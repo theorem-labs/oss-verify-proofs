@@ -2726,6 +2726,12 @@
  (depends rocq-oss-fuzz-theorems-core))
 
 (package
+ (name rocq-oss-fuzz-theorems-zlib-proofs)
+ (synopsis "Proofs of statements about zlib's OSS-Fuzz harnesses")
+ (license MIT)
+ (depends rocq-oss-fuzz-theorems-core))
+
+(package
  (name rocq-oss-fuzz-theorems-zstd-proofs)
  (synopsis "Proofs of statements about zstd's OSS-Fuzz harnesses")
  (license MIT)

@@ -5,7 +5,7 @@
 
 OSS-Fuzz runs the fuzz targets of open-source projects to search for inputs that make them fail. This repository holds Rocq proofs that, for some of these fuzz targets, no such input exists within stated limits. Each proof is about compiled binaries, not source code. It shows that, on every input within the limits, the build with a sanitizer behaves like the plain build, and that the sanitizer never detects an error. OSS Verify is a Theorem program; a maintainer enrolls a project at [theorem-labs/oss-verify](https://github.com/theorem-labs/oss-verify).
 
-60 entry points in 25 libraries have proofs. The proofs are checked with Rocq 9.2.0. They are stated in LPS, a formal model of a Linux process that runs a RISC-V binary.
+61 entry points in 26 libraries have proofs. The proofs are checked with Rocq 9.2.0. They are stated in LPS, a formal model of a Linux process that runs a RISC-V binary.
 
 **LPS is best effort and not complete.** It describes part of Linux, and it makes some assumptions that it does not check. A proof is only as good as LPS. [docs/semantics.md](docs/semantics.md) gives the design principles of LPS and its limits.
 
@@ -80,6 +80,7 @@ OSS-Fuzz runs the fuzz targets of open-source projects to search for inputs that
 | tinyobjloader | [fuzz_tobj_c](proofs/tinyobjloader/fuzz_tobj_c/) | ASan, ASan+UBSan |
 | varnish | [esi_parse_fuzzer](proofs/varnish/esi_parse_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | yajl-ruby | [json_fuzzer](proofs/yajl-ruby/json_fuzzer/) | ASan, UBSan, ASan+UBSan |
+| zlib | [checksum_fuzzer](proofs/zlib/checksum_fuzzer/) | - |
 | zstd | [fse_read_ncount](proofs/zstd/fse_read_ncount/) | ASan, ASan+UBSan |
 | zstd | [huf_decompress](proofs/zstd/huf_decompress/) | ASan |
 | zstd | [simple_decompress](proofs/zstd/simple_decompress/) | ASan+UBSan |
@@ -109,7 +110,7 @@ The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreeme
 - It is about the code that one entry point reaches, not about the whole library.
 - It is about these binaries: static riscv64 programs, built with clang 20.1.8 against musl. It is not about the source code, and not about the x86-64 builds of OSS-Fuzz.
 - It is true in LPS. Where LPS differs from Linux, the proof may not apply ([docs/semantics.md](docs/semantics.md)).
-- An agreement statement does not exclude a run that never ends. Only a halts statement does. No proof in this release proves a halts statement, so none of them rules out a run that never ends.
+- An agreement statement does not exclude a run that never ends. Only a halts statement does. 1 of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
 
 ## Versions
 | item | version |
@@ -144,13 +145,13 @@ Each proof has a build record in `proofs/<project>/<harness>/provenance/`. The r
 [docs/exploring.md](docs/exploring.md) points to what the proofs show beyond "no sanitizer error": properties that the harnesses check, and lemmas about what the library code computes. It also tells you how to find the machine-generated data in a proof.
 
 ## Statements for OSS-Fuzz fuzz targets
-This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,141 of the 2,148 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 138 are proved, some are known to be false, and proofs are added as they are found.
+This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,141 of the 2,148 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 139 are proved, some are known to be false, and proofs are added as they are found.
 
-In this release: 20,164 statements: 138 proved, 0 known false (0 counterexamples, 0 false (witnessed)), 0 suspected false, 229 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,797 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
+In this release: 20,164 statements: 139 proved, 0 known false (0 counterexamples, 0 false (witnessed)), 0 suspected false, 229 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,796 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
 
 There are four kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; and the inputs on which they agree are decidable ([docs/statements.md](docs/statements.md)). One example:
 
-[`zlib/checksum_fuzzer/plain_halts`](projects/zlib/checksum_fuzzer/Statements.v): on every input on which the plain build is never refused memory for exceeding 16 GiB, and when the environment refuses nothing that it is not forced to (both are premises), every execution exits with status 0 or 2. The harness `checksum_fuzzer` asserts that CRC-32 combine law, per chunk (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len)) must equal crc32_z(crc_so_far, chunk); chunked crc32_z over the whole input (chunk size data[0]) must equal the one-shot crc32(0, data, len) (and 4 checks more), so a proof shows that these hold on every input it covers.
+[`lzo/lzo_compress_target/plain_halts`](projects/lzo/lzo_compress_target/Statements.v): on every input on which the plain build is never refused memory for exceeding 16 GiB, and when the environment refuses nothing that it is not forced to (both are premises), every execution exits with status 0 or 2. The harness `lzo_compress_target` asserts that for compressible input (compressed_len < size), lzo1x_decompress into size+1 bytes must return LZO_E_OK and produce exactly size bytes. ONLY THE LENGTH is compared: the decompressed content is never memcmp'd against the input, so a decoder that returned the right number of wrong bytes would pass, so a proof shows that these hold on every input it covers.
 
     Definition plain_halts : Prop :=
       halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.plain.
@@ -197,7 +198,7 @@ To prove or refute a statement, see [docs/proving.md](docs/proving.md) and [CONT
 | `docs/` | the documentation |
 
 ## Citing
-[CITATION.cff](CITATION.cff). A statement is cited as `project/harness/statement@r<revision>`, for example `zlib/checksum_fuzzer/plain_halts@r1`. Until LPS is released, revisions are provisional ([docs/versioning.md](docs/versioning.md)).
+[CITATION.cff](CITATION.cff). A statement is cited as `project/harness/statement@r<revision>`, for example `lzo/lzo_compress_target/plain_halts@r1`. Until LPS is released, revisions are provisional ([docs/versioning.md](docs/versioning.md)).
 
 ## Licence
 What we wrote is under the MIT licence ([LICENSE](LICENSE)): the statements, the tools, the documentation and our proofs. Proofs that we made from proofs that Anthropic licensed under the Apache License 2.0 or the MIT licence, at the recipient's option, keep those licences. The licence texts are [LICENSES/anthropic-proofs-LICENSE](LICENSES/anthropic-proofs-LICENSE) and [LICENSES/anthropic-proofs-LICENSE-MIT](LICENSES/anthropic-proofs-LICENSE-MIT) and the notices are [LICENSES/anthropic-proofs-NOTICE](LICENSES/anthropic-proofs-NOTICE); the build record of each such proof names these three files ([docs/licensing.md](docs/licensing.md)). The binaries, the source archives and the harness copies keep their own licences ([NOTICE](NOTICE)). This project is not affiliated with or endorsed by Google or the OSS-Fuzz project.

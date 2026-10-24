@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zlib/checksum_fuzzer/plain_halts
+fingerprint: 098bad4d34d82dcdfa4a31bcdd29dbb8bf8b8f2193e5a4924acd6984b98a1c33

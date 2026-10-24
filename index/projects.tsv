@@ -1369,7 +1369,7 @@ zip	c	available	-	2	2	no	8	0	28	28	0	0	0	0	0
 zip-rs	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 zip4j	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 zipp	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
-zlib	c++	available	-	11	10	no	40	0	146	146	0	0	0	0	0
+zlib	c++	available	-	11	10	no	40	0	146	145	1	0	0	0	0
 zlib-ng	c++	available	-	7	6	no	24	0	78	78	0	0	0	0	0
 znc	c++	held	held	0	0	no	0	0	0	0	0	0	0	0	0
 zookeeper	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
