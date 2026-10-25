@@ -8,8 +8,8 @@ distribution modules, the proofs that we wrote, and the build recipe (the
 recipe archive that [release.yaml](../release.yaml) names under `recipe`),
 including the driver linked into every binary (its `src/`). The recipe archive
 also carries some upstream files, which keep their own licences; its
-`UPSTREAM-CARRIED.tsv` lists them. We accept contributions under the MIT
-licence.
+`UPSTREAM-CARRIED.tsv` lists them. A contribution is under the MIT licence,
+apart from files made from the proofs below, which keep their licence.
 
 ## Proofs made from Anthropic's proofs
 
@@ -18,8 +18,12 @@ Apache License 2.0 or the MIT licence, at the recipient's option, and adapted
 them for this release ([origin.md](origin.md)). These files remain under
 Apache-2.0 OR MIT:
 
-- Each such file keeps its licence header, and a file that we changed has one
-  more line under the header that says so.
+- Each such file keeps its licence lines, and a file that we or a contributor
+  changed has one more line under them that says so
+  ([adding-a-proof.md](adding-a-proof.md), requirement 7). A file that restates
+  the instruction words of a program, or holds data computed from one, begins
+  with a one-line comment that says so instead of Anthropic's header; the
+  program's code in it keeps the program's licences.
 - The licence texts are
   [LICENSES/anthropic-proofs-LICENSE](../LICENSES/anthropic-proofs-LICENSE)
   (Apache License 2.0) and

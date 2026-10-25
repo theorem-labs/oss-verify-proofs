@@ -43,6 +43,9 @@ TABLE = [
     ("hand", ".github/workflows/release.yml"),
     ("hand", ".github/workflows/release-check.yml"),
     ("hand", ".github/actionlint.yaml"),
+    # what an agent reads first, and the instructions it follows to add a proof
+    ("hand", "AGENTS.md"),
+    ("hand", ".claude/skills/adding-a-proof/SKILL.md"),
     # facts
     ("facts", "release.yaml"),
     ("facts", "NOTICE"),
