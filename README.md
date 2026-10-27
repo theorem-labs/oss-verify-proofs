@@ -114,7 +114,7 @@ The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreeme
 - It is about the code that one entry point reaches, not about the whole library.
 - It is about these binaries: static riscv64 programs, built with clang 20.1.8 against musl. It is not about the source code, and not about the x86-64 builds of OSS-Fuzz.
 - It is true in LPS. Where LPS differs from Linux, the proof may not apply ([docs/semantics.md](docs/semantics.md)).
-- An agreement statement does not exclude a run that never ends. Only a halts statement does. 64 of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
+- An agreement statement does not exclude a run that never ends. Only a halts statement does. 65 of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
 
 ## Versions
 | item | version |
@@ -151,9 +151,9 @@ Each project's published binaries are attached to the [release](https://github.c
 [docs/exploring.md](docs/exploring.md) points to what the proofs show beyond "no sanitizer error": properties that the harnesses check, and lemmas about what the library code computes. It also tells you how to find the machine-generated data in a proof.
 
 ## Statements for OSS-Fuzz fuzz targets
-This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,141 of the 2,148 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 202 are proved, some are known to be false, and proofs are added as they are found.
+This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,141 of the 2,148 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 203 are proved, some are known to be false, and proofs are added as they are found.
 
-In this release: 20,164 statements: 202 proved, 5 known false (0 counterexamples, 5 false (witnessed)), 0 suspected false, 229 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,728 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
+In this release: 20,164 statements: 203 proved, 5 known false (0 counterexamples, 5 false (witnessed)), 0 suspected false, 229 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,727 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
 
 There are four kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; and the inputs on which they agree are decidable ([docs/statements.md](docs/statements.md)). One example:
 

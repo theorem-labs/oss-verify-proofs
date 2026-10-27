@@ -3,14 +3,14 @@
 
 [zlib.net](https://www.zlib.net) · OSS-Fuzz: [projects/zlib](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/zlib)
 
-**Status: available.** 10 of OSS-Fuzz's 11 fuzz targets have statements. 40 binaries, 16 MB. 146 statements: 1 proved, 0 known false, 0 suspected false, 0 blocked by the model, 145 open.
+**Status: available.** 10 of OSS-Fuzz's 11 fuzz targets have statements. 40 binaries, 16 MB. 146 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 144 open.
 
 Built from zlib 1.3.1 (commit `51b7f2ab`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [checksum_fuzzer](checksum_fuzzer/) | Checks 6 properties (listed below); the first, an algebraic law: CRC-32 combine law, per chunk (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len)) must equal crc32_z(crc_so_far, chunk). | 6 checks (algebraic, differential; 2 weak; all confirmed in the binary) | 15, 1 proved |
+| [checksum_fuzzer](checksum_fuzzer/) | Checks 6 properties (listed below); the first, an algebraic law: CRC-32 combine law, per chunk (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len)) must equal crc32_z(crc_so_far, chunk). | 6 checks (algebraic, differential; 2 weak; all confirmed in the binary) | 15, 2 proved |
 | [compress_fuzzer](compress_fuzzer/) | check_decompress: uncompress of the input behind a synthesized 2-byte zlib header; result ignored. | none | 13 |
 | [example_dict_fuzzer](example_dict_fuzzer/) | Checks 2 properties (listed below); the first, a round trip: deflateInit2 (level/windowBits/memLevel/strategy from data[0]) with a preset dictionary = first data[0] bytes of the input, then inflate supplying the dictionary on Z_NEED_DICT; output memcmp-compared with the input. A mismatch only prints and returns 0. | 2 checks (api-contract, roundtrip; 1 confirmed in the binary) | 13 |
 | [example_flush_fuzzer](example_flush_fuzzer/) | Checks one property, an API contract: deflate 3 bytes with Z_FULL_FLUSH, corrupt compressed byte 3, deflate the rest; inflateSync must succeed and the final inflate(Z_FINISH) must return Z_DATA_ERROR or Z_STREAM_END. Return codes only, no data comparison; failures print + return 0. | 1 check (api-contract; 0 confirmed in the binary) | 15 |
@@ -52,6 +52,7 @@ By hand: download `zlib-bin.tar.zst` from release [v2026.10.0](https://github.co
 | statement | result |
 |---|---|
 | [zlib/checksum_fuzzer/plain_halts](../../proofs/zlib/checksum_fuzzer/plain_halts) | proved |
+| [zlib/checksum_fuzzer/plain_halts_may_fail](../../proofs/zlib/checksum_fuzzer/plain_halts_may_fail) | proved |
 
 ## Licence
 zlib is under `Zlib`. Each binary is a combined work of zlib, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `zlib-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `zlib-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

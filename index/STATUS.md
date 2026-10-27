@@ -1387,7 +1387,7 @@ Release 2026.10.1, OSS-Fuzz at `bd2ce219`. [What the statuses mean](../docs/stat
 | [zip-rs](../projects/zip-rs/) | rust | language pending | - | - | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | [zip4j](../projects/zip4j/) | jvm | language pending | - | - | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | [zipp](../projects/zipp/) | python | language pending | - | - | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| [zlib](../projects/zlib/) | c++ | available | 10 of 11 | 40 | 146 | 145 | 1 | 0 | 0 | 0 | 0 |
+| [zlib](../projects/zlib/) | c++ | available | 10 of 11 | 40 | 146 | 144 | 2 | 0 | 0 | 0 | 0 |
 | [zlib-ng](../projects/zlib-ng/) | c++ | available | 6 of 7 | 24 | 78 | 78 | 0 | 0 | 0 | 0 | 0 |
 | [znc](../projects/znc/) | c++ | held | - | - | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | [zookeeper](../projects/zookeeper/) | jvm | language pending | - | - | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
