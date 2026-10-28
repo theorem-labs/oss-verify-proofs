@@ -14,16 +14,16 @@ Checks 2 properties (listed below); the first, a round trip: deflateInit2 (level
 - Every zlib call must return Z_OK (CHECK_ERR -> exit(1)); deflate(Z_FINISH) into 100+2*deflateBound bytes must return Z_STREAM_END; the dictionary id requested by inflate must equal the Adler-32 recorded after deflateSetDictionary ([lines 61-125](source/fuzzer_example_dict.c#L61-L125)): exit(1); confirmed in the binary.
 - deflateInit2 (level/windowBits/memLevel/strategy from data[0..3]) with a preset dictionary = first data[0] bytes of the input, then inflate supplying the dictionary on Z_NEED_DICT; output must memcmp-equal the input ([lines 127-130](source/fuzzer_example_dict.c#L127-L130)): exit(1); not confirmed in the binary.
 
-A failed check marked as ending the process contradicts every halts statement below, so a proof of one implies them on every input it covers.
+A failure of the check at lines 61-125 ends the process with a status that the halts statements below that name it exclude, so a proof of one of those statements implies it on every input it covers. No statement here proves the other check.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 61-125 above holds | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 61-125 above holds | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 61-125 above holds | open |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 61-125 above holds | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; memory refused only when forced | open |
 | `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; memory refused only when forced | open |
 | `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; memory refused only when forced | open |

@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: skcms/iccprofile_info/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: 245fbd7e2e761e5064c7789f31d60edc597f80b987bc13343a8f7c14b94a42b7

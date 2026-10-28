@@ -25,19 +25,19 @@ WHAT THE HARNESS CHECKS.  $checks
 Whether each statement is open, proved or known false is recorded in the harness README, not here: this file changes only when a statement does.
 
 @@ subject_oss-fuzz
-$count builds of OSS-Fuzz's [$harness] harness for $library
+$count build$s of OSS-Fuzz's [$harness] harness for $library
 
 @@ subject_upstream
-$count builds of $project's own fuzz target [$harness], as OSS-Fuzz builds it, for $library
+$count build$s of $project's own fuzz target [$harness], as OSS-Fuzz builds it, for $library
 
 @@ subject_upstream_no_oss_fuzz
-$count builds of $project's own fuzz target [$harness], which OSS-Fuzz does not run, for $library
+$count build$s of $project's own fuzz target [$harness], which OSS-Fuzz does not run, for $library
 
 @@ subject_this-repository
-$count builds of the API driver written for this collection, over $library
+$count build$s of the API driver written for this collection, over $library
 
 @@ subject_oss-verify
-$count builds of the fuzz target [$harness], which OSS Verify builds and OSS-Fuzz does not run, for $library
+$count build$s of the fuzz target [$harness], which OSS Verify builds and OSS-Fuzz does not run, for $library
 
 @@ build_plain
   plain       no sanitizer
@@ -59,6 +59,15 @@ A driver linked into every build reads FILE as [u16 config word][config bytes][u
 @@ driver_rust
   In this Rust fuzz target, the OSS Verify port's hooks end a failed allocation with status 2 and a panic (a failed assertion, an unwrap, an overflow check or a failed rustc UB check) with status 79, each after one line on standard error: neither aborts.
 
+@@ driver_python
+  In this Python fuzz target, the harness and the Python code it imports are bytecode frozen into the binary and run by a static CPython 3.11.13, which the driver starts after it reads FILE, before the first call.  The OSS Verify port's host ends an uncaught Python exception (a failed check of the harness included) with status 79, an uncaught MemoryError with status 2 and an uncaught SystemExit with status 77, and a failure while it starts the interpreter and runs the harness module with status 80 (2 when that failure is an uncaught MemoryError), each after one line on standard error: none of them aborts.  CPython's own fatal errors still abort, for example when an allocation it makes while it starts is refused.
+
+@@ driver_harness_go
+A driver written in Go and linked into the build reads FILE as [u16 config word][config bytes][u32 allocation mask][payload] (little-endian; the low 15 bits of the config word are the config length, and the mask is ignored) and calls the Go fuzz target $entry on the payload one to four times ((config[0] & 3) + 1; once when there is no config), as OSS-Fuzz's Go helpers call it, and prints one line per call: a go-fuzz Fuzz(data []byte) int function gets the payload, and its return value is printed and does not change the exit status; for a testing.F fuzz test, the function its f.Fuzz call registers gets arguments that OSS-Fuzz's testing shim decodes from the payload (go-fuzz-headers: a []byte argument is a slice whose length the payload's first four bytes choose), it is not called when the payload is too short to decode them, a t.Skip ends the call normally, and 0 is printed.  With a wrong argument count, a missing or unreadable FILE, a FILE shorter than its header, or one of 64 MiB or more, it exits with status 2 without calling the harness.  Every statement quantifies over all of these cases and over every other process input (see Vocabulary in OssFuzzTheorems.Core.Shapes).
+
+@@ driver_go
+  In this Go fuzz target, all of the code is built by Go $go's compiler, assembler and linker, with no cgo and no C library: the harness, the library, Go's standard library, the driver and the Go runtime with the OSS Verify port's patches (no signal handlers, one thread, no reads of the environment, /proc or /sys).  A Go fuzz target ends a failure with an exit status, never with abort(): a panic on the harness's goroutine (a runtime error included) and t.Fatal, t.Error or t.Fail in a fuzz test exit with status 79, os.Exit during a call of the harness with status 77, and any other fatal runtime error that is not out of memory (a panic on another goroutine, a deadlock, a stack overflow, a concurrent map write) with status 80; the runtime exits with status 2 when the system refuses it memory for its heap, a stack or its own data; and a load through a nil pointer is a segmentation fault (status 139), because the patched runtime installs no signal handler.  Go builds have no sanitizer, so the only statement is a halts statement about the plain build, which allows only the statuses 0 and 2.
+
 @@ checks_some
 $summary  The $who checks:
 $items
@@ -71,7 +80,7 @@ $live_note
 $summary  The $who makes no check of its own beyond not crashing, so a statement about it says only that the code it calls $claim.
 
 @@ live_all
-Each check was confirmed in the binary (its assertion text or message is in the binary's bytes), so a failed one ends the process as marked.
+Each check was confirmed in the binary: its assertion text or message is in the binary's bytes.
 
 @@ live_some
 Only the checks marked "confirmed in the binary" had their assertion text or message found in the binary's bytes; for the others no usable text was found, which does not mean that they are compiled out, and no statement below relies on them.
@@ -155,6 +164,10 @@ A failed rustc UB check writes its source location on standard error and exits w
 An ASan report aborts, so a proof shows that ASan reports nothing on any such input: no memory error that this build's ASan detects happens in the code it instruments (the harness, $library_name and the driver, less the code the harness README lists as uninstrumented).
 @@ agree_asan-ubsan
 An ASan report aborts and a failed UBSan check traps, so a proof shows that neither sanitizer fires on any such input in the code they instrument (the harness, $library_name and the driver, less the code the harness README lists as uninstrumented).
+@@ agree_asan_python
+An ASan report aborts, so a proof shows that ASan reports nothing on any such input: no memory error that this build's ASan detects happens in the code it instruments (the C code: the CPython interpreter, which runs the harness and $library_name as bytecode, the port's interpreter host, and the driver, less the code the harness README lists as uninstrumented).
+@@ agree_asan-ubsan_python
+An ASan report aborts and a failed UBSan check traps, so a proof shows that neither sanitizer fires on any such input in the code they instrument (the C code: the CPython interpreter, which runs the harness and $library_name as bytecode, the port's interpreter host, and the driver, less the code the harness README lists as uninstrumented).
 @@ agree_asan-ubsan_rust
 An ASan report aborts and a failed UndefinedBehaviorSanitizer check in C code traps; a failed rustc UB check writes its source location on standard error and exits with status 79, a line the plain build, which makes no such check, does not write at that point.  So a proof shows that none of them fires on any such input in the code they instrument (the harness, $library_name and the driver, less the code the harness README lists as uninstrumented).
 
@@ -167,6 +180,10 @@ An ASan report aborts and a failed UndefinedBehaviorSanitizer check in C code tr
   The process is told that its machine is RV64GC (no vector unit).
 @@ variant_alloc_rust
   It is read alloc-forced-only because the allocation-failure hook writes the failed allocation's size on standard error, and ASan's allocator asks the kernel for memory at other allocations than musl's: refused at will, the two builds could write different lines for a reason that has nothing to do with ASan.
+@@ variant_own_budgets
+  This statement has this project's own budgets: $plain for the plain build (default $plain_default) and $san for the $san_build build (default $san_default).  The project's notes say why.
+@@ variant_alloc_python
+  It is read alloc-forced-only because CPython ends with abort() (a fatal error) when some allocations it makes while it starts are refused: refused at will, both builds could abort for a reason that has nothing to do with the sanitizer.
 
 @@ doc_bound
 For an input drawn from [Distribution.w] (Distribution.v), the probability that the plain and $san builds are not both error-free with equal traces is at most [b].  Agreement here is judged at 16 GiB / 512 GiB with no budget premise (Core.Shapes), so [$agrees] does not by itself give [$name 0].  Smaller [b] is stronger; [b = 1] holds trivially.

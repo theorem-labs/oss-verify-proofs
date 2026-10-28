@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* SPDX-License-Identifier: Apache-2.0 *)
 (* The proofs in this file are Anthropic's; the theorem statements were issued by the task authors and are reproduced as issued (see NOTICE). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* [comment removed for export] *)
@@ -14,6 +14,7 @@ Require OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Row
 Require OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Rows.RowsBp.
 Require OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Rows.HaltsBp.
 Require OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Rows.RowsBpAF.
+Require OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Rows.RowsBpBF.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
   Definition cfg := LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true.
@@ -221,3 +222,14 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+
+Theorem strong_universal_error_free_spvtools_binary_parser_fuzzer_both :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.images.Plain.M.loaded_segments OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.images.Plain.M.init_pc OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.images.AsanUbsan.M.init_pc OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.images.AsanUbsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Rows.RowsBpBF.base_bpB.
+Qed.

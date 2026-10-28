@@ -25,8 +25,8 @@
     (a) assert(size <= INT_MAX): an input-length precondition before the int
     cast; trivially true for libFuzzer inputs. [assert(); confirmed in the
     binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

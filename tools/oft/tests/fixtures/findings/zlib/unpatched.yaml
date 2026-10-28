@@ -6,3 +6,8 @@ harnesses:
     ubsan: {file: checksum_fuzzer.ubsan, bytes: 53400, sha256: 7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b}
     asan: {file: checksum_fuzzer.asan, bytes: 571500, sha256: 7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c}
     asan-ubsan: {file: checksum_fuzzer.asan-ubsan, bytes: 571800, sha256: 7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d}
+  api-driver:
+    plain: {file: api-driver.plain, bytes: 138296, sha256: 2e8386fbbc89f1135077cccfd8e2fe3c4ad23b2a3c2a974c9aa641143feb1762}
+    ubsan: {file: api-driver.ubsan, bytes: 140000, sha256: beef6fe22e2572c685765e7b0728122b498b483ff78bcbf4a51c5537fa7d73a9}
+    asan: {file: api-driver.asan, bytes: 700000, sha256: 0b2c66d3457965c40950efcd13bcce5dc56dfcff20fb46c5dec6e6c74ab2391b}
+    asan-ubsan: {file: api-driver.asan-ubsan, bytes: 700100, sha256: 23240e686b1e67ed3ea2034674736ce4d08ca200d04ed2ebccce3efc0e1cd85e}

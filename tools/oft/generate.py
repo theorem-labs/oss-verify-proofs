@@ -18,7 +18,8 @@ PROOF_THEORY_DEPS = THEORY_DEPS + " Ltac2"
 REPO_URL = "https://github.com/theorem-labs/oss-verify-proofs"
 COUNT_WORDS = {1: "One", 2: "Two", 3: "Three", 4: "Four"}
 STOP_WORDS = {"abort": "abort()", "assert": "assert()", "trap": "a trap", "throw": "an uncaught exception",
-              "panic": "a panic", "print-only": "prints only", "return-only": "returns only"}
+              "panic": "a panic", "raise": "an uncaught Python exception (status 79)",
+              "fail": "t.Fatal, t.Error or t.Fail (status 79)", "print-only": "prints only", "return-only": "returns only"}
 LIVE_WORDS = {True: "confirmed in the binary", False: "compiled out", "unknown": "not confirmed in the binary"}
 KIND_ORDER = {"halts": 0, "agreement": 1, "bound": 2, "decidability": 3}
 PAIR_ORDER = ["asan", "ubsan", "asan-ubsan"]   # ASan first: the headline pair, as in docs/statements.md
@@ -85,23 +86,34 @@ def _origin(h):
     return o + "_no_oss_fuzz" if o == "upstream" and "oss_fuzz" not in h.project.data else o
 
 
-# the blocks with a Rust variant. A Rust build's UB checks are rustc's (-Zub-checks), whose failure is a panic, which
-# the OSS Verify port's hook ends with status 79, and UBSan's in the C code its crates build (which trap); and a
-# may-fail halts statement that allows any status says that a panic does not falsify it
-RUST_BLOCKS = {"build_ubsan", "note_ubsan", "note_asan-ubsan", "agree_ubsan", "agree_asan-ubsan",
-               "fires_ubsan", "fires_asan-ubsan", "stronger"}
+# the blocks with a variant for a language. A Rust build's UB checks are rustc's (-Zub-checks), whose failure is a
+# panic, which the OSS Verify port's hook ends with status 79, and UBSan's in the C code its crates build (which trap);
+# and a may-fail halts statement that allows any status says that a panic does not falsify it. A Python build's
+# sanitizers instrument its C code: the interpreter, which runs the Python code as bytecode
+LANG_BLOCKS = {
+    "rust": {"build_ubsan", "note_ubsan", "note_asan-ubsan", "agree_ubsan", "agree_asan-ubsan",
+             "fires_ubsan", "fires_asan-ubsan", "stronger"},
+    "python": {"agree_asan", "agree_asan-ubsan"},
+    # a Go driver calls a Go fuzz function, not LLVMFuzzerTestOneInput
+    "go": {"driver_harness"},
+}
+# the languages whose fuzz targets' Statements.v header says how the port's runtime ends a failure (driver_<language>)
+DRIVER_NOTES = ("rust", "python", "go")
+# the template block of the project page's compiled sentence, per language (default: compiled, clang alone)
+COMPILED = {"rust": "compiled_rust", "python": "compiled_python", "go": "compiled_go"}
 
 
 def _lang(h, block):
     """The template block for this harness's language."""
-    return block + "_rust" if block in RUST_BLOCKS and h.project.data["language"] == "rust" else block
+    lang = h.project.data["language"]
+    return block + "_" + lang if block in LANG_BLOCKS.get(lang, ()) else block
 
 
 def _port_repository_words(port):
     """The port repository as a project page may publish it: the port's
-    name, or a generic phrase for its private prelaunch variant."""
-    if port["repository"] == schema.PRELAUNCH_REPOSITORY:
-        return "the private prelaunch OSS Verify port"
+    name, or a generic phrase for the held port's internal copy."""
+    if port["repository"] == schema.INTERNAL_PORT_REPOSITORY:
+        return "the internal copy of the OSS Verify port"
     return "`%s`" % port["repository"]
 
 
@@ -112,7 +124,7 @@ def _project_subject(proj):
 
 
 def _binding_letters(h, st):
-    return [chr(ord("a") + i) for i, c in enumerate(h.data["checks"]) if shapes.binds(c, st.data)]
+    return [chr(ord("a") + i) for i, c in enumerate(h.data["checks"]) if shapes.binds(c, st.data, h.data)]
 
 
 # --------------------------------------------------------------- Statements.v
@@ -122,12 +134,15 @@ def statements_v(h):
     lib, lib_name = _library(h)
     builds = [b for b, _ in h.builds()]
     header = _t(T, "header",
-                subject=_t(T, "subject_" + _origin(h), count=COUNT_WORDS[len(builds)],
+                subject=_t(T, "subject_" + _origin(h), count=COUNT_WORDS[len(builds)], s="" if len(builds) == 1 else "s",
                            harness=h.name, project=h.project.name, library=lib),
                 build_table="\n".join(_t(T, _lang(h, "build_" + b)) for b in builds),
                 driver=(_t(T, "driver_api", library_name=lib_name, source=_source_words(h))
-                        if h.data["origin"] == "this-repository" else _t(T, "driver_harness", entry=h.data["entry"])
-                        + (_t(T, "driver_rust") if h.project.data["language"] == "rust" else "")),
+                        if h.data["origin"] == "this-repository"
+                        else _t(T, _lang(h, "driver_harness"), entry=h.data["entry"])
+                        + (_t(T, "driver_" + h.project.data["language"],
+                              **({"go": h.project.data["build"]["go"]} if h.project.data["language"] == "go" else {}))
+                           if h.project.data["language"] in DRIVER_NOTES else "")),
                 checks=_checks_paragraph(h))
     sections, current, firsts = [], None, {}
     rendered = [s for s in _order(h) if s.rendered()]
@@ -138,10 +153,12 @@ def statements_v(h):
         if not st.rendered():
             sections.append(_t(T, "not_rendered", name=st.name, status=PB["statements"][st.status]["words"]))
             continue
-        params, body = shapes.term(st.data)
-        # a statement is written "As [first], for the X build" only after one of the same family
+        params, body = shapes.term(st.data, project=h.project.data)
+        # a statement is written "As [first], for the X build" only after one of the same family; a project's own
+        # budget pair is part of the family, so a statement with the project's own pair is stated "As" only one
+        # with the same pair, and none on a harness enum is stated "As" one with an own pair
         family = (st.kind, st.data["reading"], st.data.get("abort"), st.data.get("machine"),
-                  shapes.exits_key(st.data.get("exits", "any")))
+                  shapes.exits_key(st.data.get("exits", "any")), shapes.own_budgets(st.data, h.project.data))
         doc = _statement_doc(h, st, firsts.get(family), rendered, lib_name)
         firsts.setdefault(family, st.name)
         sections.append(_t(T, "definition", doc=_comment(doc), name=st.name, params=params, body=body))
@@ -248,15 +265,22 @@ def _statement_doc(h, st, first, rendered, lib_name):
         return _t(T, "doc_halts_may_fail", build=words, exits=_exits_words(d), rejected=rejected, stronger=stronger,
                   binds=binds, note=note, no_asan="" if has_asan else _t(T, "no_asan", who=_who(h)))
     if st.kind == "agreement":
-        budget = shapes.BUDGETS[d["budgets"]][1]
+        budget, san_budget, own = shapes.budget_words(d, h.project.data)
         variant = ""
         if d.get("abort") == "signal":
             variant += _t(T, "variant_abort")
         if d.get("machine") == "rv64gc":
             variant += _t(T, "variant_rv64gc")
-        if (not first and d["reading"] == "alloc-forced-only" and "asan" in san
-                and h.project.data["language"] == "rust"):
-            variant += _t(T, "variant_alloc_rust")
+        lang = h.project.data["language"]
+        # why the pair is read alloc-forced-only: in a Rust target its ASan pairs (the allocation-failure hook's
+        # line), in a Python target every pair (CPython aborts when some allocations made at start are refused)
+        if (not first and d["reading"] == "alloc-forced-only"
+                and (lang == "python" or (lang == "rust" and "asan" in san))):
+            variant += _t(T, "variant_alloc_" + lang)
+        if own:
+            plain_default, san_default = shapes.default_budget_words(san)
+            variant += _t(T, "variant_own_budgets", plain=budget, plain_default=plain_default, san=san_budget,
+                          san_build=words, san_default=san_default)
         san_note = _t(T, _lang(h, "agree_" + san), library_name=lib_name)
         if first:
             return "As [%s], for the %s build, with %s for the plain build.  %s%s" % (
@@ -421,6 +445,12 @@ def distribution_v(h):
 
 # --------------------------------------------------------------- READMEs
 
+def _check_place(c):
+    """'lines 66-74' or 'line 71': where a check is, as its README row names it."""
+    rng = c["where"].rpartition(":")[2]
+    return ("lines %s" if "-" in rng else "line %s") % rng
+
+
 def _statement_line(h, st):
     T = "harness-README.md.tmpl"
     d = st.data
@@ -428,8 +458,16 @@ def _statement_line(h, st):
     if st.kind == "halts":
         if d["reading"] == "budget":
             letters = _binding_letters(h, st)
+            if not letters:
+                binds = ""
+            elif len(letters) == len(h.data["checks"]):
+                binds = "; so the check above holds" if len(letters) == 1 else "; so the checks above hold"
+            else:
+                bound = [_check_place(c) for i, c in enumerate(h.data["checks"]) if chr(ord("a") + i) in letters]
+                binds = "; so the %s at %s above %s" % ("check" if len(bound) == 1 else "checks",
+                                                        render.join_words(bound), "holds" if len(bound) == 1 else "hold")
             return _t(T, "line_halts_budget", budget=shapes.HALTS_BUDGET[1], build=san, exits=_exits_words(d),
-                      binds="; so the checks above hold" if letters else "")
+                      binds=binds)
         return _t(T, "line_halts_may_fail", build=san, exits=_exits_words(d))
     if st.kind == "agreement":
         v = []
@@ -441,8 +479,9 @@ def _statement_line(h, st):
             v.append("memory refused only when forced")
         block = _lang(h, "fires_" + d["builds"][-1])
         fires = _t(T, block if block.endswith("_rust") else "fires", san=san)
-        return _t(T, "line_agreement", fires=fires, budget=shapes.BUDGETS[d["budgets"]][1],
-                  variant="".join("; " + x for x in v))
+        budget, san_budget, own = shapes.budget_words(d, h.project.data)
+        return _t(T, "line_agreement", fires=fires, budget=budget, variant="".join("; " + x for x in v),
+                  own=_t(T, "own_budgets", plain=budget, san=san_budget) if own else "")
     return _t(T, "line_" + st.kind, san=san)
 
 
@@ -510,22 +549,36 @@ def harness_readme(tree, h):
         f, _, rng = where.rpartition(":")
         a, _, b = rng.partition("-")
         anchor = "L%s-L%s" % (a, b) if b else "L%s" % a
-        return ("lines %s" % rng) if b else ("line %s" % a), f, anchor
+        return f, anchor
     checks = []
     for c in h.data["checks"]:
-        lines, f, anchor = link(c["where"])
-        checks.append(_t(T, "check_row", what=c["what"].rstrip("."), lines=lines,
+        f, anchor = link(c["where"])
+        checks.append(_t(T, "check_row", what=c["what"].rstrip("."), lines=_check_place(c),
                          file=f, anchor=anchor, stops=_stop(c), live=LIVE_WORDS[c["live"]]))
     if checks:
-        if any(_binding_letters(h, s) for s in h.statements.values()):
+        halts = [s for s in h.statements.values() if s.kind == "halts"]
+        bound = [c for i, c in enumerate(h.data["checks"])
+                 if any(chr(ord("a") + i) in _binding_letters(h, s) for s in halts)]
+        every = len(bound) == len(h.data["checks"]) and all(
+            len(_binding_letters(h, s)) == len(h.data["checks"]) for s in halts)
+        others = len(h.data["checks"]) - len(bound)
+        if every:
             checks.append("\n" + _t(T, "checks_bind", that="them" if len(h.data["checks"]) > 1 else "it"))
+        elif bound:
+            places = render.join_words(_check_place(c) for c in bound)
+            subject = ("any of the checks at %s" % places) if len(bound) > 1 else ("the check at %s" % places)
+            text = _t(T, "checks_bind_some", subject=subject, that="them" if len(bound) > 1 else "it")
+            if others:   # every check can be bound by some halts statement and still not by every one
+                text += " " + _t(T, "checks_bind_others", others="checks" if others > 1 else "check")
+            checks.append("\n" + text)
     else:
         checks.append(_t(T, "checks_none", who=_who(h), claim=_no_check_claim(h)))
     if h.data.get("rejects"):
         reject_rows = []
         for r in h.data["rejects"]:
-            lines, f, anchor = link(r["where"])
-            reject_rows.append(_t(T, "reject_row", what=r["what"].rstrip("."), lines=lines, file=f, anchor=anchor))
+            f, anchor = link(r["where"])
+            reject_rows.append(_t(T, "reject_row", what=r["what"].rstrip("."), lines=_check_place(r), file=f,
+                                  anchor=anchor))
         checks.append("\n" + _t(T, "rejects", who=_who(h), status=shapes.REJECTED, rows="\n".join(reject_rows)))
         returning = [c["where"][len("source/"):] for c in h.data["checks"] if c["stops_with"] == "return-only"]
         if returning:
@@ -565,7 +618,7 @@ def harness_readme(tree, h):
             urows.append(_t(T, "uninstrumented_row", build=b, items=", ".join(items)))
     if urows:
         uninstrumented = "\n" + _t(T, "uninstrumented", rows="\n".join(urows)) + "\n"
-    elif h.builds():
+    elif h.builds() and h.project.data["language"] != "go":    # Go builds link no toolchain runtime and no sanitizer
         uninstrumented = "\n" + _t(T, "uninstrumented_none") + "\n"
     else:
         uninstrumented = ""
@@ -696,7 +749,7 @@ def project_readme(tree, proj):
     bitems = []
     for h in hs:
         whats = [c_["what"] for i, c_ in enumerate(h.data["checks"])
-                 if any(shapes.binds(c_, s.data) for s in h.statements.values())]
+                 if any(shapes.binds(c_, s.data, h.data) for s in h.statements.values())]
         if whats:
             bitems.append(_t(T, "binding_item", name=h.name,
                              whats="; ".join(render.lower_first(w.rstrip(".")) for w in whats)))
@@ -812,7 +865,11 @@ def project_readme(tree, proj):
               build_system=PB["build_systems"][d["build"]["system"]],
               patch_items=(":\n" + "\n".join(pitems)) if pitems else "",
               harness_mods=harness_mods,
-              compiled=_t(T, "compiled_rust" if d["language"] == "rust" else "compiled", clang=d["build"]["clang"]),
+              # each block takes only its own toolchain's version, so a missing one fails here rather than render "None"
+              compiled=(_t(T, "compiled_go", go=d["build"]["go"]) if d["language"] == "go"
+                        else _t(T, COMPILED.get(d["language"], "compiled"), clang=d["build"]["clang"])),
+              # a Go project's binaries run the port's patched Go runtime: the page says what the patches change
+              runtime_item=(_t(T, "runtime_go", go=d["build"]["go"]) + "\n") if d["language"] == "go" else "",
               builder_sentence=(_t(T, "builder_unpublished") if builder.endswith(PLACEHOLDER_DIGEST)
                                 else _t(T, "builder_port", builder=builder, port_path=port["path"],
                                         port_commit=port["commit"], port_repository=_port_repository_words(port),
@@ -832,7 +889,8 @@ def project_readme(tree, proj):
                                            library_licence=render.join_words("`%s`" % x for x in known_lib)
                                            + (" (for some of its harnesses' builds; the others are not recorded yet)"
                                               if "NOASSERTION" in lib_licences else ""))),
-              binary_licence_sentence=(_t(T, "binary_licences_unknown", library_name=lib["name"])
+              binary_licence_sentence=(_t(T, "binary_licences_unknown" + ("_go" if d["language"] == "go" else ""),
+                                          library_name=lib["name"])
                                        if not licences or "NOASSERTION" in licences else
                                        _t(T, "binary_licences_known",
                                           binary_licences=render.join_words("`%s`" % x for x in licences))),
@@ -966,7 +1024,7 @@ def readme(tree):
            if any(p.data["status"] == st for p in tree.projects.values())]
     ex = _example(stmts)
     if ex:
-        params, body = shapes.term(ex.data)
+        params, body = shapes.term(ex.data, project=ex.harness.project.data)
         letters = _binding_letters(ex.harness, ex)
         shown = [render.lower_first(ex.harness.data["checks"][ord(x) - 97]["what"].rstrip(".")) for x in letters[:2]]
         if len(letters) > 2:
@@ -977,8 +1035,10 @@ def readme(tree):
         example = _t(T, "example", example_id=ex.id, example_path="%s/Statements.v" % ex.harness.dir,
                      example_words=words, example_name=ex.name + params, example_body=body)
         eid, erev = ex.id, ex.revision
+        unit = (ex.harness.project.name, ex.harness.name)
     else:
         example, eid, erev = _t(T, "example_none"), "project/harness/statement", 1
+        unit = ("<project>", "<harness>")
     harnesses = list(tree.harnesses())
     n_four = sum(1 for h in harnesses if len(h.data["builds"]) == len(schema.BUILDS))
     four_builds = ("every harness has all four" if n_four == len(harnesses) else
@@ -1002,6 +1062,7 @@ def readme(tree):
                     "%s %s proved, some are known to be false, and proofs are added as they are found."
                     % (render.thousands(by["proved"]), "is" if by["proved"] == 1 else "are"))
     proved = proved_rows(tree)
+    checked = _checked_unit(proved, unit)
     if proved:
         proved_lead = _t(T, "proved_lead", n_entries=render.thousands(len(proved)),
                          n_libraries=render.thousands(len({x["library"] for x in proved})))
@@ -1047,7 +1108,25 @@ def readme(tree):
               not_checkable="" if published else _t(T, "not_checkable"),
               lps_name=sem["name"], lps_version=lps_version, lps_plain=lps_plain, lps_commit8=sem["commit"][:8],
               rocq_version=r["rocq"]["version"], four_builds=four_builds, checker_image=r["images"]["checker"],
-              example_id=eid, example_revision=erev) + "\n"
+              example_id=eid, example_revision=erev,
+              # "Check a proof" fetches and checks a proved fuzz target the release carries (a held one is cut from
+              # the proofs, so it is never named); the fetch comment lines up at one column whatever its name
+              fetch_command=_padded("./oft fetch %s" % checked[0], 37),
+              check_command="./oft check %s/%s" % checked) + "\n"
+
+
+def _padded(command, width):
+    return command + " " * max(1, width - len(command))
+
+
+CHECKED = ("coturn", "FuzzStunClient")
+
+
+def _checked_unit(proved, fallback):
+    """The fuzz target the README's "Check a proof" fetches and checks: coturn/FuzzStunClient while it has a proof,
+    else the first entry point with one, else fallback (the example statement's fuzz target)."""
+    units = [(x["library"], x["entry"]) for x in proved]
+    return CHECKED if CHECKED in units else units[0] if units else fallback
 
 
 EXAMPLE = "zlib/checksum_fuzzer/plain_halts"
@@ -1108,7 +1187,7 @@ def index_files(tree):
             brow.append([h.project.name, h.name, b, rec["file"], "withheld" if held else "published", held or "-",
                          "-" if held else rec["bytes"], "-" if held else rec["sha256"], h.data["licence"]])
         for i, ch in enumerate(h.data["checks"]):
-            bound = [s.name for s in h.statements.values() if shapes.binds(ch, s.data)]
+            bound = [s.name for s in h.statements.values() if shapes.binds(ch, s.data, h.data)]
             crow.append([h.project.name, h.name, ch["kind"], ch["strength"], ch["stops_with"],
                          {True: "yes", False: "compiled out"}.get(ch["live"], "not found"), "halts" if bound else "-",
                          ch["where"], ch["what"]])

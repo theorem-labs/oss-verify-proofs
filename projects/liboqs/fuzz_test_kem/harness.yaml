@@ -135,6 +135,7 @@ checks:
   where: source/fuzz_test_kem.c:124
   what: 'KEM correctness: for the fuzz-selected algorithm (all OQS_KEM_algs) and a fuzz-seeded RNG, keypair
     -> encaps -> decaps and the decapsulated shared secret must equal the encapsulated one byte-for-byte.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzz_test_kem

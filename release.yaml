@@ -1,5 +1,5 @@
 schema: oss-fuzz-theorems/release/1
-release: 2026.10.1
+release: 2026.10.2
 date: '2026-10-27'
 oss_fuzz:
   repository: https://github.com/google/oss-fuzz

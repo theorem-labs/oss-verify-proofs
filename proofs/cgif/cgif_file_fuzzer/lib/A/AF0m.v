@@ -1,0 +1,316 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+From OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
+From Stdlib Require Import ZArith List Bool Lia.
+From OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib Require Import YG00 YG01 YG0f.
+From OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib.A Require Import AF0l.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope Z_scope.
+Definition TFIB_INST : Z := 0xa2998.      Definition TFIB_TP : Z := 0x5d8f90.       Definition TFIB_TSD : Z := 0x5fa338.
+Definition TFIB_DEPOT : Z := 0x187ed8.     Definition TFIB_STORE : Z := 0x177ec8.
+Definition TFIB_IAL_LO : Z := 0xa7200.    Definition TFIB_IAL_HI : Z := 0x128230.   Definition TFIB_IAL_W : Z := 0xe7fc0.
+Definition TFIB_IAL_FLAG : Z := 0x135a88.  Definition TFIB_OOM : Z := 0x128260.
+Definition TFIB_MAIN : Z := 0x7fff0.      Definition TFIB_MAIN_RA : Z := 0x8cf04.  Definition TFIB_GP : Z := 0x10800.
+Definition TFIB_ERRNO : Z := 0x5d8eec.
+Definition DRV_TRACES : list (list Z) :=
+[[0x52bcc; 0x80044]; [0x52bcc; 0x80098]; [0x52bcc; 0x80324]; [0x52bcc];
+[0x52a6c; 0x800bc]; [0x52a6c; 0x801ec]; [0x52a6c; 0x803b8]; [0x52a6c]].
+Definition Tfib_const_sym : list acell :=
+[ c8 (AT 0) (AC 0); c8 (AT 8) (ATop 0); c8 (AT 16) (ATop (- kStackSpan)); z8 (AT 24) 0; z8 (AT 32) 0; z1 (AT 40) 0;
+z8 (AT 48) 0x5d96c8; z8 (AT 56) 0x5d97a4; z8 (AT 64) 0x5d8f98; c8 (AT 72) (AF 0)    ;
+z4 (AC 8) 0; c8 (AC 152) (AT 0);
+c8 (ATsd 0) (AC 0); c8 (ATp 0) (AF 0); c8 (ATp (-88)) (ATsd 0); z8 (ATp (-8)) 0x5d8fb0  ;
+c8 (ATp 8) (AD 0); c8 (AD 24) (ATp 0)  ;
+c8 (AInst o_space) (ASp 0); c8 (AInst o_rinfo) (ASp kRegionInfoOff); c8 (AInst o_sec_chunks) (AQ 0); c8 (AInst 80) (AQ 0) ].
+Definition Tfib_const_abs : list acell :=
+[
+z8 (ANum 0x137b28) 0x1  ;
+z8 (ANum 0x137b30) 0x0  ;
+z8 (ANum 0x137b38) 0x0  ;
+z8 (ANum 0x137b40) 0x13ed0  ;
+z8 (ANum 0x137b48) 0x1e00010000  ;
+z8 (ANum 0x137b50) 0x0  ;
+z8 (ANum 0x137b58) 0x0  ;
+z8 (ANum 0x137b60) 0x0  ;
+z8 (ANum 0x137b68) 0x0  ;
+z8 (ANum 0x137b70) 0x10101000101  ;
+z8 (ANum 0x137b78) 0x100000000  ;
+z8 (ANum 0x137b80) 0x0  ;
+z8 (ANum 0x137b88) 0x0  ;
+z8 (ANum 0x137b90) 0x0  ;
+z8 (ANum 0x137b98) 0x10001  ;
+z8 (ANum 0x137ba0) 18446744073709551615  ;
+z8 (ANum 0x137ba8) 0x1180f  ;
+z8 (ANum 0x137bb0) 0x100  ;
+z8 (ANum 0x137bb8) 0x0  ;
+z8 (ANum 0x137bc0) 0x0  ;
+z8 (ANum 0x137bc8) 0x0  ;
+z8 (ANum 0x137bd0) 0x0  ;
+z8 (ANum 0x137bd8) 0xffffffff00000000  ;
+z8 (ANum 0x137be0) 0x1  ;
+z8 (ANum 0x137be8) 0x14242  ;
+z8 (ANum 0x137bf0) 0x13ed0  ;
+z8 (ANum 0x137bf8) 0x13ed0  ;
+z8 (ANum 0x137c00) 0x10101000100  ;
+z8 (ANum 0x137c08) 0x0  ;
+z8 (ANum 0x137c10) 0x1da7f  ;
+z8 (ANum 0x137c18) 0x101000100000000  ;
+z8 (ANum 0x137c20) 0x101010101010101  ;
+z8 (ANum 0x137c28) 0x1010101  ;
+z8 (ANum 0x137c30) 0x10100000001  ;
+z8 (ANum 0xa37f8) 0x100ffffffff  ;
+z8 (ANum 0xa3800) 0x1000000400  ;
+z8 (ANum 0xa3808) 0x800  ;
+z8 (ANum 0xa3810) 0x101010000000001  ;
+z8 (ANum 0xa3818) 0x1400000010  ;
+z8 (ANum 0xa3820) 0x100000000000  ;
+z8 (ANum 0xa3828) 0xbe00000000  ;
+z8 (ANum 0xa3830) 0x100000055  ;
+z8 (ANum 0xa3838) 0x0  ;
+z8 (ANum 0xa3840) 0x1000100000000  ;
+z8 (ANum 0xa3848) 0x101010101000001  ;
+z8 (ANum 0xa3850) 0x1  ;
+z8 (ANum 0xa3858) 0x200000001  ;
+z8 (ANum 0xa3860) 0x13ed0  ;
+z8 (ANum 0xa3868) 0x10101  ;
+z8 (ANum 0xa5ff8) 0x7fff8000  ;
+z4 (ANum 0xa6000) 0x1  ;
+z1 (ANum 0xa6cd8) 0x1  ;
+z1 (ANum 0xa6cd9) 0x1  ;
+z8 (ANum 0xa6ce0) 0x7fffffffffff  ;
+z8 (ANum 0xa6ce8) 0x0  ;
+z8 (ANum 0xa6cf0) 0x0  ;
+z4 (ANum 0xa6cfc) 0x1e  ;
+z1 (ANum 0xa585c) 0x1  ;
+z1 (ANum 0xa5860) 0x1  ;
+z4 (ANum 0xa5864) 0x0  ;
+z1 (ANum 0x128261) 0x1  ;
+z1 (ANum 0x128262) 0x0  ;
+z8 (ANum 0x135aa0) 0x1000  ;
+z4 (ANum 0x137b1c) 0x0  ;
+z8 (ANum 0x9fe18) 0x96ed8  ;
+z8 (ANum 0x9fe20) 0x97294  ;
+z8 (ANum 0x9fe28) 0x97698  ;
+z8 (ANum 0x9fcc8) 0x97264  ;
+z8 (ANum 0x9fcd0) 0x97194  ;
+z1 (ANum 0x137bb1) 0x1  ;
+z4 (ANum 0x135a98) 0x0  ;
+z8 (ANum 0x9eca0) 0x8  ;
+z8 (ANum 0x9fce8) 0x9c998  ;
+z8 (ANum 0x9fcf0) 0x93808  ;
+z8 (ANum 0x9fdd0) 0x97b20  ;
+z8 (ANum 0x9fcd8) 0x97198  ;
+z1 (ANum 0x137c23) 0x1  ;
+z1 (ANum 0x137b7c) 0x1  ;
+z8 (ANum 0x9fd08) 0x96be0  ;
+z8 (ANum 0x9fd10) 0x93ad0  ;
+z8 (ANum 0x9fd50) 0x97e88  ;
+z8 (ANum 0x9eb00) 0xa6cd9  ;
+z8 (ANum 0x9ec28) 0xa2870  ;
+z8 (ANum 0x9ec30) 0xa2930  ;
+z8 (ANum 0xa2940) 0x1  ;
+z8 (ANum 0x9ec90) 0x1  ;
+z8 (ANum 0x9ec98) 0xfffffffffffff800  ;
+z8 (ANum 0x177ed0) 0x800000  ;
+z8 (ANum 0xa29a0) 0x2000011000  ;
+z8 (ANum 0xa29a8) 0x16b15  ;
+z8 (ANum 0xa29b0) 0x0  ;
+z8 (ANum 0xa29c0) 0xffffffff  ;
+z8 (ANum 0xa29d0) 0x0  ;
+z8 (ANum 0xa29d8) 0x1000  ;
+z8 (ANum 0xa29f0) 0x800000  ;
+z8 (ANum 0xa29f8) 0x19241  ;
+z8 (ANum 0xa2a00) 0x0  ;
+z8 (ANum 0xa2cb0) 0x10000000  ;
+z8 (ANum 0xa2cb8) 0xe666661  ;
+z8 (ANum 0xa2cc0) 0x100000  ;
+z8 (ANum 0xa37b8) 0x10000000000  ;
+z8 (ANum 0xa37c0) 0x108000010  ;
+z8 (ANum 0x5d8f38) 0x5fa338  ;
+z8 (ANum 0x5d8f88) 0x5d8fb0  ;
+z8 (ANum 0x5d8fb0) 0x1  ;
+z8 (ANum 0x5d8fb8) 0x5d9790  ;
+z8 (ANum 0x5d8fa0) 0x0  ;
+z8 (ANum 0x103b8) 0x218a392cd3d5dbf  ;
+z8 (ANum 0x10328) 0xcc6e96b9cc6e96b9  ;
+z8 (ANum 0x103a0) 0xafffff00000fffff  ;
+z8 (ANum 0x102e8) 0xc6a4a7935bd1e995  ;
+z8 (ANum 0x10308) 0x35253c9ade8f4ca8  ;
+z8 (ANum 0x10398) 0x9747b28c9747b28c  ;
+z8 (ANum 0x9ebf0) 0x10  ;
+z8 (ANum 0x10528) 0x13080d0307020100  ;
+z8 (ANum 0x10530) 0x281422091c0e1904  ;
+z8 (ANum 0x10538) 0x301d2e0f261a1105  ;
+z8 (ANum 0x10540) 0x3929321536231f0a  ;
+z8 (ANum 0x10548) 0x27211b18120c063f  ;
+z8 (ANum 0x10550) 0x3831351e2f2d2510  ;
+z8 (ANum 0x10558) 0x37342c2420170b3e  ;
+z8 (ANum 0x10560) 0x3a3b2a3c332b163d  ;
+z8 (ANum 0x10428) 0x13080d0307020100  ;
+z8 (ANum 0x10430) 0x281422091c0e1904  ;
+z8 (ANum 0x10438) 0x301d2e0f261a1105  ;
+z8 (ANum 0x10440) 0x3929321536231f0a  ;
+z8 (ANum 0x10448) 0x27211b18120c063f  ;
+z8 (ANum 0x10450) 0x3831351e2f2d2510  ;
+z8 (ANum 0x10458) 0x37342c2420170b3e  ;
+z8 (ANum 0x10460) 0x3a3b2a3c332b163d  ;
+z8 (ANum 0x137ac0) 0x0  ;
+z8 (ANum 0x137ac8) 0x0  ;
+z8 (ANum 0x137ad0) 0x0  ;
+z8 (ANum 0x137ad8) 0x0  ;
+z8 (ANum 0x137ae0) 0x0  ;
+z8 (ANum 0x137ae8) 0x0  ;
+z8 (ANum 0x137af0) 0x0  ;
+z8 (ANum 0x137af8) 0x0  ;
+z8 (ANum 0x137b00) 0x0  ;
+z8 (ANum 0x137b08) 0x0  ;
+z8 (ANum 0x9df78) 0x135aa0  ;
+z8 (ANum 0x9df80) 0x9fe60  ;
+z8 (ANum 0x9df88) 0x137b28  ;
+z8 (ANum 0x9df90) 0xa37f8  ;
+z8 (ANum 0x9df98) 0xa5ff8  ;
+z8 (ANum 0x9dfa0) 0xa6ce8  ;
+z8 (ANum 0x9dfa8) 0xa6cf0  ;
+z8 (ANum 0x9dfb0) 0xa6ce0  ;
+z8 (ANum 0x9dfb8) 0x9fe28  ;
+z8 (ANum 0x9dfc0) 0x9fe20  ;
+z8 (ANum 0x9dfc8) 0x9fe58  ;
+z8 (ANum 0x9dfd0) 0x9fe70  ;
+z8 (ANum 0x9dfd8) 0x1  ;
+z8 (ANum 0x9dfe0) 0x137b1c  ;
+z8 (ANum 0x9dfe8) 0x135a98  ;
+z8 (ANum 0x9dff0) 0xa6000  ;
+z8 (ANum 0xa2870) 0x20e00  ;
+z8 (ANum 0xa2878) 0xd  ;
+z8 (ANum 0xa2880) 0x20  ;
+z8 (ANum 0xa2888) 0x1c088  ;
+z8 (ANum 0xa2890) 0x20e20  ;
+z8 (ANum 0xa2898) 0x0  ;
+z8 (ANum 0xa28a0) 0x0  ;
+z8 (ANum 0xa28a8) 0xffffffffffffffff  ;
+z8 (ANum 0xa28b0) 0x20e60  ;
+z8 (ANum 0xa28b8) 0x3  ;
+z8 (ANum 0xa28c0) 0x20  ;
+z8 (ANum 0xa28c8) 0x1c088  ;
+z8 (ANum 0xa28d0) 0x20e80  ;
+z8 (ANum 0xa28d8) 0x0  ;
+z8 (ANum 0xa28e0) 0x0  ;
+z8 (ANum 0xa28e8) 0xffffffffffffffff  ;
+z8 (ANum 0xa28f0) 0x20ea0  ;
+z8 (ANum 0xa28f8) 0x2  ;
+z8 (ANum 0xa2900) 0x20  ;
+z8 (ANum 0xa2908) 0x1c088  ;
+z8 (ANum 0xa2910) 0x20ec0  ;
+z8 (ANum 0xa2918) 0x0  ;
+z8 (ANum 0xa2920) 0x0  ;
+z8 (ANum 0xa2928) 0xffffffffffffffff  ;
+z1 (ANum 0x137ea0) 0x0  ;
+z8 (ANum 0xa38b0) 0x0  ;
+z2 (ANum 0xa2d0a) 0x0  ;
+z4 (ANum 0xa2d0c) 0x0  ;
+z1 (ANum 0xa2c41) 0x0  ;
+z2 (ANum 0xa2c42) 0x0  ;
+z4 (ANum 0xa2c44) 0x0  ;
+z8 (ANum 0x9fe60) 0x19241   ;
+z8 (ANum 0x1cd09) 0x612079726f6d656d  ;
+z8 (ANum 0x1cd11) 0x7365726464612074  ;
+z4 (ANum 0x1cd19) 0x70252073  ;
+z1 (ANum 0x1cd1d) 0x0  ;
+z4 (ANum 0x20b7c) 0x45f54  ;
+z8 (ANum 0x9ec38) 0x5f8fd0  ;
+z8 (ANum 0x5f9250) 0x1000  ;
+z1 (ANum 0x214ac) 0x04  ;
+z1 (ANum 0x214ad) 0xff  ;
+z4 (ANum 0x21448) 0x6b788  ;
+z1 (ANum 0x137c03) 0x1  ;
+z1 (ANum 0x137c1c) 0x1  ;
+z8 (ANum 0xa5840) 0xa5848  ;
+z8 (ANum 0x9fd60) 0x9310c  ;
+z8 (ANum 0x9fd68) 0x92ee4  ;
+z8 (ANum 0x9fd58) 0x93540  ;
+z8 (ANum 0x9fcc0) 0x97790  ;
+z1 (ANum 0x20e63) 0x0  ;
+z1 (ANum 0x20e64) 0x0  ;
+z1 (ANum 0x20e65) 0x0  ;
+z1 (ANum 0x20e66) 0x0  ;
+z1 (ANum 0x20e67) 0x0
+].
+Definition Tfib_const_shadow : list acell :=
+[ z1 (ANum 0x7fffc1c1) 0x5  ;
+z1 (ANum 0x7fffc1c2) 0xf9  ;
+z1 (ANum 0x7fffc1c3) 0xf9  ;
+z1 (ANum 0x7fffc1cc) 0x3  ;
+z1 (ANum 0x7fffc1cd) 0xf9  ;
+z1 (ANum 0x7fffc1ce) 0xf9  ;
+z1 (ANum 0x7fffc1cf) 0xf9  ;
+z1 (ANum 0x7fffc1d4) 0x2  ;
+z1 (ANum 0x7fffc1d5) 0xf9  ;
+z1 (ANum 0x7fffc1d6) 0xf9  ;
+z1 (ANum 0x7fffc1d7) 0xf9  ;
+z1 (ANum 0x8000c50e) 0xf9  ;
+z1 (ANum 0x8000c50f) 0xf9  ;
+z1 (ANum 0x8000c510) 0xf9  ;
+z1 (ANum 0x8000c511) 0xf9  ;
+z1 (ANum 0x8000c512) 0xf9  ;
+z1 (ANum 0x8000c513) 0xf9  ;
+z1 (ANum 0x8000c514) 0xf9  ;
+z1 (ANum 0x8000c515) 0xf9  ;
+z1 (ANum 0x8000c516) 0xf9  ;
+z1 (ANum 0x8000c517) 0xf9  ;
+z1 (ANum 0x8000c518) 0xf9  ;
+z1 (ANum 0x8000c519) 0xf9  ;
+z1 (ANum 0x8000c51a) 0xf9  ;
+z1 (ANum 0x8000c51b) 0xf9  ;
+z1 (ANum 0x8000c51c) 0xf9  ;
+z1 (ANum 0x8000c51d) 0xf9  ;
+z1 (ANum 0x8000c51e) 0xf9  ;
+z1 (ANum 0x8000c51f) 0xf9  ;
+z1 (ANum 0x8000c520) 0xf9  ;
+z1 (ANum 0x8000c521) 0xf9  ;
+z1 (ANum 0x8000c522) 0xf9  ;
+z1 (ANum 0x8000c523) 0xf9  ;
+z1 (ANum 0x8000c524) 0xf9  ;
+z1 (ANum 0x8000c525) 0xf9   ].
+Definition Tfib_const (ly : alayout) : list acell := Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow.
+Definition Tfib_zero_shadow : list (Z * Z) :=
+[ (0x10000, 0x20e08 - 0x10000); (0x20e20, 0x20e60 - 0x20e20); (0x20e80, 0x20ea0 - 0x20e80); (0x20ec0, 0xa2870 - 0x20ec0); (0xa2930, 0x5fb000 - 0xa2930) ].
+Definition Tfib_owned_static : list (Z * Z) :=
+[ (0x9fca8, 0xa2530 - 0x9fca8); (0xa2870, 0xc0); (0xa2940, 8); (0xa2998, 0xa5848 - 0xa2998); (0xa5850, 0x5c8650 - 0xa5850)    ; (0x5d8f90, 0x3c)  ;
+(0x9df98, 8); (0x9dff0, 8);
+(0x102e8, 8); (0x10308, 8); (0x10328, 8); (0x10398, 8); (0x103a0, 8); (0x103b8, 8); (0x10428, 64); (0x10528, 64);
+(0x9df78, 0x20); (0x9dfa0, 0x18); (0x9dfb8, 0x38); (0x9eb00, 8); (0x9ebf0, 8); (0x9ec28, 16); (0x9ec90, 16); (0x9eca0, 8)  ;
+(0x20e0d, 0x13); (0x20e63, 0x1d); (0x20ea2, 0x1e);
+(0x5d8f38, 8); (0x5d8f88, 8); (0x5d8fa0, 8)  ; (0x5fa338, 8);
+(0x1cd09, 21); (0x20b7c, 4); (0x21448, 4); (0x214ac, 2); (0x9ec38, 8); (0x5f9250, 8) ].
+Definition TFIB_TR0 (h : nat) : list Z := match h with O => [0x3e514; 0x3f864] | _ => [0x3e514] end.
+Definition TFIB_HASH (h : nat) : Z := match h with O => 11629295758429802463 | _ => 5126172091295221302 end.
+Example tfib_hash_buckets : map (fun h => (TFIB_HASH h) mod d_tab_words) [0%nat; 1%nat] = [675807; 804406].
+Proof. vm_compute. reflexivity. Qed.
+Record TfibSyms (B : asyms) : Prop := {
+ts_inst : as_inst B = TFIB_INST;
+ts_tp : as_tp B = TFIB_TP;
+ts_tsd : as_tsd B = TFIB_TSD;
+ts_gp : as_gp B = TFIB_GP;
+ts_code : as_code B = Tfib_code;
+ts_errno : as_errno B = TFIB_ERRNO;
+ts_depot : as_depot B = TFIB_DEPOT;
+ts_store : as_store B = TFIB_STORE;
+ts_ial_lo : as_ialloc_lo B = TFIB_IAL_LO;
+ts_ial_hi : as_ialloc_hi B = TFIB_IAL_HI;
+ts_ial_w : as_ialloc_w B = TFIB_IAL_W;
+ts_ial_flag : as_ialloc_flag B = TFIB_IAL_FLAG;
+ts_oom : as_oom_byte B = TFIB_OOM;
+ts_ok : asyms_ok B;
+ts_owned : as_owned_static B = Tfib_owned_static;
+ts_const : forall ly, as_const B ly = Tfib_const ly;
+ts_junk : forall ly r, In r (as_junk B ly) -> exists z, fst r = ANum z /\ 0x9d000 <= z /\ z + snd r <= 0x5fb000;
+ts_junk_comb : forall ly, In (ANum (TFIB_INST + o_comb_stats), 40) (as_junk B ly);
+ts_junk_ly : forall ly ly', as_junk B ly' = as_junk B ly;
+ts_zsh : as_zero_shadow B = Tfib_zero_shadow;
+ts_universe : universe_ok (as_universe B);
+ts_universe_drv : forall t, In t DRV_TRACES -> In t (as_universe B);
+ts_hash : forall h, (h < 2)%nat -> (as_dhash B (TFIB_TR0 h)) mod 2 ^ 64 = TFIB_HASH h
+}.

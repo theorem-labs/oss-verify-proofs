@@ -480,7 +480,7 @@ eapply (free_from_refill_spec DI L fu g RNG' ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7
 (al_t L) (fhm L c k n) n b1 ctx lo (Z.of_nat (length (a_qloc st_r))) (qfirst L (q_loc Q1)) (qlast L (q_loc Q1)) (a_qloc_bytes st_r)
 nx bs cn sb id bb mx cz sj0 ix sjr tb1 chs hs0 junk2 j0 trt)
 end.
-all: try timeout 400 lazymatch goal with
+all: try lazymatch goal with
 | |- stk _ _ _ _ => first [exact STr | exact IAS1]
 | |- ablk _ (_ + 16 + rup _ 8) => first [assumption | unfold ablk; right; generalize HLO HHI; try generalize EHM; clear; unfold fhm; intros; lia]
 | |- mem_inv _ _ => exact MIr

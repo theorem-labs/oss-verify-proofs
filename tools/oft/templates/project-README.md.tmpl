@@ -36,8 +36,8 @@ $get_binaries
 ## How these binaries were built
 - Library: [$library_label]($library_repo) $pin_long$library_version_paren, built with $build_system$patch_items
 - Harnesses: $harness_mods
-- Everywhere: static riscv64 compiled for RV64G, musl, $compiled, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
-- $builder_sentence
+- Everywhere: static riscv64 compiled for RV64G, $compiled, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
+$runtime_item- $builder_sentence
 
 ## Proofs
 $proofs
@@ -46,9 +46,15 @@ $notes
 $library_licence_sentence $binary_licence_sentence $source_sentence$copyleft_sentence
 
 @@ compiled
-clang $clang with `-Os -g`
+musl, clang $clang with `-Os -g`
 @@ compiled_rust
-rustc for the Rust code, its standard library included, with the cargo release profile and `panic = "abort"`, and clang $clang with `-Os -g` for the C code its crates build
+musl, rustc for the Rust code, its standard library included, with the cargo release profile and `panic = "abort"`, and clang $clang with `-Os -g` for the C code its crates build
+@@ compiled_python
+musl, clang $clang with `-Os -g` for the C code (a static CPython 3.11.13, the port's interpreter host and the driver), and the Python code (the fuzz targets, the library and the standard-library modules they import) frozen into the binary as CPython bytecode
+@@ compiled_go
+the Go $go compiler and linker for all of the code (the fuzz targets, the library, Go's standard library and runtime, and the driver, which is written in Go), with no cgo and so no C library, and with the OSS Verify port's patched Go runtime (next line)
+@@ runtime_go
+- Go runtime: these binaries do not run the stock Go $go runtime. The OSS Verify port patches it with an overlay of the standard library (`go build -overlay`) and a rebuilt compiler; the Go toolchain's own files do not change. The patches remove system calls and files the process model does not have: signal handlers (no `rt_sigaction` or `sigaltstack`), the sysmon thread and the main goroutine's thread lock (so one thread), the CPU-affinity and cgroup reads (so one CPU), reads of the environment (`os.Getenv` returns `""` for every variable, and `GOGC`, `GODEBUG`, `GOMAXPROCS` and `GOMEMLIMIT` have no effect), the transparent-huge-page read under `/sys` and the `MADV_NOHUGEPAGE` advice, the checks of file descriptors 0-2 at start and in `os.NewFile`, the open-file limit's read and raise, and the riscv64 hardware probe (so no vector code); the driver also sets `//go:debug containermaxprocs=0 updatemaxprocs=0 decoratemappings=0`. They also change how a failure ends: a panic on the fuzz target's goroutine (a runtime error included) and `t.Fatal`, `t.Error` or `t.Fail` in a fuzz test exit with status 79, where OSS-Fuzz's build crashes; `os.Exit` during a call of the fuzz target exits with status 77; any other fatal runtime error that is not out of memory (a panic on another goroutine, a deadlock, a stack overflow, a concurrent map write) exits with status 80, where the stock runtime exits with 2; the runtime exits with status 2 only when the system refuses it memory for its heap, a stack or its own data; and a load through a nil pointer is a segmentation fault (status 139), not a recoverable panic, because the runtime installs no signal handler, so code that recovers such a panic as control flow ends with 139 where stock Go goes on ([docs/building.md](../../docs/building.md#go-fuzz-targets)).
 
 @@ get_binaries
     ./oft fetch $project
@@ -108,6 +114,8 @@ The exact licence of $library_name is not recorded here yet; it is a GPL- or LGP
 Each binary is a combined work under the SPDX expression in its `harness.yaml` ($binary_licences).
 @@ binary_licences_unknown
 Each binary is a combined work of $library_name, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet.
+@@ binary_licences_unknown_go
+Each binary is a combined work of $library_name, the Go modules it uses, the harness, Go's standard library and runtime with the port's patches, and the port's Go driver; the SPDX expression of each is not recorded here yet.
 @@ patches_note
  with $n_patches, listed under [How these binaries were built](#how-these-binaries-were-built)
 
@@ -133,7 +141,7 @@ Not included: $items.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
 @@ binding
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 $items
 @@ binding_item
 - `$name`: $whats.

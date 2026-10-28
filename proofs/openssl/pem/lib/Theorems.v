@@ -32,8 +32,8 @@ Require OssFuzzTheorems.openssl.pem.images.Plain.
 
 
 
-
-
+Require OssFuzzTheorems.openssl.pem.images.Asan.
+Require OssFuzzTheorems.openssl.pem.images.Ubsan.
 Require OssFuzzTheorems.openssl.pem.images.AsanUbsan.
 
 
@@ -390,7 +390,18 @@ End OpensslPemHaltsBothExits.
 
 (* [comment removed for export] *)
 
+Theorem strong_universal_error_free_pem_asan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.pem.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Plain.M.init_pc OssFuzzTheorems.openssl.pem.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.pem.images.Asan.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Asan.M.init_pc OssFuzzTheorems.openssl.pem.images.Asan.M.phdrs).
+Proof.
+  exact (OssFuzzTheorems.Proofs.openssl.pem.lib.Top.PemTop.base_asan OssFuzzTheorems.Proofs.openssl.pem.lib.Top.PunyFinal.p_realizes_san OssFuzzTheorems.Proofs.openssl.pem.lib.Top.PunyFinal.a_realizes).
+Qed.
 
+(* [comment removed for export] *)
 
 (* [comment removed for export] *)
 
@@ -400,12 +411,19 @@ End OpensslPemHaltsBothExits.
 
 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
-
 
 (* [comment removed for export] *)
 
-
+Theorem strong_universal_error_free_pem_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.pem.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Plain.M.init_pc OssFuzzTheorems.openssl.pem.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.pem.images.Ubsan.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Ubsan.M.init_pc OssFuzzTheorems.openssl.pem.images.Ubsan.M.phdrs).
+Proof.
+  exact (OssFuzzTheorems.Proofs.openssl.pem.lib.Top.PemTop.base_ubsan OssFuzzTheorems.Proofs.openssl.pem.lib.Top.PunyFinal.p_realizes OssFuzzTheorems.Proofs.openssl.pem.lib.Top.PunyFinal.u_realizes).
+Qed.
 
 (* [comment removed for export] *)
 

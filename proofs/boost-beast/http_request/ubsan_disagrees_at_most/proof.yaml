@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: boost-beast/http_request/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: c5007619b1235ea5b0830292c274a295bf145739d9e1bbb775fa360a5327d6c7

@@ -1,0 +1,169 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import SFModel.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Arr SysStep Image FP ITree Nodes Decode.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Lib Require Bytes PropExec.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Spec Require Import Prelim Monad.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import SoftFloat FmtFp.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Spec Require Import Stdio.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import StrFun.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import SFW1_lemmas.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import F_memset F_memcpy F_memchr F_strnlen Stdio_kit F_syscalls StdioFiles.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import F_fmt_fp_lib.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import F_pop_arg.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import Printf_model Printf_mlib.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import Printf_zfacts F_printf_iface.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import UImgX.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import F_printf_core_common.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Lib Require Import StoreFast.
+Import ListNotations.
+Import ITree.Exc.
+Open Scope Z_scope.
+Open Scope mspec_scope.
+Open Scope bv_scope.
+Set Warnings "-notation-for-abbreviation".
+Section PrintfCore.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Context {St : Type}.
+Variables (Fp B BS : Z) (SINK : (word -> option byte) -> St -> Prop) (TOPOK : Z -> Prop)
+(OUT : list Z -> M St unit) (OUTFP : Z -> Z -> Z -> Z -> Z -> M St Z).
+Hypothesis SFR : sink_frame_stmt Fp B BS SINK.
+Hypothesis SFL : sink_flags_stmt Fp SINK.
+Hypothesis TOK : topok_stmt TOPOK.
+Hypothesis HOUT : out_stmt Fp B BS SINK TOPOK OUT.
+Variables (ra : word) (q : Z) (gp tp : word) (s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e : word)
+(F : bvmap 5 word) (fc0 : bv 32) (m0 : word -> option byte)
+(lo : Z) (canary : word) (A : Z) (fmt : list Z) (AP VA : Z) (slots : list word) (nla nlt : word).
+Hypothesis HF : Forall (fun c => 0 <= c < 256)%Z fmt.
+Hypothesis LO : (lo <= q - PC_DEPTH)%Z.
+Hypothesis GLO : (GLOBALS_TOP <= lo)%Z.
+Hypothesis QHI : (q < 2^47)%Z.
+Hypothesis TQ : TOPOK q.
+Hypothesis FRM0 : frm0 fc0.
+Hypothesis HA : (A + zlength fmt <= 118784)%Z.
+Hypothesis SEP_F : ((121784 <= Fp /\ Fp + 232 <= 324000) \/ (AP + 8 <= Fp /\ Fp + 232 <= VA))%Z.
+Hypothesis SEP_B : ((324008 <= B /\ B + BS <= lo) \/ (AP + 8 <= B /\ B + BS <= VA))%Z.
+Hypothesis HAP : (q <= AP)%Z.
+Hypothesis HVA : (AP + 8 <= VA)%Z.
+Hypothesis A0 : (0 <= A)%Z.
+Hypothesis VAHI : (VA + 8 * zlength slots <= 2^64)%Z.
+Hypothesis BS0 : (0 <= BS)%Z.
+Local Notation W := (F_printf_core_common.W Fp B BS q lo AP).
+Local Notation hi_cells := (F_printf_core_common.hi_cells ra s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e canary).
+Local Notation lo_cells := (F_printf_core_common.lo_cells AP nla nlt).
+Local Notation fmt_rng := (F_printf_core_common.fmt_rng fmt HF).
+Local Notation implM_eq_ms := (F_printf_core_common.implM_eq_ms (St:=St)).
+Local Notation sink_store := (F_printf_core_common.sink_store (St:=St) Fp B BS SINK SFR).
+Local Notation sink_call := (F_printf_core_common.sink_call (St:=St) Fp B BS SINK SFR).
+Local Notation S_WLOOP := (F_printf_core_common.S_WLOOP Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+Local Notation S_WIDTH := (F_printf_core_common.S_WIDTH Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+Local Notation tregs := (F_printf_core_common.tregs Fp q gp tp A).
+Ltac hush := idtac.
+Ltac zs := hush; zstep; try (fix_litstore; mem_after_store_opt).
+Ltac dest_finv H := let MI := fresh "MI" in let MU := fresh "MU" in let WM := fresh "WM" in let FRhi := fresh "FRhi" in
+let ST := fresh "ST" in let BY := fresh "BY" in let VAA := fresh "VAA" in let SSP1 := fresh "SSP1" in let SSP2 := fresh "SSP2" in
+destruct H as (MI & MU & WM & FRhi & ST & BY & VAA & SSP1 & SSP2); unfold W in MU; unfold hi_cells in FRhi;
+unfold got_ssp, ssp_guard in SSP1, SSP2; unfold va_area in VAA;
+unfold PC_DEPTH, GLOBALS_TOP in LO, GLO;
+try (let LT := fresh "LZB" in pose proof (zb_length fmt) as LT;
+lazymatch goal with _ : length (zb fmt) = length fmt, _ : length (zb fmt) = length fmt |- _ => clear LT | _ => idtac end);
+try (let LT := fresh "LU" in pose proof (u64s_length slots) as LT;
+lazymatch goal with _ : length (u64s slots) = _, _ : length (u64s slots) = _ |- _ => clear LT | _ => idtac end);
+unfold zlength in *; hush.
+Ltac fix_u8 i := cbv beta; rewrite (u8_lit (znth fmt i)) by (apply fmt_rng; unfold zlength in *; lia).
+Ltac rd_fmt idx :=
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?m _) =>
+match goal with BYH : bytes_at _ m A (zb fmt) |- _ =>
+let RD := fresh "RD" in let RG := fresh "RG" in
+pose proof (zbytes_read m A fmt idx _ BYH ltac:(unfold zlength in *; lia) eq_refl) as RD;
+pose proof (fmt_rng idx ltac:(unfold zlength in *; lia)) as RG;
+repeat match type of RD with context [(?a + (?b + ?c))%Z] =>
+replace (a + (b + c))%Z with (a + b + c)%Z in RD by lia end
+end end.
+Ltac mseq := cbv delta [mkR]; repeat first [ reflexivity | zl | progress f_equal ].
+Tactic Notation "jump" tactic3(tac) := eapply evt_eq; [ | tac ]; [ mseq | .. ].
+Tactic Notation "jumpM" tactic3(tac) :=
+(lazymatch goal with |- evt _ _ _ => apply evt_done | _ => idtac end);
+eapply implM_eq_ms; [ | tac ]; [ mseq | .. ].
+Ltac stmt H := let NX := fresh "NX" in pose proof H as NX; let T := type of NX in let T' := eval red in T in change T' in NX.
+Tactic Notation "stmt" constr(H) "as" ident(NX) := pose proof H as NX; let T := type of NX in let T' := eval red in T in change T' in NX.
+Local Ltac transport_chunks_extra m a bs n Hn Ha Hl ::=
+repeat match goal with
+| H : SINK m ?st |- _ =>
+first [ apply (sink_store m st a bs) in H; [ | exact Ha | rewrite Hn; exact Hl | rewrite Hn; tslia | rewrite Hn; tslia ]
+| idtac "note: dropping SINK hypothesis (not provably disjoint from store):" H; clear H ]
+end.
+Local Ltac transport_call_extra segs W m m' MU WM ::=
+repeat match goal with
+| H : SINK m ?st |- _ =>
+first [ eapply (sink_call W m m' st) in H;
+[ | exact MU | exact WM
+| repeat (apply Forall_cons; [ cbn [fst snd]; tslia | ]); apply Forall_nil
+| repeat (apply Forall_cons; [ cbn [fst snd]; tslia | ]); apply Forall_nil ]
+| idtac "note: dropping SINK hypothesis (not provably disjoint from callee footprint):" H; clear H ]
+end.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
+Local Ltac lia ::= lia3.
+Ltac mseq ::= cbv delta [mkR tregs]; repeat first [ reflexivity | zl | progress f_equal ].
+Lemma L_WLOOP : S_WLOOP.
+Proof using HF.
+intros x1 x5 x6 x7 x10 x12 x14 x15 x16 x17 x18 x19 x20 x21 x23 x24 x25 x26 x27 x28 x29 x30 x31 Ft fc m Q pos acc w s2 pfx s2s za pl plp alo ahi j128 _
+FI LOW Hpos Hacc DG G NE HK.
+remember (Z.to_nat (zlength fmt - pos)) as kk eqn:Hkk.
+revert pos acc x5 x6 x12 x14 x15 x16 x17 Hpos Hacc DG G HK Hkk.
+induction kk as [|kk IH]; intros; [unfold zlength in *; exfalso; lia|].
+pose proof FI as FI'. dest_finv FI. unfold lo_cells, ssp_guard in LOW.
+pose proof (proj1 (digit_range _) DG) as DGR.
+rewrite (sfx_cons fmt pos) in G by (unfold zlength in *; lia). rewrite (getint_cons_digit _ _ _ DG) in G.
+destruct (214748364 <? acc) eqn:OV1; [discriminate|]. destruct (INT_MAX - 10 * acc <? znth fmt pos - 48) eqn:OV2; [discriminate|]. cbn [orb] in G.
+apply Z.ltb_ge in OV1. apply Z.ltb_ge in OV2. unfold INT_MAX in OV2.
+assert (Hnx : (pos + 1 < zlength fmt)%Z).
+{ destruct (Z.lt_ge_cases (pos + 1) (zlength fmt)) as [|Hge]; [assumption|]. exfalso.
+rewrite sfx_nil in G by lia. cbn in G. injection G as _ <-. apply NE. reflexivity. }
+zs. zs. br K.
+zs. zs. try rewrite (swrap32_small (acc * 10)) by lia.
+zs. rewrite Z.add_0_r, (swrap32_small (znth fmt pos + -48)) by lia.
+rd_fmt (pos + 1)%Z. zs. fix_u8 (pos + 1)%Z.
+zs. try rewrite (lxor_imax (acc * 10)) by lia.
+zs. try rewrite (swrap32_small (acc * 10 + (znth fmt pos + -48))) by lia.
+zs. try rewrite (proj2 (Z.ltb_ge (2147483647 - acc * 10) (znth fmt pos + -48))) by lia. cbn [Z.b2z].
+zs. try change (bv_swrap 32 (0 - 0)) with 0%Z.
+zs. zs. zs. try rewrite Z.lor_0_l. zs. zs. brf K2.
+-
+assert (ND : is_digit (znth fmt (pos + 1)) = false).
+{ destruct (is_digit (znth fmt (pos + 1))) eqn:E; [|reflexivity]. exfalso. apply (proj2 (digit_test _ RG)) in E. lia. }
+rewrite (sfx_cons fmt (pos + 1)) in G by (unfold zlength in *; lia). rewrite (getint_cons_nondigit _ _ _ ND) in G.
+injection G as Ew Es2.
+zs. br K3.
+jump (apply (HK (pos + 1)%Z); [zl | | exact ND | unfold INT_MAX; zl]).
+rewrite (sfx_cons fmt (pos + 1)) by zl. symmetry. exact Es2.
+-
+assert (D2 : is_digit (znth fmt (pos + 1)) = true) by (apply (proj1 (digit_test _ RG)); lia).
+jump (apply (IH (pos + 1)%Z (10 * acc + (znth fmt pos - 48))%Z); [zl | zl | exact D2 | exact G | | zl]).
+intros k2 t0' t1' a1' a3' a4' a5' a6' a7' Hk2 Hs2 Hnd Hw. apply HK; try assumption. zl.
+Qed.
+Lemma L_WIDTH : S_WLOOP -> S_WIDTH.
+Proof using HF.
+intros HWL x1 x5 x6 x7 x10 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 Ft fc m Q k1 w s2 pfx s2s za pl plp alo ahi j128 _
+FI LOW Hk1 G NE HK.
+pose proof FI as FI'. dest_finv FI.
+pose proof (fmt_rng k1 ltac:(zl)) as RG1.
+zs. zs. zs. zs. brf K.
+-
+assert (ND : is_digit (znth fmt k1) = false).
+{ destruct (is_digit (znth fmt k1)) eqn:E; [|reflexivity]. exfalso. apply (proj2 (digit_test _ RG1)) in E. lia. }
+rewrite (sfx_cons fmt k1) in G by zl. rewrite (getint_cons_nondigit _ _ _ ND) in G. injection G as Ew Es2.
+subst w. jump (apply (HK k1); [zl | | exact ND | unfold INT_MAX; lia]).
+rewrite (sfx_cons fmt k1) by zl. symmetry. exact Es2.
+- assert (DG : is_digit (znth fmt k1) = true) by (apply (proj1 (digit_test _ RG1)); lia).
+zs. zs.
+stmt HWL as NXL. jump (eapply NXL with (pos := k1) (acc := 0%Z); [exact FI' | exact LOW | zl | lia | exact DG | exact G | exact NE | ]).
+intros k2 t0' t1' a1' a3' a4' a5' a6' a7' Hk2 Hs2 Hnd Hw. apply HK; try assumption. zl.
+Qed.
+End PrintfCore.

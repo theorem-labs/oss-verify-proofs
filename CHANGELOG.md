@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026.10.2 (2026-10-27), a patch release
+
+- 20,164 statements: 336 proved (202 in 2026.10.1), 5 known false, 229 blocked by the model, 19,594 open.
+- 134 new proofs on 42 fuzz targets in 20 projects: 46 decidability, 46 bound, 40 agreement and 2 halts statements.
+- No published statement changes its meaning. No binary or source tree is new.
+- The proofs had 456 lines with a wall-clock time limit. 59 remain, each with a comment that gives the reason, and `oft lint` refuses a limit without one. On a slow machine, a remaining limit can make a proof fail.
+
+### Known issue
+
+- Each proved agreement statement, and each proved halts statement except one, assumes that the run stays in its memory budget. The premise is `~ run_scfg_budget_refused` or its equivalent, in [theories/Shapes.v](theories/Shapes.v). No theorem shows yet that this is true for a released build. This also applies to 2026.10.0 and 2026.10.1.
+
 ## 2026.10.1 (2026-10-27), a patch release
 
 The second release. 1,381 OSS-Fuzz projects, 427 of them available, with 2,148 harnesses; 8,578 binaries, all attached to v2026.10.0, and 0 withheld. 20,164 statements: 202 proved, 5 known false (witnessed), 229 blocked by the model, 0 withheld; the other 19,728 are open. 2026.10.0 had no statement known false.
@@ -31,6 +42,10 @@ The msgpack-c proofs depend on files that treat stack down to 8,384,512 bytes be
 We know no input that makes either program use that much stack. We ran both programs with a 128 KiB stack under the emulator that our checks use. They ran correctly on every input that we tried. For msgpack-c, these inputs included data nested 1,000 levels deep. But the proofs do not show that the programs stay inside the real limit.
 
 The model correction and new proofs of these statements will come in a later release. Thank you to the reporter of rocq-linux-process-semantics#6, who found the difference.
+
+### Known issue: the memory-budget premise
+
+- Each proved statement of this release assumes that the run stays in its memory budget (`~ run_scfg_budget_refused` or its equivalent, in [theories/Shapes.v](theories/Shapes.v)). No theorem shows yet that this is true for a released build.
 
 ## 2026.10.0 (2026-10-22)
 

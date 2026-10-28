@@ -1,0 +1,18 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OssFuzzTheorems.Proofs.zstd.huf_decompress.lib.Spec Require Import STree AsanCtrl AsanEmbed.
+From OssFuzzTheorems.Proofs.zstd.huf_decompress.lib.LibA Require Import ExecF.
+From OssFuzzTheorems.Proofs.zstd.huf_decompress.lib.BothW Require Import BImg ABase AMalloc_iface ADepot_iface ADepot F_adepot AFake_iface AFake_arep AQConst ARepQ
+     ASec AInstance AInstanceM AInstanceF AFreeAll AH_huf_iface AH_huf_rdt2 AF_huf_dec_iface AH_huf_final AF_huf_x1tc AF_huf_x2tc
+     AF_huf_dec1xA AF_huf_dec4xA.
+From OssFuzzTheorems.Proofs.zstd.huf_decompress.lib.Common Require Import RunDraw.
+From OssFuzzTheorems.Proofs.zstd.huf_decompress.lib Require KReplay.
+Ltac2 kr_t_AH_huf_libc () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C5ARocqVerifyHarness?AgentSubmission5BothW8AFreeAll8AHI_freeC5ARocqVerifyHarness?AgentSubmission5BothW:AInstanceF5AI_ofC5ARocqVerifyHarness?AgentSubmission5BothW;AH_huf_rdt2>huf_rdt_stmtA2C5ARocqVerifyHarness?AgentSubmission5BothW<AH_huf_iface=huf_dec_stmtAI47Corelib4Init5Logic3and00C5ARocqVerifyHarness?AgentSubmission5BothW8F_adepot<adepot_ifaceC5ARocqVerifyHarness?AgentSubmission5BothW4ASec7ASEC_ofC5ARocqVerifyHarness?AgentSubmission5BothW9AInstance7AH_lawsC5ARocqVerifyHarness?AgentSubmission5BothW=AMalloc_iface3aciC5ARocqVerifyHarness?AgentSubmission5BothW:AInstanceF;AI_of_CI_OKC5ARocqVerifyHarness?AgentSubmission5BothW:AInstanceF7AI_of_EI47Corelib4Init9Datatypes4prod00I47Corelib4Init9Datatypes4list00K47Corelib4Init5Logic2eq01C5ARocqVerifyHarness?AgentSubmission5BothW;AF_huf_x1tcBhuf_rdt_x1_closedAC5ARocqVerifyHarness?AgentSubmission5BothW;AF_huf_x2tcBhuf_rdt_x2_closedAC5ARocqVerifyHarness?AgentSubmission5BothW=AF_huf_dec1xABhuf_dec_1x_closedAC5ARocqVerifyHarness?AgentSubmission5BothW=AF_huf_dec4xABhuf_dec_4x_closedAK47Corelib4Init5Logic3and01K47Corelib4Init5Logic2ex01I5ARocqVerifyHarness?AgentSubmission3Lib8RunConst9runConstT00K47Corelib7Numbers7BinNums8positive03I47Corelib7Numbers7BinNums1Z00C5ARocqVerifyHarness?AgentSubmission5BothW;AFake_iface9afake_rngC5ARocqVerifyHarness?AgentSubmission5BothW<AH_huf_iface;AHUF_RDT_X1C5ARocqVerifyHarness?AgentSubmission5BothW<AH_huf_iface;AHUF_RDT_X2C5ARocqVerifyHarness?AgentSubmission5BothW<AH_huf_iface;AHUF_DEC_1XC5ARocqVerifyHarness?AgentSubmission5BothW<AH_huf_iface;AHUF_DEC_4XC5ARocqVerifyHarness?AgentSubmission5BothW@AF_huf_dec_iface:huf_dt_okAC5ARocqVerifyHarness?AgentSubmission5BothW5ARepQ5AQUAR".
+Open Scope Z_scope.
+
+Theorem huf_lib_closedA : forall rc : runConstT, huf_lib_stmtA rc.
+Proof.
+ltac2:(KReplay.run1 (kr_t_AH_huf_libc ()) [] "h05dt_okh12rcp;1p;2p;5p;:p;3p;4g0000j10Tg000Uj17Tg0013j15Tg001Vj1<Tg0028j18Tg0034j26Tg003oj53Tg0054j52Tg0069j21Tg006Tj1=Tg007Tj1;Tg008Kj1:Tg009Gj29Tg00:Cj2GTg00;Dj2FTg00<Aj2ETg00<aj1DTg00=Aj2CTg00=[l:BTg00>dl:?Tg00?mj3@Tg00A8j3ATg00BCj44Tg00B^j4>Tg00C8g00D5#0#0#0R0#0#0#0#7#5%70#5#<[g00DZR0p-0\0[[R1f1R2%82,62R3g00E8R4f0R5g00F8R6D3P2P3P4P5g00G;R7D3P2P3P4P5g00H>R8D2P2P3P4P5g00IAR3D2'1'1'1X01g00JDR1P5%85R2,65R9P4P1P6D3P5P9P4P1P7D3R7P5P9P4P1P8D2R8P5P9P4P1P3D2R3'1R1'1P5%=5R6g00KJR:%;5R;%:5R<1959R=1G52R>P91F52R21E00#D/C=R0M:BP7P1P5P6P:P;P<P=P>P9P2P0M:?P8P3A@594AA594C4C4C4C>W1o"). Qed.

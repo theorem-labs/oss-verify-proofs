@@ -140,6 +140,7 @@ checks:
   where: source/fuzz.cc:154-156
   what: 'nestegg_read_packet contract: when it returns <= 0 (end of stream or error) it must not hand
     back a packet (pkt stays NULL)'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzz

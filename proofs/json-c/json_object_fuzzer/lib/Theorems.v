@@ -11,8 +11,10 @@ Require LinuxProcessSemantics.LinuxProcessSem.Run.
 Require OssFuzzTheorems.json_c.json_object_fuzzer.images.Plain.
 Require OssFuzzTheorems.json_c.json_object_fuzzer.images.Asan.
 Require OssFuzzTheorems.json_c.json_object_fuzzer.images.AsanUbsan.
+Require OssFuzzTheorems.json_c.json_object_fuzzer.images.Ubsan.
 From OssFuzzTheorems.Proofs.json_c.json_object_fuzzer.lib.AT Require TargetJo.
 From OssFuzzTheorems.Proofs.json_c.json_object_fuzzer.lib.ATB Require TargetJo.
+From OssFuzzTheorems.Proofs.json_c.json_object_fuzzer.lib.UB.Top Require TopUbsanDone.
 
 Theorem strong_universal_error_free_json_object_fuzzer_asan :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
@@ -34,4 +36,15 @@ Theorem strong_universal_error_free_json_object_fuzzer_both :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.json_c.json_object_fuzzer.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.json_c.json_object_fuzzer.images.AsanUbsan.M.init_pc OssFuzzTheorems.json_c.json_object_fuzzer.images.AsanUbsan.M.phdrs).
 Proof.
 exact OssFuzzTheorems.Proofs.json_c.json_object_fuzzer.lib.ATB.TargetJo.json_object_both_ba.
+Qed.
+
+Theorem strong_universal_error_free_json_object_fuzzer_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
+    (LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.json_c.json_object_fuzzer.images.Plain.M.loaded_segments OssFuzzTheorems.json_c.json_object_fuzzer.images.Plain.M.init_pc OssFuzzTheorems.json_c.json_object_fuzzer.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.json_c.json_object_fuzzer.images.Ubsan.M.loaded_segments OssFuzzTheorems.json_c.json_object_fuzzer.images.Ubsan.M.init_pc OssFuzzTheorems.json_c.json_object_fuzzer.images.Ubsan.M.phdrs).
+Proof.
+exact OssFuzzTheorems.Proofs.json_c.json_object_fuzzer.lib.UB.Top.TopUbsanDone.json_object_ubsan_ba_closed.
 Qed.

@@ -68,10 +68,10 @@ End WithSegs.
 (* [comment removed for export] *)
 
 From OssFuzzTheorems.openssl.pem.images Require Import Plain.
-
+From OssFuzzTheorems.openssl.pem.images Require Import Ubsan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition psegs : list Segment := Plain.M.loaded_segments.
-
+Definition usegs : list Segment := Ubsan.M.loaded_segments.
 
 (* [comment removed for export] *)

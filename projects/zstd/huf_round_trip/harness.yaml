@@ -145,6 +145,7 @@ checks:
     to X1), HUF_compress1X/4X then decompress: if compression produced output, decompression must succeed,
     regenerate the size and match. RLE and incompressible inputs (cSize == 0, or table write failure)
     are skipped.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: huf_round_trip

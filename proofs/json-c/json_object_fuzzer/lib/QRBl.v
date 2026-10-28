@@ -54,14 +54,14 @@ rewrite (unsigned_lit e) by lia; rewrite (Z.shiftr_div_pow2 e k) by lia; rewrite
 Ltac ub_cmp_auto :=
 lazymatch goal with
 | |- evt ?segs ?Q (MS ?R ?F (if ?c then ?a else ?b) ?fc ?rv ?m ?ro) =>
-first [ replace c with false; [cbv iota | symmetry; ub_cmp_norm; timeout 10 (vm_compute; reflexivity)]
-| replace c with true; [cbv iota | symmetry; ub_cmp_norm; timeout 10 (vm_compute; reflexivity)] ]
+first [ replace c with false; [cbv iota | symmetry; ub_cmp_norm; timeout 10 (vm_compute; reflexivity)]   (* timeout-ok: on expiry this arm fails, and without this limit the build exceeds 250 GiB *)
+| replace c with true; [cbv iota | symmetry; ub_cmp_norm; timeout 10 (vm_compute; reflexivity)] ]   (* timeout-ok: on expiry this arm fails, and without this limit the build exceeds 250 GiB *)
 end.
 
 Ltac ub_resolve :=
 lazymatch goal with
 | |- evt _ _ (MS _ _ (if _ then _ else _) _ _ _ _) =>
-first [ timeout 5 ub_if_lit
+first [ timeout 5 ub_if_lit   (* timeout-ok: on expiry the next arm runs; without this limit the build exceeds 250 GiB *)
 | match goal with H : ?p mod 16 = 0 |- context [Z.land (bv_unsigned (Z_to_bv 64 ?p)) _] => ubsan_align H end
 | match goal with H : ?p mod 16 = 0 |- context [Z.land ?p _] => ubsan_align H end
 | ub_align_auto

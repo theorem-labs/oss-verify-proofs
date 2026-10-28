@@ -39,7 +39,7 @@ Require OssFuzzTheorems.openssl.bignum.images.Plain.
 
 
 Require OssFuzzTheorems.openssl.bignum.images.Asan.
-
+Require OssFuzzTheorems.openssl.bignum.images.Ubsan.
 Require OssFuzzTheorems.openssl.bignum.images.AsanUbsan.
 
 
@@ -256,6 +256,9 @@ Require OssFuzzTheorems.Proofs.openssl.bignum.lib.TopBignumBoth.
 Require OssFuzzTheorems.Proofs.openssl.bignum.lib.TopBignumHaltsP.
 Require OssFuzzTheorems.Proofs.openssl.bignum.lib.TopBignumHaltsA.
 Require OssFuzzTheorems.Proofs.openssl.bignum.lib.TopBignumHaltsB.
+Require OssFuzzTheorems.Proofs.openssl.bignum.lib.TopBignumUbsan.
+
+
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
@@ -448,7 +451,16 @@ Qed.
 
 (* [comment removed for export] *)
 
-
+Theorem strong_universal_error_free_bignum_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.bignum.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.bignum.images.Plain.M.init_pc OssFuzzTheorems.openssl.bignum.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.bignum.images.Ubsan.M.loaded_segments OssFuzzTheorems.openssl.bignum.images.Ubsan.M.init_pc OssFuzzTheorems.openssl.bignum.images.Ubsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.openssl.bignum.lib.TopBignumUbsan.base_bignum_ubsan.
+Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)

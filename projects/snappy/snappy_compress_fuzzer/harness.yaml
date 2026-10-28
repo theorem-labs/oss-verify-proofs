@@ -177,6 +177,7 @@ checks:
   live: unknown
   where: source/snappy_compress_fuzzer.cc:60
   what: Uncompress of a buffer produced by Compress reports success
+failure_handlers: none
 statements:
   asan_agrees:
     kind: agreement

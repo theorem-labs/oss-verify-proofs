@@ -3,14 +3,14 @@
 
 [tinyobjloader/tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) · OSS-Fuzz: [projects/tinyobjloader](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/tinyobjloader)
 
-**Status: available.** 1 of OSS-Fuzz's 2 fuzz targets has statements. 4 binaries, 2.0 MB. 15 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 13 open.
+**Status: available.** 1 of OSS-Fuzz's 2 fuzz targets has statements. 4 binaries, 2.0 MB. 15 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 12 open.
 
 Built from tinyobjloader (commit `45636bdc`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [fuzz_tobj_c](fuzz_tobj_c/) | return tobj_fuzz_one(data, size): tobj_load_obj_from_memory_f and free on TOBJ_OK (tiny_obj_c.c:1016-1023); nothing is checked. | none | 15, 2 proved |
+| [fuzz_tobj_c](fuzz_tobj_c/) | return tobj_fuzz_one(data, size): tobj_load_obj_from_memory_f and free on TOBJ_OK (tiny_obj_c.c:1016-1023); nothing is checked. | none | 15, 3 proved |
 
 Not included: **api-driver** (held from this release); **fuzz_ParseFromString** (not built yet).
 
@@ -41,6 +41,7 @@ By hand: download `tinyobjloader-bin.tar.zst` from release [v2026.10.0](https://
 |---|---|
 | [tinyobjloader/fuzz_tobj_c/asan_agrees](../../proofs/tinyobjloader/fuzz_tobj_c/asan_agrees) | proved |
 | [tinyobjloader/fuzz_tobj_c/asan_ubsan_agrees](../../proofs/tinyobjloader/fuzz_tobj_c/asan_ubsan_agrees) | proved |
+| [tinyobjloader/fuzz_tobj_c/ubsan_agrees](../../proofs/tinyobjloader/fuzz_tobj_c/ubsan_agrees) | proved |
 
 ## Licence
 tinyobjloader is under `MIT`. Each binary is a combined work of tinyobjloader, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `tinyobjloader-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `tinyobjloader-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

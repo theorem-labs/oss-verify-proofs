@@ -9,11 +9,13 @@ From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib Require Import T
 From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Spec Require Import X1r3 X1r6 X1r7 X1nu X1r5.
 From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Spec Require X1pe X1ot.
 From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Plain.
+From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Ubsan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
 
 Notation imgP := (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs) (only parsing).
+Notation imgU := (mkImage Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs) (only parsing).
 
 Definition Tc : ProcInput -> list event -> Prop := X1nu.Tc.
 
@@ -51,6 +53,17 @@ Theorem P_side_sanitizer :
 impl_root Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs RSTAGE_plain ->
 side_canon Tc imgP SanitizerBudgets.lim_source.
 Proof. exact (P_side_at SanitizerBudgets.lim_source LBUDGET_le_sanitizer). Qed.
+
+Theorem U_side :
+impl_root Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs RSTAGE_ubsan ->
+side_canon Tc imgU target_alloc_limit.
+Proof.
+intros HU en inp He Hi0. pose proof (valid_input_core_of_either _ Hi0) as Hi.
+destruct (prog_ubsan_model_ok en inp He Hi) as [Hl Hs].
+destruct (run_of_treeF _ _ _ target_alloc_limit _ _ en inp (HU en inp He Hi) Hl Hs) as (Htr & Herr & _).
+split; [| exact Herr].
+intros tr. rewrite (Htr tr). exact (prog_det_ubsan en inp He Hi tr).
+Qed.
 
 Theorem run_defined_of_valid : forall inp ok, valid_input_either inp -> run_defined (in_fs inp) (argv_Z (in_argv inp)) ok.
 Proof. exact run_defined_valid. Qed.

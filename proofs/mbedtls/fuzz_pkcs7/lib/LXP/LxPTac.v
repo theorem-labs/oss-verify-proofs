@@ -1127,7 +1127,7 @@ Ltac lxp_apply_core L := eapply L; lxp_apply_post; lxp_apply_post.
 Ltac lxp_lia_fast :=
   lxp_noevar_goal; lxp_arith_ctx; lxp_bool_hyps;
   repeat match goal with H : context [Z.b2z _] |- _ => clear H | H : context [Z.land _ _] |- _ => clear H end;
-  rewrite ?lx_bvu64; timeout 5 lia.
+  rewrite ?lx_bvu64; timeout 5 lia.   (* timeout-ok: on expiry the next arm runs; without this limit the build exceeds 250 GiB *)
 Ltac lxp_open_impl :=
   repeat match goal with H : @eq Z ?x ?c -> _ |- _ =>
     let E := fresh "E" in

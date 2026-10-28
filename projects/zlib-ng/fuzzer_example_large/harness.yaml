@@ -132,6 +132,7 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
   where: source/fuzzer_example_large.c:43-71
   what: deflate must be greedy (avail_in == 0 after the first call), Z_FINISH must return Z_STREAM_END,
@@ -140,11 +141,13 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: true
   where: source/fuzzer_example_large.c:103-106
   what: Deflate a zero buffer, then the already-compressed bytes at level 0, then the zero buffer at level
     9/Z_FILTERED; inflate total_out must equal exactly 2*uncomprLen + diff. Output length only, content
     not compared.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzzer_example_large

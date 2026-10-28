@@ -14,16 +14,16 @@ Checks 2 properties (listed below); the first, an API contract: Compress the inp
 - ZSTD_compressCCtx into compressBound bytes must succeed ([lines 56-57](source/decompress_dstSize_tooSmall.c#L56-L57)): abort(); not confirmed in the binary.
 - Compress the input at level 1, then decompress into a buffer strictly smaller than the input: must fail, and with exactly ZSTD_error_dstSize_tooSmall (empty input: must return 0) ([lines 56-64](source/decompress_dstSize_tooSmall.c#L56-L64)): abort(); confirmed in the binary.
 
-A failed check marked as ending the process contradicts every halts statement below, so a proof of one implies them on every input it covers.
+A failure of the check at lines 56-64 ends the process with a status that the halts statements below that name it exclude, so a proof of one of those statements implies it on every input it covers. No statement here proves the other check.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 56-64 above holds | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 56-64 above holds | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 56-64 above holds | open |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at lines 56-64 above holds | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires | open |
 | `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires | open |
 | `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires | open |

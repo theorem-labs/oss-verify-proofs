@@ -1,17 +1,30 @@
-"""`oft release-tree`, `oft approvals` and approvals.yaml: a release carries the approved proofs and no other."""
+"""`oft release-tree`, `oft approvals` and approvals.yaml: a release carries the approved proofs and no other, no
+findings/, and only the held form of a project a finding holds back."""
+import contextlib
 import csv
 import io
 import os
+import shutil
 import subprocess
+import tempfile
 import unittest
 
-from oft import approvals, facts, release_tree
+from oft import approvals, facts, release_tree, yamlio
 from oft.tests.helpers import Tree, add_findings, build_record, rules_of
 from oft.tests.test_oss_verify import add_standin
 
 APPROVED = "zlib/checksum_fuzzer"
 UNAPPROVED = "zlib/api-driver"
 CODEOWNERS = "/approvals.yaml @approver\n"
+# a build record's proofs.origin that names a package, in the shape of the real ones: the package and its sha256, then
+# the submissions taken from it, the YAML folded over lines
+PACKAGE = ("fixture-proofs-package-2026-10-21 (sha256 %s),\n  libraries/zlib/proofs/submission-1 and "
+           "libraries/json/proofs/submission-2" % ("4c" * 32))
+# a contribution's proofs.origin: it names the package's digest too, later, and is no package origin
+CONTRIBUTED = ("contributed by A. Contributor in https://github.com/theorem-labs/oss-verify-proofs/pull/3 (commit %s), "
+               "made from "
+               "the library files of fixture-proofs-package-2026-10-21 (sha256 %s)" % ("1e" * 20, "4c" * 32))
+RELEASED = "json/fuzzer-parse_bjdata"
 
 
 def add_proof(t, sid):
@@ -68,9 +81,37 @@ def snapshot(t):
     return out
 
 
+EXCEPTIONS = "tools/oft/lint-exceptions.yaml"
+EXCEPTIONS_HEAD = "# the reviewed exceptions\n\n# a second paragraph\nschema: oss-fuzz-theorems/lint-exceptions/1\n"
+
+
+def needed_exception(t, rel):
+    """Write a host path into rel, an upstream copy, and return the lint exception that clears the one finding it
+    makes there."""
+    t.write(rel, "/* built in /" + "home/someone/src */\n", "a")
+    found = [f for f in t.lint() if f.rule == "private-data" and f.where.startswith(rel + ":")]
+    assert len(found) == 1, [str(f) for f in found]
+    return {"path": rel, "rule": "private-data", "key": found[0].key, "count": 1, "reason": "a host path upstream"}
+
+
+def put_exceptions(t, entries, head=EXCEPTIONS_HEAD):
+    """Write lint-exceptions.yaml: head (a leading comment with a blank line in it, and the schema), then entries."""
+    t.write(EXCEPTIONS, head + yamlio.dump({"exceptions": entries}))
+
+
 def release(t):
     buf = io.StringIO()
     rc = release_tree.run(t.root, out=buf)
+    return rc, buf.getvalue()
+
+
+def write_approvals(t, listing):
+    """`oft approvals` over t with FILE holding listing, written beside the checkout, not in it."""
+    path = t.path("..", "launch.txt")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(listing)
+    buf = io.StringIO()
+    rc = approvals.write(t.root, path, approved_by="approver", date="2026-10-20", out=buf)
     return rc, buf.getvalue()
 
 
@@ -164,16 +205,19 @@ class ReleaseTree(unittest.TestCase):
         self.assertTrue(any("holds back project zlib" in f.msg for f in self.t.lint()))
         self.assertRefused("a finding holds back project zlib")
 
-    def test_a_project_a_finding_holds_back_that_is_not_private_is_refused(self):
+    def test_a_project_a_finding_holds_back_that_is_not_private_ships_held(self):
+        """It was refused until the hold existed; it now ships in the held form (HeldBack covers the rest)."""
         add_findings(self.t)
         self.t.write("notes/zlib.md", "Notes on zlib.\n")
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
         approve(self.t, entry("json/fuzzer-parse_bjdata", statements=["plain_halts"]))
         self.assertEqual([str(f) for f in self.t.lint()], [])
-        self.assertRefused("a finding holds back project zlib, which is not private: mark it release: private in "
-                           "projects/zlib/project.yaml or disclose the finding first")
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.t.yaml("projects/zlib/project.yaml")["status"], "held")
+        self.assertFalse(os.path.lexists(self.t.path("notes", "zlib.md")))
 
-    def test_a_held_project_attached_to_its_findings_release_is_refused_before_any_change(self):
+    def test_a_held_project_attached_to_its_findings_release_ships_no_asset(self):
         add_findings(self.t)
         rel = "projects/zlib/project.yaml"
         y = self.t.yaml(rel)
@@ -181,7 +225,10 @@ class ReleaseTree(unittest.TestCase):
         self.t.put_yaml(rel, y)
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
         approve(self.t, entry("json/fuzzer-parse_bjdata", statements=["plain_halts"]))
-        self.assertRefused("a finding holds back project zlib")
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        for rel_, data in snapshot(self.t).items():
+            self.assertNotIn(b"findings-zlib", data, rel_)
 
     def test_a_symbolic_link_under_findings_is_refused(self):
         add_findings(self.t)
@@ -254,6 +301,19 @@ class ReleaseTree(unittest.TestCase):
         self.assertFalse(os.path.lexists(self.t.path("proofs", "json")))
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
+    def test_a_private_projects_written_here_goes_with_its_build_record(self):
+        """The cut checks the public facts again: a private project's build record, and what it says was written
+        here, is gone from them with its harnesses."""
+        record = "proofs/json/fuzzer-parse_bjdata/provenance/PROVENANCE.yaml"
+        self.t.write(record, build_record(proofs={"origin": PACKAGE, "written_here": ["plain_halts"]}))
+        make_private(self.t, "json")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        approve(self.t, APPROVED)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
     def test_a_private_project_oss_fuzz_does_not_have_is_removed_whole(self):
         add_standin(self.t)
         self.t.write("notes/standin.md", "Notes on the stand-in.\n")
@@ -298,7 +358,7 @@ class ReleaseTree(unittest.TestCase):
         approve(self.t, APPROVED)
         cases = [("CHANGELOG.md", "json/fuzzer-parse_bjdata", b"Proved json/fuzzer-parse_bjdata/plain_halts.\n"),
                  ("docs/notes.md", "json/fuzzer-parse_bjdata", b"see json/fuzzer-parse_bjdata\n"),
-                 ("notes/zlib.md", "json%2Ffuzzer-parse_bjdata", b"the path json%2Ffuzzer-parse_bjdata\n"),
+                 ("notes/zlib.md", "json/fuzzer-parse_bjdata", b"the path json%2Ffuzzer-parse_bjdata\n"),
                  ("docs/rocq.md", "OssFuzzTheorems.json.fuzzer_parse_bjdata",
                   b"Require OssFuzzTheorems.json.fuzzer_parse_bjdata.\n"),
                  ("docs/nul.md", "json/fuzzer-parse_bjdata", b"\0json/fuzzer-parse_bjdata\n"),
@@ -307,8 +367,18 @@ class ReleaseTree(unittest.TestCase):
         for rel, needle, data in cases:
             with self.subTest(rel=rel):
                 self.t.write(rel, data, mode="wb")
-                self.assertRefused("error: %s names %s, which a private project or a finding holds back" % (rel, needle))
+                self.assertRefused("error: %s names %s, " % (rel, needle))
                 os.remove(self.t.path(rel))
+
+    def test_a_private_name_inside_the_enrollment_tools_is_not_shipped_or_refused(self):
+        # the cut removes tools/enroll/ whole, so a name it holds back there is neither shipped nor a refusal
+        make_private(self.t, "json")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        approve(self.t, APPROVED)
+        self.t.write("tools/enroll/README.md", "enrolled json/fuzzer-parse_bjdata\n")
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.lexists(self.t.path("tools/enroll")))
 
     def test_shipped_text_that_names_a_holding_finding_is_refused(self):
         add_findings(self.t)
@@ -318,8 +388,7 @@ class ReleaseTree(unittest.TestCase):
         for needle in ("stand-in-abort", "0001-stand-in.patch"):
             with self.subTest(needle=needle):
                 self.t.write("CHANGELOG.md", "Fixed %s in adler32.\n" % needle)
-                self.assertRefused("error: CHANGELOG.md names %s, which a private project or a finding holds back"
-                                   % needle)
+                self.assertRefused("error: CHANGELOG.md names %s, " % needle)
                 os.remove(self.t.path("CHANGELOG.md"))
 
     def test_a_file_git_tracks_at_an_ignored_path_is_refused(self):
@@ -369,13 +438,38 @@ class ReleaseTree(unittest.TestCase):
     def test_the_facts_review_files_never_ship(self):
         self.t.write(".github/workflows/facts-review.yml", "name: facts-review\n")
         self.t.write(".claude/skills/review-facts/SKILL.md", "# review the facts\n")
+        self.t.write("review.md", "# The facts review's checks\n")
         approve(self.t, APPROVED)
         self.assertEqual([str(f) for f in self.t.lint()], [])
         rc, out = release(self.t)
         self.assertEqual(rc, 0, out)
-        for gone in (".github/workflows/facts-review.yml", ".claude/skills/review-facts/SKILL.md"):
+        for gone in (".github/workflows/facts-review.yml", ".claude/skills/review-facts/SKILL.md", "review.md"):
             self.assertFalse(os.path.lexists(self.t.path(gone)), gone)
         self.assertIn(".github/workflows/facts-review.yml", out)
+
+    def test_the_enrollment_pipeline_never_ships(self):
+        self.t.write(".github/workflows/enroll.yml", "name: enroll\n")
+        self.t.write(".github/workflows/enroll-build.yml", "name: enroll-build\n")
+        self.t.write("tools/enroll/README.md", "# tools/enroll\n")
+        self.t.write("tools/enroll/ci/gate.py", "LIMIT = 3\n")
+        approve(self.t, APPROVED)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        for gone in (".github/workflows/enroll.yml", ".github/workflows/enroll-build.yml", "tools/enroll"):
+            self.assertFalse(os.path.lexists(self.t.path(gone)), gone)
+        self.assertIn("tools/enroll", out)
+
+    def test_the_proof_index_never_ships(self):
+        self.t.write(".github/workflows/proof-index.yml", "name: proof-index\n")
+        self.t.write(".github/proof-index.py", "RULES = 5\n")
+        approve(self.t, APPROVED)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        for gone in (".github/workflows/proof-index.yml", ".github/proof-index.py"):
+            self.assertFalse(os.path.lexists(self.t.path(gone)), gone)
+            self.assertIn(gone, out)
 
     def test_without_codeowners_it_says_what_it_removed(self):
         os.remove(self.t.path(".github", "CODEOWNERS"))
@@ -442,9 +536,34 @@ class ReleaseTree(unittest.TestCase):
         self.assertRefused("proofs: a symbolic link")
         self.assertTrue(os.path.isdir(self.t.path("..", "other-proofs", UNAPPROVED)))
 
+    def test_a_symbolically_linked_directory_that_holds_an_internal_path_is_refused(self):
+        """The cut removes .claude/skills/review-facts/SKILL.md and tools/enroll; through a linked .claude or tools it
+        would remove them where the link points, outside the checkout."""
+        approve(self.t, APPROVED)
+        for top, inside in ((".claude", "skills/review-facts/SKILL.md"), ("tools", "enroll/build")):
+            with self.subTest(directory=top):
+                outside = self.t.path("..", "outside-" + top.strip("."))
+                os.makedirs(os.path.dirname(os.path.join(outside, inside)), exist_ok=True)
+                with open(os.path.join(outside, inside), "w") as f:
+                    f.write("kept\n")
+                if os.path.lexists(self.t.path(top)):
+                    shutil.rmtree(self.t.path(top))
+                os.symlink(os.path.join("..", "outside-" + top.strip(".")), self.t.path(top))
+                self.assertRefused("%s: a symbolic link" % top)
+                self.assertTrue(os.path.isfile(os.path.join(outside, inside)))
+                os.remove(self.t.path(top))
+
     def test_an_entry_listed_twice(self):
         approve(self.t, APPROVED, APPROVED)
         self.assertTrue(any("listed twice" in f.msg for f in self.t.lint()))
+
+    def test_a_statement_in_two_entries_is_listed_twice(self):
+        approve(self.t, entry(APPROVED, statements=["plain_halts"], origin="submission", record="review-a"),
+                entry(APPROVED, statements=["plain_halts"], origin="submission", record="review-b"))
+        found = [f.msg for f in self.t.lint()]
+        self.assertIn("approvals.fuzz_targets[1]: %s/plain_halts is listed twice: approvals.fuzz_targets[0] and [1]"
+                      % APPROVED, found)
+        self.assertNotIn("listed twice for one source", " ".join(found))
 
     def test_a_statement_listed_twice(self):
         approve(self.t, entry(APPROVED, statements=["plain_halts", "plain_halts"]))
@@ -456,6 +575,74 @@ class ReleaseTree(unittest.TestCase):
         for e in (entry(APPROVED, origin="submission"), entry(APPROVED, record="review-2026-10-18")):
             approve(self.t, e)
             self.assertTrue(any("names the record" in f.msg for f in self.t.lint()), e)
+
+    def test_a_fuzz_target_with_an_entry_per_source(self):
+        add_proof(self.t, APPROVED + "/ubsan_agrees")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        approve(self.t, entry(APPROVED, statements=["ubsan_agrees"], origin="submission", record="review-2026-10-18"),
+                entry(APPROVED, statements=["plain_halts"]))
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        for s in ("plain_halts", "ubsan_agrees"):
+            self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, s, "Proof.v")), s)
+        self.assertNotIn(release_tree.PARTIAL % APPROVED, out)
+
+    def test_a_statement_in_two_entries_of_its_fuzz_target(self):
+        approve(self.t, entry(APPROVED, origin="submission", record="review-2026-10-18"), entry(APPROVED))
+        self.assertIn("approvals.fuzz_targets[1]: %s/plain_halts is listed twice: approvals.fuzz_targets[0] and [1]"
+                      % APPROVED,
+                      [f.msg for f in self.t.lint()])
+
+    def test_one_source_listed_twice(self):
+        approve(self.t, entry(APPROVED, origin="submission", record="review-2026-10-18"),
+                entry(APPROVED, statements=["ubsan_agrees"], origin="submission", record="review-2026-10-18"))
+        self.assertIn("approvals.fuzz_targets[1]: %s is listed twice for one source (submission, record "
+                      "review-2026-10-18): "
+                      "approvals.fuzz_targets[0] and [1]" % APPROVED, [f.msg for f in self.t.lint()])
+
+    def test_a_lint_exception_for_a_private_project_is_cut_with_it(self):
+        make_private(self.t, "json")
+        approve(self.t, APPROVED)
+        private = needed_exception(self.t, "projects/json/fuzzer-parse_bjdata/source/fuzzer-parse_bjdata.cpp")
+        kept = needed_exception(self.t, "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c")
+        put_exceptions(self.t, [private, kept])
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("rewrote %s without the exception(s) for %s" % (EXCEPTIONS, private["path"]), out)
+        self.assertEqual(self.t.read(EXCEPTIONS), EXCEPTIONS_HEAD + yamlio.dump({"exceptions": [kept]}))
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_lint_exception_under_an_unapproved_fuzz_target_of_a_public_project_is_cut_with_it(self):
+        """zlib is public, so only the removal of api-driver's unlisted proofs takes the entry out."""
+        approve(self.t, APPROVED)
+        cut = needed_exception(self.t, "proofs/%s/provenance/LICENSES/zlib-LICENSE" % UNAPPROVED)
+        kept = needed_exception(self.t, "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c")
+        put_exceptions(self.t, [cut, kept])
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.exists(self.t.path("proofs", UNAPPROVED)))
+        self.assertEqual(self.t.read(EXCEPTIONS), EXCEPTIONS_HEAD + yamlio.dump({"exceptions": [kept]}))
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_rewritten_lint_exceptions_file_that_names_a_private_fuzz_target_is_refused(self):
+        """The file is rewritten, so the scan of the files the release keeps skips it: its new text is read instead."""
+        make_private(self.t, "json")
+        approve(self.t, APPROVED)
+        private = needed_exception(self.t, "projects/json/fuzzer-parse_bjdata/source/fuzzer-parse_bjdata.cpp")
+        kept = needed_exception(self.t, "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        named = dict(kept, reason="as json/fuzzer-parse_bjdata")
+        cases = {"a kept entry's reason": (EXCEPTIONS_HEAD, [private, named]),
+                 "the leading comment": ("# see json/fuzzer-parse_bjdata\n" + EXCEPTIONS_HEAD, [private, kept])}
+        for where, (head, entries) in cases.items():
+            with self.subTest(where=where):
+                put_exceptions(self.t, entries, head)
+                self.assertRefused("error: %s names %s" % (EXCEPTIONS, "json/fuzzer-parse_bjdata, a fuzz target of held project json"))
 
 
 class WriteApprovals(unittest.TestCase):
@@ -470,12 +657,7 @@ class WriteApprovals(unittest.TestCase):
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
 
     def write(self, listing):
-        path = self.t.path("..", "launch.txt")   # beside the checkout, not in it
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(listing)
-        buf = io.StringIO()
-        rc = approvals.write(self.t.root, path, approved_by="approver", date="2026-10-20", out=buf)
-        return rc, buf.getvalue()
+        return write_approvals(self.t, listing)
 
     def test_each_listed_fuzz_target_with_the_statements_it_has_proofs_of(self):
         rc, out = self.write("# the launch set\n%s\n%s\treview-2026-10-18\tubsan_agrees\njson/fuzzer-parse_bjdata\n"
@@ -522,7 +704,7 @@ class WriteApprovals(unittest.TestCase):
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
         rc, out = self.write("%s\n" % APPROVED)
         self.assertEqual(rc, 1, out)
-        self.assertIn("a finding holds back its project, not listed: %s" % APPROVED, out)
+        self.assertIn("held by a finding that is not public: %s\n" % APPROVED, out)
         self.assertFalse(os.path.exists(self.t.path("approvals.yaml")))
 
     def test_a_private_project_is_not_listed(self):
@@ -590,6 +772,251 @@ class WriteApprovals(unittest.TestCase):
         self.assertIn("'zlib/no_such_fuzzer' is not an included fuzz target", out)
         self.assertFalse(os.path.exists(self.t.path("approvals.yaml")))
 
+    def test_a_record_line_and_a_bare_line_write_an_entry_each(self):
+        rc, out = self.write("%s\n%s\treview-2026-10-18\tubsan_agrees\n" % (APPROVED, APPROVED))
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("does not cover", out)
+        self.assertEqual(self.t.yaml("approvals.yaml")["fuzz_targets"], [
+            {"fuzz_target": APPROVED, "statements": ["ubsan_agrees"], "approved_by": "approver", "date": "2026-10-20",
+             "origin": "submission", "record": "review-2026-10-18"},
+            {"fuzz_target": APPROVED, "statements": ["plain_halts"], "approved_by": "approver", "date": "2026-10-20",
+             "origin": "this-repository"}])
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_two_records_with_disjoint_statements(self):
+        rc, out = self.write("%s\treview-b\tubsan_agrees\n%s\treview-a\tplain_halts\n" % (APPROVED, APPROVED))
+        self.assertEqual(rc, 0, out)
+        self.assertEqual([(e["record"], e["statements"]) for e in self.t.yaml("approvals.yaml")["fuzz_targets"]],
+                         [("review-a", ["plain_halts"]), ("review-b", ["ubsan_agrees"])])
+
+    def test_two_records_covering_one_statement_write_nothing(self):
+        rc, out = self.write("%s\treview-a\tplain_halts\n%s\treview-b\tplain_halts,ubsan_agrees\n"
+                             % (APPROVED, APPROVED))
+        self.assertEqual(rc, 1, out)
+        self.assertIn("%s: plain_halts covered by two records" % APPROVED, out)
+        self.assertFalse(os.path.exists(self.t.path("approvals.yaml")))
+
+    def test_one_record_twice_writes_nothing(self):
+        rc, out = self.write("%s\treview-a\tplain_halts\n%s\treview-a\tubsan_agrees\n" % (APPROVED, APPROVED))
+        self.assertEqual(rc, 1, out)
+        self.assertIn("%s is listed twice with record review-a" % APPROVED, out)
+
+    def test_a_record_line_with_no_proof_is_reported(self):
+        rc, out = self.write("%s\n%s\treview-a\tasan_halts\n" % (APPROVED, APPROVED))
+        self.assertEqual(rc, 0, out)
+        self.assertIn("listed, no proof yet: %s, record review-a" % APPROVED, out)
+        self.assertIn("1 line(s) with no proof yet", out)
+        self.assertEqual([e["origin"] for e in self.t.yaml("approvals.yaml")["fuzz_targets"]], ["this-repository"])
+
+    def test_a_bare_line_with_nothing_outside_the_records_is_reported(self):
+        # UNAPPROVED has a proof of ubsan_agrees only, which the record line takes
+        rc, out = self.write("%s\treview-a\tubsan_agrees\n%s\n" % (UNAPPROVED, UNAPPROVED))
+        self.assertEqual(rc, 0, out)
+        self.assertIn("listed, no proof yet: %s\n" % UNAPPROVED, out)
+        self.assertIn("1 line(s) with no proof yet", out)
+        self.assertEqual([e["origin"] for e in self.t.yaml("approvals.yaml")["fuzz_targets"]], ["submission"])
+
+    def test_approver_and_date_are_kept_per_source(self):
+        listing = "%s\treview-2026-10-18\tubsan_agrees\n%s\n" % (APPROVED, APPROVED)
+        self.assertEqual(self.write(listing)[0], 0)
+        add_proof(self.t, APPROVED + "/asan_halts")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        path = self.t.path("..", "launch.txt")
+        rc = approvals.write(self.t.root, path, approved_by="bob", date="2026-10-25", out=io.StringIO())
+        self.assertEqual(rc, 0)
+        by = {(e["origin"], tuple(e["statements"])): (e["approved_by"], e["date"])
+              for e in self.t.yaml("approvals.yaml")["fuzz_targets"]}
+        self.assertEqual(by, {("submission", ("ubsan_agrees",)): ("approver", "2026-10-20"),
+                              ("this-repository", ("asan_halts", "plain_halts")): ("bob", "2026-10-25")})
+
+
+
+class WrittenHere(unittest.TestCase):
+    """A build record whose proofs.origin names a package says which of its proofs were written here, and
+    approvals.yaml lists each statement under the source that record gives it."""
+
+    def setUp(self):
+        self.t = Tree()
+        self.addCleanup(self.t.close)
+        add_proof(self.t, APPROVED + "/plain_halts")
+        add_proof(self.t, APPROVED + "/ubsan_agrees")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+
+    def record(self, origin, written_here=None, ok=True):
+        proofs = {"origin": origin}
+        if written_here is not None:
+            proofs["written_here"] = written_here
+        self.t.write("proofs/%s/provenance/PROVENANCE.yaml" % APPROVED, build_record(proofs=proofs))
+        rc = self.t.generate()
+        self.assertEqual(rc == 0, ok, self.t.last_output)
+
+    def msgs(self):
+        return [f.msg for f in self.t.lint()]
+
+    def test_a_package_record_with_written_here_and_an_entry_per_source(self):
+        self.record(PACKAGE, ["plain_halts"])
+        approve(self.t, entry(APPROVED, statements=["ubsan_agrees"], origin="submission", record="final-package"),
+                entry(APPROVED, statements=["plain_halts"]))
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_this_repository_may_list_only_what_written_here_names(self):
+        self.record(PACKAGE, ["plain_halts"])
+        approve(self.t, entry(APPROVED, statements=["plain_halts", "ubsan_agrees"]))
+        self.assertIn("approvals.fuzz_targets[0]: %s/ubsan_agrees: the build record says the proofs of this fuzz target "
+                      "came from a package and "
+                      "proofs.written_here does not name it, so a this-repository entry may not list it" % APPROVED,
+                      self.msgs())
+
+    def test_a_submission_may_list_none_of_them(self):
+        self.record(PACKAGE, ["plain_halts"])
+        approve(self.t, entry(APPROVED, statements=["plain_halts"], origin="submission", record="final-package"))
+        self.assertIn("approvals.fuzz_targets[0]: %s/plain_halts: the build record says the proofs of this fuzz target "
+                      "came from a package and "
+                      "proofs.written_here names it, so a submission entry may not list it" % APPROVED, self.msgs())
+
+    def test_written_here_without_a_package_origin(self):
+        self.record("written in this repository", ["plain_halts"], ok=False)
+        approve(self.t, entry(APPROVED))
+        self.assertIn("proofs.written_here: proofs.origin names no package, so every proof of %s was written here "
+                      "and none is singled out" % APPROVED, self.msgs())
+
+    def test_a_package_record_without_written_here_lists_nothing_as_ours(self):
+        self.record(PACKAGE)
+        approve(self.t, entry(APPROVED, statements=["plain_halts"]))
+        self.assertIn("approvals.fuzz_targets[0]: %s/plain_halts: the build record says the proofs of this fuzz target "
+                      "came from a package and "
+                      "proofs.written_here does not name it, so a this-repository entry may not list it" % APPROVED,
+                      self.msgs())
+        approve(self.t, entry(APPROVED, statements=["plain_halts"], origin="submission", record="final-package"))
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_real_shaped_package_origin_is_a_package(self):
+        self.assertIn("\n", PACKAGE)
+        self.record(PACKAGE, ["plain_halts"])
+        approve(self.t, entry(APPROVED, statements=["ubsan_agrees"]))
+        self.assertIn("approvals.fuzz_targets[0]: %s/ubsan_agrees: the build record says the proofs of this fuzz target "
+                      "came from a package and proofs.written_here does not name it, so a this-repository entry may "
+                      "not list it" % APPROVED, self.msgs())
+
+    def test_a_contribution_naming_the_package_later_imposes_nothing(self):
+        self.record(CONTRIBUTED)
+        approve(self.t, entry(APPROVED, statements=["plain_halts", "ubsan_agrees"]))
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        approve(self.t, entry(APPROVED, statements=["plain_halts", "ubsan_agrees"], origin="submission",
+                              record="oss-verify-proofs-pull-3"))
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+        self.record(CONTRIBUTED, ["plain_halts"], ok=False)
+        self.assertIn("proofs.written_here: proofs.origin names no package, so every proof of %s was written here "
+                      "and none is singled out" % APPROVED, self.msgs())
+
+    def test_written_here_names_a_statement_of_the_fuzz_target(self):
+        self.record(PACKAGE, ["plain_halt"], ok=False)
+        self.assertIn("proofs.written_here: plain_halt is not a statement of %s" % APPROVED, self.msgs())
+
+    def test_written_here_must_be_a_list_of_names(self):
+        self.record(PACKAGE, "plain_halts", ok=False)
+        self.assertIn("proofs.written_here must be a list of statement names", self.msgs())
+
+
+
+class ToolsProblems(unittest.TestCase):
+    """release_tree.tools_problems: whether tools/oft may be published on its own, as the runner image publishes it
+    (.github/workflows/images.yml)."""
+
+    def setUp(self):
+        self.t = Tree()
+        self.addCleanup(self.t.close)
+        self.t.write("tools/oft/README.md", "The tools.\n")
+        self.t.write("tools/other/notes.md", "Elsewhere under tools/.\n")
+
+    def problems(self):
+        return release_tree.tools_problems(facts.load(self.t.root))
+
+    def test_the_fixture_tools_may_be_published(self):
+        self.assertEqual(self.problems(), [])
+
+    def test_a_private_fuzz_target_named_under_tools_oft_is_refused_and_elsewhere_is_not(self):
+        make_private(self.t, "json")
+        self.t.write("docs/notes.md", "see json/fuzzer-parse_bjdata\n")
+        self.t.write("tools/other/notes.md", "see json/fuzzer-parse_bjdata\n")
+        self.assertEqual(self.problems(), [])
+        self.t.write("tools/oft/README.md", "see json/fuzzer-parse_bjdata\n")
+        self.assertEqual(self.problems(), ["tools/oft/README.md names json/fuzzer-parse_bjdata, a fuzz target of held project json"])
+
+    def test_a_private_fuzz_target_named_by_a_path_under_tools_oft_is_refused(self):
+        make_private(self.t, "json")
+        rocq = facts.load(self.t.root).projects["json"].harnesses["fuzzer-parse_bjdata"].data["rocq"]
+        self.t.write("tools/oft/tests/fixtures/%s.txt" % rocq, "x\n")
+        got = self.problems()
+        self.assertEqual(len(got), 1, got)
+        self.assertTrue(got[0].startswith("tools/oft/tests/fixtures/%s.txt names " % rocq), got)
+
+    def test_a_holding_finding_named_under_tools_oft_is_refused(self):
+        add_findings(self.t)
+        make_private(self.t, "zlib")
+        self.t.write("tools/oft/README.md", "fixed stand-in-abort\n")
+        self.assertTrue(any(p.startswith("tools/oft/README.md names stand-in-abort, the slug of finding")
+                            for p in self.problems()), self.problems())
+
+    def test_a_project_a_finding_holds_back_is_searched_for_whether_or_not_it_is_private(self):
+        """The cut holds a project a finding holds back whole, so tools/oft must not name it either."""
+        add_findings(self.t)
+        self.assertEqual(self.problems(), [])
+        self.t.write("tools/oft/README.md", "see zlib/checksum_fuzzer\n")
+        self.assertEqual(self.problems(), ["tools/oft/README.md names zlib/checksum_fuzzer, a fuzz target of held "
+                                           "project zlib"])
+
+    def test_facts_with_an_error_are_refused(self):
+        self.t.write("projects/zlib/project.yaml", "status: [\n", "a")
+        got = self.problems()
+        self.assertTrue(got and all(p.startswith("the facts have an error") for p in got), got)
+
+    def test_a_file_at_an_ignored_path_under_tools_oft_is_refused_and_elsewhere_is_not(self):
+        self.t.write("tools/oft/_build/stale.txt", "x\n")
+        self.t.write("docs/_build/page.html", "built\n")
+        self.assertEqual(self.problems(), ["tools/oft/_build: an ignored path, so it is not read, and a copy of "
+                                           "tools/oft takes it",
+                                           "tools/oft/_build/stale.txt: an ignored path, so it is not read, and a copy "
+                                           "of tools/oft takes it"])
+
+    def other(self, stack):
+        """A checkout of its own, with a tools/oft and a file outside it, as the public repository's is."""
+        root = stack.enter_context(tempfile.TemporaryDirectory())
+        os.makedirs(os.path.join(root, "tools", "oft"))
+        os.makedirs(os.path.join(root, "docs"))
+        self.write_to(root, "docs/notes.md", "see json/fuzzer-parse_bjdata\n")
+        self.write_to(root, "tools/oft/README.md", "The tools.\n")
+        return root
+
+    @staticmethod
+    def write_to(root, rel, text):
+        path = os.path.join(root, *rel.split("/"))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(text)
+
+    def test_another_checkout_s_tools_oft_is_judged_by_this_tree_s_facts(self):
+        # images.yml: the runner carries the public repository's tools/oft, judged by this repository's facts
+        make_private(self.t, "json")
+        rocq = facts.load(self.t.root).projects["json"].harnesses["fuzzer-parse_bjdata"].data["rocq"]
+        # this tree's own tools/oft holds every problem; none of them may be reported for another checkout
+        self.t.write("tools/oft/README.md", "see json/fuzzer-parse_bjdata\n")
+        self.t.write("tools/oft/tests/fixtures/%s.txt" % rocq, "x\n")
+        self.t.write("tools/oft/_build/stale.txt", "x\n")
+        with contextlib.ExitStack() as stack:
+            other = self.other(stack)
+            self.assertEqual(release_tree.tools_problems(facts.load(self.t.root), checkout=other), [])
+            # each rule reads the other checkout: its bytes, its paths, and an ignored path in it
+            self.write_to(other, "tools/oft/README.md", "see json/fuzzer-parse_bjdata\n")
+            self.write_to(other, "tools/oft/tests/fixtures/%s.txt" % rocq, "x\n")
+            self.write_to(other, "tools/oft/_build/stale.txt", "x\n")
+            self.assertEqual(release_tree.tools_problems(facts.load(self.t.root), checkout=other), [
+                "tools/oft/README.md names json/fuzzer-parse_bjdata, a fuzz target of held project json",
+                "tools/oft/tests/fixtures/%s.txt names OssFuzzTheorems.json.fuzzer_parse_bjdata, the Rocq module of "
+                "held fuzz target json/fuzzer-parse_bjdata" % rocq,
+                "tools/oft/_build: an ignored path, so it is not read, and a copy of tools/oft takes it",
+                "tools/oft/_build/stale.txt: an ignored path, so it is not read, and a copy of tools/oft takes it",
+            ])
 
 if __name__ == "__main__":
     unittest.main()

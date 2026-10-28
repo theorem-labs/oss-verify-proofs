@@ -1,0 +1,15 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Bool.
+From OssFuzzTheorems.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore AsanInit CertRefl CxRel CxPlan CxPlanSound HBPlanImage HBAtable HBCheck0 HBCheck1 AsanNodesIO HBCheck3 CxfL9 CxfFast BKInv BKW5B0Lit BKW6a BKW6B0Inv BKW6B0Lit BKW6B0Rng.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import AX2. Import CAP. Open Scope Z_scope.
+Definition kw6b0_IT : itab := APC.mk_itab_ranges HASEGS kw6b0_ranges.
+Lemma kw6b0_IT_ok : itab_sound HASEGS kw6b0_IT.
+Proof. apply CXS.mk_itab_ranges_sound. Qed.
+Definition kw6b0_shape_ (_ : unit) : shape := (SHole 107).
+Abbreviation kw6b0_shape := (kw6b0_shape_ tt).
+Lemma kw6b0_cert :
+  CAP.check HASEGS kw6b0_IT HAT NX0 AsanInit.LIMIT (ha3_XN (ION.IOT (ION.OFile 4194304 67108864) 32 None None None None)) ha3_XE (ha3_XB (ION.IOT (ION.OFile 4194304 67108864) 32 None None None None)) KW6B0_HS 0 true false true 400000 3000 None kw5b0_hs106 kw6b0_pl = COk kw6b0_shape.
+Proof. apply CXFF.check_l_intro. ltac2:(cert_refl_vm constr:(COk kw6b0_shape)). Time Qed.

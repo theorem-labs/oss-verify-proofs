@@ -1,0 +1,207 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Spec Require Import FseNCount ZdFrame.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import KXExec KXSound KXFull KXBridge KXTac KXGo KXTree KXAuto KXMem KXMem2 KXPost.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import KXLean KXLeanAll.   (* [comment removed for export] *)
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Ubsan Require Import UImg RZ_huf_iface RZ_huf_dx1 RZ_huf_dx41 RZ_huf_dx42_0 RZ_huf_dx42_4a RZ_huf_dx42_4b RZ_huf_dx42_4c RZ_huf_dx42_4d RZ_huf_dx42_4e.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import KXSx KXUb KXUb2.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Ubsan Require Import RZ_huf_dx42_0b.
+Import ListNotations. Import KXS.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Section DX42_4F.
+  Variables (ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (m0 : fmem).
+  Variables (SPV DST dcap DT lo : Z) (dtb : list byte).
+  Hypothesis CTX : x41_ctx SPV DST dcap DT lo dtb.
+  Variables (tl rsv : Z).
+  Hypothesis TL : 1 <= tl <= 12.
+  Hypothesis RSV : 0 <= rsv <= 255.
+  Hypothesis X2OK : huf_x2_ok dtb tl.
+  Hypothesis DJ3 : DT + 16388 <= lo \/ SPV <= DT.
+  Hypothesis NBOK : huf_nb_ok true dtb tl.
+
+  Notation POST := (huf_dec_post ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc SPV DST dcap lo 912 [] m0 huf_noQ).
+  Notation WD := [(DST, DST + dcap)].
+  Notation WDF := [(DST, DST + dcap); (SPV - 912, SPV - 616)].
+  Notation ST pc mm x1 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 :=
+    (MS (mkR x1 (Z_to_bv 64 (SPV + -912)) gp tp x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21
+             x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)
+        F (Z_to_bv 64 pc) fc None mm (seg_rom usegs)).
+  Notation FRA mm w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 :=
+    (rw_cells usegs mm (SPV + -912) [C8 w0; C8 w1; C8 w2; C8 w3; C8 w4; C8 w5; C8 w6; C8 w7; C8 w8; C8 w9; C8 w10; C8 w11; C8 w12; C8 w13;
+                                     C8 w14; C8 w15; C8 w16]).
+  Notation SINV := RZ_huf_dx41.SINV.
+  Notation WD4 := [(DST, DST + dcap); (SPV - 776, SPV - 736)].
+  Notation BD4 mm c b pad p st lm :=
+    (rw_cells usegs mm (SPV + -776) [C8 c; C4 b; CB 4 pad; C8 p; C8 st; C8 lm]).
+
+  Notation x42_tbl := (RZ_huf_dx42_0.x42_tbl SPV DST dcap DT lo dtb CTX tl X2OK).
+  Notation x42_la4 := (RZ_huf_dx42_4a.x42_la4 ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb CTX tl rsv TL RSV X2OK DJ3 NBOK).
+  Notation x42_t4 := (RZ_huf_dx42_4a.x42_t4 ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb CTX tl rsv TL RSV X2OK DJ3 NBOK).
+  Notation x42_rl4 := (RZ_huf_dx42_4a.x42_rl4 ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb CTX tl rsv TL RSV X2OK DJ3 NBOK).
+  Notation x42_w4 := (RZ_huf_dx42_4b.x42_w4 ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb CTX tl rsv TL RSV X2OK DJ3 NBOK).
+  Notation x42_c4 := (RZ_huf_dx42_4c.x42_c4 ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb CTX tl rsv TL RSV X2OK DJ3 NBOK).
+  Notation x42_p4 := (RZ_huf_dx42_4d.x42_p4 ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb CTX tl rsv TL RSV X2OK DJ3 NBOK).
+  Notation x42_q4 := (RZ_huf_dx42_4e.x42_q4 ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb CTX tl rsv TL RSV X2OK DJ3 NBOK).
+  Notation FRA7 mm pe w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 :=
+    (FRA mm w0 w1 w2 w3 w4 w5 w6 (Z_to_bv 64 (DST + pe - 7)) w8 w9 w10 w11 w12 w13 w14 (Z_to_bv 64 (DST + pe)) (Z_to_bv 64 (DT + 4))).
+  Notation K4 mb pe S pad x26 w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 :=
+    (forall mm' (y1 y5 y6 y7 y8 y9 y10 y11 y12 y13 y14 y15 y16 y17 y18 y19 y20 y21 y22 y23 y24 y25 y27 y28 y29 y30 y31 c' b' p' : word),
+        munch WD4 mb mm' -> wmono usegs mb mm' -> mem_inv usegs mm' -> stk usegs mm' DST (DST + dcap) -> bytes_at usegs mm' DT dtb ->
+        FRA7 mm' pe w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 -> BD4 mm' c' b' pad p' (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) ->
+        evt usegs POST (ST 0x290ec mm' y1 y5 y6 y7 y8 y9 y10 y11 y12 y13 y14 y15 y16 y17 y18 y19 y20 y21 y22 y23 y24 y25 x26 y27 y28 y29 y30 y31)).
+  Ltac x42_chk := kx_trap_fast.
+  Ltac x42_norm := try (lazymatch goal with |- sc_resid _ ?m _ _ => first [kx_z | match goal with H : bytes_at _ m _ _ |- _ => kx_rd H end] end); kx_ev_ranges;
+    lazymatch goal with
+    | |- evt _ _ (MS _ _ (Z_to_bv 64 0x2965c) _ _ _ _) => x42_chk
+    | |- evt _ _ (MS _ _ (Z_to_bv 64 0x29570) _ _ _ _) => x42_chk
+    | _ => idtac
+    end.
+
+  Ltac x42_s4_go S len j pe STOPS EXTRA :=
+    kx_autoLcx STOPS 100%nat
+      (EXTRA ++ [KZRange j 0 (2^32); KZRange pe 0 (2^32); KZRange (pe - j) 0 (2^32); KZRange dcap 0 (2^32);
+       KZRange DST 4096 (2^47); KZRange S 4096 (2^47); KZRange len 0 (2^32); KZRange (S + len) 4096 (2^47); KZRange DT 4096 (2^47);
+       KZRange SPV 4096 (2^47); KZWr (SPV - 776) 40;
+       KZDisj (SPV - 776) 40 DT 16388; KZDisj (SPV - 776) 40 (SPV - 912) 136; KZDisj (SPV - 776) 40 S len])
+      [(DT, 16388); (S, len); (SPV - 912, 136); (SPV - 776, 40)].
+
+  Ltac x42_sxh :=
+    try kx_read_ranges;
+    repeat match goal with
+    | KXA : atoms_ok ?zs ?E, H : rw_cells _ _ _ ?L |- _ =>
+        lazymatch L with context [C4 (edenot E ?e)] =>
+          let nz := kx_len zs in
+          let z := kx_ez2 E zs nz e in
+          let P := kx_sxc E zs nz e in
+          let HH := fresh "KXSX" in
+          assert (HH : edenot E e = Z_to_bv 64 z) by (refine (ez2_sound zs E e KXA (_ : P)); repeat split; Lia.lia);
+          rewrite HH in H; clear HH
+        end
+    end.
+  Ltac x42_post bc := kx_mem; kx_land_ranges; kx_strip_mod; try kx_sx; x42_sxh; rewrite ?(Z.mod_small bc (2^64)) in * by lia.
+
+  Ltac x42_s4_fin mb S len bs pe dl :=
+    lazymatch goal with
+    | BD' : rw_cells _ ?m2 (SPV + -776) [_; C4 (Z_to_bv 64 ?BC); _; C8 (Z_to_bv 64 ?X); _; _]
+      |- evt _ _ (MS (mkR _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Z_to_bv 64 (DST + ?J)) _ _ _ _ _ _ _ _ _ _ _ _ _) _ (Z_to_bv 64 0x28e70) _ _ ?m2 _) =>
+        eapply (x42_c4 mb m2 J pe dl S len bs BC X); try eassumption; try lia;
+        try (intro; exists (X - S); split; [lia | unfold RZ_huf_dx41.SINV in *; lia])
+    | |- evt _ _ (MS (mkR _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Z_to_bv 64 (DST + ?J)) _ _ _ _ _ _ _ _ _ _ _ _ _) _ (Z_to_bv 64 0x29058) _ _ ?m2 _) =>
+        eapply (x42_la4 mb m2 J pe dl S); try eassumption; try lia
+    | |- evt _ _ (MS ?R _ ?PC _ _ ?m2 _) =>
+        lazymatch goal with H : rw_cells _ m2 (SPV + -776) ?L |- _ => fail 0 "NOFIN" PC "CELLS" L "REGS" R | _ => fail 0 "NOFIN0" PC R end
+    | |- ?G => fail 0 "NOGOAL" G
+    end.
+
+  (* [comment removed for export] *)
+  Lemma x42_s4 : forall mb mm j pe dl S len bs bc off (c0 : word) pad
+      (x1 x5 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x20 x21 x22 x23 x24 x26 x27 x28 x29 x30 x31 : word)
+      (w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 : word),
+    munch WD4 mb mm -> wmono usegs mb mm -> mem_inv usegs mm -> stk usegs mm DST (DST + dcap) -> bytes_at usegs mm DT dtb ->
+    FRA7 mm pe w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 -> BD4 mm c0 (Z_to_bv 64 bc) pad (Z_to_bv 64 (S + off)) (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) ->
+    bytes_at usegs mm S bs -> zlen bs = len -> 4096 <= S -> S + len < 2^47 -> len < 2^32 -> (DST + dcap <= S \/ S + len <= DST) ->
+    (S + len <= lo \/ SPV <= S) -> SPV mod 16 = 0 ->
+    0 <= j <= pe -> pe <= dcap -> dl = tl + 256 * rsv -> 0 <= bc < 2^31 -> (bc <= 64 -> SINV off len bc) ->
+    K4 mb pe S pad x26 w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 ->
+    evt usegs POST (ST 0x28ac0 mm x1 x5 (Z_to_bv 64 (DT + 4)) x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 (Z_to_bv 64 (DST + j)) (Z_to_bv 64 (2^61))
+                       x20 x21 x22 x23 x24 (Z_to_bv 64 dl) x26 x27 x28 x29 x30 x31).
+  Proof using All.
+    pose proof CTX as CTX'. x41_ctx_open CTX'.
+    intros mb mm j pe dl S len bs bc off c0 pad x1 x5 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x20 x21 x22 x23 x24 x26 x27 x28 x29 x30 x31
+      w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 MU WM MI OUT DTB FA BD SB SL S0 S1 SL32 DJS DJK SPA HJ HPE HDL HB HS K.
+    destruct (Z_le_gt_dec bc 64) as [B64|B64];
+      [destruct (HS B64) as [-> | (O1 & O2 & B1)]; [|destruct (Z_lt_le_dec off 8) as [O8|O8]]|].
+    - x42_s4_go S len j pe [0x28e70; 0x29058; 0x2965c] [KZRange bc 0 64].
+      all: x42_norm.
+      all: x42_post bc.
+      all: x42_s4_fin mb S len bs pe dl.
+    - x42_s4_go S len j pe [0x28e70; 0x29058; 0x2965c] [KZRange bc 0 64; KZRange off 1 7; KZRange (len - off) 8 (2^32)].
+      all: x42_norm.
+      all: x42_post bc.
+      all: x42_s4_fin mb S len bs pe dl.
+    - x42_s4_go S len j pe [0x25ca0; 0x2965c] [KZRange bc 0 64; KZRange off 8 (2^32); KZRange (len - off) 8 (2^32)].
+      all: x42_norm.
+      all: kx_mem.
+      all: eapply (x42_rl4 mb); try eassumption; try lia.
+      all: intros mm' c' y11 y12 y13 y14 y15 y16 MU' WM' MI' OUT' DTB' FA' BD' SB'.
+      all: x42_s4_go S len j pe [0x28e70; 0x29058; 0x2965c] [KZRange bc 0 64; KZRange off 8 (2^32); KZRange (len - off) 8 (2^32)].
+      all: x42_norm.
+      all: x42_post bc.
+      all: x42_s4_fin mb S len bs pe dl.
+    - x42_s4_go S len j pe [0x28e70; 0x29058; 0x2965c] [KZRange bc 65 (2^31 - 1)].
+      all: x42_norm.
+      all: x42_post bc.
+      all: x42_s4_fin mb S len bs pe dl.
+  Qed.
+
+  (* [comment removed for export] *)
+  Lemma x42_d4 : forall mb mm j pe off S len bs dl bc (c0 : word) pad
+      (x1 x5 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x20 x21 x22 x23 x24 x26 x28 x29 x30 : word)
+      (w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 : word),
+    munch WD4 mb mm -> wmono usegs mb mm -> mem_inv usegs mm -> stk usegs mm DST (DST + dcap) -> bytes_at usegs mm DT dtb ->
+    FRA mm w0 w1 w2 w3 w4 w5 w6 (Z_to_bv 64 (DST + pe - 7)) w8 w9 w10 w11 w12 w13 w14 (Z_to_bv 64 (DST + pe)) (Z_to_bv 64 (DT + 4)) ->
+    BD4 mm c0 (Z_to_bv 64 bc) pad (Z_to_bv 64 (S + off)) (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) -> (DT + 16388 <= lo \/ SPV <= DT) ->
+    bytes_at usegs mm S bs -> zlen bs = len -> 4096 <= S -> S + len < 2^47 -> len < 2^32 -> (DST + dcap <= S \/ S + len <= DST) ->
+    (S + len <= lo \/ SPV <= S) -> SPV mod 16 = 0 ->
+    0 <= j <= pe -> pe <= dcap -> dl = tl + 256 * rsv -> 0 <= bc < 2^31 -> (bc <= 64 -> SINV off len bc) ->
+    (forall mm' (y1 y5 y6 y7 y8 y9 y10 y11 y12 y13 y14 y15 y16 y17 y18 y19 y20 y21 y22 y23 y24 y25 y27 y28 y29 y30 y31 c' b' p' : word),
+        munch WD4 mb mm' -> wmono usegs mb mm' -> mem_inv usegs mm' -> stk usegs mm' DST (DST + dcap) -> bytes_at usegs mm' DT dtb ->
+        FRA mm' w0 w1 w2 w3 w4 w5 w6 (Z_to_bv 64 (DST + pe - 7)) w8 w9 w10 w11 w12 w13 w14 (Z_to_bv 64 (DST + pe)) (Z_to_bv 64 (DT + 4)) ->
+        BD4 mm' c' b' pad p' (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) ->
+        evt usegs POST (ST 0x290ec mm' y1 y5 y6 y7 y8 y9 y10 y11 y12 y13 y14 y15 y16 y17 y18 y19 y20 y21 y22 y23 y24 y25 x26 y27 y28 y29 y30 y31)) ->
+    evt usegs POST (ST 0x287cc mm x1 x5 (Z_to_bv 64 (DT + 4)) x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 (Z_to_bv 64 (DST + j)) (Z_to_bv 64 (2^61)) x20 x21 x22 x23 x24 (Z_to_bv 64 dl) x26 (Z_to_bv 64 tl) x28 x29 x30 (Z_to_bv 64 (DST + pe))).
+  Proof using All.
+    pose proof CTX as CTX'. x41_ctx_open CTX'.
+    intros mb mm j pe off S len bs dl bc c0 pad x1 x5 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x20 x21 x22 x23 x24 x26 x28 x29 x30
+      w0 w1 w2 w3 w4 w5 w6 w8 w9 w10 w11 w12 w13 w14 MU WM MI OUT DTB FA BD DJ4 SB SL S0 S1 SL32 DJS DJK SPA HJ HPE HDL HB HS K.
+    destruct (Z_le_gt_dec bc 64) as [B64|B64].
+    all: lazymatch goal with
+         | B64 : _ <= 64 |- _ =>
+             kx_autoLx [0x28808; 0x28bc8; 0x28ac0; 0x28e70; 0x29058; 0x29570; 0x2965c] 40%nat
+               [KZRange bc 0 64; KZRange j 0 (2^32); KZRange pe 0 (2^32); KZRange (pe - j) 0 (2^32); KZRange dcap 0 (2^32); KZRange DST 4096 (2^47);
+                KZRange tl 1 12; KZRange rsv 0 255; KZRange SPV 4096 (2^47); KZRange S 4096 (2^47); KZRange (S + len) 4096 (2^47); KZRange DT 4096 (2^47);
+                KZWr (SPV - 776) 40; KZDisj (SPV - 776) 40 DT 16388; KZDisj (SPV - 776) 40 (SPV - 912) 136; KZDisj (SPV - 776) 40 S len]
+               [(SPV - 912, 136); (SPV - 776, 40)]
+         | _ =>
+             kx_autoLx [0x28808; 0x28bc8; 0x28ac0; 0x28e70; 0x29058; 0x29570; 0x2965c] 40%nat
+               [KZRange bc 65 (2^31 - 1); KZRange j 0 (2^32); KZRange pe 0 (2^32); KZRange (pe - j) 0 (2^32); KZRange dcap 0 (2^32); KZRange DST 4096 (2^47);
+                KZRange tl 1 12; KZRange rsv 0 255; KZRange SPV 4096 (2^47); KZRange S 4096 (2^47); KZRange (S + len) 4096 (2^47); KZRange DT 4096 (2^47);
+                KZWr (SPV - 776) 40; KZDisj (SPV - 776) 40 DT 16388; KZDisj (SPV - 776) 40 (SPV - 912) 136; KZDisj (SPV - 776) 40 S len]
+               [(SPV - 912, 136); (SPV - 776, 40)]
+         end.
+    all: x42_norm.
+    all: kx_mem.
+    all: subst dl; rewrite ?(neg_dl_sh tl rsv TL).
+    all: try replace (DST + pe + -9) with (DST + pe - 9) by lia; try replace (DST + pe + -7) with (DST + pe - 7) by lia.
+    all: rewrite ?(Z.mod_small bc (2^64)) in * by lia; try kx_sx.
+    all: repeat match goal with KXA : atoms_ok ?zs ?E |- context [Z.land (bv_unsigned (edenot ?E (EAluw ALU_SUB (ELit 0) (EVar ?n)))) 63] =>
+           rewrite (x42_negw zs E n tl rsv KXA) by first [apply Nat.ltb_lt; reflexivity | reflexivity | lia] end.
+    all: lazymatch goal with
+         | |- evt _ _ (MS _ _ (Z_to_bv 64 0x28808) _ _ ?m2 _) =>
+             eapply (x42_p4 (Z.to_nat (dcap + 1)) mb m2 j pe (tl + 256 * rsv) (64 - tl) S len bs bc off);
+             try eassumption; try lia; try reflexivity; try solve [apply HS; lia]
+         | |- evt _ _ (MS _ _ (Z_to_bv 64 0x28bc8) _ _ ?m2 _) =>
+             eapply (x42_q4 (Z.to_nat (dcap + 1)) mb m2 j pe (tl + 256 * rsv) (64 - tl) S len bs bc off);
+             try eassumption; try lia; try reflexivity; try solve [apply HS; lia]
+         | |- evt _ _ (MS _ _ (Z_to_bv 64 0x28ac0) _ _ ?m2 _) =>
+             eapply (x42_s4 mb m2 j pe (tl + 256 * rsv) S len bs bc off); try eassumption; try lia; try reflexivity
+         | BD' : rw_cells _ ?m2 (SPV + -776) [_; C4 (Z_to_bv 64 ?BC); _; C8 (Z_to_bv 64 ?X); _; _] |- evt _ _ (MS _ _ (Z_to_bv 64 0x28e70) _ _ ?m2 _) =>
+             eapply (x42_c4 mb m2 j pe (tl + 256 * rsv) S len bs BC X); try eassumption; try lia; try reflexivity;
+             try (intro; exfalso; lia)
+         | |- evt _ _ (MS _ _ (Z_to_bv 64 0x29058) _ _ ?m2 _) =>
+             eapply (x42_la4 mb m2 j pe (tl + 256 * rsv) S); try eassumption; try lia; try reflexivity
+         | |- evt _ _ (MS ?R _ ?PC _ _ ?m2 _) =>
+             lazymatch goal with H : rw_cells _ m2 (SPV + -776) ?L |- _ => fail 0 "NOFIN" PC "CELLS" L "REGS" R | _ => fail 0 "NOFIN0" PC R end
+         | |- ?G => fail 0 "NOGOAL" G
+         end.
+  Qed.
+
+End DX42_4F.

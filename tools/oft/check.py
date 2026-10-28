@@ -1,10 +1,16 @@
-"""oft check and oft plan.
+"""oft check.
 
 `check PROJECT/HARNESS` does what CI does for one harness:
 
   statements       verify every published ELF's SHA-256; `dune build` the
                    images (elf-snapshot, at build time), Images.v,
-                   Statements.v, Characterise.v
+                   Statements.v, Characterise.v; then compile a file that
+                   names each statement harness.yaml lists (but a withheld or
+                   withdrawn one, which Statements.v does not carry) and
+                   prints its assumptions: a unit with no such statement, a
+                   Statements.v that lacks one, one that is an axiom (Axiom,
+                   Parameter, Admitted), or an assumption outside
+                   toolchain/allowed-axioms.txt fails
   proofs           build the harness's proof library proofs/<p>/<h>/lib/, if
                    it has one, with dune (once; dune's cache may supply it),
                    then compile each proofs/<p>/<h>/<s>/ afresh with `rocq
@@ -29,13 +35,15 @@ over the statements, and once per harness over the wrappers of all its proofs.
 Off by default: without its bytecode machine (see _rocqchk) it re-checks every
 vm_compute certificate by reduction, which takes hours for one proof.
 
-Each part fails when it examined nothing it was asked to examine.
+Each part fails when it examined nothing it was asked to examine: a unit
+with no statement Statements.v defines fails statements, and a unit with no
+proof fails when --parts names proofs.  Without --parts, a unit is checked
+on each of statements, proofs and counterexamples that it has.
 
-`plan --changed FILE` maps a change to the harnesses it affects, for CI's
-job matrix.
+CI runs `python3 -m oft.check`, which loads the checker and none of the other
+commands' modules (keys.py says which files the checker is).
 """
 import hashlib
-import json
 import os
 import re
 import resource
@@ -44,6 +52,8 @@ import signal
 import subprocess
 import sys
 import tempfile
+
+import yaml
 
 from . import facts, fetch, names, render, rules, schema, yamlio
 
@@ -56,6 +66,13 @@ Require {proof_mod}.
 Definition certified : {neg}{stmt_mod}.{stmt}{args} := {proof_mod}.{theorem}.
 Set Printing Fully Qualified.
 Print Assumptions certified.
+"""
+
+DEFINED = """(* written by oft check: each statement harness.yaml lists, typed, and what it assumes *)
+Require {stmt_mod}.
+Definition oft_listed := ({terms}).
+Set Printing Fully Qualified.
+Print Assumptions oft_listed.
 """
 
 # What Print Assumptions prints (Rocq 9.2.0, printing/printer.ml, pr_assumptionset): "Closed under the global
@@ -168,6 +185,12 @@ def _rocqchk(root, qargs, modules, allowed, log):
 def check_statements(root, h, allowed, work, out, rocqchk=False):
     if not h.builds():
         raise CheckError("every build is withheld: nothing to check")
+    listed = sorted(st.name for st in h.statements.values() if st.rendered())
+    if not listed:
+        raise CheckError("every statement harness.yaml lists is withheld or withdrawn, so Statements.v defines none: "
+                         "nothing to check")
+    if not os.path.isfile(os.path.join(root, h.dir, "Statements.v")):
+        raise CheckError("%s/Statements.v is missing (run ./oft generate)" % h.dir)
     if fetch.verify_sha(root, [h.project.name], harness=h.name, out=out) != 0:
         raise CheckError("the binaries are missing or do not match (run ./oft fetch %s)" % h.project.name)
     targets = [os.path.join(h.dir, f[:-2] + ".vo") for f in ("Images.v", "Statements.v", "Characterise.v")
@@ -176,14 +199,41 @@ def check_statements(root, h, allowed, work, out, rocqchk=False):
     # --display short: the log names each rule dune ran; one it took from its cache is not named.
     if _run(["dune", "build", "--root", root, "--display", "short"] + targets, root, log) != 0:
         raise CheckError("dune build failed (see %s)" % log)
-    if not rocqchk:
-        print("%s: statements compiled" % h.dir, file=out)
-        return
     build = os.path.join(root, "_build", "default")
+    check_defined(root, h, listed, build, work, allowed)
+    if not rocqchk:
+        print("%s: statements compiled, each of the %d listed defined" % (h.dir, len(listed)), file=out)
+        return
     mods = [h.data["rocq"] + "." + os.path.basename(t)[:-3] for t in targets]
     n = _rocqchk(root, _loadpath(build, h), mods, allowed,
                  os.path.join(work, names.ident(h.project.name) + "." + names.ident(h.name) + ".rocqchk.log"))
-    print("%s: statements compiled; rocqchk: %d axioms, all allowed" % (h.dir, n), file=out)
+    print("%s: statements compiled, each of the %d listed defined; rocqchk: %d axioms, all allowed"
+          % (h.dir, len(listed), n), file=out)
+
+
+def check_defined(root, h, listed, build, work, allowed):
+    """Have the kernel type every statement in listed, from h's compiled Statements (a _build/default tree), and print
+    what they assume.  A Statements.v that compiles but lacks one, or defines none at all, is not a check of that
+    statement, and neither is one that states it as an axiom (Axiom, Parameter, or a Definition closed by Admitted)
+    or defines it from an assumption outside the allowlist."""
+    d = tempfile.mkdtemp(prefix="defined-", dir=work)
+    stmt_mod = h.data["rocq"] + ".Statements"
+    with open(os.path.join(d, "Defined.v"), "w", encoding="utf-8") as f:
+        f.write(DEFINED.format(stmt_mod=stmt_mod, terms=", ".join("@%s.%s" % (stmt_mod, s) for s in listed)))
+    log = os.path.join(d, "defined.log")
+    if _run(["rocq", "compile"] + _loadpath(build, h) + ["-Q", d, "OftDefined", os.path.join(d, "Defined.v")],
+            d, log) != 0:
+        raise CheckError("%s/Statements.v does not define every statement harness.yaml lists (%s; see %s)"
+                         % (h.dir, ", ".join(listed), log))
+    axioms = wrapper_assumptions(facts.read(log))
+    stated = sorted(s for s in listed if "%s.%s" % (stmt_mod, s) in axioms)
+    if stated:
+        raise CheckError("%s/Statements.v states %s as an axiom (Axiom, Parameter or Admitted), not a definition (see "
+                         "%s)" % (h.dir, ", ".join(stated), log))
+    outside = sorted(axioms - allowed)
+    if outside:
+        raise CheckError("%s/Statements.v: the statements assume axioms outside the allowlist: %s (see %s)"
+                         % (h.dir, ", ".join(outside), log))
 
 
 # The names under which dune reads build rules in a directory.  dune builds a proof library from the rules of lib/ and
@@ -418,7 +468,7 @@ def check_finding(root, h, f, qemu, timeout, work, out, record=False):
                                     else "the record is not reproduced")) from None
             got[which][b] = dict([("exit", ex)] + ([("signal", sig)] if sig else []) +
                                  [("stdout_sha256", so), ("stderr_sha256", se)])
-    false = [st.name for st in sts if rules.shows_false(st, got["input"])]
+    false = [st.name for st in sts if facts.shows_false(st, got["input"])]
     if f.data["state"] == "pruned" and false:
         raise CheckError("pruned, but still reproduces: on the unpatched binaries the input shows %s false"
                          % render.join_words(false))
@@ -435,7 +485,7 @@ def check_finding(root, h, f, qemu, timeout, work, out, record=False):
         if unshown:
             raise CheckError("on the unpatched binaries the input does not show %s false, so there are no runs to "
                              "record" % render.join_words(unshown))
-        control = [st.name for st in sts if rules.shows_false(st, got["control"])]
+        control = [st.name for st in sts if facts.shows_false(st, got["control"])]
         if control:
             raise CheckError("the control does not behave normally: on the unpatched binaries it shows %s false, so "
                              "there are no runs to record" % render.join_words(control))
@@ -444,7 +494,7 @@ def check_finding(root, h, f, qemu, timeout, work, out, record=False):
     for which in ("input", "control"):
         for b in builds:
             want = f.data[which][b]
-            for k in rules.RUN_FIELDS:
+            for k in facts.RUN_FIELDS:
                 if got[which][b].get(k) != want.get(k):
                     raise CheckError("%s.bin on %s: %s is %s, recorded %s"
                                      % (which, b, k, got[which][b].get(k), want.get(k)))
@@ -467,9 +517,16 @@ def raise_stack_limit():
     resource.setrlimit(resource.RLIMIT_STACK, (hard, hard))
 
 
+# The parts `oft check` runs when --parts is not given: each of them that the unit has.
+DEFAULT_PARTS = "statements,proofs,counterexamples"
 
-def run(root, units, parts="statements,proofs,counterexamples", allowed="toolchain/allowed-axioms.txt",
+
+def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
         qemu="qemu-riscv64", timeout=600, rocqchk=False, record=False, out=sys.stdout):
+    """parts: the comma-separated parts to check, where naming proofs refuses a unit with no proof; None (no --parts)
+    checks each part of DEFAULT_PARTS that the unit has, so an unproved unit is checked on its statements."""
+    named = parts is not None
+    parts = parts if named else DEFAULT_PARTS
     want = set(parts.split(","))
     if record and "findings" not in want:
         print("FAIL --record records findings: add findings to --parts", file=out)
@@ -516,6 +573,13 @@ def run(root, units, parts="statements,proofs,counterexamples", allowed="toolcha
             print("%s: nothing to check for parts %s" % (unit, parts), file=out)
             bad += 1
             continue
+        if named and "proofs" in want and not any(st.proof for st in h.statements.values()):
+            # asked for proofs by name, a unit with none would pass on its statements alone: check-units.sh asks for
+            # them only of a unit the plan lists in proof_units
+            print("FAIL %s: nothing to check for part proofs: the unit has no proof (check it with --parts statements)"
+                  % unit, file=out)
+            bad += 1
+            continue
         for label, step, passes in steps:
             try:
                 step()
@@ -557,62 +621,34 @@ def snapshot_segments(elf, tool="elf-snapshot"):
     return [counts[i] for i in range(len(counts))]
 
 
-# ---------------------------------------------------------------------- plan
+# ----------------------------------------------------------------------- cli
 
-def plan(root, changed_file, max_jobs=20, out=sys.stdout):
-    """The harness units a change affects, as {"units": [...], "check_units": [...], "all": bool, "jobs": [...]}.
+def add_arguments(c):
+    """oft check's arguments, for `oft check` and for `python3 -m oft.check`."""
+    c.add_argument("units", nargs="+", metavar="PROJECT/HARNESS")
+    c.add_argument("--parts", help="comma-separated, of statements, proofs, counterexamples and findings; naming "
+                                   "proofs refuses a unit with no proof (default: each of statements, proofs and "
+                                   "counterexamples that the unit has)")
+    c.add_argument("--allowed", default="toolchain/allowed-axioms.txt")
+    c.add_argument("--qemu", default="qemu-riscv64")
+    c.add_argument("--timeout", type=int, default=600, help="seconds per counterexample or finding run")
+    c.add_argument("--rocqchk", action="store_true",
+                   help="also re-check the compiled libraries with rocqchk (slow: hours for a large proof)")
+    c.add_argument("--record", action="store_true",
+                   help="with --parts findings: run each finding that has no runs yet and print them, to commit")
 
-    A changed harness directory, proof, counterexample or finding marks its
-    harness, and a changed findings/<p>/unpatched.yaml every harness of p with
-    a finding; a changed file of a project's own (projects/<p>/project.yaml,
-    the assets a check fetches) marks every harness of the project; a change
-    under theories/ or toolchain/, to dune-project or to a .gitattributes file
-    (which changes how git checks out any file under it), or a path git quotes
-    (it holds a '"', a '\\' or a control character, so no pattern here can
-    read it) marks every harness; anything else (docs, notes, tools, workflows,
-    lean/) marks none.  Whether the controls run is pr.yml's to decide.  units
-    is every harness CI checks in any way, so a plan with no units checks
-    nothing; check_units, the ones among them with published builds, whose
-    binaries are fetched and whose statements and proofs are built.  A harness
-    whose every build is withheld can still have a finding to re-run.  Each job
-    lists its units, its check_units and their projects, those with
-    counterexamples and those with findings, pruned ones included."""
-    tree = facts.load(root)
-    with open(changed_file, encoding="utf-8") as f:
-        changed = [l.strip() for l in f if l.strip()]
-    published = {"%s/%s" % (h.project.name, h.name) for h in tree.harnesses() if h.builds()}
-    with_findings = {f.unit for f in tree.findings.values()}
-    every = sorted(published | with_findings)
-    units, full = set(), False
-    for rel in changed:
-        if (rel.startswith(("theories/", "toolchain/", '"')) or rel == "dune-project"
-                or os.path.basename(rel) == ".gitattributes"):
-            full = True
-            continue
-        m = re.match(r"(projects|proofs|counterexamples|findings)/([^/]+)/([^/]+)/", rel)
-        u = re.match(r"findings/([^/]+)/unpatched\.yaml$", rel)
-        if m and m.group(2) != "lib":
-            unit = "%s/%s" % (m.group(2), m.group(3))
-            if unit in every:
-                units.add(unit)
-        elif u:
-            units.update(f.unit for f in tree.findings.values() if f.project == u.group(1))
-        elif rel.startswith("proofs/lib/"):
-            units.update(sid.rsplit("/", 1)[0] for sid in tree.proofs)
-        elif re.fullmatch(r"projects/[^/]+/[^/]+", rel):
-            units.update(u for u in every if u.split("/")[0] == rel.split("/")[1])
-    chosen = every if full else sorted(units)
-    n = max(1, min(max_jobs, len(chosen)))
-    shards = [chosen[i::n] for i in range(n)] if chosen else []
-    with_cx = {sid.rsplit("/", 1)[0] for sid in tree.counterexamples}
-    jobs = []
-    for i, shard in enumerate(shards):
-        check_units = [u for u in shard if u in published]
-        jobs.append({"index": i, "units": " ".join(shard), "check_units": " ".join(check_units),
-                     "projects": " ".join(sorted({u.split("/")[0] for u in check_units})),
-                     "counterexamples": " ".join(u for u in shard if u in with_cx),
-                     "findings": " ".join(u for u in shard if u in with_findings)})
-    json.dump({"all": full, "units": chosen, "check_units": [u for u in chosen if u in published], "jobs": jobs},
-              out, indent=None)
-    out.write("\n")
-    return 0
+
+def cli(root, a):
+    return run(root, a.units, parts=a.parts, allowed=a.allowed, qemu=a.qemu, timeout=a.timeout,
+               rocqchk=a.rocqchk, record=a.record)
+
+
+if __name__ == "__main__":
+    # `python3 -m oft.check`, as tools/oft/ci/check-units.sh runs it: the check without the modules of the other
+    # commands, which are not part of the checker (keys.NOT_THE_CHECKER)
+    import argparse
+    p = argparse.ArgumentParser(prog="python3 -m oft.check", description="oft check")
+    p.add_argument("--root", default=".", help="the repository root (default: .)")
+    add_arguments(p)
+    a = p.parse_args()
+    sys.exit(cli(os.path.abspath(a.root), a))

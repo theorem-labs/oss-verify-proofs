@@ -142,6 +142,7 @@ checks:
   where: source/decompress_cross_format.c:88-119
   what: 'Streaming: the same comparison with one ZSTD_decompressStream call per format: both return 0
     or neither; if both, out.pos equal and output bytes equal.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: decompress_cross_format

@@ -8,6 +8,9 @@
 #   determinism  two kinds of machine snapshot the same ELF files; the outputs
 #                are compared byte for byte, so no reference digest is needed
 #   warm         (on request, on main) fills the dune cache pr.yml reads
+#   weekly       the run's one verdict: every job above passed, warm when it
+#                was asked for and skipped when not.  It always runs, since a
+#                skipped job reports success.
 #
 # release.yml calls this workflow with `release`, so that a new release is
 # checked against the assets it actually published.  The trusted runs never
@@ -48,6 +51,8 @@ jobs:
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
+      sample: ${{ steps.plan.outputs.sample }}
+      sample_projects: ${{ steps.plan.outputs.sample_projects }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
@@ -63,9 +68,8 @@ jobs:
           ROTATE: ${{ github.event_name == 'schedule' && github.event.repository.visibility != 'public' }}
         run: |
           set -euo pipefail
-          # a change to theories/ marks every harness
-          echo theories/Shapes.v > "$RUNNER_TEMP/all.txt"
-          PYTHONPATH=tools python -m oft plan --changed "$RUNNER_TEMP/all.txt" --max-jobs 1 > "$RUNNER_TEMP/all.json"
+          # with no base and no recorded pass, every part of every harness is planned
+          PYTHONPATH=tools python -m oft plan --max-jobs 1 > "$RUNNER_TEMP/all.json"
           if [ -n "${UNITS:-}" ]; then
             read -r -a named <<< "$UNITS"
             printf '%s\n' "${named[@]}" > "$RUNNER_TEMP/units.txt"
@@ -76,10 +80,17 @@ jobs:
             jq -r '.units[]' "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
           fi
           [ -s "$RUNNER_TEMP/units.txt" ] || { echo "::error::no harness to check: nothing examined"; exit 1; }
-          sed 's|^|projects/|; s|$|/harness.yaml|' "$RUNNER_TEMP/units.txt" > "$RUNNER_TEMP/changed.txt"
-          PYTHONPATH=tools python -m oft plan --changed "$RUNNER_TEMP/changed.txt" --max-jobs 256 > "$RUNNER_TEMP/plan.json"
-          echo "plan=$(jq -c .jobs "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
-          echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
+          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" --max-jobs 256 > "$RUNNER_TEMP/plan.json"
+          # the determinism job's sample: the first job with published builds (a harness whose every build is
+          # withheld has a finding to re-run, and no binary to snapshot), as two small values, since the plan's jobs
+          # grow with the tree and an environment value may not exceed 131,072 bytes
+          sample='[.jobs[] | select(.check_units != "")][0]'
+          {
+            echo "plan=$(jq -c .jobs "$RUNNER_TEMP/plan.json")"
+            echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
+            echo "sample=$(jq -r "$sample.check_units // \"\"" "$RUNNER_TEMP/plan.json")"
+            echo "sample_projects=$(jq -r "$sample.projects // \"\"" "$RUNNER_TEMP/plan.json")"
+          } >> "$GITHUB_OUTPUT"
           echo "harnesses: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq '.units | length' "$RUNNER_TEMP/all.json")" >> "$GITHUB_STEP_SUMMARY"
 
   sweep:
@@ -118,6 +129,7 @@ jobs:
           WORK: ${{ github.workspace }}/work
           TOOLS: ${{ runner.temp }}/tools
           UNITS: ${{ matrix.job.check_units }}
+          PROOF_UNITS: ${{ toJSON(matrix.job.proof_units) }}  # JSON: check-units.sh refuses null, a plan without it
           PROJECTS: ${{ matrix.job.projects }}
           CX_UNITS: ${{ matrix.job.counterexamples }}
           FINDINGS: ${{ matrix.job.findings }}
@@ -173,20 +185,18 @@ jobs:
       - name: snapshot a sample of ELF files with the pinned elf-snapshot
         env:
           GH_TOKEN: ${{ github.token }}
-          PLAN: ${{ needs.plan.outputs.plan }}
+          # the plan job's sample (its step says which), not the whole plan, which can outgrow an environment value
+          SAMPLE: ${{ needs.plan.outputs.sample }}
+          SAMPLE_PROJECTS: ${{ needs.plan.outputs.sample_projects }}
         run: |
           set -euo pipefail
-          # the sample: the first job with published builds (a harness whose every build is withheld has a finding
-          # to re-run, and no binary to snapshot)
-          SAMPLE="$(jq -r '[.[] | select(.check_units != "")][0].check_units // ""' <<< "$PLAN")"
-          PROJECTS="$(jq -r '[.[] | select(.check_units != "")][0].projects // ""' <<< "$PLAN")"
           [ -n "$SAMPLE" ] || { echo "::error::no planned harness has published builds: nothing to snapshot"; exit 1; }
           commit="$(python -c 'import yaml; print(yaml.safe_load(open("release.yaml"))["semantics"]["commit"])')"
           # the model repository keeps elf-snapshot at tools/elf_snapshot.py (2afba80c has no package/tools/)
           curl -fsSL -o "$RUNNER_TEMP/elf_snapshot.py" \
             "https://raw.githubusercontent.com/theorem-labs/rocq-linux-process-semantics/$commit/tools/elf_snapshot.py"
           mkdir -p "$RUNNER_TEMP/assets" "$RUNNER_TEMP/snap"
-          read -r -a projects <<< "$PROJECTS"
+          read -r -a projects <<< "$SAMPLE_PROJECTS"
           releases="$(PYTHONPATH=tools python -c 'from oft import fetch; print("/".join(fetch.RELEASES.split("/")[3:5]))')"
           ./oft fetch --list "${projects[@]}" | while read -r rel file _; do
             case "$file" in *-bin.tar.zst)
@@ -217,7 +227,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           path: snap
       - name: the two machines wrote the same bytes
@@ -263,6 +273,7 @@ jobs:
           WORK: ${{ github.workspace }}/work
           TOOLS: ${{ runner.temp }}/tools
           UNITS: ${{ matrix.job.check_units }}
+          PROOF_UNITS: ${{ toJSON(matrix.job.proof_units) }}
           PROJECTS: ${{ matrix.job.projects }}
           CX_UNITS: ""
           FINDINGS: ""
@@ -285,3 +296,32 @@ jobs:
         with:
           path: ${{ runner.temp }}/dune-cache
           key: ${{ steps.keys.outputs.key }}
+
+  weekly:
+    needs: [plan, sweep, assets, determinism, determinism-compare, warm]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: every job passed, and warm ran only when it was asked for
+        env:
+          # warm's own condition
+          WARM_ASKED: ${{ github.event_name == 'workflow_dispatch' && inputs.warm && github.ref == 'refs/heads/main' }}
+          PLAN: ${{ needs.plan.result }}
+          SWEEP: ${{ needs.sweep.result }}
+          ASSETS: ${{ needs.assets.result }}
+          DETERMINISM: ${{ needs.determinism.result }}
+          COMPARE: ${{ needs.determinism-compare.result }}
+          WARM: ${{ needs.warm.result }}
+        run: |
+          set -euo pipefail
+          got="plan $PLAN, sweep $SWEEP, assets $ASSETS, determinism $DETERMINISM, determinism-compare $COMPARE, warm $WARM"
+          [ "$PLAN/$SWEEP/$ASSETS/$DETERMINISM/$COMPARE" = success/success/success/success/success ] ||
+            { echo "::error::a job did not pass: $got"; exit 1; }
+          if [ "$WARM_ASKED" = true ]; then
+            [ "$WARM" = success ] || { echo "::error::the cache was to be warmed, and was not: $got"; exit 1; }
+          else
+            [ "$WARM" = skipped ] || { echo "::error::the cache was not to be warmed, yet: $got"; exit 1; }
+          fi
+          echo "every job passed: $got"

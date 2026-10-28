@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libpcap/fuzz_pcap/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: ef108941abf30285ec76d895946acc8f924ba17fedc07453e4a58a7c634aa6d1

@@ -11,12 +11,14 @@ From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Spec Require Imp
 X1rm X1o8 X1r6 X1og X1qw X1pe X1ot X1r7
 X1r8 X1nu X1o3 X1o5 X1o4 X1o6 X1o7 X1nx.
 From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Plain.
+From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Ubsan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import X1bs.Exc.
 Open Scope Z_scope.
 
 Local Notation psegs := Plain.M.loaded_segments.
+Local Notation usegs := Ubsan.M.loaded_segments.
 
 Definition Xcanon (sel : option bool) (argv : list (list Z)) (fs : Fs) (tr : list event) : Prop :=
 exists b, compat sel b /\ tr = ct_events fs (ctrace_of argv fs b) /\ run_defined fs argv b.
@@ -149,6 +151,14 @@ forall tr, tree_traces (prog psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0
 <-> canonT (argv_Z (in_argv inp)) (in_fs inp) tr.
 Proof.
 intros lim en inp Hlim VE VI. eapply prog_det_gen; [apply reserved_top_psegs| apply ceil_psegs| apply sbk_psegs| exact Hlim| exact VE| exact VI].
+Qed.
+
+Theorem prog_det_ubsan : forall en inp,
+valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp -> valid_input_core inp ->
+forall tr, tree_traces (prog usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp) tr
+<-> canonT (argv_Z (in_argv inp)) (in_fs inp) tr.
+Proof.
+intros en inp VE VI. eapply prog_det_gen; [apply reserved_top_usegs| apply ceil_usegs| apply sbk_usegs| apply LBUDGET_le_target| exact VE| exact VI].
 Qed.
 
 Theorem canon_fuzz_defined : forall en inp ok,

@@ -44,8 +44,10 @@ them (below).
 
 A maintainer increases a statement's **revision** by one whenever its meaning
 changes: after a rebuild of its binaries, a change to the code of
-the shapes, a new LPS version, a new distribution, or a change to its
-definition (its reading or exit set). Cite a statement as
+the shapes, a new LPS version, a new distribution, a change to its
+definition (its reading or exit set), or, for an agreement statement, a
+change to its project's own budget pair (project.yaml `budgets`, which its
+term carries). Cite a statement as
 `project/harness/statement@r<revision>`.
 
 A fingerprint starts from the version of the way it is computed: version 2,
@@ -62,7 +64,14 @@ re-rendered, and its meaning changed. When the name, version or commit of LPS,
 or the Rocq package or version, differs between the two trees, every statement
 is model-changed: its meaning may have changed though its fingerprint did not.
 A statement withheld in either tree has no fingerprint, so no revision is
-expected of it. For each statement it says whether its meaning is the same,
+expected of it. A release leaves out what is held back from it, so a statement
+can be absent from the previous release and present again in this one. Its
+identifier is never reused, so the releases before it are named too, newest
+first (by date, and on one date by release: a candidate `-rc.N` by N, and
+before the release it is a candidate of; any other order compares nothing):
+`./oft revisions PREVIOUS --earlier OLDER...` compares such a statement
+with the newest of them that has it, and it keeps that release's revision, or
+takes the next one if its meaning changed since. For each statement it says whether its meaning is the same,
 changed, re-rendered or model-changed, which revision it must have, and
 whether its proof carries forward, is re-checked, is retired or is new, and it
 fails when a revision is not the one it must be.

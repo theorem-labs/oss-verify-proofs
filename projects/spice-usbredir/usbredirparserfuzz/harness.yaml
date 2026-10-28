@@ -152,6 +152,7 @@ checks:
   live: true
   where: source/usbredirparserfuzz.cc:302
   what: 'Harness-side: the unserialize buffer is empty before the magic is written (trivially true)'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: usbredirparserfuzz

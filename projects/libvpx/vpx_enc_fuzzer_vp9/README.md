@@ -14,16 +14,16 @@ Byte 0 picks keyframe interval, deadline and one of 6 tiny frame sizes; the rest
 - assert(img->bit_depth == 8) in fuzz_vpx_img_read; the image is always allocated as 8-bit VPX_IMG_FMT_I420, so this is trivially true ([line 104](source/vpx_enc_fuzzer.cc#L104)): assert(); confirmed in the binary.
 - vpx_codec_enc_config_default must succeed; called with constant arguments before any input byte is used, so it is input-independent ([line 184](source/vpx_enc_fuzzer.cc#L184)): abort(); not confirmed in the binary.
 
-A failed check marked as ending the process contradicts every halts statement below, so a proof of one implies them on every input it covers.
+A failure of the check at line 104 ends the process with a status that the halts statements below that name it exclude, so a proof of one of those statements implies it on every input it covers. No statement here proves the other check.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at line 104 above holds | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at line 104 above holds | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at line 104 above holds | open |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check at line 104 above holds | open |
 | `plain_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the plain build exits with any status | open |
 | `ubsan_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the UBSan build exits with any status | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires | open |

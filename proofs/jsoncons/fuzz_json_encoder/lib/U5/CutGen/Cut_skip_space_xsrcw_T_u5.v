@@ -1,0 +1,73 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OssFuzzTheorems.jsoncons.fuzz_json_encoder.images Require Import Ubsan.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require Import Pm6PlanKit_u5.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.CutCert Require Import Pm6CutKit_u5.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.PmParse Require Import ParseSums_u5 ParseSums2_u5. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.PmParse Require Import ParseSomeKn.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.PmSmall Require Import SmallKn.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+Definition ITR : list (Z * nat) := [(298680, 75%nat)].
+Definition IT : itab := itab_of RSEGS ITR.
+Definition BF : nat := 5000.
+Definition NF : nat := 53.
+Definition ENDS : list Z := [298972].
+Definition HDECL : CH.hdecl := CH.HD (8416) (8224) [((EVar 49), (0), ELit 8); ((EVar 50), (0), ((EVar 51)))] [((EVar 10), (0), ELit 272); ((EVar 34), (0), ELit 16)] [(65536, 827984)].
+Definition CSUMS : list CA.callsum := [CAX.xs_cs (PSU2.vec_xsum HDECL 291032 8368 10%nat)].
+Definition XSTOPS : list Z := [].
+Definition APART : list (expr * Z * expr) := CH.stack_reg HDECL :: CH.hd_crs HDECL ++ CH.hd_wrs HDECL.
+(* [comment removed for export] *)
+Definition t0 : CC.cutpoint := CC.CP 298680 [EVar 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; EVar 8; EVar 9; EVar 10; (APC.eaddz (EVar 10) (200)); EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31]
+  (SPK.kn (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) false (EVar 10) (EVar 49) (EVar 34) (EVar 2) (APC.eadd (EVar 50) (EVar 51)) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 47) (EVar 48) (ELit (0))) ++ SPK.win_f (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) (EVar 10) (EVar 49) (EVar 34) (EVar 2) (EVar 50) (EVar 51) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 47) (EVar 48) (ELit (0))) ++ [KRange (EVar 51) (1) (16384)])
+  53 [((EVar 2), (-8416), ELit 8416); ((EVar 10), (0), ELit 272)] [] (ELit (1073741824)).
+Definition BL0 : CA.blocks := [((EVar 37), (APC.escale (2) (EVar 35))); ((EVar 38), (EVar 40))].
+Definition hints0 : list (nat * CC.subst) := [].
+(* [comment removed for export] *)
+Definition t1 : CC.cutpoint := CC.CP 298764 [EVar 0; EVar 1; (APC.eaddz (EVar 2) (-48)); EVar 3; EVar 4; (ELit (32)); (EVar 55); (EVar 57); (APC.eaddz (EVar 10) (200)); (EVar 10); (APC.eadd (EVar 50) (EVar 51)); (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)); (EVar 54); (ELit (12)); (ELit (9)); (ELit (10)); (ELit (18446744073709551615)); (ELit (13)); (EVar 56); EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; (EVar 58); EVar 29; EVar 30; EVar 31]
+  ([KRange (EVar 53) (1) (16384)] ++ SPK.kn (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) true (EVar 10) (EVar 49) (EVar 34) (EVar 2) (APC.eadd (EVar 50) (EVar 51)) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ SPK.win_f (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) (EVar 10) (EVar 49) (EVar 34) (EVar 2) (EVar 50) (EVar 51) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ [KRange (APC.esub (EVar 51) (EVar 53)) (0) (16383); KRange (EVar 51) (1) (16384)])
+  59 [((EVar 2), (-8416), ELit 8416); ((EVar 10), (0), ELit 272)] [] (APC.eaddz (APC.escale (64) (EVar 53)) (8)).
+Definition BL1 : CA.blocks := [((EVar 37), (APC.escale (2) (EVar 35))); ((EVar 38), (EVar 40))].
+Definition hints1 : list (nat * CC.subst) := [].
+(* [comment removed for export] *)
+Definition t2 : CC.cutpoint := CC.CP 298872 [EVar 0; EVar 1; (APC.eaddz (EVar 2) (-48)); EVar 3; EVar 4; (ELit (32)); (EVar 55); (APC.eaddz (EVar 55) (1)); (APC.eaddz (EVar 10) (200)); (EVar 10); (APC.eadd (EVar 50) (EVar 51)); (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)); (EVar 54); (ELit (12)); (ELit (9)); (ELit (10)); (ELit (18446744073709551615)); (ELit (13)); (APC.eaddz (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)) (1)); EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; (EVar 56); EVar 29; EVar 30; EVar 31]
+  ([KRange (EVar 53) (2) (16384)] ++ SPK.kn (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) true (EVar 10) (EVar 49) (EVar 34) (EVar 2) (APC.eadd (EVar 50) (EVar 51)) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (APC.eaddz (EVar 55) (1)) (ELit (0))) ++ SPK.win_f (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) (EVar 10) (EVar 49) (EVar 34) (EVar 2) (EVar 50) (EVar 51) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (APC.eaddz (EVar 55) (1)) (ELit (0))) ++ [KRange (APC.esub (EVar 51) (EVar 53)) (0) (16383); KRange (EVar 51) (1) (16384)])
+  57 [((EVar 2), (-8416), ELit 8416); ((EVar 10), (0), ELit 272)] [] (APC.eaddz (APC.escale (64) (EVar 53)) (4)).
+Definition BL2 : CA.blocks := [((EVar 37), (APC.escale (2) (EVar 35))); ((EVar 38), (EVar 40))].
+Definition hints2 : list (nat * CC.subst) := [].
+(* [comment removed for export] *)
+Definition t3 : CC.cutpoint := CC.CP 298788 [EVar 0; EVar 1; (APC.eaddz (EVar 2) (-48)); EVar 3; EVar 4; (ELit (32)); (EVar 55); (EVar 57); (APC.eaddz (EVar 10) (200)); (EVar 10); (APC.eadd (EVar 50) (EVar 51)); (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)); (EVar 54); (ELit (12)); (ELit (9)); (ELit (10)); (ELit (18446744073709551615)); (ELit (13)); (EVar 56); EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; (EVar 58); EVar 29; EVar 30; EVar 31]
+  ([KRange (EVar 53) (1) (16384)] ++ SPK.kn (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) true (EVar 10) (EVar 49) (EVar 34) (EVar 2) (APC.eadd (EVar 50) (EVar 51)) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ SPK.win_f (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) (EVar 10) (EVar 49) (EVar 34) (EVar 2) (EVar 50) (EVar 51) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ [KRange (APC.esub (EVar 51) (EVar 53)) (0) (16383); KRange (EVar 51) (1) (16384)] ++ [KRange (EVar 57) (10) (10)])
+  59 [((EVar 2), (-8416), ELit 8416); ((EVar 10), (0), ELit 272)] [] (APC.eaddz (APC.escale (64) (EVar 53)) (6)).
+Definition BL3 : CA.blocks := [((EVar 37), (APC.escale (2) (EVar 35))); ((EVar 38), (EVar 40))].
+Definition hints3 : list (nat * CC.subst) := [].
+(* [comment removed for export] *)
+Definition t4 : CC.cutpoint := CC.CP 298824 [EVar 0; EVar 1; (APC.eaddz (EVar 2) (-48)); EVar 3; EVar 4; (ELit (32)); (EVar 55); (EVar 57); (APC.eaddz (EVar 10) (200)); (EVar 10); (APC.eadd (EVar 50) (EVar 51)); (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)); (EVar 54); (ELit (12)); (ELit (9)); (ELit (10)); (ELit (18446744073709551615)); (ELit (13)); (EVar 56); EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; (EVar 58); EVar 29; EVar 30; EVar 31]
+  ([KRange (EVar 53) (1) (16384)] ++ SPK.kn (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) true (EVar 10) (EVar 49) (EVar 34) (EVar 2) (APC.eadd (EVar 50) (EVar 51)) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ SPK.win_f (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) (EVar 10) (EVar 49) (EVar 34) (EVar 2) (EVar 50) (EVar 51) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ [KRange (APC.esub (EVar 51) (EVar 53)) (0) (16383); KRange (EVar 51) (1) (16384)] ++ [KRange (EVar 57) (9) (32)])
+  59 [((EVar 2), (-8416), ELit 8416); ((EVar 10), (0), ELit 272)] [] (APC.eaddz (APC.escale (64) (EVar 53)) (6)).
+Definition BL4 : CA.blocks := [((EVar 37), (APC.escale (2) (EVar 35))); ((EVar 38), (EVar 40))].
+Definition hints4 : list (nat * CC.subst) := [].
+(* [comment removed for export] *)
+Definition t5 : CC.cutpoint := CC.CP 298844 [EVar 0; EVar 1; (APC.eaddz (EVar 2) (-48)); EVar 3; EVar 4; (ELit (32)); (EVar 55); (EVar 57); (APC.eaddz (EVar 10) (200)); (EVar 10); (APC.eadd (EVar 50) (EVar 51)); (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)); (EVar 54); (ELit (12)); (ELit (9)); (ELit (10)); (ELit (18446744073709551615)); (ELit (13)); (EVar 56); EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; (EVar 58); EVar 29; EVar 30; EVar 31]
+  ([KRange (EVar 53) (1) (16384)] ++ SPK.kn (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) true (EVar 10) (EVar 49) (EVar 34) (EVar 2) (APC.eadd (EVar 50) (EVar 51)) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ SPK.win_f (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) (EVar 10) (EVar 49) (EVar 34) (EVar 2) (EVar 50) (EVar 51) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (EVar 55) (ELit (0))) ++ [KRange (APC.esub (EVar 51) (EVar 53)) (0) (16383); KRange (EVar 51) (1) (16384)] ++ [KRange (EVar 57) (13) (13)])
+  59 [((EVar 2), (-8416), ELit 8416); ((EVar 10), (0), ELit 272)] [] (APC.eaddz (APC.escale (64) (EVar 53)) (6)).
+Definition BL5 : CA.blocks := [((EVar 37), (APC.escale (2) (EVar 35))); ((EVar 38), (EVar 40))].
+Definition hints5 : list (nat * CC.subst) := [].
+(* [comment removed for export] *)
+Definition t6 : CC.cutpoint := CC.CP 298884 [EVar 0; EVar 1; (APC.eaddz (EVar 2) (-48)); EVar 3; EVar 4; (ELit (32)); (EVar 55); (APC.eaddz (EVar 55) (1)); (APC.eaddz (EVar 10) (200)); (EVar 10); (APC.eadd (EVar 50) (EVar 51)); (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)); (EVar 54); (ELit (12)); (ELit (9)); (ELit (10)); (ELit (18446744073709551615)); (ELit (13)); (APC.eaddz (APC.esub (APC.eadd (EVar 50) (EVar 51)) (EVar 53)) (1)); EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; (EVar 56); EVar 29; EVar 30; EVar 31]
+  ([KRange (EVar 53) (2) (16384)] ++ SPK.kn (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) true (EVar 10) (EVar 49) (EVar 34) (EVar 2) (APC.eadd (EVar 50) (EVar 51)) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (APC.eaddz (EVar 55) (1)) (ELit (0))) ++ SPK.win_f (PSK.CONSTS (803024) (804528) (803536) (65536) (1040384) (65536) (827984) (8416) [((-8), 1%nat); ((-16), 8%nat); ((-24), 9%nat); ((-32), 18%nat)] (32)) (EVar 10) (EVar 49) (EVar 34) (EVar 2) (EVar 50) (EVar 51) (PSK.PX (EVar 41) (EVar 50) (EVar 42) (EVar 43) (EVar 44) (EVar 45) (EVar 46) (EVar 35) (EVar 36) (EVar 37) (EVar 38) (EVar 39) (EVar 40) (EVar 54) (APC.eaddz (EVar 55) (1)) (ELit (0))) ++ [KRange (APC.esub (EVar 51) (EVar 53)) (0) (16383); KRange (EVar 51) (1) (16384)] ++ [KRange (EVar 56) (10) (10)])
+  57 [((EVar 2), (-8416), ELit 8416); ((EVar 10), (0), ELit 272)] [] (APC.eaddz (APC.escale (64) (EVar 53)) (2)).
+Definition BL6 : CA.blocks := [((EVar 37), (APC.escale (2) (EVar 35))); ((EVar 38), (EVar 40))].
+Definition hints6 : list (nat * CC.subst) := [].
+Definition TMPL : list CC.cutpoint := [t0; t1; t2; t3; t4; t5; t6].
+Definition EXPL (c : CC.cutpoint) (h : list (nat * CC.subst)) (first : bool) :=
+  CA.explore RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NF TMPL ENDS CSUMS 0%nat [2%nat; 4%nat] [298768; 298872] XSTOPS (CC.cp_F c) (CC.cp_meas c) h 600 first
+    (SS (CC.cp_pc c) (CC.cp_regs c) [] (CC.cp_know c) (CC.cp_nx c)).
+Definition tagcode (t : CC.tag) : Z * Z := match t with CC.TGoto j _ => (1, Z.of_nat j) | CC.TOther pc => (2, pc) end.
+Definition mkcp (c : CC.cutpoint) (o : CA.pout) : CC.cutpoint :=
+  CC.CP (CC.cp_pc c) (CC.cp_regs c) (CC.cp_know c) (CC.cp_nx c) (CC.cp_F c) (map fst (CA.po_leaves o)) (CC.cp_meas c).

@@ -47,7 +47,7 @@ Proof. try hcb. try hsb.
   assert (U1 : In c (map bslot BL1)) by (rewrite <- Ek; apply in_map; exact Hk).
   unfold one5 in P1, P2. cbn [x_pend x0] in P1, P2.
   destruct P2 as (D2 & _ & NAC & _ & _ & NFC & _). destruct P1 as (_ & _ & NAU & _ & _ & NFU & _ & _ & NUH & _).
-  destruct D2 as [A|[F|[U|[H|X]]]]; [exfalso; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])| exfalso; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])| exact U| exfalso; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])| discriminate X].
+  destruct D2 as [A|[F|[U|[H|X]]]]; [exfalso; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])| exfalso; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])| exact U| exfalso; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])| discriminate X].
 Qed.
 
 (* [comment removed for export] *)

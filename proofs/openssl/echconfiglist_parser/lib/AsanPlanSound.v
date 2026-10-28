@@ -3258,7 +3258,7 @@ Lemma kentry_ok_ksubst : forall E J e M K,
 Proof.
   intros E J e M K. set (E' := upd E J (edenot E e)).
   destruct K as [a w v|a n|a n k|lo hi|x m|x lo hi|a n|a1 n1 a2 n2|a n c|a n]; cbn [ksubst kentry_ok];
-    unfold flat, elenZ; rewrite ?estart_asubst, ?adenot_asubst, ?esubst_denot; fold E'; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]).
+    unfold flat, elenZ; rewrite ?estart_asubst, ?adenot_asubst, ?esubst_denot; fold E'; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]).
 Qed.
 
 Lemma know_ok_ksubst : forall E J e M k,

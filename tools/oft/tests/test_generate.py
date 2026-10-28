@@ -1,4 +1,5 @@
 """oft generate: deterministic, complete, and checked; and the schemas under it."""
+import io
 import os
 import shutil
 import unittest
@@ -368,20 +369,61 @@ class Shapes(unittest.TestCase):
         st = {"kind": "decidability", "builds": ["plain", "asan"], "reading": "may-fail", "machine": "rv64gc"}
         self.assertEqual(shapes.shape_name(st), "agreement_decidable_rv64gc")
 
+    HALTS = {"kind": "halts", "builds": ["plain"], "reading": "budget", "exits": [0, 2]}
+    READ = {"failure_handlers": "none"}   # a harness whose linked code was read and installs no failure handler
+
     def test_binding(self):
-        halts = {"kind": "halts", "builds": ["plain"], "reading": "budget", "exits": [0, 2]}
+        halts = self.HALTS
+        check = {"stops_with": "exit", "exit_status": 1, "exit_reaches_guard": True, "live": True}
+        self.assertTrue(shapes.binds(check, halts, self.READ))
+        # the process ends with 77 whatever argument the source passes, so exit_status does not decide this
+        self.assertTrue(shapes.binds(dict(check, exit_status=2), halts, self.READ))
+        self.assertTrue(shapes.binds(dict(check, exit_status=-1), halts, self.READ))
+        self.assertFalse(shapes.binds(check, dict(halts, exits=[0, 2, 77]), self.READ))
+        self.assertFalse(shapes.binds(dict(check, live="unknown"), halts, self.READ))
+        self.assertFalse(shapes.binds({"stops_with": "print-only", "live": True}, halts, self.READ))
+
+    def test_an_exit_that_does_not_reach_the_guard_binds_nothing(self):
+        """An exit() outside a call of the fuzz target, in LLVMFuzzerInitialize say, is not 77, so the statement
+        does not prove the check (docs/running.md, "What status 77 needs")."""
         check = {"stops_with": "exit", "exit_status": 1, "live": True}
-        self.assertTrue(shapes.binds(check, halts))
-        self.assertFalse(shapes.binds(dict(check, exit_status=2), halts))
-        self.assertFalse(shapes.binds(dict(check, live="unknown"), halts))
-        self.assertFalse(shapes.binds({"stops_with": "print-only", "live": True}, halts))
+        for guard in (False, "unknown"):
+            self.assertFalse(shapes.binds(dict(check, exit_reaches_guard=guard), self.HALTS, self.READ), guard)
+        self.assertFalse(shapes.binds(check, self.HALTS, self.READ))  # the fact left out binds nothing either
+
+    def test_a_failure_handler_present_or_not_read_binds_nothing(self):
+        """A signal handler, a terminate handler, a panic hook or a later exit handler that linked code installs can
+        end a failed check with a status the statement allows (docs/facts.md, "Failure handlers"), so every stop
+        kind binds only when the harness's failure_handlers is none; absent is unknown."""
+        checks = [{"stops_with": s, "live": True} for s in ("abort", "assert", "trap", "throw", "panic", "raise", "fail")]
+        checks.append({"stops_with": "exit", "exit_status": 1, "exit_reaches_guard": True, "live": True})
+        for check in checks:
+            self.assertTrue(shapes.binds(check, self.HALTS, self.READ), check)
+            for harness in ({"failure_handlers": "present"}, {"failure_handlers": "unknown"}, {}):
+                self.assertFalse(shapes.binds(check, self.HALTS, harness), (check, harness))
 
     def test_a_rust_panic_is_an_exit_with_status_79(self):
         panic = {"stops_with": "panic", "live": True}
-        halts = {"kind": "halts", "builds": ["plain"], "reading": "budget", "exits": [0, 2]}
-        self.assertTrue(shapes.binds(panic, halts))
-        self.assertFalse(shapes.binds(panic, dict(halts, reading="may-fail", exits="any")))
-        self.assertFalse(shapes.binds(panic, dict(halts, exits=[0, 2, 79])))
+        halts = self.HALTS
+        self.assertTrue(shapes.binds(panic, halts, self.READ))
+        self.assertFalse(shapes.binds(panic, dict(halts, reading="may-fail", exits="any"), self.READ))
+        self.assertFalse(shapes.binds(panic, dict(halts, exits=[0, 2, 79]), self.READ))
+
+    def test_an_uncaught_python_exception_is_an_exit_with_status_79(self):
+        raised = {"stops_with": "raise", "live": True}
+        halts = self.HALTS
+        self.assertTrue(shapes.binds(raised, halts, self.READ))
+        self.assertFalse(shapes.binds(raised, dict(halts, reading="may-fail", exits="any"), self.READ))
+        self.assertFalse(shapes.binds(raised, dict(halts, exits=[0, 2, 79]), self.READ))
+        self.assertFalse(shapes.binds(dict(raised, live="unknown"), halts, self.READ))
+
+    def test_a_failing_go_fuzz_test_is_an_exit_with_status_79(self):
+        failed = {"stops_with": "fail", "live": True}
+        halts = self.HALTS
+        self.assertTrue(shapes.binds(failed, halts, self.READ))
+        self.assertFalse(shapes.binds(failed, dict(halts, reading="may-fail", exits="any"), self.READ))
+        self.assertFalse(shapes.binds(failed, dict(halts, exits=[0, 2, 79]), self.READ))
+        self.assertFalse(shapes.binds(dict(failed, live="unknown"), halts, self.READ))
 
 
 class Code(unittest.TestCase):
@@ -547,6 +589,215 @@ class PublishedModel(unittest.TestCase):
             c = r["semantics"]["commit"]
             self.assertIn("commit [`%s`](%s/commit/%s)" % (c[:12], r["semantics"]["repository"], c), readme)
             self.assertEqual(t.read("index/statements.tsv"), before)
+
+
+ZLIB_UBSAN_AGREES = ("projects/zlib/checksum_fuzzer/harness.yaml", "projects/zlib/api-driver/harness.yaml")
+
+
+def set_project_budgets(t, budgets, drop=("ubsan_agrees",)):
+    """Give zlib project.yaml `budgets` and drop the harness.yaml `budgets` field of the statements in `drop`."""
+    y = t.yaml("projects/zlib/project.yaml")
+    y["budgets"] = budgets
+    t.put_yaml("projects/zlib/project.yaml", y)
+    for rel in ZLIB_UBSAN_AGREES:
+        h = t.yaml(rel)
+        for name in drop:
+            h["statements"][name].pop("budgets", None)
+        t.put_yaml(rel, h)
+
+
+def fingerprints(t):
+    return {s.id: s.fingerprint for s in facts.load(t.root).statements()}
+
+
+class ProjectBudgets(unittest.TestCase):
+    """project.yaml `budgets.agrees`: a project's own budget pair for the agreement statements of one sanitizer."""
+
+    PAIR = {"agrees": {"undefined": ["2GiB", "5TiB"]}}
+
+    def test_a_pair_changes_the_ubsan_agrees_fingerprints_and_no_other(self):
+        with tree() as t:
+            before = fingerprints(t)
+            set_project_budgets(t, self.PAIR)
+            after = fingerprints(t)
+            self.assertEqual(sorted(k for k in before if before[k] != after[k]),
+                             ["zlib/api-driver/ubsan_agrees", "zlib/checksum_fuzzer/ubsan_agrees"])
+            self.assertTrue(after["zlib/checksum_fuzzer/ubsan_agrees"] and after["zlib/api-driver/ubsan_agrees"])
+            y = t.yaml("projects/zlib/project.yaml")
+            y["budgets"]["agrees"]["undefined"] = ["2GiB", "3TiB"]
+            t.put_yaml("projects/zlib/project.yaml", y)
+            again = fingerprints(t)
+            self.assertEqual(sorted(k for k in after if after[k] != again[k]),
+                             ["zlib/api-driver/ubsan_agrees", "zlib/checksum_fuzzer/ubsan_agrees"])
+
+    def test_a_pair_renders_literals_and_names_both_budgets(self):
+        with tree() as t:
+            set_project_budgets(t, self.PAIR)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            s = t.read("projects/zlib/checksum_fuzzer/Statements.v")
+            r = t.read("projects/zlib/checksum_fuzzer/README.md")
+            facts_tree = facts.load(t.root)
+        self.assertIn("Definition ubsan_agrees : Prop :=\n  agrees 0x80000000%Z 0x50000000000%Z Images.plain "
+                      "Images.ubsan.", s)
+        doc = s[:s.index("Definition ubsan_agrees")]
+        flat = " ".join(doc[doc.rindex("(**"):].split())
+        # stated in full, never "As [asan_agrees]": the own pair puts it in a family of its own
+        self.assertTrue(flat.startswith("(** On every input on which the plain build is never refused memory for "
+                                        "exceeding 2 GiB,"), flat)
+        self.assertIn("This statement has this project's own budgets: 2 GiB for the plain build (default 16 GiB) and "
+                      "5 TiB for the UBSan build (default 512 GiB). The project's notes say why.", flat)
+        self.assertIn("Not claimed: anything about inputs on which the plain build needs more than 2 GiB.", flat)
+        self.assertIn("(this project's own budgets: 2 GiB / 5 TiB)", r)
+        # the ASan statements keep their enum
+        self.assertIn("agrees Budgets.Asan.lim_source Budgets.Asan.lim_target Images.plain Images.asan.", s)
+        self.assertNotIn("for the UBSan build, with 2 GiB for the plain build", s)
+        st = next(x for x in facts_tree.statements() if x.id == "zlib/checksum_fuzzer/ubsan_agrees")
+        self.assertEqual(shapes.shape_name(st.data), "agrees")
+
+    def test_the_as_path_carries_the_own_budgets_sentence(self):
+        with tree() as t:
+            set_project_budgets(t, {"agrees": {"address": ["1GiB", "1TiB"]}},
+                                drop=("asan_agrees", "asan_ubsan_agrees"))
+            self.assertEqual(t.generate(), 0, t.last_output)
+            s = " ".join(t.read("projects/zlib/checksum_fuzzer/Statements.v").split())
+        self.assertIn("As [asan_agrees], for the ASan+UBSan build, with 1 GiB for the plain build.", s)
+        self.assertEqual(s.count("This statement has this project's own budgets: 1 GiB for the plain build "
+                                 "(default 2 GiB) and 1 TiB for the"), 2)
+        self.assertIn("1 TiB for the ASan+UBSan build (default 512 GiB)", s)
+        # an address pair says nothing of UBSan's budgets, and the UBSan statement, on the enum, is not stated
+        # "As" one with the pair
+        self.assertNotIn("default 16 GiB", s)
+        self.assertNotIn("As [asan_agrees], for the UBSan build", s)
+        # the UBSan statement keeps the enum
+        self.assertIn("agrees Budgets.Standard.lim_source Budgets.Standard.lim_target Images.plain Images.ubsan.", s)
+
+    def test_a_pair_beside_a_harness_enum_is_refused(self):
+        with tree() as t:
+            set_project_budgets(t, self.PAIR, drop=())
+            self.assertEqual(t.generate(), 1)
+            self.assertIn("project.yaml budgets.agrees.undefined sets this statement's budgets, so it names none",
+                          t.last_output)
+
+    def test_bad_pairs_are_refused(self):
+        st = {"kind": "agreement", "builds": ["plain", "ubsan"], "reading": "may-fail"}
+        for pair, words in ((["2GiB"], "is [plain, sanitizer]"), (["2GiB", "5TiB", "6TiB"], "is [plain, sanitizer]"),
+                            (["4095", "5TiB"], "at least 4096 bytes"), (["5TiB", "2GiB"], "at least the plain one"),
+                            (["2 GiB", "5TiB"], "not a size"), ([2, "5TiB"], "not a size")):
+            with self.assertRaises(shapes.ShapeError) as e:
+                shapes.term(st, {"budgets": {"agrees": {"undefined": pair}}})
+            self.assertIn(words, str(e.exception))
+        with self.assertRaises(shapes.ShapeError) as e:
+            shapes.term(st, {"budgets": {"agrees": {"address": ["1GiB", "1TiB"]}}})     # no pair for ubsan and no enum
+        self.assertIn("an agreement statement names its budgets", str(e.exception))
+        with self.assertRaises(shapes.ShapeError) as e:
+            shapes.term(dict(st, budgets="standard"), {"budgets": {"agrees": {"undefined": ["2GiB", "5TiB"]}}})
+        self.assertIn("sets this statement's budgets, so it names none", str(e.exception))
+
+    def test_a_pair_equal_to_the_default_is_the_enum(self):
+        st = {"kind": "agreement", "builds": ["plain", "ubsan"], "reading": "alloc-forced-only"}
+        enum = shapes.term(dict(st, budgets="standard"))
+        for pb in ({"budgets": {"agrees": {"undefined": ["16GiB", "512GiB"]}}},
+                   {"budgets": {"agrees": {"undefined": ["16384MiB", "512GiB"]}}}):
+            self.assertEqual(shapes.term(st, pb), enum)
+            self.assertIsNone(shapes.own_budgets(st, pb))
+        with tree() as t:
+            before = fingerprints(t)
+            set_project_budgets(t, {"agrees": {"undefined": ["16GiB", "512GiB"]}})
+            self.assertEqual(fingerprints(t), before)
+            s = t.read("projects/zlib/checksum_fuzzer/Statements.v")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(t.read("projects/zlib/checksum_fuzzer/Statements.v"), s)
+
+    def test_literals_and_words_come_from_bytes(self):
+        st = {"kind": "agreement", "builds": ["plain", "ubsan"], "reading": "alloc-forced-only"}
+        pb = {"budgets": {"agrees": {"undefined": ["1024MiB", "4352GiB"]}}}
+        self.assertEqual(shapes.term(st, pb)[1],
+                         "agrees_in Env.alloc_forced_only 0x40000000%Z 0x44000000000%Z Images.plain Images.ubsan")
+        self.assertEqual(shapes.budget_words(st, pb), ("1 GiB", "4352 GiB", True))
+        self.assertEqual(shapes.size_bytes("4096"), 4096)
+
+    def test_the_units_are_the_schemas(self):
+        """shapes.UNITS turns the units of schemas/project.yaml's size pattern into bytes: the two name the same."""
+        import re
+        pattern = schema.load_schema("project")["defs"]["size"]["pattern"]
+        self.assertEqual(set(re.search(r"\(([^)]*)\)\?\$$", pattern).group(1).split("|")), set(shapes.UNITS) - {""})
+
+    def test_empty_blocks_mean_no_pair(self):
+        with tree() as t:
+            before = fingerprints(t)
+            for pb in ({}, {"agrees": {}}):
+                y = t.yaml("projects/zlib/project.yaml")
+                y["budgets"] = pb
+                t.put_yaml("projects/zlib/project.yaml", y)
+                self.assertEqual(fingerprints(t), before)
+                self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+    def test_a_pair_needs_the_projects_notes(self):
+        """The text says the project's notes give the reason, so a project with its own pair has notes."""
+        for notes in (None, "  \n"):
+            with tree() as t:
+                if notes is None:
+                    os.remove(t.path("notes/zlib.md"))
+                else:
+                    t.write("notes/zlib.md", notes)
+                set_project_budgets(t, self.PAIR)
+                self.assertEqual(t.generate(), 1)
+                self.assertIn("projects/zlib/project.yaml: budgets.agrees.undefined is this project's own pair, so "
+                              "notes/zlib.md says why", t.last_output)
+                found = [str(f) for f in t.lint()]
+            self.assertTrue(any("so notes/zlib.md says why" in f for f in found), found)
+
+    def test_a_pair_no_statement_uses_is_still_checked(self):
+        """json has no UBSan agreement statement; its bad undefined pair is refused at project.yaml all the same."""
+        with tree() as t:
+            y = t.yaml("projects/json/project.yaml")
+            y["budgets"] = {"agrees": {"undefined": ["5TiB", "2GiB"]}}
+            t.put_yaml("projects/json/project.yaml", y)
+            self.assertEqual(t.generate(), 1)
+            self.assertIn("projects/json/project.yaml: budgets.agrees.undefined: the sanitizer budget is at least the "
+                          "plain one", t.last_output)
+
+    def test_a_bad_pair_is_reported_once(self):
+        with tree() as t:
+            set_project_budgets(t, {"agrees": {"undefined": ["4095", "5TiB"]}})
+            self.assertEqual(facts.load(t.root).errors,
+                             ["projects/zlib/project.yaml: budgets.agrees.undefined: the plain budget is at least "
+                              "4096 bytes"])
+            self.assertEqual(t.generate(), 1)
+            self.assertEqual(t.last_output.count("budgets.agrees.undefined: the plain budget is at least 4096 bytes"),
+                             1, t.last_output)
+
+    def test_a_bad_pair_hides_no_other_shape_error(self):
+        with tree() as t:
+            set_project_budgets(t, {"agrees": {"address": ["1GiB", "2GiB", "3GiB"]}},
+                                drop=("asan_agrees", "asan_ubsan_agrees"))
+            h = t.yaml(ZLIB_UBSAN_AGREES[0])
+            h["statements"]["asan_agrees"]["exits"] = "any"
+            h["statements"]["asan_ubsan_agrees"]["shape"] = "agrees_in"
+            t.put_yaml(ZLIB_UBSAN_AGREES[0], h)
+            self.assertEqual(t.generate(), 1)
+        self.assertIn("projects/zlib/project.yaml: budgets.agrees.address is [plain, sanitizer]", t.last_output)
+        self.assertIn("statements.asan_agrees: only halts statements have exits", t.last_output)
+        self.assertIn("statements.asan_ubsan_agrees: shape is agrees_in, but its fields give agrees", t.last_output)
+
+    def test_revisions_refuses_a_tree_with_a_bad_pair(self):
+        from oft import revisions
+        for bad in ("previous", "current"):
+            with tree() as prev, tree() as cur:
+                set_project_budgets(prev if bad == "previous" else cur, {"agrees": {"undefined": ["5TiB", "2GiB"]}})
+                buf = io.StringIO()
+                self.assertEqual(revisions.run(cur.root, prev.root, out=buf), 1, bad)
+                self.assertIn("budgets.agrees.undefined: the sanitizer budget is at least the plain one", buf.getvalue())
+
+    def test_the_internal_schema_is_a_strict_subset_of_the_public_shape(self):
+        """String sizes with an optional unit, per sanitizer; public validate.py also takes a bare integer."""
+        ok = {"agrees": {"undefined": ["2GiB", "5TiB"], "address": ["512MiB", "1TiB"]}}
+        base = {"schema": "oss-fuzz-theorems/project/1", "project": "x", "language": "c", "status": "available"}
+        self.assertEqual(schema.validate("project", dict(base, budgets=ok)), [])
+        for bad in ({"agrees": {"undefined": ["2 GiB", "5TiB"]}}, {"agrees": {"thread": ["2GiB", "5TiB"]}},
+                    {"halts": "16GiB"}, {"agrees": {"undefined": [2147483648, "5TiB"]}}):
+            self.assertNotEqual(schema.validate("project", dict(base, budgets=bad)), [], bad)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ Built from exiv2 (commit `e84cb9db`).
 - **`<build>_halts`**: on every input on which the build is never refused memory for exceeding 16 GiB (a premise: an input that needs more is not covered), and when the environment refuses nothing it is not forced to, every execution exits with status 0 or 2, without crashing, failing an assertion, hanging or tripping its sanitizer.
 - **`<build>_agrees`**: on every input on which the plain build is never refused memory for exceeding its budget (a premise), neither build reaches an error, and the two have the same set of observable behaviours: every sequence of writes and exit status one can show, the other can too. A sanitizer report aborts, so this rules out every error the sanitizer build's configuration detects. It does not rule out a run that never ends; only a halts statement does.
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `fuzz-preview`: imageFactory::open must never return a null image (it throws on unknown formats instead).
 - `fuzz-read-print-write`: imageFactory::open must never return a null image (it throws on unknown formats instead).
 - `fuzz-read-write`: imageFactory::open must never return a null image (it throws on unknown formats instead).

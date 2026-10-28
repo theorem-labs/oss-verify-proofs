@@ -1465,7 +1465,7 @@ Proof.
       pose proof (PMASK.mach_vis L ar C HI LY HIok _ FF' LKn crn Awn M6 md7 HH7' BASE7') as (IC7 & CSB7 & CUAR7). fold H7 in IC7, CSB7, CUAR7. fold MV7 in IC7, CSB7, CUAR7.
       pose proof (PEARDKEYP.arkK1_conc fx7 R7 MV7 (fun j => match j with 2%nat => sp | 36%nat => op | 37%nat => ov | 38%nat => oec | 47%nat => F | 48%nat => fl | 49%nat => n | 51%nat => ptr | _ => 0 end)) as PP.
       cbn beta iota in PP.
-      L5SAR.feed PP ltac:(first [timeout 3 assumption | timeout 3 (unfold PEARDKEYP.aligned; assumption) | (first [clear - Hn; lia | clear - PT0; lia | clear - GFR; lia | clear - GFLR; lia
+      L5SAR.feed PP ltac:(first [timeout 3 assumption | timeout 3 (unfold PEARDKEYP.aligned; assumption) | (first [clear - Hn; lia | clear - PT0; lia | clear - GFR; lia | clear - GFLR; lia   (* timeout-ok: on expiry the next arm runs; without this limit the build exceeds 250 GiB *)
                                | clear - GFCEIL SLO; lia | clear - GFLR SLO; lia | clear - V1 V3; lia | clear - V2 SLO; lia | clear - VBIG; lia | clear - AvF; lia | clear - AvSF; lia])]).
       destruct PP as (fx8 & R8 & M8v & MG8 & _ & FRZ8 & MS8 & KS8 & W1 & W10 & W11 & W12 & W13 & _ & K40 & K32 & SH5 & SH4 & _ & _).
       set (W8 := fun a => (F + 32 <= a < F + 32 + 16) \/ (F / 8 + 2147450880 + 4 <= a < F / 8 + 2147450880 + 4 + 2)).

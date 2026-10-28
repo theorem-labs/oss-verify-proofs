@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: jsoncons/fuzz_msgpack_encoder/asan_disagrees_at_most
+bound: '0'
+fingerprint: f17470d96f66895a02203283dbb15e1dfb75479899b36376fb24ce6ec0549d0a

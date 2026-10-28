@@ -151,7 +151,7 @@ Ltac lxp_lb_incl :=
                 | match goal with H : forall b, In b _ -> In b _ |- _ => apply in_or_app; right; exact (H _ Hb_) end
                 | lazymatch goal with |- In _ ?T => let h := head_of T in unfold h end;
                   first [ apply in_or_app; right; exact Hb_ | apply in_or_app; left; exact Hb_ ]
-                | timeout 3 (revert Hb_; generalize b_; clear; cbn [In app map rev]; intros; tauto) ] ].
+                | timeout 3 (revert Hb_; generalize b_; clear; cbn [In app map rev]; intros; tauto) ] ].   (* timeout-ok: on expiry the next arm runs; without this limit the build exceeds 250 GiB *)
 
 (* [comment removed for export] *)
 Ltac lxp_cw_list L LB lo top :=

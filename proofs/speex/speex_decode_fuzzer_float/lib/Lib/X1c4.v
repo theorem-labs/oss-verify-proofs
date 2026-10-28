@@ -90,12 +90,12 @@ first [ exact pf | tail ]
 end.
 
 Ltac lean_core :=
-first [ timeout 10 (solve [ os_lia ])
-| timeout 90 (solve [ lean_clear; simp_ofnat_goal; revert_nonsec; intros; plia_ne ])
-| timeout 90 (solve [ lean_keep1; min_closed ltac:(plia_ne) ])
-| timeout 90 (solve [ lean_keep; min_closed ltac:(plia_ne) ])
-| timeout 90 (solve [ lean_keep6; min_closed ltac:(plia_ne) ])
-| timeout 90 (solve [ lean_keep6; min_closed ltac:(plia_eu) ]) ].
+first [ timeout 10 (solve [ os_lia ])   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
+| timeout 90 (solve [ lean_clear; simp_ofnat_goal; revert_nonsec; intros; plia_ne ])   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
+| timeout 90 (solve [ lean_keep1; min_closed ltac:(plia_ne) ])   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
+| timeout 90 (solve [ lean_keep; min_closed ltac:(plia_ne) ])   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
+| timeout 90 (solve [ lean_keep6; min_closed ltac:(plia_ne) ])   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
+| timeout 90 (solve [ lean_keep6; min_closed ltac:(plia_eu) ]) ].   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
 
 Module PLiaL6.
 Import Ltac2.
@@ -108,14 +108,14 @@ else if X1bx.zt_is_prop ty then List.exist (Ident.equal id) used else false) (Co
 Ltac2 check_uses_sec (pf : constr) : unit := Control.enter (fun () => if uses_sec_prop pf then () else Control.zero Not_found).
 End PLiaL6.
 Ltac pf_uses_sec pf := let f := ltac2:(pf |- PLiaL6.check_uses_sec (Option.get (Ltac1.to_constr pf))) in f pf.
-Ltac os_tier := timeout 10 (solve [ os_lia ]).
-Ltac lean_tier := goal_has_atoms; timeout 90 (solve [ lean_keep; min_closed ltac:(plia_ne) ]).
+Ltac os_tier := timeout 10 (solve [ os_lia ]).   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
+Ltac lean_tier := goal_has_atoms; timeout 90 (solve [ lean_keep; min_closed ltac:(plia_ne) ]).   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
 
 Ltac plia_size stock :=
 first [ solve [ goal_liable; clear_sec_props; lean_core ]
 | lazymatch goal with |- ?G =>
 let pf0 := constr:(ltac:(stock) : G) in
-first [ solve [ clear_sec_props_except pf0; first [ goal_liable; lean_core | timeout 90 false_lia ] ] | exact pf0 ] end ].
+first [ solve [ clear_sec_props_except pf0; first [ goal_liable; lean_core | timeout 90 false_lia ] ] | exact pf0 ] end ].   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
 Ltac plia_fast0 stock := first [ solve [ goal_liable; clear_sec_props; os_tier ] | stock ].
 Ltac plia_mid0 stock := first [ solve [ goal_liable; clear_sec_props; first [ os_tier | lean_tier ] ] | stock ].
 Ltac plia_midB stock :=

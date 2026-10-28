@@ -1,0 +1,5 @@
+From OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer Require Statements.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Theorems.
+
+Theorem asan_ubsan_agrees_holds : OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.Statements.asan_ubsan_agrees.
+Proof. exact OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Theorems.strong_universal_error_free_spvtools_binary_parser_fuzzer_both. Qed.

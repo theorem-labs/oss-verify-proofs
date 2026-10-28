@@ -3,4 +3,4 @@
 
 [logging.apache.org/log4j/2.x](https://logging.apache.org/log4j/2.x) · OSS-Fuzz: [projects/log4j2](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/log4j2)
 
-**Status: language pending.** This project's fuzz targets run on the JVM. This release covers C and C++; support for JVM languages is being built. [What the statuses mean](../../docs/status.md).
+**Status: language pending.** This project's fuzz targets run on the JVM. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for JVM languages is being built. [What the statuses mean](../../docs/status.md).

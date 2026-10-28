@@ -171,7 +171,7 @@ Proof. try hcb. try hsb.
     st1. st1. st1. st1.
     lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (UA' : u8arr rsegs mX (RCTX + 848) (zeros 32))
-        by (apply (u8arr_of_rw_cells rsegs mX _ 32); unfold RCTX; eapply rw_cells_congr; [| | | exact UB]; [exact zeros32_cells| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]) end.
+        by (apply (u8arr_of_rw_cells rsegs mX _ 32); unfold RCTX; eapply rw_cells_congr; [| | | exact UB]; [exact zeros32_cells| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]) end.
     clear UB.
     set (stz := upd_ctx (fun c => set_unmap_seq_map ∅ c) st).
     lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => assert (MRz : rmrep stz mX) end.

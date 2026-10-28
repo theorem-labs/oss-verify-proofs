@@ -217,7 +217,7 @@ Proof using HCEIL st m1 g b r idx j MR J SO TK. try hcb. try hsb.
   lazymatch goal with H : rw_cells rsegs ?mX (conc st mt) _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
     assert (MR5 : rmrep (put_meta mt (m_set_maplen 0 (get_meta_rec st mt)) st0') mX);
     [ eapply rmrep_put_meta_frame; [exact MRC| exact MST0| exact MUt| exact WMt|];
-      eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+      eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
       unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed m_set_maplen oconc]; reflexivity
     | clear MUt WMt H ] end.
   set (st5 := put_meta mt (m_set_maplen 0 (get_meta_rec st mt)) st0') in *.

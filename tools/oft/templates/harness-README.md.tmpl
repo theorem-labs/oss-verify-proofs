@@ -61,6 +61,10 @@ $items
 - $what ([$lines]($file#$anchor)): $stops; $live.
 @@ checks_bind
 A failed check marked as ending the process contradicts every halts statement below, so a proof of one implies $that on every input it covers.
+@@ checks_bind_some
+A failure of $subject ends the process with a status that the halts statements below that name $that exclude, so a proof of one of those statements implies $that on every input it covers.
+@@ checks_bind_others
+No statement here proves the other $others.
 @@ checks_none
 The $who makes no check of its own beyond not crashing, so a statement about it says only that the code it calls $claim.
 @@ rejects
@@ -84,7 +88,9 @@ on every input on which the $build build is never refused memory for exceeding $
 @@ line_halts_may_fail
 with no memory premise, and even if any request is refused at any time: the $build build exits with $exits
 @@ line_agreement
-on every input on which the plain build is never refused memory for exceeding $budget (a premise): neither build reaches an error and both have the same set of observable behaviours; $fires$variant
+on every input on which the plain build is never refused memory for exceeding $budget (a premise): neither build reaches an error and both have the same set of observable behaviours; $fires$variant$own
+@@ own_budgets
+ (this project's own budgets: $plain / $san)
 @@ fires
 $san never fires
 @@ fires_ubsan_rust

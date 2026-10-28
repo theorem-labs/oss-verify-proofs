@@ -1,4 +1,5 @@
-# pr.yml: every pull request, every push to main, and the findings ledger of every push to a proofs/ branch.
+# pr.yml: every pull request, every merge queue group and every push to main.  ledger.yml judges a push to a proofs/
+# branch.
 #
 # The rules come from the base branch, never from the pull request.  The lint,
 # the generator, the plan and the check all run from a worktree of the base, and the
@@ -10,8 +11,7 @@
 # with no network, and no job but fetch-drafts has more than read access.  A
 # token with contents: read cannot see a draft release, and a release pull
 # request's new binaries stay drafts until release.yml publishes them, which it
-# does only once this workflow's run for the push of the tagged commit to main
-# has passed.  So fetch-drafts alone has
+# does only once the publishing gate has passed the tagged commit.  So fetch-drafts alone has
 # contents: write; it checks out nothing and runs no script from the tree, only
 # `gh release download` of the pins plan listed and a SHA-256 check of each.
 # Its YAML is the pull request's own copy of fetch-drafts.yml, as this file is
@@ -32,26 +32,37 @@
 # files are the ones the release is to publish; if publishing is refused, they
 # were still readable for that day.
 #
-#   plan          the base and the harnesses the change affects (oft plan, from the base); the planned
-#                 binaries in a release that a read-only token cannot see (a draft), and which group needs
-#                 each; whether the change can alter what `oft lint` finds when run with the change's own
-#                 tools, and whether it touches an input of the controls
-#   lint          the repository's rules (tools/oft/README.md), from the base, over every file of the
-#                 change's tree; the findings ledger over the change's history (oft ledger); generated
-#                 files equal their rendering
-#   tests         the tools' own tests, at this change; their test of this whole repository under the
-#                 change's tools only when plan says the change can alter what that finds
+#   plan          the base, and the parts of harnesses to check (oft plan, from the base, for this change's
+#                 kind): each part whose content key (tools/oft/keys.py) differs from its key at the base; the
+#                 planned binaries in a release that a read-only token cannot see (a draft), and which group
+#                 needs each; whether the change can alter what `oft lint` finds when run with the change's own
+#                 tools, whether it touches an input of the controls, and whether it touches what the tools'
+#                 tests read
+#   lint          the repository's rules (tools/oft/README.md), from the base: every rule over every file of
+#                 the change's tree for a push to main, a merge queue group and a pull request into a base
+#                 other than main; for a pull request into main the same, except that the per-file text rules
+#                 read only the files the change touches (--changed-only), or every file when it touches a
+#                 fact, a finding's finding.yaml, a .gitattributes or tools/oft/lint-exceptions.yaml; the
+#                 findings ledger over the change's history (oft ledger); generated files equal their rendering
+#   tests         the tools' own tests, at this change, one process per test class
+#                 (tools/oft/tests/parallel.py), when plan says the change touches tools/ or .github/ (or is
+#                 on the merge path); their test of this whole repository under the change's tools only when
+#                 plan says the change can alter what that finds
 #   fetch-drafts  each draft binary once, checked against its pin, as an artifact of its own, after
 #                 lint passed (skipped when there is none)
-#   check         per group of affected harnesses: fetch (a draft from its artifact), build,
+#   check         the planned parts in up to 20 jobs, 20 at once: fetch (a draft from its artifact), build,
 #                 every proof through its wrapper with its assumptions against the allowlist,
-#                 counterexamples, findings on the unpatched binaries
+#                 counterexamples, findings on the unpatched binaries.  A change that is not a release is
+#                 checked on a worktree of the base that takes only the change's proofs/, counterexamples/
+#                 and findings/, with its generated files rendered again by the base's tools, and the base's
+#                 tools run the check, so only those three can change a key.
 #   controls      tests/: positive controls pass and negative controls fail, when plan says the
 #                 change touches what they read
-#   required      the one required status: fails if anything failed, or if the plan named
-#                 harnesses and none was checked, or named the controls and they did not pass
-#   ledger        a push to a proofs/ branch, for which nothing else runs: the findings ledger over
-#                 main..push, by main's tools
+#   required      fails if anything failed, or if the plan named harnesses and none was checked, or named the
+#                 controls and they did not pass; on theorem-labs/oss-verify-proofs, where it is the status
+#                 main's ruleset requires, also when a pull request's base is not main
+#   main-gate     the status a main that merges through a merge queue requires, of a pull request and of each
+#                 queue group: required passed, and a pull request's base is main
 #
 # lint and plan start at once.  check (which compiles the change's proofs), tests and controls (which run the
 # change's own code: its tools' tests, its tests/check.sh) wait for lint as well: nothing from a pull request runs
@@ -62,21 +73,53 @@
 # the tools do: a GitHub App can change .github/actions/ with the Contents permission alone, and this file only
 # with the Workflows permission as well.  So a change to an action takes effect for the pull requests after it
 # lands.  A push to main runs lint, tests and controls in full, and checks the harnesses the push changes;
-# release-check.yml, when enabled, checks every committed proof and finding on it.  A push to a proofs/ branch runs
-# ledger alone.
+# release-check.yml, when enabled, checks on it what that push changes, and every committed proof and
+# finding once a week.  A merge queue group is the commit main becomes, and is checked as a push to
+# main is.
+#
+# required and main-gate have no condition that skips them, since a skipped job reports success.  A pull request
+# runs again when it is edited, which is the event for a new base, and a new base is checked as any other run is.
+# A new title or description changes nothing a job reads: plan and lint (and with them every job after them) do
+# not run, and required restates the verdict of the last run that checked this head, this commit and no other; a
+# restate never gives a verdict that run did not give.  When that run is still running, required waits a while for
+# its verdict, and if it does not come, says so and ends this run cancelled, neither passed nor failed: that run's
+# own required and main-gate give the verdict when it ends (a pull request from another repository, whose token may
+# not cancel, waits for it instead, up to 345 minutes).  When no verdict will come (that run was cancelled, or no
+# run checked this head), required says so and fails.  Such a run is named `restate: <title>`; the restates of one
+# pull request share one concurrency group, where a newer one replaces one that waits, and a restate cancels no run
+# that checks.
 name: pr
+# A run for a new title or description (RESTATE) is named for it, so that the run list shows which runs checked
+# nothing.  A run with GitHub's default name shows the pull request's current title, so a title can make any name:
+# required tells a restate that has job records by its skipped plan, and reads a run's name only to tell a restate
+# that waits with no job records yet, and then only whether it starts with `restate: ` (one true or false, so a title
+# with a line feed in it adds nothing to what the step reads).  An empty run-name means the default name.
+run-name: >-
+  ${{ github.event.action == 'edited' && github.event.changes.base == null
+  && format('restate: {0}', github.event.pull_request.title) || '' }}
 on:
   pull_request:
+    # `edited` is the event for "the base branch of a pull request was changed"; without it, a pull request made
+    # green against another branch and then retargeted at main would keep that green.  The other three are the
+    # default list, which naming any type replaces.
+    types: [opened, synchronize, reopened, edited]
+  merge_group:
   push:
-    branches: [main, "proofs/**"]
+    branches: [main]
 permissions:
   contents: read
   packages: read   # to pull the pinned checker and runner images from ghcr.io
 concurrency:
-  # A pull request's new push cancels its old run.  Each push has a run of its own that nothing cancels, keyed by the
-  # branch as well as the commit: a push to main and a push to a proofs/ branch of the same commit are two runs, so
-  # the branch's never cancels main's, and release.yml tags only a commit of main whose run passed.
-  group: pr-${{ github.event.pull_request.number || format('{0}-{1}', github.ref, github.sha) }}
+  # A pull request's new push cancels its old run, and so does a new base.  A new title or description (RESTATE)
+  # has a group of its own per pull request, so that it replaces no run that waits in the pull request's group, and
+  # one pull request's restates hold one runner at a time, however many edits come (a runner held for each edit would
+  # add up).  Measured on 2026-10-26 with two restates 19 s apart: the newer one waited until the older one ended,
+  # and GitHub keeps at most one waiting run in a group.  A push to main and a merge queue group
+  # each have a run of their own that nothing cancels, keyed by the branch and the commit.
+  group: >-
+    pr-${{ (github.event.action == 'edited' && github.event.changes.base == null)
+    && format('restate-{0}', github.event.pull_request.number)
+    || github.event.pull_request.number || format('{0}-{1}', github.ref, github.sha) }}
   cancel-in-progress: true
 defaults:
   run:
@@ -84,25 +127,39 @@ defaults:
 env:
   PYTHONDONTWRITEBYTECODE: "1"
   # The kind of change, from the event alone, so that every job reads the same.  A push to main is a pull request
-  # that was checked and reviewed: release.  An owner, member or collaborator is a maintainer, and so is a branch
-  # of this repository, which only someone with write access can push (a GitHub App's pull requests come with
-  # association NONE or CONTRIBUTOR); a maintainer's branch release/* is a release (startsWith ignores case, so
-  # Release/* is one too).  Anyone else is a contributor.
+  # that was checked and reviewed: release; so is a merge queue group, the commit main becomes.  An owner, member
+  # or collaborator is a maintainer, and so is a branch of this repository, which only someone with write access
+  # can push (a GitHub App's pull requests come with association NONE or CONTRIBUTOR); a maintainer's branch
+  # release/* is a release (startsWith ignores case, so Release/* is one too).  Anyone else is a contributor.
   KIND: >-
-    ${{ github.event_name == 'push' && 'release'
+    ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && 'release'
     || (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
         || github.event.pull_request.head.repo.full_name == github.repository)
        && (startsWith(github.head_ref, 'release/') && 'release' || 'maintainer')
     || 'contributor' }}
-  # The commit the change is judged against: the pull request's base, or main before the push (all zeros when the
-  # push made the branch: then the pushed commit itself).
-  EVENT_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+  # The commit the change is judged against, for a merge queue group its base and for a push main before the push
+  # (all zeros when the push made the branch: then the pushed commit itself).  A pull request has none here: its base
+  # is the first parent of the merge commit GitHub built for this run (refs/pull/<n>/merge, which actions/checkout
+  # checks out), read in the jobs' base steps, which also make sure that commit is on the base branch the pull
+  # request names now.  The event's base.sha can be older than that commit: a pull request reopened right after its
+  # base moved was sent the base before the move, and the moved base's own commits were then judged as the change's.
+  # And the merge commit can be older than a change of base branch, which GitHub rebuilds it for in the background.
+  EVENT_BASE: >-
+    ${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha
+    || github.event_name == 'push' && github.event.before || '' }}
+  # A pull request edited with its base unchanged (a new title or description): no job checks anything, and
+  # required restates the verdict of the last run that checked this head.  run-name, the concurrency group and
+  # plan's and lint's `if:` spell the same condition out, since none of them can read env.
+  RESTATE: ${{ github.event.action == 'edited' && github.event.changes.base == null }}
 
 jobs:
   plan:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    # its checkout is on the way to every check job; this runner's is the faster
-    runs-on: ubuntu-24.04-16core
+    # not on a new title or description alone (RESTATE); facts-review.yml spells it the same way.  required's restate
+    # tells an earlier restate by this job's being skipped, so this `if:` is the only condition that may skip it.
+    if: github.event.action != 'edited' || github.event.changes.base != null
+    # One CPU and 95 MB of files (below): `oft plan` loads the facts and maps the changed paths onto harnesses.
+    # A 16-core runner minute costs seven standard ones, and this job needs neither the cores nor the disk.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
       plan: ${{ steps.drafts.outputs.plan }}
@@ -110,17 +167,49 @@ jobs:
       base: ${{ steps.base.outputs.base }}
       draft_legs: ${{ steps.drafts.outputs.draft_legs }}
       repository_lint: ${{ steps.reach.outputs.repository_lint }}
+      tests: ${{ steps.reach.outputs.tests }}
       controls: ${{ steps.reach.outputs.controls }}
+      checker: ${{ steps.reach.outputs.checker }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           path: head
+          # Every file but the proof libraries: proofs/<p>/<h>/lib/ is 4.56 GB of the tree's 4.66 GB, and nothing
+          # this job reads is under it.  `oft plan` loads release.yaml, projects/, each proofs/<p>/<h>/<s>/proof.yaml
+          # (and checks that its Proof.v or Refutation.v is there), counterexamples/ and findings/, and hashes
+          # theories/; facts.load records no error on a tree without lib/, and plan never reads proof_libs, the one
+          # field that directory fills.  blob:none leaves the rest of the blobs in the remote; the base worktree
+          # below takes its tools the same way.  The diff below reads the two trees, not the worktree, so it still
+          # lists every changed path, one under lib/ included.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/proofs/*/*/lib/
+      # the same as lint's step of this name
       - name: the base branch, whose tools judge this change
         id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
           trap 'df -h "$GITHUB_WORKSPACE"' EXIT
           base="$EVENT_BASE"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            # the first parent of the merge commit checked out (EVENT_BASE says why); a commit names its parents even
+            # in a clone one commit deep
+            read -r -a parents <<< "$(git -C head cat-file -p HEAD | sed -n 's/^parent //p' | tr '\n' ' ')"
+            [ "${#parents[@]}" = 2 ] || {
+              echo "::error::HEAD has ${#parents[@]} parent(s): not the merge commit GitHub builds for a pull request"; exit 1; }
+            base="${parents[0]}"
+            # and that commit is on the base branch the pull request names now: the base branch is it or after it
+            on=$(gh api "repos/$GITHUB_REPOSITORY/compare/$base...$BASE_REF" --jq '"\(.status) \(.merge_base_commit.sha)"')
+            case "$on" in "identical $base" | "ahead $base") ;; *)
+              echo "::error::this run's merge commit was built on $base, which is not on $BASE_REF ($on): GitHub had not rebuilt it for the pull request's base when this run started, and a re-run checks the same commit; push, or close and reopen the pull request"
+              exit 1 ;;
+            esac
+          fi
           case "$base" in ''|0000000000000000000000000000000000000000) base="$(git -C head rev-parse HEAD)" ;; esac
           # one commit each of the change and its base: the jobs compare two trees and read no history, and a
           # clone of every branch's history does not fit beside the two trees on the runner's disk
@@ -132,8 +221,11 @@ jobs:
             git -C base sparse-checkout set --cone tools .github/actions
             git -C base checkout --detach "$base"
           else
-            # any other change's check jobs fetch the base's pins, which the drafts step reads from the base's facts
-            git -C head worktree add --detach "$GITHUB_WORKSPACE/base" "$base"
+            # any other change's check jobs fetch the base's pins, which the drafts step reads from the base's facts:
+            # every file but the proof libraries, as head is checked out above
+            git -C head worktree add --no-checkout --detach "$GITHUB_WORKSPACE/base" "$base"
+            git -C base sparse-checkout set --no-cone '/*' '!/proofs/*/*/lib/'
+            git -C base checkout --detach "$base"
           fi
           [ -d base/tools/oft ] || { echo "::error::the base branch has no tools/oft: nothing trusted to judge with"; exit 1; }
           # this workflow runs the base's copy of its shared actions, so they land on the base before a workflow uses them
@@ -157,22 +249,77 @@ jobs:
 
       - name: plan
         id: plan
+        env:
+          BASE: ${{ steps.base.outputs.base }}
         run: |
           set -euo pipefail
           if [ ! -e head/release.yaml ]; then
             echo "units=0" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          changed="$RUNNER_TEMP/changed.txt"
-          if [ "$KIND" != release ]; then
-            # The check job renders the dune-project of the tree it builds itself, from the base's facts and this
-            # change's proofs, so no check job reads this change's own. A project's first proofs package comes with
-            # the proofs/ paths that mark its harnesses; counted as a change, it would mark every harness.
-            { grep -vx 'dune-project' "$changed" || [ $? -eq 1 ]; } > "$RUNNER_TEMP/plan-changed.txt"
-            changed="$RUNNER_TEMP/plan-changed.txt"
+          # 20 jobs, as before: each job pays about 2 minutes of checkout, base worktree, cache and image before its
+          # first proof (measured: run 40167837171, median 125 s outside the check step), so more jobs buy a shorter
+          # full re-check for more billed 16-core minutes (64 jobs: about 2.2 hours of that per full re-check against
+          # 40 minutes; 256: 9 hours).  It also keeps a run's jobs on the one page of 100 that required's restate
+          # step reads.
+          PYTHONPATH=base/tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
+          if grep -q -- --store "$RUNNER_TEMP/plan-help.txt"; then
+            # Content keys (tools/oft/keys.py): each part of each harness has the key of what its check reads, with
+            # the statements this run checks (the base's, unless KIND is release), this change's proofs/,
+            # counterexamples/ and findings/, and the base's tools, which are what the check jobs run.  A part is
+            # checked when its key differs from its key at the base.  So a change to the tools or the workflows
+            # checks nothing here.  No recorded pass is read (--store): nothing protects a branch of them yet.
+            args=(--base "$BASE" --pr-kind "$KIND" --max-jobs 20)
+            PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
+            { echo "### parts checked, and why"
+              jq -r '.parts[] | select(.check) | "- \(.unit) \(.part): \(.why)"' "$RUNNER_TEMP/plan.json"
+              echo "### parts not checked: $(jq '[.parts[] | select(.check | not)] | length' "$RUNNER_TEMP/plan.json")"
+              jq -r '[.parts[] | select(.check | not) | .why] | group_by(.) | .[] | "- \(.[0]): \(length)"' \
+                "$RUNNER_TEMP/plan.json"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            # The base's tools predate content keys: the plan maps the changed paths onto harnesses.
+            changed="$RUNNER_TEMP/changed.txt"
+            if [ "$KIND" != release ]; then
+              # The check job renders the dune-project of the tree it builds itself, from the base's facts and this
+              # change's proofs, so no check job reads this change's own. A project's first proofs package comes with
+              # the proofs/ paths that mark its harnesses; counted as a change, it would mark every harness.  (With
+              # content keys, a build key reads the dune-project of the facts the check takes, the base's.)
+              { grep -vx 'dune-project' "$changed" || [ $? -eq 1 ]; } > "$RUNNER_TEMP/plan-nodune.txt"
+              changed="$RUNNER_TEMP/plan-nodune.txt"
+            fi
+            # A file's checked-out bytes are its blob and its attributes.  changed.txt holds every path whose blob
+            # differs; a changed .gitattributes file is translated here into the paths whose attributes it alters,
+            # and then dropped, so the plan marks those paths' harnesses and not every one.  The reach step below
+            # reads the untranslated list, so such a change still runs the tests and the controls in full.
+            if grep -qE '(^|/)\.gitattributes$' "$changed"; then
+              read_by_the_check=(projects proofs counterexamples findings theories toolchain dune-project release.yaml
+                                 .github/workflows tools/oft)
+              { git -C head ls-tree -r -z --name-only HEAD -- "${read_by_the_check[@]}"
+                git -C head ls-tree -r -z --name-only "$BASE" -- "${read_by_the_check[@]}"
+              } | sort -z -u > "$RUNNER_TEMP/tracked.z"
+              git -C head check-attr -z --all --source=HEAD --stdin < "$RUNNER_TEMP/tracked.z" \
+                | tr '\0' '\n' | paste -d '\t' - - - > "$RUNNER_TEMP/attr-head.tsv"
+              git -C head check-attr -z --all --source="$BASE" --stdin < "$RUNNER_TEMP/tracked.z" \
+                | tr '\0' '\n' | paste -d '\t' - - - > "$RUNNER_TEMP/attr-base.tsv"
+              sort "$RUNNER_TEMP/attr-head.tsv" "$RUNNER_TEMP/attr-base.tsv" | uniq -u | cut -f1 | sort -u \
+                > "$RUNNER_TEMP/attr-changed.txt"
+              { grep -vE '(^|/)\.gitattributes$' "$changed" || [ $? -eq 1 ]; } > "$RUNNER_TEMP/plan-changed.txt"
+              changed="$RUNNER_TEMP/plan-changed.txt"
+              cat "$RUNNER_TEMP/attr-changed.txt" >> "$changed"
+              echo "a .gitattributes change: $(wc -l < "$RUNNER_TEMP/attr-changed.txt") path(s) whose attributes differ"
+            fi
+            args=(--changed "$changed" --max-jobs 20)
+            if [ -e base/release.yaml ] && grep -q -- --base-release "$RUNNER_TEMP/plan-help.txt"; then
+              args+=(--base-release base/release.yaml)
+            fi
+            if grep -q -- --pr-kind "$RUNNER_TEMP/plan-help.txt"; then
+              args+=(--pr-kind "$KIND")
+            else
+              echo "the base's tools have no plan --pr-kind: every harness this change reaches is planned"
+            fi
+            PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
           fi
-          PYTHONPATH=base/tools python -m oft --root head plan --changed "$changed" \
-            --max-jobs 256 > "$RUNNER_TEMP/plan.json"
-          # the plan output is written by the next step, with each group's draft binaries in its entry
+          # the plan output is written by the drafts step, with each group's draft binaries in its entry
           echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
           { echo "### harnesses to check"; jq -r '.units[]' "$RUNNER_TEMP/plan.json"; } >> "$GITHUB_STEP_SUMMARY"
       - name: for each group of the plan, its binaries in a release this read-only token cannot see (a draft)
@@ -204,12 +351,15 @@ jobs:
         run: |
           set -euo pipefail
           changed="$RUNNER_TEMP/changed.txt"
-          # A push to main is the merge path: lint, tests and controls run in full there, whatever the change.  So
-          # they do for a change to the workflows, which run as the change has them; to a .gitattributes file, which
-          # changes how git checks out any file (line ends, encoding); and for a path git still quotes (one with a
-          # '"', a '\' or a control character), which no pattern below can read.
+          # A push to main and a merge queue group are the merge path: lint, tests and controls run in full there,
+          # whatever the change.  So they do for a change to the workflows, which run as the change has them; to a
+          # .gitattributes file, which changes how git checks out any file (line ends, encoding); and for a path git
+          # still quotes (one with a '"', a '\' or a control character), which no pattern below can read.
           full=false
-          if [ "$EVENT" = push ] || grep -qE '^(\.github/|")|(^|/)\.gitattributes$' "$changed"; then full=true; fi
+          if [ "$EVENT" = push ] || [ "$EVENT" = merge_group ] ||
+             grep -qE '^(\.github/|")|(^|/)\.gitattributes$' "$changed"; then
+            full=true
+          fi
 
           # The tests' whole-repository lint (test_this_repository_is_clean).  lint runs the base's tools over the
           # change's tree.  The change's own tools differ from the base's only in what the change touches under
@@ -226,20 +376,50 @@ jobs:
             echo "tools/ unchanged but for test data, ci/ and README.md: lint's run covers the tests' whole-tree lint"
           fi
 
+          # The tools' own tests.  They read tools/ (their code, fixtures and scripts) and the workflow files whose
+          # steps they run (tools/oft/tests/test_keys.py the plan steps of .github/workflows/pr.yml and
+          # release-check.yml, tools/oft/tests/test_lint.py the lint step of pr.yml, and
+          # tools/oft/tests/test_facts_review_gate.py facts-review.yml); the one test that reads the rest of the tree,
+          # test_this_repository_is_clean, is skipped below unless repository_lint, and lint's run covers it.  A change
+          # that touches neither tools/ nor .github/ runs the same tests over the same bytes as its base did on main, so
+          # they do not run again; the merge path (full) runs them whatever the change.
+          if [ "$full" = true ] || grep -q '^tools/' "$changed"; then
+            echo "tests=true" >> "$GITHUB_OUTPUT"
+            echo "the tools' tests run"
+          else
+            echo "tests=false" >> "$GITHUB_OUTPUT"
+            echo "nothing under tools/ or .github/ changed: the tools' tests do not run"
+          fi
+
           # The controls: `dune build @theories/default @tests/default` and tests/check.sh in the checker image that
-          # toolchain/toolchain.lock names.  They read theories/, tests/ and toolchain/; dune also reads every dune,
-          # dune-project and dune-workspace file of the tree.  A change that touches none of these leaves their
-          # outcome as the base's, and the push of the merge to main runs them in full.
-          if [ "$full" = true ] || grep -qE '^(theories|tests|toolchain)/|(^|/)dune(-project|-workspace)?$' "$changed"; then
+          # release.yaml's images.checker names.  They read theories/, tests/, toolchain/ and that image; dune also
+          # reads every dune, dune-project and dune-workspace file of the tree.  A change that touches none of these
+          # leaves their outcome as the base's, and the merge queue group and the push of the merge to main run them in
+          # full.  Whether a changed release.yaml names another image is the base's tools' to say
+          # (plan.images_differ, which compares images.checker and images.runner, the keys a check reads); an
+          # error there, such as base tools older than that function, counts as another image.
+          new_image=false
+          if grep -qxF release.yaml "$changed" && ! PYTHONPATH=base/tools python -c 'import sys; from oft import plan
+          sys.exit(int(plan.images_differ("head/release.yaml", "base/release.yaml")))'; then
+            new_image=true
+          fi
+          if [ "$full" = true ] || [ "$new_image" = true ] ||
+             grep -qE '^(theories|tests|toolchain)/|(^|/)dune(-project|-workspace)?$' "$changed"; then
             echo "controls=true" >> "$GITHUB_OUTPUT"
             echo "the controls run"
           else
             echo "controls=false" >> "$GITHUB_OUTPUT"
             echo "no input of the controls changed: they do not run"
           fi
+          # The image the controls run in, read here with the base's PyYAML; anything but a checker digest is left out,
+          # and the controls job refuses an empty one.
+          checker=$(python -c 'import yaml; print(yaml.safe_load(open("head/release.yaml"))["images"]["checker"])') || true
+          [[ "$checker" =~ ^ghcr\.io/theorem-labs/oss-fuzz-theorems-checker@sha256:[0-9a-f]{64}$ ]] || checker=
+          echo "checker=$checker" >> "$GITHUB_OUTPUT"
 
   lint:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    # not on a new title or description alone (RESTATE)
+    if: github.event.action != 'edited' || github.event.changes.base != null
     # The text rules run in one process per CPU (tools/oft/lint.py, scan_files): some 36 CPU-minutes over proofs/.
     # Disk too: on a private repository's ubuntu-24.04 runner this job ran out of disk at about 13.5 GB written; the
     # 16-core runner has 600 GB.
@@ -252,10 +432,27 @@ jobs:
       # as plan's step of this name, with only the base's tools and findings ledger: lint reads the change's tree
       - name: the base branch, whose tools judge this change
         id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
           trap 'df -h "$GITHUB_WORKSPACE"' EXIT
           base="$EVENT_BASE"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            # the first parent of the merge commit checked out (EVENT_BASE says why); a commit names its parents even
+            # in a clone one commit deep
+            read -r -a parents <<< "$(git -C head cat-file -p HEAD | sed -n 's/^parent //p' | tr '\n' ' ')"
+            [ "${#parents[@]}" = 2 ] || {
+              echo "::error::HEAD has ${#parents[@]} parent(s): not the merge commit GitHub builds for a pull request"; exit 1; }
+            base="${parents[0]}"
+            # and that commit is on the base branch the pull request names now: the base branch is it or after it
+            on=$(gh api "repos/$GITHUB_REPOSITORY/compare/$base...$BASE_REF" --jq '"\(.status) \(.merge_base_commit.sha)"')
+            case "$on" in "identical $base" | "ahead $base") ;; *)
+              echo "::error::this run's merge commit was built on $base, which is not on $BASE_REF ($on): GitHub had not rebuilt it for the pull request's base when this run started, and a re-run checks the same commit; push, or close and reopen the pull request"
+              exit 1 ;;
+            esac
+          fi
           case "$base" in ''|0000000000000000000000000000000000000000) base="$(git -C head rev-parse HEAD)" ;; esac
           # one commit each of the change and its base, with their files: a clone of every branch's history with its
           # files does not fit beside the two trees on the runner's disk (the ledger step adds the history without them)
@@ -287,6 +484,10 @@ jobs:
           git -C head fetch --no-tags --filter=blob:none --unshallow origin "$BASE" "$(git -C head rev-parse HEAD)"
           PYTHONPATH=base/tools python -m oft --root head ledger --base "$BASE"
       - name: lint, by the base's rules
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ steps.base.outputs.base }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           set -euo pipefail
           args=(--changed "$RUNNER_TEMP/changed.txt" --pr-kind "$KIND")
@@ -295,6 +496,25 @@ jobs:
           [ ! -d base/findings ] || args+=(--base "$GITHUB_WORKSPACE/base")
           # before the first release is exported there are no facts, and the text rules still run
           [ -e head/release.yaml ] || args+=(--skeleton)
+          # A pull request into main: the per-file text rules (private data, links, proofs) read only the files that
+          # differ from the base (--changed-only), or every file when one of them is a fact, a finding's
+          # finding.yaml, a .gitattributes or tools/oft/lint-exceptions.yaml (a margin over the four files a verdict
+          # reads: tools/oft/lint.py, read_by_every_verdict).  So an unchanged file gets the verdict it has on main,
+          # which the merge queue group linted whole before it merged and the push run of main linted whole after:
+          # the same rules (the base's; a change to tools/ gets the tests job's whole-tree lint with its own tools)
+          # over the same blobs and attributes, and the same facts.  Only main
+          # has that whole-tree lint: a pull request into any other branch (a stacked one, a lane's branch) lints
+          # every file, since its base's files were never linted whole.  Every other rule still runs over the whole
+          # tree: paths (every path, what this kind of change may touch, the findings ledger), schema and the rules
+          # between facts, free text, withheld, and whether each lint exception is used.  A
+          # push to main and a merge queue group lint every file, and so do tools older than --changed-only.  One
+          # cost: a per-file finding already on main (after a push run that failed) no longer fails every pull
+          # request into main; the push run and the merge queue group still lint every file, so nothing new
+          # reaches main that way.
+          if [ "$EVENT" = pull_request ] && [ "$BASE_REF" = main ] \
+              && grep -q -- '"--changed-only"' base/tools/oft/__main__.py; then
+            args+=(--changed-only "$BASE")
+          fi
           PYTHONPATH=base/tools python -m oft --root head lint "${args[@]}"
       # The change's own code runs last: the generator, for a maintainer's change to tools/ (the tools' tests run in the
       # tests job).  It runs as this job's user in this workspace, so it could rewrite base/; no step after it reads base/.
@@ -313,24 +533,45 @@ jobs:
   tests:
     # the change's own code: only after lint has accepted the paths it changes
     needs: [plan, lint]
-    # the whole-tree lint, when it runs, takes one process per CPU
+    # only when the change touches what the tests read (plan's reach step says what that is)
+    if: needs.plan.outputs.tests == 'true'
+    # one process per test class (tools/oft/tests/parallel.py); the whole-tree lint test, when it runs, takes one
+    # process per CPU by itself and sets this job's floor, so it keeps the larger runner
     runs-on: ${{ needs.plan.outputs.repository_lint == 'true' && 'ubuntu-24.04-16core' || 'ubuntu-24.04' }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      # The whole tree when the tests lint it whole (repository_lint): test_this_repository_is_clean reads every file.
+      - if: needs.plan.outputs.repository_lint == 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           path: head
           persist-credentials: false   # the change's code runs here, and this job fetches nothing more
+      # Otherwise every file but the proof libraries, as plan checks out: proofs/<p>/<h>/lib/ is 4.56 GB of the tree's
+      # 4.66 GB, and with the whole-tree lint test skipped no test reads under it (the tests read tools/, .github/,
+      # .claude/skills/ and release.yaml).  Measured (run 40392405757, at bf36dc38): the same 653 tests run and pass
+      # either way, and the checkout takes 3-4 s (95 MB, 12,074 files) against 89-116 s for the whole tree (4.5 GB,
+      # 71,119 files), or 5-7 s against 8.2-8.9 minutes for a proofs/ branch's.  A file under lib/ is not on disk, so
+      # a test that opened one would fail, not pass on bytes it never read.
+      - if: needs.plan.outputs.repository_lint != 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          path: head
+          persist-credentials: false   # the change's code runs here, and this job fetches nothing more
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/proofs/*/*/lib/
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: the tools' dependencies (PyYAML, idna), hash-pinned, at this change
         run: python -m pip install --quiet --require-hashes -r head/tools/oft/requirements.txt
-      - name: the tools' own tests, at this change
+      - name: the tools' own tests, at this change, one process per test class
         working-directory: head/tools
         env:
           OFT_SKIP_REPOSITORY_LINT: ${{ needs.plan.outputs.repository_lint == 'true' && '0' || '1' }}
-        run: python -m unittest discover -s oft/tests -t .
+        run: python -B -m oft.tests.parallel
 
   # Each leg a call of fetch-drafts.yml, which GitHub runs from this workflow's own commit (for a pull request, its merge
   # commit: the boundary is in the header); a called workflow runs with the token the calling job grants, here contents:
@@ -351,6 +592,11 @@ jobs:
 
   check:
     # the change's proofs are compiled here: only after lint has accepted the paths and the proof text it changes.
+    # A change that is not a release is checked on a worktree of the base with only this change's proofs/,
+    # counterexamples/ and findings/ in it (the step below), so its plan names only the harnesses whose files under
+    # those three it changes: for every other harness this job would compile the base's bytes a second time.  A
+    # release pull request, a push to main and a merge queue group bring their own facts: plan reads them by the
+    # release rules (every harness the change reaches) and this job checks them on the change's own tree.
     # fetch-drafts is skipped when no group has a draft, and a job whose need was skipped is skipped too unless its
     # condition says otherwise: run when fetch-drafts passed or had nothing to do, never when it failed, was cancelled
     # or was skipped because lint failed
@@ -363,11 +609,14 @@ jobs:
     name: check ${{ matrix.job.index }}
     # a proof check peaks at 14.5-19.4 GiB on 16 cores: the 16-core/64 GB GitHub-hosted larger runner.  The
     # repository variables PROOF_RUNNER and PROOF_TIMEOUT_MINUTES move every proof check job (pr.yml, release-check.yml,
-    # weekly.yml) to a larger runner or a longer limit; a GitHub-hosted job stops at 6 hours whatever the limit.
+    # weekly.yml) to a larger runner or a longer limit; a GitHub-hosted job stops at 6 hours whatever the limit.  A merge
+    # queue's group is checked like a push to main and must report within the queue's 360 minutes of its creation,
+    # runner waits included: a group whose checks run longer leaves the queue unmerged.
     runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
     timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
     strategy:
       fail-fast: false
+      # the plan's --max-jobs 20 (the plan step says why not more), all at once
       max-parallel: 20
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.plan) }}
@@ -425,10 +674,11 @@ jobs:
           # the image check-units.sh runs: the release.yaml of the tree it checks
           bash "$RUNNER_TEMP/tools/oft/ci/cache-key.sh" "${{ steps.work.outputs.work }}/release.yaml" "${units[@]}" >> "$GITHUB_OUTPUT"
       - name: dune's cache from earlier runs of the base branch (read only)
-        # Off, and it stays off.  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
+        # Off, and it stays off (OSSV-218).  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
         # put in a filled cache under the same key, made doctored proofs pass check-units.sh.  dune restores
         # files/<digest> without hashing the bytes again (ocaml/dune 72f6fefe, src/dune_cache/shared.ml:313-319,
-        # 329-348), and the kernel does not check a compiled file again when a proof loads it.
+        # 329-348), and the kernel does not check a compiled file again when a proof loads it.  Hashing the restored
+        # files would not catch a rewritten metadata entry, and verifying by rebuilding saves nothing.
         if: false
         uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
         with:
@@ -452,6 +702,9 @@ jobs:
           WORK: ${{ steps.work.outputs.work }}
           TOOLS: ${{ runner.temp }}/tools
           UNITS: ${{ matrix.job.check_units }}
+          # as JSON, so that a plan without the field (null) is told from one whose job has no proof (""): check-units.sh
+          # refuses null
+          PROOF_UNITS: ${{ toJSON(matrix.job.proof_units) }}
           PROJECTS: ${{ matrix.job.projects }}
           CX_UNITS: ${{ matrix.job.counterexamples }}
           FINDINGS: ${{ matrix.job.findings }}
@@ -460,8 +713,11 @@ jobs:
           CACHE: ${{ runner.temp }}/dune-cache
           GH_TOKEN: ${{ github.token }}
         run: bash "$RUNNER_TEMP/tools/oft/ci/check-units.sh"
-      - name: keep dune's cache (main only, and not from a draft)
-        if: github.event_name == 'push' && join(matrix.job.drafts, ',') == ''
+      # One job saves, and not one that read a draft.  A save per job filled the repository's 10 GB of cache (8 such
+      # entries held 8.3 GiB of 9.6) and evicted the rest; a job that read a draft saves nothing (the header says why).
+      # No proof check restores this cache (OSSV-218, the restore step above).
+      - name: keep dune's cache (main only, one job, and not from a draft)
+        if: github.event_name == 'push' && matrix.job.index == 0 && join(matrix.job.drafts, ',') == ''
         uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
         with:
           path: ${{ runner.temp }}/dune-cache
@@ -481,15 +737,16 @@ jobs:
         with:
           path: head
           persist-credentials: false   # the change's code runs here, and this job fetches nothing more
-      - name: the checker image, by digest (fail closed)
+      - name: the checker image release.yaml pins, by digest (fail closed)
         id: image
+        env:
+          IMG: ${{ needs.plan.outputs.checker }}
         run: |
           set -euo pipefail
-          img="$(sed -n 's/^checker=//p' head/toolchain/toolchain.lock)"
-          [[ "$img" =~ ^ghcr\.io/theorem-labs/oss-fuzz-theorems-checker@sha256:[0-9a-f]{64}$ ]] || {
-            echo "::error::toolchain/toolchain.lock must name the checker image by digest, got '$img'"; exit 1; }
-          echo "image=$img" >> "$GITHUB_OUTPUT"
-      - name: sign in to ghcr.io, where the pinned images are (needed while their packages are private)
+          [[ "$IMG" =~ ^ghcr\.io/theorem-labs/oss-fuzz-theorems-checker@sha256:[0-9a-f]{64}$ ]] || {
+            echo "::error::release.yaml must name the checker image by digest in images.checker, got '$IMG'"; exit 1; }
+          echo "image=$IMG" >> "$GITHUB_OUTPUT"
+      - name: sign in to ghcr.io, where the pinned images are
         env:
           GH_TOKEN: ${{ github.token }}
         run: echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
@@ -501,68 +758,194 @@ jobs:
             -v "$GITHUB_WORKSPACE/head:/work" -w /work "${{ steps.image.outputs.image }}" \
             bash -c 'dune build --root . @theories/default @tests/default && ./tests/check.sh'
 
-  # A push to a proofs/ branch.  A proof branch takes pushes and merges, not pull requests, so a finding can be added
-  # there and deleted or rewritten before any pull request compares two trees; this job holds every commit of the
-  # branch to the findings ledger (oft ledger, tools/oft/README.md).  It is not the lint job: a proof branch takes over
-  # a hundred pushes a day, and the ledger reads commits and trees and a few finding files, in seconds.  It judges
-  # main..push, not event.before..push: main..push holds every commit the branch's release pull request will bring,
-  # as that pull request's lint job judges it.  The tools are main's, as a pull request's are its base's: a push never
-  # brings the rules it is judged by.  The ledger reads only the history the branch has, so a forced push, which can
-  # drop the commits that had a finding, fails the job.
-  ledger:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/proofs/')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    permissions:
-      contents: read   # it pulls no image
-    steps:
-      - name: a proof branch is never rewritten
-        env:
-          FORCED: ${{ github.event.forced }}
-        run: |
-          set -euo pipefail
-          if [ "$FORCED" = true ]; then
-            echo "::error::$GITHUB_REF_NAME was force-pushed: a proof branch is never rewritten, since a rewrite can" \
-              "drop the commits that had a finding, which no check then sees"
-            exit 1
-          fi
-      - name: main's tools
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-        with:
-          ref: main
-          sparse-checkout: tools
-      - name: the history main..push, as commits and trees, without file contents
-        id: main
-        run: |
-          set -euo pipefail
-          main="$(git rev-parse HEAD)"
-          git fetch --no-tags --filter=blob:none --unshallow origin "$main" "$GITHUB_SHA"
-          echo "main=$main" >> "$GITHUB_OUTPUT"
-          echo "main..push: $(git rev-list --count "$main..$GITHUB_SHA") commit(s)"
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
-        with:
-          python-version: "3.12"
-      - name: the tools' dependencies (PyYAML, idna), hash-pinned, from main
-        run: python -m pip install --quiet --require-hashes -r tools/oft/requirements.txt
-      - name: every record main..push had is in the push, with the evidence of its anchor
-        env:
-          MAIN: ${{ steps.main.outputs.main }}
-        run: PYTHONPATH=tools python -m oft --root . ledger --base "$MAIN" --tip "$GITHUB_SHA"
-
   required:
     needs: [plan, lint, tests, fetch-drafts, check, controls]
-    if: always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
+    if: always()
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    # a restate of a pull request from another repository waits up to 345 minutes (the step says why)
+    timeout-minutes: >-
+      ${{ github.event.action == 'edited' && github.event.changes.base == null
+      && github.event.pull_request.head.repo.full_name != github.repository && 360 || 5 }}
+    permissions:
+      # a new title or description: the earlier runs of this workflow on this head, and the cancel that ends this run
+      # with no verdict while the head's own run is still checking
+      actions: write
+      pull-requests: read   # a new title or description: the base branch the pull request names now
     steps:
+      - name: a pull request into theorem-labs/oss-verify-proofs is a pull request into main
+        if: github.repository == 'theorem-labs/oss-verify-proofs' && github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.ref }}
+        run: '[ "$BASE" = main ] || { echo "::error::the base is $BASE: this repository takes pull requests into main"; exit 1; }'
+      # The verdict of the run that checked this head for this pull request last, of all runs but this one (a re-run
+      # of an old restate must see a run a later change of base started): this head's own verdict, never an earlier
+      # push's.  Restates are passed over, so a restate restates a run that checked: a restate is a run whose plan was
+      # skipped, since plan's `if:` is the RESTATE condition.  A run's name alone cannot tell them apart (see run-name).
+      # GitHub writes a skipped job's record up to several seconds after its run starts, so a run with job records but
+      # no plan record yet is asked again, for up to 30 seconds, before it counts as a run that checked.  A run with no
+      # job records at all ended so (cancelled while it waited: passed over), or is a restate waiting behind another
+      # in its group (passed over: it checks nothing, and it cannot start before this one ends), or is a check still to
+      # come, waiting in the pull request's group or for a runner (a base change or a reopen that just cancelled the
+      # running check): as the newest run, that one is waited for.  A waiting run is told for a restate by whether its
+      # name starts with `restate: ` (see run-name; a pull request whose own title starts so makes its waiting checks
+      # look like restates, and then an older verdict of this same head is restated).  Each poll of the wait below looks
+      # again, so a waiting run is judged by its job records once it has them; the records read are those of the
+      # attempt the run list showed (a re-run is a new attempt of the same run).
+      # A run from a fork names no pull request, so it is matched by its head repository and branch instead.  Only
+      # that run is restated: an older one may have
+      # been judged against an earlier base.  On a pull request into main, the restated verdict is that run's
+      # main-gate, which passed only if that run's base was main too, so a green earned against another base stays
+      # out.
+      #
+      # A run that has not finished has no verdict yet: this step asks for it every POLL_SECONDS, for WAIT_SECONDS in
+      # all, and restates it if it comes.  A run created at the same moment as this one (a push and an edit together)
+      # may not be listed yet, so the list is asked for again for up to LIST_SECONDS, in that same wait.  A title or
+      # description is mostly edited
+      # while the head's run checks (of 58 restates of 2026-10-19 to 26 that failed, at least 53 found that run still
+      # running, the nearest 5.1 minutes from its end), so the wait is short: it covers a run in its last steps, whose
+      # required and main-gate GitHub may have started before this run's.  A run still running after the wait gives
+      # the head's verdict when it ends, with its own required and main-gate, which GitHub shows over this run's.  So
+      # this run then says so and cancels itself (force-cancel, which also stops main-gate's always()): its required
+      # ends cancelled, neither passed nor failed, while that run's own jobs show as running.  A pull request from
+      # another repository gets a token that may not cancel, so its restate waits instead, up to WAIT_SECONDS (345
+      # minutes, inside GitHub's 360-minute limit on a job; a check may take longer, and then this step fails as one
+      # that may not cancel itself).  No run that checked this head, a cancelled run (its
+      # required ran, always(), over cancelled jobs) and a run with no required or main-gate verdict leave no verdict
+      # that will come later: this step then fails and says so, as the head's own state already shows.
+      - name: a new title or description restates the last verdict on this head
+        if: env.RESTATE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          WAIT_SECONDS: ${{ github.event.pull_request.head.repo.full_name != github.repository && '20700' || '60' }}
+          POLL_SECONDS: ${{ github.event.pull_request.head.repo.full_name != github.repository && '60' || '10' }}
+          LIST_SECONDS: "60"
+        run: |
+          set -euo pipefail
+          # No verdict, and none will come: say why, and fail, as the head's own state shows.
+          none() {
+            echo "::error::no verdict to restate: $1"
+            echo "No verdict to restate: $1." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
+          # The last run that checked this head or will (see above), as "<id> <status> <conclusion>", into `found`,
+          # else nothing.  Fails (1) when a call fails, so the caller asks again and keeps what it found before.
+          declare -A known=()
+          find_last() {
+            local runs run attempt status conclusion restate plan try
+            found=
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/pr.yml/runs?event=pull_request&head_sha=$HEAD&per_page=100" \
+              --jq '[.workflow_runs[]
+                | select(.id != (env.GITHUB_RUN_ID | tonumber))
+                | select(any(.pull_requests[]; .number == (env.PR | tonumber))
+                    or (.pull_requests == [] and .head_repository.full_name == env.HEAD_REPO and .head_branch == env.HEAD_REF))]
+                | sort_by(.run_started_at) | reverse | .[] | "\(.id) \(.run_attempt) \(.status) \(.conclusion) \(.display_title | startswith("restate: "))"')" ||
+              return 1
+            while read -r run attempt status conclusion restate; do
+              [ -n "$run" ] || continue
+              # a finished attempt's records do not change: each is read once (a re-run is a new attempt of the same run)
+              if [ -n "${known[$run.$attempt]:-}" ]; then
+                plan="${known[$run.$attempt]}"
+              else
+                for try in 1 2 3 4 5 6 7; do
+                  # Every page of the attempt's jobs (--paginate: the fetch-drafts legs and the checks can put a job
+                  # past the first 100), one line per page that has none ("none": the attempt has no job records; a
+                  # later page is never empty) or per plan record; the first line is the answer.
+                  plan="$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$run/attempts/$attempt/jobs?per_page=100" \
+                    --jq 'if .jobs == [] then "none" else (.jobs[] | select(.name == "plan") | .conclusion // .status) end')" ||
+                    return 1
+                  plan="${plan%%$'\n'*}"
+                  [ -z "$plan" ] || break
+                  [ "$try" = 7 ] && break
+                  sleep 5
+                done
+                [ "$status" != completed ] || [ -z "$plan" ] || known[$run.$attempt]="$plan"
+              fi
+              case "$plan" in
+                skipped) continue ;;
+                none)
+                  [ "$status" != completed ] || continue
+                  [ "$restate" != true ] || continue ;;
+              esac
+              found="$run $attempt $status $conclusion"
+              return 0
+            done <<< "$runs"
+          }
+          polls=$((WAIT_SECONDS / POLL_SECONDS))
+          list_polls=$((LIST_SECONDS / POLL_SECONDS))
+          listed=false
+          last=
+          while :; do
+            if find_last; then
+              listed=true
+              last="$found"
+              if [ -z "$last" ]; then
+                [ "$list_polls" -gt 0 ] || break
+                list_polls=$((list_polls - 1))
+                waiting="no run that checked this head is listed yet"
+              else
+                read -r run attempt status conclusion <<< "$last"
+                [ "$status" != completed ] || break
+                waiting="run $run, the last to check this head, is $status"
+              fi
+            else
+              echo "::warning::could not list this head's runs"
+              waiting="could not list this head's runs"
+            fi
+            [ "$polls" -gt 0 ] || break
+            echo "$waiting: asking again in $POLL_SECONDS seconds"
+            polls=$((polls - 1))
+            sleep "$POLL_SECONDS"
+          done
+          [ "$listed" = true ] || none "this head's runs could not be listed"
+          [ -n "$last" ] || none "no run of this workflow checked this head (a push, or closing and reopening, checks it)"
+          read -r run attempt status conclusion <<< "$last"
+          if [ "$status" != completed ]; then
+            why="run $run, the last to check this head, is still $status; its own required and main-gate give this head's verdict when it ends"
+            echo "::notice::no verdict to restate yet: $why"
+            echo "No verdict to restate yet: $why." >> "$GITHUB_STEP_SUMMARY"
+            if gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/force-cancel" > /dev/null; then
+              # the cancel ends this job within seconds
+              sleep 60
+              none "$why, and this run, which asked to be cancelled, was not"
+            fi
+            none "$why, and this run may not cancel itself"
+          fi
+          [ "$conclusion" != cancelled ] ||
+            none "run $run, the last to check this head, was cancelled (re-running run $run, or a push, checks it)"
+          # the base branch the pull request names now, not this run's event's: a re-run of an old restate after a
+          # change of base must not restate against the old base
+          base_now="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq .base.ref)" ||
+            none "could not read pull request $PR's base branch"
+          job=required
+          [ "$base_now" = main ] && job=main-gate
+          # every page of the attempt's jobs: with up to 256 fetch-drafts legs and 20 checks, the verdict job can be
+          # past the first 100
+          verdict="$(JOB=$job gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$run/attempts/$attempt/jobs?per_page=100" \
+            --jq '.jobs[] | select(.name == env.JOB) | .conclusion // empty')" ||
+            none "the jobs of run $run, the last to check this head, could not be read"
+          verdict="${verdict%%$'\n'*}"
+          case "$verdict" in
+            success) echo "run $run on this head: $job passed, and a new title or description changes nothing"; exit 0 ;;
+            failure) echo "::error::run $run on this head: $job failed, and a new title or description changes nothing"; exit 1 ;;
+          esac
+          none "run $run, the last to check this head, has no $job verdict (${verdict:-none}; a push, or closing and reopening, checks this head)"
       - name: every job green, and something checked when the plan named anything
+        if: env.RESTATE != 'true'
         env:
           DRAFTS_LISTED: ${{ needs.plan.outputs.draft_legs != '[]' }}
         run: |
           set -euo pipefail
           [ "${{ needs.plan.result }}" = success ] || { echo "::error::the plan failed"; exit 1; }
           [ "${{ needs.lint.result }}" = success ] || { echo "::error::lint failed"; exit 1; }
-          [ "${{ needs.tests.result }}" = success ] || { echo "::error::the tools' tests failed"; exit 1; }
+          if [ "${{ needs.plan.outputs.tests }}" = true ]; then
+            [ "${{ needs.tests.result }}" = success ] || { echo "::error::the tools' tests failed or did not run"; exit 1; }
+          else
+            [ "${{ needs.tests.result }}" = skipped ] || { echo "::error::nothing the tools' tests read changed, yet they ran"; exit 1; }
+          fi
           if [ "$DRAFTS_LISTED" = true ]; then
             [ "${{ needs.fetch-drafts.result }}" = success ] || { echo "::error::fetching the draft binaries failed or did not run"; exit 1; }
           else
@@ -579,3 +962,24 @@ jobs:
             [ "${{ needs.check.result }}" = skipped ] || { echo "::error::no harness planned, yet check ran"; exit 1; }
           fi
           echo "harnesses checked: ${{ needs.plan.outputs.units }}"
+
+  # The status a main that merges through a merge queue requires, of each pull request and each queue group.  A pull
+  # request made green against another branch and then retargeted at main must not carry that green into main, so on
+  # a pull request it also judges the base.
+  main-gate:
+    name: main-gate
+    needs: [required]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: required passed
+        env:
+          REQUIRED: ${{ needs.required.result }}
+        run: '[ "$REQUIRED" = success ] || { echo "::error::required did not pass"; exit 1; }'
+      - name: a pull request's base is main
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.ref }}
+        run: '[ "$BASE" = main ] || { echo "::error::the base is $BASE, not main"; exit 1; }'

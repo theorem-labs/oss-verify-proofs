@@ -12,7 +12,9 @@ its `UPSTREAM-CARRIED.tsv` lists them. A port-built binary instead links the
 driver in the OSS Verify port's `infra/base-builder/driver/`. Each of its files
 says `SPDX-License-Identifier: MIT OR Apache-2.0`, and its source is in that
 project's port archive; a Rust port-built binary also links the port's adapter
-crate, `infra/base-builder/rust/oft-rust-rt/` (`Apache-2.0`). A contribution is
+crate, `infra/base-builder/rust/oft-rust-rt/` (`Apache-2.0`), and a Python
+port-built binary the port's interpreter host and `atheris` stand-in,
+`infra/base-builder/python/` (`Apache-2.0`). A contribution is
 under the MIT licence, apart from files made from the proofs below, which keep
 their licence.
 
@@ -62,7 +64,12 @@ the crates its fuzz target uses. The standard library's own crates are
 `MIT AND Apache-2.0 WITH LLVM-exception AND (MIT OR Apache-2.0)`, and the
 crates it vendors keep their own licences (for example `memchr`,
 `Unlicense OR MIT`, and `miniz_oxide`, `MIT OR Zlib OR Apache-2.0`), as each
-crate's `Cargo.toml` states; a Rust harness's build record lists each one. Each
+crate's `Cargo.toml` states; a Rust harness's build record lists each one. A
+Python binary holds CPython 3.11.13 (`Python-2.0`) with the third-party code
+CPython incorporates (for example its copies of expat, `MIT`, and libmpdec,
+`BSD-2-Clause`), the standard-library modules its fuzz target imports, as
+bytecode, and the build image's libraries that CPython's built-in modules link
+(for example zlib); a Python harness's build record lists each one. Each
 project's binary archive, `<project>-bin.tar.zst`, carries the licence files of
 every component compiled into its binaries, copied verbatim, as
 `LICENSES/<component>/<file>`; `./oft fetch` unpacks them to
@@ -90,3 +97,14 @@ source of the Alpine packages that the toolchain build installs
 
 This project is not affiliated with or endorsed by Google or the OSS-Fuzz
 project. See [NOTICE](../NOTICE).
+
+A Go binary is the exception to the list above: it holds no C library, no
+compiler runtime and not the port's C driver. It is the library and the Go
+modules its fuzz target uses (each under its own licence, pinned by the port's
+`go.lock`), the harness, Go 1.27.1's standard library and runtime
+(`BSD-3-Clause`), and the port's patches to that runtime and its Go driver,
+which Theorem Labs, PBC wrote under the MIT licence (each Go harness's build
+record lists them). They come from the port's Go toolchain image, not from the
+port archive, so for a Go binary the port archive does not hold the driver's
+source; a Go binary under a GPL or LGPL licence waits until a release attaches
+that source too.

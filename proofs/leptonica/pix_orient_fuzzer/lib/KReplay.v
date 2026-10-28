@@ -54,7 +54,7 @@ Ltac2 kr_img (pre : string list) (old_mod : string) (new_mod : string)
   else None.
 
 Ltac2 kr_retag_all (i : ident) : ident :=
-  kr_retag "Tgt_pix_orient_fuzzer_both" "AsanUbsan" (kr_retag "Tgt_pix_orient_fuzzer_asan" "Asan" (kr_retag "Src_leptonica_pix_orient_fuzzer_repro" "Plain" i)).
+  kr_retag "Tgt_pix_orient_fuzzer_both" "AsanUbsan" (kr_retag "Tgt_pix_orient_fuzzer_ubsan" "Ubsan" (kr_retag "Tgt_pix_orient_fuzzer_asan" "Asan" (kr_retag "Src_leptonica_pix_orient_fuzzer_repro" "Plain" i))).
 
 Ltac2 kr_port (path : ident list) : ident list :=
   if kr_pref_eq ["RocqVerifyHarness"; "AgentSubmission"] path
@@ -68,10 +68,14 @@ Ltac2 kr_port (path : ident list) : ident list :=
       match kr_img oversight "Tgt_pix_orient_fuzzer_asan" "Asan" path with
       | Some p => p
       | None =>
-        match kr_img oversight "Tgt_pix_orient_fuzzer_both" "AsanUbsan" path with
+        match kr_img oversight "Tgt_pix_orient_fuzzer_ubsan" "Ubsan" path with
         | Some p => p
         | None =>
-          path
+          match kr_img oversight "Tgt_pix_orient_fuzzer_both" "AsanUbsan" path with
+          | Some p => p
+          | None =>
+            path
+          end
         end
       end
     end.
@@ -81,6 +85,7 @@ Ltac2 kr_unport_len (path : ident list) : int :=
   if kr_pref_eq (kr_lib_path ()) path then Int.sub n 3
   else if kr_pref_eq (kr_img_path "Plain") path then Int.sub n 1
   else if kr_pref_eq (kr_img_path "Asan") path then Int.sub n 2
+  else if kr_pref_eq (kr_img_path "Ubsan") path then Int.sub n 2
   else if kr_pref_eq (kr_img_path "AsanUbsan") path then Int.sub n 2
   else n.
 

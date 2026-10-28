@@ -36,6 +36,9 @@ defs:
       # where the fuzz target turns an input away by returning a value other than 0 or -1
       # (the driver's status 78); its halts statements then allow 78
       rejects: {type: list, items: {type: ref, name: reject}, min: 1, optional: true}
+      # whether code linked into the binary can end a failed check with another status (docs/facts.md,
+      # "Failure handlers"): none, present or unknown.  Absent is unknown.  Only none lets a statement prove a check.
+      failure_handlers: {type: enum, values: [none, present, unknown], optional: true}
       distribution: {type: ref, name: distribution, optional: true}
       model_gap: {type: list, items: {type: feature}, optional: true}
       statements:
@@ -60,7 +63,7 @@ defs:
       version: {type: str, max: 40, optional: true}
       licence: {type: spdx}
 
-  # static riscv64 (RV64G) Linux ELF, musl; run as <file> <input-file>.
+  # static riscv64 (RV64G) Linux ELF, musl (a Go fuzz target: no C library); run as <file> <input-file>.
   # A published build has bytes, sha256 and segments; a withheld one has none of them.
   build:
     type: object
@@ -95,8 +98,16 @@ defs:
       kind: {type: enum, values: [algebraic, api-contract, differential, idempotence, invariant,
                                   reference-oracle, roundtrip, self-validation]}
       strength: {type: enum, values: [full, partial, weak]}
-      stops_with: {type: enum, values: [abort, assert, trap, throw, panic, exit, print-only, return-only]}
-      exit_status: {type: int, min: 0, max: 255, optional: true}      # with stops_with: exit
+      # panic: a Rust or Go panic; raise: an uncaught Python exception other than SystemExit and MemoryError; fail:
+      # t.Fatal, t.Error or t.Fail in a Go fuzz test (Go only, rules.py). The OSS Verify port ends all three with status 79
+      # (a Go one on the fuzz target's goroutine; 80 on another, also outside every Go statement's exits)
+      stops_with: {type: enum, values: [abort, assert, trap, throw, panic, raise, fail, exit, print-only, return-only]}
+      # with stops_with: exit. The argument the source passes, as a C int (32 bits on riscv64): a source value,
+      # never an observed process status, which is a byte.
+      exit_status: {type: int, min: -2147483648, max: 2147483647, optional: true}
+      # with stops_with: exit. true when the call runs during a call of the fuzz target on the driver's thread,
+      # where the guard gives 77 unless a handler registered after it ends the process first
+      exit_reaches_guard: {type: enum, values: [true, false, unknown], optional: true}
       live: {type: enum, values: [true, false, unknown]}              # true only from a binary-level observation
       where: {type: str, pattern: '^source/[A-Za-z0-9._+/-]+:[0-9]+(-[0-9]+)?$'}
       what: {type: text, max: 400}
@@ -139,7 +150,8 @@ defs:
           full_support: {type: fraction}
       mass: {type: fraction}
 
-  # One statement.  Its Rocq text is fixed by these fields (tools/oft/shapes.py);
+  # One statement.  Its Rocq text is fixed by these fields and project.yaml's
+  # `budgets` (tools/oft/shapes.py);
   # its name must be the one the naming rule gives them.  docs/facts.md
   # explains every field.
   statement:
@@ -151,10 +163,11 @@ defs:
       builds: {type: list, items: {type: build-name}, min: 1}
       # what the environment may refuse: budget (halts: only what the memory
       # budget forces), may-fail (any call, at any time), alloc-forced-only
-      # (any call, but memory only when the budget is spent)
+      # (any call, but memory only when the budget is spent or no address range
+      # is free)
       reading: {type: enum, values: [budget, may-fail, alloc-forced-only]}
       exits: {type: union, of: [{type: const, value: any}, {type: list, items: {type: int, min: 0, max: 255}, min: 1}], optional: true}
-      budgets: {type: enum, values: [standard, asan], optional: true}   # agreement only
+      budgets: {type: enum, values: [standard, asan], optional: true}   # agreement only; absent when project.yaml budgets.agrees sets a pair for its sanitizer
       abort: {type: enum, values: [error, signal], optional: true}      # agreement only; default error
       machine: {type: enum, values: [rv64g, rv64gc], optional: true}    # pair statements; default rv64g
       # halts only: whether a check of the harness that ends the process on

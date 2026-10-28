@@ -1,5 +1,5 @@
-"""oft revisions PREVIOUS: each statement of this tree beside the same statement in PREVIOUS, a checkout of the
-previous release (docs/versioning.md).
+"""oft revisions PREVIOUS [--earlier OLDER...]: each statement of this tree beside the same statement in PREVIOUS, a
+checkout of the previous release (docs/versioning.md).
 
 These tools fingerprint both trees, so a change to how a fingerprint is computed (facts.FINGERPRINT_TAG) changes no
 statement, and a statement whose two fingerprints differ changed its meaning.  Taking PREVIOUS's facts through these
@@ -13,6 +13,13 @@ other keeps its revision; a statement new in this tree has revision 1.  A proof 
 carries forward; one whose statement changed is re-checked; one that is gone is retired.  With write_pins, the pin of
 each proof that carries forward is set to its statement's fingerprint here, when it still holds the pin it had in
 PREVIOUS.
+
+A release leaves out what a finding or `release: private` holds back, so a statement can be missing from PREVIOUS and
+back in this tree.  Its identifier is never reused (docs/versioning.md), so it is compared with the newest of the
+earlier releases (OLDER, checkouts of the releases before PREVIOUS, newest first) that has it, as with PREVIOUS: it
+keeps that release's revision, or adds one if its meaning changed since.  A statement none of them has is new.  The
+releases must come strictly newest first, by date and, on one date, by release (release_order), or nothing is compared:
+two candidates of one day named oldest first would compare with the older one, and reuse a revision.
 """
 import os
 import re
@@ -83,17 +90,31 @@ def rerendered(tree):
     return ids
 
 
-def compare(prev, cur, rerendered_ids=frozenset(), model_changed=False):
-    """One row per statement of either tree: (id, its Statement in prev or None, in cur or None, expected revision or
-    None, statement, proof).  statement is one of STATEMENT: re-rendered when its fingerprints are the same but its id
-    is in rerendered_ids (rerendered(prev)); model-changed when its fingerprints are the same but model_changed (the
-    two trees' model() differ); unfingerprinted when it is withheld in a tree, so that there is nothing to compare and
-    no revision is expected.  proof is one of PROOF, or "-"."""
-    old = {s.id: s for s in prev.statements()}
+def release_order(tree):
+    """The order releases come out in, as a sort key of a checkout: its release.yaml's date, then its release, where a
+    candidate `-rc.N` comes by N, before the release it is a candidate of."""
+    base, _, rc = tree.release["release"].partition("-rc.")
+    return str(tree.release["date"]), tuple(int(n) for n in base.split(".")), (0, int(rc)) if rc else (1, 0)
+
+
+def compare(cur, releases):
+    """One row per statement of cur or of the previous release: (id, its Statement in the release it is compared with or
+    None, in cur or None, expected revision or None, statement, proof).  releases: (tree, its rerendered ids
+    (rerendered), whether its model() differs from cur's) for the previous release and each before it, newest first;
+    a statement of cur is compared with the newest of them that has it.  statement is one of STATEMENT: re-rendered
+    when its fingerprints are the same but its id is in that release's rerendered ids; model-changed when its
+    fingerprints are the same but that release's model differs; unfingerprinted when it is withheld in a tree, so that
+    there is nothing to compare and no revision is expected.  proof is one of PROOF, or "-"."""
+    old = {}
+    for tree, ids, changed in releases:
+        for s in tree.statements():
+            old.setdefault(s.id, (s, ids, changed))
+    in_prev = {s.id for s in releases[0][0].statements()}
     new = {s.id: s for s in cur.statements()}
     rows = []
-    for sid in sorted(set(old) | set(new)):
-        a, b = old.get(sid), new.get(sid)
+    for sid in sorted(in_prev | set(new)):
+        a, ids, changed = old.get(sid, (None, frozenset(), False))
+        b = new.get(sid)
         if b is None:
             what, expected = "gone", None
         elif a is None:
@@ -102,9 +123,9 @@ def compare(prev, cur, rerendered_ids=frozenset(), model_changed=False):
             what, expected = "unfingerprinted", None
         elif a.fingerprint != b.fingerprint:
             what, expected = "changed", a.revision + 1
-        elif sid in rerendered_ids:
+        elif sid in ids:
             what, expected = "re-rendered", a.revision + 1
-        elif model_changed:
+        elif changed:
             what, expected = "model-changed", a.revision + 1
         else:
             what, expected = "same", a.revision
@@ -149,21 +170,35 @@ def rewrite_pins(tree, statements):
             f.write(text)
 
 
-def run(root, previous, write_pins=False, out=sys.stdout):
+def run(root, previous, write_pins=False, earlier=(), out=sys.stdout):
+    """earlier: checkouts of the releases before previous, newest first (compare)."""
     prev, cur = facts.load(previous), facts.load(root)
-    for name, t in (("previous", prev), ("this tree", cur)):
+    older = [facts.load(p) for p in earlier]
+    named = [("previous", prev), ("this tree", cur)] + [("earlier %s" % p, t) for p, t in zip(earlier, older)]
+    for name, t in named:
         for e in t.errors:
             print("error: %s: %s" % (name, e), file=out)
-    if prev.errors or cur.errors:
+    if any(t.errors for _name, t in named):
         print("oft revisions: a tree does not load cleanly with these tools: nothing compared", file=out)
         return 1
-    old_model, new_model = model(prev), model(cur)
-    rows = compare(prev, cur, rerendered(prev), old_model != new_model)
+    # each release is older than the one before it in the list, so that a statement is compared with the newest release
+    # that has it
+    trees = [prev] + older
+    late = [i for i in range(1, len(trees)) if release_order(trees[i]) >= release_order(trees[i - 1])]
+    for i in late:
+        print("error: earlier %s is %s of %s, not older than %s of %s before it in the list: name them newest first"
+              % (earlier[i - 1], trees[i].release["release"], trees[i].release["date"],
+                 trees[i - 1].release["release"], trees[i - 1].release["date"]), file=out)
+    if late:
+        print("oft revisions: the earlier releases are not newest first: nothing compared", file=out)
+        return 1
+    models, new_model = [model(t) for t in trees], model(cur)
+    rows = compare(cur, [(t, rerendered(t), m != new_model) for t, m in zip(trees, models)])
     print("\t".join(COLUMNS), file=out)
     for sid, a, b, expected, what, proof in rows:
         print("\t".join(str(v) for v in (sid, a.revision if a else "-", b.revision if b else "-",
                                          "-" if expected is None else expected, what, proof)), file=out)
-    for (k, v), (_k, w) in zip(old_model, new_model):
+    for (k, v), (_k, w) in zip(models[0], new_model):
         if v != w:
             print("note: the model changed: %s is %s, was %s, so every statement's meaning may have changed" % (
                 k, w, v), file=out)

@@ -146,7 +146,7 @@ Proof using HCEIL st m g b gh sc0 MR MSL AV0 Hmem Hgh AI FR32 MW MASK BNC SC0. t
   pose proof (Z.ldiff_nonneg f (y - 1)) as R3.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => assert (MR4 : rmrep st4 mX) end.
   { rewrite HG in MUa, CH. unfold st4. rewrite upd_meta_put, ACT. eapply rmrep_put_meta_frame; [exact MR | exact MSL | exact MUa | exact WMa |].
-    eapply rw_cells_congr; [ | | | exact CH]; [ | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])].
+    eapply rw_cells_congr; [ | | | exact CH]; [ | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])].
     unfold meta_cells, pw. cbn [cells_bytes cbytes m_prev m_next m_mem m_avail m_freed m_set_avail m_set_freed oconc].
     rewrite meta_word_upd_af. fold mr f. rewrite Hmem, E1. cbn [oconc]. rewrite !le4_sxv by lia. reflexivity. }
   clear MUa WMa.

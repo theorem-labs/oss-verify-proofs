@@ -323,7 +323,7 @@ Section MallocHit.
 
   Lemma u8arr_app : forall mm A l1 l2, u8arr asegs mm A (l1 ++ l2) <-> u8arr asegs mm A l1 /\ u8arr asegs mm (A + Z.of_nat (length l1)) l2.
   Proof using HCEIL ra sp s0 m s LB d lo size CH HR DPL LO HI SZ HIT DCAP.
-    intros mm A l1 l2. unfold u8arr. rewrite bytes_at_app, length_app, Nat2Z.inj_add. rewrite wr_at_app by lia. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]).
+    intros mm A l1 l2. unfold u8arr. rewrite bytes_at_app, length_app, Nat2Z.inj_add. rewrite wr_at_app by lia. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]).
   Qed.
 
   (* [comment removed for export] *)

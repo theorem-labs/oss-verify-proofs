@@ -41,7 +41,7 @@ Generated from `PROVENANCE.yaml` beside this file. The build files are in `recip
 
 ## The proofs' licence
 
-The proof files of this entry point were made from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a), libraries/openssl-b/proofs/submission-2 and are under Apache-2.0 OR MIT, at the recipient's option: the licence texts and the notice are `LICENSES/anthropic-proofs-LICENSE`, `LICENSES/anthropic-proofs-LICENSE-MIT` and `LICENSES/anthropic-proofs-NOTICE` in the repository's top directory; each changed file carries one line under its licence header saying so.
+The proof files of this entry point were made from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a), libraries/openssl-b/proofs/submission-2 and are under Apache-2.0 OR MIT, at the recipient's option: the licence texts and the notice are `LICENSES/anthropic-proofs-LICENSE`, `LICENSES/anthropic-proofs-LICENSE-MIT` and `LICENSES/anthropic-proofs-NOTICE` in the repository's top directory; each changed file carries one line under its licence header saying so. The proofs of asan_ubsan_agreement_decidable and asan_ubsan_disagrees_at_most were written in this repository: they use lib/ConstAccept.v, a program that accepts every input, to decide where the builds agree and to bound their disagreement at 0. The proofs of asan_agrees and ubsan_agrees were written in this repository: the package has no complete proof of them.
 
 ## Compiler and linker flags
 

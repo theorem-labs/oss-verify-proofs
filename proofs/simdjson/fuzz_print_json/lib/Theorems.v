@@ -9,6 +9,9 @@ Require OssFuzzTheorems.Proofs.simdjson.fuzz_print_json.lib.TopClosed_asan.
 Require OssFuzzTheorems.simdjson.fuzz_print_json.images.AsanUbsan.
 Require OssFuzzTheorems.Proofs.simdjson.fuzz_print_json.lib.TopClosed_both.
 
+Require OssFuzzTheorems.simdjson.fuzz_print_json.images.Ubsan.
+Require OssFuzzTheorems.Proofs.simdjson.fuzz_print_json.lib.TopClosed_ubsan.
+
 Theorem fuzz_print_json_asan_cfg :
   strong_universal_error_free_T_scfg_budgets_abort (mkSpuriousCfg false true true true true true)
     SanitizerBudgets.lim_source SanitizerBudgets.lim_target
@@ -30,3 +33,14 @@ Theorem fuzz_print_json_both_cfg :
              OssFuzzTheorems.simdjson.fuzz_print_json.images.AsanUbsan.M.init_pc
              OssFuzzTheorems.simdjson.fuzz_print_json.images.AsanUbsan.M.phdrs).
 Proof. exact OssFuzzTheorems.Proofs.simdjson.fuzz_print_json.lib.TopClosed_both.base_both_cfg. Qed.
+
+Theorem fuzz_print_json_ubsan_cfg :
+  strong_universal_error_free_T_scfg_budgets_abort (mkSpuriousCfg false true true true true true)
+    ShippedBudgets.lim_source ShippedBudgets.lim_target
+    (mkImage OssFuzzTheorems.simdjson.fuzz_print_json.images.Plain.M.loaded_segments
+             OssFuzzTheorems.simdjson.fuzz_print_json.images.Plain.M.init_pc
+             OssFuzzTheorems.simdjson.fuzz_print_json.images.Plain.M.phdrs)
+    (mkImage OssFuzzTheorems.simdjson.fuzz_print_json.images.Ubsan.M.loaded_segments
+             OssFuzzTheorems.simdjson.fuzz_print_json.images.Ubsan.M.init_pc
+             OssFuzzTheorems.simdjson.fuzz_print_json.images.Ubsan.M.phdrs).
+Proof. exact OssFuzzTheorems.Proofs.simdjson.fuzz_print_json.lib.TopClosed_ubsan.base_ubsan_cfg. Qed.

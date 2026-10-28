@@ -1,0 +1,5 @@
+From OssFuzzTheorems.double_conversion.string_to_double_fuzzer Require Statements.
+From OssFuzzTheorems.Proofs.double_conversion.string_to_double_fuzzer.lib Require ConstAccept.
+
+Theorem ubsan_agreement_decidable_holds : OssFuzzTheorems.double_conversion.string_to_double_fuzzer.Statements.ubsan_agreement_decidable.
+Proof. exact OssFuzzTheorems.Proofs.double_conversion.string_to_double_fuzzer.lib.ConstAccept.ubsan_decidable. Qed.

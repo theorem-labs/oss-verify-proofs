@@ -113,6 +113,25 @@ def load_file(path):
         return load(f.read(), where=str(path))
 
 
+def compose(text):
+    """The document's node tree, whose nodes carry the lines they are written
+    on, or None when the text is not one YAML document."""
+    try:
+        return yaml.compose(text, Loader=StrictLoader)
+    except yaml.YAMLError:
+        return None
+
+
+def mapping_value(node, key):
+    """The value node of key in a mapping node, or None."""
+    if not isinstance(node, yaml.MappingNode):
+        return None
+    for key_node, value_node in node.value:
+        if getattr(key_node, "value", None) == key:
+            return value_node
+    return None
+
+
 class _Dumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True

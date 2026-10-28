@@ -46,9 +46,10 @@ def tokens(text):
             i = k
 
 
-def strip(text, comments=True):
-    """Text with string literals blanked, and comments (nested) too unless comments=False; lines kept."""
-    return "".join(_BLANK.sub(" ", piece) if kind == "string" or (comments and inside) else piece
+def strip(text, comments=True, strings=True):
+    """Text with string literals blanked unless strings=False, and comments (nested) too unless comments=False;
+    lines and offsets kept."""
+    return "".join(_BLANK.sub(" ", piece) if (strings and kind == "string") or (comments and inside) else piece
                    for kind, piece, inside in tokens(text))
 
 

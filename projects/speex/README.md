@@ -3,14 +3,14 @@
 
 [speex.org](https://speex.org) · OSS-Fuzz: [projects/speex](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/speex)
 
-**Status: available.** 2 of OSS-Fuzz's 4 fuzz targets have statements. 8 binaries, 4.4 MB. 28 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 26 open.
+**Status: available.** 2 of OSS-Fuzz's 4 fuzz targets have statements. 8 binaries, 4.4 MB. 28 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 25 open.
 
 Built from speex (commit `a1b872e6`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [speex_decode_fuzzer_float](speex_decode_fuzzer_float/) | speexdec-style Ogg demux + Speex header parse + speex_decode(_int)/stereo decode loop over inputs <=4096 bytes; decoded PCM, granule arithmetic results and new_frame_size are computed and discarded. | none | 13, 2 proved |
+| [speex_decode_fuzzer_float](speex_decode_fuzzer_float/) | speexdec-style Ogg demux + Speex header parse + speex_decode(_int)/stereo decode loop over inputs <=4096 bytes; decoded PCM, granule arithmetic results and new_frame_size are computed and discarded. | none | 13, 3 proved |
 | [speex_encode_fuzzer_float](speex_encode_fuzzer_float/) | Encoder configured from fuzzed mode/rate/channels/quality/complexity/VBR/ABR/VAD/DTX/highpass, then fuzzed PCM encoded frame by frame with speex_encode_int (+ stereo); bitstream bytes written to a local buffer and discarded. | none | 15 |
 
 Not included: **api-driver** (held from this release); **speex_decode_fuzzer_fixed** (not built yet); **speex_encode_fuzzer_fixed** (not built yet).
@@ -42,6 +42,7 @@ By hand: download `speex-bin.tar.zst` from release [v2026.10.0](https://github.c
 |---|---|
 | [speex/speex_decode_fuzzer_float/asan_agrees](../../proofs/speex/speex_decode_fuzzer_float/asan_agrees) | proved |
 | [speex/speex_decode_fuzzer_float/asan_ubsan_agrees](../../proofs/speex/speex_decode_fuzzer_float/asan_ubsan_agrees) | proved |
+| [speex/speex_decode_fuzzer_float/ubsan_agrees](../../proofs/speex/speex_decode_fuzzer_float/ubsan_agrees) | proved |
 
 ## Licence
 speex is under `BSD-3-Clause`. Each binary is a combined work of speex, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `speex-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `speex-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

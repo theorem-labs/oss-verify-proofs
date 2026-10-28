@@ -119,7 +119,7 @@ Proof using HCEIL st2 sc cnt size nd xa c mt SC CNT SZ ND NDA XA XA2 MST REC HC 
   lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
     assert (MR3 : rmrep (upd_meta mt (m_set_maplen (Z.shiftr nd 12)) st2) mX);
     [ unfold upd_meta; rewrite REC; eapply rmrep_put_meta_frame; [exact MR| exact MST| exact MUa| exact WMa|];
-      eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+      eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
       unfold meta_cells; rewrite EWD; unfold pw; cbn [m_prev m_next m_mem m_avail m_freed oconc m_set_maplen meta0]; reflexivity
     | clear MUa WMa H ] end.
   set (st3 := upd_meta mt (m_set_maplen (Z.shiftr nd 12)) st2) in *.

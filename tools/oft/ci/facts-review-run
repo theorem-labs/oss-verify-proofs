@@ -1,39 +1,363 @@
 #!/usr/bin/env bash
-# Runs the facts review: the review agent follows .claude/skills/review-facts/SKILL.md on the files facts-review-gather
-# wrote, and its last message, the comment for the reviewers, is written to <directory>/comment.md.
+# Runs the facts review: the review agent checks what review.md, at the root of this checkout, says to check, on the
+# files facts-review-gather wrote (.claude/skills/review-facts/SKILL.md says where they are), and its last message, the
+# comment for the reviewers, is written to <directory>/comment.md. A last message longer than the 30,000 characters
+# review.md allows is cut there, and a line after it says so: this is the one place
+# the review's text is cut. Each try's ending is one line of <directory>/tries.txt, and a run that ends without a review
+# writes why to <directory>/failure.txt: lines of this script's own words, which the job summary and the comment show.
 #
-#   PR=<number> tools/oft/ci/facts-review-run <directory inside this checkout>
+#   PR=<number> [REVIEW_SESSION=<directory outside this checkout>] \
+#     tools/oft/ci/facts-review-run <directory inside this checkout>
 #
 # Run it from the root of a checkout of main. facts-review.yml's review job runs it in CI. A person can run it on their
 # own machine too, with their own login to the review agent's tool, to see the comment a pull request would get: run
-# facts-review-gather first, then this, and read comment.md. Nothing is posted.
+# facts-review-gather first, then this, and read comment.md. Nothing is posted. facts-review-served refuses to start the
+# agent (exit 4, naming what it found) when the shell, the tool's settings, global config or managed settings, or the
+# Anthropic profile set anything that can send its requests elsewhere or let another model answer: any ANTHROPIC_* or
+# CLAUDE_CODE_* variable other than a credential (an API key, an OAuth token, the federation variables) or one of its
+# harmless knobs, a proxy or TLS trust variable, HOME or XDG_CONFIG_HOME in a file's `env`, advisorModel or a policy
+# helper, or a base_url. Unset those for the run (`env -u <name> tools/oft/ci/facts-review-run …`), or take them out of
+# the file that sets them. It runs on Linux and macOS.
 # The model gets three tools only, Read, Glob and Grep, in the agent's restricted mode, which also keeps them inside
 # this checkout: no shell, no network tool, no file writes, no MCP server. It reads what the pull request holds as
-# data (the skill's rule 1). Its environment holds only PATH, HOME, the locale and the ANTHROPIC_* variables and the
-# tool's own ones, those of its credential (in CI, those of workload identity federation).
+# data (review.md, rule 1). Its environment holds only PATH, HOME, the locale and the ANTHROPIC_* variables and the
+# tool's own ones, those of its credential (in CI, those of workload identity federation). That environment is built
+# in a process and handed to the agent whole, so no variable's value is a command's argument, which other processes on
+# the machine can read.
+# With REVIEW_SESSION, the review keeps its conversation: facts-review.yml's review job restores that directory from the
+# Actions cache, and the review of each push resumes the conversation of the last review of the pull request under its
+# own id (claude --resume <id>), looking only at since-last-review.diff, against review.md, which it reads again. The
+# directory holds `session` (id=<the conversation's id>, head=<the commit it reviewed>, dir=<its folder in
+# ~/.claude/projects>, asked=<the provider and model asked for>, base=<the base branch>) and the conversation,
+# <id>.jsonl. When a review resumes it and when it is fresh instead is decided where the session file is read, below;
+# what is kept, at the end.
+# The log says which: "resuming the conversation <id> (the review of <commit>), reviewing only <commit>..<head>", or
+# "a fresh review".
 set -euo pipefail
 
 in=${1:?usage: facts-review-run <directory>}
 [[ $PR =~ ^[0-9]+$ ]] || { echo "facts-review-run: PR is not a number" >&2; exit 2; }
 case $(realpath "$in")/ in "$(pwd -P)"/*) ;; *) echo "facts-review-run: $in is not inside this checkout" >&2; exit 2 ;; esac
 [ -s "$in/changed.txt" ] || { echo "facts-review-run: the pull request changes no facts file" >&2; exit 3; }
+rm -f "$in/failure.txt"
 model=${REVIEW_MODEL:-claude-opus-5-5}
+limit=30000   # characters, as review.md ("The comment") counts them
+head=$(sed -n 's/^head=//p' "$in/reviewed.txt" 2> /dev/null || true)
+base_ref=$(sed -n 's/^base_ref=//p' "$in/reviewed.txt" 2> /dev/null || true)
+session_dir=${REVIEW_SESSION:-}
+
+# The agent runs under facts-review-served, which reads its event stream (stream-json) as it comes, stops it at a
+# response that a model other than the one asked for answers (REVIEW_PROVIDER, by default anthropic, and REVIEW_MODEL),
+# and writes what answered, with its turns, to $in/served for the comment job, and the stream's last result event to
+# $in/review.json, the object `--output-format json` writes. It does not start the agent when that environment, the
+# tool's settings or its Anthropic profile send its requests elsewhere than the provider's own API. It is exec'd in the
+# environment built below, the one it gives the agent, so it reads that one.
+served="$(dirname "$0")/facts-review-served"
+asked=${REVIEW_PROVIDER:-anthropic}/$model
+"$served" asked "$asked" || { echo "facts-review-run: REVIEW_PROVIDER/REVIEW_MODEL is not one it can check" >&2; exit 2; }
+
+if [ -n "$session_dir" ]; then
+  case $(realpath -m "$session_dir")/ in
+    "$(pwd -P)"/*) echo "facts-review-run: REVIEW_SESSION is inside this checkout" >&2; exit 2 ;;
+  esac
+  [[ $head =~ ^[0-9a-f]{40}$ ]] || { echo "facts-review-run: $in/reviewed.txt names no head commit" >&2; exit 2; }
+fi
+uuid() { python3 -c 'import uuid; print(uuid.uuid4())'; }
 
 prompt="You are the facts review agent, in CI, on pull request #$PR of this repository, which adds or changes \
-projects' facts. Read .claude/skills/review-facts/SKILL.md and do the review that it describes, as its section \
-\"In CI\" says. The workflow gathered the inputs into $in/: the pull request is in $in/pr.md, the facts files it \
-changes in $in/changed.txt, the fuzz targets to review in $in/targets.txt, and the pull request's files in $in/head/. \
-Your last message is the comment for the reviewers, in Markdown, and nothing else."
+projects' facts. Read review.md, at the root of this checkout, for what to check and how to write the comment, and \
+.claude/skills/review-facts/SKILL.md for where the inputs are, as its section \"In CI\" says. The workflow gathered \
+the inputs into $in/: the pull request is in $in/pr.md, the facts files it changes in $in/changed.txt, the fuzz \
+targets to review in $in/targets.txt, and the pull request's files in $in/head/. Your last message is the comment for \
+the reviewers, in Markdown, and nothing else."
 
-pass=()
-for variable in $(compgen -e); do
-  case $variable in ANTHROPIC_*|CLAUDE_CODE_*) pass+=("$variable=${!variable}") ;; esac
+# The conversation of the last review is resumed only when REVIEW_SESSION holds one that is whole, that a review of the
+# provider and model asked for wrote (`asked=`: one kept before facts-review-served names none), against the same base
+# branch (`base=`: on another base, changed.txt, targets.txt and patches/ are counted again, and the diff since the last
+# head does not show what that adds; a merge of the base into the pull request keeps the branch, and resumes), of
+# another head than this one, and gather wrote since-last-review.diff, which may be empty (the push changed none of
+# the files it covers). Otherwise the review is fresh and full: a run by hand reviews the same head, and a missing diff
+# (gather could not fetch or diff the last head) shows nothing to look at alone.
+last_id="" last_head="" changes=""
+if [ -n "$session_dir" ] && [ -f "$session_dir/session" ]; then
+  kept_id=$(sed -n 's/^id=//p' "$session_dir/session")
+  kept_head=$(sed -n 's/^head=//p' "$session_dir/session")
+  kept_dir=$(sed -n 's/^dir=//p' "$session_dir/session")
+  kept_asked=$(sed -n 's/^asked=//p' "$session_dir/session")
+  kept_base=$(sed -n 's/^base=//p' "$session_dir/session")
+  if ! [[ $kept_id =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ && $kept_head =~ ^[0-9a-f]{40}$ \
+          && $kept_dir =~ ^-[A-Za-z0-9-]{1,200}$ ]] || [ ! -s "$session_dir/$kept_id.jsonl" ]; then
+    echo "facts-review-run: $session_dir/session does not name a whole conversation"
+  elif [ "$kept_asked" != "$asked" ]; then
+    echo "facts-review-run: the kept conversation $kept_id names no review of $asked, so it is not resumed"
+  elif [ -z "$kept_base" ] || [ "$kept_base" != "$base_ref" ]; then
+    echo "facts-review-run: the kept conversation $kept_id is a review against another base branch than this one:" \
+      "a fresh, full review"
+  elif [ "$kept_head" = "$head" ]; then
+    echo "facts-review-run: the kept conversation $kept_id is the review of this head, $head: a fresh, full review"
+  elif [ ! -f "$in/since-last-review.diff" ]; then
+    echo "facts-review-run: gather could not make $in/since-last-review.diff since the review of $kept_head: a fresh," \
+      "full review"
+  else
+    last_id=$kept_id last_head=$kept_head
+    mkdir -p "$HOME/.claude/projects/$kept_dir"
+    cp "$session_dir/$kept_id.jsonl" "$HOME/.claude/projects/$kept_dir/"
+    [ -s "$in/since-last-review.diff" ] || changes=" It is empty: this push changes none of those files."
+  fi
+else
+  echo "facts-review-run: no conversation of an earlier review of pull request #$PR to resume: a fresh review"
+fi
+again="This is a new push to pull request #$PR. Earlier in this conversation you reviewed its commit $last_head, and \
+your last message was the comment that the workflow posted. This review looks only at the diff since the head you \
+last reviewed: $in/since-last-review.diff holds the changes from $last_head to $head, to the facts files and to each \
+reviewed fuzz target's provenance/ (when the author merged the base branch in or rebased, the base branch's changes \
+too).$changes Review that diff against review.md (read it again: main can have changed it). Do not review again \
+what the diff does not change: a new finding comes only from the diff. For each finding of your last comment, read \
+again the current files it is about: drop the finding when they show that it no longer holds, and keep it otherwise. \
+The workflow gathered the inputs again into $in/ (.claude/skills/review-facts/SKILL.md, \"In CI\", says what each \
+holds). \
+Your new comment replaces the last one, so it must be complete without it. Your last message is the new comment for \
+the reviewers, in Markdown, and nothing else."
+
+# A GitHub identity token is single-use and lives five minutes, and the Anthropic token the agent's tool mints from
+# one lives at most twice what is left of it. Its refresh re-reads this file, and a token already exchanged is
+# refused (jti_reused), so the file must hold a new token before each exchange: see
+# https://platform.claude.com/docs/en/manage-claude/workload-identity-federation, "Token lifetime and refresh". So a
+# new token is written to the file every minute while the agent runs, and before each further try. Without it a review
+# longer than about ten minutes can die at its first refresh (internal #86's second attempt ran 584 seconds; #165's
+# second ran 592 on one token and finished, so the edge is not exact), and a further try is refused at once. Outside CI
+# there is no such token and nothing to write: the agent's tool uses the person's own login.
+token_file=${ANTHROPIC_IDENTITY_TOKEN_FILE:-}
+[ -n "$token_file" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || token_file=
+new_identity_token() {
+  [ -n "$token_file" ] || return 0
+  # A file of its own for each call, beside the token file: the loop below and the call before a further try can run
+  # at the same time, and one must not move the other's half-written token into place.
+  local new
+  new=$(mktemp "$token_file.XXXXXX") || return 1
+  # The request token goes to curl on standard input, as in the workflow's first request (printf is bash's own, so it
+  # starts no process): a command's arguments can be read by every process on the machine.
+  if printf 'Authorization: Bearer %s\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" |
+    curl -sSf --max-time 30 -H @- "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://api.anthropic.com" |
+    jq -r '.value // empty' > "$new" && [ -s "$new" ]; then
+    mv "$new" "$token_file"
+  else
+    rm -f "$new"
+    return 1
+  fi
+}
+stop_rotating() {
+  kill "$rotating" 2> /dev/null || true
+  rm -f "$token_file".??????
+  [ ! -s "$token_log" ] || cat "$token_log" >&2
+}
+if [ -n "$token_file" ]; then
+  # What the loop says goes to a file of its own, not to this script's output: its sleep outlives the kill below by
+  # up to a minute, and a caller that reads this script's output to its end would wait for that sleep to let go.
+  token_log=$in/identity-token.log
+  : > "$token_log"
+  while sleep 60; do
+    new_identity_token || echo "facts-review-run: could not write a new identity token; the review may end early"
+  done > "$token_log" 2>&1 &
+  rotating=$!
+  trap stop_rotating EXIT
+fi
+
+#   review <prompt> <the agent's arguments for the conversation...>
+# The agent, under what is left of the time up to `until` (the 45 minutes below, or less for a resumed try), with an
+# environment built in a process and handed whole to facts-review-served, run by this same Python (no lookup of a
+# python3 on PATH, which could change that environment), which hands it to the agent as it is.
+review() {
+  timeout --kill-after=60 "$((until - SECONDS))s" python3 -c '
+import fnmatch, os, sys
+keep = {k: v for k, v in os.environ.items()
+        if k in ("PATH", "HOME") or any(fnmatch.fnmatchcase(k, p) for p in ("ANTHROPIC_*", "CLAUDE_CODE_*"))}
+keep["LANG"] = "C.UTF-8"
+os.execve(sys.executable, [sys.executable, *sys.argv[1:]], keep)' \
+    "$served" run "$in" "$asked" -- \
+    claude -p "$1" "${@:2}" --restricted --tools Read,Glob,Grep --strict-mcp-config --permission-mode dontAsk \
+      --model "$model" --max-turns 200 --output-format stream-json --verbose < /dev/null > /dev/null
+}
+
+# The comment is the agent's one result object, a success that ran to its end, whose result is text with words in it;
+# anything else is no review, so no null, number or blank result is posted as one. A start that failed is not a
+# review either: the agent reports it as a success whose result is its error text and whose terminal_reason is
+# "turn_setup_failed", so a terminal_reason other than "completed" is none too (an older agent sets none). jq counts
+# characters, not bytes. When there is no review, `reason` says which of these it was, in this script's words only:
+# jq's error is one of the fixed messages below, and anything else jq says (a parse error that quotes the output) is
+# "output that is not JSON".
+write_comment() {
+  local err
+  err=$(jq -r --slurp --argjson limit "$limit" '
+    if length != 1 or (.[0] | type) != "object" then error("output that is not one JSON object") else .[0] end
+    | if .type != "result" or .subtype != "success" or .is_error != false then error("an error result")
+      elif (.terminal_reason // "completed") != "completed" then error("a run that did not reach its end")
+      elif (.result | type) != "string" then error("a result that is not text")
+      elif (.result | test("\\p{L}") | not) then error("a result with no words in it")
+      else .result end
+    | if length > $limit then
+        .[:$limit] + "\n\n(The review was \(length) characters long. It was cut at \($limit), the limit "
+        + "`review.md` sets, and the rest was not posted.)"
+      else . end' "$in/review.json" 2>&1 > "$in/comment.md") && return 0
+  case ${err##*: } in
+    "output that is not one JSON object" | "an error result" | "a run that did not reach its end" | \
+      "a result that is not text" | "a result with no words in it") reason=${err##*: } ;;
+    *) reason="output that is not JSON" ;;
+  esac
+  return 1
+}
+
+# The agent's exit status is kept, not left to set -e: the cause of a failure is in review.json, and it must reach the
+# job's log. On internal #86 (run 40224321468) the agent exited 1 twice and the log showed nothing of why. All tries
+# stop at 45 minutes, inside the review step's 50, so that a review that runs too long says so too (exit status 124,
+# or 137 when the agent outlives the TERM signal and timeout kills it a minute later).
+#
+# A run that ends without a review is tried again, up to 3 tries in all, while 10 minutes of the 45 are left. The
+# numbers are measured over this workflow's runs up to 2026-10-26 (the pull request that set them has the table): of
+# about 28 runs whose review reached the model, 8 ended with the agent's process exiting 1 in the middle of a call,
+# having written nothing, at every duration from 182 to 498 seconds and on one-fuzz-target reviews too; and the same
+# input passes on another try (#165: run 40274755332's first attempt died at 498 s, its second wrote the review in
+# 592 s and 103 turns; #138's head failed on run 40232827271 and passed, as #139, on run 40238097164). So a try fails
+# about 8 times in 28, whatever its input: 2 tries leave about 1 run in 12 without a review, 3 tries about 1 in 40.
+# The longest review that has finished took 592 s. 3 is a choice, not a limit of the 45 minutes: 3 tries of 592 s
+# leave 924 s, enough for a 4th. The rates above take each try to fail on its own, as the measurements suggest (no
+# input, size or duration predicts a failure); a 4th try would take 1 run in 40 to about 1 in 150, for up to 10 more
+# minutes of a run that has already failed 3 times, and a run with no review still says why, and the maintainers
+# review the facts either way.
+#
+# Only the first try resumes the last review's conversation. Every later try is a fresh review, whatever way the
+# resumed one failed: a conversation the agent could not load ("No conversation found", one too long), or a resumed
+# review that ended later (its turn limit, an API error in the middle). The resumed try stops 12 minutes before the
+# 45 are up (10 for a fresh try, the minute `timeout` waits before it kills, and a minute to spare for the steps
+# between), so a slow resume, whose context grows with each push, still leaves a fresh try its time. A resume that
+# the agent could not load (its result says at most 1 turn, or it wrote no result within a minute: "No conversation
+# found" is an exit 1 in seconds, and the chance deaths measured above came after 182 seconds or more) is a sure
+# failure, not the chance death the 3 tries are sized for: it is not counted as a try.
+tries=3
+deadline=$((SECONDS + 45 * 60))
+: > "$in/tries.txt"
+resume=$last_id   # the first try's only
+for ((try = 1; try <= tries; try++)); do
+  code=0
+  # This try's record and result only: facts-review-served writes both, and a try whose launcher ended without running
+  # it must not find an earlier one's.
+  rm -f "$in/served" "$in/review.json"
+  started=$SECONDS
+  if [ -n "$resume" ]; then
+    id=$resume resumed=" (resumed from the review of ${last_head:0:12})" until=$((deadline - 720))
+    echo "facts-review-run: resuming the conversation $id (the review of $last_head), reviewing only" \
+      "$last_head..$head"
+    review "$again" --resume "$id" || code=$?
+  else
+    id=$(uuid) resumed="" until=$deadline
+    echo "facts-review-run: a fresh review, as $id"
+    review "$prompt" --session-id "$id" || code=$?
+  fi
+  resume=""
+  wall=$((SECONDS - started))
+  # How the agent's run ended, from its result: its kind (subtype), its turns, its seconds and its terminal reason, each
+  # checked, so that failure.txt and tries.txt, which the comment and the job summary show, hold no text of the agent's.
+  subtype=- turns=- seconds=- terminal=-
+  read -r subtype turns seconds terminal < <(jq -r '[.subtype // "-", .num_turns // "-",
+    ((.duration_ms // 0) / 1000 | floor), .terminal_reason // "-"] | map(tostring) | join(" ")' "$in/review.json" \
+    2> /dev/null) || true
+  [[ $subtype =~ ^[a-z_]{1,40}$ ]] || subtype=-
+  [[ $turns =~ ^[0-9]{1,6}$ ]] || turns=-
+  [[ $seconds =~ ^[0-9]{1,6}$ ]] || seconds=-
+  [[ $terminal =~ ^[a-z_]{1,40}$ ]] || terminal=-
+  # Stopped by `timeout`: at the 45 minutes, which ends the run, or a resumed try at its own limit, which does not.
+  stopped=no timed_out=no
+  if [ "$code" = 124 ] || { [ "$code" = 137 ] && [ "$SECONDS" -ge "$until" ]; }; then stopped=yes; fi
+  [ "$stopped" = no ] || [ "$until" != "$deadline" ] || timed_out=yes
+  # A resume that the agent could not load: not counted as a try (above).
+  refused=no
+  if [ -n "$resumed" ] && [ "$stopped" = no ] &&
+    { [[ $turns =~ ^[01]$ ]] || { [ "$turns" = - ] && [ "$wall" -lt 60 ]; }; }; then
+    refused=yes
+  fi
+  ok=yes reason=""
+  # A result that is no review leaves comment.md empty, never part of a comment.
+  write_comment || { ok=no; : > "$in/comment.md"; }
+  # What answered, as facts-review-served checks its record: the counts, or why the review is not to be posted.
+  served_status=0
+  answered=$({ cat "$in/served" 2> /dev/null || true; } | "$served" check) || served_status=$?
+  # Not published, and not tried again: facts-review-served did not start or stopped the agent or refused its record,
+  # another endpoint, provider or model answered a try that also failed by itself, or a try that ended well has no
+  # record that passes.
+  if [ "$served_status" = 1 ] ||
+    { [ "$served_status" != 0 ] && { [ "$code" = 4 ] || { [ "$code" = 0 ] && [ "$ok" = yes ]; }; }; }; then
+    : > "$in/comment.md"
+    echo "try $try of $tries$resumed, not published, as the provider or model that answered it is not the one asked" \
+      "for or is not shown" >> "$in/tries.txt"
+    echo "facts-review-run: the review is not published: $answered" >&2
+    # Plain words only, as the review step shows no other line; the comment job names what answered from SERVED.
+    echo "the review is not published, as the provider or model that answered it is not the one asked for or is not" \
+      "shown" > "$in/failure.txt"
+    exit 4
+  fi
+  if [ "$code" = 0 ] && [ "$ok" = yes ]; then
+    echo "try $try of $tries$resumed, a review, $subtype after $turns turns and $seconds seconds" >> "$in/tries.txt"
+    break
+  fi
+  why="the review agent ended with exit status $code"
+  if [ "$timed_out" = yes ]; then why="$why, stopped at its 45-minute limit"
+  elif [ "$stopped" = yes ]; then
+    why="$why, stopped at the time limit of the resumed try, which leaves a fresh try time"
+  fi
+  # A process that died wrote no result to say how long it ran: the time this script measured says it instead.
+  if [ "$subtype" != - ]; then why="$why, $subtype after $turns turns and $seconds seconds"
+  elif [ "$stopped" = no ]; then why="$why after $wall seconds"
+  fi
+  [ "$terminal" = - ] || [ "$terminal" = completed ] || why="$why, terminal reason $terminal"
+  [ "$ok" = yes ] || why="$why, and wrote no review ($reason)"
+  if [ "$refused" = yes ]; then
+    echo "a resume of the review of ${last_head:0:12} that the agent could not load, not counted as a try, $why" \
+      >> "$in/tries.txt"
+  else
+    echo "try $try of $tries$resumed, $why" >> "$in/tries.txt"
+  fi
+  # The agent's own words on why (an API error, the errors it lists), for the log only, at most 500 bytes of them
+  # (#146's rule: an error result can hold a whole review). No control character of the agent's reaches the log: a
+  # carriage return would end the line there, outside the step's stop-commands window.
+  detail=$(jq -r '[.result, (.errors | if type == "array" then .[] else . end)] | map(select(type == "string"))
+    | join("; ")' "$in/review.json" 2> /dev/null | tr '[:cntrl:]' ' ' | cut -c1-500) || true
+  echo "facts-review-run: $why (try $try): ${detail:-no message} ($(wc -c < "$in/review.json") bytes in" \
+    "$in/review.json)" >&2
+  # No further try after the 45 minutes are up, with under 10 of them left, or without a new identity token for it.
+  stop=""
+  if [ "$try" = "$tries" ] || [ "$timed_out" = yes ]; then stop=last
+  elif [ $((deadline - SECONDS)) -lt 600 ]; then stop=", no more tries (under 10 minutes left)"
+  elif ! new_identity_token; then stop=", no more tries (no new identity token)"
+  fi
+  if [ -n "$stop" ]; then
+    [ "$stop" != last ] || stop=""
+    printf '%s\n' "$why, on try $try of $tries$stop" > "$in/failure.txt"
+    exit 1
+  fi
+  if [ "$refused" = yes ]; then
+    echo "facts-review-run: the agent could not resume the conversation $last_id (exit $code, $turns turns): a fresh" \
+      "review instead, which is try $try"
+    try=$((try - 1))
+  elif [ -n "$resumed" ]; then
+    echo "facts-review-run: the resumed review of the conversation $last_id failed (exit $code): a fresh review instead"
+  fi
 done
-env -i PATH="$PATH" HOME="$HOME" LANG=C.UTF-8 "${pass[@]}" \
-  claude -p "$prompt" --restricted --tools Read,Glob,Grep --strict-mcp-config --permission-mode dontAsk \
-    --model "$model" --max-turns 200 --output-format json < /dev/null > "$in/review.json"
-jq -r 'if .is_error then error("the review ended with an error: \(.result // .subtype)") else .result end' \
-  "$in/review.json" > "$in/comment.md"
-[ -s "$in/comment.md" ] || { echo "facts-review-run: the review wrote no comment" >&2; exit 1; }
-echo "facts-review-run: $(wc -c < "$in/comment.md") bytes in $in/comment.md, by $model," \
-  "$(jq -r '.num_turns // "?"' "$in/review.json") turns"
+echo "facts-review-run: $(LC_ALL=C.UTF-8 wc -m < "$in/comment.md") characters in $in/comment.md, asked for $asked," \
+  "answered by $answered, $subtype after $turns turns and $seconds seconds (try $try${resumed:+, resumed})"
+
+# What is kept for the next push's review. After a review, the conversation the agent kept replaces the last one; when
+# the agent kept none, the directory stays as it was (the conversation restored, which the keep job then saves again,
+# or nothing), so the next push resumes the last conversation kept.
+if [ -n "$session_dir" ]; then
+  file=$(find "$HOME/.claude/projects" -name "$id.jsonl" -size +0 -print -quit 2> /dev/null || true)
+  if [ -z "$file" ]; then
+    echo "facts-review-run: the agent kept no conversation $id; $session_dir is left as it was"
+  else
+    mkdir -p "$session_dir"
+    rm -f "$session_dir/session" "$session_dir"/*.jsonl
+    cp "$file" "$session_dir/"
+    printf 'id=%s\nhead=%s\ndir=%s\nasked=%s\nbase=%s\n' "$id" "$head" "$(basename "$(dirname "$file")")" "$asked" \
+      "$base_ref" > "$session_dir/session"
+    echo "facts-review-run: kept the conversation $id of the review of $head, for the next push's review to resume"
+  fi
+fi

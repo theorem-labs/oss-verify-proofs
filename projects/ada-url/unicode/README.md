@@ -16,16 +16,16 @@ Checks 4 properties (listed below); the first, an invariant: Per-byte classifica
 - Length/position bounds: prune_hash, trim_c0_whitespace and remove_ascii_tab_or_newline never lengthen; find_authority_delimiter(_special) and get_host_delimiter_location return positions <= size ([lines 137-196](source/unicode.cc#L137-L196)): assert(); confirmed in the binary.
 - remove_ascii_tab_or_newline leaves no \t, \n or \r in its output ([lines 154-166](source/unicode.cc#L154-L166)): abort(); not confirmed in the binary.
 
-A failed check marked as ending the process contradicts every halts statement below, so a proof of one implies them on every input it covers.
+A failure of any of the checks at lines 27-70, lines 99-109 and lines 137-196 ends the process with a status that the halts statements below that name them exclude, so a proof of one of those statements implies them on every input it covers. No statement here proves the other check.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks at lines 27-70, lines 99-109 and lines 137-196 above hold | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks at lines 27-70, lines 99-109 and lines 137-196 above hold | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks at lines 27-70, lines 99-109 and lines 137-196 above hold | open |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks at lines 27-70, lines 99-109 and lines 137-196 above hold | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; abort read as SIGABRT; memory refused only when forced | open |
 | `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; abort read as SIGABRT; memory refused only when forced | open |
 | `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; abort read as SIGABRT; memory refused only when forced | open |

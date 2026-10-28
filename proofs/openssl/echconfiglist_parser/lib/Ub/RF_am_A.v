@@ -35,7 +35,7 @@ Definition ram_fp (st : mstate) (lo sp : Z) (a : Z) : Prop :=
   \/ exists rid r, (s_regions st) !! rid = Some r /\ r_kind r <> RKGroup /\ lr_lo r <= a < r_base r + round_up_pg (r_len r).
 
 Lemma ram_fp_alloc_fp st lo sp a : ram_fp st lo sp a -> ralloc_fp (fun k => k <> RKGroup) st lo sp a.
-Proof. try hcb. try hsb. unfold ram_fp, ralloc_fp. (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]). Qed.
+Proof. try hcb. try hsb. unfold ram_fp, ralloc_fp. (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]). Qed.
 Lemma ram_fp_stack st lo sp a : lo <= a < sp -> ram_fp st lo sp a.
 Proof. try hcb. try hsb. intros; left; assumption. Qed.
 Lemma ram_fp_ctx st lo sp a : RCTX <= a < RCTX + 928 -> ram_fp st lo sp a.
@@ -70,7 +70,7 @@ Proof. try hcb. try hsb.
   eapply ram_fp_region; [exact Hra | exact NK | lia].
 Qed.
 Lemma ram_fp_same st st' lo sp a : s_regions st' = s_regions st -> ram_fp st' lo sp a <-> ram_fp st lo sp a.
-Proof. try hcb. try hsb. intros ER. unfold ram_fp. rewrite ER. (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]). Qed.
+Proof. try hcb. try hsb. intros ER. unfold ram_fp. rewrite ER. (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]). Qed.
 
 (* [comment removed for export] *)
 Definition ram_ret_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)

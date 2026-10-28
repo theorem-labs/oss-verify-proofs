@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: yajl-ruby/json_fuzzer/asan_disagrees_at_most
+bound: '0'
+fingerprint: 16cad6a59c00aafe193d42a9d5d37b259dcb2fbcd11ae84f06608c707d764553

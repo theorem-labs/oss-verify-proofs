@@ -20,9 +20,10 @@ KINDS = ("project", "harness", "release", "proof", "counterexample", "finding", 
 BUILDS = ("plain", "ubsan", "asan", "asan-ubsan")
 SANITIZER_BUILDS = BUILDS[1:]
 
-# The OSS Verify port, and its private prelaunch variant, which only a project a finding holds back builds from.
+# The OSS Verify port, and this repository's internal copy, which keeps the port's branches under oss-verify-port/
+# and which only a project a finding holds back builds from.
 OSS_VERIFY_REPOSITORY = "theorem-labs/oss-verify"
-PRELAUNCH_REPOSITORY = OSS_VERIFY_REPOSITORY + "-prelaunch"
+INTERNAL_PORT_REPOSITORY = "theorem-labs/oss-verify-proofs" + "-internal"
 
 SCALARS = {
     "project-name": r"[a-z0-9][a-z0-9_-]{0,99}",
@@ -46,7 +47,7 @@ SCALARS = {
     # A project asset may instead live on its internal findings-<project>
     # release while a finding holds that project back.
     "asset-release-tag": r"v[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?(-src)?|findings-[a-z0-9][a-z0-9_-]*",
-    "oss-verify-repository": "|".join(re.escape(r) for r in (OSS_VERIFY_REPOSITORY, PRELAUNCH_REPOSITORY)),
+    "oss-verify-repository": "|".join(re.escape(r) for r in (OSS_VERIFY_REPOSITORY, INTERNAL_PORT_REPOSITORY)),
     "build-name": "|".join(re.escape(b) for b in BUILDS),
     "archive-name": r"[A-Za-z0-9._+-]+\.a",
     # an SPDX expression whose parenthesised groups may sit anywhere, as a library's own files state it

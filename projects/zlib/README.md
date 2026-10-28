@@ -30,7 +30,7 @@ Not included: **api-driver** (held from this release); **minigzip_fuzzer** (not 
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `checksum_fuzzer`: CRC-32 combine law, per chunk (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len)) must equal crc32_z(crc_so_far, chunk); chunked crc32_z over the whole input (chunk size data[0]) must equal the one-shot crc32(0, data, len); crc32_combine(crc1,crc2,len)==crc32_combine(crc1,crc1,len) and crc32_combine_op(crc1,crc2,op)==crc32_combine_op(crc2,crc1,op): trivially true, since crc1 == crc2 was just asserted; crc32_combine(crc1, crc2, len) must equal crc32_combine_op(crc2, crc1, crc32_combine_gen(len)): the two combine APIs agree (operands swapped, but equal by the previous assert); chunked adler32_z over the input must equal the one-shot adler32(1, data, len); adler32_combine(adler1, adler2, len) == adler32_combine(adler1, adler1, len): trivially true, since adler1 == adler2 was just asserted.
 
 ## Known issues

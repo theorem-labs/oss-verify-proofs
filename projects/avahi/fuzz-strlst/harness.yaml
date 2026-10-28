@@ -96,6 +96,7 @@ checks:
   live: unknown
   where: source/fuzz-strlst.c:67-71
   what: avahi_string_list_copy(a) is avahi_string_list_equal to a
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzz-strlst

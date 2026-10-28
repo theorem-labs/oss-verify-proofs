@@ -3,7 +3,7 @@
 
 [tcpdump.org](https://www.tcpdump.org) · OSS-Fuzz: [projects/libpcap](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/libpcap)
 
-**Status: available.** 3 of OSS-Fuzz's 3 fuzz targets have statements. 12 binaries, 7.8 MB. 39 statements: 5 proved, 0 known false, 0 suspected false, 0 blocked by the model, 34 open.
+**Status: available.** 3 of OSS-Fuzz's 3 fuzz targets have statements. 12 binaries, 7.8 MB. 39 statements: 11 proved, 0 known false, 0 suspected false, 0 blocked by the model, 28 open.
 
 Built from libpcap (commit `7fc0bcd4`).
 
@@ -12,7 +12,7 @@ Built from libpcap (commit `7fc0bcd4`).
 |---|---|---|---|
 | [fuzz_both](fuzz_both/) | Byte 0 = filter length; the filter string is pcap_compile-d against a pcap file built from the rest (written to /tmp), and pcap_offline_filter is evaluated on every packet; the verdict is only fprintf-ed to /dev/null. | none | 13 |
 | [fuzz_filter](fuzz_filter/) | pcap_open_dead with the last byte as linktype, pcap_compile of the input as a filter expression, then pcap_setfilter; errors only pcap_perror-ed. | none | 13 |
-| [fuzz_pcap](fuzz_pcap/) | Writes the input to a /tmp file, pcap_open_offline, reads every packet with pcap_next_ex and calls pcap_stats; lengths printed to /dev/null only. | none | 13, 5 proved |
+| [fuzz_pcap](fuzz_pcap/) | Writes the input to a /tmp file, pcap_open_offline, reads every packet with pcap_next_ex and calls pcap_stats; lengths printed to /dev/null only. | none | 13, 11 proved |
 
 Not included: **api-driver** (held from this release).
 
@@ -40,10 +40,16 @@ By hand: download `libpcap-bin.tar.zst` from release [v2026.10.0](https://github
 ## Proofs
 | statement | result |
 |---|---|
+| [libpcap/fuzz_pcap/asan_agreement_decidable](../../proofs/libpcap/fuzz_pcap/asan_agreement_decidable) | proved |
 | [libpcap/fuzz_pcap/asan_agrees](../../proofs/libpcap/fuzz_pcap/asan_agrees) | proved |
+| [libpcap/fuzz_pcap/asan_disagrees_at_most](../../proofs/libpcap/fuzz_pcap/asan_disagrees_at_most) | proved |
+| [libpcap/fuzz_pcap/asan_ubsan_agreement_decidable](../../proofs/libpcap/fuzz_pcap/asan_ubsan_agreement_decidable) | proved |
 | [libpcap/fuzz_pcap/asan_ubsan_agrees](../../proofs/libpcap/fuzz_pcap/asan_ubsan_agrees) | proved |
+| [libpcap/fuzz_pcap/asan_ubsan_disagrees_at_most](../../proofs/libpcap/fuzz_pcap/asan_ubsan_disagrees_at_most) | proved |
 | [libpcap/fuzz_pcap/plain_halts](../../proofs/libpcap/fuzz_pcap/plain_halts) | proved |
+| [libpcap/fuzz_pcap/ubsan_agreement_decidable](../../proofs/libpcap/fuzz_pcap/ubsan_agreement_decidable) | proved |
 | [libpcap/fuzz_pcap/ubsan_agrees](../../proofs/libpcap/fuzz_pcap/ubsan_agrees) | proved |
+| [libpcap/fuzz_pcap/ubsan_disagrees_at_most](../../proofs/libpcap/fuzz_pcap/ubsan_disagrees_at_most) | proved |
 | [libpcap/fuzz_pcap/ubsan_halts](../../proofs/libpcap/fuzz_pcap/ubsan_halts) | proved |
 
 ## Licence

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: yajl-ruby/json_fuzzer/ubsan_agreement_decidable
+fingerprint: d8b29de8e5f41cc50147575d31e056c725a435a7376eee28f9b7cdb46e7e75c3

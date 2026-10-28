@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: simdjson/fuzz_element/asan_agrees
+fingerprint: d7e7dd7856ccfe75d1f6981f05d1857a5794fbd408647b1332ffbdc33eaaffab

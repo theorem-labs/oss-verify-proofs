@@ -7,8 +7,8 @@
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType Run.
 From OssFuzzTheorems.leptonica.fhmtgen_fuzzer.images Require Plain.
-From OssFuzzTheorems.leptonica.fhmtgen_fuzzer.images Require Asan AsanUbsan.
-From OssFuzzTheorems.Proofs.leptonica.fhmtgen_fuzzer.lib.Top Require BaseFhmtgenAsan BaseFhmtgenBoth.
+From OssFuzzTheorems.leptonica.fhmtgen_fuzzer.images Require Asan Ubsan AsanUbsan.
+From OssFuzzTheorems.Proofs.leptonica.fhmtgen_fuzzer.lib.Top Require BaseFhmtgenAsan BaseFhmtgenUbsan BaseFhmtgenBoth.
 
 Theorem fhmtgen_fuzzer_asan_agrees :
   strong_universal_error_free_T_scfg_budgets (Run.alloc_only_cfg false)
@@ -18,6 +18,15 @@ Theorem fhmtgen_fuzzer_asan_agrees :
     (mkImage Asan.M.loaded_segments Asan.M.init_pc
        Asan.M.phdrs).
 Proof. exact BaseFhmtgenAsan.strong_universal_error_free_fhmtgen_fuzzer_asan. Qed.
+
+Theorem fhmtgen_fuzzer_ubsan_agrees :
+  strong_universal_error_free_T_scfg_budgets (Run.alloc_only_cfg false)
+    ShippedBudgets.lim_source ShippedBudgets.lim_target
+    (mkImage Plain.M.loaded_segments Plain.M.init_pc
+       Plain.M.phdrs)
+    (mkImage Ubsan.M.loaded_segments Ubsan.M.init_pc
+       Ubsan.M.phdrs).
+Proof. exact BaseFhmtgenUbsan.strong_universal_error_free_fhmtgen_fuzzer_ubsan. Qed.
 
 Theorem fhmtgen_fuzzer_asan_ubsan_agrees :
   strong_universal_error_free_T_scfg_budgets (Run.alloc_only_cfg false)

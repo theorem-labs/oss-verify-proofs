@@ -3,7 +3,7 @@
 
 [KhronosGroup/SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools) · OSS-Fuzz: [projects/spirv-tools](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/spirv-tools)
 
-**Status: available.** 4 of OSS-Fuzz's 7 fuzz targets have statements. 16 binaries, 34 MB. 46 statements: 5 proved, 0 known false, 0 suspected false, 0 blocked by the model, 41 open.
+**Status: available.** 4 of OSS-Fuzz's 7 fuzz targets have statements. 16 binaries, 34 MB. 46 statements: 10 proved, 0 known false, 0 suspected false, 0 blocked by the model, 36 open.
 
 Built from SPIRV-Tools (commit `47c74f48`).
 
@@ -11,7 +11,7 @@ Built from SPIRV-Tools (commit `47c74f48`).
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
 | [spvtools_as_fuzzer](spvtools_as_fuzzer/) | Picks a target env from the input, then assembles the input text twice with spvTextToBinaryWithOptions (default options, then PRESERVE_NUMERIC_IDS); diagnostics are printed and destroyed, binaries destroyed. The two results are never compared. | none | 13 |
-| [spvtools_binary_parser_fuzzer](spvtools_binary_parser_fuzzer/) | Packs the input into little-endian 32-bit words and calls spvBinaryParse with null header/instruction callbacks; the return code is ignored. | none | 13, 5 proved |
+| [spvtools_binary_parser_fuzzer](spvtools_binary_parser_fuzzer/) | Packs the input into little-endian 32-bit words and calls spvBinaryParse with null header/instruction callbacks; the return code is ignored. | none | 13, 10 proved |
 | [spvtools_dis_fuzzer](spvtools_dis_fuzzer/) | Packs the input into 32-bit words and disassembles it with spvBinaryToText under every option bitmask from NONE (bit 0) up to, not including, the OR of PRINT\|COLOR\|INDENT\|SHOW_BYTE_OFFSET\|NO_HEADER\|FRIENDLY_NAMES (bits 1-6); text and diagnostics are destroyed unread. | none | 13 |
 | [spvtools_val_fuzzer](spvtools_val_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 
@@ -41,10 +41,15 @@ By hand: download `spirv-tools-bin.tar.zst` from release [v2026.10.0](https://gi
 ## Proofs
 | statement | result |
 |---|---|
+| [spirv-tools/spvtools_binary_parser_fuzzer/asan_agreement_decidable](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/asan_agreement_decidable) | proved |
 | [spirv-tools/spvtools_binary_parser_fuzzer/asan_agrees](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/asan_agrees) | proved |
+| [spirv-tools/spvtools_binary_parser_fuzzer/asan_disagrees_at_most](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/asan_disagrees_at_most) | proved |
 | [spirv-tools/spvtools_binary_parser_fuzzer/asan_halts](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/asan_halts) | proved |
+| [spirv-tools/spvtools_binary_parser_fuzzer/asan_ubsan_agrees](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/asan_ubsan_agrees) | proved |
 | [spirv-tools/spvtools_binary_parser_fuzzer/plain_halts](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/plain_halts) | proved |
+| [spirv-tools/spvtools_binary_parser_fuzzer/ubsan_agreement_decidable](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/ubsan_agreement_decidable) | proved |
 | [spirv-tools/spvtools_binary_parser_fuzzer/ubsan_agrees](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/ubsan_agrees) | proved |
+| [spirv-tools/spvtools_binary_parser_fuzzer/ubsan_disagrees_at_most](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/ubsan_disagrees_at_most) | proved |
 | [spirv-tools/spvtools_binary_parser_fuzzer/ubsan_halts](../../proofs/spirv-tools/spvtools_binary_parser_fuzzer/ubsan_halts) | proved |
 
 ## Licence

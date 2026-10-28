@@ -210,7 +210,7 @@ Ltac frd i :=
 Ltac frd_clear := repeat match goal with H : ov_read_bytes asegs _ (wa _) 1 = Some _ |- _ => clear H end.
 Ltac fixq := repeat match goal with |- context [(?x - 4096)%Z] => replace (x - 4096) with (x + -4096) by lia end.
 Ltac zl i := frd i; zstep; frd_clear; cbv beta; rewrite ?unsigned_lit8 by lia.
-Ltac zz := zstep; fix_lit_store; try (timeout 5 lit_branch); fixq.
+Ltac zz := zstep; fix_lit_store; try (timeout 5 lit_branch); fixq.   (* timeout-ok: on expiry try skips lit_branch and zz goes on; without this limit the build exceeds 250 GiB *)
 
 Ltac strchr_res := repeat match goal with |- context [ifind_byte ?c ?B] => let t := eval vm_compute in (ifind_byte c B) in change (ifind_byte c B) with t end; cbv iota; rewrite ?unsigned_lit by lia.
 

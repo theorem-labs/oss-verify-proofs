@@ -3,14 +3,14 @@
 
 [sourceware.org/bzip2](https://sourceware.org/bzip2) · OSS-Fuzz: [projects/bzip2](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/bzip2)
 
-**Status: available.** 3 of OSS-Fuzz's 4 fuzz targets have statements. 12 binaries, 5.0 MB. 45 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 43 open.
+**Status: available.** 3 of OSS-Fuzz's 4 fuzz targets have statements. 12 binaries, 5.0 MB. 45 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 42 open.
 
 Built from bzip2 (commit `f5dfc960`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [bzip2_compress_target](bzip2_compress_target/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 15, 2 proved |
+| [bzip2_compress_target](bzip2_compress_target/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 15, 3 proved |
 | [bzip2_decompress_target](bzip2_decompress_target/) | BZ2_bzBuffToBuffDecompress into a 2*size buffer; return code only optionally printed under __DEBUG__. | none | 15 |
 | [bzip2_fd](bzip2_fd/) | BZ2_bzWrite the input to a temp file, then BZ2_bzRead it back through BZ2_bzdopen; the bytes read are discarded, never compared with the input (a missed round-trip opportunity). | none | 15 |
 
@@ -43,6 +43,7 @@ By hand: download `bzip2-bin.tar.zst` from release [v2026.10.0](https://github.c
 |---|---|
 | [bzip2/bzip2_compress_target/asan_agrees](../../proofs/bzip2/bzip2_compress_target/asan_agrees) | proved |
 | [bzip2/bzip2_compress_target/asan_ubsan_agrees](../../proofs/bzip2/bzip2_compress_target/asan_ubsan_agrees) | proved |
+| [bzip2/bzip2_compress_target/ubsan_agrees](../../proofs/bzip2/bzip2_compress_target/ubsan_agrees) | proved |
 
 ## Licence
 bzip2 is under `bzip2-1.0.6`. Each binary is a combined work of bzip2, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `bzip2-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `bzip2-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

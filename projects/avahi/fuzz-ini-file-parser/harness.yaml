@@ -134,6 +134,7 @@ checks:
   where: source/fuzz-ini-file-parser.c:39-43
   what: 'environment sanity only: mkstemp returned a descriptor and write() wrote all bytes of the temp
     file; not a property of the INI parser'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzz-ini-file-parser

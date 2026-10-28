@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* SPDX-License-Identifier: Apache-2.0 *)
 (* The proofs in this file are Anthropic's; the theorem statements were issued by the task authors and are reproduced as issued (see NOTICE). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* [comment removed for export] *)
@@ -37,6 +37,7 @@ Module ZstdZstdFrameInfoHaltsBothExits <: LinuxProcessSemantics.EquivalenceDefin
   Import ListNotations.
   Definition codes : list (stdpp.bitvector.definitions.bv 64) := [Z_to_bv 64 0; Z_to_bv 64 2].
 End ZstdZstdFrameInfoHaltsBothExits.
+Require OssFuzzTheorems.Proofs.zstd.zstd_frame_info.lib.UbsanMain.
 
 Theorem strong_universal_error_free_zstd_frame_info_asan :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
@@ -47,6 +48,17 @@ Theorem strong_universal_error_free_zstd_frame_info_asan :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.zstd_frame_info.images.Asan.M.loaded_segments OssFuzzTheorems.zstd.zstd_frame_info.images.Asan.M.init_pc OssFuzzTheorems.zstd.zstd_frame_info.images.Asan.M.phdrs).
 Proof.
   exact OssFuzzTheorems.Proofs.zstd.zstd_frame_info.lib.AsanW.ABase_final.base_asan_closed.
+Qed.
+
+Theorem strong_universal_error_free_zstd_frame_info_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.alloc_only_cfg false)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.zstd_frame_info.images.Plain.M.loaded_segments OssFuzzTheorems.zstd.zstd_frame_info.images.Plain.M.init_pc OssFuzzTheorems.zstd.zstd_frame_info.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.zstd_frame_info.images.Ubsan.M.loaded_segments OssFuzzTheorems.zstd.zstd_frame_info.images.Ubsan.M.init_pc OssFuzzTheorems.zstd.zstd_frame_info.images.Ubsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.zstd.zstd_frame_info.lib.UbsanMain.base_ubsan.
 Qed.
 
 Theorem strong_universal_error_free_zstd_frame_info_both :

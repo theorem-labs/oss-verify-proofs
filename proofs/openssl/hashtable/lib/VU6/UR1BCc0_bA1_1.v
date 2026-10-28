@@ -1,0 +1,15 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Instr.
+From OssFuzzTheorems.Proofs.openssl.hashtable.lib Require Import PropExec ShapeAlg AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore.
+From OssFuzzTheorems.Proofs.openssl.hashtable.lib Require Import CertRefl CxRel CxPlan CxPlanSound CxGlue CxBatch.
+From OssFuzzTheorems.Proofs.openssl.hashtable.lib Require Import HUPlanImage HUAtable H0Sinv HUCheckG HUChain HUChain2 HUHop HUBatch HUFam.
+From OssFuzzTheorems.Proofs.openssl.hashtable.lib Require Import HUFam2 HUBatchF UR1BS0 UR1BCDc0.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Import AX2. Import AX2S. Import APC. Import CAP. Import CXS.
+Open Scope Z_scope.
+Lemma bA1_1 : (let it := APC.mk_itab_ranges HSEGS R1B_ranges in hbatch_ok LIM 100000 400 it (map jA1 leaves2_1)) = true.
+Proof. apply hbatch_f_intro. ltac2:(cert_refl_vm constr:(true)). Qed.

@@ -15,7 +15,10 @@ Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 
 Require OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Asan.
 Require OssFuzzTheorems.cgif.cgif_file_fuzzer.images.AsanUbsan.
+Require OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Ubsan.
 Require OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Plain.
+Require OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib.A.AZ05.
+Require OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib.UZ03.
 Require OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib.YZ05.
 Require OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib.Halts_tfib.
 
@@ -28,6 +31,28 @@ Module CgifCgifFileFuzzerHaltsBothExits <: LinuxProcessSemantics.EquivalenceDefi
   Import ListNotations.
   Definition codes : list (stdpp.bitvector.definitions.bv 64) := [Z_to_bv 64 0; Z_to_bv 64 2].
 End CgifCgifFileFuzzerHaltsBothExits.
+
+Theorem strong_universal_error_free_cgif_file_fuzzer_asan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.alloc_only_cfg false)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Plain.M.loaded_segments OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Plain.M.init_pc OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Asan.M.loaded_segments OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Asan.M.init_pc OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Asan.M.phdrs).
+Proof.
+exact OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib.A.AZ05.strong_universal_error_free_cgif_file_fuzzer_asan_closed.
+Qed.
+
+Theorem strong_universal_error_free_cgif_file_fuzzer_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.alloc_only_cfg false)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Plain.M.loaded_segments OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Plain.M.init_pc OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Ubsan.M.loaded_segments OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Ubsan.M.init_pc OssFuzzTheorems.cgif.cgif_file_fuzzer.images.Ubsan.M.phdrs).
+Proof.
+exact OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib.UZ03.strong_universal_error_free_cgif_file_fuzzer_ubsan.
+Qed.
 
 Theorem strong_universal_error_free_cgif_file_fuzzer_both :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets

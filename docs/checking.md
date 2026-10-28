@@ -131,25 +131,42 @@ Outside a container, `ulimit -Hs` shows the hard limit in KiB (1 GiB is
 
 | workflow | when | what |
 |---|---|---|
-| [release-check](../.github/workflows/release-check.yml) | each push to `main`, once a week, and on request | every committed proof, with `oft check` in the checker image; the badge on the README shows its result |
-| [pr](../.github/workflows/pr.yml) | each pull request, and each push to `main` | `oft lint`, `oft generate --check`, the tests of `tools/oft`, the controls in `tests/`, and `oft check` on each harness that the change affects (every harness when it changes `theories/` or `toolchain/`, and when a release pull request or a push to `main` changes `dune-project`). A pull request that is not a release is checked on the base's tree with its `proofs/` and `counterexamples/`, whose generated files, `dune-project` among them, the base's tools render again |
+| [release-check](../.github/workflows/release-check.yml) | each push to `main`, once a week, and on request | what the push changes. With tools that have content keys ([tools/oft/keys.py](../tools/oft/keys.py)), `oft plan` checks each part of each harness (its statements and proofs, its counterexamples, its findings) whose key, the hash of what that part's check reads, differs from its key at the commit before the push; every part when the push changes what no key holds (`toolchain/`, `tools/`, `.github/actions/`, a `.gitattributes`, or a path git quotes). With older tools: each harness whose proofs, counterexamples, findings or sources it touches, each harness of a project whose `project.yaml` or `harness.yaml` it touches, and every committed proof and finding when it changes what every harness reads (`theories/`, `toolchain/`, `tools/`, `.github/actions/`, `dune-project`, a `.gitattributes`, a quoted path, a hand-written dune file, or a `release.yaml` that names another checker or runner image). Every committed proof and finding for the weekly run and a request. `oft check`, in the checker image; the badge on the README shows its result |
+| [pr](../.github/workflows/pr.yml) | each pull request, each merge queue group, and each push to `main` | `oft lint`, `oft generate --check`, the tests of `tools/oft`, the controls in `tests/`, and `oft check` on each part of each harness that the change affects. With base tools that have content keys, a part is checked when its key differs from its key at the base; the key holds the statements the run checks, the change's `proofs/`, `counterexamples/` and `findings/`, and the base's tools, which the check jobs run, so a change to the tools or the workflows checks no part here. A pull request that is not a release is checked on the base's facts and tools with its `proofs/` and `counterexamples/`, whose generated files, `dune-project` among them, the base's tools render again |
 | [weekly](../.github/workflows/weekly.yml) | once a week, after each release, and on request | every statement and every proof, with no cache (while the repository is private, each scheduled run checks a third of the harnesses in turn); a byte-for-byte comparison of ELF snapshots made on two kinds of machine; a fresh download and hash of every release asset that the facts pin by SHA-256 |
 
-release-check and pr restore dune's cache from earlier runs of this
-repository's own workflows, so a library or a statement whose sources did not
-change is not compiled again. dune reuses a compiled file only when its
-sources, its dependencies and the Rocq binary all hash the same as when it was
-compiled, and the cache is keyed by the checker image
-([tools/oft/ci/cache-key.sh](../tools/oft/ci/cache-key.sh)). Only a push to
-`main`, a maintainer's request and weekly's `warm` job save it; a pull request
-never does. Each proof and its wrapper are compiled afresh on every run, and
-weekly's sweep reads no cache. `oft check` builds a proof library only from
-the `lib/dune` that `oft generate` renders (it writes that file itself), and
-refuses a library that holds a symbolic link or any other build file, or a
-build file in a directory above it.
+The checker and runner images are built from
+[toolchain/checker.Dockerfile](../toolchain/checker.Dockerfile) and
+[toolchain/runner.Dockerfile](../toolchain/runner.Dockerfile) by the workflow
+[images.yml](../.github/workflows/images.yml). The runner carries a copy of
+tools/oft: the one a release has already published. The workflow also records a
+build provenance attestation for each image it pushes, for the maintainers'
+own checks; it is not published with the image. An image pinned before that
+workflow existed was built by hand and has none. release.yaml pins each image by
+digest (`images.checker`, `images.runner`), and nothing else pins them. A new
+image is used only after a pull request changes its pin, and that pull request
+re-checks what runs in that image.
+
+No proof check restores dune's cache: release-check and pr compile every
+library and statement that a check reads on every run, and weekly's sweep reads
+no cache. A valid compiled `Statements.vo` of other statements, put in a filled
+cache under the same key, made doctored proofs pass: dune restores a cached file
+without hashing its bytes again, and the kernel does not check a compiled file
+again when a proof loads it. Each proof and its wrapper are also compiled afresh.
+`oft check` builds a proof library only from the `lib/dune` that `oft generate`
+renders (it writes that file itself), and refuses a library that holds a
+symbolic link or any other build file, or a build file in a directory above it.
 
 Every counterexample and its control input are run again in the runner image,
 and a counterexample that stops reproducing fails CI.
+
+A checker image built from `toolchain/checker.Dockerfile` trusts no root of
+eMudhra's emSign CAs or of Comodo's AAA Certificate Services: the Dockerfile
+disables them in the system store and fails the build if one remains. A
+checker image built before that step, such as the one v2026.10.1 pins, still
+trusts them. No check uses TLS in any checker image: they run with no
+network. The build fetches the Rocq opam repository with git, which checks the
+pinned commit's hash. The runner image has no store of trusted roots.
 
 [tests/check.sh](../tests/check.sh) runs the same check on the toy controls in
 `tests/`. It fails if a control that must be refused is accepted, or if it is

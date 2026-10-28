@@ -141,6 +141,7 @@ checks:
   where: source/round_trip_fuzzer.c:64-81
   what: 'Partial-decompression law: LZ4_decompress_safe_partial with targetOutputSize = a fuzzed partialCapacity
     in [0, size] must return exactly partialCapacity bytes equal to the input''s prefix.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: round_trip_fuzzer

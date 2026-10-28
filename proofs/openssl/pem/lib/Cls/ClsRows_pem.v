@@ -9,7 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit FinInput Classifier.
 Require OssFuzzTheorems.openssl.pem.images.Plain.
 
-
+Require OssFuzzTheorems.openssl.pem.images.Ubsan.
 
 
 
@@ -93,12 +93,14 @@ Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-
-
-
-
-
-
+Theorem base_row_pem_ubsan : forall cfg,
+  strong_universal_error_free_T_scfg cfg
+    (mkImage OssFuzzTheorems.openssl.pem.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Plain.M.init_pc OssFuzzTheorems.openssl.pem.images.Plain.M.phdrs)
+    (mkImage OssFuzzTheorems.openssl.pem.images.Ubsan.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Ubsan.M.init_pc OssFuzzTheorems.openssl.pem.images.Ubsan.M.phdrs) ->
+  strong_universal_error_free_T_scfg_budgets cfg ShippedBudgets.lim_source ShippedBudgets.lim_target
+    (mkImage OssFuzzTheorems.openssl.pem.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Plain.M.init_pc OssFuzzTheorems.openssl.pem.images.Plain.M.phdrs)
+    (mkImage OssFuzzTheorems.openssl.pem.images.Ubsan.M.loaded_segments OssFuzzTheorems.openssl.pem.images.Ubsan.M.init_pc OssFuzzTheorems.openssl.pem.images.Ubsan.M.phdrs).
+Proof. intros cfg Hb. exact (issued_base_of_pinned cfg _ _ Hb). Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

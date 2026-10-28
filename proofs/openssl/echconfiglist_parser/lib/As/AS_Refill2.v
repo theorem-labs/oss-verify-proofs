@@ -317,7 +317,7 @@ Section Refill.
       eapply (pop_map_seg1 _ (Z_to_bv 64 (bv_unsigned sp + -160)) gp tp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ s10' s11' _ _ _ _
                 F fc m1 lo c R (CA + 2560) sb (n - nf) nf mfa au mu);
         try eassumption; rewrite ?unsigned_lit by (first [clear - BND HI; lia | lia]).
-      all: try eassumption. all: try reflexivity. all: try (clear - RR; try acb; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])])).
+      all: try eassumption. all: try reflexivity. all: try (clear - RR; try acb; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])])).
       (* [comment removed for export] *)
       all: try (lazymatch goal with |- AHI_LO <= sb /\ _ => idtac end;
                 unfold kSpaceSize; destruct RBG as (_ & _ & R3); destruct SBR4 as (S1 & S2 & _); clear - S1 S2 R3 ERB HC; try acb; repeat split; [lia|lia|]; rewrite ERB in R3;
@@ -392,8 +392,8 @@ Section Refill.
     set (m4 := owin L4 S W (zfill (Z_to_bv 64 (rbeg + mu)) (Z_to_bv 64 262144) m2)) in VIS5.
     assert (MU4 : munch [(rbeg + mu, rbeg + mu + 262144); (sh (rbeg + mu), sh (rbeg + mu) + 32768)] m2 m4).
     { intros x Hx. cbn [outside] in Hx. destruct Hx as (Hx1 & Hx2 & _). subst m4.
-      rewrite (owin_munch L4 S (sh (rbeg + mu)) 32768 SHB3 ltac:(hci; clear - SHB2 SHB5; try acb; unfold AHI_LO in *; lia) ltac:(hci; clear; lia) _ x) by (cbn [outside]; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])])).
-      apply (zfill_munch (Z_to_bv 64 (rbeg + mu)) (Z_to_bv 64 262144) m2 x). cbn [outside]. rewrite !unsigned_lit by (first [clear - BEG2 BEG1 BNDL BND HI; lia | lia]). (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]). }
+      rewrite (owin_munch L4 S (sh (rbeg + mu)) 32768 SHB3 ltac:(hci; clear - SHB2 SHB5; try acb; unfold AHI_LO in *; lia) ltac:(hci; clear; lia) _ x) by (cbn [outside]; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])])).
+      apply (zfill_munch (Z_to_bv 64 (rbeg + mu)) (Z_to_bv 64 262144) m2 x). cbn [outside]. rewrite !unsigned_lit by (first [clear - BEG2 BEG1 BNDL BND HI; lia | lia]). (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]). }
     assert (WM4 : wmono asegs m2 m4).
     { subst m4. eapply wmono_trans; [apply zfill_wmono | apply owin_wmono]. }
     assert (MI4 : mem_inv asegs m4).

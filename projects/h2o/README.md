@@ -20,7 +20,7 @@ Not included: **h2o-fuzzer-http1** (not built yet); **h2o-fuzzer-http2** (not bu
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `h2o-fuzzer-url`: if h2o_url_parse succeeds (ret != -1), the parsed url must have a non-NULL scheme; after a successful parse, the count of non-NUL bytes across url.authority, url.host and url.path must be at most 2*Size: a loose sanity bound on the parsed component lengths (it touches every byte of each component, so ASan also checks they are readable).
 
 ## Known issues

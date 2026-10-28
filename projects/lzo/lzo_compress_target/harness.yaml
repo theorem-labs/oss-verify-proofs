@@ -138,6 +138,7 @@ checks:
     LZO_E_OK and produce exactly size bytes. ONLY THE LENGTH is compared: the decompressed content is
     never memcmp''d against the input, so a decoder that returned the right number of wrong bytes would
     pass.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: lzo_compress_target

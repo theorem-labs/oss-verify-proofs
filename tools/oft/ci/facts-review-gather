@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 # Gathers what the facts review reads, for .claude/skills/review-facts/SKILL.md ("In CI"), into <directory>:
 #
-#   PR=<number> REPO=<owner/name> [GH_TOKEN=<read token>] tools/oft/ci/facts-review-gather <directory>
+#   PR=<number> REPO=<owner/name> [GH_TOKEN=<read token>] [REVIEW_SESSION=<directory>] \
+#     tools/oft/ci/facts-review-gather <new or empty directory>
 #
 #   pr.md        the pull request's number, title, body, base branch and head commit
 #   changed.txt  each facts file it changes against the merge base, with git's status letter
-#   patches/     each of those files' diff, one .diff file each
+#   patches/     each of those files' diff, one file each, named by the file's path with each % written %25, each /
+#                %2F and each ~ %7E, then .diff: projects%2Fzlib%2Fchecksum_fuzzer%2Fharness.yaml.diff (a name over 200
+#                bytes: its first 150, ~, 16 hex digits of the path's SHA-256, .diff)
 #   head/        at the head commit: docs/, release.yaml, each reviewed project's projects/<project>/, and each
 #                reviewed fuzz target's proofs/<project>/<fuzz target>/provenance/ without its licence texts and zips
 #   oss-fuzz/    OSS-Fuzz's project directory at the commit project.yaml's oss_fuzz pins, for each project that has one
 #   library/     each project's library source at the commit project.yaml's library pins, when it is a public GitHub
 #                repository of at most 50 MB
 #   missing.txt  each of those fetches that did not happen, and why
+#   since-last-review.diff  on a later push, when REVIEW_SESSION holds the last review's conversation: the changes
+#                since the commit that review was of, to the facts files and to each reviewed fuzz target's
+#                proofs/<project>/<fuzz target>/provenance/ without its licence texts and zips; none when that commit
+#                cannot be fetched or diffed (missing.txt says so)
 #
 # facts-review.yml runs it from a checkout of main, so it is this file as main has it. It runs nothing of the
 # pull request: git reads the pull request's commits as objects, and the files are written out as plain files with no
@@ -20,12 +27,15 @@
 # gh and git use that person's own login.
 set -euo pipefail
 
-out=${1:?usage: facts-review-gather <directory>}
+out=${1:?usage: facts-review-gather <new or empty directory>}
 [[ $PR =~ ^[0-9]+$ ]] || { echo "facts-review-gather: PR is not a number" >&2; exit 2; }
 [[ $REPO =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "facts-review-gather: REPO is not owner/name" >&2; exit 2; }
 NAME='^[A-Za-z0-9][A-Za-z0-9._+-]*$'
 FACTS=(':(glob)projects/*/project.yaml' ':(glob)projects/*/*/harness.yaml' ':(glob)projects/*/*/source/**'
        ':(glob)projects/*/*/Distribution.v')
+# A directory of its own: what a gather before left there (a project the pull request has since deleted, a diff name
+# already taken) is not this pull request's.
+if [ -d "$out" ] && [ -n "$(ls -A "$out")" ]; then echo "facts-review-gather: $out is not empty" >&2; exit 2; fi
 mkdir -p "$out/patches" "$out/head" "$out/oss-fuzz"
 out=$(realpath "$out")
 scratch=$(mktemp -d "${RUNNER_TEMP:-/tmp}/facts-review.XXXXXX")
@@ -61,18 +71,65 @@ git -C "$git_dir" fetch -q --no-tags --filter=blob:none --depth=1 origin "$head"
 git -C "$git_dir" -c core.quotePath=false diff --no-renames --name-status "$merge_base" "$head" -- "${FACTS[@]}" \
   > "$out/changed.txt"
 echo "facts-review-gather: $(wc -l < "$out/changed.txt") facts files changed"
-# One diff of every facts file (git fetches its blobs in one batch), split into one file per path.
-git -C "$git_dir" -c core.quotePath=false diff --no-renames "$merge_base" "$head" -- "${FACTS[@]}" |
+# One diff of every facts file (git fetches its blobs in one batch), split into one file per path. The file's name is
+# its path with %, / and ~ written as %25, %2F and %7E, which no two paths share; a name that would pass 200 bytes is
+# its first 150 bytes, ~ and 16 hex digits of the path's SHA-256 instead, as no other name has a ~. git writes a path
+# with a control character, " or \ in quotes, with C escapes; a diff header this does not read stops the gather, so no
+# diff runs into another. A path whose type changed (a file that became a symbolic link or a submodule) has two diffs
+# in a row, the deletion and the addition: both go to its one file. The prefixes, the diff driver and the colour are
+# set here, and so are textconv (off) and the submodule form (`--submodule=short`), so a person's git config cannot
+# change them.
+git -C "$git_dir" -c core.quotePath=false diff --no-renames --no-ext-diff --no-textconv --no-color --submodule=short \
+  --src-prefix=a/ --dst-prefix=b/ "$merge_base" "$head" -- "${FACTS[@]}" |
   python3 -c '
-import os, re, sys
-out, f = sys.argv[1], None
+import hashlib, os, re, sys
+ESCAPES = {b"a": 7, b"b": 8, b"t": 9, b"n": 10, b"v": 11, b"f": 12, b"r": 13, b"\"": 34, b"\\": 92}
+def name(path):
+    n = path.replace(b"%", b"%25").replace(b"/", b"%2F").replace(b"~", b"%7E")
+    if len(n) > 200:
+        n = n[:150].decode("utf-8", "ignore").encode() + b"~" + hashlib.sha256(path).hexdigest()[:16].encode()
+    return n + b".diff"
+def unquote(q):
+    out, i = bytearray(), 0
+    while i < len(q):
+        if q[i:i + 1] != b"\\":
+            out += q[i:i + 1]; i += 1
+        elif re.fullmatch(rb"[0-3][0-7][0-7]", q[i + 1:i + 4]):
+            out.append(int(q[i + 1:i + 4], 8)); i += 4
+        elif q[i + 1:i + 2] in ESCAPES:
+            out.append(ESCAPES[q[i + 1:i + 2]]); i += 2
+        else:
+            sys.exit("facts-review-gather: a diff header has an escape it cannot read: %r" % q)
+    return bytes(out)
+out, f, seen, current = os.fsencode(sys.argv[1]), None, set(), None
 for line in sys.stdin.buffer:
-    m = re.match(rb"diff --git a/(.+) b/\1$", line.rstrip(b"\n"))
-    if m:
+    if line.startswith(b"diff --git "):
+        header = line.rstrip(b"\n")
+        m = re.fullmatch(rb"diff --git a/(.+) b/\1", header)
+        q = re.fullmatch(rb"diff --git \"a/((?:[^\"\\]|\\.)+)\" \"b/\1\"", header)
+        if m: path = m.group(1)
+        elif q: path = unquote(q.group(1))
+        else: sys.exit("facts-review-gather: a diff header it cannot read: %r" % header)
+        if f and path == current:   # the second diff of a type change: the same file
+            f.write(line); continue
+        if path in seen: sys.exit("facts-review-gather: two diffs of %r" % path)
+        seen.add(path)
+        current = path
         if f: f.close()
-        f = open(os.path.join(out, m.group(1).decode().replace("/", "__") + ".diff"), "wb")
-    if f: f.write(line)
+        try: f = open(os.path.join(out, name(path)), "xb")   # x: a name already written stops it, never overwrites
+        except FileExistsError: sys.exit("facts-review-gather: two paths have the diff name %r" % name(path))
+    elif not f:
+        sys.exit("facts-review-gather: the diff does not start with a diff --git header")
+    f.write(line)
 if f: f.close()' "$out/patches"
+
+# at_head <path>: whether the head commit has <path>. A git that fails is not "absent": it stops the gather.
+at_head() {
+  local listed
+  listed=$(git -C "$git_dir" ls-tree --name-only "$head" -- "$1") ||
+    { echo "facts-review-gather: git ls-tree could not list $1 at $head" >&2; exit 1; }
+  [ -n "$listed" ]
+}
 
 # The fuzz targets to review: each one whose facts changed, and every one of a project whose project.yaml the pull
 # request adds. A project.yaml it only modifies is reviewed by its diff: moving a pin edits every project.yaml at once.
@@ -83,21 +140,26 @@ while IFS=$'\t' read -r status path; do
   IFS=/ read -r _ project second _ <<< "$path"
   [[ $project =~ $NAME ]] || { echo "facts-review-gather: skipped the project name $project" >&2; continue; }
   # A project the pull request deletes has nothing at the head to review; its deletion is in changed.txt.
-  [ -n "$(git -C "$git_dir" ls-tree --name-only "$head" -- "projects/$project")" ] || continue
+  at_head "projects/$project" || continue
   projects[$project]=1
   if [ "$second" = project.yaml ]; then
     [ "$status" = A ] || continue
     fetch[$project]=1
+    harnesses=$(git -C "$git_dir" ls-tree -r --name-only "$head" -- "projects/$project") ||
+      { echo "facts-review-gather: git ls-tree could not list the fuzz targets of projects/$project at $head" >&2
+        exit 1; }
     while IFS= read -r harness; do
+      [[ $harness == */harness.yaml ]] || continue
       harness=${harness#projects/"$project"/}; harness=${harness%/harness.yaml}
       [[ $harness =~ $NAME ]] && targets[$project/$harness]=1
-    done < <(git -C "$git_dir" ls-tree -r --name-only "$head" -- "projects/$project" | grep '/harness\.yaml$' || true)
-  elif [[ $second =~ $NAME ]] && [ -n "$(git -C "$git_dir" ls-tree --name-only "$head" -- "projects/$project/$second/harness.yaml")" ]; then
+    done <<< "$harnesses"
+  elif [[ $second =~ $NAME ]] && at_head "projects/$project/$second/harness.yaml"; then
     targets[$project/$second]=1
   fi
 done < "$out/changed.txt"
 if [ "${#targets[@]}" -gt "$MAX_TARGETS" ]; then
-  mapfile -t all < <(printf '%s\n' "${!targets[@]}" | sort)
+  sorted=$(printf '%s\n' "${!targets[@]}" | sort)
+  mapfile -t all <<< "$sorted"
   for target in "${all[@]:$MAX_TARGETS}"; do unset "targets[$target]"; done
   echo "fuzz targets: ${#all[@]} changed; this review covers the first $MAX_TARGETS in name order and not the rest" \
     >> "$out/missing.txt"
@@ -108,17 +170,26 @@ for target in "${!targets[@]}"; do fetch[${target%%/*}]=1; done
 paths=(docs release.yaml)
 for project in "${!projects[@]}"; do
   if [ -n "${fetch[$project]:-}" ]; then paths+=("projects/$project"); else
-    [ -n "$(git -C "$git_dir" ls-tree --name-only "$head" -- "projects/$project/project.yaml")" ] &&
-      paths+=("projects/$project/project.yaml")
+    if at_head "projects/$project/project.yaml"; then paths+=("projects/$project/project.yaml"); fi
   fi
 done
 for target in "${!targets[@]}"; do
-  [ -n "$(git -C "$git_dir" ls-tree --name-only "$head" -- "proofs/$target/provenance")" ] && paths+=("proofs/$target/provenance")
+  if at_head "proofs/$target/provenance"; then paths+=("proofs/$target/provenance"); fi
 done
-# A sparse checkout fetches the files it needs in one batch, where git archive would fetch them one by one.
+# A sparse checkout fetches the files it needs in one batch, where git archive would fetch them one by one. git
+# archive then reads no attributes (--worktree-attributes with an empty --attr-source): it writes the bytes as
+# committed, and no .gitattributes of the pull request's (an export-ignore) can keep a file from the review. Without
+# --worktree-attributes it reads the whole head commit into an index for the attributes and fetches every file of it
+# first: at internal #86's head 145,634 files and 8.5 GB, for the 933 files and 4 MB this review reads, about 10
+# minutes, and a fetch that broke ("bad pack header", run 40224321468).
 git -C "$git_dir" sparse-checkout set --no-cone "${paths[@]/#//}"
 git -C "$git_dir" checkout -q --detach "$head"
-git -C "$git_dir" archive --format=tar "$head" -- "${paths[@]}" | tar -x -C "$out/head"
+no_attributes=$(git -C "$git_dir" hash-object -w -t tree /dev/null)
+git -C "$git_dir" --attr-source="$no_attributes" archive --worktree-attributes --format=tar "$head" -- "${paths[@]}" |
+  tar -x -C "$out/head"
+# No symbolic link of the pull request's is followed, from here on, by this script or by the review: a project.yaml
+# that is a link to a file the runner cannot read would stop the gather, and one to a file it can would be read.
+find "$out/head" -type l -delete
 # Not read by the review: licence texts, seed corpora, and the memory images of each binary (Images.v, images/). And
 # no file the review agent would load as its own instructions when it reads beside it: the pull request's text is data.
 find "$out/head" \( -name LICENSES -o -name images -o -name '*.zip' -o -name Images.v -o -name .claude \
@@ -126,9 +197,38 @@ find "$out/head" \( -name LICENSES -o -name images -o -name '*.zip' -o -name Ima
 # The docs the review follows are the checkout's (main's, in CI). Each doc whose copy at the head differs from them, in
 # either direction, whatever branch the change came from, is for the maintainers to see, not a new rule for the review.
 [ -d docs ] || { echo "facts-review-gather: run it from the root of a checkout of main: no docs/ here" >&2; exit 2; }
-diff -rq docs "$out/head/docs" | sed "s|$out/head/|head/|g" > "$out/docs-changed.txt" || [ "${PIPESTATUS[0]}" = 1 ]
+# diff answers 1 when the two differ; 2 or more is an error, not a list of differences.
+docs_status=0
+diff -rq docs "$out/head/docs" > "$scratch/docs-changed" || docs_status=$?
+[ "$docs_status" -le 1 ] ||
+  { echo "facts-review-gather: diff -rq could not compare docs/ with head/docs/ (status $docs_status)" >&2; exit 1; }
+sed "s|$out/head/|head/|g" "$scratch/docs-changed" > "$out/docs-changed.txt" ||
+  { echo "facts-review-gather: sed could not write docs-changed.txt" >&2; exit 1; }
 echo "facts-review-gather: ${#projects[@]} projects, ${#targets[@]} fuzz targets: ${!targets[*]}"
 if [ "${#targets[@]}" -gt 0 ]; then printf '%s\n' "${!targets[@]}" | sort > "$out/targets.txt"; else : > "$out/targets.txt"; fi
+
+# The changes since the commit of the last review, when facts-review.yml restored that review's conversation into
+# REVIEW_SESSION: to the facts files, and to each reviewed fuzz target's provenance/, which checks C and E compare
+# them with, without its licence texts (LICENSES) and zips. It is empty when the push changed none of those. The diff
+# options are set as above, so a person's git config cannot change them. When the commit cannot be fetched or diffed,
+# no file is written, and missing.txt says so.
+since=$(sed -n 's/^head=//p' "${REVIEW_SESSION:-/nonexistent}/session" 2> /dev/null || true)
+if [[ $since =~ ^[0-9a-f]{40}$ ]]; then
+  since_paths=("${FACTS[@]}")
+  for target in "${!targets[@]}"; do since_paths+=("proofs/$target/provenance"); done
+  since_paths+=(':(exclude,glob)proofs/*/*/provenance/**/LICENSES' ':(exclude,glob)proofs/*/*/provenance/**/LICENSES/**'
+                ':(exclude,glob)proofs/*/*/provenance/**/*.zip')
+  if git -C "$git_dir" fetch -q --no-tags --filter=blob:none --depth=1 origin "$since" 2> /dev/null &&
+     git -C "$git_dir" -c core.quotePath=false diff --no-renames --no-ext-diff --no-textconv --no-color \
+       --submodule=short --src-prefix=a/ --dst-prefix=b/ "$since" "$head" -- "${since_paths[@]}" \
+       > "$scratch/since-last-review.diff"; then
+    mv "$scratch/since-last-review.diff" "$out/since-last-review.diff"
+    echo "facts-review-gather: the changes since $since, the commit of the last review, in since-last-review.diff"
+  else
+    echo "since-last-review.diff: could not fetch $since, the commit of the last review, or diff it with the head" |
+      tee -a "$out/missing.txt"
+  fi
+fi
 
 # oss_fuzz_dir <path> <commit> <project>: OSS-Fuzz's whole project directory at the commit, subdirectories included,
 # from a blobless clone of google/oss-fuzz (public) that only the pinned commits are fetched into.
@@ -140,8 +240,13 @@ oss_fuzz_dir() {
     git -C "$oss_git" config remote.origin.promisor true
     git -C "$oss_git" config remote.origin.partialclonefilter blob:none
   fi
-  git -C "$oss_git" fetch -q --no-tags --filter=blob:none --depth=1 origin "$2" &&
-    [ -n "$(git -C "$oss_git" ls-tree --name-only "$2" -- "$1")" ] &&
+  git -C "$oss_git" fetch -q --no-tags --filter=blob:none --depth=1 origin "$2" || return 1
+  # A hash the pull request wrote that names a blob or a tree, not a commit, is a pin OSS-Fuzz does not have.
+  git -C "$oss_git" rev-parse -q --verify "$2^{commit}" > /dev/null || return 1
+  local listed
+  listed=$(git -C "$oss_git" ls-tree --name-only "$2" -- "$1") ||
+    { echo "facts-review-gather: git ls-tree could not list $1 in OSS-Fuzz at $2" >&2; exit 1; }
+  [ -n "$listed" ] &&
     mkdir -p "$out/oss-fuzz/$3" &&
     git -C "$oss_git" archive --format=tar "$2" -- "$1" | tar -x -C "$out/oss-fuzz/$3" --strip-components=2
 }
@@ -152,15 +257,62 @@ oss_fuzz_dir() {
 # what it could not check.
 for project in "${!fetch[@]}"; do
   yaml="$out/head/projects/$project/project.yaml"
-  [ -f "$yaml" ] || continue
-  read -r path commit repository library_commit < <(python3 -c '
+  if [ ! -f "$yaml" ]; then
+    echo "projects/$project: no project.yaml at the head commit, so OSS-Fuzz's directory and the library's source" \
+      "were not fetched" >> "$out/missing.txt"
+    continue
+  fi
+  # A project.yaml that cannot be opened stops the gather: it is not a project without oss_fuzz or library. One that
+  # the pull request wrote wrong (not YAML, YAML the reader refuses, not the mapping it must be, or values that cannot
+  # be written out) is data: missing.txt says so, in at most 300 characters, and the review goes on, so the review can
+  # say what is wrong with it. Nothing is written until all of it is known, and a character that cannot be encoded
+  # is written as an escape. The load itself is bounded: a file over 64 KiB (the largest real one is under 17 KiB) is
+  # not read, and a merge key (<<), whose copies a file of a few hundred bytes can multiply to gigabytes, is refused.
+  fields=$(python3 -c '
 import sys, yaml
+with open(sys.argv[1], "rb") as f:
+    text = f.read(65537)
+def out(lines):
+    lines = [x.replace("\n", " ").replace("\0", "\\x00") for x in lines]   # bash would drop a NUL from the line
+    sys.stdout.buffer.write("".join(x + "\n" for x in lines).encode("utf-8", "backslashreplace"))
+    sys.exit(0)
+class Loader(yaml.SafeLoader):
+    def flatten_mapping(self, node):
+        if any(key.tag == "tag:yaml.org,2002:merge" for key, _ in node.value):
+            raise ValueError("a merge key (<<) is not read")   # valid YAML, so not a YAMLError: "cannot be read"
+        super().flatten_mapping(node)
+if len(text) > 65536:
+    out(["bad", "it is over 64 KiB"])
 try:
-    p = yaml.safe_load(open(sys.argv[1])) or {}
-    o, l = p.get("oss_fuzz") or {}, p.get("library") or {}
-    print(o.get("path", "-"), o.get("commit", "-"), l.get("repository", "-"), l.get("commit", "-"))
-except Exception:
-    print("- - - -")' "$yaml" || echo "- - - -")
+    p = yaml.load(text, Loader=Loader)
+    if not isinstance(p, dict):
+        why = "it is not a mapping"
+    else:
+        o, l = p.get("oss_fuzz") or {}, p.get("library") or {}
+        if not isinstance(o, dict) or not isinstance(l, dict):
+            why = "its oss_fuzz or library is not a mapping"
+        else:
+            values = [o.get("path", "-"), o.get("commit", "-"), l.get("repository", "-"), l.get("commit", "-")]
+            if any(isinstance(v, (list, dict, set)) for v in values):
+                # A list or a mapping (an alias tree of a few hundred bytes can stand for megabytes) is no value.
+                why = "its oss_fuzz path or commit, or its library repository or commit, is not a single value"
+            else:
+                out(["ok"] + [str(v)[:300] or "-" for v in values])
+except yaml.YAMLError as e:
+    why = "it is not YAML (%s)" % e
+except Exception as e:   # YAML the reader refuses (a date that is no date, deep nesting), a value str() refuses
+    why = "it is YAML that cannot be read (%s: %s)" % (type(e).__name__, e)
+out(["bad", why[:300]])' "$yaml") ||
+    { echo "facts-review-gather: could not read projects/$project/project.yaml" >&2; exit 1; }
+  mapfile -t field <<< "$fields"
+  [ "${field[0]}" = bad ] || [ "${#field[@]}" = 5 ] ||
+    { echo "facts-review-gather: the reader of projects/$project/project.yaml wrote ${#field[@]} fields" >&2; exit 1; }
+  if [ "${field[0]}" = bad ]; then
+    echo "projects/$project: project.yaml could not be used: ${field[1]}; so OSS-Fuzz's directory and the" \
+      "library's source were not fetched" >> "$out/missing.txt"
+    continue
+  fi
+  path=${field[1]} commit=${field[2]} repository=${field[3]} library_commit=${field[4]}
   if [[ $path =~ ^projects/[A-Za-z0-9._+-]+$ && $commit =~ ^[0-9a-f]{40}$ ]]; then
     if oss_fuzz_dir "$path" "$commit" "$project"; then
       echo "facts-review-gather: OSS-Fuzz's $path at $commit: $(find "$out/oss-fuzz/$project" -type f | wc -l) files"
@@ -180,7 +332,8 @@ except Exception:
       echo "facts-review-gather: $slug at $library_commit: $(find "$out/library/$project" -type f | wc -l) files"
     else
       rm -rf "${out:?}/library/$project"
-      echo "library/$project: $slug at $library_commit was not fetched (not public, or over 50 MB)" >> "$out/missing.txt"
+      echo "library/$project: $slug at $library_commit was not fetched (not public, over 50 MB, or the download" \
+        "failed)" >> "$out/missing.txt"
     fi
   else
     echo "library/$project: the library is not a GitHub repository pinned to a commit ($repository)" >> "$out/missing.txt"

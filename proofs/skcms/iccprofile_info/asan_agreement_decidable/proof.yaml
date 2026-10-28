@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: skcms/iccprofile_info/asan_agreement_decidable
+fingerprint: 4a32c12e84f79cc462eaac6aac0ffe9619d197920b2442f7acb9409c751bbf7c

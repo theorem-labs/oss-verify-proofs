@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* SPDX-License-Identifier: Apache-2.0 *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Lia.
 From Stdlib Require Import Zify PreOmega.
@@ -452,6 +452,6 @@ Ltac lia ::= first [ lia_a0 | lia_b1d | lia_old1 | lia_old2 | Zify.zify; xlia zc
 Ltac alia := lia_goal_arith; lia.
 
 Ltac ctauto :=
-  first [ solve [ repeat (first [ exact I | assumption | timeout 2 reflexivity | split ]) ]
-        | solve [ repeat (first [ left; timeout 2 reflexivity | right ]) ]
+  first [ solve [ repeat (first [ exact I | assumption | timeout 2 reflexivity | split ]) ]   (* timeout-ok: fast tier: expiry takes the later arm (split or right) of this repeat-first *)
+        | solve [ repeat (first [ left; timeout 2 reflexivity | right ]) ]   (* timeout-ok: fast tier: expiry takes the later arm (split or right) of this repeat-first *)
         | tauto ].

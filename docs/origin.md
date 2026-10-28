@@ -52,6 +52,10 @@ assumptions.
 
 Each proof also gets a build record of its binaries, in
 `proofs/<project>/<harness>/provenance/` ([building.md](building.md#where-a-binary-comes-from)).
+The record says where the proofs of the fuzz target came from (`proofs.origin`
+in `PROVENANCE.yaml`). A fuzz target that came from a package may also hold
+proofs written in this repository: `proofs.written_here` names their
+statements, one line per source, as `approvals.yaml` lists them.
 [adding-a-proof.md](adding-a-proof.md) lists every requirement that a proof
 meets before it enters.
 

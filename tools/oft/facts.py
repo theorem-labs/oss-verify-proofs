@@ -11,6 +11,7 @@ while proving, are loaded beside them: no rendered file reads them.
 `load(root)` never raises on bad data: it records problems in `tree.errors`
 so that `oft lint` can report all of them at once.
 """
+import collections
 import hashlib
 import os
 import re
@@ -40,6 +41,7 @@ class Tree:
         self.proof_libs = []       # "<project>/<harness>" of every proofs/<p>/<h>/lib/
         self.counterexamples = {}  # statement id -> CounterexampleDir
         self.records = {}          # (project, harness) -> the recipe its build record cites, recipe.asset
+        self.record_proofs = {}    # (project, harness) -> its build record's proofs.origin and proofs.written_here
         self.approvals = None      # approvals.yaml, if this checkout has one
         self.findings = {}         # "<project>/<harness>/<slug>" -> FindingDir
         self.unpatched = {}        # project -> its findings/<project>/unpatched.yaml
@@ -223,11 +225,15 @@ def code_sha256(path):
 
 def _parse(item):
     """(data or None, errors) of one facts file: item is (path, kind).  A build record (kind "record") is not a facts
-    file: of it only the recipe it cites, recipe.asset, is read and returned.  A fallback record (one with `fallback`,
-    whose binaries the unpublished internal recipe built) may cite none: it gives (None, []).  Any other record that is
-    a mapping without a `recipe` key gives (None, None), which load() judges once it knows the project: a port-built
-    project's records cite none, since the OSS Verify port built its binaries.  A record with a `recipe` key, or one
-    that is not a mapping, is judged on recipe.asset whatever its project."""
+    file: of it only the recipe it cites, recipe.asset, and where its proofs came from (proofs.origin, and
+    proofs.written_here, the statements of a ported fuzz target whose proofs were written here) are read and
+    returned as data, {"asset": ..., "origin": ..., "written_here": ...} (origin None unless a string; written_here
+    as written, for the rules to judge).  A fallback record (one with `fallback`, whose binaries the unpublished
+    internal recipe built) may cite none: it gives (data with asset None, []).  Any other record that is a mapping
+    without a `recipe` key gives (data with asset None, None), which load() judges once it knows the project: a
+    port-built project's records cite none, since the OSS Verify port built its binaries.  A record with a `recipe`
+    key, or one that is not a mapping, is judged on recipe.asset whatever its project: asset is None when that has
+    errors.  A record that cannot be read gives (None, errors)."""
     path, kind = item
     try:
         data = yamlio.load_file(path)
@@ -236,11 +242,17 @@ def _parse(item):
     if kind == "record":
         rec = data.get("recipe") if isinstance(data, dict) else None
         asset = rec.get("asset") if isinstance(rec, dict) else None
+        pr = data.get("proofs") if isinstance(data, dict) else None
+        origin = pr.get("origin") if isinstance(pr, dict) else None
+        here = pr.get("written_here") if isinstance(pr, dict) else None
+        # the shape of written_here is judged by the rules, with the approvals it must agree with
+        info = {"asset": asset, "origin": origin if isinstance(origin, str) else None, "written_here": here}
         if asset is None and isinstance(data, dict) and data.get("fallback"):
-            return None, []
+            return info, []
         if isinstance(data, dict) and "recipe" not in data:
-            return None, None
-        data, problems = asset, schema.validate_def("release", "recipe", asset, "recipe.asset")
+            return info, None
+        problems = schema.validate_def("release", "recipe", asset, "recipe.asset")
+        data = dict(info, asset=None if problems else asset)
     else:
         problems = schema.validate(kind, data)
     return (None if problems else data), problems
@@ -312,6 +324,11 @@ def load(root, record=False, jobs=None):
             continue
         proj = Project(tree, name, data)
         tree.projects[name] = proj
+        for key in ((data.get("budgets") or {}).get("agrees") or {}):
+            try:                    # once here; the statements the pair reaches skip it (shapes.PairError)
+                shapes.project_pair(data, key)
+            except shapes.ShapeError as e:
+                tree.err(rel, str(e))
         for h in hs:
             hrel = os.path.join("projects", name, h, "harness.yaml")
             hdata = _yaml(tree, hrel, "harness", parsed[hrel])
@@ -331,9 +348,11 @@ def load(root, record=False, jobs=None):
             proj = tree.projects.get(key[0])
             no_recipe = proj is not None and port(proj)
             problems = [] if no_recipe else schema.validate_def("release", "recipe", None, "recipe.asset")
-        asset = _yaml(tree, rel, "record", (data, problems))
-        if asset is not None:
-            tree.records[key] = asset
+        rec = _yaml(tree, rel, "record", (data, problems))
+        if rec is not None:
+            tree.record_proofs[key] = rec
+            if rec["asset"] is not None:
+                tree.records[key] = rec["asset"]
     if os.path.isfile(tree.path("approvals.yaml")):
         tree.approvals = _yaml(tree, "approvals.yaml", "approvals")
     _load_findings(tree)
@@ -433,10 +452,8 @@ def bin_recipe(tree, proj):
     return b["recipe"] if "recipe" in b else (tree.release or {}).get("recipe")
 
 
-# A finding is hand-written, untrusted pull-request input before lint's path
-# pass.  Validate its files here, before any loader follows a link or reads
-# more than the same 64 KiB paths.py permits.
 FINDING_FILE_CAP = 64 << 10
+FINDING_INPUT_CAP = 1 << 20
 
 
 class BoundedFileError(Exception):
@@ -481,10 +498,10 @@ def read_bounded(path, cap=FINDING_FILE_CAP):
     return data
 
 
-def _finding_fd(tree, rel):
+def _finding_fd(tree, rel, cap=FINDING_FILE_CAP):
     """open_bounded, or None after recording the loader error."""
     try:
-        return open_bounded(tree.path(rel))
+        return open_bounded(tree.path(rel), cap)
     except BoundedFileError as e:
         tree.err(rel, str(e))
         return None
@@ -543,47 +560,182 @@ def _driver_calls(fd):
 HOLDING_STATES = ("open", "patched", "reported")
 
 
-def held_projects(tree):
-    """The projects a finding holds back: those with a finding that is open,
-    patched or reported."""
-    return {f.project for f in tree.findings.values() if f.data["state"] in HOLDING_STATES}
+def holding(tree):
+    """{project: [each finding of it that holds it back, in path order]}."""
+    out = {}
+    for f in sorted(tree.findings.values(), key=lambda f: f.path):
+        if f.data["state"] in HOLDING_STATES:
+            out.setdefault(f.project, []).append(f)
+    return out
 
 
-def private_projects(tree):
-    """The projects whose project.yaml says `release: private`: kept in this repository, held from every public
-    release.  The release keeps the held page of one OSS-Fuzz has (held_form) and removes one it does not have whole."""
-    return {n for n, p in tree.projects.items() if p.data.get("release") == "private"}
+class Hold(collections.namedtuple("Hold", "held private statements")):
+    """What a public release leaves out (hold): held, the projects a finding holds back whole; private, those whose
+    project.yaml says `release: private`; statements, {project: {"<harness>/<statement>"}} that open findings of an
+    enrolled project hold back, for a project in neither.  A project in held or private (whole) ships only as held."""
+    __slots__ = ()
+
+    @property
+    def whole(self):
+        return self.held | self.private
+
+    @property
+    def ids(self):
+        """The id (<project>/<harness>/<statement>, the key of tree.proofs) of every statement held back: the one place
+        statements' keys are read."""
+        return frozenset("%s/%s" % (p, s) for p, sts in self.statements.items() for s in sts)
+
+
+def hold(tree):
+    """The tree's Hold.  A project with a finding that is open, patched or reported is held whole, unless the finding
+    hold of an enrolled project stays per statement (_held_statements); a private project is held whole either way, so
+    its findings hold it whole too (it is in held when one holds it back)."""
+    private = {n for n, p in tree.projects.items() if p.data.get("release") == "private"}
+    statements = {p: s for p, s in _held_statements(tree).items() if p not in private}
+    return Hold(set(holding(tree)) - set(statements), private, statements)
+
+
+def written_here(tree, project, harness):
+    """The statements a harness's build record says were written in this repository (proofs.written_here, read by
+    load), as far as it is a list of names; the rules judge any other shape."""
+    names = (tree.record_proofs.get((project, harness)) or {}).get("written_here")
+    return [s for s in names if isinstance(s, str)] if isinstance(names, list) else []
+
+
+def _held_statements(tree):
+    """{project: {"<harness>/<statement>"}}: for an enrolled project (`enrolled: true`) whose findings that hold it back
+    are all open, the statements they name and every agreement or halts statement of the harness their recorded input
+    shows false (_recorded_false), with the bound and decidability statements of each held agreement's pair (which go
+    with it, rules.py).  Only those are held back: its binaries carry no patch yet.  Once one of the findings is
+    patched or reported, its binaries carry the fix, so the whole project is held (hold); so it is when the
+    hold would leave a harness with no statement, since the project's archive still holds that harness's binaries
+    (oft fetch refuses a member the facts do not list) and a project with no build left cannot be available, or would
+    leave a harness that publishes a build only withheld statements (rules.py refuses a published build no statement
+    of Statements.v covers, unless every statement is withdrawn); when the project has a proof library
+    (proofs/<p>/<h>/lib/, which ships unchecked); when a harness's build record names a held statement in its
+    proofs.written_here (that record ships whole, so the name would stay in the release); and when a build it
+    publishes is not the one its findings run on (findings/<p>/unpatched.yaml), since that build may carry a fix that
+    a reader could compare with the source."""
+    out = {}
+    for p, fs in holding(tree).items():
+        proj = tree.projects.get(p)
+        if proj is None or not proj.data.get("enrolled") or any(f.data["state"] != "open" for f in fs):
+            continue
+        held = set()
+        for f in fs:
+            h = proj.harnesses.get(f.harness)
+            if h is None:
+                continue
+            runs = f.data.get("input") or {}
+            agreements = set(f.data["statements"])
+            agreements |= {st.name for st in h.statements.values()
+                           if st.kind in ("agreement", "halts") and _recorded_false(st, runs)}
+            for name in agreements:
+                held.add("%s/%s" % (f.harness, name))
+                st = h.statements.get(name)
+                if st is not None and st.kind == "agreement":
+                    held.update("%s/%s" % (f.harness, s.name) for s in h.statements.values()
+                                if s.kind in ("bound", "decidability") and s.data["builds"] == st.data["builds"])
+        if any(_emptied(n, h, held) for n, h in proj.harnesses.items()):
+            continue
+        # a proofs/<p>/<h>/lib/ ships unchecked and may hold anything, a held statement's proof or the finding's
+        # evidence among them: a project with one is held whole
+        if any(lib.split("/")[0] == p for lib in tree.proof_libs):
+            continue
+        # every binary the project publishes must be the one its findings run on: a build with no pin, or another
+        # pin, may carry the fix, which a reader could find by comparing it with the published source.  A withheld
+        # build is not published, so it is not compared.
+        pins = (tree.unpatched.get(p) or {}).get("harnesses") or {}
+        if any((pins.get(n) or {}).get(b, {}).get("sha256") != rec.get("sha256")
+               for n, h in proj.harnesses.items() for b, rec in h.builds()):
+            continue
+        # a build record ships whole, so a held statement its proofs.written_here names would stay in the release
+        # while the cut's facts no longer carry that statement (rules._written_here refuses that)
+        if any("%s/%s" % (n, s) in held for n in proj.harnesses for s in written_here(tree, p, n)):
+            continue
+        out[p] = held
+    return out
+
+
+def _emptied(name, h, held):
+    """Whether the hold (held: {"<harness>/<statement>"}) leaves harness h, named name, no statement, or, when it
+    publishes a build, no statement Statements.v carries while one of those left is not withdrawn (rules.py's rule for
+    a harness that publishes a build)."""
+    rest = [s for s in h.statements.values() if "%s/%s" % (name, s.name) not in held]
+    return not rest or (bool(h.builds()) and not any(s.rendered() for s in rest)
+                        and {s.data.get("status") for s in rest} != {"withdrawn"})
+
+
+def _recorded_false(st, runs):
+    """Whether one input's recorded runs (build -> run), which may lack a build st names, show st false.  A death by a
+    signal of any build st names does: it is false for a halts statement of that build, and for every agreement that
+    names it, whatever the other build does (_refute_agreements).  Otherwise shows_false decides, when every build st
+    names has a run."""
+    ran = [runs[b] for b in st.data["builds"] if b in runs]
+    return any("signal" in r for r in ran) or (len(ran) == len(st.data["builds"]) and shows_false(st, runs))
 
 
 def held_form(data):
-    """The project.yaml a public release carries for a private project OSS-Fuzz has: its name, homepage, language and
-    oss_fuzz, and status held, reason held (the shape of a project held from this release)."""
+    """The project.yaml a public release carries for a project it holds whole that OSS-Fuzz has: its name, homepage,
+    language and oss_fuzz, and status held, reason held (the shape of a project held from this release)."""
     out = {k: data[k] for k in ("schema", "project", "homepage", "language", "oss_fuzz") if k in data}
     out.update(status="held", reason="held")
     return out
 
 
-def cut_private(tree):
-    """Turn loaded facts into the public release's, as oft release-tree's cut leaves them: a private project OSS-Fuzz
-    has keeps only its held form (no harnesses, notes, proofs or counterexamples), and one it does not have is gone;
-    either way nothing else is keyed by it."""
-    names = private_projects(tree)
+# A run's outcome, as `oft check --parts findings` compares it: two runs agree when all of these are equal.
+RUN_FIELDS = ("exit", "signal", "stdout_sha256", "stderr_sha256")
 
-    def keep(key):
-        return key.split("/")[0] not in names
-    for n in names:
+
+def shows_false(st, runs):
+    """Whether the runs of one input (build -> run) show the statement false.  An agreement is false when its two
+    builds differ in exit, signal, stdout or stderr, or when either dies by a signal: it requires both runs to be
+    error-free (_refute_agreements).  A halts statement is false when its build dies by a signal or exits with a
+    status the statement does not allow."""
+    if st.kind == "agreement":
+        a, b = (runs[x] for x in st.data["builds"])
+        return "signal" in a or "signal" in b or any(a.get(k) != b.get(k) for k in RUN_FIELDS)
+    r = runs[st.data["builds"][0]]
+    exits = st.data.get("exits", "any")
+    return "signal" in r or (exits != "any" and r["exit"] not in exits)
+
+
+def cut(tree, shipped, held):
+    """Turn loaded facts into the public release's, as oft release-tree's cut leaves them: without what held (the
+    Hold oft release-tree computed, hold of the same checkout) holds back.  Returns the projects held whole that it
+    keeps as a held page, sorted: the one place that decides a held page or a removal.
+
+    A project held whole that OSS-Fuzz has keeps only its held form (no harnesses, notes, proofs or counterexamples);
+    one OSS-Fuzz does not have is gone, since a held page for a project never released would tell the reader that a
+    finding exists.  A held statement leaves its harness with its counterexample.  shipped: the statement ids whose
+    proofs the release carries; every other proof goes, and a proof library with no proof left of its fuzz target goes
+    with it.  findings/ and approvals.yaml never ship, so the cut has neither, and each statement's status is derived
+    again from what is left."""
+    whole, ids, pages = held.whole, held.ids, []
+    for n in sorted(whole):
         proj = tree.projects[n]
         if "oss_fuzz" in proj.data:
             proj.data, proj.harnesses, proj.notes = held_form(proj.data), {}, None
+            pages.append(n)
         else:
             del tree.projects[n]
-    tree.proofs = {k: v for k, v in tree.proofs.items() if keep(k)}
-    tree.counterexamples = {k: v for k, v in tree.counterexamples.items() if keep(k)}
-    tree.findings = {k: v for k, v in tree.findings.items() if keep(k)}
-    tree.unpatched = {k: v for k, v in tree.unpatched.items() if keep(k)}
-    tree.finding_series = {k: v for k, v in tree.finding_series.items() if keep(k)}
-    tree.proof_libs = [k for k in tree.proof_libs if keep(k)]
-    tree.records = {(p, h): v for (p, h), v in tree.records.items() if p not in names}
+    for sid in sorted(ids):
+        p, unit, name = sid.split("/")
+        h = tree.projects[p].harnesses[unit]
+        del h.statements[name]
+        h.data = dict(h.data, statements={k: v for k, v in h.data["statements"].items() if k != name})
+    tree.proofs = {k: v for k, v in tree.proofs.items() if k in shipped}
+    tree.proof_libs = [k for k in tree.proof_libs if any(s.startswith(k + "/") for s in shipped)]
+    # a build record goes with its fuzz target's proof directory: it ships only beside a proof the release carries
+    tree.records = {(p, h): v for (p, h), v in tree.records.items()
+                    if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
+    tree.record_proofs = {(p, h): v for (p, h), v in tree.record_proofs.items()
+                          if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
+    tree.counterexamples = {k: v for k, v in tree.counterexamples.items()
+                            if k.split("/")[0] not in whole and k not in ids}
+    tree.findings, tree.unpatched, tree.finding_series, tree.approvals = {}, {}, {}, None
+    _derive(tree)
+    return pages
 
 
 def _load_findings(tree):
@@ -650,7 +802,7 @@ def _finding_record(tree, f, y):
         if not os.path.lexists(tree.path(finding_file)):
             tree.err(rel, "missing " + name)
             continue
-        fd = _finding_fd(tree, finding_file)
+        fd = _finding_fd(tree, finding_file, FINDING_INPUT_CAP)
         if fd is None:
             continue
         calls = _driver_calls(fd)
@@ -722,6 +874,8 @@ def _asset_names(tree):
 
 def _derive(tree):
     """Derived statuses and fingerprints."""
+    for st in tree.statements():
+        st.proof, st.counterexample, st.derived_counterexample, st.status = None, None, False, st.data.get("status")
     by_id = {s.id: s for s in tree.statements()}
     for sid, pd in tree.proofs.items():
         st = by_id.get(sid)
@@ -755,6 +909,8 @@ def _derive(tree):
             continue                # no fingerprint: it would let anyone test a guess at a withheld binary
         try:
             st.fingerprint = fingerprint(st, digests, lps)
+        except shapes.PairError:
+            pass                    # no fingerprint; reported once, against project.yaml, above
         except (shapes.ShapeError, KeyError, TypeError) as e:
             tree.err(st.id, "cannot be stated: %s" % e)
 
@@ -789,7 +945,7 @@ def fingerprint(st, digests, lps):
     code of each of THEORIES."""
     if digests["theories/Shapes.v"] is None or digests["theories/Images.v"] is None:
         raise KeyError("theories/Shapes.v and theories/Images.v")
-    params, body = shapes.term(st.data)
+    params, body = shapes.term(st.data, project=st.harness.project.data)
     builds = st.harness.data["builds"]
     lines = [FINGERPRINT_TAG, st.id, "Definition %s%s : Prop := %s." % (st.name, params, body)]
     for b in sorted(set(st.data["builds"])):

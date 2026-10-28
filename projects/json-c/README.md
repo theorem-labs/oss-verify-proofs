@@ -3,7 +3,7 @@
 
 [json-c.github.io/json-c](https://json-c.github.io/json-c) · OSS-Fuzz: [projects/json-c](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/json-c)
 
-**Status: available.** 4 of OSS-Fuzz's 4 fuzz targets have statements. 16 binaries, 9.3 MB. 54 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 52 open.
+**Status: available.** 4 of OSS-Fuzz's 4 fuzz targets have statements. 16 binaries, 9.3 MB. 54 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 51 open.
 
 Built from json-c (commit `d17ad9d1`).
 
@@ -11,7 +11,7 @@ Built from json-c (commit `d17ad9d1`).
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
 | [json_array_fuzzer](json_array_fuzzer/) | Parses up to three short fuzzed strings into an array, then insert_idx/get_idx/put_idx/del_idx/shrink/sort with fuzzed indices and a constant comparator; results unchecked. | none | 13 |
-| [json_object_fuzzer](json_object_fuzzer/) | Parses a short string, calls every json_object_get_* getter, json_c_visit, every setter with fuzzed values, then json_object_deep_copy; no result is compared (e.g. set then get is not checked). | none | 15, 2 proved |
+| [json_object_fuzzer](json_object_fuzzer/) | Parses a short string, calls every json_object_get_* getter, json_c_visit, every setter with fuzzed values, then json_object_deep_copy; no result is compared (e.g. set then get is not checked). | none | 15, 3 proved |
 | [json_pointer_fuzzer](json_pointer_fuzzer/) | json_tokener_parse_ex with fuzzed depth/flags, then json_pointer_get[f] and json_pointer_set[f] with a fuzzed path and sub-document; return codes only decide ownership, get-after-set is not checked. | none | 13 |
 | [tokener_parse_ex_fuzzer](tokener_parse_ex_fuzzer/) | json_tokener_parse_ex over the input, iterate object members, serialize with PRETTY\|SPACED; the string is discarded (not re-parsed). | none | 13 |
 
@@ -44,6 +44,7 @@ By hand: download `json-c-bin.tar.zst` from release [v2026.10.0](https://github.
 |---|---|
 | [json-c/json_object_fuzzer/asan_agrees](../../proofs/json-c/json_object_fuzzer/asan_agrees) | proved |
 | [json-c/json_object_fuzzer/asan_ubsan_agrees](../../proofs/json-c/json_object_fuzzer/asan_ubsan_agrees) | proved |
+| [json-c/json_object_fuzzer/ubsan_agrees](../../proofs/json-c/json_object_fuzzer/ubsan_agrees) | proved |
 
 ## Licence
 json-c is under `MIT`. Each binary is a combined work of json-c, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `json-c-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `json-c-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

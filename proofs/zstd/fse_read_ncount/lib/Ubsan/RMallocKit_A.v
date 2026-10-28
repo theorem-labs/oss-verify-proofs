@@ -1,0 +1,102 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Tac Image ZBridge SysStep Walk ITree Nodes Decode Arr.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import SFModel.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import UImgX.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Malloc Require Import F_malloc_free F_malloc_fast F_malloc_enframe MallocTree MallocFacts_A.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Malloc Require Export MallocKit_A.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree Malloc MallocCtrl Monad.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Malloc Require Import ProgDeps.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import RMallocRep RMallocTree.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import RunDraw.
+Import ListNotations.
+Open Scope Z_scope.
+Section CANSEC1. Context {rc : runConstT}.
+#[using="Type"] Lemma rmrep_wr32 : forall st m p v r,
+rmrep st m -> ticks_ok st ->
+(s_regions st) !! (fst p) = Some r -> r_kind r = RKGroup -> 0 <= snd p -> snd p + 4 <= round_up_pg (r_len r) ->
+(forall b gh, (s_groups st) !! b = Some gh -> fst b = fst p -> snd p + 4 <= snd b \/ snd b + 9 <= snd p) ->
+0 <= v < 2^32 ->
+rmrep (wr32 p v st) (write_to_mem m (wa (r_base r + snd p)) (le4 (wz v)))
+/\ ticks_ok (wr32 p v st).
+Proof.
+intros st m p v r MR TK Hr Hk H0 H4 Hg Hv.
+Local Ltac2 Set LiaHints.tbl := fun () => "00L0>11388677774.1913072661934.2114042194409.2518433110573.1518433126957.1718433127342.1618928632365.1518928747180.1828203974735.2329853265576.2534308191119.2434308191119.2634308191119.2834308191119.3036557432084.1437619581402.1941412411866.2541891467181.154729634137.18 4729716184.15 54240267163.1554240283418.1857380629272.2157380629401.2357623619925.2160482980062.2363368103597.1565502235437.1500000700>00?00@00A00B00C00D00K00R00Y00`00g00n01201601:01;01?01C01G01K01O01S01T01U01V01WS2H02H4S2H02H4SSSSSSS2H02H4S2H02H4S3Hfb1HS3Hfb1HS3Hfb1HS3Hfb1HS2HvS2B0S2B3SS2HvS2HvS2HvS2HvS2B1S2B2SSSS".
+rewrite le4_bytes by lia.
+change (write_to_mem m (wa (r_base r + snd p)) [b8 (v mod 256); b8 ((v / 256) mod 256); b8 ((v / 65536) mod 256); b8 (v / 16777216)])
+with (write_to_mem (write_to_mem (write_to_mem (write_to_mem m (wa (r_base r + snd p)) [b8 (v mod 256)])
+(wa (r_base r + snd p) + 1) [b8 ((v / 256) mod 256)]) (wa (r_base r + snd p) + 1 + 1) [b8 ((v / 65536) mod 256)])
+(wa (r_base r + snd p) + 1 + 1 + 1) [b8 (v / 16777216)]).
+rewrite !wa_succ.
+unfold wr32.
+assert (E1 : forall q w stx, wr8 q w stx = wr8 q (w mod 256) stx) by (intros; apply wr8_mod).
+rewrite (E1 p v), (E1 (aadd p 1) (Z.shiftr v 8)), (E1 (aadd p 2) (Z.shiftr v 16)), (E1 (aadd p 3) (Z.shiftr v 24)).
+rewrite !Z.shiftr_div_pow2 by lia. change (2^8) with 256. change (2^16) with 65536. change (2^24) with 16777216.
+rewrite (Z.mod_small (v / 16777216) 256) by (split; [apply Z.div_pos; lia| apply Z.div_lt_upper_bound; lia]).
+assert (B0 : 0 <= v mod 256 < 256) by (apply Z.mod_pos_bound; lia).
+assert (B1 : 0 <= (v / 256) mod 256 < 256) by (apply Z.mod_pos_bound; lia).
+assert (B2 : 0 <= (v / 65536) mod 256 < 256) by (apply Z.mod_pos_bound; lia).
+assert (B3 : 0 <= v / 16777216 < 256) by (split; [apply Z.div_pos; lia| apply Z.div_lt_upper_bound; lia]).
+assert (S1 : rmrep (wr8 p (v mod 256) st) (write_to_mem m (wa (r_base r + snd p)) [b8 (v mod 256)]) /\ ticks_ok (wr8 p (v mod 256) st)).
+{ split; [|apply ticks_ok_wr8; exact TK]. apply (rmrep_wr8 st m p _ r MR TK Hr Hk); [lia| |lia].
+intros b gh Hb Hfb. destruct (Hg b gh Hb Hfb); lia. }
+destruct S1 as [M1 T1].
+assert (S2 : rmrep (wr8 (aadd p 1) ((v / 256) mod 256) (wr8 p (v mod 256) st)) (write_to_mem (write_to_mem m (wa (r_base r + snd p)) [b8 (v mod 256)]) (wa (r_base r + snd p + 1)) [b8 ((v / 256) mod 256)])
+/\ ticks_ok (wr8 (aadd p 1) ((v / 256) mod 256) (wr8 p (v mod 256) st))).
+{ split; [|apply ticks_ok_wr8; exact T1].
+replace (r_base r + snd p + 1) with (r_base r + snd (aadd p 1)) by (cbn; lia).
+apply (rmrep_wr8 _ _ (aadd p 1) _ r M1 T1); cbn; [exact Hr| exact Hk| lia| |lia].
+intros b gh Hb Hfb. destruct (Hg b gh Hb Hfb); lia. }
+destruct S2 as [M2 T2].
+assert (S3 : rmrep (wr8 (aadd p 2) ((v / 65536) mod 256) (wr8 (aadd p 1) ((v / 256) mod 256) (wr8 p (v mod 256) st)))
+(write_to_mem (write_to_mem (write_to_mem m (wa (r_base r + snd p)) [b8 (v mod 256)]) (wa (r_base r + snd p + 1)) [b8 ((v / 256) mod 256)]) (wa (r_base r + snd p + 1 + 1)) [b8 ((v / 65536) mod 256)])
+/\ ticks_ok (wr8 (aadd p 2) ((v / 65536) mod 256) (wr8 (aadd p 1) ((v / 256) mod 256) (wr8 p (v mod 256) st)))).
+{ split; [|apply ticks_ok_wr8; exact T2].
+replace (r_base r + snd p + 1 + 1) with (r_base r + snd (aadd p 2)) by (cbn; lia).
+apply (rmrep_wr8 _ _ (aadd p 2) _ r M2 T2); cbn; [exact Hr| exact Hk| lia| |lia].
+intros b gh Hb Hfb. destruct (Hg b gh Hb Hfb); lia. }
+destruct S3 as [M3 T3].
+split; [|apply ticks_ok_wr8; exact T3].
+replace (r_base r + snd p + 1 + 1 + 1) with (r_base r + snd (aadd p 3)) by (cbn; lia).
+apply (rmrep_wr8 _ _ (aadd p 3) _ r M3 T3); cbn; [exact Hr| exact Hk| lia| |lia].
+intros b gh Hb Hfb. destruct (Hg b gh Hb Hfb); lia.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma rauxv_ok_pres : forall C m m' B,
+rauxv_ok m B -> rpres_except C m m' ->
+(forall a, B <= a -> ~ C a) -> (forall a, RAUXV_CELL <= a < RAUXV_CELL + 8 -> ~ C a) ->
+rauxv_ok m' B.
+Proof.
+intros C m m' B (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & H) HP HB HC.
+exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+- eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. Local Ltac2 Set LiaHints.tbl := fun () => "0020>31848951228.256568648877.25 00000400:S2HaS1H2Ha".
+lia.
+- eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
+- eapply rpres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma rpres_write : forall (C : Z -> Prop) m0 m a bs,
+rpres_except C m0 m -> 0 <= a -> a + Z.of_nat (length bs) <= 2^64 ->
+(forall x, a <= x < a + Z.of_nat (length bs) -> C x) ->
+rpres_except C m0 (write_to_mem m (wa a) bs).
+Proof.
+intros C m0 m a bs HP Ha Hl HC x Hx HCx.
+destruct (HP x Hx HCx) as [E W].
+assert (NE : write_to_mem m (wa a) bs (wa x) = m (wa x)).
+{ Local Ltac2 Set LiaHints.tbl := fun () => "0040>18486047942.1526981861744.155416271702.17 5738652443.15 00000400800>00BS2HlS2HaS1l2l0S2Hx".
+rewrite write_to_mem_spec by lia. rewrite wa_unsigned by lia.
+destruct (Z.leb_spec0 a x); destruct (Z.ltb_spec0 x (a + Z.of_nat (length bs))); cbn [andb]; try reflexivity.
+exfalso. apply HCx, HC. lia. }
+split.
+- rewrite NE. exact E.
+- intros Hw. apply wview_write_mono. apply W, Hw.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma rpres_except_munch_frame : forall C m0 m m' W,
+rpres_except C m0 m -> munch W m m' -> wmono usegs m m' ->
+(forall x, 0 <= x < 2^64 -> ~ C x -> outside W x) -> rpres_except C m0 m'.
+Proof.
+intros C m0 m m' W HP MU WM HW. eapply rpres_except_trans; [exact HP|]. eapply rpres_except_of_munch; eauto.
+Qed.
+End CANSEC1.

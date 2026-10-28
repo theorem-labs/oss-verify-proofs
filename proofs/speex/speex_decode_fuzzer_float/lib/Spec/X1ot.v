@@ -9,11 +9,13 @@ X1og X1qw X1pe X1oa X1ph X1p1 X1oq X1p0 X1os X1oz X1oy X1op X1p5 X1ok
 X1ov X1ow X1ou.
 From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib Require Import TopLevel.
 From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Plain.
+From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Ubsan.
 Import ListNotations.
 Import X1bs.Exc.
 Open Scope Z_scope.
 
 Local Notation psegs := Plain.M.loaded_segments.
+Local Notation usegs := Ubsan.M.loaded_segments.
 
 Definition mal_okQ (X : list (bptr * Z)) (n : Z) : Prop := ROOMX X P0 n /\ PHI P0 + R63X X + bigb n <= LBUDGET.
 
@@ -116,6 +118,11 @@ valid_entry (mkImage psegs Plain.M.init_pc Plain.M.phdrs) en inp -> valid_input_
 tlive LIM (prog psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0 psegs lim en inp).
 Proof. intros. apply (tlive_mono _ _ LBUDGET LIM LBUDGET_le_LIM). eapply prog_live_bound; [apply reserved_top_psegs| apply ceil_psegs| apply sbk_psegs| eassumption| eassumption| assumption]. Qed.
 
+Theorem LB_ubsan_proof : forall lim en inp, LBUDGET <= lim ->
+valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp -> valid_input_core inp ->
+tlive LIM (prog usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs lim en inp).
+Proof. intros. apply (tlive_mono _ _ LBUDGET LIM LBUDGET_le_LIM). eapply prog_live_bound; [apply reserved_top_usegs| apply ceil_usegs| apply sbk_usegs| eassumption| eassumption| assumption]. Qed.
+
 Lemma LBUDGET_le_source : LBUDGET <= source_alloc_limit. Proof. unfold LBUDGET, source_alloc_limit. lia. Qed.
 Lemma LBUDGET_le_target : LBUDGET <= target_alloc_limit. Proof. unfold LBUDGET, target_alloc_limit. lia. Qed.
 
@@ -128,3 +135,8 @@ Theorem prog_no_enomem_plain_at : forall lim en inp, LBUDGET <= lim ->
 valid_entry (mkImage psegs Plain.M.init_pc Plain.M.phdrs) en inp -> valid_input_core inp ->
 tsafe nstep no_enomem (prog psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0 psegs lim en inp).
 Proof. intros lim en inp Hlim VE VI. eapply prog_no_enomem; [apply reserved_top_psegs| apply ceil_psegs| apply sbk_psegs| exact Hlim| exact VE| exact VI]. Qed.
+
+Theorem prog_no_enomem_ubsan : forall en inp,
+valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp -> valid_input_core inp ->
+tsafe nstep no_enomem (prog usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp).
+Proof. intros. eapply prog_no_enomem; [apply reserved_top_usegs| apply ceil_usegs| apply sbk_usegs| apply LBUDGET_le_target| eassumption| assumption]. Qed.

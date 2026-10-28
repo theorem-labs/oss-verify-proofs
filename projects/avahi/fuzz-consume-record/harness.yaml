@@ -112,6 +112,7 @@ checks:
   live: true
   where: source/fuzz-consume-record.c:94-99
   what: avahi_record_copy(r) must be equal_no_ttl to r and lexicographically compare 0 against it
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzz-consume-record

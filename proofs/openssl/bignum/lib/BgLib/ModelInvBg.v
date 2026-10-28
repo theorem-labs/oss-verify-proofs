@@ -10,3 +10,6 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Lemma image_low_bgpsegs : image_low bgpsegs.
 Proof. split; vm_compute; [reflexivity| discriminate]. Qed.
 
+Lemma image_low_bgusegs : image_low bgusegs.
+Proof. split; vm_compute; [reflexivity| discriminate]. Qed.
+

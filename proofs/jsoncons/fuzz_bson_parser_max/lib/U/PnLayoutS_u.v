@@ -1,0 +1,154 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import PmLayout PnLayout.
+Import ListNotations.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Definition ADDR_S : pm_addrs := {|
+  pa_harness := 0x3471c;   (* [comment removed for export] *)
+  pa_str_ctor := 0x3490c;   (* [comment removed for export] *)
+  pa_iss_ctor := 0x349d4;   (* [comment removed for export] *)
+  pa_strbuf_ctor := 0x361bc;   (* [comment removed for export] *)
+  pa_init_buf_ptrs := 0x362a8;   (* [comment removed for export] *)
+  pa_str_copy := 0x58d6c;   (* [comment removed for export] *)
+  pa_ios_init := 0x5d104;   (* [comment removed for export] *)
+  pa_locale_ctor := 0x81bdc;   (* [comment removed for export] *)
+  pa_locale_dtor := 0x81cb4;   (* [comment removed for export] *)
+  pa_reader_ctor := 0;   (* [comment removed for export] *)
+  pa_src_ctor := 0x36570;   (* [comment removed for export] *)
+  pa_nullis_ctor := 0x36610;   (* [comment removed for export] *)
+  pa_vec_alloc := 0;   (* [comment removed for export] *)
+  pa_splitbuf_dtor := 0;   (* [comment removed for export] *)
+  pa_syscat := 0x5c280;   (* [comment removed for export] *)
+  pa_reset := 0;   (* [comment removed for export] *)
+  pa_parse := 0;   (* [comment removed for export] *)
+  pa_rtv := 0;   (* [comment removed for export] *)
+  pa_read_value := 0;   (* [comment removed for export] *)
+  pa_get_length := 0;   (* [comment removed for export] *)
+  pa_read_key := 0;   (* [comment removed for export] *)
+  pa_begin_array := 0;   (* [comment removed for export] *)
+  pa_begin_object := 0;   (* [comment removed for export] *)
+  pa_end_array := 0;   (* [comment removed for export] *)
+  pa_end_object := 0;   (* [comment removed for export] *)
+  pa_peek := 0;   (* [comment removed for export] *)
+  pa_ignore := 0;   (* [comment removed for export] *)
+  pa_src_read := 0x370d0;   (* [comment removed for export] *)
+  pa_fill_buffer := 0x382d4;   (* [comment removed for export] *)
+  pa_read_span := 0x39290;   (* [comment removed for export] *)
+  pa_srd_read := 0x39398;   (* [comment removed for export] *)
+  pa_validate := 0x384bc;   (* [comment removed for export] *)
+  pa_is_base10 := 0;   (* [comment removed for export] *)
+  pa_make_ec := 0x36ee4;   (* [comment removed for export] *)
+  pa_str_resize := 0x59000;   (* [comment removed for export] *)
+  pa_str_append := 0x58a84;   (* [comment removed for export] *)
+  pa_xsgetn := 0x5d574;   (* [comment removed for export] *)
+  pa_uflow := 0x5d688;   (* [comment removed for export] *)
+  pa_underflow := 0x5d844;   (* [comment removed for export] *)
+  pa_ios_clear := 0x5d02c;   (* [comment removed for export] *)
+  pa_src_dtor := 0x35cd0;   (* [comment removed for export] *)
+  pa_istream_dtor := 0x5d7bc;   (* [comment removed for export] *)
+  pa_ios_dtor := 0x5d4d0;   (* [comment removed for export] *)
+  pa_iosbase_dtor := 0x5cf24;   (* [comment removed for export] *)
+  pa_reader_read := 0;   (* [comment removed for export] *)
+  pa_vec_dtor := 0;   (* [comment removed for export] *)
+  pa_opnew := 0xb03b8;   (* [comment removed for export] *)
+  pa_opdel := 0x56720;   (* [comment removed for export] *)
+  pa_opdel_sized := 0x5671c;   (* [comment removed for export] *)
+  pa_memcpy := 0xab480;   (* [comment removed for export] *)
+  pa_memmove := 0xab884;   (* [comment removed for export] *)
+  pa_memset := 0xaba00;   (* [comment removed for export] *)
+  pa_guard_acquire := 0x39e14;   (* [comment removed for export] *)
+  pa_guard_release := 0x39e64;   (* [comment removed for export] *)
+  pa_cxa_atexit := 0x9ac10;   (* [comment removed for export] *)
+  pa_vp_visitor := 0xb1508;   (* [comment removed for export] *)
+  pa_vp_parser := 0xb16e0;   (* [comment removed for export] *)
+  pa_vp_iss := 0xb4db8;   (* [comment removed for export] *)
+  pa_vp_strbuf := 0xb4cc8;   (* [comment removed for export] *)
+  pa_vp_iss_ios := 0xb4de0;   (* [comment removed for export] *)
+  pa_vp_nullis := 0xb1758;   (* [comment removed for export] *)
+  pa_vp_nullbuf := 0xb1828;   (* [comment removed for export] *)
+  pa_vp_nullis_ios := 0xb1780;   (* [comment removed for export] *)
+  pa_vp_opts := 0xb1660;   (* [comment removed for export] *)
+  pa_errcat_guard := 0xc8580;   (* [comment removed for export] *)
+  pa_errcat_obj := 0xb8240;   (* [comment removed for export] *)
+  pa_errcat_dtor := 0x57e98;   (* [comment removed for export] *)
+  pa_dso := 0xb8218;   (* [comment removed for export] *)
+  pa_syscat_guard := 0xc87f0;   (* [comment removed for export] *)
+  pa_syscat_obj := 0xb8278;   (* [comment removed for export] *)
+  pa_glocale := 0xc89c8;   (* [comment removed for export] *)
+  pa_classic_imp := 0xc8e00;   (* [comment removed for export] *)
+  pa_loc_foot := [(0xc87f2, 0xc8f30); (0xc9658, 0xc96b0)];   (* [comment removed for export] *)
+  pa_atexit := 0xea008;   (* [comment removed for export] *)
+  pa_need_locks := 0xea253;   (* [comment removed for export] *)
+  pa_locale_lock := 0xea328;   (* [comment removed for export] *)
+  pa_canary := 0xea230;   (* [comment removed for export] *)
+  pa_frame := 784;   (* [comment removed for export] *)
+  pa_off_opts := 16;   (* [comment removed for export] *)
+  pa_off_ec := 16;   (* [comment removed for export] *)
+  pa_off_p := 40;   (* [comment removed for export] *)
+  pa_off_v := 464;   (* [comment removed for export] *)
+  pa_off_is := 472;   (* [comment removed for export] *)
+  pa_off_s := 744;   (* [comment removed for export] *)
+  pa_rw_lo := 0xb83f0;   (* [comment removed for export] *)
+  pa_gp := 0x10800;   (* [comment removed for export] *)
+  pa_tp := 0xc9fc0   (* [comment removed for export] *)
+|}.
+
+Definition NADDR_S : PNL.pn_addrs := {|
+  PNL.pn_reader_ctor := 0x36410;
+  PNL.pn_reader_dtor := 0;
+  PNL.pn_reader_read := 0;
+  PNL.pn_reset := 0x36a90;
+  PNL.pn_parse := 0x36bc0;
+  PNL.pn_begin_document := 0x36f7c;
+  PNL.pn_end_document := 0x3745c;
+  PNL.pn_begin_array := 0x38824;
+  PNL.pn_end_array := 0x37db4;
+  PNL.pn_read_e_name := 0x37338;
+  PNL.pn_read_cstring := 0x383f8;
+  PNL.pn_read_string := 0x3871c;
+  PNL.pn_read_value := 0x375ec;
+  PNL.pn_read_span_v := 0x38984;
+  PNL.pn_srd_read_v := 0x3956c;
+  PNL.pn_vu8_resize := 0x396ac;
+  PNL.pn_vu8_append := 0x39704;
+  PNL.pn_vu8_dtor := 0;
+  PNL.pn_vu8_recommend := 0;
+  PNL.pn_sbu8_ctor := 0;
+  PNL.pn_sbu8_construct := 0;
+  PNL.pn_vu8_swap_out := 0;
+  PNL.pn_sbu8_dtor := 0;
+  PNL.pn_vec_alloc := 0x36a4c;
+  PNL.pn_splitbuf_dtor := 0;
+  PNL.pn_vec_dtor := 0;
+  PNL.pn_esp_mii := 0;
+  PNL.pn_esp_mis := 0;
+  PNL.pn_sb_ctor := 0;
+  PNL.pn_swap_out := 0;
+  PNL.pn_dec128 := 0x38a78;
+  PNL.pn_from_int := 0x39a24;
+  PNL.pn_hex_pairs := 0;
+  PNL.pn_str_push_back := 0x58938;
+  PNL.pn_str_cstr := 0x37f44;
+  PNL.pn_str_dtor := 0x58430;
+  PNL.pn_strlen := 0xabee4;
+  PNL.pn_vbs_tag := 0x34d24;
+  PNL.pn_vbs_ext := 0x34d2c;
+  PNL.pn_strlen_icpt := 0;
+  PNL.pn_wrap_strlen := 0;
+  PNL.pn_wrap_cxa_atexit := 0;
+  PNL.pn_inf_guard := 0xc85a0;
+  PNL.pn_inf_obj := 0xc8588;
+  PNL.pn_inf_lit := 0x131ef;
+  PNL.pn_nan_guard := 0xc85c0;
+  PNL.pn_nan_obj := 0xc85a8;
+  PNL.pn_nan_lit := 0x11f67;
+  PNL.pn_str_dtor_slot := 0xb7108;
+  PNL.pn_drv_call := 0x9ad9c;   (* [comment removed for export] *)
+  PNL.pn_drv_guard := 0x346a4   (* [comment removed for export] *)
+|}.
+

@@ -26,7 +26,7 @@ Not included: **api-driver** (held from this release).
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `fuzz-consume-record`: the rdata of any successfully parsed record must serialize into an AVAHI_DNS_RDATA_MAX buffer without error; second comparator on the same roundtrip: avahi_record_lexicographical_compare(original, reparsed) == 0 (under #ifndef HAVE_NALLOCFUZZ, i.e. live by default); avahi_record_copy(r) must be equal_no_ttl to r and lexicographically compare 0 against it.
 - `fuzz-domain`: for ANY input whose normalization succeeds, avahi_domain_equal(s, normalize(s)) must hold.
 - `fuzz-ini-file-parser`: environment sanity only: mkstemp returned a descriptor and write() wrote all bytes of the temp file; not a property of the INI parser.

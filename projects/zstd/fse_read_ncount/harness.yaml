@@ -142,6 +142,7 @@ checks:
   what: 'Build a random valid FSE normalized count (sum = 1<<tableLog), FSE_writeNCount it, append random
     trailing bytes, FSE_readNCount: must succeed, consume exactly the written size, and return the same
     maxSymbolValue, tableLog and every count.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fse_read_ncount

@@ -175,7 +175,7 @@ Proof using HCEIL R f k bail o s Q ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10
   split. { eapply (unk_agree_xfer o st3 m'' stF m7 UA'').
     - exact PF2.
     - intros rid r Hk Hr. rewrite PF1 in Hr. exact Hr.
-    - intros b. rewrite PF3. (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]).
+    - intros b. rewrite PF3. (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]).
     - intros rid r off h Hr Hk Ho Hc NG.
       pose proof MR'' as (WF3 & _). pose proof WF3 as (_ & WR3 & DJ3 & _). destruct (WR3 _ _ Hr) as (R0 & _ & _ & RC & _). hcb; unfold Malloc.alloc_ceiling, Decode.alloc_ceiling in RC.
       destruct (rregion_facts st3 m'' rid r MR'' Hr) as (_ & _ & _ & RI1 & RI2). specialize (RI1 ltac:(lia)). specialize (RI2 ltac:(lia)).

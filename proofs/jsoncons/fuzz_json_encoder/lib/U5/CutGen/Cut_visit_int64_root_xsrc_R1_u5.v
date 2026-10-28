@@ -1,0 +1,20 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Corelib Require Import PrimString.
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OssFuzzTheorems.jsoncons.fuzz_json_encoder.images Require Import Ubsan.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require Import Pm6PlanKit_u5.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.CutCert Require Import Pm6CutKit_u5.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.PmEnc Require Import EncSums_u5. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.PmEnc Require Import EncSums2.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCodec.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.CutGen Require Import Cut_visit_int64_root_xsrc_T_u5 Cut_visit_int64_root_xsrc_R0_u5.
+Definition t1 : CC.cutpoint := CCD.dec_cp 860%positive "(245192((1 0)(1 49)(2 0(1 2)(0 -32))(1 3)(1 4)(1 50)(1 51)(1 52)(1 10)(1 11)(1 48)(1 54)(1 55)(1 56)(1 57)(1 58)(1 59)(1 60)(1 18)(1 19)(1 20)(1 21)(1 22)(1 23)(1 24)(1 25)(1 26)(1 27)(1 61)(1 62)(1 63)(1 64))((5(1 48)0 1125899906842624)(5(0 1048576)1 4611686018427387904)(0((1 2)-24)8(1 9))(0((1 2)-16)8(1 8))(0((1 2)-8)8(1 1))(0((1 10)8)8(1 32))(0((1 10)296)8(1 37))(5(1 37)0 18446744073709551615)(6((1 10)296)(0 8))(5(1 10)1099511627776 140737488355328)(4(1 10)8)(5(1 32)1099511627776 140737488355328)(4(1 32)8)(9((1 2)-10624)(0 10592))(9((1 2)-32)(0 8))(6((1 2)-10624)(0 10624))(5(1 2)1099511627776 140737488355328)(4(1 2)16)(7((1 2)-10624)(0 10624)((1 10)0)(0 408))(7((1 2)-10624)(0 10624)((1 32)0)(0 24))(7((1 10)0)(0 408)((1 32)0)(0 24))(3 65536 827984)(0((1 10)264)8(1 34))(0((1 10)272)8(1 34)))65(((1 2)-10624(0 10624))((1 10)296(0 8)))()(0 1048575))"%pstring.
+Definition BL1 : CA.blocks := Eval vm_compute in CCD.dec_bl 3%positive "()"%pstring.
+Definition hints1 : list (nat * CC.subst) := hints0.
+Definition o1 : CA.pout := CCD.dec_pout 1028%positive "((0(0(245044 245272 256492 436288 258088 286916 287032 256752 257096 257668 778312 779720))(1 0))(((245272((1(1 1))(2(1 2))(3(1 3))(4(1 4))(5(1 50))(6(1 51))(7(1 52))(8(1 8))(9(1 9))(10(0 1))(11(1 34))(12(1 37))(13(1 34))(14(1 57))(15(1 58))(16(1 59))(17(1 60))(18(1 18))(19(1 19))(20(1 20))(21(1 21))(22(1 22))(23(1 23))(24(1 24))(25(1 25))(26(1 26))(27(1 27))(28(1 61))(29(1 62))(30(1 63))(31(1 64)))()((0((1 10)296)8(2 0(1 37)(1 48)))(5(1 48)0 1125899906842624)(5(0 1048576)1 4611686018427387904)(0((1 2)-24)8(1 9))(0((1 2)-16)8(1 8))(0((1 2)-8)8(1 1))(0((1 10)8)8(1 32))(5(1 37)0 18446744073709551615)(6((1 10)296)(0 8))(5(1 10)1099511627776 140737488355328)(4(1 10)8)(5(1 32)1099511627776 140737488355328)(4(1 32)8)(9((1 2)-10624)(0 10592))(9((1 2)-32)(0 8))(6((1 2)-10624)(0 10624))(5(1 2)1099511627776 140737488355328)(4(1 2)16)(7((1 2)-10624)(0 10624)((1 10)0)(0 408))(7((1 2)-10624)(0 10624)((1 32)0)(0 24))(7((1 10)0)(0 408)((1 32)0)(0 24))(3 65536 827984)(0((1 10)264)8(1 34))(0((1 10)272)8(1 34))))(1 245272)))()())"%pstring.

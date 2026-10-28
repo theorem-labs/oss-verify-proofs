@@ -3,7 +3,7 @@
 
 [skia.googlesource.com/skcms](https://skia.googlesource.com/skcms) · OSS-Fuzz: [projects/skcms](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/skcms)
 
-**Status: available.** 3 of OSS-Fuzz's 3 fuzz targets have statements. 12 binaries, 4.5 MB. 39 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 36 open.
+**Status: available.** 3 of OSS-Fuzz's 3 fuzz targets have statements. 12 binaries, 4.5 MB. 39 statements: 9 proved, 0 known false, 0 suspected false, 0 blocked by the model, 30 open.
 
 Built from skcms (commit `9c10699e`) with 1 patch, listed under [How these binaries were built](#how-these-binaries-were-built).
 
@@ -11,7 +11,7 @@ Built from skcms (commit `9c10699e`) with 1 patch, listed under [How these binar
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
 | [iccprofile_atf](iccprofile_atf/) | skcms_Parse, then skcms_ApproximateCurve on the three TRC curves; both the boolean result and max_error are (void)-discarded. | none | 13 |
-| [iccprofile_info](iccprofile_info/) | skcms_Parse, then GetTagByIndex on the first/last tag and reads of the first and last entry of every TRC/A2B curve table and CLUT grid into a volatile sink (an out-of-bounds read is the only failure). | none | 13, 3 proved |
+| [iccprofile_info](iccprofile_info/) | skcms_Parse, then GetTagByIndex on the first/last tag and reads of the first and last entry of every TRC/A2B curve table and CLUT grid into a volatile sink (an out-of-bounds read is the only failure). | none | 13, 9 proved |
 | [iccprofile_transform](iccprofile_transform/) | skcms_Transform RGBA_8888 in both directions between the parsed profile and sRGB for every src/dst alpha format, before and after skcms_MakeUsableAsDestination; the returned bool and the destination pixels are never checked. | none | 13 |
 
 Not included: **api-driver** (held from this release).
@@ -41,9 +41,15 @@ By hand: download `skcms-bin.tar.zst` from release [v2026.10.0](https://github.c
 ## Proofs
 | statement | result |
 |---|---|
+| [skcms/iccprofile_info/asan_agreement_decidable](../../proofs/skcms/iccprofile_info/asan_agreement_decidable) | proved |
 | [skcms/iccprofile_info/asan_agrees](../../proofs/skcms/iccprofile_info/asan_agrees) | proved |
+| [skcms/iccprofile_info/asan_disagrees_at_most](../../proofs/skcms/iccprofile_info/asan_disagrees_at_most) | proved |
+| [skcms/iccprofile_info/asan_ubsan_agreement_decidable](../../proofs/skcms/iccprofile_info/asan_ubsan_agreement_decidable) | proved |
 | [skcms/iccprofile_info/asan_ubsan_agrees](../../proofs/skcms/iccprofile_info/asan_ubsan_agrees) | proved |
+| [skcms/iccprofile_info/asan_ubsan_disagrees_at_most](../../proofs/skcms/iccprofile_info/asan_ubsan_disagrees_at_most) | proved |
+| [skcms/iccprofile_info/ubsan_agreement_decidable](../../proofs/skcms/iccprofile_info/ubsan_agreement_decidable) | proved |
 | [skcms/iccprofile_info/ubsan_agrees](../../proofs/skcms/iccprofile_info/ubsan_agrees) | proved |
+| [skcms/iccprofile_info/ubsan_disagrees_at_most](../../proofs/skcms/iccprofile_info/ubsan_disagrees_at_most) | proved |
 
 ## Licence
 skcms is under `BSD-3-Clause`. Each binary is a combined work of skcms, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `skcms-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `skcms-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

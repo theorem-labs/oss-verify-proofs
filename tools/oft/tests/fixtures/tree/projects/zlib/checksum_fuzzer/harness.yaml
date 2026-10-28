@@ -25,6 +25,7 @@ checks:
 - {kind: algebraic, strength: full, stops_with: assert, live: true, where: "source/checksum_fuzzer.c:17", what: For every full chunk the CRC-32 combine law holds.}
 - {kind: differential, strength: full, stops_with: assert, live: true, where: "source/checksum_fuzzer.c:18", what: Chunked CRC-32 equals the one-shot CRC-32.}
 - {kind: differential, strength: full, stops_with: assert, live: true, where: "source/checksum_fuzzer.c:19", what: Chunked Adler-32 equals the one-shot Adler-32.}
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: checksum_fuzzer

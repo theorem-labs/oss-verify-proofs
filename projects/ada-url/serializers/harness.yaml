@@ -172,6 +172,7 @@ checks:
   where: source/serializers.cc:281-298
   what: A URL built from the serialized fuzzed IPv6 address, if it parses, re-parses to the identical
     href
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: serializers

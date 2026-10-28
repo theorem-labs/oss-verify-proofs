@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: double-conversion/string_to_double_fuzzer/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: 566d0b30f5c8926a67f140e6751ac4aa902d8c334f41ba7edda7fb0e4bc9823a

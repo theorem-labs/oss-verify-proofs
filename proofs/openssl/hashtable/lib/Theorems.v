@@ -9,7 +9,13 @@ Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
 Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 Require OssFuzzTheorems.openssl.hashtable.images.Plain.
 Require OssFuzzTheorems.openssl.hashtable.images.Asan.
+Require OssFuzzTheorems.openssl.hashtable.images.AsanUbsan.
 Require OssFuzzTheorems.Proofs.openssl.hashtable.lib.Rows.RowsHtAsanClosed.
+Require OssFuzzTheorems.Proofs.openssl.hashtable.lib.Rows.RowsHtBothClosed.
+Require OssFuzzTheorems.openssl.hashtable.images.Ubsan.
+Require OssFuzzTheorems.Proofs.openssl.hashtable.lib.HUChk.HULeafTail.
+Require OssFuzzTheorems.Proofs.openssl.hashtable.lib.T.hashtable.HUMain.
+Require OssFuzzTheorems.Proofs.openssl.hashtable.lib.Rows.RowsHtUbsanClosed.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
   Definition cfg := LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true.
@@ -307,12 +313,35 @@ Proof.
   exact OssFuzzTheorems.Proofs.openssl.hashtable.lib.Rows.RowsHtAsanClosed.base_closed.
 Qed.
 
+Theorem strong_universal_error_free_hashtable_both :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.hashtable.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.hashtable.images.Plain.M.init_pc OssFuzzTheorems.openssl.hashtable.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.hashtable.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.openssl.hashtable.images.AsanUbsan.M.init_pc OssFuzzTheorems.openssl.hashtable.images.AsanUbsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.openssl.hashtable.lib.Rows.RowsHtBothClosed.base_closed.
+Qed.
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+
+Theorem strong_universal_error_free_hashtable_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.hashtable.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.hashtable.images.Plain.M.init_pc OssFuzzTheorems.openssl.hashtable.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.hashtable.images.Ubsan.M.loaded_segments OssFuzzTheorems.openssl.hashtable.images.Ubsan.M.init_pc OssFuzzTheorems.openssl.hashtable.images.Ubsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.openssl.hashtable.lib.Rows.RowsHtUbsanClosed.ubsan_closed.
+Qed.
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)

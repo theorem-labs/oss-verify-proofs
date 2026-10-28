@@ -2,6 +2,7 @@
 and the clean fixture and this repository itself, which must pass."""
 import contextlib
 import hashlib
+import html
 import io
 import os
 import shutil
@@ -12,11 +13,21 @@ import time
 import unittest
 from unittest import mock
 
-from oft import facts, lint, urls
+from oft import facts, lint, paths, urls, yamlio
 from oft.tests.helpers import (FIXTURE_RECIPE, NEXT_RECIPE, REPO, Tree, add_findings, build_record, later_release,
                                 older_shape, recipe_only_rebuild, rules_of, tree)
+from oft.tests.test_facts_review_gate import evaluate
 
-PRELAUNCH = "theorem-labs/oss-verify" + "-prelaunch"
+INTERNAL = "theorem-labs/oss-verify-proofs" + "-internal"
+
+
+def pr_yml_jobs(test):
+    """The jobs of .github/workflows/pr.yml; the test is skipped where there is none, as in the runner image, whose
+    build runs these tests with tools/oft alone (toolchain/runner.Dockerfile)."""
+    path = os.path.join(REPO, ".github", "workflows", "pr.yml")
+    if not os.path.exists(path):
+        test.skipTest("no .github/workflows/pr.yml beside tools/oft")
+    return yamlio.load_file(path)["jobs"]
 
 
 class Clean(unittest.TestCase):
@@ -26,7 +37,8 @@ class Clean(unittest.TestCase):
 
     # On a pull request, pr.yml sets OFT_SKIP_REPOSITORY_LINT=1 when the change leaves tools/ as it is but for test
     # data (no Python file) under tests/, ci/ and the README: its lint job has then run the same code over this same
-    # tree, with --changed and --pr-kind on top.
+    # tree, with --changed and --pr-kind on top, and, into main, with --changed-only, which reads every file the change
+    # touches and leaves every other file the verdict it has on main.
     @unittest.skipIf(os.environ.get("OFT_SKIP_REPOSITORY_LINT") == "1",
                      "pr.yml's lint ran the same code over this tree")
     def test_this_repository_is_clean(self):
@@ -53,6 +65,61 @@ class Clean(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(wt, ".git")))
             self.assertNotIn("tools.pyc", lint.walk(wt))
             self.assertIn(".gitignore", lint.walk(wt))
+
+
+class TestsJobCheckout(unittest.TestCase):
+    """pr.yml's tests job checks the tree out whole exactly when test_this_repository_is_clean runs (repository_lint),
+    and otherwise every file but proofs/*/*/lib/, with plan's own checkout inputs: that test is the one that reads a
+    proof library, so a job that skips it need not wait for the 4.56 GB of them."""
+    LINTED = "needs.plan.outputs.repository_lint == 'true'"
+    SPARSE = ("filter", "sparse-checkout-cone-mode", "sparse-checkout")
+
+    def setUp(self):
+        self.jobs = pr_yml_jobs(self)
+
+    @staticmethod
+    def checkouts(job):
+        return [s for s in job["steps"] if s.get("uses", "").startswith("actions/checkout@")]
+
+    def test_the_skip_and_the_checkout_read_the_same_output(self):
+        step = next(s for s in self.jobs["tests"]["steps"] if s.get("run") == "python -B -m oft.tests.parallel")
+        self.assertEqual(step["env"]["OFT_SKIP_REPOSITORY_LINT"], "${{ %s && '0' || '1' }}" % self.LINTED)
+
+    def test_the_whole_tree_is_checked_out_exactly_when_it_is_linted(self):
+        plan = next(s["with"] for s in self.checkouts(self.jobs["plan"]) if "sparse-checkout" in s["with"])
+        self.assertEqual(plan["sparse-checkout"].split(), ["/*", "!/proofs/*/*/lib/"])
+        for value in ("true", "false", ""):
+            needs = {"plan": {"result": "success", "outputs": {"repository_lint": value}}, "lint": {"result": "success"}}
+            # a checkout with no `if:` would run beside the others: s["if"] fails on it rather than counting it once
+            ran = [s["with"] for s in self.checkouts(self.jobs["tests"]) if evaluate(s["if"], needs)]
+            with self.subTest(repository_lint=value):
+                self.assertEqual(len(ran), 1, "exactly one checkout runs")
+                self.assertEqual((ran[0]["path"], ran[0]["persist-credentials"]), ("head", False))
+                if evaluate(self.LINTED, needs):
+                    self.assertEqual([k for k in self.SPARSE if k in ran[0]], [], "the whole tree")
+                else:
+                    self.assertEqual({k: ran[0].get(k) for k in self.SPARSE}, {k: plan[k] for k in self.SPARSE})
+
+
+class NoDuneCacheRestore(unittest.TestCase):
+    """dune restores a cache entry without hashing the bytes it copies, and the kernel does not check a compiled file
+    again when a proof loads it: a valid Statements.vo of a weaker statement put in a restored cache made doctored
+    proofs pass check-units.sh (OSSV-218, 27 October 02:22Z).  So no proof check job restores a dune cache: hashing the
+    restored files would not catch a rewritten metadata entry, and verifying by rebuilding saves nothing."""
+
+    def test_no_proof_check_job_restores_a_dune_cache(self):
+        d = os.path.join(REPO, ".github", "workflows")
+        if not os.path.isdir(d):
+            self.skipTest("no .github/workflows beside tools/oft")
+        restores = 0
+        for name in sorted(os.listdir(d)):
+            for job_name, job in yamlio.load_file(os.path.join(d, name))["jobs"].items():
+                for s in job.get("steps", []):
+                    if s.get("uses", "").startswith("actions/cache/restore@") and "dune" in str(s["with"]["path"]):
+                        restores += 1
+                        with self.subTest(workflow=name, job=job_name):
+                            self.assertEqual(s.get("if"), False, "a dune cache restore that runs")
+        self.assertGreaterEqual(restores, 2, "pr.yml's and release-check.yml's restores were found")
 
 
 class Paths(unittest.TestCase):
@@ -254,6 +321,22 @@ class Changes(unittest.TestCase):
         self.assertEqual(self.ledger_change(rewrite),
                          ["paths %s: a finding's control.bin is never changed: %s" % (rel, rel)])
 
+    def test_a_recorded_input_over_64_kib_is_never_rewritten(self):
+        """The base comparison reads input.bin and control.bin up to the finding input cap, as the loader does, so a
+        full-payload input is compared too."""
+        for name in ("input.bin", "control.bin"):
+            rel = self.FINDING + "/" + name
+            long_input = b"\0\0\0\0\0\0" + b"x" * (64 << 10)
+            with self.subTest(name=name), tree() as base, tree() as t:
+                add_findings(base)
+                add_findings(t)
+                base.write(rel, long_input, "wb")
+                t.write(rel, long_input, "wb")
+                self.assertEqual([str(f) for f in t.lint(changed=[rel], pr_kind="maintainer", base=base.root)], [])
+                t.write(rel, long_input[:-1] + b"y", "wb")
+                self.assertEqual([str(f) for f in t.lint(changed=[rel], pr_kind="maintainer", base=base.root)],
+                                 ["paths %s: a finding's %s is never changed: %s" % (rel, name, rel)])
+
     def test_the_statements_a_finding_shows_false_only_grow(self):
         """Narrowed to asan_agrees, with the asan-ubsan runs dropped beside it, the record meets every rule; the base
         narrowed the same way, the proposed tree's two statements are a stronger claim, which CI checks."""
@@ -271,6 +354,28 @@ class Changes(unittest.TestCase):
             add_findings(base)
             add_findings(t)
             narrow(base)
+            self.assertEqual([str(f) for f in t.lint(changed=[self.YAML], pr_kind="maintainer", base=base.root)], [])
+
+    def test_a_finding_never_returns_to_open(self):
+        """For an enrolled project an open finding holds back only its statements, so setting a patched one back to
+        open would release most of the hold while the pinned build still carries the patch."""
+        def reopen(t):
+            y = t.yaml(self.YAML)
+            y["state"] = "open"
+            t.put_yaml(self.YAML, y)
+            t.write("findings/zlib/checksum_fuzzer/series", "")
+            return [self.YAML, "findings/zlib/checksum_fuzzer/series"]
+        self.assertEqual(self.ledger_change(reopen),
+                         ["paths %s: a finding's state never returns to open: %s was patched" % (self.YAML, self.YAML)])
+
+    def test_an_open_finding_may_move_on(self):
+        with tree() as base, tree() as t:
+            add_findings(base)
+            add_findings(t)
+            y = base.yaml(self.YAML)
+            y["state"] = "open"
+            base.put_yaml(self.YAML, y)
+            base.write("findings/zlib/checksum_fuzzer/series", "")
             self.assertEqual([str(f) for f in t.lint(changed=[self.YAML], pr_kind="maintainer", base=base.root)], [])
 
     def test_the_unpatched_pins_of_a_harness_with_a_finding_never_change(self):
@@ -385,23 +490,38 @@ class Schemas(unittest.TestCase):
             t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", y)
             self.assertTrue(any("give the name ubsan_agrees" in f.msg for f in t.lint()))
 
-    def test_a_toolchain_lock_with_commentary_or_another_checker(self):
-        with tree() as t:
-            t.write("toolchain/toolchain.lock", "# the checker we used\nchecker=ghcr.io/theorem-labs/"
-                    "oss-fuzz-theorems-checker@sha256:" + "4" * 64 + "\n")
-            self.assertEqual(len([f for f in t.lint() if f.rule == "schema"]), 2)
+    def test_the_exit_guard_fields(self):
+        """failure_handlers, exit_reaches_guard and an exit_status that is any C int load; other values do not."""
+        def schema_findings(**change):
+            with tree() as t:
+                y = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+                y["failure_handlers"] = change.get("failure_handlers", "none")
+                y["checks"].append({"kind": "algebraic", "strength": "full", "stops_with": "exit",
+                                    "exit_status": change.get("exit_status", -1),
+                                    "exit_reaches_guard": change.get("exit_reaches_guard", True), "live": True,
+                                    "where": "source/checksum_fuzzer.c:17", "what": "An exit check."})
+                t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", y)
+                # Only what the schema says of the three keys: what a value means for a statement is not this test's.
+                keys = ("failure_handlers", "exit_reaches_guard", "exit_status")
+                return [str(f) for f in t.lint() if f.rule == "schema" and any(k in f.msg for k in keys)]
+        self.assertEqual(schema_findings(), [])
+        for change in ({"exit_status": 256}, {"exit_status": -2147483648}, {"exit_status": 2147483647},
+                       {"failure_handlers": "present"}, {"failure_handlers": "unknown"},
+                       {"exit_reaches_guard": False}, {"exit_reaches_guard": "unknown"}):
+            with self.subTest(change=change):
+                self.assertEqual(schema_findings(**change), [])
+        for change in ({"exit_status": 2147483648}, {"exit_status": -2147483649}, {"failure_handlers": "maybe"},
+                       {"exit_reaches_guard": "maybe"}, {"exit_reaches_guard": "true"}):
+            with self.subTest(change=change):
+                self.assertNotEqual(schema_findings(**change), [])
 
-    def test_a_toolchain_lock_naming_images_release_yaml_does_not_pin(self):
+    def test_a_second_pin_of_the_images_is_refused(self):
+        # release.yaml's images: is the one place an image is pinned; toolchain/toolchain.lock repeated it until it was
+        # removed, and the paths rule refuses it now, even when it agrees
         with tree() as t:
             img = t.yaml("release.yaml")["images"]
-            lock = "checker=%s\nrunner=%s\ntoolchain=%s\n" % (img["checker"], img["runner"], img["builder"][0])
-            t.write("toolchain/toolchain.lock", lock)
-            self.assertEqual([f for f in t.lint() if f.rule == "schema"], [])
-            t.write("toolchain/toolchain.lock", lock.replace(img["runner"], img["checker"]).replace(
-                "toolchain=" + img["builder"][0], "toolchain=" + img["runner"]))
-            self.assertEqual(sorted(f.msg for f in t.lint() if f.rule == "schema"), [
-                "runner differs from release.yaml's images.runner",
-                "toolchain is not one of release.yaml's images.builder"])
+            t.write("toolchain/toolchain.lock", "checker=%s\nrunner=%s\n" % (img["checker"], img["runner"]))
+            self.assertTrue(any(f.rule == "paths" and "toolchain/toolchain.lock" in str(f) for f in t.lint()))
 
     def test_a_project_builder_release_yaml_does_not_pin(self):
         with tree() as t:
@@ -445,8 +565,25 @@ class FactsPool(unittest.TestCase):
 
 
 class PerFileScope(unittest.TestCase):
+    """--changed-only BASE: the per-file text rules read only the files that differ from commit BASE, or every file
+    when a file that every file's verdict reads differs from it; the rules over the whole tree run as they always do."""
     MAIL = "mail someone" + "@" + "example.com"
     HOST = "see /" + "data/someone/x"
+    PER_FILE_RULES = ("private-data", "links", "proofs")
+
+    def commit(self, t):
+        """Make t a git checkout of one commit, HEAD: the base that --changed-only compares with."""
+        git = ["git", "-C", t.root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+        subprocess.run(git[:3] + ["init", "-q"], check=True)
+        subprocess.run(git + ["add", "-A"], check=True)
+        subprocess.run(git + ["commit", "-q", "-m", "base"], check=True)
+
+    def changed_only(self, t, **kw):
+        """t.lint(changed_only="HEAD", ...) as strings, and what it wrote on stderr."""
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            found = [str(f) for f in t.lint(changed_only="HEAD", **kw)]
+        return found, err.getvalue()
 
     def test_a_pool_reports_what_one_process_reports_in_the_same_order(self):
         with tree() as t:
@@ -454,8 +591,7 @@ class PerFileScope(unittest.TestCase):
             t.write("docs/x.md", self.HOST + "\n")
             t.write("proofs/zlib/checksum_fuzzer/lib/Table.v", "(* " + self.MAIL + " *)\nDefinition t := 0.\n")
             serial = [str(f) for f in t.lint(jobs=1)]
-            with mock.patch.object(lint, "POOL_MIN_FILES", 0):
-                pooled = [str(f) for f in t.lint(jobs=4)]
+            pooled = [str(f) for f in t.lint(jobs=4)]
             self.assertEqual(len([f for f in serial if f.startswith("private-data")]), 3)
             self.assertEqual(pooled, serial)
 
@@ -463,50 +599,64 @@ class PerFileScope(unittest.TestCase):
         with tree() as t:
             t.write("notes/zlib.md", "mail someone" + "@" + "example.com; see https://example.org/x\n", "a")
             t.write("proofs/zlib/checksum_fuzzer/lib/Cheat.v", "Axiom cheat : False.\n")
-            # findings in many files, so that they span many of the pool's chunks
+            # findings in many files, so that they span many of the pool's workers
             for i in range(48):
                 t.write("docs/mail-%02d.md" % i, "mail person%d" % i + "@" + "example.com\n")
             one = [str(f) for f in t.lint(jobs=1)]
             self.assertEqual(sorted({f.split()[0] for f in one}), ["links", "private-data", "proofs"])
             self.assertEqual(sum("docs/mail-" in f for f in one), 48)
-            with mock.patch.object(lint, "POOL_MIN_FILES", 0):
-                self.assertEqual([str(f) for f in t.lint(jobs=4)], one)
+            self.assertEqual([str(f) for f in t.lint(jobs=4)], one)
 
     def test_changed_only_scans_only_the_files_changed_since_base(self):
         with tree() as t:
             t.write("notes/zlib.md", self.MAIL + "\n", "a")   # in the base, unchanged since: a per-file finding
-            t.write("stray.txt", "x\n")                       # in the base, unchanged since: a whole-tree finding
-            git = ["git", "-C", t.root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
-            subprocess.run(git[:3] + ["init", "-q"], check=True)
-            subprocess.run(git + ["add", "-A"], check=True)
-            subprocess.run(git + ["commit", "-q", "-m", "base"], check=True)
-            t.write("docs/x.md", self.HOST + "\n")            # changed since the base
+            t.write("docs/y.md", "nothing private\n")         # in the base, changed since
+            self.commit(t)
+            t.write("docs/x.md", self.HOST + "\n")            # added since the base
+            t.write("docs/y.md", self.MAIL + "\n", "a")
             mail_line = t.read("notes/zlib.md").split("\n").index(self.MAIL) + 1
-            whole = t.lint()
-            only = t.lint(changed_only="HEAD")
-            private = lambda found: sorted(f.where for f in found if f.rule == "private-data")
-            self.assertEqual(private(whole), ["docs/x.md:1", "notes/zlib.md:%d" % mail_line])
-            self.assertEqual(private(only), ["docs/x.md:1"])
-            self.assertIn("stray.txt", [f.where for f in only if f.rule == "paths"])
+            private = lambda found: sorted(f.split()[1].rstrip(":") for f in found if f.startswith("private-data "))
+            self.assertEqual(private(map(str, t.lint())),
+                             ["docs/x.md:1", "docs/y.md:2", "notes/zlib.md:%d" % mail_line])
+            only, err = self.changed_only(t)
+            self.assertEqual(private(only), ["docs/x.md:1", "docs/y.md:2"])
+            self.assertEqual(err, "")
 
-    def test_an_exception_for_an_unscanned_file_is_not_reported_unused(self):
+    def test_a_deleted_file_is_not_read_and_its_exception_is_checked(self):
+        """A file the change deletes has no text left to read; an exception for it is now unused, as a full lint
+        reports."""
         with tree() as t:
-            rel = "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c"
-            t.write(rel, "/* built in /" + "home/someone/zlib */\n", "a")
-            key = [f for f in t.lint() if f.rule == "private-data"][0].key
+            t.write("docs/old.md", self.HOST + "\n")
             t.put_yaml("tools/oft/lint-exceptions.yaml", {
                 "schema": "oss-fuzz-theorems/lint-exceptions/1",
-                "exceptions": [{"path": rel, "rule": "private-data", "key": key, "count": 1, "reason": "a test"}]})
-            git = ["git", "-C", t.root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
-            subprocess.run(git[:3] + ["init", "-q"], check=True)
-            subprocess.run(git + ["add", "-A"], check=True)
-            subprocess.run(git + ["commit", "-q", "-m", "base"], check=True)
-            self.assertEqual(t.lint(changed_only="HEAD"), [])
-            t.write(rel, "/* nothing private any more */\n")               # the entry's file changed: it is read,
-            self.assertTrue(any("not used" in f.msg for f in t.lint(changed_only="HEAD")))   # and the entry is stale
+                "exceptions": [{"path": "docs/old.md", "rule": "private-data", "key": "0" * 16, "count": 1,
+                                "reason": "a test"}]})
+            self.commit(t)
+            os.remove(t.path("docs/old.md"))
+            whole = [str(f) for f in t.lint()]
+            self.assertEqual(whole, ["paths tools/oft/lint-exceptions.yaml: an exception for private-data docs/old.md "
+                                     "that is not used 1 time(s)"])
+            self.assertEqual(self.changed_only(t), (whole, ""))
+
+    def test_an_exception_for_an_unchanged_file_is_not_reported_unused(self):
+        with tree() as t:
+            t.write("docs/x.md", self.HOST + "\n")
+            t.put_yaml("tools/oft/lint-exceptions.yaml", {
+                "schema": "oss-fuzz-theorems/lint-exceptions/1",
+                "exceptions": [{"path": "docs/x.md", "rule": "private-data", "key": "0" * 16, "count": 1,
+                                "reason": "a test"}]})
+            self.commit(t)
+            t.write("docs/y.md", "nothing private\n")
+            self.assertEqual(self.changed_only(t), ([], ""))
+            t.write("docs/x.md", "nothing private either\n")     # the entry's file changed: it is read, and the
+            only, _ = self.changed_only(t)                         # entry is reported as a full lint reports it
+            self.assertEqual([f for f in only if "not used" in f], [f for f in map(str, t.lint()) if "not used" in f])
+            self.assertEqual(len(only), 1)
 
     def test_changed_only_reads_every_file_when_the_exceptions_change(self):
-        """An entry removed from lint-exceptions.yaml leaves its finding in a file that did not change."""
+        """An entry removed from lint-exceptions.yaml leaves its finding in a file that did not change, and an entry
+        added for a path that does not exist is unused: --changed-only reports what a full lint reports, and says
+        why it read every file."""
         with tree() as t:
             rel = "projects/zlib/checksum_fuzzer/source/checksum_fuzzer.c"
             t.write(rel, "/* built in /" + "home/someone/zlib */\n", "a")
@@ -514,48 +664,244 @@ class PerFileScope(unittest.TestCase):
             entry = {"path": rel, "rule": "private-data", "key": key, "count": 1, "reason": "a test"}
             t.put_yaml("tools/oft/lint-exceptions.yaml",
                        {"schema": "oss-fuzz-theorems/lint-exceptions/1", "exceptions": [entry]})
-            git = ["git", "-C", t.root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
-            subprocess.run(git[:3] + ["init", "-q"], check=True)
-            subprocess.run(git + ["add", "-A"], check=True)
-            subprocess.run(git + ["commit", "-q", "-m", "base"], check=True)
-            t.put_yaml("tools/oft/lint-exceptions.yaml", {"schema": "oss-fuzz-theorems/lint-exceptions/1"})
-            self.assertEqual([f.key for f in t.lint(changed_only="HEAD") if f.rule == "private-data"], [key])
+            self.commit(t)
+            self.assertEqual(self.changed_only(t), ([], ""))
+            t.put_yaml("tools/oft/lint-exceptions.yaml", {
+                "schema": "oss-fuzz-theorems/lint-exceptions/1",
+                "exceptions": [dict(entry, path="docs/gone.md")]})
+            whole = [str(f) for f in t.lint()]
+            self.assertEqual([f.split()[0] for f in whole], ["private-data", "paths"])
+            only, err = self.changed_only(t)
+            self.assertEqual(only, whole)
+            self.assertEqual(err, "oft lint --changed-only: tools/oft/lint-exceptions.yaml changed, and the verdict on "
+                                  "a file that did not change can depend on it: the per-file rules read every file\n")
 
-    def held_prelaunch(self, t):
-        """The fixture with its finding, which holds zlib back, and zlib built from the port's prelaunch variant: its
-        project.yaml may name that variant."""
+    def test_changed_only_reads_every_file_when_a_fact_changes(self):
+        """A link the facts record may be linked from any file: once zlib's homepage changes, an unchanged page
+        that links to the old one has an unknown link."""
+        with tree() as t:
+            t.write("docs/x.md", "see https://www.zlib.net/\n")
+            self.commit(t)
+            y = t.yaml("projects/zlib/project.yaml")
+            y["homepage"] = "https://zlib.example.org/"
+            t.put_yaml("projects/zlib/project.yaml", y)
+            whole = [str(f) for f in t.lint()]
+            self.assertIn("docs/x.md:1:", [f.split()[1] for f in whole if f.startswith("links ")])
+            only, err = self.changed_only(t)
+            self.assertEqual(only, whole)
+            self.assertIn("projects/zlib/project.yaml changed", err)
+
+    def held_internal_port(self, t):
+        """The fixture with its finding, which holds zlib back, and zlib built from the port's internal copy: its
+        project.yaml may name that copy."""
         add_findings(t)
         p = t.yaml("projects/zlib/project.yaml")
-        p["build"]["oss_verify"] = {"repository": PRELAUNCH, "commit": "d" * 40, "path": "projects/zlib"}
+        p["build"]["oss_verify"] = {"repository": INTERNAL, "commit": "d" * 40, "path": "projects/zlib"}
+        p["assets"]["port"] = {"release": "v2026.11.0", "file": "zlib-port.tar.zst", "bytes": 1000,
+                               "sha256": "9" * 64}
         t.put_yaml("projects/zlib/project.yaml", p)
 
-    def test_a_pool_lets_a_held_project_name_the_prelaunch_port(self):
-        with tree() as t:
-            self.held_prelaunch(t)
-            serial = [str(f) for f in t.lint(jobs=1)]
-            with mock.patch.object(lint, "POOL_MIN_FILES", 0):
-                pooled = [str(f) for f in t.lint(jobs=4)]
-            self.assertEqual([f for f in serial if f.startswith("private-data")], [])
-            self.assertEqual(pooled, serial)
-
     def test_changed_only_reads_every_file_again_when_a_finding_changes(self):
-        """Which project.yaml may name the prelaunch port follows from the findings: once zlib's finding is public,
+        """Which project.yaml may name the port's internal copy follows from the findings: once zlib's finding is public,
         zlib is not held back, and --changed-only reads its unchanged project.yaml again and finds what a full lint
         finds."""
         rel = "findings/zlib/checksum_fuzzer/stand-in-abort/finding.yaml"
         with tree() as t:
-            self.held_prelaunch(t)
-            git = ["git", "-C", t.root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
-            subprocess.run(git[:3] + ["init", "-q"], check=True)
-            subprocess.run(git + ["add", "-A"], check=True)
-            subprocess.run(git + ["commit", "-q", "-m", "base"], check=True)
+            self.held_internal_port(t)
+            self.commit(t)
             y = t.yaml(rel)
             y.update(state="public", upstream="https://bugs.example.org/1")
             t.put_yaml(rel, y)
-            private = lambda found: sorted(f.where.split(":")[0] for f in found if f.rule == "private-data")
-            whole = private(t.lint())
-            self.assertEqual(whole, ["projects/zlib/project.yaml"])
-            self.assertEqual(private(t.lint(changed_only="HEAD")), whole)
+            private = lambda found: sorted(f.split()[1].split(":")[0] for f in found if f.startswith("private-data "))
+            whole = [str(f) for f in t.lint()]
+            self.assertEqual(private(whole), ["projects/zlib/project.yaml"])
+            only, err = self.changed_only(t)
+            self.assertEqual(private(only), private(whole))
+            self.assertIn(rel + " changed", err)
+
+    def test_a_pool_lets_a_held_project_name_the_internal_port(self):
+        with tree() as t:
+            self.held_internal_port(t)
+            serial = [str(f) for f in t.lint(jobs=1)]
+            pooled = [str(f) for f in t.lint(jobs=4)]
+            self.assertEqual([f for f in serial if f.startswith("private-data")], [])
+            self.assertEqual(pooled, serial)
+
+    def test_the_rules_over_the_whole_tree_still_run(self):
+        """A stray path, a schema error and a contributor's change outside its paths, none of them in a file the
+        change touches, are found as a full lint finds them."""
+        with tree() as t:
+            t.write("stray.txt", "x\n")
+            t.write("projects/abseil-py/project.yaml", "colour: {shade: blue}\n", "a")
+            t.write("notes/zlib.md", self.MAIL + "\n", "a")
+            self.commit(t)
+            t.write("docs/x.md", "nothing private\n")
+            kw = dict(changed=["tools/oft/lint.py", "docs/x.md"], pr_kind="contributor")
+            whole = [str(f) for f in t.lint(**kw)]
+            only, err = self.changed_only(t, **kw)
+            self.assertLessEqual({"paths", "private-data", "schema"}, {f.split()[0] for f in whole}, whole)
+            self.assertEqual(only, [f for f in whole if f.split()[0] not in self.PER_FILE_RULES])
+            self.assertTrue(any("stray.txt" in f for f in only), only)
+            self.assertEqual(err, "")
+
+    def test_changed_only_needs_a_base_git_can_read(self):
+        from oft import __main__ as cli
+        with tree() as t:
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as e:
+                cli.main(["--root", t.root, "lint", "--changed-only"])
+            self.assertEqual(e.exception.code, 2)
+            self.assertIn("argument --changed-only: expected one argument", err.getvalue())
+            t.write("notes/zlib.md", self.MAIL + "\n", "a")
+            self.commit(t)
+            git = ["git", "-C", t.root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+            subprocess.run(git + ["commit", "-q", "--allow-empty", "-m", "change"], check=True)
+            # a commit the checkout does not have, a word that names a directory of the tree (git would read it as
+            # a path and compare the index with the work tree: an empty change), a tree rather than a commit, and
+            # an option: each an error, never an empty change
+            for bad in ("no-such-commit", "notes", "HEAD^{tree}", "--output=x"):
+                with self.subTest(base=bad):
+                    self.assertRaisesRegex(lint.ChangedOnlyError, "names no commit", t.lint, changed_only=bad)
+            self.assertFalse(os.path.exists(t.path("x")))
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(cli.main(["--root", t.root, "lint", "--changed-only", "notes"]), 1)
+            self.assertEqual(out.getvalue(), "FAIL oft lint --changed-only: 'notes' names no commit of %s\n" % t.root)
+            # a revision that names a commit, by any spelling, works
+            sha = subprocess.run(git[:3] + ["rev-parse", "HEAD~1"], capture_output=True, text=True).stdout.strip()
+            for good in ("HEAD", "HEAD~1", sha):
+                with self.subTest(base=good), contextlib.redirect_stderr(io.StringIO()) as err:
+                    self.assertEqual([str(f) for f in t.lint(changed_only=good)], [])
+                    self.assertEqual(err.getvalue(), "")
+
+    def test_changed_only_refuses_a_root_below_the_checkout_top(self):
+        """git names the changed paths from the checkout's top, walk names them from root: below the top no tracked
+        change would match, so lint stops rather than read nothing."""
+        from oft import __main__ as cli
+        with tree() as t:
+            parent = os.path.dirname(t.root)
+            git = ["git", "-C", parent, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+            subprocess.run(git[:3] + ["init", "-q"], check=True)
+            subprocess.run(git + ["add", "-A"], check=True)
+            subprocess.run(git + ["commit", "-q", "-m", "base"], check=True)
+            t.write("notes/zlib.md", self.MAIL + "\n", "a")
+            self.assertIn("private-data", [f.rule for f in t.lint()])
+            self.assertRaisesRegex(lint.ChangedOnlyError, "is not the top of a git checkout", t.lint,
+                                   changed_only="HEAD")
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(cli.main(["--root", t.root, "lint", "--changed-only", "HEAD"]), 1)
+            self.assertIn("FAIL oft lint --changed-only: %s is not the top of a git checkout" % t.root, out.getvalue())
+        with tree() as t:   # no checkout at all
+            self.assertRaisesRegex(lint.ChangedOnlyError, "is not the top of a git checkout", t.lint,
+                                   changed_only="HEAD")
+
+    def test_changed_only_reads_every_file_when_the_running_tools_change(self):
+        """A local ./oft lint runs the tree's own tools: a change to them (a stricter rule, a new phrase) can change
+        the verdict on a file that did not change, so every file is read.  CI runs the base's tools, outside the tree,
+        and a change under tools/ is then just a changed file."""
+        with tree() as t:
+            t.write("notes/zlib.md", self.MAIL + "\n", "a")   # in the base, unchanged since: a per-file finding
+            self.commit(t)
+            t.write("tools/oft/rules_extra.py", "RULE = 1\n")
+            private = lambda found: [f for f in found if f.startswith("private-data notes/zlib.md:")]
+            only, err = self.changed_only(t)                    # the running tools are outside the tree
+            self.assertEqual((private(only), err), ([], ""))
+            self.assertIsNone(lint.running_tools(t.root))
+            with mock.patch.object(lint, "HERE", t.path("tools", "oft")):
+                self.assertEqual(lint.running_tools(t.root), "tools/oft")
+                only, err = self.changed_only(t)
+                self.assertEqual(private(only), private(map(str, t.lint())))
+                self.assertEqual(len(private(only)), 1)
+                self.assertIn("tools/oft/rules_extra.py changed", err)
+            with mock.patch.object(lint, "HERE", t.root):         # tools at the top: any change is a change to them
+                self.assertEqual(lint.running_tools(t.root), ".")
+                only, err = self.changed_only(t)
+                self.assertEqual(len(private(only)), 1)
+
+    def test_changed_only_reads_every_file_when_gitattributes_changes(self):
+        """A .gitattributes (at the top or in a directory) changes the bytes git checks out for a file whose blob did
+        not change (line ends, encoding), so a change to one reads every file."""
+        for rel in (".gitattributes", "docs/.gitattributes"):
+            with self.subTest(rel=rel), tree() as t:
+                t.write("notes/zlib.md", self.MAIL + "\n", "a")
+                self.commit(t)
+                t.write(rel, "*.md text\n")
+                only, err = self.changed_only(t)
+                self.assertTrue(any(f.startswith("private-data notes/zlib.md:") for f in only), only)
+                self.assertIn(rel + " changed", err)
+
+    # The files facts.load parses, by paths.py's pattern, beyond the ones paths.py classes "facts".  The margin
+    # (read_by_every_verdict) must cover every one a per-file rule reads; the rest carry the reason they are out.
+    # This is a reviewed inventory, not a detector: it is written by hand against the rules as they read today, so
+    # it holds a new rule's author to naming the file it reads here.  It cannot see a new rule read one by itself.
+    FACTS_OUTSIDE_THE_MARGIN = {
+        "approvals.yaml": "which proofs a release publishes: no per-file rule reads it",
+        "findings/{project}/unpatched.yaml": "the findings ledger: check_paths reads it over the whole tree, so a "
+                                             "change to it is judged there, every run",
+        "findings/{project}/{harness}/series": "the ledger's series: the same whole-tree rule",
+        "proofs/{project}/{harness}/{statement}/proof.yaml": "a proof's own pins: rules.check reads them over the "
+                                                             "whole tree",
+        "counterexamples/{project}/{harness}/{statement}/expect.yaml": "a counterexample's own outcome: the same",
+    }
+    FACT_FILES = (["findings/{project}/{harness}/*/finding.yaml"] + list(FACTS_OUTSIDE_THE_MARGIN))
+
+    def test_the_margin_matches_the_reviewed_inventory_of_facts(self):
+        """read_by_every_verdict is a margin over the files a per-file verdict reads.  Nothing derives it from the
+        facts, so this test pins it to the inventory above: every file facts.load parses is inside the margin or
+        carries its reason there.  It fails when the margin and the inventory disagree, not when a rule starts to read
+        a new file; that stays the reviewer's question for any change to scan_file, fact_urls or apply_exceptions."""
+        patterns = [p for cls, p in paths.TABLE if cls == "facts"] + self.FACT_FILES
+        self.assertIn("projects/{project}/{harness}/harness.yaml", patterns)
+        for pattern in patterns:
+            rel = (pattern.replace("{project}", "zlib").replace("{harness}", "api-driver")
+                   .replace("{statement}", "s1").replace("**", "x").replace("*", "x"))
+            with self.subTest(pattern=pattern):
+                inside = lint.read_by_every_verdict(rel)
+                if pattern in self.FACTS_OUTSIDE_THE_MARGIN:
+                    self.assertFalse(inside, "%s is inside the margin now: drop its row" % pattern)
+                else:
+                    self.assertTrue(inside, "%s is a fact a verdict could read and the margin misses: cover it in "
+                                            "read_by_every_verdict, or give it a row with its reason" % pattern)
+
+    def lint_step(self, event, base_ref):
+        """pr.yml's lint step, run as the workflow runs it, with a python that records its arguments: the arguments
+        it passes to oft lint."""
+        jobs = pr_yml_jobs(self)
+        step = next(s for s in jobs["lint"]["steps"] if s.get("name") == "lint, by the base's rules")
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "base", "tools", "oft"))
+            shutil.copy(os.path.join(REPO, "tools", "oft", "__main__.py"), os.path.join(d, "base", "tools", "oft"))
+            os.makedirs(os.path.join(d, "head"))
+            open(os.path.join(d, "head", "release.yaml"), "w").close()
+            open(os.path.join(d, "changed.txt"), "w").close()
+            os.mkdir(os.path.join(d, "bin"))
+            with open(os.path.join(d, "bin", "python"), "w") as f:
+                f.write('#!/bin/sh\nprintf "%%s\\n" "$@" > "%s"\n' % os.path.join(d, "args"))
+            os.chmod(os.path.join(d, "bin", "python"), 0o755)
+            env = dict(os.environ, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], RUNNER_TEMP=d,
+                       GITHUB_WORKSPACE=d, EVENT=event, BASE="b" * 40, BASE_REF=base_ref, KIND="maintainer")
+            subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]], cwd=d, env=env,
+                           check=True)
+            with open(os.path.join(d, "args")) as f:
+                return f.read().split("\n")
+
+    def test_pr_yml_lints_changed_files_only_for_a_pull_request_into_main(self):
+        """Only main had every file linted (by each push): a pull request into another branch (stacked on another
+        pull request, or into a lane's branch) has unchanged files no whole lint judged, so it lints every file."""
+        self.assertEqual(self.lint_step("pull_request", "main")[-3:-1], ["--changed-only", "b" * 40])
+        for event, base_ref in (("pull_request", "mcsl/s1"), ("pull_request", "main-old"), ("push", ""),
+                                ("merge_group", "")):
+            with self.subTest(event=event, base_ref=base_ref):
+                self.assertNotIn("--changed-only", self.lint_step(event, base_ref))
+
+    def test_the_command_reads_changed_only(self):
+        from oft import __main__ as cli
+        with tree() as t:
+            t.write("notes/zlib.md", self.MAIL + "\n", "a")   # unchanged since the base
+            self.commit(t)
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(cli.main(["--root", t.root, "lint"]), 1, out.getvalue())
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(cli.main(["--root", t.root, "lint", "--changed-only", "HEAD"]), 0, out.getvalue())
 
     def test_jobs_takes_one_or_more(self):
         from oft import __main__ as cli
@@ -569,7 +915,6 @@ class PerFileScope(unittest.TestCase):
                     self.assertIn("argument --jobs: %r is not a number of processes (1 or more)" % jobs, err.getvalue())
             with contextlib.redirect_stdout(io.StringIO()) as out:
                 self.assertEqual(cli.main(["--root", t.root, "lint", "--jobs", "1"]), 0, out.getvalue())
-
 
 class PrivateData(unittest.TestCase):
     def check(self, text, path="notes/zlib.md"):
@@ -590,6 +935,23 @@ class PrivateData(unittest.TestCase):
 
     def test_an_email_address(self):
         self.assertEqual(len(self.check("mail someone" + "@" + "example.com\n")), 1)
+
+    def test_a_numeric_reference_too_long_for_any_code_point_is_read_as_text(self):
+        """internal #80's code-quality review at 320061f9f6, finding 15: html.unescape reads a decimal reference with
+        int(), which refuses more than 4,300 digits, so one such line stopped `oft lint`; and its bug-finder at
+        85988e9f79: leading zeros count too.  urls.unescape, which the private-data and link rules read references
+        with, leaves a reference too long for any code point as it is, reads one padded with zeros without them, and
+        reads every other one as html.unescape does."""
+        huge, padded = "&#" + "9" * 4400 + ";", "&#" + "0" * 5000 + "65;"
+        for text in (huge + "\n", "[a](https://example.org/%s)\n" % huge, '<a href="%s">a</a>\n' % huge,
+                     "&#38;#" + "9" * 4400 + ";\n", padded + "\n", "&#x" + "0" * 5000 + "41;\n",
+                     "[a](https://example.org/%s)\n" % padded):
+            with self.subTest(text=text[:20]):
+                self.assertEqual(self.check(text), [])
+        self.assertEqual(urls.unescape(huge), huge)
+        self.assertEqual(urls.unescape(padded), "A")
+        same = "&amp; &#65; &#x42; &ampx &#128; &#0; &#x110000; &notit; &#0000000000067; &#65 &#x42"
+        self.assertEqual(urls.unescape(same), html.unescape(same))
 
     def test_an_address_shape_inside_a_proof_string_is_payload(self):
         at = "x" + "@" + "y.zz"
@@ -646,24 +1008,37 @@ class PrivateData(unittest.TestCase):
             found = {(f.rule, f.where) for f in t.lint() if f.where.startswith(rel + ":")}
         self.assertEqual(found, {("links", rel + ":3"), ("private-data", rel + ":5")})
 
-    def test_the_prelaunch_port_name_is_allowed_only_in_a_held_project_field(self):
+    def test_the_internal_port_name_is_allowed_only_in_a_held_project_field(self):
         with tree() as t:
-            t.write("notes/zlib.md", PRELAUNCH + "\n", "a")
+            t.write("notes/zlib.md", INTERNAL + "\n", "a")
             self.assertTrue(any(f.rule == "private-data" for f in t.lint()))
         with tree() as t:
             add_findings(t)
             p = t.yaml("projects/zlib/project.yaml")
-            p["build"]["oss_verify"] = {"repository": PRELAUNCH, "commit": "d" * 40, "path": "projects/zlib"}
+            p["build"]["oss_verify"] = {"repository": INTERNAL, "commit": "d" * 40, "path": "projects/zlib"}
             p["assets"]["port"] = {"release": "v2026.11.0", "file": "zlib-port.tar.zst", "bytes": 1000,
                                    "sha256": "9" * 64}
             t.put_yaml("projects/zlib/project.yaml", p)
             self.assertEqual([f for f in t.lint() if f.rule == "private-data"], [])
         with tree() as t:
             p = t.yaml("projects/zlib/project.yaml")
-            p["build"]["oss_verify"] = {"repository": PRELAUNCH, "commit": "d" * 40, "path": "projects/zlib"}
+            p["build"]["oss_verify"] = {"repository": INTERNAL, "commit": "d" * 40, "path": "projects/zlib"}
             t.put_yaml("projects/zlib/project.yaml", p)
             self.assertTrue(any(f.rule == "private-data" and f.where.startswith("projects/zlib/project.yaml:")
                                 for f in t.lint()))
+
+    def test_another_repository_field_of_a_held_project_may_not_name_the_internal_port(self):
+        """Only build.oss_verify.repository: another repository key of the same file is not that field."""
+        with tree() as t:
+            add_findings(t)
+            p = t.yaml("projects/zlib/project.yaml")
+            p["build"]["oss_verify"] = {"repository": INTERNAL, "commit": "d" * 40, "path": "projects/zlib"}
+            p["assets"]["port"] = {"release": "v2026.11.0", "file": "zlib-port.tar.zst", "bytes": 1000,
+                                   "sha256": "9" * 64}
+            p["library"]["repository"] = "https://github.com/" + INTERNAL
+            t.put_yaml("projects/zlib/project.yaml", p)
+            found = [f for f in t.lint() if f.rule == "private-data"]
+            self.assertTrue(found and all(f.where.startswith("projects/zlib/project.yaml:") for f in found), found)
 
     def test_an_unused_exception(self):
         with tree() as t:
@@ -750,6 +1125,67 @@ class FreeText(unittest.TestCase):
             self.assertIn("free-text", rules_of(t.lint()))
 
 
+class ProofsException(unittest.TestCase):
+    """A notation token the proofs rule refuses can be cleared by one reviewed entry that names it exactly: its path,
+    line, message and string literal, count 1.  Anything less exact, or an entry no finding matches, is a finding."""
+    REL = "proofs/zlib/checksum_fuzzer/plain_halts/Proof.v"
+    TOKEN = "Notation \"'LF2CBN(' t ')'\" := t (at level 0, only parsing).\n"
+    MSG = ("a notation token with a '\"', or a '(' after anything but '.', '`' or ':', is not allowed in a proof")
+
+    def found(self, where, token="LF2CBN"):
+        return "proofs %s: %s (key \"'%s(' t ')'\")" % (where, self.MSG, token)
+
+    def entry(self, **change):
+        return dict({"path": self.REL, "rule": "proofs", "line": 2, "message": self.MSG,
+                     "key": "\"'LF2CBN(' t ')'\"", "count": 1, "reason": "a test"}, **change)
+
+    def lint(self, files, entries):
+        with tree() as t:
+            t.put_yaml("proofs/zlib/checksum_fuzzer/plain_halts/proof.yaml", {
+                "schema": "oss-fuzz-theorems/proof/1", "proves": "zlib/checksum_fuzzer/plain_halts",
+                "fingerprint": next(s for s in facts.load(t.root).statements()
+                                    if s.id == "zlib/checksum_fuzzer/plain_halts").fingerprint})
+            for rel, body in files.items():
+                t.write(rel, body)
+            t.put_yaml("tools/oft/lint-exceptions.yaml",
+                       {"schema": "oss-fuzz-theorems/lint-exceptions/1", "exceptions": entries})
+            t.generate()
+            return [str(f) for f in t.lint() if f.rule == "proofs" or "lint-exceptions" in f.where]
+
+    def test_the_exact_entry_clears_its_one_finding(self):
+        self.assertEqual(self.lint({self.REL: "(* a *)\n" + self.TOKEN}, [self.entry()]), [])
+
+    def test_the_same_token_elsewhere_still_fails(self):
+        other = "proofs/zlib/checksum_fuzzer/plain_halts/Other.v"
+        found = self.lint({self.REL: "(* a *)\n" + self.TOKEN, other: "(* a *)\n" + self.TOKEN}, [self.entry()])
+        self.assertEqual(found, [self.found(other + ":2")])
+        found = self.lint({self.REL: "(* a *)\n" + self.TOKEN + self.TOKEN.replace("LF2CBN", "LF3CBN")},
+                          [self.entry()])
+        self.assertEqual(found, [self.found(self.REL + ":3", "LF3CBN")])
+
+    def test_a_stale_entry_fails(self):
+        found = self.lint({self.REL: "(* a *)\n(* b *)\n" + self.TOKEN}, [self.entry()])
+        self.assertEqual(found, [self.found(self.REL + ":3"),
+                                 "paths tools/oft/lint-exceptions.yaml: an exception for proofs %s:2 that is not "
+                                 "used 1 time(s)" % self.REL])
+
+    def test_an_entry_that_is_not_exact_fails(self):
+        for change in ({"count": 2}, {"count": True}, {"count": 1.0}, {"line": None}, {"line": "2"},
+                       {"message": ""}, {"line": True}, {"extra": 1}):
+            with self.subTest(change=change):
+                entry = {k: v for k, v in self.entry(**change).items() if v is not None}
+                found = self.lint({self.REL: "(* a *)\n" + self.TOKEN}, [entry])
+                self.assertEqual(found, [self.found(self.REL + ":2"),
+                                         "paths tools/oft/lint-exceptions.yaml: an exception for proofs %s must name "
+                                         "exactly its path, line, message and key, with count 1 and a reason, once"
+                                         % self.REL])
+
+    def test_a_second_entry_for_the_same_finding_fails(self):
+        found = self.lint({self.REL: "(* a *)\n" + self.TOKEN}, [self.entry(), self.entry(reason="again")])
+        self.assertEqual(found, ["paths tools/oft/lint-exceptions.yaml: an exception for proofs %s must name exactly "
+                                 "its path, line, message and key, with count 1 and a reason, once" % self.REL])
+
+
 class Proofs(unittest.TestCase):
     def proof(self, body, **extra):
         with tree() as t:
@@ -793,25 +1229,189 @@ class Proofs(unittest.TestCase):
         self.assertEqual(sorted((str(f).split(": ")[0].rsplit(":", 1)[-1], "'Load'" in str(f)) for f in refused),
                          [("1", True), ("3", False)])
 
+    @staticmethod
+    def lines(found):
+        return sorted(int(str(f).split(": ")[0].rsplit(":", 1)[-1]) for f in found)
+
     def test_wall_clock_timeouts(self):
         refused = self.proof("Set Default Timeout 60.\nLemma l : True.\nProof. timeout 5 exact I.\nQed.\n"
                              "Timeout 10 Check I.\nLemma m : True.\nProof. idtac; timeout 5 exact I.\nQed.\n"
                              "Lemma k : True.\nProof. first [ exact I | timeout 5 exact I ].\nQed.\n"
                              "Lemma j : True.\nProof. try idtac; timeout 5 exact I.\nQed.\n")
-        self.assertEqual(sorted(int(str(f).split(": ")[0].rsplit(":", 1)[-1]) for f in refused), [1, 3, 5, 7, 10, 13])
+        self.assertEqual(self.lines(refused), [1, 3, 5, 7, 10, 13])
 
-    def test_a_caught_timeout_and_a_commented_one_are_fine(self):
+    def test_a_timeout_whose_expiry_something_catches_is_refused_too(self):
+        # under load the expiry still changes what the proof does: `try` leaves the goal open, a later arm runs
+        body = ("Lemma l : True.\nProof. first [ timeout 5 exact I | exact I ].\nQed.\n"
+                "Lemma m : True.\nProof. try (timeout 5 fail). exact I.\nQed.\n"
+                "Lemma k : True.\nProof. solve [ timeout 5 exact I | exact I ].\nQed.\n"
+                "Lemma j : True.\nProof. repeat (timeout 5 fail). exact I.\nQed.\n"
+                "Ltac hot2_mid := timeout 8 lia.\n")
+        self.assertEqual(self.lines(lint.scan_proof(body, "proofs/varnish/esi_parse_fuzzer/lib/D_Dir.v")),
+                         [2, 5, 8, 11, 13])
+
+    def test_a_justified_timeout_and_a_commented_one_are_fine(self):
         self.assertEqual(self.proof("(* Set Default Timeout 60. timeout 5 *)\n"
-                                    "Lemma l : True.\nProof. first [ timeout 5 exact I | exact I ].\nQed.\n"
-                                    "Lemma m : True.\nProof. try (timeout 5 fail). exact I.\nQed.\n"
-                                    "Lemma k : True.\nProof. solve [ timeout 5 exact I | exact I ].\nQed.\n"
-                                    "Lemma j : True.\nProof. repeat (timeout 5 fail). exact I.\nQed.\n"), [])
+                                    "Lemma l : True.\n"
+                                    "Proof. first [ timeout 5 exact I | exact I ]. (* timeout-ok: the next arm *)\nQed.\n"
+                                    "Ltac t := first [ timeout 5 lia (* [a note] *)   (*timeout-ok:fast tier*)\n"
+                                    "  | nia ].\n"), [])
 
-    def test_the_timeout_exemption_is_one_definition_in_its_file(self):
-        body = "Ltac hot2_mid := timeout 8 lia.\nLtac other := timeout 8 lia.\n"
-        found = lint.scan_proof(body, "proofs/varnish/esi_parse_fuzzer/lib/D_Dir.v")
-        self.assertEqual([str(f).split(": ")[0].rsplit(":", 1)[-1] for f in found], ["2"])
-        self.assertEqual(len(lint.scan_proof(body, "proofs/varnish/esi_parse_fuzzer/lib/Other.v")), 2)
+    def test_the_justification_ends_the_line_of_the_timeout_and_gives_a_reason(self):
+        body = ("Ltac a := first [ timeout 5 lia | nia ]. (* timeout-ok: *)\n"
+                "Ltac b := (* timeout-ok: fast tier *) first [ timeout 5 lia | nia ].\n"
+                "(* timeout-ok: fast tier *)\nLtac c := first [ timeout 5 lia | nia ].\n"
+                "Ltac d := first [ timeout 5 lia | nia ]. Definition s := \"(* timeout-ok: fast tier *)\".\n"
+                "Ltac e := first [ timeout 5 lia | nia ]. (* timeout-ok: fast *) idtac.\n"
+                "Ltac f := first [ timeout 5 lia | nia ]. (* timeout-ok: fast *) (* other *)\n"
+                "Ltac g := first [ timeout 5 lia\n  | nia ]. (* timeout-ok: fast tier *)\n")
+        self.assertEqual(self.lines(lint.scan_proof(body, "proofs/zlib/checksum_fuzzer/lib/T.v")),
+                         [1, 2, 4, 5, 6, 7, 8])
+
+    def test_a_timeout_of_a_variable_and_the_ltac2_timeouts_are_refused(self):
+        body = ("Ltac t n := timeout n lia.\n"
+                "Ltac2 a () := Control.timeout 5 (fun () => ()).\n"
+                "Ltac2 b () := Control.timeoutf 0.5 (fun () => ()).\n"
+                "Ltac2 c () := Ltac2.Control.timeout 5 (fun () => ()).\n"
+                "Import Ltac2.Control.\nLtac2 d () := timeoutf 0.5 (fun () => ()).\n"
+                "Ltac2 e () := let f := Control.timeout in f 5 (fun () => ()).\n"
+                "Ltac2 g () := Control.timeout 5 (fun () => ()). (* timeout-ok: fast tier *)\n"
+                "Definition timeout_ms := 5. Definition my_timeout := timeout_ms. Definition MyControl := 1.\n")
+        self.assertEqual(self.lines(lint.scan_proof(body, "proofs/zlib/checksum_fuzzer/lib/T.v")),
+                         [1, 2, 3, 4, 6, 7])
+
+    def test_an_ltac2_external_bound_to_the_timeout_primitive_is_refused(self):
+        body = ('Ltac2 @external tmo : int -> (unit -> unit) -> unit := "rocq-runtime.plugins.ltac2" "timeout".\n'
+                'Ltac2 @external\n  tmf : float -> (unit -> unit) -> unit :=\n'
+                '  "rocq-runtime.plugins.ltac2" "timeoutf".\n'
+                'Ltac2 @external sgo : string -> int -> int := "rocq-runtime.plugins.ltac2" "string_get".\n'
+                '(* Ltac2 @external c : int := "rocq-runtime.plugins.ltac2" "timeout". *)\n'
+                'Definition s := "Ltac2 @external c : int := ""rocq-runtime.plugins.ltac2"" ""timeout"".".\n')
+        self.assertEqual(self.lines(lint.scan_proof(body, "proofs/zlib/checksum_fuzzer/lib/T.v")), [1, 2])
+
+    def test_a_comment_does_not_hide_an_ltac2_external(self):
+        body = ('Ltac2 @external a : int := "rocq-runtime.plugins.ltac2" (* x *) "timeout".\n'
+                'Ltac2 @external b : int := (* x *) "rocq-runtime.plugins.ltac2" "timeout".\n'
+                'Ltac2 @ (* x *) external c : int := "rocq-runtime.plugins.ltac2" "timeout".\n'
+                'Ltac2 @external d (* "string_get" *) : int := "rocq-runtime.plugins.ltac2" "timeoutf".\n'
+                'Ltac2 @external e : int := "rocq-runtime.plugins.ltac2" (* "timeout" *) "string_get".\n')
+        self.assertEqual(self.lines(lint.scan_proof(body, "proofs/zlib/checksum_fuzzer/lib/T.v")), [1, 2, 3, 4])
+
+    def test_an_ltac2_external_may_bind_only_an_allowed_primitive(self):
+        body = ('Ltac2 @external a : string -> int -> int := "rocq-runtime.plugins.ltac2" "string_set".\n'
+                'Ltac2 @external b : string -> int -> int := "other-plugin" "string_get".\n'
+                'Ltac2 @external c : string -> int -> int := "rocq-runtime.plugins.ltac2" "string_get".\n'
+                'Ltac2 @external d : int := "rocq-runtime.plugins.ltac2" "string_set". (* timeout-ok: no *)\n')
+        found = lint.scan_proof(body, "proofs/zlib/checksum_fuzzer/lib/T.v")
+        self.assertEqual(self.lines(found), [1, 2, 4])
+        self.assertIn('binds "rocq-runtime.plugins.ltac2" "string_set"', str(found[0]))
+        with tempfile.TemporaryDirectory() as root:
+            rel = "theories/T.v"
+            os.makedirs(os.path.join(root, "theories"))
+            with open(os.path.join(root, rel), "w") as f:
+                f.write(body)
+            found = [f.where for f in lint.scan_file(root, rel, facts.Tree(root), frozenset(), frozenset())[0]
+                     if f.rule == "proofs"]
+        self.assertEqual(found, ["theories/T.v:1", "theories/T.v:2", "theories/T.v:4"])
+
+    def test_a_parenthesised_or_qualified_timeout_is_refused(self):
+        body = ("Import Ltac2.Control.\n"
+                "Ltac2 a () := timeout (5) (fun () => ()).\n"
+                "Ltac2 b n := timeout(n) (fun () => ()).\n"
+                "Module C := Ltac2.Control.\n"
+                "Ltac2 d () := C.timeoutf 0.5 (fun () => ()).\n"
+                "Ltac2 e () := C.timeout\n  5 (fun () => ()).\n")
+        self.assertEqual(self.lines(lint.scan_proof(body, "proofs/zlib/checksum_fuzzer/lib/T.v")), [2, 3, 5, 6])
+
+    def test_a_timeout_in_tests_is_refused(self):
+        files = ("tests/proofs/toy/exit0/plain_halts/Proof.v", "tests/toy/README.md")
+        with tempfile.TemporaryDirectory() as root:
+            for rel in files:
+                os.makedirs(os.path.dirname(os.path.join(root, rel)), exist_ok=True)
+                with open(os.path.join(root, rel), "w") as f:
+                    f.write("Lemma l : True.\nProof. timeout 5 exact I.\nQed.\n")
+            found = [[f.where for f in lint.scan_file(root, rel, facts.Tree(root), frozenset(), frozenset())[0]
+                      if f.rule == "proofs"] for rel in files]
+        self.assertEqual(found, [["tests/proofs/toy/exit0/plain_halts/Proof.v:2"], []])
+
+    def test_a_timeout_in_theories_projects_or_a_rocq_template_is_refused(self):
+        with tree() as t:
+            t.generate()
+            t.write("theories/Tmo.v", "Set Default Timeout 5.\nLemma l : True. Proof. timeout 5 exact I. Qed.\n"
+                                      "Lemma m : True. Proof. first [ timeout 5 exact I | exact I ]. "
+                                      "(* timeout-ok: the next arm *)\nQed.\n")
+            with open(t.path("projects/zlib/checksum_fuzzer/Statements.v"), "a") as f:
+                f.write("Timeout 5 Check I.\n")
+            with open(t.path("projects/zlib/checksum_fuzzer/Statements.v")) as f:
+                last = f.read().count("\n")
+            found = sorted(f.where for f in t.lint() if f.rule == "proofs")
+        self.assertEqual(found, ["projects/zlib/checksum_fuzzer/Statements.v:%d" % last,
+                                 "theories/Tmo.v:1", "theories/Tmo.v:2"])
+        templates = ("tools/oft/templates/X.v.tmpl", "tools/oft/templates/X.md.tmpl")
+        with tempfile.TemporaryDirectory() as root:
+            os.makedirs(os.path.join(root, "tools/oft/templates"))
+            for rel in templates:
+                with open(os.path.join(root, rel), "w") as f:
+                    f.write("Ltac t n := timeout n lia.\n")
+            found = [len([f for f in lint.scan_file(root, rel, facts.Tree(root), frozenset(), frozenset())[0]
+                          if f.rule == "proofs"]) for rel in templates]
+        self.assertEqual(found, [1, 0])
+
+    def test_a_command_that_reads_a_file_is_refused_in_every_form(self):
+        """A proof's compile reads no file: Load, Cd and Extra Dependency are refused when a comment, a line break, an
+        attribute or a control prefix separates their words or comes first, and so are the ReadFile commands."""
+        forms = {
+            "Load on the next line": ('Lemma l : True.\nProof. exact I. Qed.\nLoad\n  "cheat".\n', 3, "Load"),
+            "a comment first": ('(* c *) Load "cheat".\n', 1, "Load"),
+            "an attribute": ('Lemma l : True.\nProof. exact I. Qed.\n#[local] Load "cheat".\n', 3, "Load"),
+            "a control prefix": ('Lemma l : True.\nProof. exact I. Qed.\nTimeout 5 Time Load "cheat".\n', 3, "Load"),
+            "Fail": ('Lemma l : True.\nProof. exact I. Qed.\nFail Cd "/tmp".\n', 3, "Cd"),
+            "Extra Dependency split": ('Extra (* c *)\n  Dependency "CHANGELOG.md" as log.\n', 1, "Extra Dependency"),
+            "From ... Extra Dependency": ('From Foo Extra Dependency "a" as a.\n', 1, "Extra Dependency"),
+            "ReadFileBytes": ("Definition b := ReadFileBytes.\n", 1, "ReadFileBytes"),
+            "a control flag before an attribute": (
+                'Lemma l : True.\nProof. exact I. Qed.\nTime #[warnings="-deprecated"] Load "cheat".\n', 3, "Load"),
+            "a legacy attribute": ('Lemma l : True.\nProof. exact I. Qed.\nProgram Load "cheat".\n', 3, "Load"),
+            "Timeout in hexadecimal": ('Lemma l : True.\nProof. exact I. Qed.\nTimeout 0x5 Load "cheat".\n', 3, "Load"),
+            "a bullet": ('Lemma l : True.\nProof.\n- Load "cheat".\n', 3, "Load"),
+            "a byte-order mark": ('\ufeffLoad "cheat".\n', 1, "Load"),
+            "Locate File": ('Locate File "cheat.v".\n', 1, "Locate File"),
+            "a goal selector and a brace": ('Lemma l : True.\nProof.\n1:{ Load "cheat".\n', 3, "Load"),
+        }
+        for name, (body, line, word) in forms.items():
+            with self.subTest(form=name):
+                # a Timeout prefix is also a wall-clock limit, refused on its own (test_wall_clock_timeouts)
+                found = [str(f) for f in self.proof(body) if "wall-clock" not in str(f)]
+                self.assertEqual([(f.split(": ")[0].rsplit(":", 1)[-1], "%r is" % word in f) for f in found],
+                                 [(str(line), True)], found)
+
+    def test_a_forbidden_command_split_across_lines_is_refused(self):
+        found = self.proof("Declare\n  ML (* c *) Module \"x\".\nAdd\nLoadPath \"y\" as Y.\n")
+        self.assertEqual(sorted(str(f).split(": ")[0].rsplit(":", 1)[-1] for f in found), ["1", "3"], found)
+
+    def test_a_token_that_rocq_lexes_otherwise_is_refused(self):
+        """A notation token holding a '(' or a '"' can make Rocq read as code what these rules take for a comment or
+        a string; such a token, and a comment right after '.', '`' or ':', are refused."""
+        for body in ('Notation "<(*" := 0 (at level 0).\nDefinition a := <(*.\nLoad "cheat".\n',
+                     'Notation "<""" := 0 (at level 0).\nDefinition a := <".\nLoad "cheat".\n',
+                     'Notation "*" := tt (at level 0).\nDefinition a := `(*).\nLoad "cheat".\n'):
+            with self.subTest(body=body):
+                found = [str(f) for f in self.proof(body)]
+                self.assertEqual([f.split(": ")[0].rsplit(":", 1)[-1] for f in found],
+                                 ["2" if "`" in body else "1"], found)
+        self.assertEqual(self.proof('Local Notation "\'HBF.(\' f \')\'" := (f) (at level 0).\n'), [])
+
+    def test_a_rocq_file_with_a_nul_byte_is_refused(self):
+        found = self.proof('(* \0 *)\nLoad "cheat".\n')
+        self.assertEqual([f.msg.split(" (")[0] for f in found], ["a Rocq file that is not read as text"], found)
+
+    def test_a_generated_rocq_file_that_would_read_a_file_is_refused(self):
+        with tree() as t:
+            path = "projects/zlib/checksum_fuzzer/Statements.v"
+            t.write(path, t.read(path) + 'Load "x".\nDefinition y := Load.\n')
+            found = [str(f) for f in t.lint() if f.rule == "proofs" and path in str(f)]
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("'Load' is not allowed in a file of projects/", found[0])
 
 
 class ProofHarnessDirs(unittest.TestCase):
@@ -1193,6 +1793,103 @@ class RecipeShapes(unittest.TestCase):
             t.put_yaml(self.ZLIB, p)
             self.assertTrue(any(self.ZLIB in str(f) and "assets.bin.recipe, recipe-2.tar.zst in v2026.12.0-src, is not "
                                 "one of release.yaml's recipes" in f.msg for f in t.lint()))
+
+
+class ExitChecks(unittest.TestCase):
+    """A stops_with: exit check carries the source's argument and whether that exit() reaches the driver's
+    guard (docs/facts.md, "A check")."""
+
+    def exit_check(self, t, **kw):
+        fields = dict({"stops_with": "exit", "exit_status": 1}, **kw)
+        y = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+        for c in y["checks"]:
+            c.update(fields)
+        t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", y)
+        return y
+
+    def test_an_exit_check_says_whether_its_exit_reaches_the_guard(self):
+        with tree() as t:
+            self.exit_check(t)
+            self.assertTrue(any("exit_reaches_guard goes with stops_with: exit" in f.msg for f in t.lint()))
+
+    def test_exit_reaches_guard_belongs_to_an_exit_check_only(self):
+        with tree() as t:
+            y = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+            y["checks"][0]["exit_reaches_guard"] = True
+            t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", y)
+            self.assertTrue(any("exit_reaches_guard goes with stops_with: exit" in f.msg for f in t.lint()))
+
+    def test_the_source_argument_loads_as_written(self):
+        """exit(-1) and exit(258) are what the source passes, and facts.load keeps them as such; the schema's
+        range is tested in Schemas.test_the_exit_guard_fields."""
+        for arg in (-1, 258):
+            with tree() as t:
+                self.exit_check(t, exit_status=arg, exit_reaches_guard=True)
+                h = facts.load(t.root).projects["zlib"].harnesses["checksum_fuzzer"]
+                self.assertEqual(h.data["checks"][0]["exit_status"], arg)
+
+    def test_a_check_whose_exit_may_not_reach_the_guard_binds_no_statement(self):
+        with tree() as t:
+            self.exit_check(t, exit_reaches_guard="unknown")
+            self.assertTrue(any("binds_checks is True, but the checks give False" in f.msg for f in t.lint()))
+
+
+class FailureHandlers(unittest.TestCase):
+    """Only a harness whose linked code installs no handler that can take over a failed check binds a halts
+    statement (docs/facts.md, "Failure handlers")."""
+
+    H = "projects/zlib/checksum_fuzzer/harness.yaml"
+
+    def test_a_harness_not_read_or_with_a_handler_binds_no_statement(self):
+        for value in ("present", "unknown", None):
+            with tree() as t:
+                y = t.yaml(self.H)
+                if value is None:
+                    del y["failure_handlers"]
+                else:
+                    y["failure_handlers"] = value
+                t.put_yaml(self.H, y)
+                self.assertTrue(any("binds_checks is True, but the checks give False" in f.msg for f in t.lint()),
+                                value)
+
+    def test_the_page_names_only_the_checks_a_statement_proves(self):
+        with tree() as t:
+            y = t.yaml(self.H)
+            y["checks"][0]["live"] = "unknown"
+            t.put_yaml(self.H, y)
+            t.generate()
+            page = t.read("projects/zlib/checksum_fuzzer/README.md")
+            self.assertIn("so the checks at line 18 and line 19 above hold", page)
+            self.assertIn("A failure of any of the checks at line 18 and line 19 ends the process", page)
+            self.assertIn("No statement here proves the other check.", page)
+
+    def test_the_page_names_no_other_check_when_every_check_is_bound(self):
+        """A may-fail halts statement (exits: any) binds no exit check, so not every statement binds it, but no
+        other check is left to name."""
+        with tree() as t:
+            y = t.yaml(self.H)
+            y["checks"] = [dict(y["checks"][0], stops_with="exit", exit_status=1, exit_reaches_guard=True)]
+            y["statements"]["plain_halts_may_fail"] = {"kind": "halts", "builds": ["plain"], "reading": "may-fail",
+                                                      "exits": "any", "status": "open"}
+            t.put_yaml(self.H, y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            page = t.read("projects/zlib/checksum_fuzzer/README.md")
+            self.assertIn("A failure of the check at line", page)
+            self.assertIn("so a proof of one of those statements implies it on every input it covers.\n", page)
+            self.assertNotIn("No statement here proves the other", page)
+            self.assertNotIn("so the checks above hold", page)
+
+    def test_a_page_with_one_binding_check_of_three_counts_in_the_singular(self):
+        with tree() as t:
+            y = t.yaml(self.H)
+            for c in y["checks"][1:]:
+                c["live"] = "unknown"
+            t.put_yaml(self.H, y)
+            t.generate()
+            page = t.read("projects/zlib/checksum_fuzzer/README.md")
+            self.assertIn("so the check at line 17 above holds", page)
+            self.assertIn("A failure of the check at line 17 ends the process", page)
+            self.assertIn("No statement here proves the other checks.", page)
 
 
 class Pending(unittest.TestCase):

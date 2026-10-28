@@ -26,8 +26,8 @@
     ODPUTIL_FLOW_KEY_BYTES; violation only printf's and sets exit_code=1, and
     LLVMFuzzerTestOneInput discards parse_keys()'s return value, so the check
     never fails the run [prints only; confirmed in the binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

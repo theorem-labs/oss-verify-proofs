@@ -197,6 +197,13 @@ proofs:
   - LICENSES/anthropic-proofs-NOTICE
   texts_location: the repository's top directory
   modified: each changed file carries one line under its licence header saying so
+  written_here:
+  - asan_agreement_decidable
+  - asan_disagrees_at_most
+  - asan_ubsan_agreement_decidable
+  - asan_ubsan_disagrees_at_most
+  - ubsan_agreement_decidable
+  - ubsan_disagrees_at_most
 flags:
   note: as written in the recipe; a library's own build system adds its flags after these (e.g. CMake Release appends
     -O3 -DNDEBUG), see the pin and recipes.sh

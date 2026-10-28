@@ -22,12 +22,12 @@ The harness makes no check of its own beyond not crashing, so a statement about 
 | `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
 | `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; abort read as SIGABRT; memory refused only when forced | [proved](../../../proofs/jsoncons/fuzz_bson_parser_max/asan_agrees/) |
-| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; abort read as SIGABRT; memory refused only when forced | open |
-| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; abort read as SIGABRT; memory refused only when forced | open |
-| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
+| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; abort read as SIGABRT; memory refused only when forced | [proved](../../../proofs/jsoncons/fuzz_bson_parser_max/ubsan_agrees/) |
+| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; abort read as SIGABRT; memory refused only when forced | [proved](../../../proofs/jsoncons/fuzz_bson_parser_max/asan_ubsan_agrees/) |
+| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | [proved](../../../proofs/jsoncons/fuzz_bson_parser_max/asan_disagrees_at_most/) at b = 0 |
 | `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
 | `asan_ubsan_disagrees_at_most` | P[plain and ASan+UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
-| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | open |
+| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | [proved](../../../proofs/jsoncons/fuzz_bson_parser_max/asan_agreement_decidable/) |
 | `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | open |
 | `asan_ubsan_agreement_decidable` | some program decides exactly the inputs where plain and ASan+UBSan agree | open |
 

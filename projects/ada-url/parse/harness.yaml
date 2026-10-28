@@ -181,6 +181,7 @@ checks:
   where: source/parse.cc:681-708
   what: 'url_search_params serialisation is a fixed point: url_search_params(sp.to_string()).to_string()
     == sp.to_string() (sp taken from a URL whose query is the fuzz input, plus an appended pair)'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: parse

@@ -1,0 +1,220 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Spec Require Import FseNCount FseLemmas ZdSeqTable.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac Arr Bytes ZBridge InitMem.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import DrvAgree FseWalkKit FseRdKit FseRdKit2 ZdWalkKit.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Spec Require Import STree AsanCtrl AsanEmbed.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF Shadow.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.AsanT Require Import BImg ABase RtCells AProto AMalloc_iface AProg_kit AFake_iface AFakeK_iface
+     AZ_kit AZ_globals AZ_globalsR AZ_fkit AZ_libc_iface AF_fse_rd_base AF_fse_rd_mem AF_fse_rd_seg AF_fse_rd_asm.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import RunDraw.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import FseWalkKitF.
+Import ListNotations.
+Open Scope Z_scope.
+Set Warnings "-notation-for-abbreviation".
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Local Ltac acc_enrich ::= rewrite ?shad_div in *; rewrite ?nshad_div in *; unfold ASHOFF, KLOW, KHIGH, KEND in *; rewrite ?Z.shiftr_div_pow2 in * by lia.
+
+Notation SHB := 2147450880.
+Notation BF1 := (Z_to_bv 8 18446744073709551601).
+Notation BF3 := (Z_to_bv 8 18446744073709551603).
+Notation BF8 := (Z_to_bv 8 18446744073709551608).
+Notation B00 := (Z_to_bv 8 0).
+
+Section CANSEC1. Context {rc : runConstT}.
+(* [comment removed for export] *)
+Lemma sl_got_cells : forall m, (forall i, ARELRO_LO <= i < ARELRO_HI -> m (wa i) = None) ->
+  rw_cells bsegs m 0xc7360 [C8 (Z_to_bv 64 0xcfd00)] /\ rw_cells bsegs m 0xc7308 [C8 (Z_to_bv 64 0xcfcf8)].
+Proof.
+  intros m R. split; (apply relro_wordA; [exact R| unfold ARELRO_LO; lia| unfold ARELRO_HI; lia| vm_compute; reflexivity]).
+Qed.
+
+(* [comment removed for export] *)
+Definition SLSAVED (ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) : list cell :=
+  [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra].
+
+(* [comment removed for export] *)
+Definition SLSH00 : list cell :=
+  [C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00;
+   C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00].
+Lemma shadow32_c1sL : forall (m : amem) s,
+  rw_cells bsegs m s [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)] -> rw_cells bsegs m s SLSH00.
+Proof. intros m s H. eapply rw_cells_recast; [exact H| cbn; repeat split; exact I| vm_compute; reflexivity| reflexivity]. Qed.
+
+(* [comment removed for export] *)
+Definition SLSH0 : list cell :=
+  [C1 BF1; C1 BF1; C1 BF1; C1 BF1;
+   C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8; C1 BF8;
+   C1 BF3; C1 BF3; C1 BF3; C1 BF3; C1 BF3; C1 BF3; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00; C1 B00].
+Definition SLJSH0 : list byte := [BF1; BF1; BF1; BF1].
+Definition SLJM : list byte := [BF8; BF8; BF8; BF8; BF8; BF8; BF8; BF8; BF8; BF8; BF8; BF8; BF8; BF8].
+Definition SLJSH1 : list byte := [BF3; BF3; BF3; BF3; BF3; BF3; B00; B00; B00; B00; B00; B00; B00; B00].
+Lemma slsh0_blobs : forall (m : amem) s, rw_cells bsegs m s SLSH0 -> rw_cells bsegs m s [CB 4 SLJSH0; CB 14 SLJM; CB 14 SLJSH1].
+Proof. intros m s H. eapply rw_cells_recast; [exact H| cbn; repeat split; exact I| vm_compute; reflexivity| reflexivity]. Qed.
+
+(* [comment removed for export] *)
+Definition SLJFH (junk8 : list byte) : list byte :=
+  cells_bytes [C8 (Z_to_bv 64 0x41b58ab3); C8 (Z_to_bv 64 0x18965); C8 (Z_to_bv 64 0x89974); CB 8 junk8].
+
+Section S.
+  Variables (ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (FR : bvmap 5 word) (fc : bv 32).
+  Variables (SPV lo : Z).
+  Hypothesis SP16 : SPV mod 16 = 0.
+  Hypothesis SPT : SPV + 16 < KEND.
+  Hypothesis LOS : lo <= SPV - 704 - 4096.
+  Hypothesis LOC : ATOP <= lo.
+  Variable RNG : footprint.
+  Hypothesis RSTK : rng RNG lo (SPV - lo).
+  Hypothesis RI : rng_aimg RNG.
+
+  (* [comment removed for export] *)
+  Definition SLFRB : Z := (SPV - 672) - (SPV - 672) mod 32.
+  Lemma slfrb_props : SPV - 704 <= SLFRB <= SPV - 672 /\ SLFRB mod 32 = 0 /\ (SPV + -672) - (SPV + -672) mod 2^5 = SLFRB.
+  Proof. unfold SLFRB. change (2^5) with 32. Z.div_mod_to_equations. lia. Qed.
+
+  (* [comment removed for export] *)
+  Lemma sl_pro : forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) m,
+    stk bsegs m lo SPV -> mem_inv bsegs m ->
+    rt_shbase m -> rw_cells bsegs m 0xc7360 [C8 (Z_to_bv 64 0xcfd00)] -> rw_cells bsegs m 0xc7308 [C8 (Z_to_bv 64 0xcfcf8)] ->
+    rw_cells bsegs m 0xcfd00 [C4 (Z_to_bv 64 1)] ->
+    evtF bsegs RNG (fun ms' => exists m' jA jB,
+        ms' = MS (mkR (Z_to_bv 64 0x89a00) (Z_to_bv 64 SLFRB) gp tp t0 t1 t2 (Z_to_bv 64 SPV) (Z_to_bv 64 SLFRB)
+                     (Z_to_bv 64 192) (Z_to_bv 64 1) a2 a3 a4 a5 a6 a7
+                     (Z_to_bv 64 SHB) a3 a2 (Z_to_bv 64 0x7000) (Z_to_bv 64 0x74c8) a0 a5 s9 s10 a4 t3 t4 t5 t6)
+                 FR (Z_to_bv 64 0x3f190) fc None m' (seg_rom bsegs)
+        /\ munch [(SPV - 704, SPV)] m m' /\ wmono bsegs m m' /\ mem_inv bsegs m'
+        /\ rw_cells bsegs m' (SPV + -104) (SLSAVED ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11)
+        /\ rw_cells bsegs m' SLFRB [CB 232 jA; C8 a1; CB 328 jB]
+        /\ stk bsegs m' lo SLFRB /\ stk bsegs m' (SLFRB + 568) (SPV + -104))
+      (MS (mkR ra (Z_to_bv 64 SPV) gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          FR (Z_to_bv 64 0x89974) fc None m (seg_rom bsegs)).
+  Proof.
+    intros until m. intros ST MI SHBm GOT1 GOT2 SUA.
+    unfold KEND in SPT. pose proof atop_range as ATR.
+    pose proof slfrb_props as (SPAB & SPA32 & ESPA').
+    assert (LO0 : 0 <= lo) by (destruct ST as [? _]; assumption).
+    pose proof (munch_refl [(SPV - 704, SPV)] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+    zstep.                                        (* [comment removed for export] *)
+    carve_frame 104%nat ST. carve_frame 568%nat ST.
+    zstep.                                        (* [comment removed for export] *)
+    do 13 zstep.                                  (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    change 18446744073709551584 with (2^64 - 2^5). rewrite land_align_downA by lia. rewrite ESPA'.
+    release_frame FR1 ST (SPV + -104).
+    destruct (stk_split bsegs _ lo (SLFRB + 568) (SPV + -104) ST ltac:(lia)) as [ST1 STG]. clear ST.
+    destruct (stk_carve bsegs _ lo (SLFRB + 568) 568 ST1 ltac:(cbn; lia)) as [STL [jA FRA]]. clear ST1.
+    change (Z.of_nat 568) with 568 in STL, FRA. replace (SLFRB + 568 - 568) with SLFRB in STL, FRA by lia.
+    apply (rw_cells_split_CB bsegs _ _ [] 568 _ [] [232; 8; 328]%nat) in FRA; [| reflexivity]. cbn [mk_CB_cells app] in FRA.
+    zstep.                                        (* [comment removed for export] *)
+    zstep. zstep. zstep. zstep. zstep.            (* [comment removed for export] *)
+    zstep. zstep. zstep. zstep. zstep.            (* [comment removed for export] *)
+    clear GOT1 GOT2.
+    zstep. rewrite (sx32_small 1) by lia.         (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep. bcase K0; [exfalso; rewrite ?unsigned_lit in K0 by lia; lia|].   (* [comment removed for export] *)
+    zstep. zstep.                                 (* [comment removed for export] *)
+    apply evtF_done.
+    eexists _, _, _. split; [reflexivity|]. split; [exact MU|]. split; [exact WM|]. split; [eassumption|].
+    split; [exact FR0|]. split; [exact FRA|]. split; [exact STL| exact STG].
+  Qed.
+
+  (* [comment removed for export] *)
+  Lemma sl_hdr : forall (x1 x5 x6 x7 x11 x12 x13 x14 x15 x16 x17 x28 x29 x30 x31 xs3 xs4 xs8 xs9 xs10 xs11 : word) m (FF FLG DCTX : Z)
+      (cdst : word) (j0 j1 j2 : word) (junk jA jB : list byte),
+    rw_cells bsegs m SLFRB [CB 232 jA; C8 cdst; CB 328 jB] -> stk bsegs m lo SLFRB ->
+    rw_cells bsegs m FF [C8 j0; C8 j1; C8 j2; CB 224 junk; C8 (Z_to_bv 64 FLG)] ->
+    rw_cells bsegs m (shad FF) [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)] ->
+    mem_inv bsegs m ->
+    ablk FF (FF + 256) -> FF + 256 <= ATOP -> FF mod 256 = 0 -> rng RNG FF 256 -> rng RNG (shad FF) 32 ->
+    0 <= DCTX -> DCTX + 95992 < 2^47 -> m (wa (shad (DCTX + 30368))) = Some (Z_to_bv 8 0) -> rng RNG (shad (DCTX + 30368)) 1 ->
+    DCTX + 95992 <= FF \/ FF + 256 <= DCTX ->
+    evtF bsegs RNG (fun ms' => exists m' jds jp j144 j8 jA1 jA2 jB1 jB2,
+        ms' = MS (mkR x1 (Z_to_bv 64 SLFRB) gp tp x5 x6 x7 (Z_to_bv 64 SPV) (Z_to_bv 64 SLFRB)
+                     (Z_to_bv 64 (DCTX + 29896)) (Z_to_bv 64 0) (Z_to_bv 64 (Z.shiftr (DCTX + 30368) 3 + SHB)) (Z_to_bv 64 0x18965)
+                     (Z_to_bv 64 0x89974) (Z_to_bv 64 18446744073709551601) (Z_to_bv 64 18446744073709551603) x17
+                     (Z_to_bv 64 SHB) xs3 xs4 (Z_to_bv 64 0x7000) (Z_to_bv 64 (Z.shiftr FF 3 + SHB)) (Z_to_bv 64 DCTX) xs8 (Z_to_bv 64 FF) xs10 xs11 x28 x29 x30 (Z_to_bv 64 (DCTX + 30368)))
+                 FR (Z_to_bv 64 0x89ae0) fc None m' (seg_rom bsegs)
+        /\ munch [(FF, FF + 24); (Z.shiftr FF 3 + SHB, Z.shiftr FF 3 + SHB + 32); (SLFRB, SLFRB + 568)] m m'
+        /\ wmono bsegs m m' /\ mem_inv bsegs m'
+        /\ rw_cells bsegs m' SLFRB [CB 232 jA; C8 cdst; CB 8 jA1; C8 (Z_to_bv 64 FF); CB 8 jA2; C8 (Z_to_bv 64 (Z.shiftr (DCTX + 30368) 3 + SHB)); CB 64 jB1; C8 (Z_to_bv 64 FF); CB 224 jB2] /\ stk bsegs m' lo SLFRB
+        /\ rw_cells bsegs m' FF [CB 32 (SLJFH j8); CB 88 jds; CB 24 jp; CB 104 j144; C8 (Z_to_bv 64 FLG)]
+        /\ rw_cells bsegs m' (Z.shiftr FF 3 + SHB) [CB 4 SLJSH0; CB 14 SLJM; CB 14 SLJSH1])
+      (MS (mkR x1 (Z_to_bv 64 SLFRB) gp tp x5 x6 x7 (Z_to_bv 64 SPV) (Z_to_bv 64 SLFRB)
+               (Z_to_bv 64 FF) x11 x12 x13 x14 x15 x16 x17
+               (Z_to_bv 64 SHB) xs3 xs4 (Z_to_bv 64 0x7000) (Z_to_bv 64 0x74c8) (Z_to_bv 64 DCTX) xs8 xs9 xs10 xs11 x28 x29 x30 x31)
+          FR (Z_to_bv 64 0x89a00) fc None m (seg_rom bsegs)).
+  Proof.
+    intros until jB. intros FRA STL FFC SHF MI FH FC F256 RF RSF D0 D47 D8A DRS DDJ.
+    pose proof (ablk_lin _ _ FH) as (FHa & FHb & FHc & FHd). unfold AIMG_HI in *.
+    pose proof atop_range as ATR. unfold KEND in SPT.
+    pose proof slfrb_props as (SPAB & SPA32 & _).
+    assert (LO0 : 0 <= lo) by (destruct STL as [? _]; assumption).
+    apply shadow32_c1sL in SHF. unfold SLSH00 in SHF. replace (shad FF) with (Z.shiftr FF 3 + SHB) in SHF, RSF by (unfold shad, ASHOFF; lia).
+    assert (BSF : SHB <= Z.shiftr FF 3 + SHB /\ Z.shiftr FF 3 + SHB + 32 <= 17594333495296)
+      by (rewrite Z.shiftr_div_pow2 by lia; Z.div_mod_to_equations; lia).
+    replace (shad (DCTX + 30368)) with (Z.shiftr (DCTX + 30368) 3 + 2147450880) in D8A, DRS by (unfold shad, ASHOFF; lia).
+    assert (SDC : rw_cells bsegs m (Z.shiftr (DCTX + 30368) 3 + 2147450880) [C1 (Z_to_bv 8 0)]).
+    { apply AProg_kit.c1_of_byte; [rewrite Z.shiftr_div_pow2 by lia; Z.div_mod_to_equations; lia | rewrite Z.shiftr_div_pow2 by lia; Z.div_mod_to_equations; lia | exact D8A]. }
+    assert (SDB : 0 <= Z.shiftr (DCTX + 30368) 3 /\ Z.shiftr (DCTX + 30368) 3 + 2147450880 + 1 <= 17594333495296)
+      by (clear - D0 D47; rewrite Z.shiftr_div_pow2 by lia; Z.div_mod_to_equations; lia).
+    assert (SDJ : Z.shiftr (DCTX + 30368) 3 + 1 <= Z.shiftr FF 3 \/ Z.shiftr FF 3 + 32 <= Z.shiftr (DCTX + 30368) 3)
+      by (clear - D0 FHb DDJ; rewrite !Z.shiftr_div_pow2 by lia; Z.div_mod_to_equations; lia).
+    pose proof FH as FHu. unfold ablk, AIMG_HI, KLS in FHu.
+    (* [comment removed for export] *)
+    pose proof FFC as [[WFJ _] _]. cbn [cells_wf cell_wf] in WFJ. destruct WFJ as (_ & _ & _ & LJ & _).
+    apply (rw_cells_split_CB bsegs _ _ [C8 j0; C8 j1; C8 j2] 224 _ [C8 (Z_to_bv 64 FLG)] [8; 88; 24; 104]%nat) in FFC; [| reflexivity].
+    cbn [mk_CB_cells app] in FFC.
+    pose proof (munch_refl [(FF, FF + 24); (Z.shiftr FF 3 + SHB, Z.shiftr FF 3 + SHB + 32); (SLFRB, SLFRB + 568)] m) as MU.
+    pose proof (wmono_refl bsegs m) as WM.
+    (* [comment removed for export] *)
+    pose proof FRA as [[WFA _] _]. cbn [cells_wf cell_wf] in WFA. destruct WFA as (LJA & _ & LJB & _).
+    apply (rw_cells_split_CB bsegs _ _ [CB 232 jA; C8 cdst] 328 _ [] [8; 8; 8; 8; 64; 8; 224]%nat) in FRA; [| reflexivity].
+    cbn [mk_CB_cells app] in FRA.
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep. zstep. bcase K0; [| exfalso; rewrite ?unsigned_lit in K0 by lia; lia].   (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    do 3 zstep.                                   (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep. zstep.                                 (* [comment removed for export] *)
+    zstep. zstep. zstep.                          (* [comment removed for export] *)
+    zstep. zstep. zstep.                          (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    replace (Z_to_bv 64 (-8)) with (Z_to_bv 64 18446744073709551608) by (apply Z_to_bv_eqm; reflexivity).
+    replace (Z_to_bv 64 (-15)) with (Z_to_bv 64 18446744073709551601) by (apply Z_to_bv_eqm; reflexivity).
+    replace (Z_to_bv 64 (-13)) with (Z_to_bv 64 18446744073709551603) by (apply Z_to_bv_eqm; reflexivity).
+    do 4 zstep.                                   (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    do 4 zstep.                                   (* [comment removed for export] *)
+    do 4 zstep.                                   (* [comment removed for export] *)
+    do 4 zstep.                                   (* [comment removed for export] *)
+    do 4 zstep.                                   (* [comment removed for export] *)
+    do 5 zstep.                                   (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    zstep.                                        (* [comment removed for export] *)
+    apply evtF_done.
+    lazymatch type of FRA with rw_cells _ ?mf _ [CB 232 _; _; CB 8 ?ja1; _; CB 8 ?ja2; _; CB 64 ?jb1; _; CB 224 ?jb2] =>
+      exists mf, (take 88 (drop 8 junk)), (take 24 (drop 88 (drop 8 junk))), (take 104 (drop 24 (drop 88 (drop 8 junk)))), (take 8 junk), ja1, ja2, jb1, jb2 end.
+    split; [reflexivity|]. split; [eapply munch_weaken; [| exact MU]; unfold sub_fp; cbn [outside]; intros; lia|]. split; [exact WM|]. split; [exact MI|].
+    split; [exact FRA|]. split; [exact STL|].
+    split.
+    { lazymatch type of FFC with rw_cells _ ?m0 _ _ => change (rw_cells bsegs m0 FF ([] ++ [C8 (Z_to_bv 64 1102416563); C8 (Z_to_bv 64 100709); C8 (Z_to_bv 64 563572); CB 8 (take 8 junk)] ++
+                                    [CB 88 (take 88 (drop 8 junk)); CB 24 (take 24 (drop 88 (drop 8 junk))); CB 104 (take 104 (drop 24 (drop 88 (drop 8 junk)))); C8 (Z_to_bv 64 FLG)])) in FFC;
+      apply (rw_cells_merge bsegs m0 FF) in FFC; cbn [app cells_size csize Nat.add length] in FFC; exact FFC end. }
+    apply slsh0_blobs. exact SHF.
+  Qed.
+End S.
+End CANSEC1.

@@ -5991,9 +5991,9 @@ Ltac bveq :=
   | |- ?g =>
       tryif check_closed_term g then
         first
-          [ timeout 30 (vm_compute; reflexivity)
-          | fail 1 "bveq: vm_compute did not close this closed goal in "
-                   "30s — it is runaway-large; reduce it first." ]
+          [ (vm_compute; reflexivity)
+          | fail 1 "bveq: vm_compute did not close this closed goal: "
+                   "its two sides compute to different values." ]
       else tryif has_evar g then
         fail 1 "bveq: the goal contains an evar — vm_compute must not "
                "see it; instantiate the machine state (eexists / "
@@ -6001,7 +6001,7 @@ Ltac bveq :=
       else
         (* [comment removed for export] *)
         first
-          [ timeout 30 reflexivity
+          [ reflexivity
           | fail 1 "bveq: the goal is OPEN (it mentions a context "
                    "variable) and kernel conversion did not close it — "
                    "resolve the register and memory projections first "

@@ -1,10 +1,12 @@
 """oft revisions: each statement against the previous release, both fingerprinted by today's tools."""
 import io
+import os
+import shutil
 import unittest
 from unittest import mock
 
 from oft import facts, revisions, shapes
-from oft.tests.helpers import tree
+from oft.tests.helpers import recount, tree
 
 HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
 STATEMENTS = "projects/zlib/checksum_fuzzer/Statements.v"
@@ -28,12 +30,52 @@ def raw(t, rel):
         return f.read()
 
 
+def drop_project(t, name):
+    """Remove a project from a release tree, as a release that holds it back leaves it out, and write the counts of
+    what is left (what `oft release-tree` does, rules.counts)."""
+    for rel in (("projects", name), ("counterexamples", name), ("proofs", name)):
+        shutil.rmtree(t.path(*rel), ignore_errors=True)
+    note = t.path("notes", name + ".md")
+    if os.path.isfile(note):
+        os.remove(note)
+    recount(t)
+    assert t.generate() == 0, t.last_output
+
+
 def run(cur, prev, **kw):
     """(exit status, output, {id: the other columns}) of `oft revisions` in cur against prev."""
     buf = io.StringIO()
     rc = revisions.run(cur.root, prev.root, out=buf, **kw)
     out = buf.getvalue()
     return rc, out, {r[0]: r[1:] for r in (line.split("\t") for line in out.splitlines()[1:]) if len(r) > 1}
+
+
+def dated(t, release, date):
+    """Make t the checkout of release, published on date."""
+    r = t.yaml("release.yaml")
+    r.update(release=release, date=date)
+    t.put_yaml("release.yaml", r)
+
+
+UBSAN = ("ubsan_agrees", "ubsan_halts", "ubsan_halts_may_fail")   # the statements the ubsan build's bytes are part of
+
+
+def hold_back(t, names=UBSAN):
+    """Leave names out of t, as a release that holds them back does (facts.cut)."""
+    y = t.yaml(HARNESS)
+    y["statements"] = {k: v for k, v in y["statements"].items() if k not in names}
+    t.put_yaml(HARNESS, y)
+    assert t.generate() == 0, t.last_output
+
+
+def rebuild(t, sha, revision, names=UBSAN):
+    """Give t's ubsan build other bytes, so names mean something else, at revision."""
+    y = t.yaml(HARNESS)
+    y["builds"]["ubsan"]["sha256"] = sha
+    for name in names:
+        y["statements"][name]["revision"] = revision
+    t.put_yaml(HARNESS, y)
+    assert t.generate() == 0, t.last_output
 
 
 class Revisions(unittest.TestCase):
@@ -202,6 +244,84 @@ class Revisions(unittest.TestCase):
             self.assertEqual(rc, 1, out)
             self.assertIn("ubsan_halts/proof.yaml: no plain or quoted top-level fingerprint: no pin written", out)
             self.assertEqual({sid: raw(cur, "proofs/%s/proof.yaml" % sid) for sid in (PROVED, other)}, before)
+
+    def test_a_statement_a_release_held_back_keeps_its_revision_when_it_returns(self):
+        """A release leaves out what a finding or `release: private` holds back.  The statement comes back in a later
+        release, and its identifier is never reused: --earlier gives it the revision of the newest release that has
+        it, plus one when its meaning changed since."""
+        sid = "zlib/checksum_fuzzer/ubsan_halts"
+        with tree() as older, tree() as prev, tree() as cur:
+            dated(older, "2026.10.0", "2026-10-01")
+            # prev held these statements back (facts.cut); cur publishes them again, rebuilt, so their meaning changed
+            hold_back(prev)
+            rebuild(cur, "0" * 63 + "a", 2)
+            rc, out, rows = run(cur, prev)
+            self.assertEqual(rc, 1, out)
+            self.assertEqual(rows[sid][1:4], ["2", "1", "new"])
+            self.assertIn("error: %s: revision 2, expected 1: it is new" % sid, out)
+            rc, out, rows = run(cur, prev, earlier=[older.root])
+            self.assertEqual(rc, 0, out)
+            for name in UBSAN:
+                self.assertEqual(rows["zlib/checksum_fuzzer/" + name][:4], ["1", "2", "2", "changed"], name)
+            self.assertEqual(rows[PROVED][:4], ["1", "1", "1", "same"])
+
+    def test_a_statement_no_named_release_has_is_new(self):
+        sid = "zlib/checksum_fuzzer/asan_ubsan_halts"
+        with tree() as older, tree() as prev, tree() as cur:
+            dated(older, "2026.10.0", "2026-10-01")
+            for t in (older, prev):
+                y = t.yaml(HARNESS)
+                del y["statements"][sid.rsplit("/", 1)[1]]
+                t.put_yaml(HARNESS, y)
+                self.assertEqual(t.generate(), 0, t.last_output)
+            rc, out, rows = run(cur, prev, earlier=[older.root])
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(rows[sid][:4], ["-", "1", "1", "new"])
+
+    def test_a_private_projects_statement_is_compared_with_the_release_that_had_it(self):
+        """#2's case, already on main: a `release: private` project is left out of a release the same way."""
+        sid = "json/fuzzer-parse_bjdata/plain_halts"
+        with tree() as older, tree() as prev, tree() as cur:
+            dated(older, "2026.10.0", "2026-10-01")
+            drop_project(prev, "json")
+            rc, out, rows = run(cur, prev)
+            self.assertEqual((rc, rows[sid][1:4]), (0, ["1", "1", "new"]), out)
+            rc, out, rows = run(cur, prev, earlier=[older.root])
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(rows[sid][:4], ["1", "1", "1", "same"])
+
+    def test_earlier_releases_named_out_of_order_are_refused(self):
+        """--earlier names the releases newest first, so that a statement is compared with the newest one that has
+        it: a list in another order is refused, and nothing is compared."""
+        with tree() as older, tree() as prev, tree() as cur:
+            dated(older, "2026.12.0", "2026-12-01")
+            rc, out, _rows = run(cur, prev, earlier=[older.root])
+        self.assertEqual(rc, 1, out)
+        self.assertIn("error: earlier %s is 2026.12.0 of 2026-12-01, not older than 2026.11.0 of 2026-11-02 before it "
+                      "in the list: name them newest first" % older.root, out)
+        self.assertIn("nothing compared", out)
+
+    def test_two_releases_of_one_day_are_named_newest_first_and_compared_with_the_newest(self):
+        """internal #80's final review, finding 8.  rc.1 and rc.2 are of one day, rc.2 changed the meaning of the ubsan
+        statements (revision 2), the release after them held them back, and this tree changes their meaning again but
+        keeps revision 2.  Named newest first, they are compared with rc.2 and need revision 3; named oldest first, or
+        the same release twice, nothing is compared."""
+        sid = "zlib/checksum_fuzzer/ubsan_halts"
+        with tree() as rc1, tree() as rc2, tree() as prev, tree() as cur:
+            dated(rc1, "2026.11.0-rc.1", "2026-11-02")
+            dated(rc2, "2026.11.0-rc.2", "2026-11-02")
+            rebuild(rc2, "0" * 63 + "a", 2)
+            hold_back(prev)
+            rebuild(cur, "0" * 63 + "b", 2)
+            rc, out, rows = run(cur, prev, earlier=[rc2.root, rc1.root])
+            self.assertEqual(rc, 1, out)
+            self.assertEqual(rows[sid][:4], ["2", "2", "3", "changed"])
+            self.assertIn("error: %s: revision 2, expected 3" % sid, out)
+            for order in ([rc1.root, rc2.root], [rc2.root, rc2.root]):
+                rc, out, rows = run(cur, prev, earlier=order)
+                self.assertEqual((rc, rows), (1, {}), out)
+                self.assertIn("is 2026.11.0-rc.2 of 2026-11-02, not older than", out)
+                self.assertIn("nothing compared", out)
 
     def test_a_tree_that_does_not_load_is_not_compared(self):
         with tree() as prev, tree() as cur:

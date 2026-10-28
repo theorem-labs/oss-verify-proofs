@@ -26,9 +26,11 @@ Definition pc_addr (T c : Z) : Z := T + 208 + 80 * c.    (* [comment removed for
 Definition cstats (T : Z) : Z := T + 2768.               (* [comment removed for export] *)
 Definition cstat_alloc (T : Z) : Z := T + 2784.          (* [comment removed for export] *)
 Definition cstat_mapped (T : Z) : Z := T + 2792.         (* [comment removed for export] *)
-Definition astats (T : Z) : Z := T + 2800. (* [comment removed for export] *)
-(* [comment removed for export] *)
+Definition astats (T : Z) : Z := T + 2800.               (* [comment removed for export] *)
 
+(* [comment removed for export] *)
+Definition pc_cells (m : mem) (P cnt mc cs : Z) : Prop :=
+  rw_cells ctasegs m P [C4 (Z_to_bv 64 cnt); C4 (Z_to_bv 64 mc); C8 (Z_to_bv 64 cs)].
 
 (* [comment removed for export] *)
 Definition cptr (w : word) : Z := bv_unsigned w mod 2^32.

@@ -138,6 +138,7 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
   where: source/large_fuzzer.c:54-58
   what: deflate(Z_NO_FLUSH) with ample output space must consume all input ('deflate not greedy' -> exit
@@ -146,6 +147,7 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
   where: source/large_fuzzer.c:66-74
   what: deflate(Z_FINISH) after feeding its own compressed output back in must report Z_STREAM_END; deflateInit/deflate/deflateEnd
@@ -154,10 +156,12 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: true
   where: source/large_fuzzer.c:97-109
   what: The deflate stream just produced must inflate to Z_STREAM_END without any inflate error (output
     discarded, not compared)
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: large_fuzzer

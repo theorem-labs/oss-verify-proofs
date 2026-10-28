@@ -138,6 +138,7 @@ checks:
   where: source/xml_parsebuffer_fuzzer.c:77
   what: 'assert(size <= INT_MAX): an input-length precondition before the int cast; trivially true for
     libFuzzer inputs.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: xml_parsebuffer_fuzzer_UTF-8

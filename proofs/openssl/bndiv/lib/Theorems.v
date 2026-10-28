@@ -10,11 +10,13 @@ Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 Require OssFuzzTheorems.openssl.bndiv.images.Plain.
 Require OssFuzzTheorems.openssl.bndiv.images.Asan.
 Require OssFuzzTheorems.openssl.bndiv.images.Ubsan.
+Require OssFuzzTheorems.openssl.bndiv.images.AsanUbsan.
 Require OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivAsan.
 Require OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivUbsan.
 Require OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivHaltsP.
 Require OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivHaltsU.
 Require OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivHaltsA.
+Require OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivBoth.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
   Definition cfg := LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true.
@@ -141,6 +143,17 @@ Theorem strong_universal_error_free_bndiv_ubsan :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.bndiv.images.Ubsan.M.loaded_segments OssFuzzTheorems.openssl.bndiv.images.Ubsan.M.init_pc OssFuzzTheorems.openssl.bndiv.images.Ubsan.M.phdrs).
 Proof.
   exact OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivUbsan.base_bndiv_ubsan.
+Qed.
+
+Theorem strong_universal_error_free_bndiv_both :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.bndiv.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.bndiv.images.Plain.M.init_pc OssFuzzTheorems.openssl.bndiv.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.bndiv.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.openssl.bndiv.images.AsanUbsan.M.init_pc OssFuzzTheorems.openssl.bndiv.images.AsanUbsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.openssl.bndiv.lib.TopBndivBoth.base_bndiv_both.
 Qed.
 
 (* [comment removed for export] *)

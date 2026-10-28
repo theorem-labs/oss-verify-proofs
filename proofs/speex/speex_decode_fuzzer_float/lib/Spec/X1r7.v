@@ -7,9 +7,11 @@ From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Impo
 From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Spec Require Import X1r2 X1qx X1qs X1ra X1qu X1r3 X1r6 X1og X1qw X1pe X1ot.
 From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib Require Import TopLevel.
 From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Plain.
+From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Ubsan.
 Open Scope Z_scope.
 
 Local Notation psegs := Plain.M.loaded_segments.
+Local Notation usegs := Ubsan.M.loaded_segments.
 
 Theorem prog_model_ok : forall segs rs pc ph lim en inp,
 0 < reserved_top (segments_reserved segs) ->
@@ -39,3 +41,9 @@ Proof.
 intros lim en inp Hlim Hv Hi. unfold prog_plain.
 eapply prog_model_ok; [apply reserved_top_psegs| apply ceil_psegs| apply sbk_psegs| exact Hlim| exact Hv| exact Hi].
 Qed.
+
+Theorem prog_ubsan_model_ok : forall en inp,
+valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp -> valid_input_core inp ->
+leaves_unreachable_m nstep (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp)
+/\ tsafe nstep nsafe (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp).
+Proof. intros en inp Hv Hi. exact (prog_ubsan_model_okN en inp Hv Hi (prog_no_enomem_ubsan en inp Hv Hi)). Qed.

@@ -147,6 +147,7 @@ checks:
   what: 'After a successful parse, the count of non-NUL bytes across url.authority, url.host and url.path
     must be at most 2*Size: a loose sanity bound on the parsed component lengths (it touches every byte
     of each component, so ASan also checks they are readable).'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: h2o-fuzzer-url

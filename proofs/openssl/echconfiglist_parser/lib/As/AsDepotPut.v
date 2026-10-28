@@ -178,7 +178,7 @@ Section PUT.
       do 12 step. release_frame FR ST (bv_unsigned sp). step.
       apply evt_done. unfold put_post. do 15 eexists.
       split. { unfold d_putid. rewrite (proj2 (Z.eqb_neq _ _) FNZ). reflexivity. }
-      split. { eapply munch_weaken; [|exact MU]. unfold sub_fp, depot_W. cbn [outside]. intros x Hx. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]). }
+      split. { eapply munch_weaken; [|exact MU]. unfold sub_fp, depot_W. cbn [outside]. intros x Hx. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]). }
       split; [exact WM|]. split; [assumption|].
       split. { unfold d_put. rewrite (proj2 (Z.eqb_neq _ _) FNZ). split; [exact W|].
                eapply depot_mem_stack; [exact W|exact DM0|exact MU|exact WM|lia|lia|lia]. }
@@ -186,7 +186,7 @@ Section PUT.
     (* [comment removed for export] *)
     intros a0_ a2_ FZ. unfold wz.
     apply (munch_weaken _ (put_W lo (bv_unsigned sp) (bucket h) (d_nb d) (d_ids d + 1) (d_sb d) (d_frames d) n)) in MU.
-    2:{ unfold sub_fp, put_W. cbn [outside]. intros x Hx. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]). }
+    2:{ unfold sub_fp, put_W. cbn [outside]. intros x Hx. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]). }
     unfold put_W in MU. rewrite <- EPB, <- END in MU.
     (* [comment removed for export] *)
     step. step.

@@ -207,6 +207,146 @@ def add_sqlpage(t):
     t.write("projects/sqlpage/sql_file/source/sql_file.rs", "fuzz_target!(|data: &[u8]| {});\n")
 
 
+def add_python_target(t):
+    """Add a Python project OSS-Fuzz does not have, whose fuzz target OSS Verify builds (origin oss-verify): four
+    builds, a check that raises, a halts statement and three alloc-forced-only agreement statements."""
+    release = t.yaml("release.yaml")
+    release["counts"]["projects"] += 1
+    release["counts"]["available"] += 1
+    release["counts"]["harnesses"] += 1
+    release["counts"]["binaries"] += 4
+    t.put_yaml("release.yaml", release)
+    repo, commit = "https://github.com/example/pyhtml", "c" * 40
+    t.put_yaml("projects/pyhtml/project.yaml", {
+        "schema": "oss-fuzz-theorems/project/1",
+        "project": "pyhtml",
+        "description": "A Python library that turns HTML into text",
+        "homepage": "https://github.com/example/pyhtml",
+        "language": "python",
+        "status": "available",
+        "library": {"name": "pyhtml", "repository": repo, "commit": commit, "version": "1.0.0", "licence": "MIT"},
+        "harnesses": [{"name": "fuzz_html", "status": "included", "origin": "oss-verify"}],
+        "assets": {
+            "bin": {"release": "v2026.11.0", "file": "pyhtml-bin.tar.zst", "bytes": 1000, "sha256": "5" * 64},
+            "src": {"release": "v2026.11.0", "file": "pyhtml-src.tar.zst", "bytes": 1000, "sha256": "6" * 64},
+            "src_manifest": {"release": "v2026.11.0", "file": "pyhtml-src.MANIFEST.tsv", "bytes": 1000,
+                             "sha256": "7" * 64},
+            "port": dict(PORT_ASSET, file="pyhtml-port.tar.zst"),
+        },
+        "build": {"system": "custom", "clang": "20.1.8", "builder": release["images"]["builder"][0],
+                  "oss_verify": dict(PORT, path="projects/pyhtml")},
+    })
+    t.put_yaml("projects/pyhtml/fuzz_html/harness.yaml", {
+        "schema": "oss-fuzz-theorems/harness/1",
+        "project": "pyhtml",
+        "harness": "fuzz_html",
+        "rocq": "OssFuzzTheorems.pyhtml.fuzz_html",
+        "origin": "oss-verify",
+        "summary": "Turns the payload into text with the library's HTML tokenizer.",
+        "entry": "LLVMFuzzerTestOneInput",
+        "source": {
+            "files": ["source/fuzz_html.py"],
+            "from": {"repository": "theorem-labs/oss-verify", "commit": "d" * 40,
+                     "path": "projects/pyhtml/fuzz_html.py"},
+            "modified": False,
+            "licence": "Apache-2.0",
+        },
+        "library": {"repository": repo, "commit": commit, "version": "1.0.0", "licence": "MIT"},
+        "modifications": ["The harness runs in a static CPython linked with the driver, not under atheris."],
+        "failure_handlers": "none",
+        "builds": {
+            "plain": {"file": "fuzz_html.plain", "bytes": 1000, "sha256": "8" * 64, "segments": [1]},
+            "ubsan": {"file": "fuzz_html.ubsan", "bytes": 1000, "sha256": "9" * 64, "segments": [1]},
+            "asan": {"file": "fuzz_html.asan", "bytes": 1000, "sha256": "a" * 64, "segments": [1]},
+            "asan-ubsan": {"file": "fuzz_html.asan-ubsan", "bytes": 1000, "sha256": "b" * 64, "segments": [1]},
+        },
+        "licence": "NOASSERTION",
+        "checks": [{"kind": "invariant", "strength": "full", "stops_with": "raise", "live": True,
+                    "where": "source/fuzz_html.py:2", "what": "The text comes back unchanged."}],
+        "statements": {
+            "plain_halts": {"kind": "halts", "builds": ["plain"], "reading": "budget", "exits": [0, 2],
+                            "binds_checks": True, "status": "open"},
+            "asan_agrees": {"kind": "agreement", "builds": ["plain", "asan"], "reading": "alloc-forced-only",
+                            "budgets": "asan", "status": "open"},
+            "ubsan_agrees": {"kind": "agreement", "builds": ["plain", "ubsan"], "reading": "alloc-forced-only",
+                             "budgets": "standard", "status": "open"},
+            "asan_ubsan_agrees": {"kind": "agreement", "builds": ["plain", "asan-ubsan"],
+                                  "reading": "alloc-forced-only", "budgets": "asan", "status": "open"},
+        },
+    })
+    t.write("projects/pyhtml/fuzz_html/source/fuzz_html.py",
+            "def TestOneInput(data):\n    _check(text(data) == text(data), \"P1: changed\")\n")
+
+
+# the port's Go toolchain image, its row in the port's infra/toolchains.tsv
+GO_IMAGE = ("ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain-go@"
+            "sha256:bb18d9228adb8ffc003ab49c0ae39b485da9814d583f2c53324b95d69ebe54a8")
+
+
+def add_go_target(t):
+    """Add a Go project OSS-Fuzz does not have, whose fuzz target OSS Verify builds (origin oss-verify), as go-yaml's
+    FuzzDecode is: the plain build only, a check that ends with t.Fatal, and one halts statement with exits {0, 2}."""
+    release = t.yaml("release.yaml")
+    release["counts"]["projects"] += 1
+    release["counts"]["available"] += 1
+    release["counts"]["harnesses"] += 1
+    release["counts"]["binaries"] += 1
+    release["images"]["builder"].append(GO_IMAGE)
+    t.put_yaml("release.yaml", release)
+    repo, commit = "https://github.com/example/goyaml", "e" * 40
+    t.put_yaml("projects/goyaml/project.yaml", {
+        "schema": "oss-fuzz-theorems/project/1",
+        "project": "goyaml",
+        "description": "A YAML library for Go",
+        "homepage": "https://github.com/example/goyaml",
+        "language": "go",
+        "status": "available",
+        "library": {"name": "goyaml", "repository": repo, "commit": commit, "version": "3.0.5", "licence": "MIT"},
+        "harnesses": [{"name": "fuzz_decode", "status": "included", "origin": "oss-verify"}],
+        "assets": {
+            "bin": {"release": "v2026.11.0", "file": "goyaml-bin.tar.zst", "bytes": 1000, "sha256": "5" * 64},
+            "src": {"release": "v2026.11.0", "file": "goyaml-src.tar.zst", "bytes": 1000, "sha256": "6" * 64},
+            "src_manifest": {"release": "v2026.11.0", "file": "goyaml-src.MANIFEST.tsv", "bytes": 1000,
+                             "sha256": "7" * 64},
+            "port": dict(PORT_ASSET, file="goyaml-port.tar.zst"),
+        },
+        "build": {"system": "go", "go": "1.27.1", "builder": GO_IMAGE,
+                  "oss_verify": dict(PORT, path="projects/goyaml")},
+    })
+    t.put_yaml("projects/goyaml/fuzz_decode/harness.yaml", {
+        "schema": "oss-fuzz-theorems/harness/1",
+        "project": "goyaml",
+        "harness": "fuzz_decode",
+        "rocq": "OssFuzzTheorems.goyaml.fuzz_decode",
+        "origin": "oss-verify",
+        "summary": "Decodes the payload as YAML and fails when a decoded value does not encode again.",
+        "entry": "FuzzDecode",
+        "source": {
+            "files": ["source/fuzz_test.go"],
+            "from": {"repository": "theorem-labs/oss-verify", "commit": "d" * 40,
+                     "path": "projects/goyaml/fuzz_test.go"},
+            "modified": False,
+            "licence": "Apache-2.0",
+        },
+        "library": {"repository": repo, "commit": commit, "version": "3.0.5", "licence": "MIT"},
+        "modifications": ["The fuzz test runs under the port's patched Go runtime and Go driver, not libFuzzer."],
+        "failure_handlers": "none",
+        "builds": {
+            "plain": {"file": "fuzz_decode.plain", "bytes": 1000, "sha256": "8" * 64, "segments": [1]},
+        },
+        "licence": "NOASSERTION",
+        "checks": [{"kind": "roundtrip", "strength": "partial", "stops_with": "fail", "live": True,
+                    "where": "source/fuzz_test.go:3", "what": "A decoded value encodes again."}],
+        "statements": {
+            "plain_halts": {"kind": "halts", "builds": ["plain"], "reading": "budget", "exits": [0, 2],
+                            "binds_checks": True, "status": "open"},
+        },
+    })
+    t.write("projects/goyaml/fuzz_decode/source/fuzz_test.go",
+            "func FuzzDecode(f *testing.F) {\n\tf.Fuzz(func(t *testing.T, b []byte) {\n"
+            "\t\tif err := check(b); err != nil { t.Fatal(err) }\n\t})\n}\n")
+
+
 # a port-built build record in the shape docs/adding-a-proof.md gives: the port's project directory and the
 # tools/check manifest under port/, in place of recipe/
 MAKE_RECORD = {
@@ -586,6 +726,279 @@ class ProjectsOwnTargets(unittest.TestCase):
         cxx = next(line for line in pages["projects/json/README.md"].splitlines()
                    if line.startswith("- **`<build>_agrees`**"))
         self.assertIn("A sanitizer report aborts, so this rules out", cxx)
+
+
+class PythonTargets(unittest.TestCase):
+    """A Python project OSS-Fuzz does not have, whose fuzz target OSS Verify builds."""
+
+    def render(self):
+        with tree(render=False) as t:
+            add_python_target(t)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            return {rel: " ".join(t.read(rel).split()) for rel in (
+                "projects/pyhtml/README.md", "projects/pyhtml/fuzz_html/README.md",
+                "projects/pyhtml/fuzz_html/Statements.v", "projects/json/fuzzer-parse_bjdata/Statements.v",
+                "projects/json/README.md")}
+
+    @staticmethod
+    def doc(statements, name):
+        at = statements.index("Definition %s " % name)
+        return statements[statements.rindex("(**", 0, at):at]
+
+    def test_the_header_gives_the_exit_statuses_of_the_interpreter_host(self):
+        pages = self.render()
+        python = pages["projects/pyhtml/fuzz_html/Statements.v"]
+        cxx = pages["projects/json/fuzzer-parse_bjdata/Statements.v"]
+        sentence = ("The OSS Verify port's host ends an uncaught Python exception (a failed check of the harness "
+                    "included) with status 79, an uncaught MemoryError with status 2 and an uncaught SystemExit with "
+                    "status 77")
+        self.assertIn(sentence, python)
+        self.assertIn("static CPython 3.11.13", python)
+        self.assertLess(python.index(sentence), python.index("WHAT THE HARNESS CHECKS"))
+        self.assertNotIn("In this Python fuzz target", cxx)
+        self.assertNotIn("In this Rust fuzz target", python)
+
+    def test_a_check_that_raises_exits_with_status_79_and_binds_a_statement_that_excludes_it(self):
+        pages = self.render()
+        python = pages["projects/pyhtml/fuzz_html/Statements.v"]
+        self.assertIn("[an uncaught Python exception (status 79); confirmed in the binary]", python)
+        self.assertIn("an uncaught Python exception (status 79); confirmed in the binary.",
+                      pages["projects/pyhtml/fuzz_html/README.md"])
+        self.assertIn("Check (a) ends the process when it fails", self.doc(python, "plain_halts"))
+
+    def test_asan_instruments_the_interpreter_not_the_python_code(self):
+        pages = self.render()
+        asan = self.doc(pages["projects/pyhtml/fuzz_html/Statements.v"], "asan_agrees")
+        self.assertIn("(the C code: the CPython interpreter, which runs the harness and pyhtml as bytecode, the "
+                      "port's interpreter host, and the driver,", asan)
+        self.assertNotIn("(the harness, pyhtml and the driver", asan)
+        self.assertIn("(the harness, nlohmann/json and the driver",
+                      self.doc(pages["projects/json/fuzzer-parse_bjdata/Statements.v"], "asan_agrees"))
+
+    def test_the_asan_ubsan_pair_names_the_same_instrumented_c_code(self):
+        pages = self.render()
+        pair = self.doc(pages["projects/pyhtml/fuzz_html/Statements.v"], "asan_ubsan_agrees")
+        self.assertIn("neither sanitizer fires on any such input in the code they instrument (the C code: the CPython "
+                      "interpreter, which runs the harness and pyhtml as bytecode, the port's interpreter host, and "
+                      "the driver,", pair)
+        self.assertNotIn("(the harness, pyhtml and the driver", pair)
+
+    def test_a_python_pair_read_alloc_forced_only_says_why(self):
+        pages = self.render()
+        python = pages["projects/pyhtml/fuzz_html/Statements.v"]
+        why = ("It is read alloc-forced-only because CPython ends with abort() (a fatal error) when some allocations "
+               "it makes while it starts are refused")
+        self.assertIn(why, self.doc(python, "asan_agrees"))
+        self.assertIn("As [asan_agrees], for the UBSan build", self.doc(python, "ubsan_agrees"))
+        self.assertNotIn(why, pages["projects/json/fuzzer-parse_bjdata/Statements.v"])
+
+    def test_the_project_page_says_the_python_code_is_frozen_bytecode(self):
+        pages = self.render()
+        everywhere = pages["projects/pyhtml/README.md"].split("- Everywhere:", 1)[1].split("- ", 1)[0]
+        self.assertIn("a static CPython 3.11.13", everywhere)
+        self.assertIn("frozen into the binary as CPython bytecode", everywhere)
+        self.assertIn("clang 20.1.8 with `-Os -g`", pages["projects/json/README.md"])
+        self.assertNotIn("CPython", pages["projects/json/README.md"])
+
+
+class GoTargets(unittest.TestCase):
+    """A Go project OSS-Fuzz does not have, whose fuzz target OSS Verify builds: go-yaml's case."""
+    PAGES = ("projects/goyaml/README.md", "projects/goyaml/fuzz_decode/README.md",
+             "projects/goyaml/fuzz_decode/Statements.v", "projects/json/fuzzer-parse_bjdata/Statements.v",
+             "projects/json/README.md", "projects/pyhtml/README.md")
+
+    def render(self):
+        with tree(render=False) as t:
+            add_go_target(t)
+            add_python_target(t)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            return {rel: " ".join(t.read(rel).split()) for rel in self.PAGES}
+
+    def lint(self, project=None, harness=None):
+        """The lint findings of the Go fixture with project.yaml and harness.yaml changed by the two functions."""
+        with tree(render=False) as t:
+            add_go_target(t)
+            for rel, change in (("projects/goyaml/project.yaml", project),
+                                ("projects/goyaml/fuzz_decode/harness.yaml", harness)):
+                if change:
+                    data = t.yaml(rel)
+                    change(data)
+                    t.put_yaml(rel, data)
+            return [str(f) for f in t.lint()]
+
+    def test_the_project_page_names_the_go_compiler_and_no_c_library(self):
+        pages = self.render()
+        everywhere = pages["projects/goyaml/README.md"].split("- Everywhere:", 1)[1].split(" - ", 1)[0]
+        self.assertIn("the Go 1.27.1 compiler and linker for all of the code", everywhere)
+        self.assertIn("with no cgo and so no C library", everywhere)
+        self.assertNotIn("musl", everywhere)
+        self.assertNotIn("clang", everywhere)
+        self.assertIn("RV64G, musl, clang 20.1.8 with `-Os -g`", pages["projects/json/README.md"])
+        self.assertIn("RV64G, musl, clang 20.1.8 with `-Os -g` for the C code (a static CPython",
+                      pages["projects/pyhtml/README.md"])
+
+    def test_the_project_page_discloses_the_runtime_patches(self):
+        pages = self.render()
+        page = pages["projects/goyaml/README.md"]
+        self.assertIn("- Go runtime: these binaries do not run the stock Go 1.27.1 runtime.", page)
+        for words in ("signal handlers (no `rt_sigaction` or `sigaltstack`)", "(so one thread)", "(so one CPU)",
+                      "`os.Getenv` returns `\"\"`", "the open-file limit's read and raise", "riscv64 hardware probe",
+                      "//go:debug containermaxprocs=0 updatemaxprocs=0 decoratemappings=0",
+                      "a panic on the fuzz target's goroutine", "a panic on another goroutine",
+                      "exit with status 79", "exits with status 80", "segmentation fault (status 139)"):
+            self.assertIn(words, page)
+        self.assertLess(page.index("- Everywhere:"), page.index("- Go runtime:"))
+        self.assertLess(page.index("- Go runtime:"), page.index("- Builder image:"))
+        self.assertIn("built with OSS-Fuzz's Go helpers", page)
+        for other in ("projects/json/README.md", "projects/pyhtml/README.md"):
+            self.assertNotIn("Go runtime", pages[other])
+
+    def test_the_licence_sentence_names_go_parts_not_a_c_library(self):
+        pages = self.render()
+        self.assertIn("Each binary is a combined work of goyaml, the Go modules it uses, the harness, Go's standard "
+                      "library and runtime with the port's patches, and the port's Go driver;",
+                      pages["projects/goyaml/README.md"])
+        self.assertNotIn("the C library, the compiler's runtime", pages["projects/goyaml/README.md"])
+
+    def test_the_harness_page_names_no_toolchain_runtime(self):
+        page = self.render()["projects/goyaml/fuzz_decode/README.md"]
+        self.assertNotIn("compiler-rt", page)
+        self.assertNotIn("the C library", page)
+
+    def test_each_statement_file_says_how_a_go_target_ends_a_failure(self):
+        pages = self.render()
+        go = pages["projects/goyaml/fuzz_decode/Statements.v"]
+        for words in ("One build of the fuzz target [fuzz_decode]",
+                      "A driver written in Go and linked into the build reads FILE",
+                      "calls the Go fuzz target FuzzDecode on the payload",
+                      "for a testing.F fuzz test, the function its f.Fuzz call registers",
+                      "built by Go 1.27.1's compiler, assembler and linker",
+                      "t.Fatal, t.Error or t.Fail in a fuzz test exit with status 79",
+                      "os.Exit during a call of the harness with status 77", "with status 80",
+                      "the runtime exits with status 2 when the system refuses it memory",
+                      "a load through a nil pointer is a segmentation fault (status 139)"):
+            self.assertIn(words, go)
+        self.assertLess(go.index("In this Go fuzz target"), go.index("WHAT THE HARNESS CHECKS"))
+        self.assertNotIn("In this Go fuzz target", pages["projects/json/fuzzer-parse_bjdata/Statements.v"])
+        self.assertNotIn("FuzzDecode(payload, length)", go)
+
+    def test_its_one_statement_is_a_halts_statement_with_exits_0_and_2(self):
+        pages = self.render()
+        go = pages["projects/goyaml/fuzz_decode/Statements.v"]
+        self.assertEqual(go.count("Definition "), 1)
+        self.assertIn("Definition plain_halts : Prop := halts_within_budget Budgets.Standard.lim_source "
+                      "Exits.ok_or_refused", go)
+        self.assertNotIn("agrees", go)
+        self.assertNotIn("halts_may_fail", go)
+
+    def test_a_failing_go_test_check_is_status_79_and_binds_the_halts_statement(self):
+        pages = self.render()
+        go = pages["projects/goyaml/fuzz_decode/Statements.v"]
+        self.assertIn("[t.Fatal, t.Error or t.Fail (status 79); confirmed in the binary]", go)
+        self.assertIn("Check (a) ends the process when it fails", go)
+
+    def test_a_go_project_names_its_go_toolchain_and_no_clang(self):
+        for change in (lambda p: p["build"].pop("go"), lambda p: p["build"].update(clang="20.1.8")):
+            self.assertTrue(any("a Go project names build.go, the Go toolchain, and no build.clang" in f
+                                for f in self.lint(project=change)))
+        found = self.lint(project=lambda p: p["build"].update(system="custom"))
+        self.assertTrue(any("build.system is go exactly for a Go project" in f for f in found), found)
+
+    def test_only_a_go_project_names_build_go(self):
+        with tree(render=False) as t:
+            add_python_target(t)
+            project = t.yaml("projects/pyhtml/project.yaml")
+            project["build"]["go"] = "1.27.1"
+            t.put_yaml("projects/pyhtml/project.yaml", project)
+            found = [str(f) for f in t.lint()]
+        self.assertTrue(any("only a Go project names build.go" in f for f in found), found)
+        with tree(render=False) as t:
+            add_python_target(t)
+            project = t.yaml("projects/pyhtml/project.yaml")
+            project["build"]["system"] = "go"
+            t.put_yaml("projects/pyhtml/project.yaml", project)
+            found = [str(f) for f in t.lint()]
+        self.assertTrue(any("build.system is go exactly for a Go project" in f for f in found), found)
+
+    def test_a_go_fuzz_target_has_only_the_plain_build(self):
+        def ubsan(h):
+            h["builds"]["ubsan"] = {"file": "fuzz_decode.ubsan", "bytes": 1000, "sha256": "9" * 64, "segments": [1]}
+        found = self.lint(harness=ubsan)
+        self.assertTrue(any("builds.ubsan: a Go fuzz target has only the plain build" in f for f in found), found)
+
+    def test_a_go_fuzz_target_has_no_agreement_statement(self):
+        def agrees(h):
+            h["builds"]["ubsan"] = {"file": "fuzz_decode.ubsan", "bytes": 1000, "sha256": "9" * 64, "segments": [1]}
+            h["statements"]["ubsan_agrees"] = {"kind": "agreement", "builds": ["plain", "ubsan"],
+                                               "reading": "may-fail", "budgets": "standard", "status": "open"}
+        found = self.lint(harness=agrees)
+        self.assertTrue(any("statements.ubsan_agrees: a Go fuzz target's one statement is plain_halts" in f
+                            for f in found), found)
+
+    def test_a_go_fuzz_target_has_no_may_fail_statement(self):
+        def may_fail(h):
+            h["statements"]["plain_halts_may_fail"] = {"kind": "halts", "builds": ["plain"], "reading": "may-fail",
+                                                       "exits": [0, 2], "binds_checks": True, "status": "open"}
+        found = self.lint(harness=may_fail)
+        self.assertTrue(any("statements.plain_halts_may_fail: a Go fuzz target's one statement is plain_halts" in f
+                            for f in found), found)
+
+    def test_a_go_check_has_only_go_stops(self):
+        for stop in ("raise", "abort", "assert", "trap", "throw"):
+            found = self.lint(harness=lambda h, stop=stop: h["checks"][0].update(stops_with=stop))
+            self.assertTrue(any("checks[0]: a Go check stops with one of" in f for f in found), (stop, found))
+
+    def test_a_go_project_has_no_api_driver(self):
+        def api(h):
+            h["origin"] = "this-repository"
+        found = self.lint(harness=api)
+        self.assertTrue(any("a Go project has no API driver" in f for f in found), found)
+
+    def test_a_go_project_is_built_by_the_port_in_the_go_image(self):
+        found = self.lint(project=lambda p: p["build"].pop("oss_verify"))
+        self.assertTrue(any("a Go project's binaries are built by the OSS Verify port" in f for f in found), found)
+        with tree(render=False) as t:
+            add_go_target(t)
+            release = t.yaml("release.yaml")
+            project = t.yaml("projects/goyaml/project.yaml")
+            project["build"]["builder"] = release["images"]["builder"][0]
+            t.put_yaml("projects/goyaml/project.yaml", project)
+            json = t.yaml("projects/json/project.yaml")
+            json["build"]["builder"] = GO_IMAGE
+            t.put_yaml("projects/json/project.yaml", json)
+            found = [str(f) for f in t.lint()]
+        for p in ("goyaml", "json"):
+            self.assertTrue(any("projects/%s/project.yaml" % p in f and "build.builder is the port's Go toolchain "
+                                "image" in f for f in found), (p, found))
+
+    def test_a_c_project_still_names_its_clang(self):
+        with tree(render=False) as t:
+            project = t.yaml("projects/json/project.yaml")
+            project["build"].pop("clang")
+            t.put_yaml("projects/json/project.yaml", project)
+            found = [str(f) for f in t.lint()]
+        self.assertTrue(any("build.clang names the clang that compiled the C code" in f for f in found), found)
+
+    def test_a_go_halts_statement_allows_exactly_0_and_2(self):
+        for exits in ("any", [0], [0, 2, 79]):
+            def change(h, exits=exits):
+                h["statements"]["plain_halts"]["exits"] = exits
+                h["statements"]["plain_halts"]["binds_checks"] = exits != "any"
+            found = self.lint(harness=change)
+            self.assertTrue(any("statements.plain_halts: a Go fuzz target's halts statement allows exactly the "
+                                "statuses 0 and 2" in f for f in found), (exits, found))
+
+    def test_a_failing_go_test_check_is_for_go_harnesses_only(self):
+        with tree(render=False) as t:
+            add_python_target(t)
+            harness = t.yaml("projects/pyhtml/fuzz_html/harness.yaml")
+            harness["checks"][0]["stops_with"] = "fail"
+            t.put_yaml("projects/pyhtml/fuzz_html/harness.yaml", harness)
+            found = [str(f) for f in t.lint()]
+        self.assertTrue(any("stops_with: fail is t.Fatal, t.Error or t.Fail in a Go fuzz test" in f for f in found),
+                        found)
 
 
 class Linting(unittest.TestCase):

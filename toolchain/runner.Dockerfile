@@ -1,9 +1,9 @@
-# The runner image: qemu-user 10 and this repository's tools (tools/oft), for
-# running counterexamples and their controls.  Nothing else: no compiler, no
-# Rocq, no proof automation.
+# The runner image: qemu-user 10 and the tools of oss-fuzz-theorems (tools/oft)
+# as a release publishes them, for running counterexamples and their controls.
+# Nothing else: no compiler, no Rocq, no proof automation.
 #
 #   docker build -f toolchain/runner.Dockerfile \
-#       --build-context oft-tools=tools/oft --build-context oft-toy=tests/toy \
+#       --build-context oft-tools=<a tools/oft> --build-context oft-toy=tests/toy \
 #       toolchain/
 #
 #   docker run --rm -v "$PWD:/work" <image> qemu-riscv64 <binary> input.bin
@@ -12,11 +12,14 @@
 # Every input is pinned: the base image by digest, the Debian packages by a
 # dated snapshot of the Debian archive, qemu-user by the SHA-256 of its
 # package, and PyYAML by the hashes in tools/oft/requirements.txt.  The tools
-# are copied from the checkout that builds the image, and
-# /opt/oss-fuzz-theorems/TOOLS.sha256 records which: the same hash over the
-# files of tools/oft in a checkout is
+# are the `oft-tools` build context (.github/workflows/images.yml gives it the
+# tools/oft a release has published), and /opt/oss-fuzz-theorems/TOOLS.sha256
+# records which: the same hash over the files of tools/oft in a checkout is
 #   (cd tools/oft && find . -type f -printf '%P\n' | LC_ALL=C sort \
 #      | xargs -d '\n' -r sha256sum | sha256sum)
+# /opt/oss-fuzz-theorems/TOOLS-TESTS.txt records that the tools' own tests
+# passed on the image's own files, with git and PyYAML on python3's path
+# added (the stage tools-tests, below).
 #
 # qemu-user is Debian's 1:10.0.11+ds-0+deb13u1, whose qemu-riscv64 is a single
 # static binary.  Earlier qemu releases fail on the AddressSanitizer builds
@@ -74,8 +77,8 @@ RUN printf '%s\n' '#!/bin/sh' \
 # Self-test in the finished image: qemu is the pinned 10.0 release; the three
 # toy programs of tests/toy are written, match the SHA-256 recorded beside
 # them, and exit under qemu with the status their statements predict (0, 0
-# and 1, so a qemu that exits 0 on everything fails); PyYAML is the pinned
-# version; and the tools' own tests pass under this Python.
+# and 1, so a qemu that exits 0 on everything fails); and PyYAML is the pinned
+# version.  The tools' own tests run in the stage below.
 RUN --network=none --mount=type=bind,from=oft-toy,target=/mnt/toy \
     mkdir -p /tmp/selftest && cd /tmp/selftest && \
     qemu-riscv64 --version | tee versions.txt && python3 --version | tee -a versions.txt && \
@@ -89,16 +92,34 @@ RUN --network=none --mount=type=bind,from=oft-toy,target=/mnt/toy \
     for t in exit0.plain:0 exit0.padded:0 exit1.plain:1; do \
       rc=0; env -i /usr/bin/qemu-riscv64 "./${t%%:*}" input.bin || rc=$?; \
       echo "${t%%:*} under qemu-riscv64: exit ${rc}"; test "${rc}" = "${t##*:}"; \
-    done
-# One test of the tools is left out here: it lints the checkout around
-# tools/oft, and the image holds only tools/oft.
+    done && \
+    PYTHONPATH=/opt/oss-fuzz-theorems/pydeps python3 -c \
+      'import yaml, sys; sys.exit(0 if yaml.__version__ == "6.0.3" else "PyYAML " + yaml.__version__)' && \
+    oft --help > /dev/null
+
+LABEL org.opencontainers.image.title="oss-fuzz-theorems runner" \
+      org.opencontainers.image.description="qemu-user 10.0.11 and the oss-fuzz-theorems tools"
+WORKDIR /work
+ENTRYPOINT []
+CMD ["bash"]
+
+# ---- the tools' own tests, on the image with git added -----------------------
+
+# They need two things the image does not ship: git, which the tests of oft
+# ledger, lint and release-tree drive, and PyYAML on python3's own path, since
+# some tests start python3 with a PYTHONPATH of their own.  So they run in a
+# stage of their own, and only their result reaches the image, as
+# /opt/oss-fuzz-theorems/TOOLS-TESTS.txt.  One test is left out: it lints the
+# checkout around tools/oft, and the image holds only tools/oft.
+FROM runner AS tools-tests
+RUN --mount=type=tmpfs,target=/var/lib/apt/lists --mount=type=tmpfs,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends git && \
+    site="$(python3 -c 'import site; print(site.getsitepackages()[0])')" && mkdir -p "${site}" && \
+    echo /opt/oss-fuzz-theorems/pydeps > "${site}/oss-fuzz-theorems-pydeps.pth"
 RUN --network=none <<'EOF'
 set -euo pipefail
-PYTHONPATH=/opt/oss-fuzz-theorems/pydeps python3 -c \
-  'import yaml, sys; sys.exit(0 if yaml.__version__ == "6.0.3" else "PyYAML " + yaml.__version__)'
-oft --help > /dev/null
 cd /opt/oss-fuzz-theorems/tools
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/oss-fuzz-theorems/tools:/opt/oss-fuzz-theorems/pydeps python3 - <<'PY'
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/oss-fuzz-theorems/tools python3 - <<'PY'
 import sys
 import unittest
 SKIP = "oft.tests.test_lint.Clean.test_this_repository_is_clean"
@@ -110,14 +131,17 @@ kept = [t for t in tests if t.id() != SKIP]
 if len(tests) - len(kept) != 1:
     sys.exit("expected to leave out exactly %s" % SKIP)
 r = unittest.TextTestRunner(verbosity=1).run(unittest.TestSuite(kept))
-print("tools/oft tests: %d of %d run, all passed: %s" % (r.testsRun, len(tests), r.wasSuccessful()))
-sys.exit(0 if r.wasSuccessful() and r.testsRun == len(kept) > 0 else 1)
+line = "tools/oft tests: %d of %d run, all passed: %s" % (r.testsRun, len(tests), r.wasSuccessful())
+print(line)
+if not (r.wasSuccessful() and r.testsRun == len(kept) > 0):
+    sys.exit(1)
+with open("/tools-tests.txt", "w") as f:
+    f.write(line + "\n")
 PY
 echo "runner image self-test: pass"
 EOF
 
-LABEL org.opencontainers.image.title="oss-fuzz-theorems runner" \
-      org.opencontainers.image.description="qemu-user 10.0.11 and the oss-fuzz-theorems tools"
-WORKDIR /work
-ENTRYPOINT []
-CMD ["bash"]
+# ---- the image --------------------------------------------------------------
+
+FROM runner
+COPY --from=tools-tests /tools-tests.txt /opt/oss-fuzz-theorems/TOOLS-TESTS.txt

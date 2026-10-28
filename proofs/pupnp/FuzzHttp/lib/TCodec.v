@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* SPDX-License-Identifier: Apache-2.0 *)
 From Ltac2 Require Import Ltac2.
 From Stdlib Require Import BinNums.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.

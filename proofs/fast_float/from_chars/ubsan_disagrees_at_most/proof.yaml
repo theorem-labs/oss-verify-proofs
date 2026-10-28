@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: fast_float/from_chars/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: e87e0d75dfe64073bed11a464a72081feb33f14d5fbb0e0a7d35e0d5ccbe750d

@@ -19,17 +19,17 @@ A failed check marked as ending the process contradicts every halts statement be
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | [proved](../../../proofs/openssl/hashtable/asan_halts/) |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check above holds | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check above holds | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check above holds | [proved](../../../proofs/openssl/hashtable/asan_halts/) |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the check above holds | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; memory refused only when forced | [proved](../../../proofs/openssl/hashtable/asan_agrees/) |
-| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; memory refused only when forced | open |
-| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; memory refused only when forced | open |
-| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
+| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; memory refused only when forced | [proved](../../../proofs/openssl/hashtable/ubsan_agrees/) |
+| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; memory refused only when forced | [proved](../../../proofs/openssl/hashtable/asan_ubsan_agrees/) |
+| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | [proved](../../../proofs/openssl/hashtable/asan_disagrees_at_most/) at b = 0 |
 | `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
 | `asan_ubsan_disagrees_at_most` | P[plain and ASan+UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
-| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | open |
+| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | [proved](../../../proofs/openssl/hashtable/asan_agreement_decidable/) |
 | `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | open |
 | `asan_ubsan_agreement_decidable` | some program decides exactly the inputs where plain and ASan+UBSan agree | open |
 

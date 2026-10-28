@@ -5,7 +5,8 @@
 # files (port/projects/<project>/), such as its author's copyright line.
 # Each entry: {path, rule, key, count, reason}; the key is the one the finding
 # names.  An entry that clears fewer occurrences than its count is itself a
-# finding.
+# finding.  A `proofs` entry also names the line and the exact message, its key
+# is the notation's string literal, and its count is 1.
 schema: oss-fuzz-theorems/lint-exceptions/1
 exceptions:
   - path: projects/xmlsec/xmlsec_enc_fuzzer/source/xmlsec_enc_target.c
@@ -24,3 +25,15 @@ exceptions:
       perfetto's own fuzz harness (test/end_to_end_shared_memory_fuzzer.cc at
       40b52992, git blob fa2b5e90) names the Android device directory where its
       test daemons create their socket, under an Android-only #if.
+  - path: proofs/jsoncons/fuzz_msgpack_encoder/lib/LeanFeed2.v
+    rule: proofs
+    line: 4
+    message: >-
+      a notation token with a '"', or a '(' after anything but '.', '`' or ':',
+      is not allowed in a proof
+    key: "\"'LF2CBN(' t ')'\""
+    count: 1
+    reason: >-
+      Released in v2026.10.1. Every use of LF2CBN( in this library is followed
+      by a space and an identifier, and git grep 'LF2CBN(\*' finds nothing, so
+      no comment opener and no hidden command can form.

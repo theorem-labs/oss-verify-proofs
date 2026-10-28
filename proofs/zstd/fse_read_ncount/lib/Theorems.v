@@ -39,6 +39,8 @@ Module ZstdFseReadNcountHaltsBothExits <: LinuxProcessSemantics.EquivalenceDefin
   Import ListNotations.
   Definition codes : list (stdpp.bitvector.definitions.bv 64) := [Z_to_bv 64 0; Z_to_bv 64 2].
 End ZstdFseReadNcountHaltsBothExits.
+Require OssFuzzTheorems.zstd.fse_read_ncount.images.Ubsan.
+Require OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.UbsanMain.
 
 Theorem strong_universal_error_free_fse_read_ncount_asan :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
@@ -60,6 +62,17 @@ Theorem strong_universal_error_free_fse_read_ncount_both :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.fse_read_ncount.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.zstd.fse_read_ncount.images.AsanUbsan.M.init_pc OssFuzzTheorems.zstd.fse_read_ncount.images.AsanUbsan.M.phdrs).
 Proof.
   exact OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.BothW.AMain_final.base_both_closed.
+Qed.
+
+Theorem strong_universal_error_free_fse_read_ncount_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.fse_read_ncount.images.Plain.M.loaded_segments OssFuzzTheorems.zstd.fse_read_ncount.images.Plain.M.init_pc OssFuzzTheorems.zstd.fse_read_ncount.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.fse_read_ncount.images.Ubsan.M.loaded_segments OssFuzzTheorems.zstd.fse_read_ncount.images.Ubsan.M.init_pc OssFuzzTheorems.zstd.fse_read_ncount.images.Ubsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.UbsanMain.base_ubsan.
 Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)

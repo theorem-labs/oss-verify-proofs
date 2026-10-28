@@ -89,12 +89,36 @@ Proof.
   intros pcs sites pc s k Hpc Hs Hk. unfold traces_of. apply in_flat_map. exists pc. split; [exact Hpc|].
   apply in_flat_map. exists s. split; [exact Hs|]. apply in_map. apply in_prefixes. exact Hk.
 Qed.
-(* [comment removed for export] *)
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* [comment removed for export] *)
+Fixpoint uw_chain (TOPB : Z) (m : mem) (f fp : Z) (ras : list Z) : Prop :=
+  match ras with
+  | [] => fp_stop f fp
+  | r :: ras' =>
+      f + 16 <= fp /\ fp mod 8 = 0 /\ fp <= TOPB
+      /\ exists fp', 0 <= fp' < 2 ^ 64
+                     /\ rw_cells ctasegs m (fp + -16) [C8 (Z_to_bv 64 fp'); C8 (Z_to_bv 64 r)] /\ uw_chain TOPB m fp fp' ras'
+  end.
 
+Lemma uw_chain_cells : forall TOPB W (m : mem) ras f fp ra,
+  TOPB <= 2 ^ 63 -> 0 <= f -> uw_chain TOPB m f fp ras ->
+  (forall a, f <= a -> a + 16 <= TOPB -> disjoint_from W a 16) ->
+  Forall (fun r => 0 <= r < 2 ^ 64) ras ->
+  exists ch, map fst ch = ras /\ chain_cells W m fp ch /\ chain_ok f ((ra, fp) :: ch).
+Proof.
+  intros TOPB W m ras. induction ras as [|r ras IH]; intros f fp ra HT Hf HU HW HR.
+  - exists []. cbn in *. split; [reflexivity|]. split; [exact I | exact HU].
+  - cbn [uw_chain] in HU. destruct HU as (H1 & H2 & H3 & fp' & Hfp' & HC & HU).
+    apply Forall_cons_iff in HR as [Hr HR].
+    destruct (IH fp fp' r HT ltac:(lia) HU) as (ch & E & CC & OK); [intros a Ha Ha'; apply HW; lia | exact HR|].
+    exists ((r, fp') :: ch). split; [cbn [map fst]; rewrite E; reflexivity|]. split.
+    + cbn [chain_cells]. split; [exact HC|]. split; [lia|]. split; [apply HW; lia | exact CC].
+    + change (f + 16 <= fp /\ fp mod 8 = 0 /\ chain_ok fp ((r, fp') :: ch)). split; [exact H1|]. split; [exact H2 | exact OK].
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -119,3 +143,25 @@ Proof.
   - lia.
 Qed.
 
+Theorem site_unwind : forall TOPB W (m : mem) pcs sites kmax pc bot top maxd sp ra s0 ras,
+  sites_okb 4096 pcs kmax sites = true -> In pc pcs -> In (ra :: ras) sites ->
+  TOPB <= 2 ^ 63 -> top - 16 <= 2 ^ 63 -> 0 <= sp -> 2 + Z.of_nat kmax <= maxd ->
+  uw_chain TOPB m sp s0 ras ->
+  (forall a, sp <= a -> a + 16 <= TOPB -> disjoint_from W a 16) ->
+  exists ch tr, chain_cells W m s0 ch
+    /\ unwind_trace pc 4096 bot top maxd sp ((ra, s0) :: ch) = Some tr
+    /\ In tr (traces_of pcs sites) /\ (1 <= length tr <= 1 + kmax)%nat.
+Proof.
+  intros TOPB W m pcs sites kmax pc bot top maxd sp ra s0 ras OKB Hpc Hs HT Htop Hsp Hmax HU HW.
+  destruct (sites_okb_spec 4096 pcs kmax sites (ra :: ras) pc OKB Hs Hpc) as (HL & HF & HR).
+  apply Forall_cons_iff in HR as [Hra HR].
+  destruct (uw_chain_cells TOPB W m ras sp s0 ra HT Hsp HU HW HR) as (ch & E & CC & OK).
+  assert (EM : map fst ((ra, s0) :: ch) = ra :: ras) by (cbn [map fst]; rewrite E; reflexivity).
+  assert (EL : length ((ra, s0) :: ch) = length (ra :: ras)) by (rewrite <- EM, length_map; reflexivity).
+  destruct (unwind_trace_prefix pc 4096 bot top maxd sp ((ra, s0) :: ch) OK Htop) as (k & Hk & ET).
+  { rewrite EM. exact HF. }
+  { rewrite EL. lia. }
+  exists ch, (pc :: firstn k (ra :: ras)). split; [exact CC|]. split; [rewrite <- EM; exact ET|]. split.
+  - apply in_traces_of; [exact Hpc | exact Hs | rewrite <- EL; exact Hk].
+  - cbn [length]. rewrite length_firstn. rewrite EL in Hk. lia.
+Qed.

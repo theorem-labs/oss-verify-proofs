@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: jsoncons/fuzz_ubjson_parser_max/asan_disagrees_at_most
+bound: '0'
+fingerprint: d82a6c22034c79d3d149fafe8de29c81c599ab7be2a0d762da8f423c048ecaed

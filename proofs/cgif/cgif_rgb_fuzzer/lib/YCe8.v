@@ -293,7 +293,7 @@ lazymatch goal with
 | HS : st_ok ?segs E ?ss _ |- _ =>
 let tmp := fresh "shtmp" in
 first
-[ timeout 30
+[ timeout 30   (* timeout-ok: on expiry the next arm runs; without this limit the build exceeds 250 GiB *)
 (let SH := eval lazy in (SH0 ++ app_entries (ss_facts ss) (ss_mem ss)) in
 lazymatch SH with
 | context [flat_map] => fail

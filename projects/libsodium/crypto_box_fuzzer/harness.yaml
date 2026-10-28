@@ -140,6 +140,7 @@ checks:
   live: true
   where: source/crypto_box_fuzzer.cc:53
   what: crypto_box_easy must return 0 on every input.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: crypto_box_fuzzer

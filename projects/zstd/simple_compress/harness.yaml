@@ -134,6 +134,7 @@ checks:
   where: source/simple_compress.c:49-52
   what: 'ZSTD_compressCCtx into a random-size buffer in [0, compressBound]: any failure must be exactly
     ZSTD_error_dstSize_tooSmall.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: simple_compress

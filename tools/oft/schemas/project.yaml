@@ -18,6 +18,11 @@ defs:
       description: {type: text, max: 300, optional: true}     # one sentence, from public project metadata
       homepage: {type: url, optional: true}
       language: {type: enum, values: [c, c++, go, jvm, python, rust, javascript, ruby, swift, lua]}
+      # The project's own memory budgets for its agreement statements, in the public project.yaml's shape: per
+      # sanitizer (`undefined`: the UBSan build; `address`: the ASan and ASan+UBSan builds), [plain, sanitizer].  An
+      # agreement statement of a sanitizer that has a pair names no `budgets` in harness.yaml; its term carries the
+      # pair as literals (tools/oft/shapes.py, which also checks the pair's length, floor and order)
+      budgets: {type: ref, name: budgets, optional: true}
       # OSS-Fuzz's directory for the project, at release.yaml's commit; absent: OSS-Fuzz has no such project
       oss_fuzz:
         type: object
@@ -35,6 +40,10 @@ defs:
       # removes the rest of it (harnesses, statements, proofs, counterexamples, notes); it removes a project OSS-Fuzz
       # does not have whole. release.yaml's counts and image libraries are those of the public release
       release: {type: enum, values: [private], optional: true}
+      # enrolled: the project's maintainers take part (oss-verify's primary_contact); absent for a seeded project.  An
+      # open finding of an enrolled project holds back only the statements it names (facts.hold); any other
+      # unpublished finding holds the whole project
+      enrolled: {type: bool, optional: true}
       reason: {type: reason-code, optional: true}        # required unless status is available
       reason_args: {type: ref, name: reason_args, optional: true}
       library: {type: ref, name: library, optional: true}
@@ -57,12 +66,16 @@ defs:
         type: object
         optional: true
         fields:
-          system: {type: enum, values: [autotools, bazel, cargo, cmake, make, meson, scons, custom]}
-          clang: {type: str, pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'}
+          # go: OSS-Fuzz's Go helpers (compile_go_fuzzer, compile_native_go_fuzzer), as the OSS Verify port changes them
+          system: {type: enum, values: [autotools, bazel, cargo, cmake, make, meson, scons, go, custom]}
+          # the clang that compiled the C code; every language but Go has one, and Go has none (rules.py)
+          clang: {type: str, pattern: '^[0-9]+\.[0-9]+\.[0-9]+$', optional: true}
+          # the Go toolchain that built every binary of a Go project (`go env GOVERSION` less its "go"), and only of one
+          go: {type: str, pattern: '^[0-9]+\.[0-9]+\.[0-9]+$', optional: true}
           builder: {type: image}
           # The OSS Verify port that built every binary of this project instead of a build recipe: its repository
-          # name, commit and project directory.  Its private prelaunch variant is permitted only for a project a
-          # finding holds back (rules.py).
+          # name, commit and project directory.  Its internal copy is permitted only for a project a finding holds
+          # back (rules.py).
           oss_verify:
             type: object
             optional: true
@@ -70,6 +83,19 @@ defs:
               repository: {type: oss-verify-repository}
               commit: {type: commit}
               path: {type: str, pattern: '^projects/[a-z0-9][a-z0-9_-]*$'}
+
+  budgets:
+    type: object
+    fields:
+      agrees:
+        type: object
+        optional: true
+        fields:
+          address: {type: list, items: {type: ref, name: size}, min: 2, optional: true}
+          undefined: {type: list, items: {type: ref, name: size}, min: 2, optional: true}
+
+  # a memory size: bytes, or a whole number of KiB, MiB, GiB or TiB
+  size: {type: str, pattern: '^[1-9][0-9]{0,15}(KiB|MiB|GiB|TiB)?$'}
 
   # typed values the phrasebook sentence for (status, reason) is filled from
   reason_args:

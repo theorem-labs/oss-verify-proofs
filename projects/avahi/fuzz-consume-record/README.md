@@ -18,14 +18,14 @@ Checks 6 properties (listed below); the first, a round trip: rdata serialize -> 
 - second comparator on the same roundtrip: avahi_record_lexicographical_compare(original, reparsed) == 0 (under #ifndef HAVE_NALLOCFUZZ, i.e. live by default) ([lines 86-88](source/fuzz-consume-record.c#L86-L88)): assert(); confirmed in the binary.
 - avahi_record_copy(r) must be equal_no_ttl to r and lexicographically compare 0 against it ([lines 94-99](source/fuzz-consume-record.c#L94-L99)): assert(); confirmed in the binary.
 
-A failed check marked as ending the process contradicts every halts statement below, so a proof of one implies them on every input it covers.
+A failure of any of the checks at lines 67-72, lines 86-88 and lines 94-99 ends the process with a status that the halts statements below that name them exclude, so a proof of one of those statements implies them on every input it covers. No statement here proves the other checks.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks at lines 67-72, lines 86-88 and lines 94-99 above hold | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks at lines 67-72, lines 86-88 and lines 94-99 above hold | open |
 | `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires | open |
 | `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
 | `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | open |

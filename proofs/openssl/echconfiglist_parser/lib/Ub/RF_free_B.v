@@ -121,7 +121,7 @@ Proof. try hcb. try hsb.
     - unfold meta_cells. cbn [cells_bytes cbytes m_set_freed m_prev m_next m_mem m_avail m_freed meta_word m_last_idx m_freeable m_sizeclass m_maplen].
       unfold bit. rewrite (free_store_val (m_freed mr) idx) by (assumption || lia). reflexivity.
     - reflexivity.
-    - cbn. (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]). }
+    - cbn. (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]). }
   clear MUg MM.
   (* [comment removed for export] *)
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>

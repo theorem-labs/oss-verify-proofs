@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: cgif/cgif_rgb_fuzzer/plain_halts_may_fail
+fingerprint: cde74a486f5da6333e73521504e8f1fd8c8fe61100cfca6831475b89fa4dcf4e

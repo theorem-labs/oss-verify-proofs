@@ -113,7 +113,7 @@ Proof. try hcb. try hsb.
     apply (rw_cells_congr rsegs mc (bv_unsigned gw) cs
              (meta_cells st (m_set_avail (mask - lowbit mask) (get_meta_rec st g)))) in H;
     [| unfold meta_cells; cbn [cells_bytes cbytes m_prev m_next m_mem m_avail m_freed m_set_avail]; rewrite LB, (le4_avail_sub mask (2 ^ k)) by lia; reflexivity
-     | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]) ];
+     | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]) ];
     rewrite HG in H;
     pose proof (rmrep_put_meta_frame st m mc g _ MR MSL MUg WMg H) as MR1; rewrite <- upd_meta_put in MR1; clear H MUg WMg
   end.

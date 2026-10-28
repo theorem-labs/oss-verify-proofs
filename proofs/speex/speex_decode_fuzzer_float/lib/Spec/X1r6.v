@@ -46,4 +46,4 @@ Definition prog_plain := prog.
 Definition prog_ubsan := prog.
 
 Definition RSTAGE_plain : Z := 0x35e39.
-Definition RSTAGE_ubsan : Z := 0x3cde9.
+Definition RSTAGE_ubsan : Z := 0x3d349.

@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: spirv-tools/spvtools_binary_parser_fuzzer/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: 3db3e965432f4d7d99ab63655bf598f5a7e1749df589d7d204722c0de45e9bb4

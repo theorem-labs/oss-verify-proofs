@@ -36,16 +36,76 @@ Qed.
 Lemma agree_on_of_D : forall P m m', D_kit.agree_on P m m' -> agree_on P m m'.
 Proof. intros P m m' H a Ha HP. apply H. unfold wa. rewrite unsigned_lit by lia. exact HP. Qed.
 
+Lemma agree_on_of_munch : forall W m m', munch W m m' -> wmono ctasegs m m' -> agree_on (fun a => outside W a) m m'.
+Proof. intros W m m' MU _ a Ha Ho. apply MU. unfold wa. rewrite unsigned_lit by lia. exact Ho. Qed.
 Lemma agree_on_of_munch_nw : forall W m m', munch W m m' -> agree_on (fun a => outside W a) m m'.
 Proof. intros W m m' MU a Ha Ho. apply MU. unfold wa. rewrite unsigned_lit by lia. exact Ho. Qed.
 
+Lemma bytes_at_agree : forall P m m' A bs,
+  agree_on P m m' -> bytes_at ctasegs m A bs -> (forall a, A <= a < A + Z.of_nat (length bs) -> P a) ->
+  bytes_at ctasegs m' A bs.
+Proof.
+  intros P m m' A bs HP (H0 & H1 & HB) HR. split; [exact H0|]. split; [exact H1|].
+  intros i Hi. rewrite <- (HB i Hi). unfold mrd.
+  rewrite (HP (A + Z.of_nat i) ltac:(lia) ltac:(apply HR; lia)). reflexivity.
+Qed.
 
+Lemma wr_at_agree : forall P m m' A n,
+  agree_on P m m' -> wr_at ctasegs m A n -> (forall a, A <= a < A + n -> P a) -> wr_at ctasegs m' A n.
+Proof.
+  intros P m m' A n HP (H0 & H1 & HW) HR. split; [exact H0|]. split; [exact H1|].
+  intros i Hi. rewrite (wview_agree ctasegs m m'); [exact (HW i Hi)|]. apply HP; [lia| apply HR; lia].
+Qed.
 
+Lemma rw_cells_agree : forall P m m' A cs,
+  agree_on P m m' -> rw_cells ctasegs m A cs -> (forall a, A <= a < A + Z.of_nat (cells_size cs) -> P a) ->
+  rw_cells ctasegs m' A cs.
+Proof.
+  intros P m m' A cs HP [[Hwf HB] HW] HR. split; [split; [exact Hwf|]|].
+  - eapply bytes_at_agree; eauto. rewrite cells_bytes_length by assumption. exact HR.
+  - eapply wr_at_agree; eauto.
+Qed.
 
+Lemma ro_cells_agree : forall P m m' A cs,
+  agree_on P m m' -> ro_cells ctasegs m A cs -> (forall a, A <= a < A + Z.of_nat (cells_size cs) -> P a) ->
+  ro_cells ctasegs m' A cs.
+Proof.
+  intros P m m' A cs HP [Hwf HB] HR. split; [exact Hwf|].
+  eapply bytes_at_agree; eauto. rewrite cells_bytes_length by assumption. exact HR.
+Qed.
 
+Lemma u64arr_agree : forall P m m' A ws,
+  agree_on P m m' -> u64arr ctasegs m A ws -> (forall a, A <= a < A + 8 * Z.of_nat (length ws) -> P a) ->
+  u64arr ctasegs m' A ws.
+Proof.
+  intros P m m' A ws HP [HB HW] HR. split.
+  - eapply bytes_at_agree; eauto. rewrite u64s_length. intros a Ha. apply HR. lia.
+  - eapply wr_at_agree; eauto.
+Qed.
 
+Lemma u32arr_agree : forall P m m' A ws,
+  agree_on P m m' -> u32arr ctasegs m A ws -> (forall a, A <= a < A + 4 * Z.of_nat (length ws) -> P a) ->
+  u32arr ctasegs m' A ws.
+Proof.
+  intros P m m' A ws HP [HB HW] HR. split.
+  - eapply bytes_at_agree; eauto. rewrite u32s_length. intros a Ha. apply HR. lia.
+  - eapply wr_at_agree; eauto.
+Qed.
 
+Lemma stk_agree : forall P m m' lo hi,
+  agree_on P m m' -> stk ctasegs m lo hi -> (forall a, lo <= a < hi -> P a) -> stk ctasegs m' lo hi.
+Proof.
+  intros P m m' lo hi HP ST HR. destruct ST as (H0 & H1 & HW). split; [exact H0|]. split; [exact H1|].
+  intros i Hi. pose proof (HP i ltac:(lia) ltac:(apply HR; lia)) as E. destruct (HW i Hi) as [W0 [b Hb]].
+  split; [rewrite (wview_agree ctasegs m m' _ E); exact W0|]. exists b. unfold mrd in *. rewrite E. exact Hb.
+Qed.
 
+Lemma acc_agree : forall P m m' a n,
+  agree_on P m m' -> A.Shadow.acc ctasegs m a n -> (forall i, 0 <= i < n -> P (A.Shadow.shad (a + i))) -> A.Shadow.acc ctasegs m' a n.
+Proof.
+  intros P m m' a n HP H HR i Hi. destruct (H i Hi) as (b & Hb & Hok). exists b. split; [|exact Hok].
+  eapply bytes_at_agree; [exact HP | exact Hb |]. intros x Hx. cbn [length] in Hx. replace x with (A.Shadow.shad (a + i)) by lia. apply HR. exact Hi.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -114,5 +174,9 @@ Lemma agree_of_rt_pres_fp : forall L SP W m m', rt_pres_fp (map blk_an L) [] SP 
 Proof.
   intros L SP W m m' H a Ha [Hc Hd]. apply H; unfold wa; rewrite unsigned_lit by lia; [apply aclient_of_addr; exact Hc | exact Hd].
 Qed.
-(* [comment removed for export] *)
 
+(* [comment removed for export] *)
+Lemma rw_cells_recast : forall m A cs cs',
+  rw_cells ctasegs m A cs -> cells_wf cs' -> cells_bytes cs' = cells_bytes cs -> cells_size cs' = cells_size cs ->
+  rw_cells ctasegs m A cs'.
+Proof. intros m A cs cs' [[Hwf Hb] Hw] Hwf' Eb Es. split; [split; [exact Hwf'| rewrite Eb; exact Hb] | rewrite Es; exact Hw]. Qed.

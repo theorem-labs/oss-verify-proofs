@@ -14,9 +14,11 @@ Require LinuxProcessSemantics.EquivalenceDefinition.PatchClassifySpec.
 Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 Require OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Plain.
 Require OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Asan.
+Require OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Ubsan.
 Require OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.AsanUbsan.
 Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.PmXasan.
 Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.PmXboth.
+Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.PmXubsan.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
   Definition cfg := LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true.
@@ -467,6 +469,17 @@ Theorem strong_universal_error_free_fuzz_json_encoder_asan :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Asan.M.loaded_segments OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Asan.M.init_pc OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Asan.M.phdrs).
 Proof.
 exact (OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.PmXasan.PmXasan.xasan_base).
+Qed.
+
+Theorem strong_universal_error_free_fuzz_json_encoder_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Plain.M.loaded_segments OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Plain.M.init_pc OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Ubsan.M.loaded_segments OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Ubsan.M.init_pc OssFuzzTheorems.jsoncons.fuzz_json_encoder.images.Ubsan.M.phdrs).
+Proof.
+exact (OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.PmXubsan.PmXubsan.xubsan_top).
 Qed.
 
 Theorem strong_universal_error_free_fuzz_json_encoder_both :

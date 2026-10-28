@@ -19,8 +19,9 @@ builds, and says for each one that has no statements why not.
 ## language-pending
 The fuzz targets are in a language this release does not cover yet (Python,
 Java and other JVM languages, Go, Rust, JavaScript, Ruby). This release covers
-C and C++, and Rust only for the projects whose fuzz targets OSS Verify builds
-([building.md](building.md#rust-fuzz-targets)).
+C and C++, and Rust and Python only for the projects whose fuzz targets OSS
+Verify builds ([building.md](building.md#rust-fuzz-targets),
+[building.md](building.md#python-fuzz-targets)).
 
 
 ## not-yet-built

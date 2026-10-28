@@ -135,6 +135,7 @@ checks:
   where: source/compress_hc_fuzzer.c:48-57
   what: LZ4_compress_HC at a fuzzed level (LZ4HC_CLEVEL_MIN..MAX) into a fuzzed capacity in [0, size];
     if it returns >0, LZ4_decompress_safe must regenerate the input exactly.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: compress_hc_fuzzer

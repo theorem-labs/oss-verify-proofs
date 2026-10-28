@@ -385,7 +385,7 @@ Ltac ab_chk t u s J :=
       | ABok : absh_ok ?b ?X ?sz |- _ =>
           let E := fresh "Eab" in
           assert (E : b = z8)
-            by (destruct ABok as [E | [K1 K2]]; [exact E | exfalso; timeout 30 (uchk_open; Z.div_mod_to_equations; lia)]);
+            by (destruct ABok as [E | [K1 K2]]; [exact E | exfalso; (uchk_open; Z.div_mod_to_equations; lia)]);
           subst b; clear ABok; Step.step; rewrite ?zxb_z8, ?sxb_z8; first [if_false | if_true]
       end
     | lazymatch goal with

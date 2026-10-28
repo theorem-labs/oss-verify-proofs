@@ -11,7 +11,7 @@ skcms_Parse of the input profile, then skcms_Transform of a fixed 64-pixel RGBA 
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 
 ## What the harness checks
-- The embedded constant sRGB profile must parse (exit(1) otherwise) -- independent of the input, so trivially true once it passes once ([line 71](source/fuzz_iccprofile_transform.c#L71)): exit(1); not confirmed in the binary.
+- The embedded constant sRGB profile must parse (exit(1) otherwise) -- independent of the input, so trivially true once it passes once ([lines 71-75](source/fuzz_iccprofile_transform.c#L71-L75)): exit(1); not confirmed in the binary.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 

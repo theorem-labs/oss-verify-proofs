@@ -32,7 +32,7 @@ Not included: **api-driver** (held from this release); **streaming_fuzzer** (not
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `icc_codec_fuzzer`: predictICC (the writer) must succeed on every byte string ("Writing should support any random bytestream so must succeed"); for every input whose first byte is non-zero: UnpredictICC(PredictICC(x)) reproduces x exactly (same size and memcmp equal) -- the ICC predictive codec is lossless on ARBITRARY bytes, not only on valid profiles; every allocation the library made through the harness TrackingMemoryManager was freed by the end of the run (num_allocations==0, allocation map empty, bytes_in_use==0): a leak check on the JxlMemoryManager path that holds without LeakSanitizer.
 - `rans_fuzzer`: every allocation the library made through the harness TrackingMemoryManager was freed by the end of the run (num_allocations==0, allocation map empty, bytes_in_use==0): a leak check on the JxlMemoryManager path that holds without LeakSanitizer.
 

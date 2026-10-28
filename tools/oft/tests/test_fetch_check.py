@@ -1,4 +1,4 @@
-"""oft fetch, verify-sha, check and plan, against stand-in archives and tools."""
+"""oft fetch, verify-sha and check, against stand-in archives and tools."""
 import hashlib
 import io
 import json
@@ -13,10 +13,13 @@ import tarfile
 import tempfile
 import unittest
 
-from oft import check, facts, fetch, rules, schema, yamlio
+from oft import check, facts, fetch, plan, rules, schema, yamlio
 from oft.tests.helpers import REPO, add_findings, later_release, older_shape, recipe_only_rebuild, tree
 
 HAVE_ZSTD = shutil.which("zstd") is not None
+PR_YML = os.path.join(REPO, ".github", "workflows", "pr.yml")
+HAVE_PR_YML = os.path.exists(PR_YML)     # the runner image, which runs these tests, holds only tools/oft
+IMAGES_YML = os.path.join(REPO, ".github", "workflows", "images.yml")
 
 
 def make_release(t, assets, members=None, tamper=None, padding=0):
@@ -59,6 +62,50 @@ def run(fn, *a, **kw):
     buf = io.StringIO()
     rc = fn(*a, out=buf, **kw)
     return rc, buf.getvalue()
+
+
+def withdraw_every_statement(t, harness):
+    """Withdraw every statement of zlib's harness, as the schema allows of a harness with published builds, and render
+    again: its Statements.v then defines none, and it has no Characterise.v."""
+    rel = "projects/zlib/%s/harness.yaml" % harness
+    y = t.yaml(rel)
+    for st in y["statements"].values():
+        for k in ("basis", "reason", "witness", "withheld", "gap"):
+            st.pop(k, None)
+        st.update(status="withdrawn", reason="a test")
+    t.put_yaml(rel, y)
+    characterise = t.path("projects/zlib/%s/Characterise.v" % harness)
+    if os.path.exists(characterise):
+        os.remove(characterise)
+    assert t.generate() == 0, t.last_output
+
+
+# Stands in for `rocq compile .../Defined.v` (check.check_defined): each name in the tuple oft_listed must be the
+# Definition of a statement in the harness's Statements.v (the source beside the -Q mapping of its _build directory);
+# one stated by Axiom or Parameter, or closed by Admitted, is an axiom Print Assumptions lists, as the kernel's does.
+DEFINED_STUB = r'''import re, sys
+args = sys.argv[1:]
+src = None
+for i, a in enumerate(args[:-2]):
+    if a == "-Q" and args[i + 2] not in ("OssFuzzTheorems.Core", "OftDefined"):
+        src = args[i + 1].replace("/_build/default/", "/")
+listed = re.search(r"Definition oft_listed := \((.*)\)\.", open(args[-1]).read()).group(1)
+try:
+    stmts = open(src + "/Statements.v").read()
+except OSError:
+    sys.exit("Cannot find a physical path bound to logical path Statements.")
+axioms = ["Corelib.Init.Something.prim : Prop"]
+for name in (t.strip().lstrip("@") for t in listed.split(",")):
+    s = name.rsplit(".", 1)[1]
+    m = re.search(r"^(Definition|Axiom|Parameter) %s\b(.*?)(?=^Definition |\Z)" % re.escape(s), stmts, re.M | re.S)
+    if not m:
+        print("The reference %s was not found in the current environment." % name)
+        sys.exit(1)
+    if m.group(1) != "Definition" or "Admitted." in m.group(2):
+        axioms.append("%s : Prop" % name)
+print("Axioms:")
+print("\n".join(axioms))
+'''
 
 
 @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
@@ -370,15 +417,21 @@ class Tools:
         with open(os.path.join(d, "wrapper.out"), "w") as f:
             f.write(wrapper)
         # `rocq dep -sort` prints, in order, the whole closure of the .v files it is given: the files of a library on its
-        # -Q path (a ...lib logical name) first, as the real one does, then the files given.
+        # -Q path (a ...lib logical name) first, as the real one does, then the files given.  A compile of check's
+        # Defined.v is answered as the kernel would (DEFINED_STUB).
+        defined = os.path.join(d, "defined_stub.py")
+        with open(defined, "w") as f:
+            f.write(DEFINED_STUB)
         self.put("rocq", 'echo "rocq $*" >> "%s"\nulimit -s >> "%s"\n'
                          'if [ "$1" = dep ] && [ "$2" = -sort ]; then\n'
                          '  prev=""; for a in "$@"; do\n'
                          '    case "$a" in *.lib) find "$prev" -name "*.v" | sort ;; esac; prev="$a"; done\n'
                          '  for f in "$@"; do case "$f" in *.v) echo "$f" ;; esac; done; exit 0; fi\n'
+                         'case "$*" in *Defined.v) exec python3 "%s" "$@" ;; esac\n'
                          'case "$*" in *Wrapper.v*) cat "%s"; %s ;; esac\n'
                          'exit 0\n'
-                 % (self.log, self.log, os.path.join(d, "wrapper.out"), "exit 1" if wrapper_fails else "exit 0"))
+                 % (self.log, self.log, defined, os.path.join(d, "wrapper.out"),
+                    "exit 1" if wrapper_fails else "exit 0"))
         # aborts on the 13-byte counterexample input, exits 0 on the 8-byte control
         # and records the core file limit it was started with
         self.put("qemu-riscv64", 'ulimit -c >> "%s"\n'
@@ -400,11 +453,22 @@ class Tools:
 
 
 class Check(unittest.TestCase):
+    # [check.raise_stack_limit] refuses a stack hard limit below 1 GiB, which a host can impose on every process
+    # (systemd's DefaultLimitSTACK) and which a test cannot raise.  [test_rocq_runs_with_the_largest_stack_allowed] and
+    # [test_a_stack_hard_limit_below_1_gib_is_refused_on_any_host] are about that refusal; the others are about what
+    # `oft check` does, so on such a host they run with a stand-in that raises the soft limit to the hard limit and
+    # refuses nothing.  A test that runs `oft check` in a new process gets the real one there, and expects the refusal.
     def setUp(self):
         self.d = tempfile.TemporaryDirectory()
         self.old_path = os.environ["PATH"]
+        hard = resource.getrlimit(resource.RLIMIT_STACK)[1]
+        self.stack_limit_is_low = hard != resource.RLIM_INFINITY and hard < check.STACK_NEEDED
+        self.old_raise_stack_limit = check.raise_stack_limit
+        if self.stack_limit_is_low:
+            check.raise_stack_limit = lambda: resource.setrlimit(resource.RLIMIT_STACK, (hard, hard))
 
     def tearDown(self):
+        check.raise_stack_limit = self.old_raise_stack_limit
         os.environ["PATH"] = self.old_path
         self.d.cleanup()
 
@@ -428,8 +492,197 @@ class Check(unittest.TestCase):
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
             self.assertEqual(rc, 0, out)
             self.assertIn("projects/zlib/checksum_fuzzer/Statements.vo", tl.calls())
-            self.assertIn("projects/zlib/checksum_fuzzer: statements compiled\n", out)
+            listed = facts.load(t.root).projects["zlib"].harnesses["checksum_fuzzer"].statements.values()
+            self.assertIn("projects/zlib/checksum_fuzzer: statements compiled, each of the %d listed defined\n"
+                          % sum(st.rendered() for st in listed), out)
             self.assertNotIn("rocqchk", tl.calls(), "rocqchk runs only when asked")
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_statements_v_that_defines_no_statement_harness_yaml_lists_fails(self):
+        """It compiles, but it is a check of no statement: the kernel is asked for each one harness.yaml lists."""
+        with tree() as t:
+            self.ready(t)
+            self.tools()
+            stmts = "projects/zlib/checksum_fuzzer/Statements.v"
+            text = t.read(stmts)
+            t.write(stmts, text[:text.index("\nDefinition ")] + "\n")
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
+            self.assertEqual(rc, 1, out)
+            self.assertIn("FAIL statements: projects/zlib/checksum_fuzzer/Statements.v does not define every statement "
+                          "harness.yaml lists", out)
+            self.assertIn("0 step(s) passed, 1 failed", out)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_missing_statements_v_fails_before_any_build(self):
+        with tree() as t:
+            self.ready(t)
+            tl = self.tools()
+            os.remove(t.path("projects/zlib/checksum_fuzzer/Statements.v"))
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
+            self.assertEqual(rc, 1, out)
+            self.assertIn("FAIL statements: projects/zlib/checksum_fuzzer/Statements.v is missing", out)
+            self.assertFalse(os.path.exists(tl.log) and "dune build" in tl.calls(), "nothing is built")
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_unit_whose_every_statement_is_withdrawn_has_no_statement_to_check(self):
+        """The schema takes a harness with published builds whose every statement is withdrawn; its Statements.v then
+        defines none."""
+        with tree() as t:
+            self.ready(t)
+            tl = self.tools()
+            withdraw_every_statement(t, "checksum_fuzzer")
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
+            self.assertEqual(rc, 1, out)
+            self.assertIn("is withheld or withdrawn, so Statements.v defines none: nothing to check", out)
+            self.assertFalse(os.path.exists(tl.log) and "dune build" in tl.calls(), "nothing is built")
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_proofs_asked_of_a_unit_with_no_proof_fail(self):
+        """--parts statements,proofs of a unit with no proof would pass on its statements alone."""
+        with tree() as t:
+            self.ready(t)
+            self.tools()
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements,proofs")
+            self.assertEqual(rc, 1, out)
+            self.assertIn("FAIL zlib/checksum_fuzzer: nothing to check for part proofs: the unit has no proof", out)
+            self.assertIn("0 step(s) passed, 1 failed", out)
+            # with a proof, the same parts pass
+            self._proof(t)
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements,proofs")
+            self.assertEqual(rc, 0, out)
+            self.assertIn("2 step(s) passed, 0 failed", out)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_without_parts_a_unit_is_checked_on_the_parts_it_has(self):
+        """`./oft check p/h`, as every harness README and docs/proving.md say to run it: an unproved unit passes on its
+        statements, and a proved one is checked with its proofs."""
+        with tree() as t:
+            self.ready(t)
+            self.tools()
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"])
+            self.assertEqual(rc, 0, out)
+            self.assertIn("1 step(s) passed, 0 failed", out)
+            self._proof(t)
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"])
+            self.assertEqual(rc, 0, out)
+            self.assertIn("proofs/zlib/checksum_fuzzer/plain_halts: proves", out)
+            self.assertIn("2 step(s) passed, 0 failed", out)
+            r = subprocess.run([sys.executable, "-m", "oft", "--root", t.root, "check", "zlib/checksum_fuzzer"],
+                               cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                               env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), capture_output=True, text=True)
+            if self.stack_limit_is_low:
+                # a new process gets this host's low hard limit, which only root can raise: `oft check` refuses
+                self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                self.assertIn("FAIL the stack's hard limit is", r.stdout, r.stdout + r.stderr)
+                self.assertIn("(docker run --ulimit stack=-1:-1)\n", r.stdout, r.stdout + r.stderr)
+                return
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("2 step(s) passed, 0 failed", r.stdout)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_statement_stated_as_an_axiom_fails(self):
+        """Under its own name, an Axiom, a Parameter or a Definition closed by Admitted is not a definition: Print
+        Assumptions lists it."""
+        for how in ("Axiom plain_halts : Prop.\n", "Parameter plain_halts : Prop.\n",
+                    "Definition plain_halts : Prop.\nAdmitted.\n"):
+            self.tearDown()  # a fresh stand-in directory for each
+            self.setUp()
+            with self.subTest(how=how), tree() as t:
+                self.ready(t)
+                self.tools()
+                stmts = "projects/zlib/checksum_fuzzer/Statements.v"
+                text = t.read(stmts)
+                i = text.index("Definition plain_halts : Prop :=")
+                t.write(stmts, text[:i] + how + text[text.index("\nDefinition ", i + 1) + 1:])
+                rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
+                self.assertEqual(rc, 1, out)
+                self.assertIn("Statements.v states plain_halts as an axiom (Axiom, Parameter or Admitted)", out)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_statements_that_assume_an_axiom_outside_the_allowlist_fail(self):
+        with tree() as t:
+            self.ready(t)
+            self.tools()
+            t.write("toolchain/allowed-axioms.txt", "Corelib.Init.Something.other\n")
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
+            self.assertEqual(rc, 1, out)
+            self.assertIn("the statements assume axioms outside the allowlist: Corelib.Init.Something.prim", out)
+
+    def _check_units(self, t, tl, **env):
+        """Run check-units.sh over t with a docker that runs oft here; (the completed process, the docker calls)."""
+        log = os.path.join(self.d.name, "check-units.log")
+        open(log, "w").close()
+        tl.put("docker", """echo "docker $*" >> "$CHECK_UNITS_LOG"
+case "$1" in
+  pull) exit 0 ;;
+  run)
+    while [ "$#" -gt 0 ] && [ "$1" != python3 ]; do shift; done
+    shift 3
+    [ "$1" = --root ] && shift 2
+    PYTHONPATH="$TOOLS" python3 -m oft.check --root "$WORK" "$@"
+    ;;
+esac
+""")
+        tools = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        env = dict(os.environ, WORK=t.root, TOOLS=os.path.dirname(tools), PROJECTS="zlib", CX_UNITS="", FINDINGS="",
+                   ASSETS=os.path.join(self.d.name, "assets"),  # ready() put the release asset here
+                   PYDEPS=self.d.name, CACHE=os.path.join(self.d.name, "cache"), GITHUB_REPOSITORY="example/proofs",
+                   CHECK_UNITS_LOG=log, PYTHONDONTWRITEBYTECODE="1", **env)
+        r = subprocess.run(["bash", os.path.join(tools, "ci", "check-units.sh")], env=env, capture_output=True,
+                           text=True)
+        with open(log) as f:
+            return r, f.read()
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_check_units_checks_a_unit_with_no_proof_by_its_statements_and_one_with_a_proof_with_its_proofs(self):
+        """CI's check job (check-units.sh) on the plan's job: a unit the plan leaves out of proof_units is a
+        statements-only run, which passes; one in it is checked with its proofs."""
+        with tree() as t:
+            self.ready(t)
+            tl = self.tools()
+            self._proof(t)
+            # the plan, of a commit of this tree (a stand-in checker in tools/oft/, as keys.checker reads one)
+            t.write("tools/oft/check.py", "check\n")
+            git = ["git", "-C", t.root, "-c", "user.name=t", "-c", "user.email=t" + "@" + "example.invalid",
+                   "-c", "commit.gpgsign=false"]
+            for args in (["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "x"]):
+                subprocess.run(git + args, check=True, capture_output=True,
+                               env=dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1"))
+            buf = io.StringIO()
+            plan.plan(t.root, units={"zlib/checksum_fuzzer", "zlib/api-driver"}, max_jobs=1, out=buf)
+            job = json.loads(buf.getvalue())["jobs"][0]
+            self.assertEqual(job["check_units"], "zlib/api-driver zlib/checksum_fuzzer")
+            self.assertEqual(job["proof_units"], "zlib/checksum_fuzzer")
+            r, calls = self._check_units(t, tl, UNITS=job["check_units"],
+                                         PROOF_UNITS=json.dumps(job["proof_units"]))
+            if self.stack_limit_is_low:
+                # each check runs in a new process, with this host's low hard limit: the first refuses, as above
+                self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+                self.assertIn("FAIL the stack's hard limit is", r.stdout, r.stdout + r.stderr)
+                self.assertIn("(docker run --ulimit stack=-1:-1)\n", r.stdout, r.stdout + r.stderr)
+                self.assertIn("python3 -m oft.check --root /work zlib/", calls)
+                return
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("python3 -m oft.check --root /work zlib/checksum_fuzzer --parts statements,proofs\n", calls)
+            self.assertIn("python3 -m oft.check --root /work zlib/api-driver --parts statements\n", calls)
+            self.assertIn("2 step(s) passed, 0 failed", r.stdout)
+            self.assertIn("1 step(s) passed, 0 failed", r.stdout)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_check_units_refuses_a_job_that_does_not_say_which_units_have_proofs(self):
+        """A plan without proof_units (null through toJSON), no PROOF_UNITS at all, or one that names a unit the job
+        does not build: no unit is checked without its proofs because the plan said nothing."""
+        with tree() as t:
+            self.ready(t)
+            tl = self.tools()
+            self._proof(t)
+            for env, why in (({}, "PROOF_UNITS is not set"), ({"PROOF_UNITS": "null"}, "PROOF_UNITS is null"),
+                             ({"PROOF_UNITS": '"zlib/api-driver"'}, "PROOF_UNITS names zlib/api-driver")):
+                with self.subTest(env=env):
+                    r, calls = self._check_units(t, tl, UNITS="zlib/checksum_fuzzer", **env)
+                    self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+                    self.assertIn(why, r.stderr)
+                    self.assertNotIn("docker run", calls)
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
     def test_statements_with_rocqchk(self):
@@ -651,20 +904,57 @@ class Check(unittest.TestCase):
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
     def test_rocq_runs_with_the_largest_stack_allowed(self):
         # large proof terms overflow the usual 8 MiB stack in the release checker image
+        check.raise_stack_limit = self.old_raise_stack_limit
         with tree() as t:
             self.ready(t)
             self._proof(t)
             tl = self.tools()
             soft, hard = resource.getrlimit(resource.RLIMIT_STACK)
             try:
-                resource.setrlimit(resource.RLIMIT_STACK, (8 << 20, hard))
+                # the usual 8 MiB, or a hard limit below it
+                resource.setrlimit(resource.RLIMIT_STACK, (min(8 << 20, hard) if self.stack_limit_is_low else 8 << 20,
+                                                           hard))
                 rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs")
             finally:
                 resource.setrlimit(resource.RLIMIT_STACK, (soft, hard))
+            if self.stack_limit_is_low:
+                # this host gives every process a hard limit below the 1 GiB Rocq needs, and a test cannot raise it:
+                # what `oft check` owes here is the refusal, before it compiles anything
+                self.assertEqual(rc, 1, out)
+                self.assertIn("the stack's hard limit is %d bytes" % hard, out)
+                self.assertIn("docker run --ulimit stack=-1:-1", out)
+                return
             self.assertEqual(rc, 0, out)
             want = "unlimited" if hard == resource.RLIM_INFINITY else str(hard // 1024)
             seen = {l for l in tl.calls().splitlines() if l == "unlimited" or l.isdigit()}
             self.assertEqual(seen, {want})
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_stack_hard_limit_below_1_gib_is_refused_on_any_host(self):
+        """A process may lower its own hard limit: `oft check` runs in one whose hard limit is just below 1 GiB (or
+        this host's, when that is lower) and refuses before it compiles anything; at 1 GiB, where the host allows
+        it, it checks."""
+        with tree() as t:
+            self.ready(t)
+            self._proof(t)
+            tl = self.tools()
+            here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            argv = [sys.executable, "-m", "oft.check", "--root", t.root, "zlib/checksum_fuzzer", "--parts", "proofs"]
+            low = resource.getrlimit(resource.RLIMIT_STACK)[1] if self.stack_limit_is_low else check.STACK_NEEDED - 1
+            for hard in [low] + ([] if self.stack_limit_is_low else [check.STACK_NEEDED]):
+                with self.subTest(hard=hard):
+                    r = subprocess.run(argv, cwd=here, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+                                       capture_output=True, text=True,
+                                       preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_STACK,
+                                                                             (min(8 << 20, hard), hard)))
+                    if hard < check.STACK_NEEDED:
+                        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                        self.assertIn("FAIL the stack's hard limit is %d bytes; Rocq needs at least %d "
+                                      "(docker run --ulimit stack=-1:-1)\n" % (hard, check.STACK_NEEDED), r.stdout)
+                        self.assertFalse(os.path.exists(tl.log) and "rocq " in tl.calls(), "nothing is compiled")
+                    else:
+                        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                        self.assertIn("1 step(s) passed, 0 failed", r.stdout)
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
     def test_a_proof_of_another_statement(self):
@@ -784,128 +1074,174 @@ class Check(unittest.TestCase):
             self.assertIn("no longer reproduces", out)
 
 
-class Plan(unittest.TestCase):
-    def plan(self, t, changed):
-        p = t.path("changed.txt")
-        with open(p, "w") as f:
-            f.write("\n".join(changed) + "\n")
-        buf = io.StringIO()
-        check.plan(t.root, p, out=buf)
-        return json.loads(buf.getvalue())
-
-    def test_units(self):
-        with tree() as t:
-            self.assertEqual(self.plan(t, ["docs/proving.md", "notes/zlib.md"])["units"], [])
-            one = self.plan(t, ["proofs/zlib/checksum_fuzzer/plain_halts/Proof.v"])
-            self.assertEqual(one["units"], ["zlib/checksum_fuzzer"])
-            self.assertEqual(one["check_units"], ["zlib/checksum_fuzzer"])
-            everything = self.plan(t, ["theories/Shapes.v"])
-            self.assertTrue(everything["all"])
-            self.assertEqual(len(everything["units"]), 3)
-            self.assertEqual(everything["check_units"], everything["units"])
-
-    def test_a_changed_finding_marks_its_unit_and_puts_it_in_the_findings_list(self):
-        with tree() as t:
-            add_findings(t)
-            for changed in (["findings/zlib/checksum_fuzzer/stand-in-abort/finding.yaml"],
-                            ["findings/zlib/checksum_fuzzer/series"], ["findings/zlib/unpatched.yaml"]):
-                with self.subTest(changed=changed):
-                    got = self.plan(t, changed)
-                    self.assertEqual(got["units"], ["zlib/checksum_fuzzer"])
-                    self.assertEqual([j["findings"] for j in got["jobs"]], ["zlib/checksum_fuzzer"])
-            got = self.plan(t, ["proofs/json/fuzzer-parse_bjdata/plain_halts/Proof.v"])
-            self.assertEqual([j["findings"] for j in got["jobs"]], [""])
-
-    def test_a_unit_whose_only_finding_is_pruned_is_still_in_the_findings_list(self):
-        with tree() as t:
-            add_findings(t)
-            prune(t)
-            got = self.plan(t, ["theories/Shapes.v"])
-            self.assertEqual(" ".join(j["findings"] for j in got["jobs"]).split(), ["zlib/checksum_fuzzer"])
-
-    def test_a_withheld_finding_is_planned_and_keeps_its_findings_job(self):
-        """A finding on a harness that withholds every build still makes a job: pr.yml runs its check job, and
-        required wants it to pass, when the plan's units are not empty (pr.yml's lint outputs.units).  Readers that
-        fetch binaries or build statements (each job's check-units.sh step, weekly's determinism sample, ossv-gate's
-        quick statements) read check_units, which leaves the harness out."""
-        with tree() as t:
-            add_findings(t)
-            withhold_checksum_fuzzer(t)
-            got = self.plan(t, ["findings/zlib/checksum_fuzzer/stand-in-abort/finding.yaml"])
-            self.assertEqual(got["units"], ["zlib/checksum_fuzzer"])
-            self.assertEqual(got["check_units"], [])
-            self.assertEqual(len(got["jobs"]), 1)
-            self.assertEqual(got["jobs"][0]["check_units"], "")
-            self.assertEqual(got["jobs"][0]["projects"], "")
-            self.assertEqual(got["jobs"][0]["findings"], "zlib/checksum_fuzzer")
-            mixed = self.plan(t, ["findings/zlib/checksum_fuzzer/stand-in-abort/finding.yaml",
-                                  "proofs/json/fuzzer-parse_bjdata/plain_halts/Proof.v"])
-            self.assertEqual(mixed["units"], ["json/fuzzer-parse_bjdata", "zlib/checksum_fuzzer"])
-            self.assertEqual(mixed["check_units"], ["json/fuzzer-parse_bjdata"])
-
-    def release_check_plan(self, t):
-        """release-check.yml's plan step, run as the workflow runs it on the tree t: (its exit, its output, the plan)."""
-        step = next(s for s in yamlio.load_file(os.path.join(REPO, ".github", "workflows", "release-check.yml"))
-                    ["jobs"]["plan"]["steps"] if s.get("id") == "plan")
+class ReachStep(unittest.TestCase):
+    def pr_reach_step(self, head_release, base_release, changed, event="pull_request", old_base_tools=False):
+        """pr.yml's reach step, run as the workflow runs it, with this text as the change's release.yaml and the
+        base's (None: no such file), and these changed paths: (its exit, its output, the outputs it wrote).  With
+        old_base_tools, the base's tools are an oft whose plan module has no images_differ."""
         with tempfile.TemporaryDirectory() as d:
-            os.symlink(os.path.dirname(os.path.dirname(os.path.abspath(check.__file__))), t.path("tools"))
+            os.makedirs(os.path.join(d, "head"))
+            os.makedirs(os.path.join(d, "base"))
+            for side, text in (("head", head_release), ("base", base_release)):
+                if text is not None:
+                    with open(os.path.join(d, side, "release.yaml"), "w") as f:
+                        f.write(text)
+            if old_base_tools:
+                os.makedirs(os.path.join(d, "base", "tools", "oft"))
+                for name in ("__init__.py", "plan.py"):
+                    open(os.path.join(d, "base", "tools", "oft", name), "w").close()
+            else:
+                # the base's tools, as the plan job's base worktree holds them
+                os.symlink(os.path.dirname(os.path.dirname(os.path.abspath(check.__file__))),
+                           os.path.join(d, "base", "tools"))
             os.mkdir(os.path.join(d, "bin"))
             with open(os.path.join(d, "bin", "python"), "w") as f:
                 f.write('#!/bin/sh\nexec "%s" "$@"\n' % sys.executable)
             os.chmod(os.path.join(d, "bin", "python"), 0o755)
+            tmp = os.path.join(d, "runner-temp")
+            os.mkdir(tmp)
+            with open(os.path.join(tmp, "changed.txt"), "w") as f:
+                f.write("".join(rel + "\n" for rel in changed))
+            script = os.path.join(d, "reach.sh")
+            step = next(s for s in yamlio.load_file(PR_YML)["jobs"]["plan"]["steps"] if s.get("id") == "reach")
+            with open(script, "w") as f:
+                f.write(step["run"])
+            out = os.path.join(d, "output")
+            # the step starts python itself, and -B of this process does not reach that child: without this the run
+            # leaves tools/oft/__pycache__ behind, which the repository's own lint then refuses
+            env = dict(os.environ, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], RUNNER_TEMP=tmp,
+                       GITHUB_OUTPUT=out, GITHUB_STEP_SUMMARY=os.path.join(d, "summary"), EVENT=event,
+                       PYTHONDONTWRITEBYTECODE="1")
+            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", script], cwd=d, env=env,
+                               capture_output=True, text=True)
+            got = {}
+            if os.path.exists(out):
+                with open(out) as f:
+                    got = dict(line.rstrip("\n").split("=", 1) for line in f if "=" in line)
+            return r.returncode, r.stdout + r.stderr, got
+
+    @unittest.skipUnless(HAVE_PR_YML, "no .github/workflows/pr.yml beside tools/oft")
+    def test_the_reach_step_runs_the_controls_when_release_yaml_names_another_image(self):
+        """The controls run in the checker image release.yaml names, and no file under toolchain/ changes with that
+        pin: a release.yaml whose checker or runner differs from the base's runs them, and the plan job hands the
+        change's checker to the controls job.  A release.yaml the base's tools cannot compare counts as another
+        image, and anything but a checker digest is handed over as nothing, which the controls job refuses."""
+        with open(os.path.join(REPO, "tools", "oft", "tests", "fixtures", "tree", "release.yaml")) as f:
+            base = f.read()
+        checker = "ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:" + "1" * 64
+        self.assertIn(checker, base)
+        other_checker = base.replace("1" * 64, "a" * 64)
+        other_runner = base.replace("2" * 64, "b" * 64)
+        other_date = base.replace("date: 2026-11-02", "date: 2026-11-03")
+        self.assertNotEqual(other_date, base)
+        docs = ["docs/checking.md"]
+        cases = [
+            ("no release.yaml change", base, base, docs, "false", checker),
+            ("another checker", other_checker, base, ["release.yaml"], "true", checker.replace("1" * 64, "a" * 64)),
+            ("another runner", other_runner, base, ["release.yaml"], "true", checker),
+            ("another key only", other_date, base, ["release.yaml"], "false", checker),
+            ("a release.yaml that does not parse", "images: [\n", base, ["release.yaml"], "true", ""),
+            ("no base release.yaml", base, None, ["release.yaml"], "true", checker),
+            ("a checker that is not a digest", base.replace("@sha256:" + "1" * 64, ":latest"), base,
+             ["release.yaml"], "true", ""),
+        ]
+        for name, head_release, base_release, changed, controls, handed in cases:
+            with self.subTest(case=name):
+                rc, output, got = self.pr_reach_step(head_release, base_release, changed)
+                self.assertEqual(rc, 0, output)
+                self.assertEqual((got.get("controls"), got.get("checker")), (controls, handed), output)
+        # base tools older than plan.images_differ: the call fails, and that alone runs the controls (the images are
+        # the same, so nothing else would)
+        rc, output, got = self.pr_reach_step(other_date, base, ["release.yaml"], old_base_tools=True)
+        self.assertEqual(rc, 0, output)
+        self.assertEqual((got.get("controls"), got.get("checker")), ("true", checker), output)
+
+
+class ImagesDailyRun(unittest.TestCase):
+    PUBLIC_TREE = "e" * 40
+    OLD_TREE = "d" * 40
+    PINNED = "ghcr.io/theorem-labs/oss-fuzz-theorems-runner@sha256:" + "0" * 64
+
+    def plan_step(self, versions, attested, labels):
+        """images.yml's plan step on a daily run, as the workflow runs it, with stand-ins for gh and docker: the runner
+        package's build- versions `versions` (digests, newest first), `attested` {digest: attestations this
+        repository holds} (a digest not in it: the call fails), and `labels` {digest: its tools/oft tree label}.
+        (its exit, its output, the outputs it wrote)."""
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "release.yaml"), "w") as f:
+                f.write("images:\n  runner: %s\n" % self.PINNED)
+            data = {"versions": versions, "attested": attested, "labels": labels,
+                    "commit": "c" * 40, "tree": self.PUBLIC_TREE}
+            with open(os.path.join(d, "data.json"), "w") as f:
+                json.dump(data, f)
+            os.mkdir(os.path.join(d, "bin"))
+            stand_in = (
+                "#!%s\nimport json, os, sys\n"
+                "data = json.load(open(os.path.join(os.environ['STAND_IN_DATA'])))\n"
+                "a = sys.argv[1:]\n" % sys.executable)
+            gh = stand_in + (
+                "path = a[1]\n"
+                "if path.endswith('/commits/main'): print(data['commit'])\n"
+                "elif '/contents/tools?' in path: print(data['tree'])\n"
+                "elif '/versions?' in path: print('\\n'.join(data['versions']))\n"
+                "elif '/attestations/' in path:\n"
+                "    d = path.rsplit('/', 1)[1]\n"
+                "    if d not in data['attested']: sys.exit('gh: Not Found (HTTP 404)')\n"
+                "    print(data['attested'][d])\n"
+                "else: sys.exit('gh stand-in: %r' % a)\n")
+            docker = stand_in + (
+                "ref = a[3]\n"
+                "d = ref.rsplit('@', 1)[1]\n"
+                "tree = data['labels'].get(d)\n"
+                "print(json.dumps({'oss-fuzz-theorems.tools.tree': tree} if tree else {}))\n")
+            for name, text in (("gh", gh), ("docker", docker)):
+                with open(os.path.join(d, "bin", name), "w") as f:
+                    f.write(text)
+                os.chmod(os.path.join(d, "bin", name), 0o755)
+            step = next(s for s in yamlio.load_file(IMAGES_YML)["jobs"]["plan"]["steps"] if s.get("id") == "plan")
             script = os.path.join(d, "plan.sh")
             with open(script, "w") as f:
                 f.write(step["run"])
-            env = dict(os.environ, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], RUNNER_TEMP=d,
-                       GITHUB_OUTPUT=os.path.join(d, "output"), GITHUB_STEP_SUMMARY=os.path.join(d, "summary"))
-            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", script], cwd=t.root, env=env,
+            tmp = os.path.join(d, "runner-temp")
+            os.mkdir(tmp)
+            out = os.path.join(d, "output")
+            env = dict(os.environ, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], RUNNER_TEMP=tmp,
+                       GITHUB_OUTPUT=out, GITHUB_STEP_SUMMARY=os.path.join(d, "summary"), EVENT="schedule",
+                       CHOICE="", BEFORE="", GH_TOKEN="x", GITHUB_REF="refs/heads/main",
+                       GITHUB_REPOSITORY_OWNER="theorem-labs", GITHUB_REPOSITORY="theorem-labs/oss-verify-proofs",
+                       STAND_IN_DATA=os.path.join(d, "data.json"))
+            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", script], cwd=d, env=env,
                                capture_output=True, text=True)
-            if r.returncode != 0:
-                return r.returncode, r.stdout + r.stderr, None
-            with open(os.path.join(d, "plan.json")) as f, open(os.path.join(d, "output")) as o:
-                return 0, o.read(), json.load(f)
+            got = {}
+            if os.path.exists(out):
+                with open(out) as f:
+                    got = dict(line.rstrip("\n").split("=", 1) for line in f if "=" in line)
+            return r.returncode, r.stdout + r.stderr, got
 
-    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
-    def test_release_check_plans_every_committed_proof_and_finding(self):
-        """release-check.yml's plan step: a harness with a committed finding is checked, also when it withholds every
-        build and has no proof, and only the harnesses with published builds are built."""
-        with tree() as t:
-            add_findings(t)
-            withhold_checksum_fuzzer(t)
-            t.write("proofs/json/fuzzer-parse_bjdata/plain_halts/proof.yaml", "a committed proof\n")
-            rc, output, got = self.release_check_plan(t)
-            self.assertEqual(rc, 0, output)
-            self.assertEqual(got["units"], ["json/fuzzer-parse_bjdata", "zlib/checksum_fuzzer"])
-            self.assertEqual(got["check_units"], ["json/fuzzer-parse_bjdata"])
-            self.assertEqual(" ".join(j["findings"] for j in got["jobs"]).split(), ["zlib/checksum_fuzzer"])
-            self.assertIn("units=2\n", output)
+    @unittest.skipUnless(os.path.exists(IMAGES_YML) and shutil.which("jq"), "no images.yml beside tools/oft, or no jq")
+    def test_the_daily_run_compares_the_newest_attested_runner(self):
+        """A push that failed after `docker push` leaves a newest version with no attestation, labelled with the
+        public tools tree; the attestations call answers it with an empty list.  The daily run passes over it and
+        compares the newest runner this workflow finished, so a tree no attested runner carries is built again."""
+        failed, finished = "sha256:" + "a" * 64, "sha256:" + "b" * 64
+        labels = {failed: self.PUBLIC_TREE, finished: self.OLD_TREE}
+        for name, attested in (("an empty list", {failed: 0, finished: 1}), ("a refused call", {finished: 2})):
+            with self.subTest(newest_unattested=name):
+                rc, output, got = self.plan_step([failed, finished], attested, labels)
+                self.assertEqual(rc, 0, output)
+                self.assertIn("runner ghcr.io/theorem-labs/oss-fuzz-theorems-runner@%s" % finished, output)
+                self.assertEqual(got.get("images"), '["runner"]', output)
+        rc, output, got = self.plan_step([finished], {finished: 1}, {finished: self.PUBLIC_TREE})
+        self.assertEqual((rc, got.get("images")), (0, "[]"), output)
 
-    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
-    def test_release_check_plans_findings_in_a_tree_with_no_proofs(self):
-        """The cross-model review's case: a tree with a finding and no proofs/ directory plans that finding."""
-        with tree() as t:
-            add_findings(t)
-            self.assertFalse(os.path.exists(t.path("proofs")))
-            rc, output, got = self.release_check_plan(t)
-            self.assertEqual(rc, 0, output)
-            self.assertEqual(got["units"], ["zlib/checksum_fuzzer"])
-            self.assertEqual(" ".join(j["findings"] for j in got["jobs"]).split(), ["zlib/checksum_fuzzer"])
+    @unittest.skipUnless(os.path.exists(IMAGES_YML) and shutil.which("jq"), "no images.yml beside tools/oft, or no jq")
+    def test_the_daily_run_says_why_it_compares_the_pinned_runner(self):
+        """With no attested runner, the run compares the runner release.yaml pins, and its log says why."""
+        rc, output, got = self.plan_step(["sha256:" + "a" * 64], {}, {"sha256:" + "0" * 64: self.PUBLIC_TREE})
+        self.assertEqual((rc, got.get("images")), (0, "[]"), output)
+        self.assertIn("::warning::no pushed runner has an attestation of this repository", output)
+        self.assertIn("runner %s" % self.PINNED, output)
 
-    def test_a_project_file_marks_every_harness_of_its_project(self):
-        with tree() as t:
-            every = self.plan(t, ["theories/Shapes.v"])["units"]
-            zlib = [u for u in every if u.startswith("zlib/")]
-            self.assertTrue(zlib and len(zlib) < len(every))
-            self.assertEqual(self.plan(t, ["projects/zlib/project.yaml"])["units"], zlib)
-
-    def test_a_quoted_path_marks_every_harness(self):
-        with tree() as t:
-            self.assertTrue(self.plan(t, ['"proofs/zlib/checksum_fuzzer/lib/a\\"b.v"'])["all"])
-
-    def test_a_gitattributes_file_marks_every_harness(self):
-        with tree() as t:
-            for rel in (".gitattributes", "proofs/zlib/.gitattributes"):
-                self.assertTrue(self.plan(t, [rel])["all"], rel)
 
 
 FINDING = "findings/zlib/checksum_fuzzer/stand-in-abort"
@@ -1006,7 +1342,7 @@ class Findings(unittest.TestCase):
             rc, out = run(fetch.fetch, t.root, ["zlib"], source=self.assets, findings=True)
             self.assertEqual(rc, 0, out)
             self.assertIn("zlib: zlib-unpatched-bin.tar.zst", out)
-            self.assertIn("4 binaries, each SHA-256 checked", out)
+            self.assertIn("8 binaries, each SHA-256 checked", out)
             for name, data in files.items():
                 with open(t.path("findings/zlib/bin", name), "rb") as f:
                     self.assertEqual(f.read(), data)
@@ -1022,7 +1358,7 @@ class Findings(unittest.TestCase):
             unpatched_release(t, self.assets, tamper=lambda f: dict(f, **lic))
             rc, out = run(fetch.fetch, t.root, ["zlib"], source=self.assets, findings=True)
             self.assertEqual(rc, 0, out)
-            self.assertIn("4 binaries, each SHA-256 checked; 1 licence files", out)
+            self.assertIn("8 binaries, each SHA-256 checked; 1 licence files", out)
             with open(t.path("findings/zlib/bin/LICENSES/zlib/LICENSE"), "rb") as f:
                 self.assertEqual(f.read(), lic["LICENSES/zlib/LICENSE"])
             self.assertEqual([str(f) for f in t.lint()], [], "the fetched licence files are never tracked")
@@ -1251,7 +1587,7 @@ case "$1" in
     while [ "$#" -gt 0 ] && [ "$1" != python3 ]; do shift; done
     shift 3
     [ "$1" = --root ] && shift 2
-    PYTHONPATH="$TOOLS" python3 -m oft --root "$WORK" "$@"
+    PYTHONPATH="$TOOLS" python3 -m oft.check --root "$WORK" "$@"
     ;;
 esac
 """)
@@ -1262,7 +1598,8 @@ esac
             tools = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             script = os.path.join(tools, "ci", "check-units.sh")
             env = dict(os.environ, PATH=tl.bin + os.pathsep + self.old_path, WORK=t.root, TOOLS=os.path.dirname(tools),
-                       UNITS="", PROJECTS="", CX_UNITS="", FINDINGS="zlib/checksum_fuzzer", ASSETS=assets,
+                       UNITS="", PROOF_UNITS='""', PROJECTS="", CX_UNITS="", FINDINGS="zlib/checksum_fuzzer",
+                       ASSETS=assets,
                        PYDEPS=self.d.name, CACHE=cache, GITHUB_REPOSITORY="example/proofs",
                        CHECK_UNITS_LOG=log, CHECK_UNITS_SOURCE=self.assets, CHECK_UNITS_DEST=assets,
                        PYTHONDONTWRITEBYTECODE="1")
@@ -1272,7 +1609,7 @@ esac
             with open(log) as f:
                 calls = f.read()
             self.assertIn("gh release download findings-zlib", calls)
-            self.assertIn("check zlib/checksum_fuzzer --parts findings", calls)
+            self.assertIn("python3 -m oft.check --root /work zlib/checksum_fuzzer --parts findings", calls)
             self.assertNotIn("statements,proofs", calls)
 
 

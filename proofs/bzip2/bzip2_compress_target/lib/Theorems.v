@@ -9,8 +9,9 @@ Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
 Require LinuxProcessSemantics.LinuxProcessSem.Run.
 Require OssFuzzTheorems.bzip2.bzip2_compress_target.images.Plain.
 Require OssFuzzTheorems.bzip2.bzip2_compress_target.images.Asan.
+Require OssFuzzTheorems.bzip2.bzip2_compress_target.images.Ubsan.
 Require OssFuzzTheorems.bzip2.bzip2_compress_target.images.AsanUbsan.
-From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib Require FilingA0 FilingB0.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib Require FilingA0 FilingB0 FilingU0.
 
 Theorem strong_universal_error_free_bzip2_compress_target_asan :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
@@ -32,4 +33,15 @@ Theorem strong_universal_error_free_bzip2_compress_target_both :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.bzip2.bzip2_compress_target.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.bzip2.bzip2_compress_target.images.AsanUbsan.M.init_pc OssFuzzTheorems.bzip2.bzip2_compress_target.images.AsanUbsan.M.phdrs).
 Proof.
 exact FilingB0.compress_both_san.
+Qed.
+
+Theorem strong_universal_error_free_bzip2_compress_target_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.alloc_only_cfg false)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.bzip2.bzip2_compress_target.images.Plain.M.loaded_segments OssFuzzTheorems.bzip2.bzip2_compress_target.images.Plain.M.init_pc OssFuzzTheorems.bzip2.bzip2_compress_target.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.bzip2.bzip2_compress_target.images.Ubsan.M.loaded_segments OssFuzzTheorems.bzip2.bzip2_compress_target.images.Ubsan.M.init_pc OssFuzzTheorems.bzip2.bzip2_compress_target.images.Ubsan.M.phdrs).
+Proof.
+exact FilingU0.compress_ubsan_std.
 Qed.

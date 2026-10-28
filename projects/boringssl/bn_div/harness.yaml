@@ -163,6 +163,7 @@ checks:
   live: true
   where: source/bn_div.cc:63-66
   what: 'Division law: after BN_div(q, r, n, d), checks q*d + r == n exactly (BN_mul, BN_add, BN_cmp).'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: bn_div

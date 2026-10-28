@@ -1,0 +1,154 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import Tac Arr Bytes StoreFast FP ImageA.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_implementations.lib.Sj Require Import SjS1Out SjStage2 SjLeaves SjTape SjTapeInv SjTapeList SjExpDigits.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_implementations.lib.B Require Import Sj_akit Sj_stage2_defs Sj_stage2_tapek Sj_stage2_traps Sj_stage2_guard Sj_tables Sj_stage2_hooks Sj_stage2_numkit Sj_stage2_numkit2 Sj_stage2_numkit2b Sj_stage2_numkit3
+  Sj_stage2_numr_defs Sj_stage2_numr_defs2 Sj_stage2_numr_loops.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac lia ::= s2lia.
+Local Ltac tlia ::= r_tlia.
+Local Ltac solve_load ::= first [ solve_load_base | s2_load_shadow_cp | s2_load_shadow | s2_load_cp | s2_load_sown | solve_load_image ].
+Local Ltac solve_store ::= first [ solve_store0 | s2_store_wr ].
+
+Section NumR3.
+  Variable E : s2env.
+  Hypothesis OK : env_ok E.
+  Hypothesis SHZ : a_shz E.
+  Variable CP : Z.
+  Hypothesis HCP : cp_ok E CP.
+  Hypothesis SHZC : cp_shz E CP.
+  Notation bs := (crs (rtxt E)).
+  Notation LEN := (blen (rtxt E)).
+  Notation o s := 0%Z.
+
+  Lemma seg_numr_scan : forall (Q : machine_state -> Prop) (s : st) neg p e0,
+    (0 <= k s <= e_n E)%Z -> (0 <= neg <= 1)%Z -> (0 <= p <= LEN)%Z ->
+    (forall q0, (p < q0 <= LEN)%Z -> numr_expd_k E Q CP s neg q0 e0) ->
+    numr_flt_k E Q CP s neg p ->
+    numr_int_k E Q CP s neg p ->
+    numr_scan_k E Q CP s neg p e0.
+  Proof using OK SHZ HCP SHZC.
+    intros Q s neg p e0 HK HNEG HP KE KF KI. unfold numr_scan_k. intros until m1. intros HM.
+    pose proof (rtxt_ok E OK) as BOK. pose proof (conj (Z.le_refl 0) (Z.le_refl 0)) as HO.
+    pose proof (B_range bs p BOK) as HB0. pose proof (B_range bs (p + 1) BOK) as HB1. pose proof (B_range bs (p + 2) BOK) as HB2.
+    s2_env OK.
+    nopen HM.
+    ngrun.
+    if_cases K0; zify_cond K0.
+    -
+      ngrun.
+      if_cases K1; first [ (kapply KI; nclose) | (kapply KF; nclose) ].
+    - assert (HNZ : (p < LEN)%Z) by (nz_lt_by ltac:(intro EZ; rewrite EZ in K0; discriminate K0)).
+      ngrun.
+      if_cases K2; zify_cond K2.
+      +
+        assert (HNZ1 : (p + 1 < LEN)%Z) by (nz_lt_by ltac:(lia)).
+        ngrun_to 0xc809c%Z. kapply (KE (p + 2)%Z); [lia | nclose].
+      + ngrun.
+        if_cases K3; zify_cond K3.
+        *
+          kapply (KE (p + 1)%Z); [lia | nclose].
+        *
+          assert (HNZ1 : (p + 1 < LEN)%Z) by (nz_lt_by ltac:(lia)).
+          ngrun_to 0xc809c%Z. kapply (KE (p + 2)%Z); [lia | nclose].
+  Qed.
+
+  Ltac esign KN KA p' v :=
+    ngrun;
+    (let KSG := fresh "KSG" in if_cases KSG);
+      first [ (kapply (KN p' v); [lia | lia | nclose])
+            | (nstep; kapply (KN p' v); [lia | lia | nclose])
+            | (ngrun_to 0xc8298%Z; kapply (KA p' v); [lia | lia | nclose]) ].
+
+  Lemma seg_numr_expd : forall (Q : machine_state -> Prop) (s : st) neg q0 e0,
+    (0 <= k s <= e_n E)%Z -> (0 <= neg <= 1)%Z -> (0 <= q0 <= LEN)%Z -> rdelA_k E Q CP ->
+    (forall p' v, (q0 <= p' <= LEN)%Z -> (0 <= v < 10 ^ 18)%Z -> numr_eneg_k E Q CP s neg p' e0 v) ->
+    (forall p' v, (q0 <= p' <= LEN)%Z -> (0 <= v < 10 ^ 18)%Z -> numr_eadd_k E Q CP s neg p' e0 v) ->
+    numr_expd_k E Q CP s neg q0 e0.
+  Proof using OK SHZ HCP SHZC.
+    intros Q s neg q0 e0 HK HNEG HQ0 KX KN KA. unfold numr_expd_k. intros until m1. intros HM.
+    pose proof (rtxt_ok E OK) as BOK. pose proof (conj (Z.le_refl 0) (Z.le_refl 0)) as HO.
+    pose proof (B_range bs q0 BOK) as HBQ.
+    change (10 ^ 18)%Z with 1000000000000000000%Z in *.
+    s2_env OK.
+    nopen HM.
+    ngrun.
+    if_cases K3; zify_cond K3.
+    -
+      ngrun. if_cases K4; zify_cond K4; try (exfalso; lia).
+      nexit KX.
+    - assert (HNZ : (q0 < LEN)%Z) by (nz_lt_by ltac:(lia)).
+      assert (HD1 : digits bs q0 (0 + 1)) by (intros i Hi; replace (q0 + i)%Z with q0 by lia; lia).
+      ngrun_to 0xc80d8%Z.
+      kapply (numr_L4 E OK SHZ CP HCP SHZC Q (S (Z.to_nat (LEN))) q0 0%Z); [nclose | lia | lia | lia | lia | exact HD1 |].
+      intros c'. intro_words. intros HC1 HC2 HD' HND.
+      pose proof (B_range bs (q0 + c') BOK) as HBC.
+      ngrun.
+      if_cases K5; zify_cond K5; try (exfalso; lia).
+      ngrun.
+
+      if_cases K19; zify_cond K19;
+        first [ (assert (H19 : (19 <= c')%Z) by lia;
+                 ngrun;
+                 if_cases KZ; zify_cond KZ;
+                   [
+                     ngrun;
+                     if_cases KB; zify_cond KB; try (exfalso; lia);
+                     esign KN KA (q0 + c')%Z 999999999999999999%Z
+                   |
+                     ngrun_to 0xcbe70%Z;
+                     kapply (numr_L5 E OK SHZ CP HCP SHZC Q (S (Z.to_nat (LEN))) q0); [nclose | lia | lia |];
+                     intros z'; intro_words; intros HZ1 HZ2;
+                     ngrun;
+                     if_cases KB; zify_cond KB;
+                       [
+                         assert (HQC : (z' <= q0 + c')%Z)
+                           by (destruct (Z_le_dec z' (q0 + c')) as [L|G]; [exact L|]; exfalso; apply HND; rewrite (HZ2 (q0 + c')%Z) by lia; lia);
+                         assert (HZS : zeros bs q0 (z' - q0))
+                           by (intros i Hi; destruct (Z.eq_dec i 0) as [->|NE]; [replace (q0 + 0)%Z with q0 by lia; lia | apply HZ2; lia]);
+                         pose proof (dval_lt18 bs q0 c' (z' - q0) ltac:(lia) ltac:(lia) HD' HZS) as HV;
+                         change (10 ^ 18)%Z with 1000000000000000000%Z in HV;
+                         esign KN KA (q0 + c')%Z (dval bs q0 c')
+                       | esign KN KA (q0 + c')%Z 999999999999999999%Z ] ])
+              | (assert (H18 : (c' < 19)%Z) by lia;
+                 pose proof (dval_bound bs q0 c' ltac:(lia) HD') as HDB;
+                 assert (HP18 : (10 ^ c' <= 10 ^ 18)%Z) by (apply Z.pow_le_mono_r; lia);
+                 change (10 ^ 18)%Z with 1000000000000000000%Z in HP18;
+                 esign KN KA (q0 + c')%Z (dval bs q0 c')) ].
+  Qed.
+
+  Lemma seg_numr_eadd : forall (Q : machine_state -> Prop) (s : st) neg p e0 v,
+    (-2097152 <= e0 <= 0)%Z -> (-1000000000000000000 < v < 1000000000000000000)%Z ->
+    numr_flt_k E Q CP s neg p ->
+    numr_eadd_k E Q CP s neg p e0 v.
+  Proof using OK SHZ HCP SHZC.
+    intros Q s neg p e0 v HE0 HV KF. unfold numr_eadd_k. intros until m1. intros HM.
+    s2_env OK.
+    nopen HM.
+    destruct (Z_lt_dec v 0) as [VN|VP].
+    - zstep. zstep. zstep. g_bias. ngrun_to 0xc82b0%Z. kapply KF. nclose.
+    - zstep. zstep. zstep. g_bias. ngrun_to 0xc82b0%Z. kapply KF. nclose.
+  Qed.
+
+  Lemma seg_numr_eneg : forall (Q : machine_state -> Prop) (s : st) neg p e0 v,
+    (0 <= v < 1000000000000000000)%Z ->
+    numr_eadd_k E Q CP s neg p e0 (- v) ->
+    numr_eneg_k E Q CP s neg p e0 v.
+  Proof using OK SHZ HCP SHZC.
+    intros Q s neg p e0 v HV KA. unfold numr_eneg_k. intros until m1. intros HM.
+    s2_env OK.
+    nopen HM.
+    destruct (Z.eq_dec v 0) as [V0|VN].
+    - zstep. zstep. zstep. g_bias. ngrun_to 0xc8298%Z. kapply KA. nclose.
+    - zstep. zstep. zstep. g_bias. ngrun_to 0xc8298%Z. kapply KA. nclose.
+  Qed.
+End NumR3.

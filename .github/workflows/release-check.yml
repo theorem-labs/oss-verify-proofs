@@ -1,14 +1,17 @@
 # release-check.yml: what a commit changes, checked on that commit alone; the README's badge.
 #
-#   plan           the paths this commit changes, against its parent, mapped onto harnesses by
-#                  `oft plan --changed`: a changed proofs/<p>/<h>/, findings/<p>/<h>/,
-#                  counterexamples/<p>/<h>/ or projects/<p>/ marks that harness or that project's
-#                  harnesses, and nothing else marks any.  A weekly run, a dispatch, a push with no
-#                  usable parent, and a change that reaches every harness (FULL below) plan instead
-#                  every harness with a committed proof (proofs/<p>/<h>/<s>/proof.yaml) or finding
-#                  (findings/<p>/<h>/<slug>/finding.yaml, also on a harness that withholds every
-#                  build), as weekly.yml plans its sweep.  The plan also names the planned binaries
-#                  in a release that a read-only token cannot see (a draft), and which group needs each
+#   plan           the base (this commit's parent), the paths the commit changes, and the parts to
+#                  check of every harness with a committed proof (proofs/<p>/<h>/<s>/proof.yaml) or
+#                  finding (findings/<p>/<h>/<slug>/finding.yaml, also on a harness that withholds
+#                  every build), through `oft plan`.  With tools that have content keys
+#                  (tools/oft/keys.py), a part is kept when its key differs from its key at the base;
+#                  with tools that predate them (a release line's older tools), the changed paths are
+#                  mapped onto harnesses by `oft plan --changed`: a changed proofs/<p>/<h>/,
+#                  findings/<p>/<h>/, counterexamples/<p>/<h>/ or projects/<p>/ marks that harness or
+#                  that project's harnesses, and nothing else marks any.  A weekly or dispatched run, a
+#                  push with no usable parent, and a change that reaches every harness (FULL below) plan
+#                  every part instead (a full plan).  The plan also names the planned binaries in a
+#                  release that a read-only token cannot see (a draft), and which group needs each
 #   fetch-drafts   each of those binaries once, checked against its pin, as an artifact
 #                  of its own (skipped when there is none)
 #   check          each group of harnesses: fetch (a draft from its artifact), build the
@@ -20,24 +23,36 @@
 #
 # What each commit's own diff decides.  A commit that changes only CHANGELOG.md, docs/,
 # .github/workflows/, or release.yaml's version and date plans no proof job and is green in minutes; a
-# commit that changes one unit's proofs, counterexamples, findings or sources re-checks that unit, and
-# one that changes a project's project.yaml or any of its harness.yaml files re-checks that project
-# (`oft fetch` checks the project's archive against every harness's builds); never more than the full
-# plan.  A change that every harness reads -- theories/, toolchain/ (the toolchain pins and the files
-# that build the images), dune-project, a .gitattributes, a hand-written dune file, tools/ (the checker
-# the check job copies and runs), .github/actions/ (whose place-drafts the check job runs), or a
-# release.yaml that names another checker or runner image --
-# re-checks every one (FULL).  A path git quotes ('"', '\' or a control character in its name) is read
-# by no rule here, and is FULL too.
+# commit that changes one unit's proofs, counterexamples, findings or facts re-checks that unit, and
+# never more than the full plan.  Which router decides depends on the commit's own tools, which are
+# what the check job runs:
+#   - content keys, when `oft plan` has them (it takes --store): a change to the checker image pin
+#     (release.yaml images.checker), theories/, toolchain/allowed-axioms.txt or dune-project changes
+#     every build key, and so re-checks every build.  What no key holds takes the full plan (FULL):
+#     tools/ (the checker the check job copies and runs), toolchain/ (the files that build the
+#     images), a .gitattributes, and .github/actions/ (whose place-drafts the check job runs).  A
+#     hand-written dune file that could change a build is refused by the plan (keys.check_hand_dune).
+#   - the diff alone, with older tools: a change to a project's project.yaml or any of its
+#     harness.yaml files re-checks that project (`oft fetch` checks the project's archive against
+#     every harness's builds).  A change that every harness reads -- theories/, toolchain/,
+#     dune-project, a .gitattributes, a hand-written dune file, tools/, .github/actions/, or a
+#     release.yaml that names another checker or runner image -- re-checks every one (FULL).
+# A path git quotes ('"', '\' or a control character in its name) is read by no rule here, and is
+# FULL too.
 #
 # A change under .github/workflows/ plans no proof.  What it can break is the workflows themselves, and
 # pr.yml's run of the same push to main lints the tree and runs the tools' own tests, which read these
 # workflow files; re-compiling every proof would say nothing more about it.  This is also the rule the
 # publishing gate's own router follows.
 #
-# No earlier push is credited: the plan reads this commit against its parent and no record of earlier
-# runs, and each push already has a run of its own that nothing cancels (concurrency, below), so every
-# commit of main is decided and checked on its own.
+# No earlier push is credited.  The plan judges this commit against its parent and reads no record of
+# passes (`oft plan --store`), and each commit's run has a concurrency group of its own, so a new push
+# never cancels the run that is checking the push before it: every commit of main is decided and
+# checked on its own.
+#
+# The parts are planned with THIS commit's statements and tools (`--pr-kind release`, `--tools HEAD`),
+# which are what the check job runs (it copies work/tools out of the tree it checks).  pr.yml instead
+# judges a pull request with the base's tools, which a reviewer has read.
 #
 # It runs on every push to main, weekly and on request.  pr.yml checks what a pull request touches;
 # the weekly run and a workflow_dispatch check every committed proof and finding, so the badge rests on
@@ -65,7 +80,8 @@
 #     this repository's own runs writes it.  Each proof itself, and the wrapper
 #     that ties it to its statement and prints its assumptions, is compiled
 #     afresh every run (oft check compiles them with `rocq compile` in fresh
-#     directories).
+#     directories).  No proof check restores this cache now (OSSV-218: the
+#     check job's restore step says why); it is still saved.
 #   - the release assets, keyed by their pinned SHA-256; `oft fetch` checks every
 #     archive and file against the facts before using it.
 # A job that read a draft saves neither cache: a pull request can restore a
@@ -108,13 +124,14 @@ defaults:
 env:
   PYTHONDONTWRITEBYTECODE: "1"
   # The commit this one is judged against: main before the push (all zeros when the push made the
-  # branch).  A schedule or a dispatch has none, and plans every committed proof and finding.
+  # branch).  A schedule or a dispatch has none, and plans every part of every harness with a committed
+  # proof or finding.
   EVENT_BASE: ${{ github.event_name == 'push' && github.event.before || '' }}
 
 jobs:
   plan:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     outputs:
       plan: ${{ steps.drafts.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
@@ -122,6 +139,15 @@ jobs:
       draft_legs: ${{ steps.drafts.outputs.draft_legs }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          # Every file but the proof libraries, as pr.yml's plan job takes them: proofs/<p>/<h>/lib/ is
+          # most of the tree and nothing this job reads is under it.  The diff below reads the two
+          # trees, not the worktree, so it still lists every changed path, one under lib/ included.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/proofs/*/*/lib/
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
@@ -144,16 +170,39 @@ jobs:
               | sed -E 's|^(findings/[^/]+/[^/]+)/[^/]+/finding\.yaml$|\1/|' | sort -u >> "$RUNNER_TEMP/every.txt"
           fi
           [ -s "$RUNNER_TEMP/every.txt" ] || { echo "::error::no committed proof or finding: nothing to check"; exit 1; }
+          if [ -n "${UNITS:-}" ]; then
+            [ "$GITHUB_REF" != refs/heads/main ] || { echo "::error::on main every harness is checked: the badge says so"; exit 1; }
+            read -r -a units <<< "$UNITS"
+            for u in "${units[@]}"; do
+              grep -qxF -e "proofs/$u/" -e "findings/$u/" "$RUNNER_TEMP/every.txt" \
+                || { echo "::error::$u has no committed proof or finding"; exit 1; }
+            done
+            for u in "${units[@]}"; do printf 'proofs/%s/\nfindings/%s/\n' "$u" "$u"; done \
+              | grep -xF -f - "$RUNNER_TEMP/every.txt" > "$RUNNER_TEMP/named.txt"
+            mv "$RUNNER_TEMP/named.txt" "$RUNNER_TEMP/every.txt"
+          fi
+          # the same harnesses as PROJECT/HARNESS, for `oft plan --units`
+          sed -E 's|^[^/]+/([^/]+/[^/]+)/$|\1|' "$RUNNER_TEMP/every.txt" | sort -u > "$RUNNER_TEMP/units.txt"
           # The commit this one is judged against: main's tip before this push, which is the commit's
           # parent for a fast-forward and the tip it replaced for a force-push (whose own run checked
-          # it).  Without one -- a schedule, a dispatch, a push that made the branch, or a tip the
-          # repository no longer has -- every committed proof and finding is planned.
+          # it).  Without one -- a schedule, a dispatch, or a push that made the branch -- every part is
+          # planned.
           base="${EVENT_BASE:-}"
           case "$base" in 0000000000000000000000000000000000000000) base= ;; esac
           if [ -n "$base" ]; then
-            git cat-file -e "$base^{commit}" 2>/dev/null || git fetch --no-tags --depth=1 origin "$base" 2>/dev/null \
-              || { echo "::warning::$base is not in the repository: every committed proof and finding is planned"; base=; }
+            # the checkout is one commit deep, so the base is fetched the same way; only the two trees
+            # are read.  A base the repository no longer has (a force-push, a pruned commit) takes the
+            # full plan rather than a wrong one.
+            git cat-file -e "$base^{commit}" 2>/dev/null \
+              || git fetch --no-tags --depth=1 origin "$base" 2>/dev/null \
+              || { echo "::warning::$base is not in the repository: every part is planned"; base=; }
           fi
+          # Which router: content keys when this commit's tools have them (`oft plan --store` comes with
+          # tools/oft/keys.py), else the diff mapped onto harnesses, for a release line whose tools predate
+          # them.  Both are this commit's own tools, which the check job runs.
+          PYTHONPATH=tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
+          keyed=false
+          if grep -q -- --store "$RUNNER_TEMP/plan-help.txt"; then keyed=true; fi
           full=true
           if [ -n "$base" ] && [ -z "${UNITS:-}" ]; then
             # --no-renames: a renamed file is its old path and its new one; with renames git lists only
@@ -163,32 +212,49 @@ jobs:
             # there.  The dune filter reads bytes too, and splits on newlines alone.
             git -c core.quotePath=false diff --no-renames --name-only "$base" HEAD > "$RUNNER_TEMP/diff.txt"
             echo "changed paths: $(wc -l < "$RUNNER_TEMP/diff.txt")"
-            # A dune file dune reads for any build, which could declare a theory a build finds before the
-            # installed one (dune looks in the workspace first).  The generated ones cannot: each names
-            # only its own unit's theories, and `oft lint` holds them to their rendering.  Which ones are
-            # generated is tools/oft/paths.py's to say (is_gen, the `gen` rows, whose placeholders refuse
-            # a segment such as bin/ or lib/ that is not a name); a pattern here would be wider.  Every
-            # other dune file is hand-written, so it is FULL.
-            dune=$({ LC_ALL=C grep -E '(^|/)(dune|dune-project|dune-workspace|dune-file)$' "$RUNNER_TEMP/diff.txt" \
-                     || [ $? -eq 1 ]; } \
-                   | PYTHONPATH=tools python -c 'import sys
+            if [ "$keyed" = true ]; then
+              # What no content key holds, so that a change to it takes the full plan: tools/, the checker
+              # the check job copies and runs (keys.py holds one tools/ id, which is the same on both
+              # sides of a comparison, so no key can tell this change); a .gitattributes, since a rule of
+              # one aimed at tools/ changes the bytes the checker is checked out as, and the keys hold the
+              # attributes of the keyed paths only; toolchain/, whose Dockerfiles build the
+              # images a check runs in; .github/actions/, whose place-drafts the check job runs.  A
+              # path git still quotes ('"', '\' or a control character in its name) cannot be read by
+              # this pattern, and takes the full plan too.  .github/workflows/ is NOT here: a change to a
+              # workflow plans no proof, since pr.yml's run of the same push lints the tree and runs the
+              # tools' tests, which are what such a change can break.
+              if LC_ALL=C grep -qE '^(toolchain/|tools/|\.github/actions/|")|(^|/)\.gitattributes$' "$RUNNER_TEMP/diff.txt"; then
+                echo "a change under toolchain/, tools/ or .github/actions/, or a .gitattributes: every part is planned"
+              else
+                full=false
+              fi
+            else
+              # A dune file dune reads for any build, which could declare a theory a build finds before the
+              # installed one (dune looks in the workspace first).  The generated ones cannot: each names
+              # only its own unit's theories, and `oft lint` holds them to their rendering.  Which ones are
+              # generated is tools/oft/paths.py's to say (is_gen, the `gen` rows, whose placeholders refuse
+              # a segment such as bin/ or lib/ that is not a name); a pattern here would be wider.  Every
+              # other dune file is hand-written, so it is FULL.
+              dune=$({ LC_ALL=C grep -E '(^|/)(dune|dune-project|dune-workspace|dune-file)$' "$RUNNER_TEMP/diff.txt" \
+                       || [ $? -eq 1 ]; } \
+                     | PYTHONPATH=tools python -c 'import sys
           from oft import paths
           names = [b.decode("utf-8", "surrogateescape") for b in sys.stdin.buffer.read().split(b"\n") if b]
           sys.stdout.buffer.write(b" ".join(n.encode("utf-8", "surrogateescape") for n in names if not paths.is_gen(n)))')
-            # FULL: what every harness reads, so that a change to it re-checks every one.  theories/,
-            # toolchain/, dune-project, a .gitattributes and a quoted path are `oft plan`'s own full
-            # rules (tools/oft/check.py, plan).  The rest mark no harness in `oft plan`, so they are
-            # named here: tools/, the checker the check job copies out of the tree and runs;
-            # .github/actions/, whose place-drafts the check job runs; a hand-written dune file; and a
-            # release.yaml that names another checker or runner image, the images every check runs in.
-            # (`oft check` also reads the rest of release.yaml through the facts' rules, which can only
-            # turn a pass into a failure, and pr.yml's lint runs those rules on every push.)
-            if LC_ALL=C grep -qE '^(theories/|toolchain/|tools/|\.github/actions/|dune-project$|")|(^|/)\.gitattributes$' \
-                 "$RUNNER_TEMP/diff.txt"; then
-              echo "a change every harness reads (theories/, toolchain/, tools/, .github/actions/, dune-project, .gitattributes)"
-            elif [ -n "${dune// /}" ]; then
-              echo "a hand-written dune file, which dune reads for any build: $dune"
-            elif LC_ALL=C grep -qxF release.yaml "$RUNNER_TEMP/diff.txt" && ! python - "$base" <<'PY'
+              # FULL: what every harness reads, so that a change to it re-checks every one.  theories/,
+              # toolchain/, dune-project, a .gitattributes and a quoted path are `oft plan`'s own full
+              # rules (tools/oft/check.py, plan).  The rest mark no harness in `oft plan`, so they are
+              # named here: tools/, the checker the check job copies out of the tree and runs;
+              # .github/actions/, whose place-drafts the check job runs; a hand-written dune file; and a
+              # release.yaml that names another checker or runner image, the images every check runs in.
+              # (`oft check` also reads the rest of release.yaml through the facts' rules, which can only
+              # turn a pass into a failure, and pr.yml's lint runs those rules on every push.)
+              if LC_ALL=C grep -qE '^(theories/|toolchain/|tools/|\.github/actions/|dune-project$|")|(^|/)\.gitattributes$' \
+                   "$RUNNER_TEMP/diff.txt"; then
+                echo "a change every harness reads (theories/, toolchain/, tools/, .github/actions/, dune-project, .gitattributes)"
+              elif [ -n "${dune// /}" ]; then
+                echo "a hand-written dune file, which dune reads for any build: $dune"
+              elif LC_ALL=C grep -qxF release.yaml "$RUNNER_TEMP/diff.txt" && ! python - "$base" <<'PY'
           import subprocess, sys
           import yaml
           KEYS = (("images", "checker"), ("images", "runner"))
@@ -214,60 +280,75 @@ jobs:
           was = images(base.stdout) if base.returncode == 0 else None
           sys.exit(0 if was is not None and was == images(head) else 1)
           PY
-            then
-              echo "release.yaml names another checker or runner image"
-            else
-              full=false
+              then
+                echo "release.yaml names another checker or runner image"
+              else
+                full=false
+              fi
             fi
           fi
-          if [ "$full" = true ]; then
-            cp -- "$RUNNER_TEMP/every.txt" "$RUNNER_TEMP/changed.txt"
+          # 256 jobs, the matrix limit: oft plan deals units to jobs round-robin by name, blind to how long each
+          # takes, and at 32 jobs it put cgif/cgif_rgb_fuzzer (188 min) and openssl/hashtable (120 min) in one
+          # job, close to the 6 hours a GitHub-hosted job cannot exceed.  max-parallel (the check job) is unchanged.
+          if [ "$keyed" = true ]; then
+            args=(--units "$RUNNER_TEMP/units.txt" --max-jobs 256)
+            if [ "$full" = false ]; then
+              # Content keys (tools/oft/keys.py): a part is checked when the key of what its check reads
+              # differs from its key at the base.  --pr-kind release and --tools HEAD name what the check
+              # job runs: this commit's own statements, and the tools it copies out of the tree it checks
+              # (the base's are the same bytes here, since a change under tools/ took the full plan above).
+              # No record of passes is read (--store): a pass of an earlier push credits nothing.
+              args+=(--base "$base" --pr-kind release --tools HEAD)
+            fi
+            PYTHONPATH=tools python -m oft plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
           else
-            # A project's own generated files, which no check reads: its README.md and its .opam file
-            # (a proof re-renders the README, so every proof commit carries one).  `oft plan` reads any
-            # path `projects/<p>/<file>` as every harness of <p>, so without this a one-proof commit
-            # would re-check its whole project.
-            # A harness.yaml is the other way round: `oft plan` marks only its own harness, but
-            # `oft fetch <p>` checks the project's archive against the builds of every harness of <p>
-            # (tools/oft/fetch.py), so it is read by every check of the project and is planned as
-            # projects/<p>/project.yaml is.
-            { LC_ALL=C grep -vE '^projects/[^/]+/(README\.md|[^/]+\.opam)$' "$RUNNER_TEMP/diff.txt" || [ $? -eq 1 ]; } \
-              | LC_ALL=C sed -E 's|^(projects/[^/]+)/[^/]+/harness\.yaml$|\1/project.yaml|' > "$RUNNER_TEMP/reach-changed.txt"
-            PYTHONPATH=tools python -m oft plan --changed "$RUNNER_TEMP/reach-changed.txt" --max-jobs 256 \
-              > "$RUNNER_TEMP/reach.json"
-            # The harnesses this change reaches that have a committed proof or finding.  A diff plan
-            # never names one the full plan would not: `oft plan` maps a changed projects/<p>/ file onto
-            # every harness of <p>, published build or not, and this workflow is about what is committed.
-            jq -r '.units[]' "$RUNNER_TEMP/reach.json" \
-              | awk '{ printf "proofs/%s/\nfindings/%s/\n", $0, $0 }' > "$RUNNER_TEMP/reached.txt"
-            : > "$RUNNER_TEMP/changed.txt"
-            if [ -s "$RUNNER_TEMP/reached.txt" ]; then
-              { grep -xF -f "$RUNNER_TEMP/reached.txt" "$RUNNER_TEMP/every.txt" || [ $? -eq 1 ]; } \
-                > "$RUNNER_TEMP/changed.txt"
+            if [ "$full" = true ]; then
+              cp -- "$RUNNER_TEMP/every.txt" "$RUNNER_TEMP/changed.txt"
+            else
+              # A project's own generated files, which no check reads: its README.md and its .opam file
+              # (a proof re-renders the README, so every proof commit carries one).  `oft plan` reads any
+              # path `projects/<p>/<file>` as every harness of <p>, so without this a one-proof commit
+              # would re-check its whole project.
+              # A harness.yaml is the other way round: `oft plan` marks only its own harness, but
+              # `oft fetch <p>` checks the project's archive against the builds of every harness of <p>
+              # (tools/oft/fetch.py), so it is read by every check of the project and is planned as
+              # projects/<p>/project.yaml is.
+              { LC_ALL=C grep -vE '^projects/[^/]+/(README\.md|[^/]+\.opam)$' "$RUNNER_TEMP/diff.txt" || [ $? -eq 1 ]; } \
+                | LC_ALL=C sed -E 's|^(projects/[^/]+)/[^/]+/harness\.yaml$|\1/project.yaml|' > "$RUNNER_TEMP/reach-changed.txt"
+              PYTHONPATH=tools python -m oft plan --changed "$RUNNER_TEMP/reach-changed.txt" --max-jobs 256 \
+                > "$RUNNER_TEMP/reach.json"
+              # The harnesses this change reaches that have a committed proof or finding.  A diff plan
+              # never names one the full plan would not: `oft plan` maps a changed projects/<p>/ file onto
+              # every harness of <p>, published build or not, and this workflow is about what is committed.
+              jq -r '.units[]' "$RUNNER_TEMP/reach.json" \
+                | awk '{ printf "proofs/%s/\nfindings/%s/\n", $0, $0 }' > "$RUNNER_TEMP/reached.txt"
+              : > "$RUNNER_TEMP/changed.txt"
+              if [ -s "$RUNNER_TEMP/reached.txt" ]; then
+                { grep -xF -f "$RUNNER_TEMP/reached.txt" "$RUNNER_TEMP/every.txt" || [ $? -eq 1 ]; } \
+                  > "$RUNNER_TEMP/changed.txt"
+              fi
             fi
+            PYTHONPATH=tools python -m oft plan --changed "$RUNNER_TEMP/changed.txt" --max-jobs 256 > "$RUNNER_TEMP/plan.json"
           fi
-          if [ -n "${UNITS:-}" ]; then
-            [ "$GITHUB_REF" != refs/heads/main ] || { echo "::error::on main every harness is checked: the badge says so"; exit 1; }
-            read -r -a units <<< "$UNITS"
-            for u in "${units[@]}"; do
-              grep -qxF -e "proofs/$u/" -e "findings/$u/" "$RUNNER_TEMP/changed.txt" \
-                || { echo "::error::$u has no committed proof or finding"; exit 1; }
-            done
-            for u in "${units[@]}"; do printf 'proofs/%s/\nfindings/%s/\n' "$u" "$u"; done \
-              | grep -xF -f - "$RUNNER_TEMP/changed.txt" > "$RUNNER_TEMP/units.txt"
-            mv "$RUNNER_TEMP/units.txt" "$RUNNER_TEMP/changed.txt"
-          fi
-          PYTHONPATH=tools python -m oft plan --changed "$RUNNER_TEMP/changed.txt" --max-jobs 256 > "$RUNNER_TEMP/plan.json"
           n="$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
           if [ "$full" = true ] && [ "$n" -eq 0 ]; then
             echo "::error::the committed proofs and findings name no harness to check"; exit 1
           fi
           # the plan output is written by the next step, with each group's draft binaries in its entry
-          echo "units=$n" >> "$GITHUB_OUTPUT"
-          echo "full=$full" >> "$GITHUB_OUTPUT"
+          { echo "units=$n"
+            echo "full=$full"; } >> "$GITHUB_OUTPUT"
           { if [ "$full" = true ]; then echo "### every harness with a committed proof or finding: $n"
             else echo "### harnesses this commit changes: $n"; fi
-            jq -r '.units[]' "$RUNNER_TEMP/plan.json"; } >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.units[]' "$RUNNER_TEMP/plan.json"
+            # a content-keyed plan says why each part is or is not checked; an older plan has no parts
+            if jq -e 'has("parts")' "$RUNNER_TEMP/plan.json" > /dev/null; then
+              echo "### parts checked, and why"
+              jq -r '.parts[] | select(.check) | "- \(.unit) \(.part): \(.why)"' "$RUNNER_TEMP/plan.json"
+              echo "### parts not checked: $(jq '[.parts[] | select(.check | not)] | length' "$RUNNER_TEMP/plan.json")"
+              jq -r '[.parts[] | select(.check | not) | .why] | group_by(.) | .[] | "- \(.[0]): \(length)"' \
+                "$RUNNER_TEMP/plan.json"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: for each group of the plan, its binaries in a release this read-only token cannot see (a draft)
         id: drafts
         # a local action resolves in the workspace (`./`): the checkout of this workflow's own commit
@@ -365,10 +446,11 @@ jobs:
           drafts: ${{ toJSON(matrix.job.drafts) }}
           assets: ${{ runner.temp }}/assets
       - name: dune's cache, from earlier runs
-        # Off, and it stays off.  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
+        # Off, and it stays off (OSSV-218).  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
         # put in a filled cache under the same key, made doctored proofs pass check-units.sh.  dune restores
         # files/<digest> without hashing the bytes again (ocaml/dune 72f6fefe, src/dune_cache/shared.ml:313-319,
-        # 329-348), and the kernel does not check a compiled file again when a proof loads it.
+        # 329-348), and the kernel does not check a compiled file again when a proof loads it.  Hashing the restored
+        # files would not catch a rewritten metadata entry, and verifying by rebuilding saves nothing.
         if: false
         uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
         with:
@@ -384,6 +466,7 @@ jobs:
           WORK: ${{ github.workspace }}/work
           TOOLS: ${{ runner.temp }}/tools
           UNITS: ${{ matrix.job.check_units }}
+          PROOF_UNITS: ${{ toJSON(matrix.job.proof_units) }}  # JSON: check-units.sh refuses null, a plan without it
           PROJECTS: ${{ matrix.job.projects }}
           CX_UNITS: ${{ matrix.job.counterexamples }}
           FINDINGS: ${{ matrix.job.findings }}

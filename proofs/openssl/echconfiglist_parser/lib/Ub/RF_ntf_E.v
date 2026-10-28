@@ -263,7 +263,7 @@ Proof. try hcb. try hsb.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
     assert (MR1 : rmrep st1 mX)
       by (unfold st1; rewrite upd_meta_put; eapply rmrep_put_meta_frame; [exact MR | exact MSL | exact MUg | exact WMg |];
-          eapply rw_cells_congr; [ | | | exact CH]; [reflexivity | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]);
+          eapply rw_cells_congr; [ | | | exact CH]; [reflexivity | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]);
     clear MUg WMg CH
   end.
   assert (COV : forall m', munch [(conc stm g, conc stm g + 40); (conc stm g, conc stm g + 40)]%Z m m' -> wmono usegs m m' ->
@@ -341,7 +341,7 @@ Proof. try hcb. try hsb.
         assert (MR2 : rmrep (act_st st1 a (act_of st1 a)) mX)
       end.
       { unfold act_st. rewrite upd_meta_put, ACT. eapply rmrep_put_meta_frame; [exact MR1 | exact MSa | exact MUa | exact WMa |].
-        eapply rw_cells_congr; [ | | | exact CHa]; [ | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])].
+        eapply rw_cells_congr; [ | | | exact CHa]; [ | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])].
         unfold meta_cells. unfold pw. cbn [cells_bytes cbytes m_prev m_next m_mem m_avail m_freed m_set_avail m_set_freed meta_word m_last_idx m_freeable m_sizeclass m_maplen oconc].
         fold f. rewrite E1. rewrite (act_mask_le4 f y) ; [| lia | exact Y1 | rewrite <- Zplus_mod_idemp_l, swrap32_mod32, Zplus_mod_idemp_l; reflexivity].
         rewrite !le4_sxv by lia. rewrite Hmem. cbn [oconc]. reflexivity. }

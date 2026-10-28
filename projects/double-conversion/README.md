@@ -3,14 +3,14 @@
 
 [google/double-conversion](https://github.com/google/double-conversion) · OSS-Fuzz: [projects/double-conversion](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/double-conversion)
 
-**Status: available.** 1 of OSS-Fuzz's 1 fuzz target has statements. 4 binaries, 3.6 MB. 15 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 12 open.
+**Status: available.** 1 of OSS-Fuzz's 1 fuzz target has statements. 4 binaries, 3.6 MB. 15 statements: 5 proved, 0 known false, 0 suspected false, 0 blocked by the model, 10 open.
 
 Built from double-conversion (commit `2c1eb4ff`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [string_to_double_fuzzer](string_to_double_fuzzer/) | StringToDoubleConverter (hex, octal, junk, spaces, case-insensitive, hex floats) .StringToDouble on the input; the double and processed-digit count are discarded (no DoubleToString round trip). | none | 15, 3 proved |
+| [string_to_double_fuzzer](string_to_double_fuzzer/) | StringToDoubleConverter (hex, octal, junk, spaces, case-insensitive, hex floats) .StringToDouble on the input; the double and processed-digit count are discarded (no DoubleToString round trip). | none | 15, 5 proved |
 
 Not included: **api-driver** (held from this release).
 
@@ -41,7 +41,9 @@ By hand: download `double-conversion-bin.tar.zst` from release [v2026.10.0](http
 |---|---|
 | [double-conversion/string_to_double_fuzzer/asan_agrees](../../proofs/double-conversion/string_to_double_fuzzer/asan_agrees) | proved |
 | [double-conversion/string_to_double_fuzzer/asan_ubsan_agrees](../../proofs/double-conversion/string_to_double_fuzzer/asan_ubsan_agrees) | proved |
+| [double-conversion/string_to_double_fuzzer/ubsan_agreement_decidable](../../proofs/double-conversion/string_to_double_fuzzer/ubsan_agreement_decidable) | proved |
 | [double-conversion/string_to_double_fuzzer/ubsan_agrees](../../proofs/double-conversion/string_to_double_fuzzer/ubsan_agrees) | proved |
+| [double-conversion/string_to_double_fuzzer/ubsan_disagrees_at_most](../../proofs/double-conversion/string_to_double_fuzzer/ubsan_disagrees_at_most) | proved |
 
 ## Licence
 double-conversion is under `BSD-3-Clause`. Each binary is a combined work of double-conversion, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `double-conversion-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `double-conversion-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

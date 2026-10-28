@@ -35,6 +35,12 @@ Bugs in Linux or QEMU do not count. LPS does not choose one of these systems.
 It describes all the behaviours that the supported systems can give, taken
 together.
 
+**Known divergence.** On a shrinking `mremap` with `MREMAP_MAYMOVE`, QEMU user
+mode can move the mapping to a new address. Linux keeps a shrink in place. LPS
+allows only a shrink in place or an error. So LPS does not describe this QEMU
+behaviour. We saw it in one recorded run. A statement proved in LPS is
+therefore not shown for a QEMU run that takes this path.
+
 LPS has three priorities, in this order:
 
 1. **Sound (required).** A statement that you prove in LPS is true of the

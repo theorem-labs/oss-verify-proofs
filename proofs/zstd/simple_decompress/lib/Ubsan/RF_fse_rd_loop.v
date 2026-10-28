@@ -1,0 +1,135 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Spec Require Import FseNCount FseLemmas FseReadSound.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac Arr Bytes ZBridge.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import FseWalkKit FseRdKit FseRdKit2.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Ubsan Require Import UImg RF_fse_iface RF_fse_rd_base RF_fse_rd_count RF_fse_rd_zero.
+Import ListNotations.
+Open Scope Z_scope.
+
+Section Loop.
+  Variable C : rdctx.
+  Hypothesis OK : rd_ok C.
+  Variable tl : Z.
+  Hypothesis Htl : 5 <= tl <= 15.
+
+  Notation buf := (c_buf C).
+  Notation msv1 := (c_msv0 C + 1).
+  Notation BUF := (c_BUF C).
+  Notation NC := (c_NC C).
+  Ltac cbnR := cbn [r_nc r_ip r_bitStream r_bitCount r_charnum r_remaining r_threshold r_nbBits r_previous0] in *.
+
+  (* [comment removed for export] *)
+  Lemma exit_run : forall s m1 msvw (x1 x6 x13 x14 x16 x25 x28 x29 : word),
+    rd_inv C m1 (r_nc s) msvw (Z_to_bv 64 tl) -> rd_brk_ok C s ->
+    r_remaining s = 1 -> 1 <= r_charnum s <= msv1 -> r_bitCount s <= 32 ->
+    evt usegs (rd_body_post C (r_nc s) (r_charnum s - 1) tl (r_ip s + (r_bitCount s + 7) / 8))
+        (rd_exit C s m1 x1 x6 x13 x14 x16 x25 x28 x29).
+  Proof.
+    intros s m1 msvw x1 x6 x13 x14 x16 x25 x28 x29 INV (B1 & B2 & B3 & B4 & B5) Erem Hcn Hbc.
+    pose proof OK as OK'. destruct OK' as (HH & FBY & HM0 & HM1 & RSP & LO & LO0 & (HN0 & HN1) & (HB0 & HB1) & (HV0 & HV1) & (HT0 & HT1) & SNS & SMS & STS & SBS & SNM & SNT & SNB & SMT & SMB & STB & _).
+    destruct (rd_aln C OK) as (_ & _ & HMS0 & HMS4 & _ & _ & HBP).
+    unfold RD_STACK in *.
+    unfold rd_exit, rd_lst.
+    destruct s as [nc ip bs bc cn rem thr nb p0]. cbnR. subst rem.
+    destruct INV as (ARR & LNC & HBUF & HMSV & HTL & (junk0 & junk16 & FR) & ST & MU & WM & MI). unfold rd_W, RD_STACK in MU.
+    assert (LWS : length (map (Z_to_bv 64) nc) = length (c_rt0 C)) by (rewrite length_map; exact LNC).
+    assert (LBS : zlen (map (Z_to_bv 8) buf) = zlen buf) by (rewrite length_map; reflexivity).
+    change (2^31) with 2147483648 in *.
+    zstep. zstep. zstep. if_false.
+    zstep.
+    if_cases K2; zify_cond K2; [|exfalso; lia].
+    zstep. zstep.
+    if_cases K3; zify_cond K3; rewrite ?signed_lit in K3 by lia; [exfalso; lia|].
+    zstep. zstep. zstep.
+    rewrite (swrap32_small (bc + 7)) by lia. rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8.
+    assert (Q : 0 <= (bc + 7) / 8 < 5) by (split; [apply Z.div_pos; lia| apply Z.div_lt_upper_bound; lia]).
+    rewrite (swrap32_small ((bc + 7) / 8)) by lia.
+    zstep. zstep.
+    zstep. if_cases G1; zify_cond G1; [exfalso; lia|].
+    zstep. replace (BUF + ip + (bc + 7) / 8 <? BUF + ip) with false by (symmetry; apply Z.ltb_ge; lia). cbn [Z.b2z].
+    zstep.
+    match goal with |- context [Z.lxor ((bc + 7) / 8) ?k <? ?r] =>
+      replace (Z.lxor ((bc + 7) / 8) k <? r) with false
+        by (symmetry; apply Z.ltb_ge; change k with (2^63); rewrite zb_lxor_pow2_small by lia; lia) end.
+    cbn [Z.b2z].
+    zstep. zstep. zstep. if_false.
+    zstep.
+    replace (BUF + ip + (bc + 7) / 8 - BUF) with (ip + (bc + 7) / 8) by lia.
+    do 13 zstep. zstep. zstep.
+    release_frame FR ST (c_SP C).
+    apply evt_done. unfold rd_body_post, rd_W, RD_STACK.
+    do 14 eexists. eexists. split; [reflexivity|].
+    split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [exact ST|].
+    split; [exact ARR|]. split; [| exact HTL].
+    replace (cn - 1) with (cn + -1) by lia. exact HMSV.
+  Qed.
+  Lemma buf_h8 : 8 <= FseNCount.Zlength buf.
+  Proof. unfold FseNCount.Zlength. destruct OK as (HH & _). lia. Qed.
+  Lemma msv1_ok : 1 <= msv1 <= FseNCount.Zlength (c_rt0 C).
+  Proof. unfold FseNCount.Zlength. destruct OK as (_ & _ & HM0 & HM1 & _). lia. Qed.
+
+  (* [comment removed for export] *)
+  Lemma loop_run : forall f s sF m1 msvw (x1 x6 x14 x16 x28 : word),
+    rloop buf msv1 f s = Ok sF ->
+    rd_inv C m1 (r_nc s) msvw (Z_to_bv 64 tl) -> CTL msv1 (c_rt0 C) tl s -> POS buf s -> r_bitCount s < 32 ->
+    r_remaining sF = 1 -> r_charnum sF <= msv1 -> r_bitCount sF <= 32 ->
+    evt usegs (rd_body_post C (r_nc sF) (r_charnum sF - 1) tl (r_ip sF + (r_bitCount sF + 7) / 8)) (rd_head C s m1 x1 x6 x14 x16 x28).
+  Proof.
+    induction f as [|f IH]; intros s sF m1 msvw x1 x6 x14 x16 x28 RL INV HC HP HB32 F1 F2 F3.
+    { cbn in RL. discriminate RL. }
+    cbn [rloop] in RL.
+    set (POSTF := rd_body_post C (r_nc sF) (r_charnum sF - 1) tl (r_ip sF + (r_bitCount sF + 7) / 8)).
+    (* [comment removed for export] *)
+    assert (CNT : forall s1 m2 (y6 y27 : word),
+              rd_inv C m2 (r_nc s1) msvw (Z_to_bv 64 tl) -> CTL msv1 (c_rt0 C) tl s1 -> POS buf s1 -> r_bitCount s1 < 32 ->
+              (let! fl := rcount_block buf msv1 s1 in match fl with Brk s' => Ok s' | Cont s' => rloop buf msv1 f s' end) = Ok sF ->
+              evt usegs POSTF (rd_cnt C s1 m2 y6 y27)).
+    { intros s1 m2 y6 y27 INV1 HC1 HP1 HB1 RL1.
+      destruct (rcount_total buf (buf_all_bytes C OK) buf_h8 msv1 (c_rt0 C) msv1_ok tl Htl s1 HC1 HP1 HB1) as (fl & EF & HF).
+      rewrite EF in RL1. cbn [bind] in RL1.
+      eapply (count_run C OK tl Htl POSTF s1 m2 msvw (Z_to_bv 64 tl) fl); try eassumption.
+      - intros s' m3 z1 z6 z13 z14 z16 z25 z28 z29 -> INV3 BK. injection RL1 as ->.
+        destruct HF as ((_ & CN1 & _) & _).
+        eapply (exit_run sF m3 msvw); try assumption. lia.
+      - intros s' m3 z1 z6 z14 z16 z28 -> INV3. destruct HF as (HC3 & HP3 & HB3 & _).
+        eapply IH; eassumption. }
+    unfold rbody in RL.
+    destruct (r_previous0 s) eqn:EP.
+    - (* [comment removed for export] *)
+      destruct (rzero_total buf (buf_all_bytes C OK) buf_h8 msv1 (c_rt0 C) msv1_ok tl Htl s HC HP HB32) as (flz & EZ & HZ).
+      rewrite EZ in RL. cbn [bind] in RL.
+      unfold rd_head. rewrite EP.
+      eapply (zero_run C OK POSTF tl s m1 msvw (Z_to_bv 64 tl) flz); try eassumption.
+      + intros s' z1 z6 z13 z14 z16 z25 z28 z29 -> EN BK. cbn [bind] in RL. injection RL as ->.
+        destruct HZ as ((_ & CN1 & _) & _).
+        eapply (exit_run sF m1 msvw); try assumption; try lia. rewrite EN. exact INV.
+      + intros s' z6 z27 -> EN. destruct HZ as (HC1 & HP1 & HB1 & _).
+        apply CNT; try assumption. rewrite EN. exact INV.
+    - (* [comment removed for export] *)
+      cbn [bind] in RL.
+      unfold rd_head. rewrite EP.
+      eapply (cnt_entry C tl Htl POSTF s m1); [exact HC | exact HP |].
+      intros y6 y27. apply CNT; assumption.
+  Qed.
+  (* [comment removed for export] *)
+  Corollary loop_run' : forall f s sF m1 msvw pc (x1 x6 x11 x13 x14 x16 x24 x25 x26 x27 x28 x29 : word),
+    rloop buf msv1 f s = Ok sF ->
+    rd_inv C m1 (r_nc s) msvw (Z_to_bv 64 tl) -> CTL msv1 (c_rt0 C) tl s -> POS buf s -> r_bitCount s < 32 ->
+    r_remaining sF = 1 -> r_charnum sF <= msv1 -> r_bitCount sF <= 32 ->
+    pc = (if r_previous0 s then 0x29e80 else 0x29e64) ->
+    x11 = Z_to_bv 64 (r_charnum s) -> x13 = Z_to_bv 64 (bv_swrap 32 (r_bitStream s)) -> x24 = Z_to_bv 64 (r_remaining s) ->
+    x25 = Z_to_bv 64 (r_threshold s) -> x26 = Z_to_bv 64 (r_bitCount s) -> x27 = Z_to_bv 64 (BUF + r_ip s) ->
+    x29 = Z_to_bv 64 (r_nbBits s) ->
+    evt usegs (rd_body_post C (r_nc sF) (r_charnum sF - 1) tl (r_ip sF + (r_bitCount sF + 7) / 8))
+      (rd_lst C pc m1 x1 x6 x11 x13 x14 x16 x24 x25 x26 x27 x28 x29).
+  Proof.
+    intros f s sF m1 msvw pc x1 x6 x11 x13 x14 x16 x24 x25 x26 x27 x28 x29 RL INV HC HP HB F1 F2 F3 -> -> -> -> -> -> -> ->.
+    exact (loop_run f s sF m1 msvw x1 x6 x14 x16 x28 RL INV HC HP HB F1 F2 F3).
+  Qed.
+End Loop.

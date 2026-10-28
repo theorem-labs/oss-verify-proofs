@@ -26,65 +26,65 @@ OSS-Fuzz runs the fuzz targets of open-source projects to search for inputs that
 |---|---|---|
 | boost-beast | [http_request](proofs/boost-beast/http_request/) | ASan, UBSan, ASan+UBSan |
 | boost-json | [fuzz_parse](proofs/boost-json/fuzz_parse/) | ASan, UBSan, ASan+UBSan |
-| bzip2 | [bzip2_compress_target](proofs/bzip2/bzip2_compress_target/) | ASan, ASan+UBSan |
-| cgif | [cgif_file_fuzzer](proofs/cgif/cgif_file_fuzzer/) | ASan+UBSan |
-| cgif | [cgif_rgb_fuzzer](proofs/cgif/cgif_rgb_fuzzer/) | ASan, ASan+UBSan |
+| bzip2 | [bzip2_compress_target](proofs/bzip2/bzip2_compress_target/) | ASan, UBSan, ASan+UBSan |
+| cgif | [cgif_file_fuzzer](proofs/cgif/cgif_file_fuzzer/) | ASan, UBSan, ASan+UBSan |
+| cgif | [cgif_rgb_fuzzer](proofs/cgif/cgif_rgb_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | cjson | [cjson_read_fuzzer](proofs/cjson/cjson_read_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | coturn | [FuzzStunClient](proofs/coturn/FuzzStunClient/) | ASan, UBSan, ASan+UBSan |
 | double-conversion | [string_to_double_fuzzer](proofs/double-conversion/string_to_double_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | fast_float | [from_chars](proofs/fast_float/from_chars/) | ASan, UBSan, ASan+UBSan |
 | glaze | [binary_reflection](proofs/glaze/binary_reflection/) | ASan, UBSan, ASan+UBSan |
-| json-c | [json_object_fuzzer](proofs/json-c/json_object_fuzzer/) | ASan, ASan+UBSan |
+| json-c | [json_object_fuzzer](proofs/json-c/json_object_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | jsoncons | [fuzz_bigint](proofs/jsoncons/fuzz_bigint/) | ASan, UBSan, ASan+UBSan |
-| jsoncons | [fuzz_bson_parser_max](proofs/jsoncons/fuzz_bson_parser_max/) | ASan |
-| jsoncons | [fuzz_json_cursor](proofs/jsoncons/fuzz_json_cursor/) | ASan, ASan+UBSan |
-| jsoncons | [fuzz_json_encoder](proofs/jsoncons/fuzz_json_encoder/) | ASan, ASan+UBSan |
+| jsoncons | [fuzz_bson_parser_max](proofs/jsoncons/fuzz_bson_parser_max/) | ASan, UBSan, ASan+UBSan |
+| jsoncons | [fuzz_json_cursor](proofs/jsoncons/fuzz_json_cursor/) | ASan, UBSan, ASan+UBSan |
+| jsoncons | [fuzz_json_encoder](proofs/jsoncons/fuzz_json_encoder/) | ASan, UBSan, ASan+UBSan |
 | jsoncons | [fuzz_msgpack_encoder](proofs/jsoncons/fuzz_msgpack_encoder/) | ASan |
 | jsoncons | [fuzz_ubjson_encoder](proofs/jsoncons/fuzz_ubjson_encoder/) | ASan, UBSan, ASan+UBSan |
 | jsoncons | [fuzz_ubjson_parser_max](proofs/jsoncons/fuzz_ubjson_parser_max/) | ASan, UBSan, ASan+UBSan |
-| leptonica | [bilateral_fuzzer](proofs/leptonica/bilateral_fuzzer/) | ASan, ASan+UBSan |
+| leptonica | [bilateral_fuzzer](proofs/leptonica/bilateral_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | leptonica | [colorfill_fuzzer](proofs/leptonica/colorfill_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | leptonica | [edge_fuzzer](proofs/leptonica/edge_fuzzer/) | ASan, UBSan, ASan+UBSan |
-| leptonica | [fhmtgen_fuzzer](proofs/leptonica/fhmtgen_fuzzer/) | ASan, ASan+UBSan |
+| leptonica | [fhmtgen_fuzzer](proofs/leptonica/fhmtgen_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | leptonica | [graymorph_fuzzer](proofs/leptonica/graymorph_fuzzer/) | ASan, UBSan, ASan+UBSan |
-| leptonica | [grayquant_fuzzer](proofs/leptonica/grayquant_fuzzer/) | ASan, ASan+UBSan |
+| leptonica | [grayquant_fuzzer](proofs/leptonica/grayquant_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | leptonica | [jpegiostub_fuzzer](proofs/leptonica/jpegiostub_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | leptonica | [kernel_fuzzer](proofs/leptonica/kernel_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | leptonica | [paintcmap_fuzzer](proofs/leptonica/paintcmap_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | leptonica | [pix1_fuzzer](proofs/leptonica/pix1_fuzzer/) | ASan, UBSan, ASan+UBSan |
-| leptonica | [pix_orient_fuzzer](proofs/leptonica/pix_orient_fuzzer/) | ASan, ASan+UBSan |
+| leptonica | [pix_orient_fuzzer](proofs/leptonica/pix_orient_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | libpcap | [fuzz_pcap](proofs/libpcap/fuzz_pcap/) | ASan, UBSan, ASan+UBSan |
-| mbedtls | [fuzz_pkcs7](proofs/mbedtls/fuzz_pkcs7/) | ASan |
+| mbedtls | [fuzz_pkcs7](proofs/mbedtls/fuzz_pkcs7/) | ASan, UBSan, ASan+UBSan |
 | msgpack-c | [unpack_pack_fuzzer](proofs/msgpack-c/unpack_pack_fuzzer/) | ASan, UBSan, ASan+UBSan |
-| openssl | [bignum](proofs/openssl/bignum/) | ASan, ASan+UBSan |
-| openssl | [bndiv](proofs/openssl/bndiv/) | ASan, UBSan |
-| openssl | [ct](proofs/openssl/ct/) | ASan+UBSan |
-| openssl | [echconfiglist_parser](proofs/openssl/echconfiglist_parser/) | ASan, UBSan |
-| openssl | [hashtable](proofs/openssl/hashtable/) | ASan |
-| openssl | [pem](proofs/openssl/pem/) | ASan+UBSan |
+| openssl | [bignum](proofs/openssl/bignum/) | ASan, UBSan, ASan+UBSan |
+| openssl | [bndiv](proofs/openssl/bndiv/) | ASan, UBSan, ASan+UBSan |
+| openssl | [ct](proofs/openssl/ct/) | ASan, UBSan, ASan+UBSan |
+| openssl | [echconfiglist_parser](proofs/openssl/echconfiglist_parser/) | ASan, UBSan, ASan+UBSan |
+| openssl | [hashtable](proofs/openssl/hashtable/) | ASan, UBSan, ASan+UBSan |
+| openssl | [pem](proofs/openssl/pem/) | ASan, UBSan, ASan+UBSan |
 | openssl | [punycode](proofs/openssl/punycode/) | ASan, UBSan, ASan+UBSan |
-| pupnp | [FuzzHttp](proofs/pupnp/FuzzHttp/) | ASan, ASan+UBSan |
+| pupnp | [FuzzHttp](proofs/pupnp/FuzzHttp/) | ASan, UBSan, ASan+UBSan |
 | simdjson | [fuzz_atpointer](proofs/simdjson/fuzz_atpointer/) | ASan, UBSan, ASan+UBSan |
-| simdjson | [fuzz_dump](proofs/simdjson/fuzz_dump/) | ASan, UBSan |
-| simdjson | [fuzz_dump_raw_tape](proofs/simdjson/fuzz_dump_raw_tape/) | ASan, UBSan |
-| simdjson | [fuzz_element](proofs/simdjson/fuzz_element/) | ASan+UBSan |
-| simdjson | [fuzz_implementations](proofs/simdjson/fuzz_implementations/) | ASan, UBSan |
+| simdjson | [fuzz_dump](proofs/simdjson/fuzz_dump/) | ASan, UBSan, ASan+UBSan |
+| simdjson | [fuzz_dump_raw_tape](proofs/simdjson/fuzz_dump_raw_tape/) | ASan, UBSan, ASan+UBSan |
+| simdjson | [fuzz_element](proofs/simdjson/fuzz_element/) | ASan, UBSan, ASan+UBSan |
+| simdjson | [fuzz_implementations](proofs/simdjson/fuzz_implementations/) | ASan, UBSan, ASan+UBSan |
 | simdjson | [fuzz_minifyimpl](proofs/simdjson/fuzz_minifyimpl/) | ASan, UBSan, ASan+UBSan |
 | simdjson | [fuzz_ondemand](proofs/simdjson/fuzz_ondemand/) | ASan, UBSan, ASan+UBSan |
 | simdjson | [fuzz_parser](proofs/simdjson/fuzz_parser/) | ASan, UBSan, ASan+UBSan |
-| simdjson | [fuzz_print_json](proofs/simdjson/fuzz_print_json/) | ASan, ASan+UBSan |
+| simdjson | [fuzz_print_json](proofs/simdjson/fuzz_print_json/) | ASan, UBSan, ASan+UBSan |
 | simdjson | [fuzz_utf8](proofs/simdjson/fuzz_utf8/) | ASan, UBSan, ASan+UBSan |
 | skcms | [iccprofile_info](proofs/skcms/iccprofile_info/) | ASan, UBSan, ASan+UBSan |
-| speex | [speex_decode_fuzzer_float](proofs/speex/speex_decode_fuzzer_float/) | ASan, ASan+UBSan |
-| spirv-tools | [spvtools_binary_parser_fuzzer](proofs/spirv-tools/spvtools_binary_parser_fuzzer/) | ASan, UBSan |
-| tinyobjloader | [fuzz_tobj_c](proofs/tinyobjloader/fuzz_tobj_c/) | ASan, ASan+UBSan |
+| speex | [speex_decode_fuzzer_float](proofs/speex/speex_decode_fuzzer_float/) | ASan, UBSan, ASan+UBSan |
+| spirv-tools | [spvtools_binary_parser_fuzzer](proofs/spirv-tools/spvtools_binary_parser_fuzzer/) | ASan, UBSan, ASan+UBSan |
+| tinyobjloader | [fuzz_tobj_c](proofs/tinyobjloader/fuzz_tobj_c/) | ASan, UBSan, ASan+UBSan |
 | varnish | [esi_parse_fuzzer](proofs/varnish/esi_parse_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | yajl-ruby | [json_fuzzer](proofs/yajl-ruby/json_fuzzer/) | ASan, UBSan, ASan+UBSan |
 | zlib | [checksum_fuzzer](proofs/zlib/checksum_fuzzer/) | - |
-| zstd | [fse_read_ncount](proofs/zstd/fse_read_ncount/) | ASan, ASan+UBSan |
-| zstd | [huf_decompress](proofs/zstd/huf_decompress/) | ASan |
-| zstd | [simple_decompress](proofs/zstd/simple_decompress/) | ASan+UBSan |
-| zstd | [zstd_frame_info](proofs/zstd/zstd_frame_info/) | ASan, ASan+UBSan |
+| zstd | [fse_read_ncount](proofs/zstd/fse_read_ncount/) | ASan, UBSan, ASan+UBSan |
+| zstd | [huf_decompress](proofs/zstd/huf_decompress/) | ASan, UBSan, ASan+UBSan |
+| zstd | [simple_decompress](proofs/zstd/simple_decompress/) | ASan, UBSan, ASan+UBSan |
+| zstd | [zstd_frame_info](proofs/zstd/zstd_frame_info/) | ASan, UBSan, ASan+UBSan |
 
 [index/PROOFS.md](index/PROOFS.md) has one row for each entry point: the statements proved, the system-call failures they allow, the binaries, and where the proof is.
 
@@ -105,7 +105,7 @@ So an agreement proof rules out every error that the sanitizer build detects, on
 
 A halts statement is about one build alone. It says that on every covered input, every execution of that build ends, and that it ends with a status the statement allows: status 0 or 2 for most harnesses, and any status for espeak-ng's `ssml-fuzzer`. Its premises are its own: the build is never refused memory for exceeding 16 GiB, and the environment refuses nothing that the process's state does not force. A `_halts_may_fail` statement drops both premises and allows any status.
 
-If the harness checks a property with `assert()`, `abort()` or a trap, and the check is in the binary, an agreement proof shows that the property holds on every covered input, and so does every halts proof: a failed check of these kinds kills the process, which no halts statement allows. A check that ends the process with `exit(n)` instead is shown by a halts proof only when the statement's allowed statuses leave out `n` ([docs/exploring.md](docs/exploring.md), [docs/statements.md](docs/statements.md)).
+If the harness checks a property with `assert()`, `abort()` or a trap, and the check is in the binary, an agreement proof shows that the property holds on every covered input. A halts proof shows it only for the checks that the fuzz target's page names: a check seen in the binary, of a fuzz target whose linked code installs no handler that could end a failed check with a status of its own (`failure_handlers: none`). A failed check of these kinds then kills the process, which no halts statement allows. A check that ends the process with `exit()` instead is shown only when the call reaches the driver's exit guard (`exit_reaches_guard: true`), which ends the process with status 77 whatever status the source passes, and only by a halts statement whose allowed statuses leave out 77 ([docs/facts.md](docs/facts.md), [docs/exploring.md](docs/exploring.md), [docs/statements.md](docs/statements.md)).
 
 The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreement and halts form is proved equal to its LPS definition: an agreement form to `strong_universal_error_free_T_budgets` or one of its variants, a halts form to `halts_allowed_T_scfg_budgets` or `halts_allowed_T_scfg`. [docs/statements.md](docs/statements.md) explains each form.
 
@@ -114,7 +114,7 @@ The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreeme
 - It is about the code that one entry point reaches, not about the whole library.
 - It is about these binaries: static riscv64 programs, built with clang 20.1.8 against musl. It is not about the source code, and not about the x86-64 builds of OSS-Fuzz.
 - It is true in LPS. Where LPS differs from Linux, the proof may not apply ([docs/semantics.md](docs/semantics.md)).
-- An agreement statement does not exclude a run that never ends. Only a halts statement does. 64 of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
+- An agreement statement does not exclude a run that never ends. Only a halts statement does. 66 of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
 
 ## Versions
 | item | version |
@@ -127,18 +127,18 @@ The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreeme
 | axioms | only the axioms in [toolchain/allowed-axioms.txt](toolchain/allowed-axioms.txt): the primitive integer, array and string types of Rocq with their specifications, and six axioms of the standard library (`classic`, `functional_extensionality_dep`, `constructive_indefinite_description`, `propositional_extensionality`, `sig_forall_dec` and `sig_not_dec`) |
 
 ## Check a proof
-You need Docker, zstd, and Python 3 with the packages `tools/oft/requirements.txt` pins (PyYAML; for `./oft lint`, also idna). The checker image holds Rocq and LPS, but not PyYAML, so the commands below mount it. On 16 cores, one proof check needs up to 20 GiB of memory. It compiles one file per core, so more cores need more memory; `docker run --cpuset-cpus` limits the cores.
+You need Docker, zstd, and Python 3 with the packages `tools/oft/requirements.txt` pins (PyYAML; for `./oft lint`, also idna). The checker image holds Rocq and LPS, but not PyYAML, so the commands below mount it. On 16 cores, one proof check needs up to 20 GiB of memory. It compiles one file per core, so more cores need more memory; `docker run --cpuset-cpus` limits the cores. `--ulimit stack=-1:-1` gives the container an unlimited stack limit: Rocq needs a hard limit of at least 1 GiB, and without the flag the check stops where Docker's limit is lower ([docs/checking.md](docs/checking.md#stack-size)).
 
     git clone https://github.com/theorem-labs/oss-verify-proofs && cd oss-verify-proofs
     ./oft fetch coturn                   # the project's binaries, each checked against its SHA-256
     python3 -m pip install --require-hashes --target "$HOME/oft-pydeps" -r tools/oft/requirements.txt
-    docker run --rm --network none -u "$(id -u):$(id -g)" -e HOME=/tmp -e PYTHONPATH=/pydeps \
+    docker run --rm --network none --ulimit stack=-1:-1 -u "$(id -u):$(id -g)" -e HOME=/tmp -e PYTHONPATH=/pydeps \
       -v "$HOME/oft-pydeps:/pydeps:ro" -v "$PWD:/work" -w /work ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:cc9ae43a9f4b0dd59d7c8d30727d36e039bfe72a2a9f9c4a99c68e413037e902 \
       ./oft check coturn/FuzzStunClient --parts statements,proofs
 
 `oft check` does these steps. It checks each binary against its SHA-256. It builds the memory images and the statements. It compiles each proof. It compiles a small wrapper that gives the proof's theorem the type of the statement. Then it reads what `Print Assumptions` prints for the wrapper, and it refuses every assumption that is not in the allowed list ([docs/checking.md](docs/checking.md)).
 
-CI runs the same check. The [release-check](.github/workflows/release-check.yml) workflow checks every committed proof on each push to `main` and once a week, and the badge at the top shows its result. The [pr](.github/workflows/pr.yml) workflow checks what a pull request changes. The [weekly](.github/workflows/weekly.yml) workflow checks every statement and every proof, with no cache ([docs/checking.md](docs/checking.md#what-ci-runs)).
+CI runs the same check. The [release-check](.github/workflows/release-check.yml) workflow checks what each push to `main` changes, and every committed proof once a week, and the badge at the top shows its result. The [pr](.github/workflows/pr.yml) workflow checks what a pull request changes. The [weekly](.github/workflows/weekly.yml) workflow checks every statement and every proof, with no cache ([docs/checking.md](docs/checking.md#what-ci-runs)).
 
 ## How the binaries are built
 Each binary is a static riscv64 Linux program, built with clang 20.1.8 against musl. An entry point has up to four builds: plain, ASan, UBSan and ASan+UBSan. [docs/building.md](docs/building.md) gives the compiler flags and the sanitizer settings. [docs/running.md](docs/running.md) tells you how to run a binary and what its input file holds.
@@ -151,9 +151,9 @@ Each project's published binaries are attached to the [release](https://github.c
 [docs/exploring.md](docs/exploring.md) points to what the proofs show beyond "no sanitizer error": properties that the harnesses check, and lemmas about what the library code computes. It also tells you how to find the machine-generated data in a proof.
 
 ## Statements for OSS-Fuzz fuzz targets
-This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,141 of the 2,148 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 202 are proved, some are known to be false, and proofs are added as they are found.
+This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,141 of the 2,148 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 336 are proved, some are known to be false, and proofs are added as they are found.
 
-In this release: 20,164 statements: 202 proved, 5 known false (0 counterexamples, 5 false (witnessed)), 0 suspected false, 229 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,728 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
+In this release: 20,164 statements: 336 proved, 5 known false (0 counterexamples, 5 false (witnessed)), 0 suspected false, 229 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,594 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
 
 There are four kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; and the inputs on which they agree are decidable ([docs/statements.md](docs/statements.md)). One example:
 
@@ -195,7 +195,7 @@ To prove or refute a statement, see [docs/proving.md](docs/proving.md) and [CONT
 | `projects/<project>/<harness>/` | the facts (`harness.yaml`), the statements (`Statements.v`), the images (`Images.v`), the harness page, and, for most harnesses, a copy of the harness source (`source/`) |
 | `theories/` | the statement forms (`Shapes.v`), the image library, and the input-file format (`Driver.v`) |
 | `index/` | tables of every proof, project, harness, statement and binary |
-| `toolchain/` | the Dockerfiles of the checker and runner images, the pinned versions (`toolchain.lock`), the allowed axioms, and the list of LPS files |
+| `toolchain/` | the Dockerfiles of the checker and runner images, which [release.yaml](release.yaml) pins by digest, the allowed axioms, and the list of LPS files |
 | `tools/oft/` | the `oft` tool: fetch, generate, lint and check |
 | `tests/` | a generator of toy binaries, and controls that the checker must accept or refuse |
 | `counterexamples/` | inputs that make a binary break a statement, each with a control input |

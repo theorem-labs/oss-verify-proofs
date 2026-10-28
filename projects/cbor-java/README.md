@@ -3,4 +3,4 @@
 
 [android.googlesource.com/platform/external/cbor-java/+/refs/heads/master](https://android.googlesource.com/platform/external/cbor-java/+/refs/heads/master) · OSS-Fuzz: [projects/cbor-java](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/cbor-java)
 
-**Status: language pending.** This project's fuzz targets run on the JVM. This release covers C and C++; support for JVM languages is being built. [What the statuses mean](../../docs/status.md).
+**Status: language pending.** This project's fuzz targets run on the JVM. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for JVM languages is being built. [What the statuses mean](../../docs/status.md).

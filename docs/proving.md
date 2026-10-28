@@ -39,10 +39,24 @@ touch files or switch a checker off; `oft lint` refuses those on sight (its
 `proofs` rule), and what the wrapper's `Print Assumptions` lists, every entry
 checked against [toolchain/allowed-axioms.txt](../toolchain/allowed-axioms.txt),
 is the authority. Nor may a proof set a wall-clock limit, which can fail a
-check on a loaded machine: no `Set Default Timeout`, no `Timeout` command and no
-`timeout` tactical whose expiry can fail its sentence (one under `try` or
-`repeat`, or in a `first` or `solve` arm that is not the last, is fine). The
-same rule refuses those.
+check on a loaded machine: no `Set Default Timeout`, no `Timeout` command, no
+Ltac `timeout` tactical, no Ltac2 `Control.timeout` or `Control.timeoutf`
+(under any qualifier or import, so no use of the name `timeout` or `timeoutf`
+at all). The same rule refuses those in every Rocq file of the repository
+(`proofs/`, `theories/`, `projects/`, `tests/` and the `.v` templates of
+`tools/oft/templates/`), except on a line that ends with a comment
+of the form `(* timeout-ok: <why> *)`. The reason must say why an expiry
+cannot fail the check: for example, the `timeout` is in a `first` arm, and a
+later arm proves the same goal in a different way, so the limit changes only
+the speed. Reviewers examine each reason.
+
+An Ltac2 `@external` can give any plugin primitive, `"timeout"` among them, a
+new name. So in the same files each `@external` must bind a primitive on a
+short allowlist, `EXTERNAL_ALLOWED` in `tools/oft/lint.py`. Today the list has
+one entry: `"rocq-runtime.plugins.ltac2" "string_get"`. A `timeout-ok`
+comment does not allow another primitive. To add one, change the list in the
+same pull request and say there why the primitive cannot depend on time or
+on the machine.
 
 ## Where to start
 

@@ -22,7 +22,7 @@ Not included: **api-driver** (held from this release).
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `codecfuzzer`: encoded size is within the advertised bound: 0 < res <= meshopt_encodeVertexBufferBound(count, stride); determinism: re-encoding the same input into a buffer of exactly res bytes placed at the end of the allocation returns the same size (and exercises encoder bounds safety); meshlet index round trip modulo rotation: encodeMeshlet(triangles) then decodeMeshlet (both 4-byte and 3-byte triangle outputs) returns every triangle equal to the input triangle up to a cyclic rotation (abc, bca or cab); meshlet vertex round trip: 32-bit vertex references decode back exactly, and the 16-bit decode equals the low 16 bits of each input reference.
 
 ## Known issues

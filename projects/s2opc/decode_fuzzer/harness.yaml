@@ -144,6 +144,7 @@ checks:
   what: 'decode(x)=v, encode(v)=b1, decode(b1)=v2, encode(v2)=b2: b1 and b2 must be byte-identical (length
     and memcmp), i.e. encode.decode is idempotent on the canonical encoding (the input itself is deliberately
     not compared).'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: decode_fuzzer

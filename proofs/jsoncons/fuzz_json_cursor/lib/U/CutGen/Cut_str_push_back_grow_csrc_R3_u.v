@@ -1,0 +1,20 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Corelib Require Import PrimString.
+
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OssFuzzTheorems.jsoncons.fuzz_json_cursor.images Require Import Ubsan.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.U Require Import Pm10PlanKit_u.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.U.CutCert Require Import Pm10CutKit_u.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.CutCert Require Import CutCodec.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.U.CutGen Require Import Cut_str_push_back_grow_csrc_T_u Cut_str_push_back_grow_csrc_R0_u Cut_str_push_back_grow_csrc_R1_u Cut_str_push_back_grow_csrc_R2_u.
+Definition dict_Cut_str_push_back_grow_csrc_R3 : CCD.pt := CCD.mk_table 1048%positive "((4 0(0 4)(1 32))(2 0#1(0 -2))(2 6#2(0 3))(4 0(0 8)#3)(2 0#4(0 8))(4 0(0 2)(1 32))(2 0#6(0 -1))((1 2)-8288)(0 8224)(9#8#9)(0 1048574)(5#11 1 4611686018427387904)((1 52)0)(2#13#7 0)(9#13#7)(0 1048575)(5#16 1 4611686018427387904)(5(1 52)4096 140737488355328)(4(1 52)16)(2 0#6(1 52))(#20 -1)(4 0(0 -2)(1 32))(2 0#22#4)(2 0#23(0 9))(6#13#5)((0 0)65536)(0 950272)(7#13#5#26#27)((1 2)-8304)(0 8304)(7#13#5#29#30)((1 10)0)(7#13#5#32(0 24))((1 34)0)(7#13#5#34#6)(9#29(0 16))(0 1048576)(5#37 1 4611686018427387904)(2 0#6(0 1))(6 0 0 1#39)(2 9#40(0 1))(5#41 1 1)((1 2)-64)(0#43 8(1 22))((1 2)-56)(0#45 8(1 21))((1 2)-48)(0#47 8(1 20))((1 2)-40)(0#49 8(1 19))((1 2)-32)(0#51 8(1 18))((1 2)-24)(0#53 8(1 9))((1 2)-16)(0#55 8(1 8))((1 2)-8)(0#57 8(1 1))((1 10)8)((1 10)16)(5(1 32)12 33554432)(5(1 11)0 255)(5(1 34)4096 140737488355328)(4(1 34)16)(6#32(0 24))(5(1 10)4096 140737488355328)(4(1 10)8)(6#29#30)(5(1 2)1099511627776 140737488355328)(4(1 2)16)(7#29#30#32(0 24))(7#29#30#34#6)(7#32(0 24)#34#6)(5#24 0 4611686018427387904)(9#29#9)((1 2)-80)(9#76(0 0)))"%pstring.
+
+Definition t3 : CC.cutpoint := CCD.dec_cp_t dict_Cut_str_push_back_grow_csrc_R3 432%positive "(410504((1 0)(1 80)(2 0(1 2)(0 -64))(1 3)(1 4)(1 81)(1 82)(1 83)(1 11)(1 10)(1 84)(1 85)(1 86)(1 87)(1 88)(1 89)(1 90)(1 91)(1 34)#5#7#6(1 52)(1 23)(1 24)(1 25)(1 26)(1 27)(1 92)(1 93)(1 94)(1 95))(#10#12#14#15#17#18#19(9#21#24)#25#28#31#33#35#36#38#42#44#46#48#50#52#54#56#58(0#32 8#39)(0#59 8#7)(0#60 8(1 34))#61#62#63#64(9#32(0 24))#65#66#67#68#69#70#71#72#73#74#75#77)96(((1 2)-8304#30)((1 10)0(0 24))((1 52)0#5))()(0 1048573))"%pstring.
+Definition BL3 : CA.blocks := Eval vm_compute in CCD.dec_bl_t dict_Cut_str_push_back_grow_csrc_R3 13%positive "(((1 52)#5))"%pstring.
+Definition hints3 : list (nat * CC.subst) := hints2.
+Definition o3 : CA.pout := CCD.dec_pout_t dict_Cut_str_push_back_grow_csrc_R3 609%positive "((0(0(410272 410576 692548 692228 752792 751764 753172))(1 0))(((410576((1(1 1))(2(1 2))(3(1 3))(4(1 4))(5(1 81))(6(1 82))(7(1 83))(8(1 8))(9(1 9))(10(2 0#20(0 -1)))(11#6)(12(1 86))(13(1 87))(14(1 88))(15(1 89))(16(1 90))(17(1 91))(18(1 18))(19(1 19))(20(1 20))(21(1 21))(22(1 22))(23(1 23))(24(1 24))(25(1 25))(26(1 26))(27(1 27))(28(1 92))(29(1 93))(30(1 94))(31(1 95)))()((0(#20 0)1(0 0))(0#21 1(1 11))(0#59 8#6)(0#60 8(1 52))(0#32 8(2 0#4(0 9)))#10#12#14#15#17#18#19(9(#20 1)(2 0#23(0 7)))#25#28#31#33#35#36#38#42#44#46#48#50#52#54#56#58#61#62#63#64#65#66#67#68#69#70#71#72#73#74#75#77))(1 410576)))()())"%pstring.

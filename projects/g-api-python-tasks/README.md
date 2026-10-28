@@ -3,4 +3,4 @@
 
 [googleapis/google-cloud-python](https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-tasks) · OSS-Fuzz: [projects/g-api-python-tasks](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/g-api-python-tasks)
 
-**Status: language pending.** This project's fuzz targets are written in Python. This release covers C and C++; support for Python is being built. [What the statuses mean](../../docs/status.md).
+**Status: language pending.** This project's fuzz targets are written in Python. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for the others is being built. [What the statuses mean](../../docs/status.md).

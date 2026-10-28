@@ -169,6 +169,7 @@ checks:
   what: 'Every allocation the library made through the harness TrackingMemoryManager was freed by the
     end of the run (num_allocations==0, allocation map empty, bytes_in_use==0): a leak check on the JxlMemoryManager
     path that holds without LeakSanitizer.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: icc_codec_fuzzer

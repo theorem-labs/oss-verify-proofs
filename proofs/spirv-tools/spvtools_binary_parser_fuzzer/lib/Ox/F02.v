@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* SPDX-License-Identifier: Apache-2.0 *)
 (* [comment removed for export] *)
 From Corelib Require Import PrimInt63 PrimArray.
 Fixpoint flush_loop (n : nat) (acc : int) : int :=

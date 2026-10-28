@@ -1,0 +1,402 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
+
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BW_0Gc.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BeapCeil.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BTac BImage BZBridge BSysStep BSFModel BellsX BArr BacX.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BothAllocModel.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BSegs BsShadow BllocWf BllocKit BllocRep BsAtomics B_memset BsDepotInv BsDepotHash BsDepotPut BsUnwind BidBits BW_Combined BW_PoisonShadow BW_Leaves BW_DepotFrame BW_AllocBase BllocWalkKit.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BW_MallocBase BW_FreeLeaves BW_IAInit BW_FreePre BW_Dealloc BW_Put1 BW_Enqueue1 BW_Enqueue2 BW_Put2 BS_Free1 BllocTacX.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BerfLia.
+Import ListNotations.
+Open Scope bv_scope.
+Open Scope Z_scope.
+#[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Section HCW.
+  Context {HCEIL : HeapCeil}.
+
+Local Unset Keyed Unification.
+
+Lemma outside_app : forall (A B : list ivl) x, outside (A ++ B) x <-> outside A x /\ outside B x.
+Proof. induction A as [|[l h] A IH]; intros B x; cbn; [tauto|]. rewrite IH. tauto. Qed.
+Lemma sub_fp_app_l : forall A B : list ivl, sub_fp A (A ++ B).
+Proof. intros A B x Hx. apply outside_app in Hx. tauto. Qed.
+Lemma sub_fp_app_r : forall A B : list ivl, sub_fp B (A ++ B).
+Proof. intros A B x Hx. apply outside_app in Hx. tauto. Qed.
+Lemma munch_app2 : forall (A B : list ivl) m1 m2 m3, munch A m1 m2 -> munch B m2 m3 -> munch (A ++ B) m1 m3.
+Proof.
+  intros A B m1 m2 m3 H1 H2. eapply munch_trans; [eapply munch_weaken; [apply sub_fp_app_l| exact H1]| eapply munch_weaken; [apply sub_fp_app_r| exact H2]].
+Qed.
+
+Definition free_common (sp : word) (m m' : mem) (W : list ivl) (lo U size b1 actx TH : Z) (T : list Z) (d : depot) : Prop :=
+     munch W m m' /\ wmono asegs m m' /\ mem_inv asegs m'
+  /\ stk asegs m' lo (bv_unsigned sp)
+  /\ rw_cells asegs m' (U + -16) [C1 (b8 3); C1 (b8 b1); C2 (wz 0); C4 (wz size); C8 (wz actx)]
+  /\ rw_cells asegs m' U [C8 (wz (d_putid d (depot_hash T)))]
+  /\ stk asegs m' (TH + 2800) (TH + 3168)
+  /\ rw_cells asegs m' (TH + 3168) [C1 (b8 0)]
+  /\ rw_cells asegs m' AIAINIT [C1 (b8 1); C1 (b8 0); C2 (wz 0)] /\ ia_after m'
+  /\ DEPOT asegs (d_put d (depot_hash T) (Z.of_nat (length T))) m'
+  /\ u8arr asegs m' (sh U) (repeat (b8 kAsanHeapFreeMagic) (Z.to_nat (nsh size)))
+  /\ Forall (fun x => 0 <= x < 2^64) T /\ (1 <= length T <= 30)%nat.
+
+Section Free.
+  Variables (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+            (F : bvmap 5 word) (fc : bv 32) (m : mem).
+  Variables (lo : Z) (d : depot) (inited : bool).
+  Variables (TSD CTX TH TOP BOT : Z) (CH : list (Z * Z)) (sb : Z).
+  Variables (U size b1 actx : Z) (ub : list byte) (qmax qmin qcache : Z) (sbs : list byte).
+  Variables (k hdq LA qbytes : Z).
+  Let CHI := icpt_chain (bv_unsigned ra) (bv_unsigned s0) (bv_unsigned sp) TOP CH.
+  Let T := utrace 0xba24c (bv_unsigned sp) TOP BOT 30 CHI.
+  Let Wh := free_head_W lo (bv_unsigned sp) TH U size d.
+
+  Hypothesis LO : aceil <= lo.  Hypothesis HI : lo + 2912 <= bv_unsigned sp.
+  Hypothesis SPA : hidden (bv_unsigned sp mod 16 = 0).
+  Hypothesis SPT : hidden (bv_unsigned sp + 16 <= 2^47).
+  Hypothesis TPR : hidden (6762376 <= bv_unsigned tp /\ bv_unsigned tp + 4096 <= AIMG_TOP).
+  Hypothesis RNG : hidden (6762288 <= TSD /\ TSD + 8 <= AIMG_TOP /\ aapp CTX 160 /\ CTX + 160 <= aceil /\ akobj TH 4096 /\ TH + 4096 <= aceil /\ TH mod 16 = 0).
+  Hypothesis PLC : hidden ((TH + 4096 <= sb \/ sb + kSpaceSize + 4096 <= TH) /\ (CTX + 160 <= sb \/ sb + kSpaceSize + 4096 <= CTX)
+                /\ (CTX + 160 <= TH \/ TH + 4096 <= CTX)).
+  Hypothesis PLCD : hidden ((TH + 4096 <= d_nb d \/ d_nb d + 16 * 65536 <= TH) /\ (TH + 4096 <= d_sb d \/ d_sb d + 8 * 32768 <= TH)
+                /\ (sb + kSpaceSize + 4096 <= d_nb d \/ d_nb d + 16 * 65536 <= sb) /\ (sb + kSpaceSize + 4096 <= d_sb d \/ d_sb d + 8 * 32768 <= sb)
+                /\ (CTX + 160 <= d_nb d \/ d_nb d + 16 * 65536 <= CTX) /\ (CTX + 160 <= d_sb d \/ d_sb d + 8 * 32768 <= CTX)
+                /\ aapp (d_nb d) (16 * 65536) /\ aapp (d_sb d) (8 * 32768)).
+  Hypothesis PLU : hidden ((TH + 4096 <= U - 16 \/ U + 8 <= TH) /\ (CTX + 160 <= U - 16 \/ U + 8 <= CTX)
+                /\ (d_nb d + 16 * 65536 <= U - 16 \/ U + 8 <= d_nb d) /\ (d_sb d + 8 * 32768 <= U - 16 \/ U + 8 <= d_sb d)).
+  Hypothesis TBR : hidden (4096 <= TOP <= 2^47 /\ 0 <= BOT < TOP).
+  Hypothesis DLO : d_nb d + 16 * 65536 <= lo /\ d_sb d + 8 * 32768 <= lo.
+  Hypothesis DCAP : d_ids d + 1 < 65536 /\ d_frames d + 31 <= 32768.
+  Hypothesis FCH : goodframe BOT (bv_unsigned sp) TOP = true -> goodframe (bv_unsigned sp) (bv_unsigned s0) TOP = true ->
+                   bv_unsigned sp + 16 <= bv_unsigned s0 /\ frame_chain asegs m TOP (bv_unsigned s0) CH.
+  Hypothesis Ha0 : a0 = wz U.
+  Hypothesis UR : hidden (aapp U (round_up size 8) /\ AIMG_TOP + 16 <= U /\ U + round_up size 8 <= aceil /\ U mod 16 = 0).
+  Hypothesis SZ : 1 <= size < 2^32.
+  Hypothesis B1 : 0 <= b1 < 256 /\ b1 mod 128 = 17.
+  Hypothesis ACR : 0 <= actx < 2^64.
+  Hypothesis QR : 0 < qcache < 2^64 /\ size <= qmax < 2^64 /\ 0 <= qmin < 2^64.
+  Hypothesis SBS : Z.of_nat (length sbs) = nsh size.
+
+  Hypothesis KR : 0 <= k /\ k + 1 < 2^64. Hypothesis HDQ : 0 <= hdq < 2^64. Hypothesis QB0 : 0 <= qbytes.
+
+  Hypothesis ENV : IENV tp TSD CTX TH sb TOP BOT m.
+  Hypothesis MI : mem_inv asegs m.
+  Hypothesis ST : stk asegs m lo (bv_unsigned sp).
+  Hypothesis UNW : rw_cells asegs m (TH + 3168) [C1 (b8 0)].
+  Hypothesis FLG : rw_cells asegs m AIAINIT [C1 (b8 (if inited then 1 else 0)); C1 (b8 0); C2 (wz 0)].
+  Hypothesis IA : if inited then ia_after m else ia_pristine m.
+  Hypothesis DEP : DEPOT asegs d m.
+  Hypothesis HDR : rw_cells asegs m (U + -16) [C1 (b8 2); C1 (b8 b1); C2 (wz 0); C4 (wz size); C8 (wz actx)].
+  Hypothesis UB : rw_cells asegs m U [CB 8 ub].
+  Hypothesis TST : stk asegs m (TH + 2800) (TH + 3168).
+  Hypothesis QC : rw_cells asegs m (AINST + OI_QMAX) [C8 (wz qmax); C8 (wz qmin); C8 (wz qcache)].
+  Hypothesis SH : u8arr asegs m (sh U) sbs.
+  Hypothesis TQ : rw_cells asegs m (TH + OT_TQ) [C8 (wz k); C8 (wz hdq); C8 (wz LA); C8 (wz qbytes)].
+
+  Let ENTRY := MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                  F (Z_to_bv 64 0xba114) fc None m (seg_rom asegs).
+
+  Ltac prepF :=
+    pose proof (bv_unsigned_in_range _ sp) as SPR; change (bv_modulus 64) with (2^64)%Z in SPR;
+    assert (BND : aceil <= lo /\ 7241728 <= CTX /\ CTX + 160 <= aceil /\ 4096 <= TH /\ TH + 4096 <= aceil
+               /\ bv_unsigned sp + 16 <= 140737488355328 /\ 7241744 <= U /\ U + round_up size 8 <= aceil /\ 140735193776128 <= aceil /\ size <= round_up size 8 /\ 8 <= round_up size 8
+               /\ 7241728 <= d_nb d /\ 7241728 <= d_sb d)
+      by (clear - LO RNG SPT UR PLCD SZ; try acb; destruct RNG as [RNG']; destruct UR as [UR']; destruct PLCD as [PLCD']; destruct SPT as [SPT'];
+          unfold AHI_LO, round_up in *; acb; change (2^47)%Z with 140737488355328%Z in SPT'; aunf; repeat split; try tlia; Z.div_mod_to_equations; tlia);
+        region_sides; name_bands;
+    assert (PLUb : (TH + 4096 <= U - 16 \/ U + 8 <= TH)) by (destruct PLU as [X]; clear - X; tauto);
+    assert (PLDb : (TH + 4096 <= d_nb d \/ d_nb d + 16 * 65536 <= TH) /\ (TH + 4096 <= d_sb d \/ d_sb d + 8 * 32768 <= TH)) by (destruct PLCD as [X]; clear - X; tauto);
+    assert (SHR : 2148356096 <= sh U /\ sh U + nsh size <= 17594333495296) by (unfold sh, nsh, ASHADOW_BASE; clear - BND SZ; try acb; Z.div_mod_to_equations; tlia);
+    assert (USH : sh U + nsh size <= U - 16 \/ U + round_up size 8 <= sh U) by (destruct UR as [[UA UX]]; clear - UA UX; acb; unfold aapp, aapp_lo, aapp_hi, AIMG_TOP, ALOWSH_LO, AHI_LO, sh, nsh, round_up, ASHADOW_BASE in *; Z.div_mod_to_equations; tlia);
+    assert (THR : hidden (akobj TH 4096 /\ TH + 4096 <= aceil /\ TH mod 16 = 0)) by (destruct RNG as [X]; constructor; clear - X; tauto);
+    assert (UR8 : hidden (aapp U 8 /\ AIMG_TOP + 16 <= U /\ U + 8 <= aceil)) by (destruct UR as [X]; constructor; destruct X as [XA X]; split; [apply (aapp_sub _ _ _ _ XA); clear - BND; tlia| clear - X BND; tlia]).
+
+  Ltac run_head :=
+    eapply evt_cut;
+    [ eapply (@free_head _ ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo d inited TSD CTX TH TOP BOT CH sb
+                U size b1 actx ub qmax qmin qcache sbs); eassumption
+    | cbv beta; intros ms3 PO3;
+      destruct PO3 as (t0_3 & t1_3 & t2_3 & a5_3 & a6_3 & a7_3 & t3_3 & t4_3 & t5_3 & t6_3 & jk & rest & m3 & -> & MU3 & WM3 & MI3 & ENV3 & ST3 & PFR3
+                       & ESO3 & TRB3 & LR3 & TFB3 & F43 & TRNG & NR & HDR3 & UW3 & TST3 & UNW3 & FLG3 & IA3 & DEP3 & SHD3) ].
+
+  Section Append.
+    Variables (lsize lcount : Z) (lchunks : list Z).
+    Let Wa : list ivl := [(lo, bv_unsigned sp + -2208); (TH + OT_TQ + 24, TH + OT_TQ + 32); (LA + 8, LA + 24); (LA + 24 + 8 * lcount, LA + 32 + 8 * lcount)].
+    Hypothesis K1 : 1 <= k.
+    Hypothesis LAR : hidden (AHI_LO <= LA /\ LA + kBatchSize <= aceil /\ LA mod 16 = 0 /\ (TH + 4096 <= LA \/ LA + kBatchSize <= TH)).
+    Hypothesis PLL : hidden ((LA + kBatchSize <= U - 16 \/ U + 8 <= LA)
+                          /\ (d_nb d + 16 * 65536 <= LA \/ LA + kBatchSize <= d_nb d) /\ (d_sb d + 8 * 32768 <= LA \/ LA + kBatchSize <= d_sb d)).
+    Hypothesis LC : 1 <= lcount < kBatchCount /\ lcount = zlen lchunks. Hypothesis LSZ : 0 <= lsize /\ lsize + size < 2^64.
+    Hypothesis LCH : Forall (fun x => 0 <= x < 2^64) lchunks.
+    Hypothesis QLE : qbytes + size <= qcache.
+    Hypothesis LB : rw_cells asegs m LA [C8 (wz 0); C8 (wz lsize); C8 (wz lcount)].
+    Hypothesis LCHK : u64arr asegs m (LA + 24) (wlist lchunks).
+    Hypothesis LJ : stk asegs m (LA + 24 + 8 * lcount) (LA + kBatchSize).
+
+    Definition free_append_post : machine_state -> Prop := fun ms' =>
+      exists m', free_ret_post sp ra s0 s1 s2 s3 s4 s5 gp tp s6 s7 s8 s9 s10 s11 F fc lo m' ms'
+      /\ free_common sp m m' (Wh ++ Wa) lo U size b1 actx TH T d
+      /\ rw_cells asegs m' (TH + OT_TQ) [C8 (wz k); C8 (wz hdq); C8 (wz LA); C8 (wz (qbytes + size))]
+      /\ rw_cells asegs m' LA [C8 (wz 0); C8 (wz (lsize + size)); C8 (wz (lcount + 1))]
+      /\ u64arr asegs m' (LA + 24) (wlist (lchunks ++ [U + -16]))
+      /\ stk asegs m' (LA + 32 + 8 * lcount) (LA + kBatchSize).
+
+    Theorem free_append : evt asegs free_append_post ENTRY.
+    Proof.
+      unfold ENTRY. prepF. run_head.
+
+      pose proof MU3 as MU3'. unfold Wh, free_head_W, depot_W, AIAINIT, AIAINST in MU3'.
+      unfold OT_TQ, kBatchSize, kBatchCount in *.
+      eapply rw_cells_transport in TQ; [| exact MU3'| exact WM3| cbn [disjoint_from cells_size csize length Nat.add Nat.mul app]; region_decide].
+      assert (LAD : disjoint_from Wh LA 8192).
+      { unfold Wh, free_head_W, depot_W, AIAINIT, AIAINST. cbn [disjoint_from app]. destruct LAR as [X]. destruct PLL as [Y]. unfold AHI_LO in X.
+        clear - X Y BND SHR DLO HI. tlia. }
+      eapply rw_cells_transport in LB; [| exact MU3| exact WM3| cbn [cells_size csize length Nat.add Nat.mul]; eapply disjoint_from_sub; [exact LAD| clear; tlia| clear; tlia]].
+      eapply u64arr_transport in LCHK; [| exact MU3| exact WM3| eapply disjoint_from_sub; [exact LAD| clear; tlia| unfold wlist; rewrite length_map; unfold zlen in LC; clear -LC; tlia]].
+      eapply stk_transport_disjoint in LJ; [| exact MU3| exact WM3| eapply disjoint_from_sub; [exact LAD| clear -LC; tlia| clear; tlia]].
+
+      eapply evt_cut.
+      { eapply (@enq_append _ sp gp tp t0_3 t1_3 t2_3 a5_3 a6_3 a7_3 t3_3 t4_3 t5_3 t6_3 s7 s8 s9 s10 s11 F fc m3 lo U size TH qcache k hdq LA lsize lcount qbytes lchunks).
+        all: try eassumption. clear - HI; try acb; tlia. clear - KR K1; tlia. }
+      cbv beta. intros ms4 PO4.
+      destruct PO4 as (t0_4 & t1_4 & t2_4 & a1_4 & a2_4 & a3_4 & a4_4 & a5_4 & a6_4 & a7_4 & t3_4 & t4_4 & t5_4 & t6_4 & m4 & -> & MU4 & WM4 & MI4 & ST4 & TQ4 & LB4 & LCHK4 & LJ4).
+      unfold OT_TQ, kBatchSize in MU4, LJ4.
+
+      Ltac tr4 H MU WM tac := eapply rw_cells_transport in H; [| exact MU| exact WM| cbn [disjoint_from cells_size csize length Nat.add Nat.mul app]; tac].
+      assert (LAB : 17594333495296 <= LA /\ LA + 8192 <= aceil) by (destruct LAR as [X]; unfold AHI_LO in X; clear - X; tlia).
+      unfold put_frame in PFR3. tr4 PFR3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC TB end; try acb; aunf; tlia).
+      tr4 ESO3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC TB end; try acb; aunf; tlia).
+      eapply u64arr_transport in TRB3; [| exact MU4| exact WM4| cbn [disjoint_from app]; rewrite length_app, length_map, LR3; clear - BND SPR HI NR LAB LC; try acb; tlia].
+      tr4 TFB3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC TB end; try acb; aunf; tlia).
+      tr4 F43 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC TB end; try acb; aunf; tlia).
+      eapply evt_cut.
+      { eapply (@put_tail _ sp ra s0 s1 s2 s3 s4 s5 gp tp s6 s7 s8 s9 s10 s11 F fc lo T rest jk); try eassumption.
+        - clear - HI; try acb; tlia.
+        - destruct THR as [XT]; constructor; clear - XT; tauto.
+        - clear - QR; tlia.
+        - clear - QB0 QLE SZ; tlia. }
+      cbv beta. intros ms5 PO5.
+      apply evt_done. exists m4. split; [exact PO5|].
+      split.
+      2:{ split; [exact TQ4|]. split; [exact LB4|]. split; [exact LCHK4| exact LJ4]. }
+
+      unfold free_common.
+      split; [exact (munch_app2 _ _ _ _ _ MU3 MU4)|]. split; [exact (wmono_trans _ _ _ _ WM3 WM4)|]. split; [exact MI4|].
+      split. { destruct PO5 as (x0 & x1 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & x9 & x10 & x11 & x12 & x13 & x14 & _ & ST6). exact ST6. }
+      assert (LAB8 : LA + 32 + 8 * lcount <= LA + 8192) by (clear - LC; tlia).
+      assert (LAU : LA + 8192 <= U - 16 \/ U + 8 <= LA) by (destruct PLL as [Y]; clear - Y; tauto).
+      tr4 HDR3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC SZ LAU PLUb TB end; try acb; aunf; tlia). split; [exact HDR3|].
+      tr4 UW3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC SZ LAU PLUb TB end; try acb; aunf; tlia). split; [exact UW3|].
+      assert (LAT : TH + 4096 <= LA \/ LA + 8192 <= TH) by (destruct LAR as [X]; clear - X; tauto).
+      split. { eapply stk_transport_disjoint; [exact TST3| exact MU4| exact WM4| cbn [disjoint_from app]; region_decide]. }
+      tr4 UNW3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC LAT TB end; try acb; aunf; tlia). split; [exact UNW3|].
+      unfold AIAINIT in FLG3 |- *. tr4 FLG3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI LAB LC TB end; try acb; aunf; tlia). split; [exact FLG3|].
+      split; [exact (ia_if_transport true _ m3 m4 IA3 MU4 WM4 ltac:(hci; cbn [disjoint_from app]; region_decide))|].
+      assert (LADD : (d_nb d + 16 * 65536 <= LA \/ LA + 8192 <= d_nb d) /\ (d_sb d + 8 * 32768 <= LA \/ LA + 8192 <= d_sb d)) by (destruct PLL as [Y]; clear - Y; tauto).
+      split. { eapply (DEPOT_transport asegs _ _ m4) in DEP3; [exact DEP3| exact MU4 | exact WM4 |].
+               unfold depot_avoid, avoids. rewrite ?d_nb_put, ?d_sb_put. cbn [fst snd].
+               repeat split; repeat (first [apply Forall_nil | apply Forall_cons; [cbn [fst snd]; first [clear - BND HI DLO LAB LC LADD PLDb; try acb; tlia | region_decide] |]]). }
+      split. { eapply u8arr_transport; [exact SHD3| exact MU4| exact WM4| cbn [disjoint_from app]]. rewrite repeat_length, Z2Nat.id by (clear - SZ; unfold nsh; Z.div_mod_to_equations; tlia).
+               first [clear - BND SHR HI LAB LC; try acb; tlia | region_decide]. }
+      split; [exact TRNG| exact NR].
+    Qed.
+  End Append.
+
+  Section NewHit.
+    Variables (cnt : Z) (chunks : list Z) (B : Z) (j0 j1 j2 j3 : word).
+    Let Wn : list ivl := enq_new_W lo (bv_unsigned sp) TH B LA.
+    Hypothesis SBR : hidden (AHI_LO <= sb /\ sb + kSpaceSize + kPageSize <= aceil /\ sb mod 65536 = 0).
+    Hypothesis CNT : cnt = zlen chunks. Hypothesis HIT : 1 <= cnt <= 2.
+    Hypothesis CPS : Forall (fun cp => 0 <= cp < 2^32) chunks.
+    Hypothesis HB : B = sb + kBatchClass * 2^32 + hd 0 chunks * 16.
+    Hypothesis BR : hidden (AHI_LO <= B /\ B + kBatchSize <= aceil /\ (TH + 4096 <= B \/ B + kBatchSize <= TH)).
+    Hypothesis PLB : hidden ((B + kBatchSize <= U - 16 \/ U + 8 <= B)
+                          /\ (d_nb d + 16 * 65536 <= B \/ B + kBatchSize <= d_nb d) /\ (d_sb d + 8 * 32768 <= B \/ B + kBatchSize <= d_sb d)).
+    Hypothesis LAh : k <> 0 -> (rw_cells asegs m LA [C8 (wz 0)] /\ rw_cells asegs m (LA + 16) [C8 (wz kBatchCount)])
+                     /\ AHI_LO <= LA /\ LA + kBatchSize <= aceil /\ (TH + 4096 <= LA \/ LA + kBatchSize <= TH) /\ (B + kBatchSize <= LA \/ LA + kBatchSize <= B)
+                     /\ (LA + kBatchSize <= U - 16 \/ U + 8 <= LA)
+                     /\ (d_nb d + 16 * 65536 <= LA \/ LA + kBatchSize <= d_nb d) /\ (d_sb d + 8 * 32768 <= LA \/ LA + kBatchSize <= d_sb d).
+    Hypothesis LA0 : k = 0 -> LA = 0.
+    Hypothesis QLE : qbytes + size + kBatchSize <= qcache.
+    Hypothesis PC1 : rw_cells asegs m (TH + 2128) [C4 (wz cnt)].
+    Hypothesis PC2 : rw_cells asegs m (TH + 2136) [C8 (wz kBatchSize)].
+    Hypothesis PC3 : u32arr asegs m (TH + 2144) (wlist (rev chunks)).
+    Hypothesis PC4 : stk asegs m (TH + 2144 + 4 * cnt) (TH + 2208).
+    Hypothesis STATS : rw_cells asegs m (TH + 2768) [C8 j0; C8 j1; C8 j2; C8 j3].
+    Hypothesis INST : rw_cells asegs m (AINST + OI_SPACEBEG) [C8 (wz sb)].
+    Hypothesis BJ : stk asegs m B (B + kBatchSize).
+
+    Definition free_newhit_post : machine_state -> Prop := fun ms' =>
+      exists (j2' : word) m', free_ret_post sp ra s0 s1 s2 s3 s4 s5 gp tp s6 s7 s8 s9 s10 s11 F fc lo m' ms'
+      /\ free_common sp m m' (Wh ++ Wn) lo U size b1 actx TH T d
+      /\ rw_cells asegs m' (TH + OT_TQ) [C8 (wz (k + 1)); C8 (wz (if k =? 0 then B else hdq)); C8 (wz B); C8 (wz (qbytes + (size + kBatchSize)))]
+      /\ (k <> 0 -> rw_cells asegs m' LA [C8 (wz B)])
+      /\ rw_cells asegs m' B [C8 (wz 0); C8 (wz (size + kBatchSize)); C8 (wz 1); C8 (wz (U + -16))]
+      /\ stk asegs m' (B + 32) (B + kBatchSize)
+      /\ rw_cells asegs m' (TH + 2128) [C4 (wz (cnt - 1))]
+      /\ u32arr asegs m' (TH + 2144) (wlist (rev (tl chunks)))
+      /\ stk asegs m' (TH + 2144 + 4 * (cnt - 1)) (TH + 2208)
+      /\ rw_cells asegs m' (TH + 2768) [C8 j0; C8 j1; C8 j2'; C8 j3].
+
+    Theorem free_newhit : evt asegs free_newhit_post ENTRY.
+    Proof.
+      unfold ENTRY. prepF. run_head.
+
+      pose proof MU3 as MU3'. unfold Wh, free_head_W, depot_W, AIAINIT, AIAINST in MU3'.
+      unfold OT_TQ, kBatchSize, kBatchCount in *.
+      Ltac tr3 H MU WM tac := eapply rw_cells_transport in H; [| exact MU| exact WM| cbn [disjoint_from cells_size csize length Nat.add Nat.mul app]; tac].
+      tr3 TQ MU3' WM3 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND PLUb PLDb SHR DLO HI SZ TB end; try acb; aunf; tlia).
+      tr3 PC1 MU3' WM3 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND PLUb PLDb SHR DLO HI SZ TB end; try acb; aunf; tlia).
+      tr3 PC2 MU3' WM3 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND PLUb PLDb SHR DLO HI SZ TB end; try acb; aunf; tlia).
+      assert (LENC : Z.of_nat (length (wlist (rev chunks))) = cnt) by (unfold wlist; rewrite length_map, length_rev; unfold zlen in CNT; clear - CNT; tlia).
+      eapply u32arr_transport in PC3; [| exact MU3'| exact WM3| cbn [disjoint_from app]; rewrite LENC; match goal with TB : akobj TH 4096 |- _ => clear - BND PLUb PLDb SHR DLO HI SZ HIT TB end; try acb; aunf; tlia].
+      eapply stk_transport_disjoint in PC4; [| exact MU3'| exact WM3| cbn [disjoint_from app]; region_decide].
+      tr3 STATS MU3' WM3 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND PLUb PLDb SHR DLO HI SZ TB end; try acb; aunf; tlia).
+      unfold AINST, OI_SPACEBEG in INST. tr3 INST MU3' WM3 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND PLUb PLDb SHR DLO HI SZ TB end; try acb; aunf; tlia).
+      assert (BD : disjoint_from Wh B 8192).
+      { unfold Wh, free_head_W, depot_W, AIAINIT, AIAINST. cbn [disjoint_from app]. destruct BR as [X]. destruct PLB as [Y]. unfold AHI_LO in X.
+        clear - X Y BND SHR DLO HI. tlia. }
+      eapply stk_transport_disjoint in BJ; [| exact MU3| exact WM3| replace (B + 8192 - B) with 8192 by (clear; tlia); exact BD].
+      assert (LAh3 : k <> 0 -> (rw_cells asegs m3 LA [C8 (wz 0)] /\ rw_cells asegs m3 (LA + 16) [C8 (wz 1021)])
+                     /\ AHI_LO <= LA /\ LA + 8192 <= aceil /\ (TH + 4096 <= LA \/ LA + 8192 <= TH) /\ (B + 8192 <= LA \/ LA + 8192 <= B)).
+      { intros NZ. destruct (LAh NZ) as ([LC LCC] & LA1 & LA2 & LA3 & LA4 & LA5 & LA6 & LA7).
+        assert (LAD : disjoint_from Wh LA 8192).
+        { unfold Wh, free_head_W, depot_W, AIAINIT, AIAINST. cbn [disjoint_from app]. unfold AHI_LO in LA1. clear - LA1 LA2 LA3 LA5 LA6 LA7 BND SHR DLO HI. tlia. }
+        split; [| clear - LA1 LA2 LA3 LA4; tauto]. split.
+        - eapply rw_cells_transport; [exact LC| exact MU3| exact WM3| eapply disjoint_from_sub; [exact LAD| clear; tlia| cbn; clear; tlia]].
+        - eapply rw_cells_transport; [exact LCC| exact MU3| exact WM3| eapply disjoint_from_sub; [exact LAD| clear; tlia| cbn; clear; tlia]]. }
+
+      eapply evt_cut.
+      { eapply (@enq_new_hit _ sp gp tp t0_3 t1_3 t2_3 a5_3 a6_3 a7_3 t3_3 t4_3 t5_3 t6_3 s7 s8 s9 s10 s11 F fc m3 lo U size TH qcache sb k hdq LA qbytes cnt chunks B j0 j1 j2 j3).
+        all: try eassumption. }
+      cbv beta. intros ms4 PO4.
+      destruct PO4 as (t0_4 & t1_4 & t2_4 & a1_4 & a2_4 & a3_4 & a4_4 & a5_4 & a6_4 & a7_4 & t3_4 & t4_4 & t5_4 & t6_4 & j2' & m4 & -> & MU4 & WM4 & MI4 & ST4
+                       & TQ4 & LA4 & BC4 & BJ4 & PC14 & PC34 & PC44 & STATS4).
+      unfold enq_new_W, kBatchSize in MU4, BJ4, TQ4, BC4.
+
+      Ltac tr4 H MU WM tac := eapply rw_cells_transport in H; [| exact MU| exact WM| cbn [disjoint_from cells_size csize length Nat.add Nat.mul app]; tac].
+      assert (BB : 17594333495296 <= B /\ B + 8192 <= aceil /\ (TH + 4096 <= B \/ B + 8192 <= TH) /\ (B + 8192 <= U - 16 \/ U + 8 <= B))
+        by (destruct BR as [X]; destruct PLB as [Y]; unfold AHI_LO in X; clear - X Y; tauto).
+      assert (LAX : LA = 0 \/ (17594333495296 <= LA /\ LA + 8192 <= aceil /\ (TH + 4096 <= LA \/ LA + 8192 <= TH) /\ (B + 8192 <= LA \/ LA + 8192 <= B)
+                               /\ (LA + 8192 <= U - 16 \/ U + 8 <= LA)
+                               /\ (d_nb d + 16 * 65536 <= LA \/ LA + 8192 <= d_nb d) /\ (d_sb d + 8 * 32768 <= LA \/ LA + 8192 <= d_sb d))).
+      { destruct (Z.eq_dec k 0) as [KZ|KNZ]; [left; exact (LA0 KZ)| right].
+        destruct (LAh KNZ) as (_ & Y1 & Y2 & Y3 & Y4 & Y5 & Y6 & Y7). unfold AHI_LO in Y1. clear - Y1 Y2 Y3 Y4 Y5 Y6 Y7. repeat split; assumption. }
+      Ltac slv LAX := destruct LAX as [LAZ|LAF]; [rewrite ?LAZ in *; clear LAZ | ]; try acb; aunf; tliac.
+      unfold put_frame in PFR3. tr4 PFR3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI BB LAX TB end; slv LAX).
+      tr4 ESO3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI BB LAX TB end; slv LAX).
+      eapply u64arr_transport in TRB3; [| exact MU4| exact WM4| cbn [disjoint_from app]; rewrite length_app, length_map, LR3; match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI NR BB LAX TB end; slv LAX].
+      tr4 TFB3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI BB LAX TB end; slv LAX).
+      tr4 F43 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI BB LAX TB end; slv LAX).
+      eapply evt_cut.
+      { eapply (@put_tail _ sp ra s0 s1 s2 s3 s4 s5 gp tp s6 s7 s8 s9 s10 s11 F fc lo T rest jk); try eassumption.
+        - clear - HI; try acb; tlia.
+        - destruct THR as [XT]; constructor; clear - XT; tauto.
+        - clear - QR; tlia.
+        - clear - QB0 QLE SZ; tlia. }
+      cbv beta. intros ms5 PO5.
+      apply evt_done. exists j2', m4. split; [exact PO5|].
+      split.
+      2:{ split; [exact TQ4|]. split; [exact LA4|]. split; [exact BC4|]. split; [exact BJ4|]. split; [exact PC14|]. split; [exact PC34|]. split; [exact PC44| exact STATS4]. }
+
+      unfold free_common.
+      split; [exact (munch_app2 _ _ _ _ _ MU3 MU4)|]. split; [exact (wmono_trans _ _ _ _ WM3 WM4)|]. split; [exact MI4|].
+      split. { destruct PO5 as (x0 & x1 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & x9 & x10 & x11 & x12 & x13 & x14 & _ & ST6). exact ST6. }
+      tr4 HDR3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI SZ BB LAX PLUb TB end; slv LAX). split; [exact HDR3|].
+      tr4 UW3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI SZ BB LAX PLUb TB end; slv LAX). split; [exact UW3|].
+      split. { eapply stk_transport_disjoint; [exact TST3| exact MU4| exact WM4| cbn [disjoint_from app]; match goal with TB : akobj TH 4096 |- _ => clear - BND HI BB LAX TB end; slv LAX]. }
+      tr4 UNW3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI BB LAX TB end; slv LAX). split; [exact UNW3|].
+      unfold AIAINIT in FLG3 |- *. tr4 FLG3 MU4 WM4 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI BB LAX TB end; slv LAX). split; [exact FLG3|].
+      split; [exact (ia_if_transport true _ m3 m4 IA3 MU4 WM4 ltac:(hci; cbn [disjoint_from app]; match goal with TB : akobj TH 4096 |- _ => clear - BND HI BB LAX TB end; slv LAX))|].
+      split. { eapply (DEPOT_transport asegs _ _ m4) in DEP3; [exact DEP3| exact MU4 | exact WM4 |].
+               unfold depot_avoid, avoids. rewrite ?d_nb_put, ?d_sb_put. cbn [fst snd].
+               pose proof (conj BB (conj PLDb DLO)) as X. destruct PLB as [Y].
+               repeat split; repeat (first [apply Forall_nil | apply Forall_cons; [cbn [fst snd]; match goal with TB : akobj TH 4096 |- _ => clear - BND HI X Y LAX TB end; slv LAX |]]). }
+      split. { eapply u8arr_transport; [exact SHD3| exact MU4| exact WM4| cbn [disjoint_from app]]. rewrite repeat_length, Z2Nat.id by (clear - SZ; unfold nsh; Z.div_mod_to_equations; tlia).
+               match goal with TB : akobj TH 4096 |- _ => clear - BND SHR HI BB LAX TB end; slv LAX. }
+      split; [exact TRNG| exact NR].
+    Qed.
+  End NewHit.
+
+End Free.
+
+Section Null.
+  Variables (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+            (F : bvmap 5 word) (fc : bv 32) (m : mem).
+  Variables (lo : Z) (d : depot) (inited : bool).
+  Variables (TSD CTX TH TOP BOT : Z) (CH : list (Z * Z)) (sb : Z).
+  Let Wp : list ivl := [(lo, bv_unsigned sp); (TH + 3168, TH + 3169); (AIAINIT, AIAINIT + 4); (AIAINST, AIAINST + 0x81030)].
+
+  Hypothesis LO : aceil <= lo.  Hypothesis HI : lo + 2912 <= bv_unsigned sp.
+  Hypothesis SPA : hidden (bv_unsigned sp mod 16 = 0).
+  Hypothesis SPT : hidden (bv_unsigned sp + 16 <= 2^47).
+  Hypothesis TPR : hidden (6762376 <= bv_unsigned tp /\ bv_unsigned tp + 4096 <= AIMG_TOP).
+  Hypothesis RNG : hidden (6762288 <= TSD /\ TSD + 8 <= AIMG_TOP /\ aapp CTX 160 /\ CTX + 160 <= aceil /\ akobj TH 4096 /\ TH + 4096 <= aceil /\ TH mod 16 = 0).
+  Hypothesis PLC : hidden ((TH + 4096 <= sb \/ sb + kSpaceSize + 4096 <= TH) /\ (CTX + 160 <= sb \/ sb + kSpaceSize + 4096 <= CTX)
+                /\ (CTX + 160 <= TH \/ TH + 4096 <= CTX)).
+  Hypothesis PLCD : hidden ((TH + 4096 <= d_nb d \/ d_nb d + 16 * 65536 <= TH) /\ (TH + 4096 <= d_sb d \/ d_sb d + 8 * 32768 <= TH)
+                /\ (sb + kSpaceSize + 4096 <= d_nb d \/ d_nb d + 16 * 65536 <= sb) /\ (sb + kSpaceSize + 4096 <= d_sb d \/ d_sb d + 8 * 32768 <= sb)
+                /\ (CTX + 160 <= d_nb d \/ d_nb d + 16 * 65536 <= CTX) /\ (CTX + 160 <= d_sb d \/ d_sb d + 8 * 32768 <= CTX)
+                /\ aapp (d_nb d) (16 * 65536) /\ aapp (d_sb d) (8 * 32768)).
+  Hypothesis TBR : hidden (4096 <= TOP <= 2^47 /\ 0 <= BOT < TOP).
+  Hypothesis DLO : d_nb d + 16 * 65536 <= lo /\ d_sb d + 8 * 32768 <= lo.
+  Hypothesis FCH : goodframe BOT (bv_unsigned sp) TOP = true -> goodframe (bv_unsigned sp) (bv_unsigned s0) TOP = true ->
+                   bv_unsigned sp + 16 <= bv_unsigned s0 /\ frame_chain asegs m TOP (bv_unsigned s0) CH.
+  Hypothesis ENV : IENV tp TSD CTX TH sb TOP BOT m.
+  Hypothesis MI : mem_inv asegs m.
+  Hypothesis ST : stk asegs m lo (bv_unsigned sp).
+  Hypothesis UNW : rw_cells asegs m (TH + 3168) [C1 (b8 0)].
+  Hypothesis FLG : rw_cells asegs m AIAINIT [C1 (b8 (if inited then 1 else 0)); C1 (b8 0); C2 (wz 0)].
+  Hypothesis IA : if inited then ia_after m else ia_pristine m.
+  Hypothesis DEP : DEPOT asegs d m.
+
+  Definition free_null_post : machine_state -> Prop := fun ms' =>
+    exists m', free_ret_post sp ra s0 s1 s2 s3 s4 s5 gp tp s6 s7 s8 s9 s10 s11 F fc lo m' ms'
+    /\ munch Wp m m' /\ wmono asegs m m' /\ mem_inv asegs m'
+    /\ rw_cells asegs m' (TH + 3168) [C1 (b8 0)]
+    /\ rw_cells asegs m' AIAINIT [C1 (b8 1); C1 (b8 0); C2 (wz 0)] /\ ia_after m'
+    /\ DEPOT asegs d m'.
+
+  Theorem free_null :
+    evt asegs free_null_post
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (wz 0) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 0xba114) fc None m (seg_rom asegs)).
+  Proof.
+    pose proof (bv_unsigned_in_range _ sp) as SPR; change (bv_modulus 64) with (2^64)%Z in SPR.
+    assert (BND : aceil <= lo /\ 4096 <= TH /\ TH + 4096 <= aceil /\ bv_unsigned sp + 16 <= 140737488355328
+               /\ 7241728 <= d_nb d /\ 7241728 <= d_sb d)
+      by (clear - LO RNG SPT PLCD; try acb; destruct RNG as [RNG']; destruct PLCD as [PLCD']; destruct SPT as [SPT'];
+          unfold AHI_LO in *; acb; change (2^47)%Z with 140737488355328%Z in SPT'; aunf; repeat split; tlia).
+    region_sides. name_bands.
+    assert (PLDb : (TH + 4096 <= d_nb d \/ d_nb d + 16 * 65536 <= TH) /\ (TH + 4096 <= d_sb d \/ d_sb d + 8 * 32768 <= TH)) by (destruct PLCD as [X]; clear - X; tauto).
+    eapply evt_cut.
+    { eapply (@free_pre _ ra sp gp tp t0 t1 t2 s0 s1 (wz 0) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo d inited TSD CTX TH TOP BOT CH sb).
+      all: try eassumption. clear - HI; try acb; tlia. unfold wz; rewrite unsigned_lit by (clear; tlia); clear; tlia. }
+    cbv beta. intros ms1 PO1.
+    destruct PO1 as (x3 & x4 & x5 & x12 & x13 & x14 & x15 & x16 & x17 & jk & rest & m1 & -> & MU1 & WM1 & MI1 & ENV1 & ST1 & ESO1 & TRB1 & LR1 & TFB1 & F41
+                     & UNW1 & DEP1 & TRNG & NR & FLG1 & IA1).
+    eapply evt_cut.
+    { eapply (@dealloc_null _ sp ra s0 s1 s2 s3 s4 s5 gp tp s6 s7 s8 s9 s10 s11 F fc lo _ rest jk); try eassumption.
+      - clear - HI; try acb; tlia.
+      - destruct SPT as [X]; exact X. }
+    cbv beta. intros ms2 (m2 & RET & MU2 & WM2 & MI2).
+    apply evt_done. exists m2. split; [exact RET|].
+    assert (SUB2 : sub_fp [(lo, bv_unsigned sp + -2128)] Wp).
+    { unfold Wp, sub_fp. intros x Hx. cbn [outside] in *. destruct Hx as (X1 & _). split; [clear - X1; tlia| exact I]. }
+    split; [exact (munch_trans _ _ _ _ MU1 (munch_weaken _ _ _ _ SUB2 MU2))|]. split; [exact (wmono_trans _ _ _ _ WM1 WM2)|]. split; [exact MI2|].
+    Ltac tr2 H MU WM tac := eapply rw_cells_transport in H; [| exact MU| exact WM| cbn [disjoint_from cells_size csize length Nat.add Nat.mul app]; tac].
+    tr2 UNW1 MU2 WM2 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI TB end; try acb; aunf; tlia). split; [exact UNW1|].
+    unfold AIAINIT in FLG1 |- *. tr2 FLG1 MU2 WM2 ltac:(match goal with TB : akobj TH 4096 |- _ => clear - BND SPR HI TB end; try acb; aunf; tlia). split; [exact FLG1|].
+    split; [exact (ia_if_transport true _ m1 m2 IA1 MU2 WM2 ltac:(hci; cbn [disjoint_from]; clear - BND HI; try acb; tlia))|].
+    eapply (DEPOT_transport asegs _ _ m2) in DEP1; [exact DEP1| exact MU2 | exact WM2 |].
+    unfold depot_avoid, avoids. cbn [fst snd].
+    repeat split; repeat (first [apply Forall_nil | apply Forall_cons; [cbn [fst snd]; first [clear - BND HI DLO; try acb; tlia | region_decide] |]]).
+  Qed.
+End Null.
+End HCW.

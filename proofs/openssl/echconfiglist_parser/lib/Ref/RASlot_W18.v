@@ -145,7 +145,7 @@ Proof. try hcb. try hsb.
     (* [comment removed for export] *)
     lazymatch type of CH with rw_cells rsegs m G [?c0; ?c1; ?c2; C4 ?av; C4 ?fr; ?c5] =>
       assert (CH' : rw_cells rsegs m G [c0; c1; c2; CB 8 (le4 av ++ le4 fr); c5]);
-      [ eapply rw_cells_congr; [| | | exact CH]; [cbn [cells_bytes cbytes]; rewrite <- !app_assoc; reflexivity| reflexivity| cbn [cells_wf cell_wf]; rewrite length_app, !length_le4; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]
+      [ eapply rw_cells_congr; [| | | exact CH]; [cbn [cells_bytes cbytes]; rewrite <- !app_assoc; reflexivity| reflexivity| cbn [cells_wf cell_wf]; rewrite length_app, !length_le4; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]
       | clear CH ] end.
     pose proof (munch_refl [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40)]%Z m) as MUa.
     pose proof (munch_refl [(bv_unsigned sp - 144, bv_unsigned sp)]%Z m) as MUs.
@@ -165,13 +165,13 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR0 : rmrep (put_meta mt meta0 st) mX);
       [ eapply rmrep_put_meta_frame; [exact MRs| exact MST| exact MUb| exact WMb|];
-        eapply rw_cells_congr; [| | | exact H]; [cbn [cells_bytes cbytes]; reflexivity| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]
+        eapply rw_cells_congr; [| | | exact H]; [cbn [cells_bytes cbytes]; reflexivity| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]
       | clear H MUb WMb ] end.
     lazymatch goal with H : rw_cells rsegs ?mX (bv_unsigned sp + -144) (CB 8 ?j8 :: _) |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (FR' : rw_cells rsegs mX (bv_unsigned sp + -144)
         ([CB 48 (j8 ++ cells_bytes [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]); C8 (wz hcanary); C8 s9v; C8 s8v; C8 s7v; C8 s6v; C8 s5v; C8 s4v; C8 s3v; C8 s2v; C8 s1v; C8 s0v; C8 rav]));
       [ destruct H as [[WF BA] WR]; cbn [cells_wf cell_wf] in WF; destruct WF as [L8 WF'];
-        split; [split; [cbn [cells_wf cell_wf]; rewrite length_app, L8; cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])| cbn [cells_bytes cbytes] in BA |- *; rewrite <- !app_assoc; exact BA]
+        split; [split; [cbn [cells_wf cell_wf]; rewrite length_app, L8; cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])| cbn [cells_bytes cbytes] in BA |- *; rewrite <- !app_assoc; exact BA]
               | cbn [cells_size csize] in WR |- *; exact WR]
       | clear H ] end.
     apply evt_done. do 2 eexists. split; [reflexivity|]. split; [exact FR'|].
@@ -182,7 +182,7 @@ Proof. try hcb. try hsb.
     destruct (FL h eq_refl) as (MSh & NEh & p & HP & MSp & NEp). rewrite HP.
     pose proof (rmeta_slot_bounds st m h MR MSh) as (Hpos & HC' & HI & _ & _).
     pose proof (rmeta_slot_bounds st m p MR MSp) as (Ppos & PC & PI & _ & _).
-    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24); (conc st h, conc st h + 40); (conc st p, conc st p + 40)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])|]. cbv beta.
+    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24); (conc st h, conc st h + 40); (conc st p, conc st p + 40)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])|]. cbv beta.
     intros ms' (m1 & junk' & -> & FR1 & MU & WM1 & MI1 & MR0). clear PRE WM.
     set (st0 := put_meta mt meta0 st) in *.
     assert (MSm0 : meta_slot st0 mt) by (apply meta_slot_put_meta; exact MST).
@@ -199,7 +199,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR1 : rmrep (put_meta mt (mkMeta None (Some h) None 0 0 0 0 0 0) st0) mX);
       [ eapply rmrep_put_meta_frame; [exact MR0| exact MSm0| exact MUa| exact WMa|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed oconc]; change (conc st0 h) with (conc st h); reflexivity
       | clear MUa WMa H ] end.
     set (st1 := put_meta mt _ st0) in MR1.
@@ -218,7 +218,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR2 : rmrep (put_meta mt (mkMeta (Some p) (Some h) None 0 0 0 0 0 0) st1) mX);
       [ eapply rmrep_put_meta_frame; [exact MR1| exact MSm1| exact MUb| exact WMb|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed oconc]; reflexivity
       | clear MUb WMb H ] end.
     set (st2 := put_meta mt _ st1) in MR2.
@@ -232,7 +232,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX (conc st p) _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR3 : rmrep (put_meta p (m_set_next (Some mt) (get_meta_rec st p)) st2) mX);
       [ eapply rmrep_put_meta_frame; [exact MR2| exact MSp2| exact MUc| exact WMc|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed m_set_next oconc meta_word m_last_idx m_freeable m_sizeclass m_maplen];
         change (conc st2 mt) with G; reflexivity
       | clear MUc WMc H ] end.
@@ -251,7 +251,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX (conc st h) _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR4 : rmrep (put_meta h (m_set_prev (Some mt) (get_meta_rec st3 h)) st3) mX);
       [ eapply rmrep_put_meta_frame; [exact MR3| exact MSh3| exact MUd| exact WMd|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed m_set_prev oconc meta_word m_last_idx m_freeable m_sizeclass m_maplen];
         change (conc st3 mt) with G; reflexivity
       | clear MUd WMd H ] end.
@@ -276,7 +276,7 @@ Proof. try hcb. try hsb.
     { rewrite !get_meta_rec_put_same. reflexivity. }
     rewrite !(get_meta_rec_put_other _ mt _ q) by congruence. reflexivity.
   - (* [comment removed for export] *)
-    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])|]. cbv beta.
+    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])|]. cbv beta.
     intros ms' (m1 & junk' & -> & FR1 & MU & WM1 & MI1 & MR0). clear PRE WM.
     set (st0 := put_meta mt meta0 st) in *.
     assert (MSm0 : meta_slot st0 mt) by (apply meta_slot_put_meta; exact MST).
@@ -291,7 +291,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR1 : rmrep (put_meta mt (mkMeta (Some mt) (Some mt) None 0 0 0 0 0 0) st0) mX);
       [ eapply rmrep_put_meta_frame; [exact MR0| exact MSm0| exact MUa| exact WMa|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed oconc]; change (conc st0 mt) with G; reflexivity
       | clear MUa WMa H ] end.
     set (st1 := put_meta mt _ st0) in MR1.
@@ -353,7 +353,7 @@ Proof. try hcb. try hsb.
     (* [comment removed for export] *)
     lazymatch type of CH with rw_cells rsegs m G [?c0; ?c1; ?c2; C4 ?av; C4 ?fr; ?c5] =>
       assert (CH' : rw_cells rsegs m G [c0; c1; c2; CB 8 (le4 av ++ le4 fr); c5]);
-      [ eapply rw_cells_congr; [| | | exact CH]; [cbn [cells_bytes cbytes]; rewrite <- !app_assoc; reflexivity| reflexivity| cbn [cells_wf cell_wf]; rewrite length_app, !length_le4; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]
+      [ eapply rw_cells_congr; [| | | exact CH]; [cbn [cells_bytes cbytes]; rewrite <- !app_assoc; reflexivity| reflexivity| cbn [cells_wf cell_wf]; rewrite length_app, !length_le4; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]
       | clear CH ] end.
     pose proof (munch_refl [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40)]%Z m) as MUa.
     pose proof (munch_refl [(bv_unsigned sp - 144, bv_unsigned sp)]%Z m) as MUs.
@@ -373,13 +373,13 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR0 : rmrep (put_meta mt meta0 st) mX);
       [ eapply rmrep_put_meta_frame; [exact MRs| exact MST| exact MUb| exact WMb|];
-        eapply rw_cells_congr; [| | | exact H]; [cbn [cells_bytes cbytes]; reflexivity| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]
+        eapply rw_cells_congr; [| | | exact H]; [cbn [cells_bytes cbytes]; reflexivity| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]
       | clear H MUb WMb ] end.
     lazymatch goal with H : rw_cells rsegs ?mX (bv_unsigned sp + -144) (CB 8 ?j8 :: _) |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (FR' : rw_cells rsegs mX (bv_unsigned sp + -144)
         ([CB 48 (j8 ++ cells_bytes [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]); C8 (wz hcanary); C8 s9v; C8 s8v; C8 s7v; C8 s6v; C8 s5v; C8 s4v; C8 s3v; C8 s2v; C8 s1v; C8 s0v; C8 rav]));
       [ destruct H as [[WF BA] WR]; cbn [cells_wf cell_wf] in WF; destruct WF as [L8 WF'];
-        split; [split; [cbn [cells_wf cell_wf]; rewrite length_app, L8; cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])| cbn [cells_bytes cbytes] in BA |- *; rewrite <- !app_assoc; exact BA]
+        split; [split; [cbn [cells_wf cell_wf]; rewrite length_app, L8; cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])| cbn [cells_bytes cbytes] in BA |- *; rewrite <- !app_assoc; exact BA]
               | cbn [cells_size csize] in WR |- *; exact WR]
       | clear H ] end.
     apply evt_done. do 2 eexists. split; [reflexivity|]. split; [exact FR'|].
@@ -390,7 +390,7 @@ Proof. try hcb. try hsb.
     destruct (FL h eq_refl) as (MSh & NEh & p & HP & MSp & NEp). rewrite HP.
     pose proof (rmeta_slot_bounds st m h MR MSh) as (Hpos & HC' & HI & _ & _).
     pose proof (rmeta_slot_bounds st m p MR MSp) as (Ppos & PC & PI & _ & _).
-    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24); (conc st h, conc st h + 40); (conc st p, conc st p + 40)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])|]. cbv beta.
+    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24); (conc st h, conc st h + 40); (conc st p, conc st p + 40)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])|]. cbv beta.
     intros ms' (m1 & junk' & -> & FR1 & MU & WM1 & MI1 & MR0). clear PRE WM.
     set (st0 := put_meta mt meta0 st) in *.
     assert (MSm0 : meta_slot st0 mt) by (apply meta_slot_put_meta; exact MST).
@@ -407,7 +407,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR1 : rmrep (put_meta mt (mkMeta None (Some h) None 0 0 0 0 0 0) st0) mX);
       [ eapply rmrep_put_meta_frame; [exact MR0| exact MSm0| exact MUa| exact WMa|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed oconc]; change (conc st0 h) with (conc st h); reflexivity
       | clear MUa WMa H ] end.
     set (st1 := put_meta mt _ st0) in MR1.
@@ -426,7 +426,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR2 : rmrep (put_meta mt (mkMeta (Some p) (Some h) None 0 0 0 0 0 0) st1) mX);
       [ eapply rmrep_put_meta_frame; [exact MR1| exact MSm1| exact MUb| exact WMb|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed oconc]; reflexivity
       | clear MUb WMb H ] end.
     set (st2 := put_meta mt _ st1) in MR2.
@@ -440,7 +440,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX (conc st p) _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR3 : rmrep (put_meta p (m_set_next (Some mt) (get_meta_rec st p)) st2) mX);
       [ eapply rmrep_put_meta_frame; [exact MR2| exact MSp2| exact MUc| exact WMc|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed m_set_next oconc meta_word m_last_idx m_freeable m_sizeclass m_maplen];
         change (conc st2 mt) with G; reflexivity
       | clear MUc WMc H ] end.
@@ -460,7 +460,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX (conc st h) _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR4 : rmrep (put_meta h (m_set_prev (Some mt) (get_meta_rec st3 h)) st3) mX);
       [ eapply rmrep_put_meta_frame; [exact MR3| exact MSh3| exact MUd| exact WMd|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed m_set_prev oconc meta_word m_last_idx m_freeable m_sizeclass m_maplen];
         change (conc st3 mt) with G; reflexivity
       | clear MUd WMd H ] end.
@@ -485,7 +485,7 @@ Proof. try hcb. try hsb.
     { rewrite !get_meta_rec_put_same. reflexivity. }
     rewrite !(get_meta_rec_put_other _ mt _ q) by congruence. reflexivity.
   - (* [comment removed for export] *)
-    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])|]. cbv beta.
+    eapply evt_cut; [apply (PRE [(bv_unsigned sp - 144, bv_unsigned sp); (G, G + 40); (3209088 + 16, 3209088 + 24)]%Z); cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])|]. cbv beta.
     intros ms' (m1 & junk' & -> & FR1 & MU & WM1 & MI1 & MR0). clear PRE WM.
     set (st0 := put_meta mt meta0 st) in *.
     assert (MSm0 : meta_slot st0 mt) by (apply meta_slot_put_meta; exact MST).
@@ -500,7 +500,7 @@ Proof. try hcb. try hsb.
     lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
       assert (MR1 : rmrep (put_meta mt (mkMeta (Some mt) (Some mt) None 0 0 0 0 0 0) st0) mX);
       [ eapply rmrep_put_meta_frame; [exact MR0| exact MSm0| exact MUa| exact WMa|];
-        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+        eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
         unfold meta_cells, pw; cbn [m_prev m_next m_mem m_avail m_freed oconc]; change (conc st0 mt) with G; reflexivity
       | clear MUa WMa H ] end.
     set (st1 := put_meta mt _ st0) in MR1.

@@ -27,6 +27,34 @@ SPECIAL = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21, "file": No
 MARKDOWN = re.compile(r"(?i)\.(?:md|mkdn?|mdwn|mdown|markdown|mdx|litcoffee|md\.tmpl)\Z")
 _FORBIDDEN_HOST = re.compile(r"[\x00-\x20#%/:<>?@\[\\\]^|\x7f]")
 _C0_AND_SPACE = "".join(map(chr, range(0x21)))
+# a character reference, as html.unescape finds one
+CHARREF = re.compile(r"&(#[0-9]+;?|#[xX][0-9a-fA-F]+;?|[^\t\n\f <&#;]{1,32};?)")
+
+
+def reference_digits(ref):
+    """(the digits of a numeric reference, ref a CHARREF match's group 1, without their leading zeros, and their base),
+    or None for a named one.  More than 7 digits is more than any code point."""
+    if ref[0] != "#":
+        return None
+    hexa = ref[1] in "xX"
+    return ref[2 if hexa else 1:].rstrip(";").lstrip("0") or "0", 16 if hexa else 10
+
+
+def _reference(match):
+    numeric = reference_digits(match.group(1))
+    if numeric is None:
+        return html.unescape(match.group())
+    digits, base = numeric
+    if len(digits) > 7:
+        return match.group()
+    # html.unescape reads every digit with int(), leading zeros too, and int() refuses a run of over 4,300
+    return html.unescape("&#%s%s;" % ("x" if base == 16 else "", digits))
+
+
+def unescape(text):
+    """html.unescape(text), but a numeric reference is read without its leading zeros, and one too long for any code
+    point (reference_digits) stays as it is, so no text makes it raise."""
+    return CHARREF.sub(_reference, text) if "&" in text else text
 
 
 class Unreadable(ValueError):
@@ -294,7 +322,7 @@ def links(text, markdown):
             yield Link(no, m.group(), m.group().rstrip(".,;:)]}'\""), "url")
         if not markdown:
             continue
-        decoded = html.unescape(line) if "&" in line else line
+        decoded = unescape(line)
         shown = unescape_markdown(line)
         for variant in dict.fromkeys((decoded, shown)):
             if variant != line:
@@ -311,7 +339,7 @@ def links(text, markdown):
     for m in [*re.finditer(r"\]\(", text), *_REFERENCE.finditer(text)]:
         dest = _destination(text, m.end())
         if dest is not None:
-            yield Link(line_of(dest[1]), dest[0], html.unescape(_BACKSLASH_ESCAPE.sub(r"\1", dest[0])), "link")
+            yield Link(line_of(dest[1]), dest[0], unescape(_BACKSLASH_ESCAPE.sub(r"\1", dest[0])), "link")
     for m in _ANGLE.finditer(text):
         yield Link(line_of(m.start(1)), m.group(1), m.group(1), "link")
     for tag in _TAG.finditer(text):
@@ -321,10 +349,10 @@ def links(text, markdown):
                 continue
             value = next(v for v in values if v is not None)
             if attribute.lower() == "srcset":
-                for ref in _srcset(html.unescape(value)):
+                for ref in _srcset(unescape(value)):
                     yield Link(line_of(tag.start() + m.start(1)), ref, ref, "link")
             else:
-                yield Link(line_of(tag.start() + m.start(1)), value, html.unescape(value), "link")
+                yield Link(line_of(tag.start() + m.start(1)), value, unescape(value), "link")
 
 
 def _gfm_trim(url):

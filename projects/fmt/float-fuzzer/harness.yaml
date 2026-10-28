@@ -165,6 +165,7 @@ checks:
   live: true
   where: source/float.cc:28
   what: strtod must consume the whole formatted output (no trailing unparsed characters).
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: float-fuzzer

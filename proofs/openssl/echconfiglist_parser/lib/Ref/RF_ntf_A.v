@@ -53,7 +53,7 @@ Ltac rmeta_close MRold MSq MUq WMq CH st' MRnew :=
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
     assert (MRnew : rmrep st' mX)
       by (eapply rmrep_put_meta_frame; [exact MRold | exact MSq | exact MUq | exact WMq |];
-          eapply rw_cells_congr; [ | | | exact CH]; [reflexivity | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]);
+          eapply rw_cells_congr; [ | | | exact CH]; [reflexivity | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]);
     clear MUq WMq CH end.
 
 (* [comment removed for export] *)
@@ -144,7 +144,7 @@ Proof. try hcb. try hsb.
       rewrite (le4_lor_sxv (m_freed mr) (2 ^ i)); [reflexivity | lia |].
       split; [apply Z.pow_nonneg; lia | apply Z.pow_lt_mono_r; lia].
     - reflexivity.
-    - cbn. (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]). }
+    - cbn. (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]). }
   clear MUg MM.
   (* [comment removed for export] *)
   st1. st1.
@@ -202,7 +202,7 @@ Proof. try hcb. try hsb.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
   lazymatch type of CH with rw_cells _ _ ?A [?c0; ?c1; ?c2; C4 ?va; C4 ?vf; ?c5] =>
     assert (CH' : rw_cells rsegs mX A [c0; c1; c2; CB 8 (le4 va ++ le4 vf); c5])
-      by (eapply rw_cells_congr; [ | | | exact CH]; [cbn [cells_bytes cbytes app]; rewrite <- ?app_assoc; reflexivity | reflexivity | cbn -[le4 app]; rewrite ?app_length, ?length_le4; cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]);
+      by (eapply rw_cells_congr; [ | | | exact CH]; [cbn [cells_bytes cbytes app]; rewrite <- ?app_assoc; reflexivity | reflexivity | cbn -[le4 app]; rewrite ?app_length, ?length_le4; cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]);
     clear CH; rename CH' into CH
   end end.
   st1. st1. (* [comment removed for export] *)
@@ -211,7 +211,7 @@ Proof. try hcb. try hsb.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
   lazymatch type of CH with rw_cells _ _ ?A [?c0; ?c1; ?c2; C8 ?z; ?c5] =>
     assert (CH' : rw_cells rsegs mX A [c0; c1; c2; C4 (wz 0); C4 (wz 0); c5])
-      by (eapply rw_cells_congr; [ | | | exact CH]; [reflexivity | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]);
+      by (eapply rw_cells_congr; [ | | | exact CH]; [reflexivity | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]);
     clear CH; rename CH' into CH
   end end.
   rmeta_close MRf MSL MUg WMg CH (put_meta g meta0 st) MR0.

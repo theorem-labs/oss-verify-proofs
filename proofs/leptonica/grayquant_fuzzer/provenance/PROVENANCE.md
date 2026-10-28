@@ -41,7 +41,7 @@ Generated from `PROVENANCE.yaml` beside this file. The build files are in `recip
 
 ## The proofs' licence
 
-The proof files of this entry point were made from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a), libraries/leptonica/proofs/submission-8, libraries/openssl-b/proofs/submission-2 and libraries/jsoncons/proofs/submission-2 and are under Apache-2.0 OR MIT, at the recipient's option: the licence texts and the notice are `LICENSES/anthropic-proofs-LICENSE`, `LICENSES/anthropic-proofs-LICENSE-MIT` and `LICENSES/anthropic-proofs-NOTICE` in the repository's top directory; each changed file carries one line under its licence header saying so.
+The proof files of this entry point were made from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a), libraries/leptonica/proofs/submission-8, libraries/openssl-b/proofs/submission-2 and libraries/jsoncons/proofs/submission-2 and are under Apache-2.0 OR MIT, at the recipient's option: the licence texts and the notice are `LICENSES/anthropic-proofs-LICENSE`, `LICENSES/anthropic-proofs-LICENSE-MIT` and `LICENSES/anthropic-proofs-NOTICE` in the repository's top directory; each changed file carries one line under its licence header saying so. The proofs of ubsan_agrees were written in this repository: the package has no complete proof of them.
 
 ## Compiler and linker flags
 

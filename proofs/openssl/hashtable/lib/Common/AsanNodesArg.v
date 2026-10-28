@@ -49,9 +49,9 @@ Definition ARG_H0 : argtab :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition ARG_HU : argtab :=
-  {| g_istrlen := 0; g_memchr := 0x2bbee4; g_stdio_write := 0x2b5568; g_exit := 0x2b17a8;
-     g_file_lo := 0x31eb90; g_file_hi := 0x31ee58; g_canary_got := 0x31d548; g_canary := 0x331b68;
-     g_ro_lo := 0x3a770; g_ro_hi := 0x3a7b8 |}.
+  {| g_istrlen := 0; g_memchr := 0x2bbf28; g_stdio_write := 0x2b55ac; g_exit := 0x2b17ec;
+     g_file_lo := 0x31ebd0; g_file_hi := 0x31ee98; g_canary_got := 0x31d588; g_canary := 0x351b28;
+     g_ro_lo := 0x3a760; g_ro_hi := 0x3a7a8 |}.
 (* [comment removed for export] *)
 Definition ARG_HA : argtab :=
   {| g_istrlen := 0x1d5654; g_memchr := 0x5281e8; g_stdio_write := 0x522984; g_exit := 0x51ce64;
@@ -59,10 +59,10 @@ Definition ARG_HA : argtab :=
      g_ro_lo := 0x10498; g_ro_hi := 0x104d8 |}.
 (* [comment removed for export] *)
 Definition ARG_HB : argtab :=
-  {| g_istrlen := 0x1d05e4; g_memchr := 0x560d38; g_stdio_write := 0x55b4d4; g_exit := 0x5559b4;
-     g_file_lo := 0x5e4f68; g_file_hi := 0x5e5238; g_canary_got := 0x5e0a68; g_canary := 0xbd90f0;
+  {| g_istrlen := 0x1d05c4; g_memchr := 0x560d0c; g_stdio_write := 0x55b4a8; g_exit := 0x555988;
+     g_file_lo := 0x5e4f48; g_file_hi := 0x5e5218; g_canary_got := 0x5e0a48; g_canary := 0xbf8ff0;
      g_ro_lo := 0x104b0; g_ro_hi := 0x104f0 |}.
-Definition ARGTABS : list (Z * argtab) := [(0xe17e0, ARG_HU); (0xdcf48, ARG_H0); (0x19a08c, ARG_HA); (0x19501c, ARG_HB); (0x5f9ac, ARG_A0); (0x5f0a0, ARG_B0)].
+Definition ARGTABS : list (Z * argtab) := [(0xe1830, ARG_HU); (0xdcf48, ARG_H0); (0x19a08c, ARG_HA); (0x194ffc, ARG_HB); (0x5f9ac, ARG_A0); (0x5f0a0, ARG_B0)].
 Fixpoint argtab_find (e : Z) (l : list (Z * argtab)) : argtab :=
   match l with
   | [] => ARG_B0

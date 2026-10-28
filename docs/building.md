@@ -20,6 +20,10 @@ Each proof has a build record:
   `project.yaml`), in place of the recipe, the OSS Verify port's build manifest
   (`port/manifest.yaml`) and its files for the project
   (`port/projects/<project>/`);
+- where the proofs of this fuzz target came from (`proofs.origin` in
+  `PROVENANCE.yaml`); when they came from a package, `proofs.written_here`
+  names the statements whose proofs were written in this repository, so the
+  record credits the package with no proof that it does not have;
 - the build system, the compiler, the builder image digest and the static
   AddressSanitizer commit;
 - the file name, size and SHA-256 of each of the four builds;
@@ -216,6 +220,121 @@ state the process model does not describe. std's `HashMap` keys come from
 `available_parallelism()` returns 1 without reading cgroup files or CPU
 affinity. A third edit, to standard output, is compiled in only for a build
 that asks for it; each harness page lists the edits its builds carry.
+
+## Python fuzz targets
+
+The OSS Verify port builds a Python fuzz target, an atheris harness, in its
+Python toolchain image (`ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain-python`,
+pinned in the port's `infra/toolchains.tsv`; release.yaml lists it in
+`images.builder` once a release holds a Python build): the C and C++ toolchain
+image with the CPython 3.11.13 source tarball and a native CPython 3.11.13 added.
+Each build compiles CPython 3.11.13 from that tarball, with one patch (`import
+signal` takes the signal dispositions of a new process without asking the
+kernel for them), as a static library, with the build's compiler and flags:
+the sanitizers instrument the interpreter, its built-in extension modules and
+the port's interpreter host (`atheris_host.c`) as they instrument a C library.
+The Python code is not compiled: the harness, the library's modules and every
+standard-library module they import are marshalled CPython bytecode, frozen
+into the binary, and an `atheris` stand-in keeps the harness's `TestOneInput`
+for the host to call. Libraries that some built-in modules link (zlib, bzip2,
+XZ, SQLite and others) come from the build image's sysroot, uninstrumented.
+
+The interpreter runs isolated: its configuration reads no environment
+variable (`os.environ` still holds the process's environment), it imports
+nothing from the file system, hashes strings with seed 0 and allocates every
+object with `malloc` (no pymalloc arenas), so AddressSanitizer sees each
+object. The driver starts it after it reads the input file, before the first
+call of the fuzz target. Python code does not access memory directly, so the
+sanitizers look for errors only in the C code. The host ends a failure with an
+exit status, never with `abort()`:
+
+| what happens | status |
+|---|---|
+| an uncaught exception in a call of the harness, a failed property check included | 79 |
+| an uncaught `MemoryError` | 2 |
+| an uncaught `SystemExit` in a call of the harness | 77 |
+| the interpreter or the harness module fails before the first call | 80 (2 when the failure is an uncaught `MemoryError`) |
+
+Each writes one line on standard error, with the exception's type and the
+source line where it was raised. atheris would report each of these as a crash.
+A failed `assert` in Python code is an uncaught `AssertionError`: status 79.
+CPython's own fatal errors still end with `abort()`: for example, it aborts when
+some allocations it makes while it starts are refused. So a Python fuzz target
+has no `_halts_may_fail` statement, and its agreement statements are read
+alloc-forced-only ([statements.md](statements.md)).
+
+## Go fuzz targets
+
+The OSS Verify port builds a Go fuzz target, an OSS-Fuzz Go fuzz target as it
+is, in its Go toolchain image (`ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain-go`,
+pinned in the port's `infra/toolchains.tsv`; release.yaml lists it in
+`images.builder` once a release holds a Go build): the C and C++ toolchain image
+with Go 1.27.1 and OSS-Fuzz's Go helpers (`compile_go_fuzzer` for a go-fuzz
+`Fuzz(data []byte) int` function, `compile_native_go_fuzzer` for a
+`testing.F` fuzz test), changed to build a static riscv64 program. The program
+is the fuzz target, the library, Go's standard library and runtime, and a
+driver written in Go, all built by Go's own compiler, assembler and linker,
+for RV64G, with no cgo: no clang, no musl and no C code. The project's
+`project.yaml` names the Go version in `build.go` and has no `build.clang`. A
+`go.lock` in the port's project directory pins every module; the build reads
+them from those files, with no network. Go's `-asan` needs cgo, which the
+port's build turns off (`CGO_ENABLED=0`), and `-msan` does not target riscv64,
+so a Go fuzz target has the plain build only.
+
+The build uses a patched Go runtime: an overlay of the standard library (`go
+build -overlay`) and a rebuilt compiler; the Go toolchain's own files do not
+change. The patches remove system calls and files the process model does not
+have: signal handlers, the sysmon thread and the main goroutine's thread lock,
+the CPU-affinity and cgroup reads, reads of the environment, the
+transparent-huge-page read under `/sys` and the `MADV_NOHUGEPAGE` advice, the
+checks of file descriptors 0-2, the open-file limit's read and raise, and the
+riscv64 hardware probe (so no vector code); the driver also sets `//go:debug
+containermaxprocs=0 updatemaxprocs=0 decoratemappings=0`. So the program runs on one CPU,
+`os.Getenv` returns `""` for every variable, and `GOGC`, `GODEBUG`,
+`GOMAXPROCS` and `GOMEMLIMIT` have no effect. The patches also give a failure
+its own exit status, where OSS-Fuzz's build would crash:
+
+| what happens | status |
+|---|---|
+| a panic on the fuzz target's goroutine, a runtime error included, or `t.Fatal`, `t.Error` or `t.Fail` in a fuzz test | 79 |
+| `os.Exit` during a call of the fuzz target | 77 |
+| any other fatal runtime error that is not out of memory: a panic on another goroutine, a deadlock, a stack overflow, a write to a map from two goroutines | 80 (the stock runtime exits with 2) |
+| the system refused the runtime memory: an `mmap` for the heap, a stack or the runtime's own data failed | 2 |
+| a load through a nil pointer | 139 (`SIGSEGV`): the runtime installs no signal handler, so this is not a recoverable panic, and code that recovers it as control flow (`fmt` does, for a nil `Stringer`) ends with 139 where stock Go goes on |
+
+A request larger than the runtime's limit for one allocation (2^48 bytes), a
+`make()` that is too large for one, panics without asking the system: status 79.
+`t.Skip` in a fuzz test ends the call normally, as OSS-Fuzz's testing shim
+makes it; a call on the `*testing.F` itself (`f.Fatal`, `f.Error`, `f.Fail`)
+does nothing under that shim. A `testing.F` test's function gets arguments the
+shim decodes from the payload (go-fuzz-headers), and is not called when the
+payload is too short to decode them. A go-fuzz `Fuzz` function's return value does not change the exit status (so a
+Go fuzz target never exits with 78); the driver writes it on standard output.
+The patches do not remove everything the model lacks: a timer, which the
+runtime's scavenger can start, starts the network poller (`epoll_create1`,
+`epoll_ctl`, `epoll_pwait`), which the process model does not cover, so a run
+that reaches it is blocked by the model.
+So a Go fuzz target's statements are
+halts statements about the plain build that allow exactly the statuses 0 and 2
+(the Go driver gives no status 3), with no `_halts_may_fail` statement and no
+agreement statements; a check that ends with `panic` or with `fail` (`t.Fatal`,
+`t.Error`, `t.Fail`) exits with status 79 on the fuzz target's goroutine (80 on
+another), which such a statement excludes
+([facts.md](facts.md), [statements.md](statements.md)). The project page lists
+the runtime patches.
+
+In a Go project's facts ([facts.md](facts.md)), `project.yaml` names
+`build.system: go`, the Go version in `build.go` and no `build.clang`; its
+`build.builder` is the port's Go toolchain image and `build.oss_verify` is
+required, since only the port builds Go fuzz targets. A Go harness's `entry` is
+its Go fuzz function (`FuzzDecode`, say), not `LLVMFuzzerTestOneInput`, and its
+`builds` hold `plain` only. In a Go harness's
+checks, `os.Exit` is `stops_with: exit`, which the patched runtime ends with
+status 77 during a call of the fuzz target (`exit_reaches_guard: true`); a
+deferred function that calls `recover()` while a panic unwinds and then
+returns, or ends the process, without panicking again is a failure handler
+that takes over `panic` and `fail` (the driver's own recover is not one); and `oft lint`
+refuses the stops `abort`, `assert`, `trap`, `throw` and `raise`.
 
 ## What this means for a statement
 

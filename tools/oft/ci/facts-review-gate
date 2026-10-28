@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Says whether facts-review.yml must run its review job on a pull request, on standard output:
+#
+#   PR=<number> REPO=<owner/name> [GH_TOKEN=<read token>] tools/oft/ci/facts-review-gate
+#
+#   review=true   the pull request changes a facts file, or already has the facts review comment (a push that took away
+#                 its last facts change must still replace that comment), or GitHub listed fewer of its files than it
+#                 changes (the list stops at 3,000 files)
+#   review=false  none of these: the review job would only gather and find nothing to review
+#
+# It reads the pull request, its list of files and its comments from GitHub's API, and nothing else: no checkout and no
+# clone, so a pull request that changes no facts file costs a run of seconds. The facts files are those
+# facts-review-gather counts (its FACTS), as regular expressions; tools/oft/tests/test_facts_review_gate.py checks
+# that the two agree. A file the pull request renames counts by its old path and by its new one, as gather's
+# --no-renames diff counts it. It exits non-zero when it cannot read what it needs; the workflow then runs the review.
+set -euo pipefail
+
+[[ $PR =~ ^[0-9]+$ ]] || { echo "facts-review-gate: PR is not a number" >&2; exit 2; }
+[[ $REPO =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "facts-review-gate: REPO is not owner/name" >&2; exit 2; }
+FACTS='^projects/[^/]+/(project\.yaml|[^/]+/harness\.yaml|[^/]+/source/.+|[^/]+/Distribution\.v)$'
+marker='<!-- facts-review -->'
+
+changed=$(gh api "repos/$REPO/pulls/$PR" --jq .changed_files)
+[[ $changed =~ ^[0-9]+$ ]] || { echo "facts-review-gate: no file count for pull request $PR" >&2; exit 1; }
+# One line for each file: its path, then a tab and its old path when it was renamed.
+list=$(gh api "repos/$REPO/pulls/$PR/files?per_page=100" --paginate \
+  --jq '.[] | [.filename] + if .previous_filename then [.previous_filename] else [] end | @tsv')
+# grep answers 1 for "no match" and 2 or more for an error it could not read past. Only the first is
+# an answer: an error must leave the decision to the workflow, which runs the review.
+listed=0
+if [ -n "$list" ]; then
+  listed=$(printf '%s' "$list" | grep -c '') ||
+    { echo "facts-review-gate: could not count the files of pull request $PR" >&2; exit 1; }
+fi
+files=$(tr '\t' '\n' <<< "$list")
+
+status=0
+facts=$(grep -cE -- "$FACTS" <<< "$files") || status=$?
+if [ "$status" -gt 1 ]; then
+  echo "facts-review-gate: could not search the files of pull request $PR" >&2; exit 1
+fi
+if [ "$status" = 0 ]; then
+  echo "facts-review-gate: pull request $PR changes $facts facts files" >&2
+  echo review=true; exit 0
+fi
+if [ "$listed" -lt "$changed" ]; then
+  echo "facts-review-gate: GitHub listed $listed of the $changed files pull request $PR changes" >&2
+  echo review=true; exit 0
+fi
+existing=$(gh api "repos/$REPO/issues/$PR/comments?per_page=100" --paginate \
+  --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id")
+if [ -n "$existing" ]; then
+  echo "facts-review-gate: pull request $PR changes no facts file and has the facts review comment" >&2
+  echo review=true; exit 0
+fi
+echo "facts-review-gate: pull request $PR changes no facts file ($changed files) and has no facts review comment" >&2
+echo review=false

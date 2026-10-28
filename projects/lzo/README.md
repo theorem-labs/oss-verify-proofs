@@ -21,7 +21,7 @@ Not included: **all_lzo_compress** (not built yet); **api-driver** (held from th
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `lzo_compress_target`: for compressible input (compressed_len < size), lzo1x_decompress into size+1 bytes must return LZO_E_OK and produce exactly size bytes. ONLY THE LENGTH is compared: the decompressed content is never memcmp'd against the input, so a decoder that returned the right number of wrong bytes would pass.
 
 ## Known issues

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: spirv-tools/spvtools_binary_parser_fuzzer/asan_agreement_decidable
+fingerprint: eb404eaf00fb5b99bad3d88593f33eeedbed4c28e5119c5957649b9676fd5ca2

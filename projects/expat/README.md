@@ -21,7 +21,7 @@ Not included: **api-driver** (held from this release); **xml_lpm_fuzzer** (not b
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `xml_parse_fuzzer_UTF-8`: assert(size <= INT_MAX): a precondition on the input length before the int cast, not a property of the library; libFuzzer inputs never reach INT_MAX.
 - `xml_parsebuffer_fuzzer_UTF-8`: assert(size <= INT_MAX): an input-length precondition before the int cast; trivially true for libFuzzer inputs.
 

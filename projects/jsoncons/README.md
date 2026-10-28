@@ -3,31 +3,31 @@
 
 [danielaparker/jsoncons](https://github.com/danielaparker/jsoncons) · OSS-Fuzz: [projects/jsoncons](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/jsoncons)
 
-**Status: available.** 18 of OSS-Fuzz's 18 fuzz targets have statements. 72 binaries, 75 MB. 234 statements: 27 proved, 0 known false, 0 suspected false, 0 blocked by the model, 207 open.
+**Status: available.** 18 of OSS-Fuzz's 18 fuzz targets have statements. 72 binaries, 75 MB. 234 statements: 51 proved, 0 known false, 0 suspected false, 0 blocked by the model, 183 open.
 
 Built from jsoncons (commit `af497a1c`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [fuzz_bigint](fuzz_bigint/) | bigint(input) then a % b and b % a against a fixed 38-digit constant, for inputs < 5000 bytes; results discarded; std::runtime_error swallowed. | none | 13, 3 proved |
+| [fuzz_bigint](fuzz_bigint/) | bigint(input) then a % b and b % a against a fixed 38-digit constant, for inputs < 5000 bytes; results discarded; std::runtime_error swallowed. | none | 13, 9 proved |
 | [fuzz_bson](fuzz_bson/) | bson::decode_bson<json> from an istringstream over the input; value discarded; ser_error swallowed. | none | 13 |
 | [fuzz_bson_encoder](fuzz_bson_encoder/) | bson_stream_reader drives a bson_bytes_encoder (decode -> re-encode to a byte vector) with an error_code; the re-encoded bytes are never compared or decoded again. | none | 13 |
-| [fuzz_bson_parser_max](fuzz_bson_parser_max/) | bson_stream_reader into a default_json_visitor (no-op sink) with an error_code; nothing checked. | none | 13, 2 proved |
+| [fuzz_bson_parser_max](fuzz_bson_parser_max/) | bson_stream_reader into a default_json_visitor (no-op sink) with an error_code; nothing checked. | none | 13, 6 proved |
 | [fuzz_cbor](fuzz_cbor/) | decode_cbor<json> from an istringstream; value discarded; ser_error and json_runtime_error<std::runtime_error> swallowed. | none | 13 |
 | [fuzz_cbor_encoder](fuzz_cbor_encoder/) | cbor_stream_reader drives a cbor_bytes_encoder (decode -> re-encode); re-encoded bytes discarded; ec ignored. | none | 13 |
 | [fuzz_cbor_parser_max](fuzz_cbor_parser_max/) | cbor_stream_reader into a no-op default_json_visitor; ec ignored. | none | 13 |
 | [fuzz_csv](fuzz_csv/) | csv_string_reader (assume_header, n_rows mapping) into json_decoder<ojson>; result discarded; ser_error and two json_runtime_error variants swallowed. | none | 13 |
-| [fuzz_json_cursor](fuzz_json_cursor/) | json_stream_cursor pull loop: for each event call event.get<std::string>(ec) and advance while no error; values discarded. | none | 13, 5 proved |
-| [fuzz_json_encoder](fuzz_json_encoder/) | json_stream_reader drives a json_string_encoder (parse -> re-serialize to a string); output discarded; ec ignored. | none | 13, 2 proved |
+| [fuzz_json_cursor](fuzz_json_cursor/) | json_stream_cursor pull loop: for each event call event.get<std::string>(ec) and advance while no error; values discarded. | none | 13, 10 proved |
+| [fuzz_json_encoder](fuzz_json_encoder/) | json_stream_reader drives a json_string_encoder (parse -> re-serialize to a string); output discarded; ec ignored. | none | 13, 3 proved |
 | [fuzz_json_parser_max](fuzz_json_parser_max/) | json_stream_reader into a no-op default_json_visitor; ec ignored. | none | 13 |
 | [fuzz_msgpack](fuzz_msgpack/) | msgpack::decode_msgpack<json> from an istringstream; value discarded; ser_error swallowed. | none | 13 |
-| [fuzz_msgpack_encoder](fuzz_msgpack_encoder/) | msgpack_stream_reader drives a msgpack_bytes_encoder (decode -> re-encode); bytes discarded; ec ignored. | none | 13, 1 proved |
+| [fuzz_msgpack_encoder](fuzz_msgpack_encoder/) | msgpack_stream_reader drives a msgpack_bytes_encoder (decode -> re-encode); bytes discarded; ec ignored. | none | 13, 3 proved |
 | [fuzz_msgpack_parser_max](fuzz_msgpack_parser_max/) | msgpack_stream_reader into a no-op default_json_visitor; ec ignored. | none | 13 |
 | [fuzz_parse](fuzz_parse/) | json::parse(input); value discarded; ser_error swallowed. | none | 13 |
 | [fuzz_ubjson](fuzz_ubjson/) | ubjson::decode_ubjson<json>; value discarded; ser_error swallowed. | none | 13 |
 | [fuzz_ubjson_encoder](fuzz_ubjson_encoder/) | ubjson_stream_reader drives a ubjson_bytes_encoder (decode -> re-encode); bytes discarded; ec ignored. | none | 13, 7 proved |
-| [fuzz_ubjson_parser_max](fuzz_ubjson_parser_max/) | ubjson_stream_reader into a no-op default_json_visitor; ec ignored. | none | 13, 7 proved |
+| [fuzz_ubjson_parser_max](fuzz_ubjson_parser_max/) | ubjson_stream_reader into a no-op default_json_visitor; ec ignored. | none | 13, 13 proved |
 
 Not included: **api-driver** (held from this release).
 
@@ -55,19 +55,37 @@ By hand: download `jsoncons-bin.tar.zst` from release [v2026.10.0](https://githu
 ## Proofs
 | statement | result |
 |---|---|
+| [jsoncons/fuzz_bigint/asan_agreement_decidable](../../proofs/jsoncons/fuzz_bigint/asan_agreement_decidable) | proved |
 | [jsoncons/fuzz_bigint/asan_agrees](../../proofs/jsoncons/fuzz_bigint/asan_agrees) | proved |
+| [jsoncons/fuzz_bigint/asan_disagrees_at_most](../../proofs/jsoncons/fuzz_bigint/asan_disagrees_at_most) | proved |
+| [jsoncons/fuzz_bigint/asan_ubsan_agreement_decidable](../../proofs/jsoncons/fuzz_bigint/asan_ubsan_agreement_decidable) | proved |
 | [jsoncons/fuzz_bigint/asan_ubsan_agrees](../../proofs/jsoncons/fuzz_bigint/asan_ubsan_agrees) | proved |
+| [jsoncons/fuzz_bigint/asan_ubsan_disagrees_at_most](../../proofs/jsoncons/fuzz_bigint/asan_ubsan_disagrees_at_most) | proved |
+| [jsoncons/fuzz_bigint/ubsan_agreement_decidable](../../proofs/jsoncons/fuzz_bigint/ubsan_agreement_decidable) | proved |
 | [jsoncons/fuzz_bigint/ubsan_agrees](../../proofs/jsoncons/fuzz_bigint/ubsan_agrees) | proved |
+| [jsoncons/fuzz_bigint/ubsan_disagrees_at_most](../../proofs/jsoncons/fuzz_bigint/ubsan_disagrees_at_most) | proved |
+| [jsoncons/fuzz_bson_parser_max/asan_agreement_decidable](../../proofs/jsoncons/fuzz_bson_parser_max/asan_agreement_decidable) | proved |
 | [jsoncons/fuzz_bson_parser_max/asan_agrees](../../proofs/jsoncons/fuzz_bson_parser_max/asan_agrees) | proved |
+| [jsoncons/fuzz_bson_parser_max/asan_disagrees_at_most](../../proofs/jsoncons/fuzz_bson_parser_max/asan_disagrees_at_most) | proved |
+| [jsoncons/fuzz_bson_parser_max/asan_ubsan_agrees](../../proofs/jsoncons/fuzz_bson_parser_max/asan_ubsan_agrees) | proved |
 | [jsoncons/fuzz_bson_parser_max/plain_halts](../../proofs/jsoncons/fuzz_bson_parser_max/plain_halts) | proved |
+| [jsoncons/fuzz_bson_parser_max/ubsan_agrees](../../proofs/jsoncons/fuzz_bson_parser_max/ubsan_agrees) | proved |
+| [jsoncons/fuzz_json_cursor/asan_agreement_decidable](../../proofs/jsoncons/fuzz_json_cursor/asan_agreement_decidable) | proved |
 | [jsoncons/fuzz_json_cursor/asan_agrees](../../proofs/jsoncons/fuzz_json_cursor/asan_agrees) | proved |
+| [jsoncons/fuzz_json_cursor/asan_disagrees_at_most](../../proofs/jsoncons/fuzz_json_cursor/asan_disagrees_at_most) | proved |
 | [jsoncons/fuzz_json_cursor/asan_halts](../../proofs/jsoncons/fuzz_json_cursor/asan_halts) | proved |
+| [jsoncons/fuzz_json_cursor/asan_ubsan_agreement_decidable](../../proofs/jsoncons/fuzz_json_cursor/asan_ubsan_agreement_decidable) | proved |
 | [jsoncons/fuzz_json_cursor/asan_ubsan_agrees](../../proofs/jsoncons/fuzz_json_cursor/asan_ubsan_agrees) | proved |
+| [jsoncons/fuzz_json_cursor/asan_ubsan_disagrees_at_most](../../proofs/jsoncons/fuzz_json_cursor/asan_ubsan_disagrees_at_most) | proved |
 | [jsoncons/fuzz_json_cursor/asan_ubsan_halts](../../proofs/jsoncons/fuzz_json_cursor/asan_ubsan_halts) | proved |
 | [jsoncons/fuzz_json_cursor/plain_halts](../../proofs/jsoncons/fuzz_json_cursor/plain_halts) | proved |
+| [jsoncons/fuzz_json_cursor/ubsan_agrees](../../proofs/jsoncons/fuzz_json_cursor/ubsan_agrees) | proved |
 | [jsoncons/fuzz_json_encoder/asan_agrees](../../proofs/jsoncons/fuzz_json_encoder/asan_agrees) | proved |
 | [jsoncons/fuzz_json_encoder/asan_ubsan_agrees](../../proofs/jsoncons/fuzz_json_encoder/asan_ubsan_agrees) | proved |
+| [jsoncons/fuzz_json_encoder/ubsan_agrees](../../proofs/jsoncons/fuzz_json_encoder/ubsan_agrees) | proved |
+| [jsoncons/fuzz_msgpack_encoder/asan_agreement_decidable](../../proofs/jsoncons/fuzz_msgpack_encoder/asan_agreement_decidable) | proved |
 | [jsoncons/fuzz_msgpack_encoder/asan_agrees](../../proofs/jsoncons/fuzz_msgpack_encoder/asan_agrees) | proved |
+| [jsoncons/fuzz_msgpack_encoder/asan_disagrees_at_most](../../proofs/jsoncons/fuzz_msgpack_encoder/asan_disagrees_at_most) | proved |
 | [jsoncons/fuzz_ubjson_encoder/asan_agrees](../../proofs/jsoncons/fuzz_ubjson_encoder/asan_agrees) | proved |
 | [jsoncons/fuzz_ubjson_encoder/asan_halts](../../proofs/jsoncons/fuzz_ubjson_encoder/asan_halts) | proved |
 | [jsoncons/fuzz_ubjson_encoder/asan_ubsan_agrees](../../proofs/jsoncons/fuzz_ubjson_encoder/asan_ubsan_agrees) | proved |
@@ -75,12 +93,18 @@ By hand: download `jsoncons-bin.tar.zst` from release [v2026.10.0](https://githu
 | [jsoncons/fuzz_ubjson_encoder/plain_halts](../../proofs/jsoncons/fuzz_ubjson_encoder/plain_halts) | proved |
 | [jsoncons/fuzz_ubjson_encoder/ubsan_agrees](../../proofs/jsoncons/fuzz_ubjson_encoder/ubsan_agrees) | proved |
 | [jsoncons/fuzz_ubjson_encoder/ubsan_halts](../../proofs/jsoncons/fuzz_ubjson_encoder/ubsan_halts) | proved |
+| [jsoncons/fuzz_ubjson_parser_max/asan_agreement_decidable](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_agreement_decidable) | proved |
 | [jsoncons/fuzz_ubjson_parser_max/asan_agrees](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_agrees) | proved |
+| [jsoncons/fuzz_ubjson_parser_max/asan_disagrees_at_most](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_disagrees_at_most) | proved |
 | [jsoncons/fuzz_ubjson_parser_max/asan_halts](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_halts) | proved |
+| [jsoncons/fuzz_ubjson_parser_max/asan_ubsan_agreement_decidable](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_ubsan_agreement_decidable) | proved |
 | [jsoncons/fuzz_ubjson_parser_max/asan_ubsan_agrees](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_ubsan_agrees) | proved |
+| [jsoncons/fuzz_ubjson_parser_max/asan_ubsan_disagrees_at_most](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_ubsan_disagrees_at_most) | proved |
 | [jsoncons/fuzz_ubjson_parser_max/asan_ubsan_halts](../../proofs/jsoncons/fuzz_ubjson_parser_max/asan_ubsan_halts) | proved |
 | [jsoncons/fuzz_ubjson_parser_max/plain_halts](../../proofs/jsoncons/fuzz_ubjson_parser_max/plain_halts) | proved |
+| [jsoncons/fuzz_ubjson_parser_max/ubsan_agreement_decidable](../../proofs/jsoncons/fuzz_ubjson_parser_max/ubsan_agreement_decidable) | proved |
 | [jsoncons/fuzz_ubjson_parser_max/ubsan_agrees](../../proofs/jsoncons/fuzz_ubjson_parser_max/ubsan_agrees) | proved |
+| [jsoncons/fuzz_ubjson_parser_max/ubsan_disagrees_at_most](../../proofs/jsoncons/fuzz_ubjson_parser_max/ubsan_disagrees_at_most) | proved |
 | [jsoncons/fuzz_ubjson_parser_max/ubsan_halts](../../proofs/jsoncons/fuzz_ubjson_parser_max/ubsan_halts) | proved |
 
 ## Licence

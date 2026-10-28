@@ -3,7 +3,7 @@
 
 [simdjson.org](https://simdjson.org) · OSS-Fuzz: [projects/simdjson](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/simdjson)
 
-**Status: available.** 13 of OSS-Fuzz's 14 fuzz targets have statements. 52 binaries, 51 MB. 179 statements: 24 proved, 0 known false, 0 suspected false, 4 blocked by the model, 151 open.
+**Status: available.** 13 of OSS-Fuzz's 14 fuzz targets have statements. 52 binaries, 51 MB. 179 statements: 30 proved, 0 known false, 0 suspected false, 4 blocked by the model, 145 open.
 
 Built from simdjson (commit `f807de97`) with 1 patch, listed under [How these binaries were built](#how-these-binaries-were-built).
 
@@ -11,17 +11,17 @@ Built from simdjson (commit `f807de97`) with 1 patch, listed under [How these bi
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
 | [fuzz_atpointer](fuzz_atpointer/) | dom::parser::parse of the first split string, then root.at_pointer(second string) and leaf.get_string(); every result is only used to return 0. | 1 check (invariant; 1 weak; 0 confirmed in the binary) | 13, 3 proved |
-| [fuzz_dump](fuzz_dump/) | parse, then a recursive tree walk printing every element to a null ostream; no value is checked. | none | 15, 2 proved |
-| [fuzz_dump_raw_tape](fuzz_dump_raw_tape/) | parse, then elem.dump_raw_tape(null ostream); the boolean result (false when the tape is malformed) is discarded. | none | 15, 2 proved |
-| [fuzz_element](fuzz_element/) | parse strings[1], then one of 31 dom::element accessors selected by the first byte (type, get_*, is_*, is<T>, get<T>, tie, casts, at_pointer, at, at_key, at_key_case_insensitive, dump_raw_tape); every result discarded, exceptions caught. | none | 13, 1 proved |
-| [fuzz_implementations](fuzz_implementations/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 13, 2 proved |
+| [fuzz_dump](fuzz_dump/) | parse, then a recursive tree walk printing every element to a null ostream; no value is checked. | none | 15, 3 proved |
+| [fuzz_dump_raw_tape](fuzz_dump_raw_tape/) | parse, then elem.dump_raw_tape(null ostream); the boolean result (false when the tape is malformed) is discarded. | none | 15, 3 proved |
+| [fuzz_element](fuzz_element/) | parse strings[1], then one of 31 dom::element accessors selected by the first byte (type, get_*, is_*, is<T>, get<T>, tie, casts, at_pointer, at, at_key, at_key_case_insensitive, dump_raw_tape); every result discarded, exceptions caught. | none | 13, 3 proved |
+| [fuzz_implementations](fuzz_implementations/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 13, 3 proved |
 | [fuzz_minify](fuzz_minify/) | parse into a DOM, then simdjson::minify(elem); the minified string is (void)-cast away (no reparse, no idempotence check). | none | 15 |
 | [fuzz_minifyimpl](fuzz_minifyimpl/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 13, 3 proved |
 | [fuzz_ndjson](fuzz_ndjson/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 13 |
 | [fuzz_ondemand](fuzz_ondemand/) | ondemand::parser::iterate over strings[0], then for each item one of 12 accessors (get_string/bool/array/int64/double/object/uint64/raw_json_string, is_null, begin, end, nested iteration); results discarded, exceptions caught. | none | 13, 3 proved |
 | [fuzz_padded](fuzz_padded/) | padded_string construction with fuzzed sizes (s1, s2 up to SIZE_MAX), move-assign, swap, data(), string_view conversion; allocation failures surface as exceptions/crashes only. | none | 13, 4 blocked by the model |
 | [fuzz_parser](fuzz_parser/) | dom::parser::parse(Data, Size); the error code is discarded. | none | 15, 3 proved |
-| [fuzz_print_json](fuzz_print_json/) | parse, then ostream << element into a null stream; no comparison. | none | 15, 2 proved |
+| [fuzz_print_json](fuzz_print_json/) | parse, then ostream << element into a null stream; no comparison. | none | 15, 3 proved |
 | [fuzz_utf8](fuzz_utf8/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 13, 3 proved |
 
 Not included: **api-driver** (held from this release); **fuzz_atpath** (not built yet).
@@ -61,11 +61,16 @@ By hand: download `simdjson-bin.tar.zst` from release [v2026.10.0](https://githu
 | [simdjson/fuzz_atpointer/asan_ubsan_agrees](../../proofs/simdjson/fuzz_atpointer/asan_ubsan_agrees) | proved |
 | [simdjson/fuzz_atpointer/ubsan_agrees](../../proofs/simdjson/fuzz_atpointer/ubsan_agrees) | proved |
 | [simdjson/fuzz_dump/asan_agrees](../../proofs/simdjson/fuzz_dump/asan_agrees) | proved |
+| [simdjson/fuzz_dump/asan_ubsan_agrees](../../proofs/simdjson/fuzz_dump/asan_ubsan_agrees) | proved |
 | [simdjson/fuzz_dump/ubsan_agrees](../../proofs/simdjson/fuzz_dump/ubsan_agrees) | proved |
 | [simdjson/fuzz_dump_raw_tape/asan_agrees](../../proofs/simdjson/fuzz_dump_raw_tape/asan_agrees) | proved |
+| [simdjson/fuzz_dump_raw_tape/asan_ubsan_agrees](../../proofs/simdjson/fuzz_dump_raw_tape/asan_ubsan_agrees) | proved |
 | [simdjson/fuzz_dump_raw_tape/ubsan_agrees](../../proofs/simdjson/fuzz_dump_raw_tape/ubsan_agrees) | proved |
+| [simdjson/fuzz_element/asan_agrees](../../proofs/simdjson/fuzz_element/asan_agrees) | proved |
 | [simdjson/fuzz_element/asan_ubsan_agrees](../../proofs/simdjson/fuzz_element/asan_ubsan_agrees) | proved |
+| [simdjson/fuzz_element/ubsan_agrees](../../proofs/simdjson/fuzz_element/ubsan_agrees) | proved |
 | [simdjson/fuzz_implementations/asan_agrees](../../proofs/simdjson/fuzz_implementations/asan_agrees) | proved |
+| [simdjson/fuzz_implementations/asan_ubsan_agrees](../../proofs/simdjson/fuzz_implementations/asan_ubsan_agrees) | proved |
 | [simdjson/fuzz_implementations/ubsan_agrees](../../proofs/simdjson/fuzz_implementations/ubsan_agrees) | proved |
 | [simdjson/fuzz_minifyimpl/asan_agrees](../../proofs/simdjson/fuzz_minifyimpl/asan_agrees) | proved |
 | [simdjson/fuzz_minifyimpl/asan_ubsan_agrees](../../proofs/simdjson/fuzz_minifyimpl/asan_ubsan_agrees) | proved |
@@ -78,6 +83,7 @@ By hand: download `simdjson-bin.tar.zst` from release [v2026.10.0](https://githu
 | [simdjson/fuzz_parser/ubsan_agrees](../../proofs/simdjson/fuzz_parser/ubsan_agrees) | proved |
 | [simdjson/fuzz_print_json/asan_agrees](../../proofs/simdjson/fuzz_print_json/asan_agrees) | proved |
 | [simdjson/fuzz_print_json/asan_ubsan_agrees](../../proofs/simdjson/fuzz_print_json/asan_ubsan_agrees) | proved |
+| [simdjson/fuzz_print_json/ubsan_agrees](../../proofs/simdjson/fuzz_print_json/ubsan_agrees) | proved |
 | [simdjson/fuzz_utf8/asan_agrees](../../proofs/simdjson/fuzz_utf8/asan_agrees) | proved |
 | [simdjson/fuzz_utf8/asan_ubsan_agrees](../../proofs/simdjson/fuzz_utf8/asan_ubsan_agrees) | proved |
 | [simdjson/fuzz_utf8/ubsan_agrees](../../proofs/simdjson/fuzz_utf8/ubsan_agrees) | proved |

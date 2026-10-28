@@ -25,8 +25,8 @@
     sizeof(buffer). [assert(); confirmed in the binary]
     (b) Harness bookkeeping: current stream non-NULL and index below the stream
     count. [assert(); confirmed in the binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

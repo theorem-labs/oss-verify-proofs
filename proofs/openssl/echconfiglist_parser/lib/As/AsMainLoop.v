@@ -899,7 +899,7 @@ Section Loop.
     intros regsG memG msFG moG s3 HVG HAG MPG KEPTG INVG STKG ERRG AUXG HPG RHG ACG HALG.
     pose proof (mo_tr _ _ _ EQF (mo_mp _ _ MPG)) as EQG.
     assert (ELB : as_lb_remove H p [(p2, A2, 2 * cap); (p, A, cap)] = [(p2, A2, 2 * cap)]).
-    { destruct (ah_lb_remove H HH) as (L1 & L2 & L3). rewrite (L2 p (p2, A2, 2 * cap)) by (cbn; exact Hp). rewrite (L1 p A cap []) by (cbn; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])])). reflexivity. }
+    { destruct (ah_lb_remove H HH) as (L1 & L2 & L3). rewrite (L2 p (p2, A2, 2 * cap)) by (cbn; exact Hp). rewrite (L1 p A cap []) by (cbn; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])])). reflexivity. }
     rewrite ELB in HPG, RHG.
     assert (STG : mstatics memG) by (eapply (mstatics_apres memF memG); [exact STF | exact HPG | exact INVG | exact STKG | exact ACG | exact AUXG | exact HBF | eapply (aauxv_ok_apres H); [exact AUXVF | exact HPG | lia]]).
     destruct (blk_apres [(p2, A2, 2 * cap)] p2 A2 (2 * cap) memF memG _ _ _ HPG ltac:(left; reflexivity) ltac:(lia) ltac:(lia) ltac:(lia) CB2F AD2F HD2F ltac:(lia))

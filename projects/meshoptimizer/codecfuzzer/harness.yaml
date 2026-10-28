@@ -163,6 +163,7 @@ checks:
   where: source/codecfuzz.cpp:115-141
   what: 'Meshlet vertex round trip: 32-bit vertex references decode back exactly, and the 16-bit decode
     equals the low 16 bits of each input reference'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: codecfuzzer

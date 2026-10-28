@@ -24,12 +24,12 @@ The harness makes no check of its own beyond not crashing, so a statement about 
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; memory refused only when forced | [proved](../../../proofs/skcms/iccprofile_info/asan_agrees/) |
 | `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; memory refused only when forced | [proved](../../../proofs/skcms/iccprofile_info/ubsan_agrees/) |
 | `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; memory refused only when forced | [proved](../../../proofs/skcms/iccprofile_info/asan_ubsan_agrees/) |
-| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
-| `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
-| `asan_ubsan_disagrees_at_most` | P[plain and ASan+UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
-| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | open |
-| `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | open |
-| `asan_ubsan_agreement_decidable` | some program decides exactly the inputs where plain and ASan+UBSan agree | open |
+| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | [proved](../../../proofs/skcms/iccprofile_info/asan_disagrees_at_most/) at b = 0 |
+| `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | [proved](../../../proofs/skcms/iccprofile_info/ubsan_disagrees_at_most/) at b = 0 |
+| `asan_ubsan_disagrees_at_most` | P[plain and ASan+UBSan disagree] <= b under [Distribution.v](Distribution.v) | [proved](../../../proofs/skcms/iccprofile_info/asan_ubsan_disagrees_at_most/) at b = 0 |
+| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | [proved](../../../proofs/skcms/iccprofile_info/asan_agreement_decidable/) |
+| `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | [proved](../../../proofs/skcms/iccprofile_info/ubsan_agreement_decidable/) |
+| `asan_ubsan_agreement_decidable` | some program decides exactly the inputs where plain and ASan+UBSan agree | [proved](../../../proofs/skcms/iccprofile_info/asan_ubsan_agreement_decidable/) |
 
 ## Builds
 Static riscv64 Linux programs, compiled for RV64G and run as `<file> <input-file>`; `oft fetch skcms` downloads the published ones and checks each against its SHA-256.

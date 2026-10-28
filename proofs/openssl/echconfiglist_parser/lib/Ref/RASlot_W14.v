@@ -171,7 +171,7 @@ Proof using HCEIL stT sc cnt ai ml mt p r SC CNT AI ML MST REC Hr Hk P0 P16 PEND
   lazymatch goal with H : rw_cells rsegs ?mX G _ |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
     assert (MRC : rmrep (stC stT sc cnt ai ml mt p) mX);
     [ eapply rmrep_put_meta_frame; [exact MRB| exact MSTB| exact MUa| exact WMa|];
-      eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])];
+      eapply rw_cells_congr; [| | | exact H]; [| reflexivity| cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])];
       unfold meta_cells, recA, pw; cbn [m_prev m_next m_mem m_avail m_freed oconc cells_bytes cbytes app];
       change (conc (stB stT sc cnt p) p) with P; unfold wz at 3 4;
       rewrite (le4_congr v3 (Z_to_bv 64 AV)) by (rewrite V3, unsigned_lit by lia; reflexivity);
@@ -306,7 +306,7 @@ Proof using HCEIL stT sc cnt ai ml mt p r SC CNT AI ML MST REC Hr Hk P0 P16 PEND
         fold AV. Z.div_mod_to_equations. (first [clear - H9 H5 H4 H0 H; lia | lia]). }
     do 6 f_equal. unfold meta_word. cbn [m_last_idx m_freeable m_sizeclass m_maplen]. f_equal. lia. }
   { reflexivity. }
-  { cbn. (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]). }
+  { cbn. (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]). }
   assert (TKE : ticks_ok (stE stT sc cnt ai ml mt p)) by (exact (ticks_ok_upd_meta (stD stT sc cnt ai ml mt p) mt (fun _ => recF sc cnt ai ml mt p) TKD)).
   clear MRD TKD MSTD.
   (* [comment removed for export] *)

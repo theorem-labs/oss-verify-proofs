@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: jsoncons/fuzz_bigint/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: 93ed0281d6d693c2fdcaa051091e31acc6c7dad46e29c8a71b206d8d44629034

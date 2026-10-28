@@ -113,7 +113,7 @@ Local Ltac lia ::= OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Dieta
 From OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require LiaMunch.
 From OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib Require Import BWorld.
 Local Ltac hot2_mid := match goal with H : context [Z.modulo _ _] |- _ => idtac | H : context [Z.div _ _] |- _ => idtac end;
-  (repeat match goal with H : context [Z.modulo _ _] |- _ => clear H | H : context [Z.div _ _] |- _ => clear H end); timeout 8 (Zify.zify; xlia zchecker).
+  (repeat match goal with H : context [Z.modulo _ _] |- _ => clear H | H : context [Z.div _ _] |- _ => clear H end); timeout 8 (Zify.zify; xlia zchecker).   (* timeout-ok: fast tier: hot2_mid's caller catches its failure and runs zify; xlia without it *)
 Local Ltac hot_lia_prev := first [ OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Dieta54.dl_first | OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib.LiaTwx2.zify_prune; OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib.LiaTwx2.zify_noeuclid; Z.euclidean_division_equations_cleanup; xlia zchecker | OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib.LiaTwx2.zify_prune; Zify.zify; xlia zchecker | hot2_mid | Zify.zify; xlia zchecker ].
 Local Ltac hot_lia_rest := first [ OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib.LiaMunch.munch_tier ltac:(hot_lia_prev) | hot_lia_prev ].
 Local Ltac lia ::= first [ solve [ OssFuzzTheorems.Proofs.varnish.esi_parse_fuzzer.lib.Lib.LiaMunch.hplen_pre; hot_lia_rest ] | hot_lia_rest ].

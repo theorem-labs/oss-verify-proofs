@@ -127,7 +127,7 @@ Section STRNCMP.
         destruct SIGN as [SG1 SG2].
         destruct CASES as [[-> E]|[[-> E]|[-> E]]].
         - split; [reflexivity|]. change (bv_signed (sx32 (Z_to_bv 64 0))) with 0.
-          split; [(first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])])])])|]. split; [split; intros; lia|]. auto 10.
+          split; [(first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])])])])|]. split; [split; intros; lia|]. auto 10.
         - split; [reflexivity|]. change (bv_signed (sx32 (Z_to_bv 64 1))) with 1.
           split; [split; intros; lia|]. split; [split; intros; lia|]. auto 10.
         - split; [apply bv_eq; vm_compute; reflexivity|].

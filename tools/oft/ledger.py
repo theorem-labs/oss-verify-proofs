@@ -8,28 +8,33 @@ of one, to the rule instead.
 
 A record is a findings/<project>/<harness>/<slug>/ with finding.yaml.  Its
 anchor is its first version that is evidence, which is decided by the record's
-own files alone: its input.bin and control.bin are regular files that begin
-with a complete driver header; each of its statements is an agreement or halts
-statement by its name, which gives its builds (names.statement_builds); and its
-input and control each hold a run of every build its statements name, each of
-the shape `oft check --record` prints (an exit status from 0 to 255, an
-optional signal, and two SHA-256s).  Any recorded runs of that shape anchor a
-record, whether or not they show its statements false, so a record's runs must
-come only from `oft check --record`, which prints them only when the input
-shows each statement false and the control none.  No schema,
-harness.yaml or unpatched.yaml is consulted, so neither another file nor a
-change to the tools can turn evidence back into a draft.  Before its anchor a
-record is a draft, which CI never re-ran, so it may change in any way and may
-be renamed or deleted.  Anchors are found by ancestry over TIP's whole history,
-not by the order of a walk: the anchors of a record are its versions that are
-evidence at commits none of whose ancestors had a version of it that was
-evidence.  Two anchors that differ in input.bin, control.bin, statements or
-recorded runs are refused, when one of them is in BASE..TIP: two branches that
-each recorded the slug, merged in either order or with either tree kept.
+own files alone: its input.bin and control.bin are regular files of at most the
+finding input cap that begin with a complete driver header; each of its
+statements is an agreement or halts statement by its name, which gives its
+builds (names.statement_builds); and its input and control each hold a run of
+every build its statements name, each of the shape `oft check --record` prints
+(an exit status from 0 to 255, an optional signal, and two SHA-256s).  Any
+recorded runs of that shape anchor a record, whether or not they show its
+statements false, so a record's runs must come only from `oft check --record`,
+which prints them only when the input shows each statement false and the
+control none.  No schema, harness.yaml or unpatched.yaml is consulted, so
+neither another file nor a change to the tools can turn evidence back into a
+draft.  Before its anchor a record is a draft, which CI never re-ran, so it may
+change in any way and may be renamed or deleted.  Anchors are found by ancestry
+over TIP's whole history, not by the order of a walk: the anchors of a record
+are its versions that are evidence at commits none of whose ancestors had a
+version of it that was evidence.  Two anchors that differ in input.bin,
+control.bin, statements or recorded runs are refused, when one of them is in
+BASE..TIP: two branches that each recorded the slug, merged in either order or
+with either tree kept.
 
 From its anchor on, a record is never deleted or renamed: every file of it
 that a commit at or after its anchor had is in TIP, among the commits of
-BASE..TIP and their parents.  Its input.bin and control.bin are the anchor's,
+BASE..TIP and their parents.  Its state never moves back to `open` from one
+whose patch the pinned build carries (`patched`, `reported` or `public`,
+rules.SERIES_STATES), whether or not the base has the record, since an
+enrolled project's binaries keep that patch; from `pruned` or `not-a-defect`
+it may, since those carry no patch.  Its input.bin and control.bin are the anchor's,
 and its statements include the anchor's (a longer list makes a stronger claim,
 and CI checks each).  The unpatched pin of each build the anchor's statements
 name is frozen at the pin's own anchor: its first value in
@@ -58,9 +63,9 @@ which a branch that lags main never had, and the reference is n, the newest
 commit of that line that TIP has.  In a pull request m = c = BASE; on a push
 to a proof branch, a branch that lags main is held to what it has.  TIP's runs
 agree with each reference that has the record, except one whose images.runner
-in release.yaml (the image CI re-runs findings in, which toolchain/toolchain.lock
-repeats) differs from TIP's: the same test lint's base comparison makes, for a
-pull request.  A record anchored only in BASE..TIP keeps its anchor's runs
+in release.yaml (the image CI re-runs findings in) differs from TIP's: the same
+test lint's base comparison makes, for a pull request.  A record anchored only
+in BASE..TIP keeps its anchor's runs
 whatever the runner, since that commit's
 release.yaml is as unchecked as its pins.  If a new runner changes such a
 record's runs, CI's re-run fails, so its branch cannot merge and its project
@@ -69,15 +74,17 @@ stays held.  A record's state, summary, upstream and patch text may change.
 The rule is net: only TIP is judged against what the history had.  A file of a
 record that paths.py does not list (an old run.sh beside it) may go, and
 restoring what was deleted or changed clears the finding, since a proof branch
-is never rewritten (pr.yml fails a forced push to one) and its history has to
+is never rewritten (ledger.yml fails a forced push to one) and its history has to
 be able to come right.  The history is read as git has it, with no replace ref
 or graft: either could hide a commit.
 
 Only git objects are read: commits and trees, the finding.yaml, input.bin and
 control.bin of each version and the unpatched.yaml of each commit at or after
-an anchor, each within the finding file cap, and the release.yaml of TIP and of
-each reference commit above, within its own cap (lint.file_cap).  In a clone
-fetched without blobs, git fetches those on demand.
+an anchor, each within its cap in the finding (facts.FINDING_INPUT_CAP for
+input.bin and control.bin, facts.FINDING_FILE_CAP for the others), and the
+release.yaml of TIP and of each reference commit above, within its own cap
+(lint.file_cap).  In a clone fetched without blobs, git fetches those on
+demand.
 """
 import os
 import re
@@ -137,13 +144,11 @@ class _Git:
         return self.docs[oid]
 
     def header(self, obj):
-        """The driver calls the header of a regular file's blob gives, or None if it is not a regular file of at most
-        the finding file cap or its header is incomplete."""
         mode, oid = obj
         if mode not in REGULAR:
             return None
         if oid not in self.headers:
-            fits = int(self.out("cat-file", "-s", oid)) <= facts.FINDING_FILE_CAP
+            fits = int(self.out("cat-file", "-s", oid)) <= facts.FINDING_INPUT_CAP
             self.headers[oid] = facts.driver_calls(self.out("cat-file", "blob", oid)) if fits else None
         return self.headers[oid]
 
@@ -161,6 +166,13 @@ def _pins(doc, harness):
 
 def _build_order(b):
     return (schema.BUILDS.index(b) if b in schema.BUILDS else len(schema.BUILDS), str(b))
+
+
+def _state(git, rec):
+    """The state a version of a record gives it, or None when it has none to read."""
+    doc = git.yaml(rec["finding.yaml"]) if "finding.yaml" in rec else None
+    state = doc.get("state") if isinstance(doc, dict) else None
+    return state if isinstance(state, str) else None
 
 
 def _runner(git, commit):
@@ -210,11 +222,6 @@ class _Evidence:
 
 
 def _anchor(git, rec):
-    """The _Evidence of this version of a record (its files), or None if it is a draft.  A draft: its input.bin or
-    control.bin is not a regular file of at most the finding file cap that begins with a complete driver header; its
-    finding.yaml does not parse, or names a statement that is not an agreement or halts statement by its name
-    (names.statement_builds); or its input or its control lacks a run of a build its statements name, or has one that
-    is not of the shape `oft check --record` prints.  A run of another build is not evidence; lint refuses it."""
     if any(name not in rec or git.header(rec[name]) is None for name in FIXED_FILES):
         return None
     doc = git.yaml(rec["finding.yaml"])
@@ -272,6 +279,7 @@ def run(root, base, tip="HEAD"):
     pin_reach = {}    # (project, harness, build) -> the commits at or after one of its pin's anchors
     pin_anchors = {}  # (project, harness, build) -> [(commit, the pin)], parents first
     had = {}          # (record, file name) -> the first commit judged that had it at or after an anchor
+    states_had = {}   # record -> [(a commit judged, the state it gave the record)], parents first
     unpatched = {}    # project -> the first commit judged with an anchored record of it and its unpatched.yaml
     for c in commits:
         for seen in reach.values():
@@ -296,6 +304,9 @@ def run(root, base, tip="HEAD"):
             if c in scope:
                 for name in rec:
                     had.setdefault((key, name), c)
+                st = _state(git, rec)
+                if st is not None:
+                    states_had.setdefault(key, []).append((c, st))
                 p = key.split("/")[0]
                 if p + "/unpatched.yaml" in files:
                     unpatched.setdefault(p, c)
@@ -372,6 +383,16 @@ def run(root, base, tip="HEAD"):
             rel = "findings/%s/unpatched.yaml" % p
             out.append(Finding("paths", rel, "a finding's unpatched pins are never deleted: %s, which %s had"
                                % (rel, c[:10])))
+    # a state only moves forward from one whose patch the pinned build carries (rules.SERIES_STATES), over the whole
+    # history judged: the base alone does not show a finding that a commit of this change added as patched and a later
+    # one set back to open, which would release a hold its binaries keep
+    for key, seq in sorted(states_had.items()):
+        rel = "findings/%s/finding.yaml" % key
+        if key in now and _state(git, now[key]) == "open":
+            was = [(c, s) for c, s in seq if s in rules.SERIES_STATES]
+            if was:
+                out.append(Finding("paths", rel, "a finding's state never returns to open: %s was %s at %s"
+                                   % (rel, was[0][1], was[0][0][:10])))
     for key, found in sorted(anchors.items()):
         rel = "findings/" + key
         (first, ev), split = _first_once(found, new, _Evidence.differences)

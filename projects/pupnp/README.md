@@ -3,14 +3,14 @@
 
 [pupnp.github.io/pupnp](https://pupnp.github.io/pupnp) · OSS-Fuzz: [projects/pupnp](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/pupnp)
 
-**Status: available.** 2 of OSS-Fuzz's 4 fuzz targets have statements. 8 binaries, 2.9 MB. 30 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 28 open.
+**Status: available.** 2 of OSS-Fuzz's 4 fuzz targets have statements. 8 binaries, 2.9 MB. 30 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 27 open.
 
 Built from pupnp (commit `b46bc77a`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [FuzzHttp](FuzzHttp/) | first byte selects HTTP request or response parser (parser_request_init / parser_response_init GET); parser_append feeds the rest; parse status and message discarded, then httpmsg_destroy. | none | 15, 2 proved |
+| [FuzzHttp](FuzzHttp/) | first byte selects HTTP request or response parser (parser_request_init / parser_response_init GET); parser_append feeds the rest; parse status and message discarded, then httpmsg_destroy. | none | 15, 3 proved |
 | [FuzzIxml](FuzzIxml/) | writes the input (10..5120 bytes) to /tmp/libfuzzer.<pid>, ixmlLoadDocumentEx parses it, ixmlPrintDocument serialises it, then frees; the printed text is not compared to anything. | 1 check (invariant; 1 weak; 0 confirmed in the binary) | 15 |
 
 Not included: **FuzzIxmlDom** (not built yet); **FuzzServiceTable** (not built yet); **api-driver** (held from this release).
@@ -42,6 +42,7 @@ By hand: download `pupnp-bin.tar.zst` from release [v2026.10.0](https://github.c
 |---|---|
 | [pupnp/FuzzHttp/asan_agrees](../../proofs/pupnp/FuzzHttp/asan_agrees) | proved |
 | [pupnp/FuzzHttp/asan_ubsan_agrees](../../proofs/pupnp/FuzzHttp/asan_ubsan_agrees) | proved |
+| [pupnp/FuzzHttp/ubsan_agrees](../../proofs/pupnp/FuzzHttp/ubsan_agrees) | proved |
 
 ## Licence
 pupnp is under `BSD-3-Clause`. Each binary is a combined work of pupnp, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `pupnp-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `pupnp-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

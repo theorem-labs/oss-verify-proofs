@@ -131,6 +131,7 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
   where: source/fuzzer_example_small.c:9-14
   what: Every deflate/inflate call must return Z_OK (or Z_STREAM_END where expected).
@@ -138,6 +139,7 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
   where: source/fuzzer_example_small.c:86-89
   what: deflate then inflate with 1-byte in/out buffers; output must memcmp-equal the input.

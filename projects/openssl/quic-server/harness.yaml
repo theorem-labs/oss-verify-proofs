@@ -139,6 +139,7 @@ checks:
   live: true
   where: source/quic-server.c:205-206
   what: 'Harness bookkeeping: current stream non-NULL and index below the stream count.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: quic-server

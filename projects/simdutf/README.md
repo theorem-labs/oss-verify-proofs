@@ -20,7 +20,7 @@ Not included: **api-driver** (held from this release); **base64_details** (not b
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `base64`: base64_to_binary_safe with a fuzzed output-buffer size: written length <= buffer size (assert); on OUTPUT_BUFFER_TOO_SMALL and BASE64_INPUT_REMAINDER the reported input count <= input size (abort); on INVALID_BASE64_CHARACTER the error position < input size (assert).
 
 ## Known issues

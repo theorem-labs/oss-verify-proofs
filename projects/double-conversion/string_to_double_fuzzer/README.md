@@ -27,10 +27,10 @@ The harness makes no check of its own beyond not crashing, so a statement about 
 | `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; abort read as SIGABRT | [proved](../../../proofs/double-conversion/string_to_double_fuzzer/ubsan_agrees/) |
 | `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; abort read as SIGABRT | [proved](../../../proofs/double-conversion/string_to_double_fuzzer/asan_ubsan_agrees/) |
 | `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
-| `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
+| `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | [proved](../../../proofs/double-conversion/string_to_double_fuzzer/ubsan_disagrees_at_most/) at b = 0 |
 | `asan_ubsan_disagrees_at_most` | P[plain and ASan+UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
 | `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | open |
-| `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | open |
+| `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | [proved](../../../proofs/double-conversion/string_to_double_fuzzer/ubsan_agreement_decidable/) |
 | `asan_ubsan_agreement_decidable` | some program decides exactly the inputs where plain and ASan+UBSan agree | open |
 
 ## Builds

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: jsoncons/fuzz_ubjson_parser_max/asan_agreement_decidable
+fingerprint: 7ec7fe6ba9561f18177e562387dabcb7066d77f8a1d223e051145d0afa8ca2f8

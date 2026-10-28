@@ -11,7 +11,7 @@ Checks one property, a self-validation: A signature just produced by OQS_SIG_sig
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 
 ## What the harness checks
-- A signature just produced by OQS_SIG_sign over the fuzz message (fuzz-selected algorithm, fuzz-seeded RNG keypair) must verify with OQS_SIG_verify under the matching public key ([line 102](source/fuzz_test_sig.c#L102)): exit(1); not confirmed in the binary.
+- A signature just produced by OQS_SIG_sign over the fuzz message (fuzz-selected algorithm, fuzz-seeded RNG keypair) must verify with OQS_SIG_verify under the matching public key ([lines 102-108](source/fuzz_test_sig.c#L102-L108)): exit(1); not confirmed in the binary.
 
 ## Statements ([Statements.v](Statements.v))
 

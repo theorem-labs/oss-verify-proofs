@@ -1,0 +1,141 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Spec Require Import FseNCount ZdFrame.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import KXExec KXSound KXFull KXBridge KXTac KXGo KXTree KXAuto KXMem KXMem2 KXPost KXUb KXUb2.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Common Require Import KXLean KXLeanAll.
+From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Ubsan Require Import UImg RZ_huf_iface RZ_huf_dx1 huf41_kit_x41ck huf411_kit_rs huf411_kit_d1t huf411_kit_d1r huf411_kit_d1d.
+Import ListNotations. Import KXS.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Section D1L.
+  Variables (ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (m0 : fmem).
+  Variables (SPV DST dcap DT lo : Z) (dtb : list byte).
+  Hypothesis LO : 4096 <= lo /\ lo <= SPV - 912.
+  Hypothesis SPB : SPV < 2^47.
+  Hypothesis R1 : 4096 <= DST /\ 0 <= dcap < 2^32 /\ DST + dcap < 2^47.
+  Hypothesis OS1 : DST + dcap <= lo \/ SPV <= DST.
+  Hypothesis DL : zlen dtb = 16388.
+  Hypothesis R3 : 4096 <= DT /\ DT + 16388 < 2^47.
+  Hypothesis DJ2 : DST + dcap <= DT \/ DT + 16388 <= DST.
+
+  Notation POST := (huf_dec_post ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc SPV DST dcap lo 912 [] m0 huf_noQ).
+  Notation WDK := [(DST, DST + dcap); (SPV - 376, SPV - 336)].
+  Notation ST pc mm x1 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 :=
+    (MS (mkR x1 (Z_to_bv 64 (SPV + -512)) gp tp x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21
+             x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)
+        F (Z_to_bv 64 pc) fc None mm (seg_rom usegs)).
+  Notation OEND := (Z_to_bv 64 (DST + dcap)).
+  Notation DT4 := (Z_to_bv 64 (DT + 4)).
+  Notation Q62 := (Z_to_bv 64 4611686018427387904).
+
+  Notation FRA mm w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 :=
+    (rw_cells usegs mm (SPV + -512) [C8 w0; C8 w1; C8 w2; C8 w3; C8 w4; C8 w5; C8 w6; C8 w7; C8 w8; C8 w9; C8 w10; C8 w11; C8 w12; C8 w13;
+                                     C8 w14; C8 w15; C8 w16]).
+  Notation BD1 mm c b pad p st lm := (rw_cells usegs mm (SPV + -376) [C8 c; C4 b; CB 4 pad; C8 p; C8 st; C8 lm]).
+
+  Notation KD1 mb pe x9 x19 x21 x22 x23 x24 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16 S :=
+    (forall mm' (y1 y5 y6 y7 y8 y10 y11 y12 y13 y14 y15 y16 y17 y18 y26 y28 y29 y30 y31 c' b' p' : word) (pad' : list byte),
+        munch WDK mb mm' -> wmono usegs mb mm' -> mem_inv usegs mm' -> stk usegs mm' DST (DST + dcap) -> bytes_at usegs mm' DT dtb ->
+        FRA mm' w0 w1 w2 w3 w4 w5 w6 w7 OEND (Z_to_bv 64 (DST + pe)) w10 w11 w12 w13 (Z_to_bv 64 DST) w15 w16 ->
+        BD1 mm' c' b' pad' p' (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) ->
+        evt usegs POST (ST 0x2448c mm' y1 y5 y6 y7 y8 x9 y10 y11 y12 y13 y14 y15 y16 y17 y18 x19 Q62 x21 x22 x23 x24
+                           DT4 y26 OEND y28 y29 y30 y31)).
+
+  #[local] Ltac zfix H := let T := type of H in lazymatch T with
+    | ?a mod 2^64 = ?b mod 2^64 => rewrite (zbv_eqm a b H)
+    | ?a mod 2^64 = ?b => rewrite (zbv_eqm a b ltac:(rewrite H; symmetry; apply Z.mod_small; lia))
+    end.
+
+  Notation L1K mb j pe S len bs dl tl x1 x9 x21 x22 x23 x24 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16 :=
+    (j + 4 <= pe -> forall mm' off' bc' t' a0' a1' nd' a3' c2' a5' m1' a7' (c0' : word) pad' (y6 y7 y8 y18 y28 y29 y30 y31 : word),
+        munch WDK mb mm' -> wmono usegs mb mm' -> mem_inv usegs mm' -> stk usegs mm' DST (DST + dcap) -> bytes_at usegs mm' DT dtb ->
+        FRA mm' w0 w1 w2 w3 w4 w5 w6 w7 OEND (Z_to_bv 64 (DST + pe)) w10 w11 w12 w13 (Z_to_bv 64 DST) w15 w16 ->
+        BD1 mm' c0' (Z_to_bv 64 bc') pad' (Z_to_bv 64 (S + off')) (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) ->
+        bytes_at usegs mm' S bs -> (off' = 0 \/ (1 <= off' /\ off' + 8 <= len /\ bc' <= 64)) -> 0 <= bc' <= 64 ->
+        t' mod 2^64 = bc' -> a0' mod 2^64 = 64 -> a1' mod 2^64 = (DST + pe - 3) mod 2^64 -> nd' mod 2^64 = (-1 * DT + -5) mod 2^64 ->
+        a3' mod 2^64 = (DST + (j + 4) + 3) mod 2^64 -> c2' mod 2^64 = 2 -> a5' mod 2^64 = 64 - tl -> m1' mod 2^64 = 2^64 - 1 ->
+        a7' mod 2^64 = (DST + (j + 4)) mod 2^64 ->
+        evt usegs POST (ST 0x24080 mm' x1 (Z_to_bv 64 t') y6 y7 y8 x9 (Z_to_bv 64 a0') (Z_to_bv 64 a1') (Z_to_bv 64 nd') (Z_to_bv 64 a3')
+                           (Z_to_bv 64 c2') (Z_to_bv 64 a5') (Z_to_bv 64 m1') (Z_to_bv 64 a7') y18 (Z_to_bv 64 dl) Q62
+                           x21 x22 x23 x24 DT4 (Z_to_bv 64 pe) OEND y28 y29 y30 y31)).
+
+  Lemma x41_l1_it : forall mb mm j pe off S len bs dl tl rsv bc t a0 a1 nd a3 c2 a5 m1 a7 (c0 : word) pad
+      (x1 x6 x7 x8 x9 x18 x21 x22 x23 x24 x28 x29 x30 x31 : word)
+      (w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16 : word),
+    munch WDK mb mm -> wmono usegs mb mm -> mem_inv usegs mm -> stk usegs mm DST (DST + dcap) -> bytes_at usegs mm DT dtb ->
+    FRA mm w0 w1 w2 w3 w4 w5 w6 w7 OEND (Z_to_bv 64 (DST + pe)) w10 w11 w12 w13 (Z_to_bv 64 DST) w15 w16 ->
+    BD1 mm c0 (Z_to_bv 64 bc) pad (Z_to_bv 64 (S + off)) (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) -> (DT + 16388 <= lo \/ SPV <= DT) ->
+    bytes_at usegs mm S bs -> zlen bs = len -> 4096 <= S -> S + len < 2^47 -> len < 2^32 ->
+    (DST + dcap <= S \/ S + len <= DST) -> (S + len <= lo \/ SPV <= S) ->
+    0 <= j <= pe -> pe <= dcap -> dl = tl + 256 * rsv -> 1 <= tl <= 12 -> 0 <= rsv <= 255 ->
+    (off = 0 \/ (1 <= off /\ off + 8 <= len /\ bc <= 64)) -> 0 <= bc <= 64 ->
+    t mod 2^64 = bc -> a0 mod 2^64 = 64 -> a1 mod 2^64 = (DST + pe - 3) mod 2^64 -> nd mod 2^64 = (-1 * DT + -5) mod 2^64 ->
+    a3 mod 2^64 = (DST + j + 3) mod 2^64 -> c2 mod 2^64 = 2 -> a5 mod 2^64 = 64 - tl -> m1 mod 2^64 = 2^64 - 1 ->
+    a7 mod 2^64 = (DST + j) mod 2^64 ->
+    L1K mb j pe S len bs dl tl x1 x9 x21 x22 x23 x24 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16 ->
+    KD1 mb pe x9 (Z_to_bv 64 dl) x21 x22 x23 x24 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16 S ->
+    evt usegs POST (ST 0x24080 mm x1 (Z_to_bv 64 t) x6 x7 x8 x9 (Z_to_bv 64 a0) (Z_to_bv 64 a1) (Z_to_bv 64 nd) (Z_to_bv 64 a3)
+                       (Z_to_bv 64 c2) (Z_to_bv 64 a5) (Z_to_bv 64 m1) (Z_to_bv 64 a7) x18 (Z_to_bv 64 dl) Q62
+                       x21 x22 x23 x24 DT4 (Z_to_bv 64 pe) OEND x28 x29 x30 x31).
+  Proof using LO SPB R1 OS1 DL R3 DJ2.
+    intros mb mm j pe off S len bs dl tl rsv bc t a0 a1 nd a3 c2 a5 m1 a7 c0 pad
+      x1 x6 x7 x8 x9 x18 x21 x22 x23 x24 x28 x29 x30 x31 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16
+      MU WM MI OUT DTB FA BD OS3 SB SL S0 S1 SL32 DJS OS2 HJ HPE HDL HTL HRSV HS HB
+      HT HA0 HA1 HND HA3 HC2 HA5 HM1 HA7 KC K.
+    zfix HT. zfix HA0. zfix HA1. zfix HND. zfix HA3. zfix HC2. zfix HA5. zfix HM1. zfix HA7.
+    refine (x41_l1_r ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb LO SPB R1 OS1 DL R3 DJ2
+              mb mm j pe off S len bs dl tl rsv bc c0 pad x1 x6 x7 x8 x9 x18 x21 x22 x23 x24 x28 x29 x30 x31
+              w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16
+              MU WM MI OUT DTB FA BD OS3 SB SL S0 S1 SL32 DJS OS2 HJ HPE HDL HTL HRSV HS HB _ K).
+    intros mm' B P vb vf vq a0' a1' nd' a3' c2' a5' m1' a7' p2 c0' pad' y8 y28 y29 y30 y31
+      MU' WM' MI' OUT' DTB' FA' BD' SB' HP0 HP8 HB' HF HTB HTP HA0' HA1' HND' HA3' HC2' HA5' HM1' HA7' HP2.
+    exact (x41_l1_d ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SPV DST dcap DT lo dtb LO SPB R1 OS1 DL R3 DJ2
+             mb mm' j pe S len bs dl tl rsv B P vb vf vq a0' a1' nd' a3' c2' a5' m1' a7' p2 c0' pad'
+             x1 y8 x9 x21 x22 x23 x24 y28 y29 y30 y31 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16
+             MU' WM' MI' OUT' DTB' FA' BD' OS3 SB' SL S0 S1 SL32 DJS OS2 HJ HPE HDL HTL HRSV HP0 HP8 HB' HF HTB HTP
+             HA0' HA1' HND' HA3' HC2' HA5' HM1' HA7' HP2 KC K).
+  Qed.
+
+
+  Lemma x41_l1 : forall (k : nat) mb mm j pe off S len bs dl tl rsv bc t a0 a1 nd a3 c2 a5 m1 a7 (c0 : word) pad
+      (x1 x6 x7 x8 x9 x18 x21 x22 x23 x24 x28 x29 x30 x31 : word)
+      (w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16 : word),
+    munch WDK mb mm -> wmono usegs mb mm -> mem_inv usegs mm -> stk usegs mm DST (DST + dcap) -> bytes_at usegs mm DT dtb ->
+    FRA mm w0 w1 w2 w3 w4 w5 w6 w7 OEND (Z_to_bv 64 (DST + pe)) w10 w11 w12 w13 (Z_to_bv 64 DST) w15 w16 ->
+    BD1 mm c0 (Z_to_bv 64 bc) pad (Z_to_bv 64 (S + off)) (Z_to_bv 64 S) (Z_to_bv 64 (S + 8)) -> (DT + 16388 <= lo \/ SPV <= DT) ->
+    bytes_at usegs mm S bs -> zlen bs = len -> 4096 <= S -> S + len < 2^47 -> len < 2^32 ->
+    (DST + dcap <= S \/ S + len <= DST) -> (S + len <= lo \/ SPV <= S) ->
+    pe - j <= Z.of_nat k -> 0 <= j <= pe -> pe <= dcap -> dl = tl + 256 * rsv -> 1 <= tl <= 12 -> 0 <= rsv <= 255 ->
+    (off = 0 \/ (1 <= off /\ off + 8 <= len /\ bc <= 64)) -> 0 <= bc <= 64 ->
+    t mod 2^64 = bc -> a0 mod 2^64 = 64 -> a1 mod 2^64 = (DST + pe - 3) mod 2^64 -> nd mod 2^64 = (-1 * DT + -5) mod 2^64 ->
+    a3 mod 2^64 = (DST + j + 3) mod 2^64 -> c2 mod 2^64 = 2 -> a5 mod 2^64 = 64 - tl -> m1 mod 2^64 = 2^64 - 1 ->
+    a7 mod 2^64 = (DST + j) mod 2^64 ->
+    KD1 mb pe x9 (Z_to_bv 64 dl) x21 x22 x23 x24 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16 S ->
+    evt usegs POST (ST 0x24080 mm x1 (Z_to_bv 64 t) x6 x7 x8 x9 (Z_to_bv 64 a0) (Z_to_bv 64 a1) (Z_to_bv 64 nd) (Z_to_bv 64 a3)
+                       (Z_to_bv 64 c2) (Z_to_bv 64 a5) (Z_to_bv 64 m1) (Z_to_bv 64 a7) x18 (Z_to_bv 64 dl) Q62
+                       x21 x22 x23 x24 DT4 (Z_to_bv 64 pe) OEND x28 x29 x30 x31).
+  Proof using LO SPB R1 OS1 DL R3 DJ2.
+    induction k as [|k IH];
+      intros mb mm j pe off S len bs dl tl rsv bc t a0 a1 nd a3 c2 a5 m1 a7 c0 pad
+        x1 x6 x7 x8 x9 x18 x21 x22 x23 x24 x28 x29 x30 x31 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16
+        MU WM MI OUT DTB FA BD OS3 SB SL S0 S1 SL32 DJS OS2 HK HJ HPE HDL HTL HRSV HS HB
+        HT HA0 HA1 HND HA3 HC2 HA5 HM1 HA7 K;
+      (refine (x41_l1_it mb mm j pe off S len bs dl tl rsv bc t a0 a1 nd a3 c2 a5 m1 a7 c0 pad
+                 x1 x6 x7 x8 x9 x18 x21 x22 x23 x24 x28 x29 x30 x31 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16
+                 MU WM MI OUT DTB FA BD OS3 SB SL S0 S1 SL32 DJS OS2 HJ HPE HDL HTL HRSV HS HB
+                 HT HA0 HA1 HND HA3 HC2 HA5 HM1 HA7 _ K)).
+    - intros HJ4. exfalso. lia.
+    - intros HJ4 mm' off' bc' t' a0' a1' nd' a3' c2' a5' m1' a7' c0' pad' y6 y7 y8 y18 y28 y29 y30 y31
+        MU' WM' MI' OUT' DTB' FA' BD' SB' HS' HB' HT' HA0' HA1' HND' HA3' HC2' HA5' HM1' HA7'.
+      exact (IH mb mm' (j + 4) pe off' S len bs dl tl rsv bc' t' a0' a1' nd' a3' c2' a5' m1' a7' c0' pad'
+               x1 y6 y7 y8 x9 y18 x21 x22 x23 x24 y28 y29 y30 y31 w0 w1 w2 w3 w4 w5 w6 w7 w10 w11 w12 w13 w15 w16
+               MU' WM' MI' OUT' DTB' FA' BD' OS3 SB' SL S0 S1 SL32 DJS OS2 ltac:(lia) ltac:(lia) HPE HDL HTL HRSV HS' HB'
+               HT' HA0' HA1' HND' HA3' HC2' HA5' HM1' HA7' K).
+  Qed.
+
+End D1L.

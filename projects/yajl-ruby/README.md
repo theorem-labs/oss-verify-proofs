@@ -3,14 +3,14 @@
 
 [brianmario/yajl-ruby](https://github.com/brianmario/yajl-ruby) · OSS-Fuzz: [projects/yajl-ruby](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/yajl-ruby)
 
-**Status: available.** 1 of OSS-Fuzz's 1 fuzz target has statements. 4 binaries, 1.4 MB. 13 statements: 7 proved, 0 known false, 0 suspected false, 0 blocked by the model, 6 open.
+**Status: available.** 1 of OSS-Fuzz's 1 fuzz target has statements. 4 binaries, 1.4 MB. 13 statements: 13 proved, 0 known false, 0 suspected false, 0 blocked by the model, 0 open.
 
 Built from yajl-ruby (commit `6501652d`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [json_fuzzer](json_fuzzer/) | Checks 2 properties (listed below); the first, an invariant: Every number token delivered to the number callback has length > 0 (essentially guaranteed by the lexer). | 1 check (invariant; 1 weak; 0 confirmed in the binary) | 13, 7 proved |
+| [json_fuzzer](json_fuzzer/) | Checks 2 properties (listed below); the first, an invariant: Every number token delivered to the number callback has length > 0 (essentially guaranteed by the lexer). | 1 check (invariant; 1 weak; 0 confirmed in the binary) | 13, 13 proved |
 
 Not included: **api-driver** (held from this release).
 
@@ -38,12 +38,18 @@ By hand: download `yajl-ruby-bin.tar.zst` from release [v2026.10.0](https://gith
 ## Proofs
 | statement | result |
 |---|---|
+| [yajl-ruby/json_fuzzer/asan_agreement_decidable](../../proofs/yajl-ruby/json_fuzzer/asan_agreement_decidable) | proved |
 | [yajl-ruby/json_fuzzer/asan_agrees](../../proofs/yajl-ruby/json_fuzzer/asan_agrees) | proved |
+| [yajl-ruby/json_fuzzer/asan_disagrees_at_most](../../proofs/yajl-ruby/json_fuzzer/asan_disagrees_at_most) | proved |
 | [yajl-ruby/json_fuzzer/asan_halts](../../proofs/yajl-ruby/json_fuzzer/asan_halts) | proved |
+| [yajl-ruby/json_fuzzer/asan_ubsan_agreement_decidable](../../proofs/yajl-ruby/json_fuzzer/asan_ubsan_agreement_decidable) | proved |
 | [yajl-ruby/json_fuzzer/asan_ubsan_agrees](../../proofs/yajl-ruby/json_fuzzer/asan_ubsan_agrees) | proved |
+| [yajl-ruby/json_fuzzer/asan_ubsan_disagrees_at_most](../../proofs/yajl-ruby/json_fuzzer/asan_ubsan_disagrees_at_most) | proved |
 | [yajl-ruby/json_fuzzer/asan_ubsan_halts](../../proofs/yajl-ruby/json_fuzzer/asan_ubsan_halts) | proved |
 | [yajl-ruby/json_fuzzer/plain_halts](../../proofs/yajl-ruby/json_fuzzer/plain_halts) | proved |
+| [yajl-ruby/json_fuzzer/ubsan_agreement_decidable](../../proofs/yajl-ruby/json_fuzzer/ubsan_agreement_decidable) | proved |
 | [yajl-ruby/json_fuzzer/ubsan_agrees](../../proofs/yajl-ruby/json_fuzzer/ubsan_agrees) | proved |
+| [yajl-ruby/json_fuzzer/ubsan_disagrees_at_most](../../proofs/yajl-ruby/json_fuzzer/ubsan_disagrees_at_most) | proved |
 | [yajl-ruby/json_fuzzer/ubsan_halts](../../proofs/yajl-ruby/json_fuzzer/ubsan_halts) | proved |
 
 ## Licence

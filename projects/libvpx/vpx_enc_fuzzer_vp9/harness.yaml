@@ -148,6 +148,7 @@ checks:
   where: source/vpx_enc_fuzzer.cc:184
   what: vpx_codec_enc_config_default must succeed; called with constant arguments before any input byte
     is used, so it is input-independent.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: vpx_enc_fuzzer_vp9

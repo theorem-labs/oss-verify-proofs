@@ -169,6 +169,7 @@ checks:
   where: source/fuzzer_checksum.c:71-73
   what: 'adler32_combine(adler1, adler2, len) == adler32_combine(adler1, adler1, len): trivially true
     since adler1 == adler2.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzzer_checksum

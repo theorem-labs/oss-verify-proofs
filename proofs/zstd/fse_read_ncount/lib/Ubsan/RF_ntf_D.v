@@ -1,0 +1,132 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Tac Image ZBridge SysStep Walk Arr.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Common Require Import SFModel.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import UImgX.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Malloc Require Import F_malloc_free F_malloc_fast MallocModel_B F_ntf_B MallocKit_A3.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import RMallocRep RMallocTree RMallocKit_B RMallocKit_B3 RF_ntf_A RF_ntf_E.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree Malloc MallocCtrl.
+From OssFuzzTheorems.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import RunDraw.
+Import ListNotations.
+Open Scope bv_scope.
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Section CANSEC1. Context {rc : runConstT}.
+#[using="Type"] Lemma testbit_false_ge a n : 0 <= a < 2^n -> 0 <= n -> forall k, n <= k -> Z.testbit a k = false.
+Proof.
+intros Ha Hn k Hk. destruct (Z.eq_dec a 0) as [->|NE]; [apply Z.bits_0|].
+Local Ltac2 Set LiaHints.tbl := fun () => "0030=26983581294.84366122214.9 8734630769.8 00000700=00AS2Ha2NES2Hk1HS2Ha".
+apply Z.bits_above_log2; [lia|].
+assert (Z.log2 a < n) by (apply Z.log2_lt_pow2; lia). lia.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma lor_lxor_ones64 a b : 0 <= a < 2^64 -> 0 <= b < 2^64 ->
+Z.lor (Z.lxor a 18446744073709551615) (Z.lxor b 18446744073709551615) = Z.lxor (Z.land a b) 18446744073709551615.
+Proof.
+intros Ha Hb. change 18446744073709551615 with (Z.ones 64).
+apply Z.bits_inj'. intros n Hn. rewrite Z.lor_spec, !Z.lxor_spec, Z.land_spec.
+destruct (Z.lt_ge_cases n 64) as [L|G].
+- Local Ltac2 Set LiaHints.tbl := fun () => "0060=14349313109.825831690560.835495402263.856759190151.858937931451.89277398327.8 00000300600700;00?00ES1GS1GSS2HaS2HbS2Hn1L".
+rewrite Z.ones_spec_low by lia. destruct (Z.testbit a n), (Z.testbit b n); reflexivity.
+- rewrite Z.ones_spec_high by lia. rewrite (testbit_false_ge a 64), (testbit_false_ge b 64) by lia. reflexivity.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma usage_sub_word u w : 0 <= u < 2^64 -> 0 <= w < 2^64 ->
+Z_to_bv 64 (u + Z.lor (bv_unsigned (Z_to_bv 64 (Z.lxor w 18446744073709551615))) 18446744073709551584)
+= wz (u - (Z.land w 31 + 1)).
+Proof.
+intros Hu Hw.
+Local Ltac2 Set LiaHints.tbl := fun () => "00;0=11601621875.714822106158.629317575382.634241555761.736476774354.644015166854.65231142375.5 5231146246.6 58028792219.565275802054.767353100442.600000100200300400800900=00A00E00I00JSSSSS2HXSS2HwS2HwS2HwS2HLS".
+assert (HX : 0 <= Z.lxor w 18446744073709551615 < 2^64) by (rewrite zb_lxor_ones by lia; lia).
+rewrite unsigned_lit by lia.
+change 18446744073709551584 with (Z.lxor 31 18446744073709551615).
+rewrite lor_lxor_ones64 by lia.
+assert (HL : 0 <= Z.land w 31 < 32).
+{ split; [apply Z.land_nonneg; lia|]. change 31 with (Z.ones 5). rewrite Z.land_ones by lia. apply Z.mod_pos_bound. lia. }
+rewrite zb_lxor_ones by lia. unfold wz.
+rewrite <- (Z_to_bv_mod64 (u + _)), <- (Z_to_bv_mod64 (u - _)). f_equal.
+replace (u + (18446744073709551615 - Z.land w 31)) with ((u - (Z.land w 31 + 1)) + 1 * 2^64) by lia.
+rewrite Z.mod_add by lia. reflexivity.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+Definition rfg_post (ra sp gp tp s0 s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 t0 t1 t2 a5 a6 a7 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32)
+(lo : Z) (st : mstate) (m : word -> option byte) (st' : mstate) (g : aptr) (sc W : Z) (fr : list cell) : machine_state -> Prop :=
+fun ms' => exists a3 a4 m',
+ms' = MS (mkR ra (Z_to_bv 64 (bv_unsigned sp + -96)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (conc st g)) (Z_to_bv 64 sc) (wz W) a3 a4 a5 a6 a7 (Z_to_bv 64 RCTX) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x15830) fc None m' (seg_rom usegs)
+/\ rpres_except (rfree_fp st lo (bv_unsigned sp)) m m' /\ wmono usegs m m' /\ mem_inv usegs m'
+/\ stk usegs m' lo (bv_unsigned sp + -96)
+/\ rw_cells usegs m' (bv_unsigned sp + -96) fr
+/\ rmrep st' m'.
+#[using="Type"] Lemma rntf_fg : forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) F fc
+(m : word -> option byte) (fr : list cell) st (g : aptr) (lo : Z),
+let mr := get_meta_rec st g in
+rmrep st m -> mem_inv usegs m -> meta_slot st g ->
+mw_ok mr ->
+(m_sizeclass mr < 48 -> 0 <= usage st (m_sizeclass mr) < 2^64) ->
+rw_cells usegs m (bv_unsigned sp + -96) fr -> cells_size fr = 96%nat ->
+stk usegs m lo (bv_unsigned sp + -96) -> ATOP <= lo -> lo <= bv_unsigned sp - 96 ->
+evt usegs (rfg_post ra sp gp tp s0 s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 t0 t1 t2 a5 a6 a7 t3 t4 t5 t6 F fc lo st m
+(fg_usage_st st g) g (m_sizeclass mr) (meta_word mr) fr)
+(MS (mkR ra (Z_to_bv 64 (bv_unsigned sp + -96)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (conc st g)) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 RCTX) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x157fc) fc None m (seg_rom usegs)).
+Proof.
+intros until lo. intros mr MR MI MSL MW UR FR FRL ST LO LOLE.
+pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
+pose proof (rmeta_slot_bounds st m g MR MSL) as GB.
+pose proof (meta_word_range mr MW) as MWR.
+pose proof MW as (LI & FB & SCR & ML).
+pose proof FR as [[WFfr _] _]. pose proof (cells_bytes_length _ WFfr) as LFR. rewrite FRL in LFR.
+unfold RCTX in *. atop_facts.
+assert (MW2 : Z.shiftr (bv_unsigned (Z_to_bv 64 (Z.shiftl (meta_word mr) 52))) 58 = m_sizeclass mr).
+{ Local Ltac2 Set LiaHints.tbl := fun () => "00O0>11438358419.5811599412717.5811887039770.6311889072664.6518600826357.661874239611.66 20035158812.6420035242882.6420035650181.6620391564489.6322071364716.5825069450385.6625755212519.6429786659065.6433375346226.5836030178447.6436032323863.6336032520848.6036034748437.6144304995321.6545095684684.5849702840724.6649731370611.6150827569594.6050993530517.605631454109.63 56869103245.5863337929696.586987929670.66 8832910886.66 8939814016.58 00000100200900@00Y00^00_00`00a00e00f01;01B01C01D01I01N01S01X01Y01Z01]01`01a01d01e01f01m02102:02ESSS3SCR1KS3SCR1KS3FRL2LO4LOLE3LFR5ATOPR1KS3SCRSSSS2URSS2LO4LOLE3SCR5ATOPR1KS3SCR1KSSS3SCRS3MWRS3MWRS3SCRSSS1KS1KFS1KFSS2LI2FBS2HxS4LOLE2HxS2LI2FB3SCR".
+rewrite unsigned_lit_wrap, Z.shiftl_mul_pow2, Z.shiftr_div_pow2 by lia. unfold meta_word.
+replace ((m_last_idx mr + 32 * m_freeable mr + 64 * m_sizeclass mr + 4096 * m_maplen mr) * 2 ^ 52)
+with ((m_last_idx mr + 32 * m_freeable mr + 64 * m_sizeclass mr) * 2^52 + m_maplen mr * 2^64) by lia.
+rewrite Z.mod_add by lia. rewrite Z.mod_small by lia.
+replace ((m_last_idx mr + 32 * m_freeable mr + 64 * m_sizeclass mr) * 2 ^ 52) with ((m_last_idx mr + 32 * m_freeable mr) * 2^52 + m_sizeclass mr * 2^58) by lia.
+rewrite Z.div_add by lia. rewrite Z.div_small by lia. lia. }
+rmeta_chunk MR MSL CH. fold mr in CH.
+st1. st1. st1. rewrite MW2. st1. st1. if_cases K; zify_cond K; rewrite ?unsigned_lit in K by lia.
+-
+clear CH.
+unfold fg_usage_st. fold mr. replace (m_sizeclass mr <? 48) with false by (symmetry; apply Z.ltb_ge; lia).
+apply evt_done. unfold rfg_post. do 3 eexists. split; [cbv delta [mkR]; unfold RCTX; reflexivity|].
+split; [apply rpres_except_refl|]. split; [apply wmono_refl|]. split; [exact MI|]. split; [exact ST|]. split; [exact FR|exact MR].
+- unfold fg_usage_st. fold mr. replace (m_sizeclass mr <? 48) with true by (symmetry; apply Z.ltb_lt; lia).
+specialize (UR ltac:(lia)).
+pose proof (munch_refl [(bv_unsigned sp - 96, bv_unsigned sp); (324152, 324152 + 928)]%Z m) as MU.
+pose proof (wmono_refl usegs m) as WM.
+pose proof (rmrep_usage_read st m (m_sizeclass mr) (wa (RCTX + 464 + 8 * m_sizeclass mr)) MR ltac:(lia) eq_refl) as RDU. unfold RCTX in RDU.
+st1. rewrite ?(unsigned_lit (m_sizeclass mr)), ?Z.shiftl_mul_pow2 by lia. change (2 ^ 3) with 8.
+st1.
+replace (wa (324152 + 464 + 8 * m_sizeclass mr)) with (Z_to_bv 64 (324152 + m_sizeclass mr * 8 + 464)) in RDU by (unfold wa; f_equal; lia).
+st1. clear RDU.
+st1. st1. st1.
+rewrite (usage_sub_word (usage st (m_sizeclass mr)) (meta_word mr)) by lia. rewrite (meta_word_last_idx mr MW).
+pose proof MR as (_ & (_ & _ & USG & _) & _).
+pose proof (u64arr_store_ok usegs _ _ (usages st) (m_sizeclass mr) (Z_to_bv 64 (324152 + m_sizeclass mr * 8 + 464)) USG
+ltac:(rewrite usages_length; lia) ltac:(unfold wa, RCTX; f_equal; lia)) as SOK.
+st1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem ?mX _ _) _) =>
+pose proof (rmrep_set_usage st mX (m_sizeclass mr) (usage st (m_sizeclass mr) - (m_last_idx mr + 1)) MR ltac:(lia)) as MR2; unfold RCTX in MR2 end.
+clear USG.
+rraw_store_finish (324152 + 464 + 8 * m_sizeclass mr) (le8 (wz (usage st (m_sizeclass mr) - (m_last_idx mr + 1)))) FR ST MU WM SOK.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+assert (CH' : rw_cells usegs mX (conc st g) (meta_cells st mr)) end.
+{ pose proof (rmrep_meta_chunk _ _ _ MR2 (meta_slot_set_usage _ _ _ _ MSL)) as X.
+rewrite conc_set_usage, rec_set_usage in X. fold mr in X.
+replace (meta_cells (set_usage (m_sizeclass mr) (usage st (m_sizeclass mr) - (m_last_idx mr + 1)) st) mr) with (meta_cells st mr) in X; [exact X|].
+unfold meta_cells, pw. rewrite !oconc_set_usage. reflexivity. }
+clear CH. unfold meta_cells in CH'.
+st1. clear CH'.
+apply evt_done. unfold rfg_post. do 3 eexists. split; [cbv delta [mkR]; unfold RCTX; reflexivity|].
+split.
+{ apply (rpres_except_of_munch_cov (rfree_fp st lo (bv_unsigned sp))) in MU; [exact MU|exact WM|].
+cbn [ivs_covered]. repeat split; intros x Hx.
++ apply rfree_fp_stack. lia.
++ apply rfree_fp_ctx. unfold RCTX. lia. }
+split; [exact WM|]. split; [assumption|]. split; [exact ST|]. split; [exact FR|exact MR2].
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+End CANSEC1.

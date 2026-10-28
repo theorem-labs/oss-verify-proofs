@@ -3,14 +3,14 @@
 
 [developer.trustedfirmware.org/w/mbed-tls](https://developer.trustedfirmware.org/w/mbed-tls) · OSS-Fuzz: [projects/mbedtls](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/mbedtls)
 
-**Status: available.** 1 of OSS-Fuzz's 20 fuzz targets has statements. 4 binaries, 2.4 MB. 15 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 13 open.
+**Status: available.** 1 of OSS-Fuzz's 20 fuzz targets has statements. 4 binaries, 2.4 MB. 15 statements: 6 proved, 0 known false, 0 suspected false, 0 blocked by the model, 9 open.
 
 Built from mbedtls (commit `8d692f37`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [fuzz_pkcs7](fuzz_pkcs7/) | mbedtls_pkcs7_parse_der on the input, then free; the return code is ignored. | none | 15, 2 proved |
+| [fuzz_pkcs7](fuzz_pkcs7/) | mbedtls_pkcs7_parse_der on the input, then free; the return code is ignored. | none | 15, 6 proved |
 
 Not included: **api-driver** (held from this release); **fuzz_client** (not built yet); **fuzz_dtlsclient** (not built yet); **fuzz_dtlsserver** (not built yet); **fuzz_privkey** (not built yet); **fuzz_pubkey** (not built yet); **fuzz_server** (not built yet); **fuzz_x509crl** (not built yet); **fuzz_x509crt** (not built yet); **fuzz_x509csr** (not built yet); **usepsa-fuzz_client** (not built yet); **usepsa-fuzz_dtlsclient** (not built yet); **usepsa-fuzz_dtlsserver** (not built yet); **usepsa-fuzz_pkcs7** (not built yet); **usepsa-fuzz_privkey** (not built yet); **usepsa-fuzz_pubkey** (not built yet); **usepsa-fuzz_server** (not built yet); **usepsa-fuzz_x509crl** (not built yet); **usepsa-fuzz_x509crt** (not built yet); **usepsa-fuzz_x509csr** (not built yet).
 
@@ -39,8 +39,12 @@ By hand: download `mbedtls-bin.tar.zst` from release [v2026.10.0](https://github
 ## Proofs
 | statement | result |
 |---|---|
+| [mbedtls/fuzz_pkcs7/asan_agreement_decidable](../../proofs/mbedtls/fuzz_pkcs7/asan_agreement_decidable) | proved |
 | [mbedtls/fuzz_pkcs7/asan_agrees](../../proofs/mbedtls/fuzz_pkcs7/asan_agrees) | proved |
+| [mbedtls/fuzz_pkcs7/asan_disagrees_at_most](../../proofs/mbedtls/fuzz_pkcs7/asan_disagrees_at_most) | proved |
 | [mbedtls/fuzz_pkcs7/asan_halts](../../proofs/mbedtls/fuzz_pkcs7/asan_halts) | proved |
+| [mbedtls/fuzz_pkcs7/asan_ubsan_agrees](../../proofs/mbedtls/fuzz_pkcs7/asan_ubsan_agrees) | proved |
+| [mbedtls/fuzz_pkcs7/ubsan_agrees](../../proofs/mbedtls/fuzz_pkcs7/ubsan_agrees) | proved |
 
 ## Licence
 mbedtls is under `Apache-2.0`. Each binary is a combined work of mbedtls, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `mbedtls-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `mbedtls-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

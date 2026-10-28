@@ -143,6 +143,7 @@ checks:
   live: true
   where: source/dictionary_loader.c:90-93
   what: With ZSTD_dct_rawContent, compression must never fail ("Raw must always succeed!").
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: dictionary_loader

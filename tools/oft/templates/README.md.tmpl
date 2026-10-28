@@ -48,7 +48,7 @@ So an agreement proof rules out every error that the sanitizer build detects, on
 
 A halts statement is about one build alone. It says that on every covered input, every execution of that build ends, and that it ends with a status the statement allows: status 0 or 2 for most harnesses, and any status for espeak-ng's `ssml-fuzzer`. Its premises are its own: the build is never refused memory for exceeding 16 GiB, and the environment refuses nothing that the process's state does not force. A `_halts_may_fail` statement drops both premises and allows any status.
 
-If the harness checks a property with `assert()`, `abort()` or a trap, and the check is in the binary, an agreement proof shows that the property holds on every covered input, and so does every halts proof: a failed check of these kinds kills the process, which no halts statement allows. A check that ends the process with `exit(n)` instead is shown by a halts proof only when the statement's allowed statuses leave out `n` ([docs/exploring.md](docs/exploring.md), [docs/statements.md](docs/statements.md)).
+If the harness checks a property with `assert()`, `abort()` or a trap, and the check is in the binary, an agreement proof shows that the property holds on every covered input. A halts proof shows it only for the checks that the fuzz target's page names: a check seen in the binary, of a fuzz target whose linked code installs no handler that could end a failed check with a status of its own (`failure_handlers: none`). A failed check of these kinds then kills the process, which no halts statement allows. A check that ends the process with `exit()` instead is shown only when the call reaches the driver's exit guard (`exit_reaches_guard: true`), which ends the process with status 77 whatever status the source passes, and only by a halts statement whose allowed statuses leave out 77 ([docs/facts.md](docs/facts.md), [docs/exploring.md](docs/exploring.md), [docs/statements.md](docs/statements.md)).
 
 The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreement and halts form is proved equal to its LPS definition: an agreement form to `strong_universal_error_free_T_budgets` or one of its variants, a halts form to `halts_allowed_T_scfg_budgets` or `halts_allowed_T_scfg`. [docs/statements.md](docs/statements.md) explains each form.
 
@@ -70,18 +70,18 @@ The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreeme
 | axioms | only the axioms in [toolchain/allowed-axioms.txt](toolchain/allowed-axioms.txt): the primitive integer, array and string types of Rocq with their specifications, and six axioms of the standard library (`classic`, `functional_extensionality_dep`, `constructive_indefinite_description`, `propositional_extensionality`, `sig_forall_dec` and `sig_not_dec`) |
 
 ## Check a proof
-You need Docker, zstd, and Python 3 with the packages `tools/oft/requirements.txt` pins (PyYAML; for `./oft lint`, also idna). The checker image holds Rocq and LPS, but not PyYAML, so the commands below mount it. On 16 cores, one proof check needs up to 20 GiB of memory. It compiles one file per core, so more cores need more memory; `docker run --cpuset-cpus` limits the cores.
+You need Docker, zstd, and Python 3 with the packages `tools/oft/requirements.txt` pins (PyYAML; for `./oft lint`, also idna). The checker image holds Rocq and LPS, but not PyYAML, so the commands below mount it. On 16 cores, one proof check needs up to 20 GiB of memory. It compiles one file per core, so more cores need more memory; `docker run --cpuset-cpus` limits the cores. `--ulimit stack=-1:-1` gives the container an unlimited stack limit: Rocq needs a hard limit of at least 1 GiB, and without the flag the check stops where Docker's limit is lower ([docs/checking.md](docs/checking.md#stack-size)).
 
     git clone https://github.com/theorem-labs/oss-verify-proofs && cd oss-verify-proofs
-    ./oft fetch coturn                   # the project's binaries, each checked against its SHA-256
+    $fetch_command# the project's binaries, each checked against its SHA-256
     python3 -m pip install --require-hashes --target "$$HOME/oft-pydeps" -r tools/oft/requirements.txt
-    docker run --rm --network none -u "$$(id -u):$$(id -g)" -e HOME=/tmp -e PYTHONPATH=/pydeps \
+    docker run --rm --network none --ulimit stack=-1:-1 -u "$$(id -u):$$(id -g)" -e HOME=/tmp -e PYTHONPATH=/pydeps \
       -v "$$HOME/oft-pydeps:/pydeps:ro" -v "$$PWD:/work" -w /work $checker_image \
-      ./oft check coturn/FuzzStunClient --parts statements,proofs
+      $check_command --parts statements,proofs
 
 `oft check` does these steps. It checks each binary against its SHA-256. It builds the memory images and the statements. It compiles each proof. It compiles a small wrapper that gives the proof's theorem the type of the statement. Then it reads what `Print Assumptions` prints for the wrapper, and it refuses every assumption that is not in the allowed list ([docs/checking.md](docs/checking.md)).
 
-CI runs the same check. The [release-check](.github/workflows/release-check.yml) workflow checks every committed proof on each push to `main` and once a week, and the badge at the top shows its result. The [pr](.github/workflows/pr.yml) workflow checks what a pull request changes. The [weekly](.github/workflows/weekly.yml) workflow checks every statement and every proof, with no cache ([docs/checking.md](docs/checking.md#what-ci-runs)).
+CI runs the same check. The [release-check](.github/workflows/release-check.yml) workflow checks what each push to `main` changes, and every committed proof once a week, and the badge at the top shows its result. The [pr](.github/workflows/pr.yml) workflow checks what a pull request changes. The [weekly](.github/workflows/weekly.yml) workflow checks every statement and every proof, with no cache ([docs/checking.md](docs/checking.md#what-ci-runs)).
 
 ## How the binaries are built
 Each binary is a static riscv64 Linux program, built with clang 20.1.8 against musl. An entry point has up to four builds: plain, ASan, UBSan and ASan+UBSan. [docs/building.md](docs/building.md) gives the compiler flags and the sanitizer settings. [docs/running.md](docs/running.md) tells you how to run a binary and what its input file holds.
@@ -128,7 +128,7 @@ To prove or refute a statement, see [docs/proving.md](docs/proving.md) and [CONT
 | `projects/<project>/<harness>/` | the facts (`harness.yaml`), the statements (`Statements.v`), the images (`Images.v`), the harness page, and, for most harnesses, a copy of the harness source (`source/`) |
 | `theories/` | the statement forms (`Shapes.v`), the image library, and the input-file format (`Driver.v`) |
 | `index/` | tables of every proof, project, harness, statement and binary |
-| `toolchain/` | the Dockerfiles of the checker and runner images, the pinned versions (`toolchain.lock`), the allowed axioms, and the list of LPS files |
+| `toolchain/` | the Dockerfiles of the checker and runner images, which [release.yaml](release.yaml) pins by digest, the allowed axioms, and the list of LPS files |
 | `tools/oft/` | the `oft` tool: fetch, generate, lint and check |
 | `tests/` | a generator of toy binaries, and controls that the checker must accept or refuse |
 | `counterexamples/` | inputs that make a binary break a statement, each with a control input |

@@ -11,21 +11,25 @@
     links         links point only where they may: never to a machine on a
                   private network or to a private theorem-labs repository
     free-text     every free-text field has a place in the rendering
-    proofs        no axioms, admits, plugins, file effects or wall-clock limits in proofs/
+    proofs        no axioms, admits, plugins or file effects in proofs/, no
+                  file reads (Load, Cd, Extra Dependency) in projects/*.v, and
+                  no wall-clock limits in a Rocq file
     withheld      a withheld item shows no detail anywhere
 
 Every rule fails when it examined nothing.  `run` returns the findings; the
 command exits 1 if there is any.
 """
 import bisect
+import concurrent.futures
 import hashlib
-import html
 import ipaddress
+import multiprocessing
 import os
 import re
 import socket
 import stat
 import subprocess
+import sys
 import urllib.parse
 
 from . import facts, names, paths, rocq, rules, schema, urls, yamlio
@@ -33,14 +37,17 @@ from . import facts, names, paths, rocq, rules, schema, urls, yamlio
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 MAX_BYTES = 5 << 20
-CAPS = [  # (pattern, bytes)
+CAPS = [
     ("index/*.tsv", 64 << 20),
     ("projects/*/*/source/**", 256 << 10),
     ("counterexamples/**", 64 << 10),
-    ("findings/**", 64 << 10),
+    ("findings/*/*/*/input.bin", facts.FINDING_INPUT_CAP),
+    ("findings/*/*/*/control.bin", facts.FINDING_INPUT_CAP),
+    ("findings/**", facts.FINDING_FILE_CAP),
     ("proofs/*/*/*/classifier/**", 1 << 20),
 ]
 PROOF_DIR_CAP = 5 << 20
+PARALLEL_FILES = 256  # at least this many files to read run their text rules on every CPU by default (run's jobs)
 DERIVED_SUFFIXES = (".vo", ".vos", ".vok", ".glob", ".aux", ".hex", ".cache", ".pyc", ".pyo")
 QUOTED_NAME = re.compile(r'["\\\x00-\x1f\x7f]')  # what git quotes in a path whatever core.quotePath says
 LFS_POINTER = b"version https://git-lfs.github.com/spec/v1"
@@ -184,7 +191,7 @@ PRIVATE_IP = re.compile(r"(?<![\d.])(?:10\.\d{1,3}|100\.(?:6[4-9]|[7-9]\d|1[01]\
 PRIVATE_SUFFIXES = ("localhost", "internal", "local", "corp", "lan", "home.arpa", "ts.net",
                     "internal.cloudapp.net")
 PUBLIC_REPOS = ("oss-verify", "oss-verify-proofs", "rocq-linux-process-semantics", "rocq-read-file", "static-asan")
-PRELAUNCH_PORT_REPO = schema.PRELAUNCH_REPOSITORY.split("/", 1)[1]
+INTERNAL_PORT_REPO = schema.INTERNAL_PORT_REPOSITORY.split("/", 1)[1]
 # Private names, refused in any text whether or not it is a link (the link rule judges links by what they open):
 # a host name under a private suffix, in any case; and a theorem-labs repository named as a path (after a /,
 # backslash or the : of an ssh remote) or as owner/name, also with %2F or a character reference (a line with % or &
@@ -227,12 +234,24 @@ def _github_org_page(line, match):
             and GITHUB_ORG_PACKAGES.search(line[:match.start()]) is not None)
 
 
-def held_prelaunch_fields(tree):
-    """The project.yaml files whose build.oss_verify.repository may name the port's private prelaunch variant, the sole
-    field that may: those of the projects a finding holds back that build from it."""
-    held = facts.held_projects(tree)
-    return frozenset("projects/%s/project.yaml" % name for name, proj in tree.projects.items()
-                     if name in held and (facts.port(proj) or {}).get("repository") == schema.PRELAUNCH_REPOSITORY)
+def _internal_port_lines(tree, where, text):
+    """The lines of a held project's build.oss_verify.repository, the sole
+    field that may name the port's internal copy: no other field of that file
+    may name it."""
+    parts = where.split("/")
+    if len(parts) != 3 or parts[0] != "projects" or parts[2] != "project.yaml":
+        return frozenset()
+    project = tree.projects.get(parts[1])
+    if project is None or project.name not in facts.hold(tree).held:
+        return frozenset()
+    node = yamlio.compose(text)
+    for key in ("build", "oss_verify", "repository"):
+        node = yamlio.mapping_value(node, key)
+        if node is None:
+            return frozenset()
+    if getattr(node, "value", None) != schema.INTERNAL_PORT_REPOSITORY:
+        return frozenset()
+    return frozenset(range(node.start_mark.line + 1, node.end_mark.line + 2))
 
 
 def _repository_value(line, match):
@@ -248,7 +267,7 @@ def _key(text):
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
-def scan_shapes(text, where, source=False, email_text=None, allow_prelaunch=False):
+def scan_shapes(text, where, source=False, email_text=None, internal_port_lines=frozenset()):
     """private-data.  Upstream copies (source=True) keep their authors'
     addresses and their own example addresses, so there only paths, keys,
     tokens and private repository names count.  email_text, when given, is the
@@ -269,7 +288,7 @@ def scan_shapes(text, where, source=False, email_text=None, allow_prelaunch=Fals
         seen, variants = set(), [line]
         if markdown:
             variants.append(urls.unescape_markdown(line))
-        variants += [urllib.parse.unquote(html.unescape(v)) for v in variants if "%" in v or "&" in v]
+        variants += [urllib.parse.unquote(urls.unescape(v)) for v in variants if "%" in v or "&" in v]
         for variant in dict.fromkeys(variants):
             for what, r in names:
                 for m in r.finditer(variant):
@@ -278,7 +297,7 @@ def scan_shapes(text, where, source=False, email_text=None, allow_prelaunch=Fals
                             continue
                         name = (m.group(1) or m.group(2)).lower().rstrip(".").removesuffix(".git")
                         bare = m.group(1) is not None and m.group()[:1].lower() == "t"
-                        if name in PUBLIC_REPOS or (allow_prelaunch and bare and name == PRELAUNCH_PORT_REPO
+                        if name in PUBLIC_REPOS or (no in internal_port_lines and bare and name == INTERNAL_PORT_REPO
                                                     and _repository_value(variant, m)):
                             continue
                     if r is PRIVATE_HOST_NAME and _ordinary_code_name(where, variant, m):
@@ -471,222 +490,169 @@ def scan_links(text, where, known, strict=True):
 FORBIDDEN_IN_PROOFS = re.compile(
     r"\b(?:Axiom|Axioms|Parameter|Parameters|Conjecture|Admitted|admit|give_up|Declare\s+ML\s+Module"
     r"|Redirect|Add\s+(?:Rec\s+)?LoadPath|Add\s+ML\s+Path|(?:Separate\s+|Recursive\s+)?Extraction"
-    r"|Unset\s+(?:\w+\s+)*Checking|bypass_check)\b"
+    r"|Unset\s+(?:\w+\s+)*Checking|bypass_check|ReadFile(?:Bytes|Int63|String)|Locate\s+File)\b"
     r"|\bPrimitive\s+\w+\s*:"                      # a primitive declaration, not Set Primitive Projections
     r"|\bRegister\s+(?:Inline\s+)?[\w.]+\s+as\b")
-# Load and Cd are commands only where a sentence starts (the file's start, or after a `.` and white space); elsewhere
-# they are ordinary names, such as the model's instruction constructor `Load`.
-FORBIDDEN_COMMANDS = re.compile(r"(?:\A|(?<=\.)(?=\s))\s*\b(Load|Cd)\b")
-# A wall-clock limit can fail a proof on a loaded machine, so a proof states none: no `Set Default Timeout <n>.`, no
-# `Timeout <n>` command prefix, and no `timeout <n>` tactical whose expiry can fail its sentence. timeout_caught()
-# decides, from Rocq's Ltac grammar: try, repeat and assert_fails catch, and so do a first/solve arm that is not the
-# last, the left side of || and of +, the tryif condition, a match branch that a later branch or a hypothesis pattern
-# backs up, and a Fail sentence; progress, once, do, timeout, time, abstract, the last arm, lazymatch, a [ | ]
-# dispatch, by (...) and ltac:(...) pass a failure on, and `try a; b` covers only a. TIMEOUT_OK names the Ltac
-# definitions, by file, every one of whose callers catches a failure that reaches the top of the definition.
-LTAC_TIMEOUT = re.compile(r"(?<![A-Za-z0-9_'.])timeout\s+([0-9]+)\b")
-DEFAULT_TIMEOUT = re.compile(r"Set\s+Default\s+Timeout\s+([0-9]+)")
-TIMEOUT_COMMAND = re.compile(r"(?<![A-Za-z0-9_'.])Timeout\s+([0-9]+)\s+(?![0-9])")
-TIMEOUT_OK = {
-    "proofs/json-c/json_object_fuzzer/lib/QRBl.v": ("ub_cmp_auto",),
-    "proofs/mbedtls/fuzz_pkcs7/lib/LXP/LxPHeap.v": ("lxp_lb_incl",),
-    "proofs/mbedtls/fuzz_pkcs7/lib/LXP/LxPTac.v": ("lxp_lia_fast",),
-    "proofs/speex/speex_decode_fuzzer_float/lib/Lib/X1c4.v": ("lean_core", "lean_tier", "os_tier"),
-    "proofs/speex/speex_decode_fuzzer_float/lib/LibA/X1d5.v": ("olia_os",),
-    "proofs/varnish/esi_parse_fuzzer/lib/DU_Dir.v": ("hot2_mid",),
-    "proofs/varnish/esi_parse_fuzzer/lib/DU_Mz0p.v": ("hot2_mid",),
-    "proofs/varnish/esi_parse_fuzzer/lib/D_Dir.v": ("hot2_mid",),
-    "proofs/varnish/esi_parse_fuzzer/lib/D_Mah0u.v": ("hot2_mid",),
-    "proofs/varnish/esi_parse_fuzzer/lib/E_As0ui.v": ("hot2_mid",),
-}
-_LTAC_TOKEN = re.compile(r'"[^"]*(?:""[^"]*)*"|\[>|\|\||\|-|=>|::=|:=|[A-Za-z_][A-Za-z0-9_\']*(?:\.[A-Za-z_][A-Za-z0-9_\']*)*'
-                         r"|[0-9]+|\S")
-_OPEN, _CLOSE, _MATCH = {"(", "[", "[>", "{"}, {")", "]", "}"}, {"match", "lazymatch", "multimatch"}
-_CATCH = {"try": "try", "repeat": "repeat", "assert_fails": "assert_fails"}
-_PASS = {"once", "exactly_once", "abstract", "time", "assert_succeeds", "unshelve", "timeout", "do"}
-_BULLET, _EMBED = {"-", "+", "*", "{", "}"}, {"ltac", "constr", "open_constr", "uconstr"}
-_STOP = {";", "|", "||", "+", "then", "else", "end", "=>"}
+# The commands that make a compile read a file: Load, Cd (which moves where Load and Extra Dependency look) and Extra
+# Dependency.  Load and Cd are commands only where a sentence starts (the file's start, after a `.` and white space,
+# or after a proof-mode bullet or brace), after any control flags (Time, Fail, Timeout 5, ...), attributes (#[...])
+# and legacy attributes (Local, Program, ...); elsewhere they are ordinary names, such as the model's instruction
+# constructor `Load`.  Extra Dependency is two keywords anywhere.  Every pattern runs over the whole text with comments
+# and strings blanked, so a command split across lines is found.
+FILE_WORDS = re.compile(r"\b(?:(Load|Cd)|(Extra\s+Dependency))\b")
+# what may stand between a sentence's start and Load or Cd: proof-mode bullets and braces (sentences with no `.`), a
+# goal selector before a brace (`1:{`, `[g]:{`), Rocq's control flags, attributes and legacy attributes, and a
+# byte-order mark (Rocq skips one at a file's start).
+# Rocq takes the flags, then the attributes, then the legacy attributes; this takes them in any order, which refuses no
+# more than sentences that Rocq rejects too.
+_COMMAND_LEAD = re.compile(
+    r"\ufeff?(?:\s|[-+*{}]|#\[[^\]]*\]"
+    r"|(?:\d\w*(?:\s*[-,]\s*\d\w*)*|\[\s*\w+\s*\]|!|all|par)\s*:\s*\{"
+    r"|(?:Time|Instructions|Profile|Redirect|Timeout\s+\d\w*|Fail|Succeed"
+    r"|Local|Global|Export|Polymorphic|Monomorphic|Cumulative|NonCumulative|Private|Program)\b)*")
+_SENTENCE_END = re.compile(r"\.(?=[ \t\n\r])")
+# Rocq lexes a declared token whole, so a `(` or a `"` inside one opens no comment or string there, where rocq.strip
+# opens one and blanks what follows: after `Notation "<(*" := 0.` and `Definition a := <(*.`, every later sentence is
+# hidden from these rules.  Only a declared token with a `"`, or with a `(` after its first character, can do that.
+# The libraries that proofs import declare four such tokens, `.(`, `` `( ``, `module:(` and `red_flags:(` (Print
+# Keywords after importing each module a proof imports); so a proof declares no token with a `"`, or with a `(` after
+# anything but `.`, `` ` `` or `:`, and writes no comment right after `.`, `` ` `` or `:`.
+_TOKEN_DECLARATION = re.compile(r"(?:Notation|Infix|where)\b")   # no leading \b: it stops re's literal search
+_UNSAFE_TOKEN = re.compile(r'""|[^ \t\n\r.`:]\(')
+_COMMENT_AFTER = re.compile(r"[.`:](?=\(\*)")
 
 
-def _opens(x):
-    return x in _OPEN or x in _MATCH
-
-
-def _closes(x):
-    return x in _CLOSE or x == "end"
-
-
-def _closer(t, o, e):
-    depth = 0
-    for k in range(o, e):
-        if _opens(t[k]):
-            depth += 1
-        elif _closes(t[k]):
-            depth -= 1
-            if depth == 0:
-                return k
-    return e
-
-
-def _level(t, lo, hi):
-    """Indices of the tokens of [lo, hi) at depth 0; a nested frame shows as its opener and closer."""
-    out, depth = [], 0
-    for k in range(lo, hi):
-        if _closes(t[k]) and depth:
-            depth -= 1
-        if depth == 0:
-            out.append(k)
-        if _opens(t[k]):
-            depth += 1
+def _file_commands(stripped, where, rule, what):
+    out, starts = [], None
+    for m in FILE_WORDS.finditer(stripped):
+        if m.group(1):
+            if starts is None:   # where each sentence starts: the text's start, and after each `.` that a blank follows
+                starts = [0] + [e.end() for e in _SENTENCE_END.finditer(stripped)]
+            if not _COMMAND_LEAD.fullmatch(stripped, starts[bisect.bisect_right(starts, m.start()) - 1], m.start()):
+                continue
+        no = stripped.count("\n", 0, m.start()) + 1
+        word = " ".join(m.group().split())
+        out.append(Finding(rule, "%s:%d" % (where, no), "%r is not allowed in %s" % (word, what)))
     return out
 
 
-def _sentence_header(t, s, e):
-    """The sentence's kind, ("ltac", name) | ("fail",) | ("other",), and where its tactic text starts."""
-    while s < e and t[s] in _BULLET:
-        s += 1
-    j = s
-    while j < e and (t[j].isdigit() or t[j] in (",", "-", "all", "par")):
-        j += 1
-    if s < j < e and t[j] == ":":
-        s = j + 1
-    k, fail = s, False
-    while k < e:
-        if t[k] == "Fail":
-            fail, k = True, k + 1
-        elif t[k] in ("Succeed", "Time"):
-            k += 1
-        elif t[k] in ("Timeout", "Redirect") and k + 1 < e:
-            k += 2
-        else:
-            break
-    if fail:
-        return ("fail",), k
-    if k + 1 < e and t[k] == "#" and t[k + 1] == "[":
-        k = _closer(t, k + 1, e) + 1
-    while k < e and t[k] in ("Local", "Global", "Export"):
-        k += 1
-    if k + 1 < e and t[k] in ("Ltac", "Ltac2"):
-        return ("ltac", t[k + 1]), k + 2
-    if k + 1 < e and t[k] == "Tactic" and t[k + 1] == "Notation":
-        return ("other",), k + 2
-    if k < e and t[k] == "Hint":
-        return ("other",), k + 1
-    return ("other",), k
-
-
-def timeout_caught(t, s, e, i):
-    """For the failure of the expression at token i of the sentence [s, e) of tokens t: (caught, top), top being the
-    sentence kind (see _sentence_header) that an uncaught failure reaches."""
-    top, hs = _sentence_header(t, s, e)
-    stack = []
-    for k in range(hs, i):
-        if _opens(t[k]):
-            stack.append(k)
-        elif _closes(t[k]) and stack:
-            stack.pop()
-    lv0 = _level(t, stack[-1] + 1, _closer(t, stack[-1], e)) if stack else _level(t, hs, e)
-    ends = [k for k in lv0 if k > i and t[k] in _STOP - {"||", "+"}]
-    lo_a, hi_a = i, (ends[0] - 1 if ends else max([k for k in lv0 if k >= i] or [i]))
-    pending = None   # a catch at an inner level, which an outer progress undoes
-    for d in range(len(stack), -1, -1):
-        o = stack[d - 1] if d else None
-        lv = _level(t, o + 1, _closer(t, o, e)) if d else _level(t, hs, e)
-        nxt = next((k for k in lv if k > hi_a and t[k] in _STOP), None)
-        if nxt is not None and t[nxt] in ("||", "+"):
-            return True, top
-        before = [k for k in lv if k < lo_a]
-        if next((t[k] for k in reversed(before) if t[k] in ("tryif", "then", "else")), None) == "tryif":
-            return True, top
-        state, j = None, len(before) - 1
-        while j >= 0:
-            x = t[before[j]]
-            if x.isdigit() and j and t[before[j - 1]] in ("timeout", "do"):
-                j -= 1
-            elif x.startswith('"') and j and t[before[j - 1]] == "time":
-                j -= 1
-            elif x in _CATCH:
-                state = state or _CATCH[x]
-            elif x == "progress":
-                state = pending = None
-            elif x not in _PASS:
-                break
-            j -= 1
-        rest = before[:j + 1]
-        if state:
-            if rest or any(k > hi_a for k in lv) or pending:
-                return True, top
-            pending = state
-        elif pending and (rest or any(k > hi_a for k in lv)):
-            return True, top
-        if not d:
-            break
-        x = t[o]
-        outer = _level(t, stack[d - 2] + 1, _closer(t, stack[d - 2], e)) if d > 1 else _level(t, hs, e)
-        pre = [k for k in outer if k < o]
-        lo_next = o
-        if x in ("[", "[>") and pre and t[pre[-1]] in ("first", "solve"):
-            if any(t[k] == "|" for k in lv if k > hi_a):
-                return True, top
-            lo_next = pre[-1]
-        elif x == "(" and len(pre) >= 2 and t[pre[-1]] == ":" and t[pre[-2]] in _EMBED:
-            lo_next = pre[-2]
-        elif x in ("match", "multimatch"):
-            marks = [k for k in before if t[k] in ("=>", "|", "with")]
-            if marks and t[marks[-1]] == "=>":
-                pat = [t[k] for k in lv if marks[-2] < k < marks[-1]] if len(marks) > 1 else []
-                if any(t[k] == "|" for k in lv if k > hi_a) or ("|-" in pat and ":" in pat[:pat.index("|-")]):
-                    return True, top
-        lo_a, hi_a = lo_next, _closer(t, o, e)
-    return bool(pending) or top == ("fail",), top
-
-
-def timeout_violations(code, where):
-    """(start, end, form, n) of each wall-clock limit lint refuses in the comment-free `code` of file `where`."""
+def _lexer_doubts(text, stripped, where):
+    """The places where Rocq could lex text otherwise than rocq.strip does (see _TOKEN_DECLARATION)."""
     out = []
-    found = list(LTAC_TIMEOUT.finditer(code))
-    if found:
-        toks, offs, ends = [], [], []
-        for m in _LTAC_TOKEN.finditer(code):
-            if m.group(0) == "." and code[m.end():m.end() + 1] in (" ", "\n", "\t", ""):
-                ends.append(len(toks))
-            toks.append(m.group(0))
-            offs.append(m.start())
-        at = {o: k for k, o in enumerate(offs)}
-        for m in found:
-            k = at[m.start()]
-            n = bisect.bisect_left(ends, k)
-            caught, top = timeout_caught(toks, ends[n - 1] + 1 if n else 0, ends[n] if n < len(ends) else len(toks), k)
-            if not (caught or top[0] == "ltac" and top[1] in TIMEOUT_OK.get(where, ())):
-                out.append((m.start(), m.end(1), "timeout", m.group(1)))
-    for m in DEFAULT_TIMEOUT.finditer(code):
-        end = re.compile(r"\.(?=\s|$)").search(code, m.end())
-        out.append((m.start(), end.end() if end else m.end(), "Set Default Timeout", m.group(1)))
-    for m in TIMEOUT_COMMAND.finditer(code):
-        if not re.search(r"Default\s*$", code[max(0, m.start() - 40):m.start()]):
-            out.append((m.start(), m.end(1), "Timeout", m.group(1)))
+    for m in _COMMENT_AFTER.finditer(text) if ".(*" in text or "`(*" in text or ":(*" in text else ():
+        if stripped[m.start()] == m.group() and stripped[m.end()] == " ":   # code, then a comment's `(*`
+            out.append(Finding("proofs", "%s:%d" % (where, text.count("\n", 0, m.end()) + 1),
+                               "a comment right after %r, which a token can take its '(' into, is not allowed in a "
+                               "proof" % m.group()))
+    stop = 0
+    for m in _TOKEN_DECLARATION.finditer(stripped):
+        before = stripped[m.start() - 1] if m.start() else " "
+        if m.start() < stop or before.isalnum() or before == "_":
+            continue
+        end = _SENTENCE_END.search(stripped, m.end())   # the string literals of this sentence after the keyword
+        stop, at = (end.start() if end else len(stripped)), m.end()
+        for kind, piece, inside in rocq.tokens(text[at:stop]):
+            if kind == "string" and not inside and _UNSAFE_TOKEN.search(piece, 1, len(piece) - 1):
+                out.append(Finding("proofs", "%s:%d" % (where, text.count("\n", 0, at) + 1),
+                                   "a notation token with a '\"', or a '(' after anything but '.', '`' or ':', is not "
+                                   "allowed in a proof", key=piece))
+            at += len(piece)
+    return out
+
+
+# A wall-clock limit makes a check depend on the machine's load: a tactic that fits its limit on an idle machine can
+# run out on a loaded one. So no Rocq file of the repository (proofs/, theories/, projects/, tests/ and the templates
+# that render .v files) states one: no `timeout` or `timeoutf` used as a name at all (the Ltac tactical with a number
+# or a variable, Ltac2's `Control.timeout` and `Control.timeoutf` under any qualifier or import), no
+# `Set Default Timeout <n>.`, no `Timeout <n>` command prefix, unless the line that has it ends with a justification
+# comment, `(* timeout-ok: <why> *)`, saying why an expiry cannot fail the check: it only makes the proof take another
+# alternative that is itself a proof step. A reviewer judges the reason; lint checks only that one is there.
+WALL_CLOCK = (
+    re.compile(r"(?<![A-Za-z0-9_'])(?:[A-Za-z_][A-Za-z0-9_']*\.)*timeoutf?(?![A-Za-z0-9_'])"),
+    re.compile(r"Set\s+Default\s+Timeout\s+[0-9]+"),
+)
+TIMEOUT_COMMAND = re.compile(r"(?<![A-Za-z0-9_'.])Timeout\s+[0-9]+(?=\s)")
+TIMEOUT_JUSTIFIED = re.compile(r"\(\*\s*timeout-ok:\s*(?:(?!\*\))\S)(?:(?!\*\))[^\n])*\*\)[ \t]*$")
+# A Ltac2 `@external` binds a name to any OCaml primitive of a plugin, `"timeout"` among them, under a name that need
+# not say so. So each one must bind a primitive on this list, (plugin, primitive), and no justification comment
+# allows another. The declaration is read with its comments blanked and its string literals kept.
+EXTERNAL_ALLOWED = frozenset({("rocq-runtime.plugins.ltac2", "string_get")})
+EXTERNAL = re.compile(r"@\s*external\b")
+_STRING = r'"((?:[^"]|"")*)"'
+EXTERNAL_PRIMITIVE = re.compile(r"[^\"]*?:=\s*" + _STRING + r"\s*" + _STRING)
+
+
+def wall_clock_scanned(rel):
+    """Whether rel is a Rocq file outside proofs/ that the wall-clock check reads (scan_proof reads proofs/)."""
+    return (rel.endswith(".v") and rel.startswith(("theories/", "projects/", "tests/"))
+            or rel.startswith("tools/oft/templates/") and rel.endswith(".v.tmpl"))
+
+
+def timeout_violations(code, commented):
+    """(line, text) of each wall-clock limit lint refuses: `code` is a file's text without comments or string
+    literals, `commented` the same with its comments kept (rocq.strip, comments=False); both keep its offsets."""
+    lines = commented.split("\n")
+    out = set()
+    for regex in WALL_CLOCK + (TIMEOUT_COMMAND,):
+        for m in regex.finditer(code):
+            if regex is TIMEOUT_COMMAND and re.search(r"Default\s*$", code[max(0, m.start() - 40):m.start()]):
+                continue
+            no = code.count("\n", 0, m.start()) + 1
+            if not TIMEOUT_JUSTIFIED.search(lines[no - 1]):
+                out.add((no, " ".join(m.group().split())))
     return sorted(out)
 
 
-def scan_timeouts(code, where):
-    return [Finding("proofs", "%s:%d" % (where, code.count("\n", 0, s) + 1),
-                    "'%s %s' is not allowed in a proof: a wall-clock limit can fail it on a loaded machine%s"
-                    % (form, n, " (nothing catches its expiry)" if form == "timeout" else ""))
-            for s, e, form, n in timeout_violations(code, where)]
+def external_violations(code, uncommented):
+    """(line, primitive) of each Ltac2 `@external` that binds no primitive of EXTERNAL_ALLOWED: `code` is a file's text
+    without comments or string literals, `uncommented` the same with its string literals kept (rocq.strip,
+    strings=False); both keep its offsets. primitive is None where the declaration cannot be read."""
+    out = []
+    for m in EXTERNAL.finditer(code):
+        p = EXTERNAL_PRIMITIVE.match(uncommented, m.end())
+        prim = (p.group(1).replace('""', '"'), p.group(2).replace('""', '"')) if p else None
+        if prim not in EXTERNAL_ALLOWED:
+            out.append((code.count("\n", 0, m.start()) + 1, prim))
+    return out
+
+
+def scan_wall_clock(text, where, stripped=None):
+    """The findings of the wall-clock check (timeout_violations, external_violations) on the Rocq file `text`."""
+    if "imeout" not in text and "external" not in text:
+        return []
+    stripped = rocq.strip(text) if stripped is None else stripped
+    out = [Finding("proofs", "%s:%d" % (where, no),
+                   "'%s' is not allowed in Rocq source: a wall-clock limit can fail a check on a loaded machine "
+                   "(keep one only on a line that ends with '(* timeout-ok: <why> *)')" % form)
+           for no, form in timeout_violations(stripped, rocq.strip(text, comments=False))]
+    out += [Finding("proofs", "%s:%d" % (where, no),
+                    "a Ltac2 @external may bind only a primitive of lint.EXTERNAL_ALLOWED (%s); this one binds %s"
+                    % (", ".join('"%s" "%s"' % a for a in sorted(EXTERNAL_ALLOWED)),
+                       '"%s" "%s"' % prim if prim else "a primitive lint cannot read"))
+            for no, prim in external_violations(stripped, rocq.strip(text, strings=False))]
+    return out
 
 
 def scan_proof(text, where):
     out = []
     stripped = rocq.strip(text)
-    for no, line in enumerate(stripped.split("\n"), 1):
-        for m in FORBIDDEN_IN_PROOFS.finditer(line):
-            out.append(Finding("proofs", "%s:%d" % (where, no), "%r is not allowed in a proof" % m.group()))
-    for m in FORBIDDEN_COMMANDS.finditer(stripped):
-        no = stripped.count("\n", 0, m.start(1)) + 1
-        out.append(Finding("proofs", "%s:%d" % (where, no), "%r is not allowed in a proof" % m.group(1)))
-    if "imeout" in stripped:
-        out += scan_timeouts(stripped, where)
-    return out
+    for m in FORBIDDEN_IN_PROOFS.finditer(stripped):
+        no = stripped.count("\n", 0, m.start()) + 1
+        word = " ".join(m.group().split())
+        out.append(Finding("proofs", "%s:%d" % (where, no), "%r is not allowed in a proof" % word))
+    out += _lexer_doubts(text, stripped, where) + _file_commands(stripped, where, "proofs", "a proof")
+    return out + scan_wall_clock(text, where, stripped)
+
+
+_PROJECT_PREFILTER = re.compile(r"\b(?:Load|Cd|Dependency)\b")
+
+
+def scan_project_rocq(text, where):
+    """A generated Rocq file of projects/ reads no file while it compiles (generate --check holds it to its
+    rendering; this says why, if the rendering ever does).  The ReadFile commands are left to the generator."""
+    if not _PROJECT_PREFILTER.search(text):
+        return []
+    return _file_commands(rocq.strip(text), where, "proofs", "a file of projects/")
 
 
 # --------------------------------------------------------- paths, withheld
@@ -819,16 +785,23 @@ def _fixed_evidence(tree, base, ledger):
             if fixed not in ledger or not os.path.lexists(tree.path(fixed)):
                 continue
             try:
-                proposed = facts.read_bounded(tree.path(fixed))
+                proposed = facts.read_bounded(tree.path(fixed), facts.FINDING_INPUT_CAP)
             except facts.BoundedFileError:
                 continue
-            if proposed != facts.read_bounded(os.path.join(base, fixed)):
+            if proposed != facts.read_bounded(os.path.join(base, fixed), facts.FINDING_INPUT_CAP):
                 out.append(Finding("paths", fixed, "a finding's %s is never changed: %s" % (name, fixed)))
         head = tree.findings.get("%s/%s/%s" % (p, h, s))
         dropped = sorted(set(was["statements"]) - set(head.data["statements"])) if head else []
         if dropped:
             out.append(Finding("paths", rel, "a finding's statements only grow: %s no longer names %s"
                                % (rel, ", ".join(dropped))))
+        # a state only moves forward from one whose patch the pinned build carries (rules.SERIES_STATES): for an
+        # enrolled project an open finding holds back only its statements, so a return to open would release most of
+        # a hold while that build still carries the patch.  A pruned or not-a-defect finding has no such build, and a
+        # defect found in it later must be able to go back to open.
+        if head and head.data.get("state") == "open" and was.get("state") in rules.SERIES_STATES:
+            out.append(Finding("paths", rel, "a finding's state never returns to open: %s was %s"
+                               % (rel, was["state"])))
         for which in ("input", "control") if head and "input" in was and not new_runner else ():
             for b in sorted(builds & set(was[which]), key=schema.BUILDS.index):
                 if (head.data.get(which) or {}).get(b) != was[which][b]:
@@ -929,8 +902,7 @@ def check_placeholders(tree):
     finding names the line and what it pins, so that replacing one placeholder
     visibly clears its finding while the others stay."""
     out = []
-    for rel in ["release.yaml", "toolchain/toolchain.lock"] + [os.path.join(p.dir, "project.yaml")
-                                                                for p in tree.projects.values()]:
+    for rel in ["release.yaml"] + [os.path.join(p.dir, "project.yaml") for p in tree.projects.values()]:
         p = tree.path(rel)
         if not os.path.isfile(p):
             continue
@@ -939,39 +911,6 @@ def check_placeholders(tree):
                 what = re.split(r"[:=@]", line.strip().lstrip("-").strip(), maxsplit=1)[0].strip() or "a value"
                 out.append(Finding("schema", "%s:%d" % (rel, no), "%s is a placeholder digest or commit (all "
                                    "zeros): replace it with the published value before a release" % what))
-    return out
-
-
-LOCK_LINE = re.compile(r"[a-z0-9][a-z0-9-]*=\S+")
-
-
-def check_toolchain_lock(tree):
-    """schema, for toolchain/toolchain.lock: key=value lines and nothing else (no
-    commentary), and the images it names are the ones release.yaml pins: its
-    checker and runner are release.yaml's, and each toolchain* image is one of
-    release.yaml's builder images."""
-    p = tree.path("toolchain", "toolchain.lock")
-    if not os.path.isfile(p):
-        return []
-    out, keys = [], {}
-    for no, line in enumerate(facts.read(p).splitlines(), 1):
-        if not LOCK_LINE.fullmatch(line):
-            out.append(Finding("schema", "toolchain/toolchain.lock:%d" % no, "not a key=value line"))
-            continue
-        k, v = line.split("=", 1)
-        if k in keys:
-            out.append(Finding("schema", "toolchain/toolchain.lock:%d" % no, "%s is given twice" % k))
-        keys[k] = v
-    images = (tree.release or {}).get("images") or {}
-    want = images.get("checker")
-    if want and keys.get("checker") != want:
-        out.append(Finding("schema", "toolchain/toolchain.lock", "checker differs from release.yaml's images.checker"))
-    if "runner" in keys and images.get("runner") and keys["runner"] != images["runner"]:
-        out.append(Finding("schema", "toolchain/toolchain.lock", "runner differs from release.yaml's images.runner"))
-    builders = images.get("builder") or []
-    for k in sorted(k for k in keys if k.startswith("toolchain")):
-        if images and keys[k] not in builders:
-            out.append(Finding("schema", "toolchain/toolchain.lock", "%s is not one of release.yaml's images.builder" % k))
     return out
 
 
@@ -997,6 +936,9 @@ def check_free_text(tree):
 
 # --------------------------------------------------------------- exceptions
 
+EXCEPTIONS = "tools/oft/lint-exceptions.yaml"
+
+
 def load_exceptions(root):
     p = os.path.join(root, EXCEPTIONS)
     if not os.path.isfile(p):
@@ -1005,18 +947,40 @@ def load_exceptions(root):
     return data.get("exceptions") or []
 
 
-def apply_exceptions(findings, exceptions, own, scanned=None):
+def apply_exceptions(findings, exceptions, own, scope=None):
     """A private-data finding in an upstream copy (a host path in its authors' comments, say) or in a port record's
     copied project.yaml (the project's own address, say), or an e-mail address in any other file of a port record's
     copy of the port's project files (port/projects/<project>/: the enrollment author's copyright line, say), may be
     cleared by a reviewed entry naming (path, rule, key) and how often; an OSS Verify target's source (under one of
-    `own`, oss_verify_sources) is not an upstream copy.  Nothing else can be cleared: a host path or a URL's user
-    information in a copied build script stays a finding.  An entry left unused is a finding, unless its path is
-    outside `scanned` (the files the per-file rules read, when they read only some)."""
-    budget = {(e["path"], e["rule"], e["key"]): e["count"] for e in exceptions}
+    `own`, oss_verify_sources) is not an upstream copy.  A host path or a URL's user information in a copied build
+    script stays a finding.
+
+    A `proofs` finding of a notation token may be cleared only by an entry that names it exactly: its path, its
+    line, its message and its key (the token's string literal, as the proof has it), with count 1.  A `proofs` entry
+    without those, or with another count, is itself a finding, and so is one that matches no finding (the token moved
+    or left that line).  Nothing else can be cleared.  An entry left unused is a finding, unless its path is outside
+    `scope` (when the per-file rules read only some files: the paths that differ from the base, deleted ones among
+    them)."""
+    budget, exact, out = {}, {}, []
+    for e in exceptions:
+        if e.get("rule") == "proofs":
+            if (set(e) != {"path", "rule", "line", "message", "key", "count", "reason"}
+                    or type(e["count"]) is not int or e["count"] != 1 or type(e["line"]) is not int
+                    or not all(isinstance(e[k], str) and e[k] for k in ("path", "message", "key", "reason"))
+                    or ("%s:%d" % (e["path"], e["line"]), e["message"], e["key"]) in exact):
+                out.append(Finding("paths", EXCEPTIONS, "an exception for proofs %s must name exactly its path, line, "
+                                   "message and key, with count 1 and a reason, once" % e.get("path")))
+                continue
+            exact[("%s:%d" % (e["path"], e["line"]), e["message"], e["key"])] = e["path"]
+        else:
+            budget[(e["path"], e["rule"], e["key"])] = e["count"]
     used = {}
     kept = []
     for f in findings:
+        if f.rule == "proofs" and f.key is not None and (f.where, f.msg, f.key) in exact \
+                and (f.where, f.msg, f.key) not in used:
+            used[(f.where, f.msg, f.key)] = 1
+            continue
         key = (f.where.rsplit(":", 1)[0], f.rule, f.key)
         clearable = f.rule == "private-data" and (PORT_PROJECT_YAML.match(key[0])
                                                    or (PORT_PROJECT_FILE.match(key[0])
@@ -1027,22 +991,30 @@ def apply_exceptions(findings, exceptions, own, scanned=None):
             continue
         kept.append(f)
     for key, n in budget.items():
-        if used.get(key, 0) < n and (scanned is None or key[0] in scanned):
+        if used.get(key, 0) < n and (scope is None or key[0] in scope):
             kept.append(Finding("paths", EXCEPTIONS,
                                 "an exception for %s %s that is not used %d time(s)" % (key[1], key[0], n)))
-    return kept
+    for key, path in exact.items():
+        if key not in used and (scope is None or path in scope):
+            kept.append(Finding("paths", EXCEPTIONS, "an exception for proofs %s that is not used 1 time(s)" % key[0]))
+    return kept + out
 
 
 # --------------------------------------------------------------------- run
 
-def scan_file(root, rel, known, own, prelaunch):
-    """(whether rel is a text file, the findings of the per-file text rules on it); a binary file, or one that is not
+def scan_file(root, rel, tree, known, own):
+    """(the findings of the per-file text rules on rel, whether it is a text file); a binary file, or one that is not
     a regular file of at most its cap, is not read.  known: the links the facts record (fact_urls); own: the source
-    directories of the fuzz targets OSS Verify builds (oss_verify_sources); prelaunch: the project.yaml files that may
-    name the port's prelaunch variant (held_prelaunch_fields)."""
+    directories of the fuzz targets OSS Verify builds (oss_verify_sources); tree: the facts, which say which
+    project.yaml may name the port's internal copy (_internal_port_lines)."""
     text = read_text(os.path.join(root, rel), file_cap(rel))
     if text is None:
-        return False, []
+        # Rocq compiles a file that holds a NUL byte (in a comment, say), so a Rocq file the proof rules cannot read is
+        # refused, not skipped
+        if rel.endswith(".v") and rel.startswith(("proofs/", "projects/")):
+            return [Finding("proofs", rel, "a Rocq file that is not read as text (it holds a NUL byte, or it is not a "
+                                           "regular file of at most its cap) is not allowed")], False
+        return [], False
     out = []
     src = verbatim(rel, text)
     own_source = oss_verify_source(own, rel)
@@ -1053,7 +1025,8 @@ def scan_file(root, rel, known, own, prelaunch):
     blanked = None
     if proof_v and (EMAIL.search(text) or URL.search(text) or GHCR.search(text)):
         blanked = rocq.strip(text, comments=False)
-    out += scan_shapes(text, rel, source=src and not own_source, email_text=blanked, allow_prelaunch=rel in prelaunch)
+    out += scan_shapes(text, rel, source=src and not own_source, email_text=blanked,
+                       internal_port_lines=_internal_port_lines(tree, rel, text))
     if not src or own_source:
         out += scan_links(text if blanked is None else blanked, rel, known,
                           strict=link_strict(rel) and not port_text and not own_source)
@@ -1061,84 +1034,112 @@ def scan_file(root, rel, known, own, prelaunch):
         out += scan_port_manifest(text, rel)
     if proof_v:
         out += scan_proof(text, rel)
-    return True, out
+    elif rel.startswith("projects/") and rel.endswith(".v"):
+        out += scan_project_rocq(text, rel)
+    if not proof_v and wall_clock_scanned(rel):
+        out += scan_wall_clock(text, rel)
+    return out, True
 
 
-_POOL_ARGS = {}
+_FORKED = None  # the function of forked_map in one of its workers, set by _forked_init
 
 
-def _pool_init(root, known, own, prelaunch):
-    _POOL_ARGS.update(root=root, known=known, own=own, prelaunch=prelaunch)
+def _forked_init(fn):
+    global _FORKED
+    _FORKED = fn
 
 
-def _scan_chunk(chunk):
-    n_text, out = 0, []
-    for rel in chunk:
-        is_text, found = scan_file(_POOL_ARGS["root"], rel, _POOL_ARGS["known"], _POOL_ARGS["own"],
-                                   _POOL_ARGS["prelaunch"])
-        n_text += is_text
-        out += found
-    return n_text, out
+def _forked_one(item):
+    return _FORKED(item)
 
 
-# Below this many files the per-file rules run in this process: a pool costs more than it saves.
-POOL_MIN_FILES = 2000
+def default_jobs():
+    """The CPUs this process may run on (facts.cpus): the default number of processes of forked_map."""
+    return facts.cpus()
 
 
-def scan_files(root, files, known, own, prelaunch, jobs=None):
-    """(text files examined, findings) of the per-file text rules over files, in the order of files, with the work
-    spread over `jobs` processes (default: every CPU this process may run on, facts.cpus())."""
-    jobs = jobs or facts.cpus()
-    if jobs == 1 or len(files) < POOL_MIN_FILES:
-        _pool_init(root, known, own, prelaunch)
-        return _scan_chunk(files)
-    from concurrent.futures import ProcessPoolExecutor
-    n = max(1, len(files) // (jobs * 16))
-    chunks = [files[i:i + n] for i in range(0, len(files), n)]
-    n_text, out = 0, []
-    with ProcessPoolExecutor(max_workers=jobs, initializer=_pool_init, initargs=(root, known, own, prelaunch)) as pool:
-        for k, found in pool.map(_scan_chunk, chunks):   # map keeps the chunks' order, so the output is the serial one
-            n_text += k
-            out += found
-    return n_text, out
+def forked_map(fn, items, jobs):
+    """[fn(item) for item in items], on up to jobs processes.  The workers are forked from this process, so each starts
+    with fn and what it reads as they are here, never pickled; the results come back in the order of items, so the
+    result is the same as one process's.  A worker that dies (the out-of-memory killer) fails the run instead of
+    hanging it."""
+    if jobs <= 1 or len(items) < 2 or "fork" not in multiprocessing.get_all_start_methods():
+        return [fn(item) for item in items]
+    with concurrent.futures.ProcessPoolExecutor(min(jobs, len(items)), mp_context=multiprocessing.get_context("fork"),
+                                                initializer=_forked_init, initargs=(fn,)) as pool:
+        # small chunks: a file runs from a few bytes to megabytes
+        return list(pool.map(_forked_one, items, chunksize=16))
+
+
+def scan_files(root, tree, known, own, files, jobs):
+    """scan_file for each of files, in their order, on up to jobs processes (forked_map), each starting with the tree
+    loaded here."""
+    return forked_map(lambda rel: scan_file(root, rel, tree, known, own), files, jobs)
+
+
+class ChangedOnlyError(Exception):
+    """--changed-only cannot say which files differ from its base: lint stops rather than read too few."""
 
 
 def changed_since(root, base):
-    """The files that differ from commit `base`: changed, added or renamed since it, staged or not, and the untracked
-    files .gitignore does not exclude."""
-    diff = subprocess.run(["git", "-C", root, "diff", "--name-only", "--no-renames", "-z", base],
-                          capture_output=True, check=True).stdout.decode().split("\0")
-    new = subprocess.run(["git", "-C", root, "ls-files", "-z", "--others", "--exclude-standard"],
-                         capture_output=True, check=True).stdout.decode().split("\0")
+    """The paths that differ from commit `base`: changed, added, renamed or deleted since it, staged or not, and the
+    untracked files .gitignore does not exclude.  root must be the top of a git checkout: git names every path from
+    there, and walk names them from root.  base must name a commit: a word that names a path instead would compare
+    the index with the work tree, an empty change after a commit."""
+    top = subprocess.run(["git", "-C", root, "rev-parse", "--show-toplevel"], capture_output=True)
+    if top.returncode != 0 or os.path.realpath(top.stdout.decode().rstrip("\n")) != os.path.realpath(root):
+        raise ChangedOnlyError("%s is not the top of a git checkout: git names the files that differ from %s "
+                               "relative to the top" % (root, base))
+    commit = subprocess.run(["git", "-C", root, "rev-parse", "--verify", "--quiet", base + "^{commit}"],
+                            capture_output=True) if not base.startswith("-") else None
+    if commit is None or commit.returncode != 0:
+        raise ChangedOnlyError("%r names no commit of %s" % (base, root))
+    diff = subprocess.run(["git", "-C", root, "diff", "--name-only", "--no-renames", "-z",
+                           commit.stdout.decode().strip(), "--"],
+                          stdout=subprocess.PIPE, check=True).stdout.decode().split("\0")
+    new = subprocess.run(["git", "-C", root, "ls-files", "-z", "--others", "--exclude-standard", "--"],
+                         stdout=subprocess.PIPE, check=True).stdout.decode().split("\0")
     return {p for p in diff + new if p}
 
 
-EXCEPTIONS = "tools/oft/lint-exceptions.yaml"
-
-
 def read_by_every_verdict(rel):
-    """Whether the per-file rules' verdict on any file reads rel: a fact (a file paths.py classes as facts), a
-    finding's finding.yaml, whose links fact_urls records and whose state decides which project.yaml may name the
-    port's prelaunch variant (held_prelaunch_fields), or lint-exceptions.yaml, whose entries clear findings in other
-    files (an entry removed there leaves a finding in a file that did not change)."""
-    return (rel == EXCEPTIONS or any(cls == "facts" for cls, _, _ in paths.classify(rel))
+    """Whether a change to rel can change the per-file rules' verdict on another file.  Four files are read by every
+    verdict: a project's project.yaml and a harness's harness.yaml (facts), a finding's finding.yaml, whose links
+    fact_urls records and whose state decides which project.yaml may name the port's internal copy
+    (_internal_port_lines), and lint-exceptions.yaml, whose entries clear findings in other files (an entry removed
+    there leaves a finding in a file that did not change).  The set is wider on purpose, a margin, so that it does
+    not lose a file a later rule reads: every file paths.py classes as facts, and every .gitattributes, which changes
+    the bytes git checks out for a file whose blob did not change (line ends, encoding)."""
+    return (rel == EXCEPTIONS or os.path.basename(rel) == ".gitattributes"
+            or any(cls == "facts" for cls, _, _ in paths.classify(rel))
             or (_FINDING_FILE.match(rel) is not None and rel.endswith("/finding.yaml")))
+
+
+def running_tools(root):
+    """The directory of the code running this lint, relative to root, when it is inside root (a local ./oft lint), or
+    None (CI runs the base's tools, outside the tree it judges).  A change under it can change any file's verdict."""
+    rel = os.path.relpath(os.path.realpath(HERE), os.path.realpath(root))
+    return None if rel == ".." or rel.startswith(".." + os.sep) else rel.replace(os.sep, "/")
 
 
 def run(root, changed=None, pr_kind=None, base=None, skeleton=False, release=False, changed_only=None, jobs=None):
     """All findings for the tree at root.  skeleton=True accepts a tree with
     no facts at all (no release.yaml, no projects/): the text rules still run
-    over every file, which is how the repository's own tools are checked
-    before a release has been exported into it.  release=True adds what only
-    a release must satisfy: no placeholder digest or commit is left.  base:
-    the trusted base tree CI compares the findings ledger with
-    (check_changes).  changed_only=BASE runs the per-file text rules only
-    over the files that differ from commit BASE, or over every file when a
-    fact (a file paths.py classes as facts), a finding's finding.yaml or
-    lint-exceptions.yaml differs from it (read_by_every_verdict); the rules
-    over the whole tree still run.  jobs: how many processes run the
-    per-file text rules (scan_files); the findings do not depend on it."""
+    over every file (unless changed_only narrows them), which is how the
+    repository's own tools are checked before a release has been exported
+    into it.  release=True adds what only a release must satisfy: no
+    placeholder digest or commit is left.  base: the trusted base tree CI
+    compares the findings ledger with (check_changes).  changed_only=BASE runs the
+    per-file text rules only over the files that differ from commit BASE, or
+    over every file when one that a verdict may read differs from it
+    (read_by_every_verdict) or the code running this lint does
+    (running_tools), and says so on stderr; the rules over the whole tree
+    still run.  root must then be the top of a git checkout and BASE a commit
+    of it (ChangedOnlyError).  jobs: how many processes run the text rules
+    (default: every CPU this process may use, for at least PARALLEL_FILES
+    files to read); the findings do not depend on it."""
     root = os.path.abspath(root)
+    since = None if changed_only is None else changed_since(root, changed_only)   # first: it may refuse the run
     tree = facts.load(root)
     if skeleton and not tree.projects and not os.path.exists(tree.path("release.yaml")):
         tree.errors = []
@@ -1151,22 +1152,37 @@ def run(root, changed=None, pr_kind=None, base=None, skeleton=False, release=Fal
     found += check_paths(tree, files)
     found += check_disclosure(tree)
     found += check_free_text(tree)
-    found += check_toolchain_lock(tree)
     if release:
         found += check_placeholders(tree)
     if changed is not None:
         found += check_changes(tree, changed, pr_kind or "maintainer", base)
-    scanned = files
-    if changed_only is not None:
-        since = changed_since(root, changed_only)
-        # a file's verdict reads the facts and the findings (the links they record, the sources that are OSS Verify's
-        # own, the projects a finding holds back): a change to one can change the verdict on a file that did not
-        # change, so then every file is read
-        if not any(read_by_every_verdict(rel) for rel in since):
-            scanned = [rel for rel in files if rel in since]
+    known = fact_urls(tree)
     own = oss_verify_sources(tree)
-    n_text, per_file = scan_files(root, scanned, fact_urls(tree), own, held_prelaunch_fields(tree), jobs)
-    found += per_file
-    if not n_text and changed_only is None:
+    scanned, scope = files, None
+    if since is not None:
+        # a file's verdict reads the facts, the findings and the lint exceptions (the links they record, the sources
+        # that are OSS Verify's own, the projects a finding holds back, the findings an entry clears), and is made by
+        # the running code: a change to one can change the verdict on a file that did not change, so then every
+        # file is read
+        tools = running_tools(root)
+        every = sorted(rel for rel in since if read_by_every_verdict(rel)
+                       or (tools is not None and (tools == "." or rel.startswith(tools + "/"))))
+        if every:
+            what = every[0] if len(every) == 1 else "%s and %d more" % (every[0], len(every) - 1)
+            print("oft lint --changed-only: %s changed, and the verdict on a file that did not change can depend on "
+                  "%s: the per-file rules read every file" % (what, "it" if len(every) == 1 else "them"),
+                  file=sys.stderr)
+        else:
+            scanned, scope = [rel for rel in files if rel in since], since
+    n_text = 0
+    if jobs is None:
+        jobs = default_jobs() if len(scanned) >= PARALLEL_FILES else 1
+    for file_found, is_text in scan_files(root, tree, known, own, scanned, jobs):
+        found += file_found
+        n_text += is_text
+    # The canary: a whole tree always holds a text file, so none read back means the reading itself broke.  Under
+    # --changed-only the files to read are the changed ones, and a change of binary files alone (a finding's
+    # input.bin) legitimately holds no text, so the canary cannot speak there.
+    if not n_text and scope is None:
         found.append(Finding("private-data", root, "no text files: nothing examined"))
-    return apply_exceptions(found, load_exceptions(root), own, None if changed_only is None else set(scanned))
+    return apply_exceptions(found, load_exceptions(root), own, scope)

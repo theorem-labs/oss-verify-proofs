@@ -3,4 +3,4 @@
 
 [Leonidas-from-XIV/node-xml2js](https://github.com/Leonidas-from-XIV/node-xml2js) · OSS-Fuzz: [projects/node-xml2js](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/node-xml2js)
 
-**Status: language pending.** This project's fuzz targets are written in JavaScript. This release covers C and C++; support for JavaScript is being built. [What the statuses mean](../../docs/status.md).
+**Status: language pending.** This project's fuzz targets are written in JavaScript. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for JavaScript is being built. [What the statuses mean](../../docs/status.md).

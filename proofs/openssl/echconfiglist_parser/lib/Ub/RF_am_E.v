@@ -194,7 +194,7 @@ Proof. try hcb. try hsb.
   lazymatch type of DST with rw_cells _ ?mX _ _ =>
     assert (DST8 : rw_cells usegs mX (bv_unsigned sp + -64) [C8 (wz hsecret)])
       by (destruct DST as [[_ B] W]; cbn [cells_bytes cbytes app] in B; rewrite app_nil_r in B;
-          split; [split; [cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])| cbn [cells_bytes cbytes app]; rewrite app_nil_r; exact B]| exact W]);
+          split; [split; [cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])| cbn [cells_bytes cbytes app]; rewrite app_nil_r; exact B]| exact W]);
     clear DST end.
   st1.
   (* [comment removed for export] *)

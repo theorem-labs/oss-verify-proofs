@@ -25,8 +25,8 @@
     (a) LZ4_compress_default into a fuzzed capacity in [0, LZ4_compressBound];
     if it returns >0, LZ4_decompress_safe must regenerate exactly size bytes
     equal to the input. [abort(); confirmed in the binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

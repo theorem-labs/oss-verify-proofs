@@ -1,0 +1,142 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_dump.lib.AS Require Import ShapeAlg AsanAcct.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_dump.lib.Lib Require Import Tac Arr Bytes ImageA RzCPS SysStep FP StoreFast.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_dump.lib.Sj Require Import SjNumber SjNumU SjNumN.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_dump.lib.P Require Import Rnd Sj_num_kit Sj_num_walk.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_dump.lib.A Require Import Shadow.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_dump.lib.B Require Import Layout RT_iface D_defs D_kit D_clx Sj_akit Sj_acps Sj_hkit Sj_rtf Sj_num_akit Sj_num_amem
+  Sj_num_iface Sj_num_bkit Sj_num_bdefs Sj_num_pm_kit Sj_num_pm_defs Sj_num_pm_round Sj_num_pm_ti Sj_num_pm_fent.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac solve_load ::= first [ solve_load_base | asan_load_hook | asan_zr_hook | asan_ptr_hook | num_load_hook | solve_load_image ].
+Local Ltac solve_store ::= first [ num_solve_store0 | num_store_hook ].
+Local Ltac nnorm ::= nnorm_u.
+Local Ltac unorm_in H ::= unorm_in_n H.
+
+Section PMBINT1.
+  Variable E : pmbenv.
+  Hypothesis OK : pmb_ok E.
+  Hypothesis PV : pmb_prov E.
+  Notation X := (p_X E).
+  Notation DGA := (p_DG E).
+  Notation IP := (p_IP E).
+  Notation IL := (p_IL E).
+  Notation FPT := (p_FPT E).
+  Notation FL := (p_FL E).
+
+  Section BODY.
+  Variable f : nat.
+
+  Hypothesis HEAD : forall xra xt2 xa0 xa1 xa6 xa7 xs2 xs5 xs9 xs11 xt4 xt6 mm len D p w8 w32 w40 w48,
+    PMBINV E mm len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) ->
+    (IP <= p <= (IP + IL))%Z -> (0 <= D <= 769)%Z -> (19 * len <= 2 * D + 38)%Z -> (p <> (IP + IL) -> 19 * len <= 2 * D + 0)%Z -> ((IP + IL) - p <= Z.of_nat f)%Z ->
+    evt bsegs (pmb_post E) (PMB E 0xea140 xra (Z_to_bv 64 (DGA / 8 + 2147450880)) (Z_to_bv 64 2147450880) xt2 (Z_to_bv 64 (X + 8)) (Z_to_bv 64 8) xa0 xa1 (Z_to_bv 64 769) (Z_to_bv 64 DGA) (Z_to_bv 64 (X + 496)) (Z_to_bv 64 p) xa6 xa7 xs2 (Z_to_bv 64 10) (Z_to_bv 64 X) xs5 (Z_to_bv 64 1) (Z_to_bv 64 18446744073709551615) (Z_to_bv 64 17) xs9 (Z_to_bv 64 19) xs11 (Z_to_bv 64 176064) xt4 (Z_to_bv 64 (IP + IL)) xt6 mm).
+
+  Lemma in_push : forall xra xt2 xa0 xa1 xa6 xs5 xs9 xs11 xt4 mm len D p cn (v : word) P w8 w32 w40 w48,
+    PMBINVg E mm len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) P ->
+    (bv_unsigned v <> 0)%Z ->
+    (len <= 61)%Z ->
+    (IP <= p <= (IP + IL))%Z ->
+    (1 <= cn <= 19)%Z ->
+    (D <= 768)%Z ->
+    (cn <= D)%Z ->
+    (cn = 19 \/ p = (IP + IL))%Z ->
+    (19 * len <= 2 * (D - cn) + 19)%Z ->
+    ((IP + IL) - p <= Z.of_nat f)%Z ->
+    evt bsegs (pmb_post E) (PMB E 0xea5d8 xra (Z_to_bv 64 (DGA / 8 + 2147450880)) (Z_to_bv 64 2147450880) xt2 (Z_to_bv 64 (X + 8)) (Z_to_bv 64 8) xa0 xa1 (Z_to_bv 64 769) (Z_to_bv 64 DGA) (Z_to_bv 64 (X + 496)) (Z_to_bv 64 p) xa6 (Z_to_bv 64 ((X + 496) / 8 + 2147450880)) (Z_to_bv 64 len) (Z_to_bv 64 10) (Z_to_bv 64 X) xs5 (Z_to_bv 64 1) (Z_to_bv 64 18446744073709551615) (Z_to_bv 64 17) xs9 (Z_to_bv 64 19) xs11 (Z_to_bv 64 176064) xt4 (Z_to_bv 64 (IP + IL)) v mm).
+  Proof using OK PV HEAD.
+    intros until w48. intros INV HV Hl Hp Hcn HD HcD HC HB Hm. pm_open INV. pm_env OK. pm_prov PV.
+    bwalk ltac:(fun pc => lazymatch pc with
+      | 0xeb8b4%Z => u_trap pc
+      | 0xea140%Z => first [ num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 (len + 1) D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) (D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intros _; apply bignorm_b_push; [lia | lia | lia | exact HV]))); eapply evt_eq; [| eapply HEAD with (len := (len + 1)%Z) (D := D) (p := p)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      end).
+  Qed.
+
+  Lemma in_wrapped : forall xra xt2 xa0 xa1 xa6 xs5 xs9 xs11 xt4 xt6 mm len D p cn P w8 w32 w40 w48,
+    PMBINVg E mm len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) P ->
+    (1 <= len)%Z ->
+    (IP <= p <= (IP + IL))%Z ->
+    (1 <= cn <= 19)%Z ->
+    (D <= 768)%Z ->
+    (cn <= D)%Z ->
+    (cn = 19 \/ p = (IP + IL))%Z ->
+    (19 * len <= 2 * (D - cn) + 19)%Z ->
+    ((IP + IL) - p <= Z.of_nat f)%Z ->
+    evt bsegs (pmb_post E) (PMB E 0xea5cc xra (Z_to_bv 64 (DGA / 8 + 2147450880)) (Z_to_bv 64 2147450880) xt2 (Z_to_bv 64 (X + 8)) (Z_to_bv 64 8) xa0 xa1 (Z_to_bv 64 769) (Z_to_bv 64 DGA) (Z_to_bv 64 (X + 496)) (Z_to_bv 64 p) xa6 (Z_to_bv 64 ((X + 496) / 8 + 2147450880)) (Z_to_bv 64 len) (Z_to_bv 64 10) (Z_to_bv 64 X) xs5 (Z_to_bv 64 1) (Z_to_bv 64 18446744073709551615) (Z_to_bv 64 17) xs9 (Z_to_bv 64 19) xs11 (Z_to_bv 64 176064) xt4 (Z_to_bv 64 (IP + IL)) xt6 mm).
+  Proof using OK PV HEAD.
+    intros until w48. intros INV Hl1 Hp Hcn HD HcD HC HB Hm. pose proof INV as INV0. pm_open INV0. pm_env OK. pm_prov PV.
+    bwalk ltac:(fun pc => lazymatch pc with
+      | 0xea140%Z => first [ num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) (D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intro; exfalso; lia))); eapply evt_eq; [| eapply HEAD with (len := len) (D := D) (p := p)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      | 0xea5d8%Z => first [ eapply evt_eq; [| eapply (in_push) with (len := len) (D := D) (p := p) (cn := cn) (v := Z_to_bv 64 1) (P := P)]; [num_st_eq | exact INV | rewrite unsigned_lit by lia; lia | lia | lia | lia | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      end).
+  Qed.
+
+  Lemma in_CA : forall (g : nat) (j : Z) xra xa1 xs5 xs9 xs11 xt6 mm len D p cn w8 w32 w40 w48,
+    PMBINVg E mm len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) (j <= len - 2 /\ D < PMB_NORM_DG)%Z ->
+    (0 <= j <= len - 1)%Z ->
+    (len - 1 - j <= Z.of_nat g)%Z ->
+    (IP <= p <= (IP + IL))%Z ->
+    (1 <= cn <= 19)%Z ->
+    (D <= 768)%Z ->
+    (cn <= D)%Z ->
+    (cn = 19 \/ p = (IP + IL))%Z ->
+    (19 * len <= 2 * (D - cn) + 19)%Z ->
+    ((IP + IL) - p <= Z.of_nat f)%Z ->
+    evt bsegs (pmb_post E) (PMB E 0xea578 xra (Z_to_bv 64 (DGA / 8 + 2147450880)) (Z_to_bv 64 2147450880) (Z_to_bv 64 (len - 1 - j)) (Z_to_bv 64 (X + 8)) (Z_to_bv 64 8) (Z_to_bv 64 (X + 8 + 8 * j)) xa1 (Z_to_bv 64 769) (Z_to_bv 64 DGA) (Z_to_bv 64 (X + 496)) (Z_to_bv 64 p) (Z_to_bv 64 (X + 8 + 8 * j)) (Z_to_bv 64 ((X + 496) / 8 + 2147450880)) (Z_to_bv 64 len) (Z_to_bv 64 10) (Z_to_bv 64 X) xs5 (Z_to_bv 64 1) (Z_to_bv 64 18446744073709551615) (Z_to_bv 64 17) xs9 (Z_to_bv 64 19) xs11 (Z_to_bv 64 176064) (Z_to_bv 64 (18446744073709551112 + 8 * j)) (Z_to_bv 64 (IP + IL)) xt6 mm).
+  Proof using OK PV HEAD.
+    intros g. induction g as [|g IH]; intros until w48; intros INV Hj Hg Hp Hcn HD HcD HC HB Hm.
+    - pose proof INV as INV0. pm_open INV0. pm_env OK. pm_prov PV. bstep.
+      bwalk ltac:(fun pc => lazymatch pc with
+      | 0xeb8b4%Z => u_trap pc
+      | 0xea5cc%Z => first [ eapply evt_eq; [| eapply (in_wrapped) with (len := len) (D := D) (p := p) (cn := cn)]; [num_st_eq | exact INV | lia | lia | lia | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      end).
+    - destruct (Z.eq_dec j (len - 2)) as [JT|JT].
+      +
+        pose proof INV as INV0. pm_open INV0. pm_env OK. pm_prov PV. bkstep.
+        bkwalk ltac:(fun pc => lazymatch pc with
+      | 0xeb8b4%Z => u_trap pc
+      | 0xea5cc%Z => first [ exfalso; lia | fail 100 "cut" pc ]
+      | 0xea140%Z => first [ num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) (D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intros _; apply bignorm_b_upd_top; [lia | lia | lia |]; rewrite unsigned_lit_wrap; fold_limbz; first [ lazymatch goal with KB : _ <> 0%Z |- _ => exact KB end | lia ]))); eapply evt_eq; [| eapply HEAD with (len := len) (D := D) (p := p)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      | 0xea578%Z => first [ num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) ((j + 1) <= len - 2 /\ D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intros [? _]; exfalso; lia))); eapply evt_eq; [| eapply (IH (j + 1)%Z) with (len := len) (D := D) (p := p) (cn := cn)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      end).
+      + pose proof INV as INV0. pm_open INV0. pm_env OK. pm_prov PV. bstep.
+        bwalk ltac:(fun pc => lazymatch pc with
+      | 0xeb8b4%Z => u_trap pc
+      | 0xea5cc%Z => first [ eapply evt_eq; [| eapply (in_wrapped) with (len := len) (D := D) (p := p) (cn := cn)]; [num_st_eq | exact INV | lia | lia | lia | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      | 0xea140%Z => first [ num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) (D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intros HN; apply bignorm_b_upd_other; [apply NB; lia | lia | rewrite ?length_le8; lia | lia]))); eapply evt_eq; [| eapply HEAD with (len := len) (D := D) (p := p)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      | 0xea578%Z => first [ num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) ((j + 1) <= len - 2 /\ D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intros [? HN]; apply bignorm_b_upd_other; [apply NB; lia | lia | rewrite ?length_le8; lia | lia]))); eapply evt_eq; [| eapply (IH (j + 1)%Z) with (len := len) (D := D) (p := p) (cn := cn)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      end).
+  Qed.
+
+  Lemma in_sadd : forall xra xt2 xa0 xa1 xa6 xs2 xs5 xs9 xs11 xt4 mm len D p cn (v : word) w8 w32 w40 w48,
+    PMBINV E mm len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) ->
+    (IP <= p <= (IP + IL))%Z ->
+    (1 <= cn <= 19)%Z ->
+    (D <= 768)%Z ->
+    (cn <= D)%Z ->
+    (cn = 19 \/ p = (IP + IL))%Z ->
+    (19 * len <= 2 * (D - cn) + 19)%Z ->
+    ((IP + IL) - p <= Z.of_nat f)%Z ->
+    evt bsegs (pmb_post E) (PMB E 0xea520 xra (Z_to_bv 64 (DGA / 8 + 2147450880)) (Z_to_bv 64 2147450880) xt2 (Z_to_bv 64 (X + 8)) (Z_to_bv 64 8) xa0 xa1 (Z_to_bv 64 769) (Z_to_bv 64 DGA) (Z_to_bv 64 (X + 496)) (Z_to_bv 64 p) xa6 (Z_to_bv 64 ((X + 496) / 8 + 2147450880)) xs2 (Z_to_bv 64 10) (Z_to_bv 64 X) xs5 (Z_to_bv 64 1) (Z_to_bv 64 18446744073709551615) (Z_to_bv 64 17) xs9 (Z_to_bv 64 19) xs11 (Z_to_bv 64 176064) xt4 (Z_to_bv 64 (IP + IL)) v mm).
+  Proof using OK PV HEAD.
+    intros until w48. intros INV Hp Hcn HD HcD HC HB Hm. pose proof INV as INV0. pm_open INV0. pm_env OK. pm_prov PV.
+    bkwalk ltac:(fun pc => lazymatch pc with
+      | 0xeb8b4%Z => u_trap pc
+      | 0xea140%Z => first [ first [ eapply evt_eq; [| eapply HEAD with (len := len) (D := D) (p := p)]; [num_st_eq | exact INV | lia | lia | lia | lia | lia] | fold_limbz; num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) (D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intros HN; destruct (Z.eq_dec len 1) as [L1|L1]; [ apply bignorm_b_upd_top; [lia | lia | lia |]; rewrite unsigned_lit_wrap; specialize (NB HN); destruct NB as [?|NB]; [lia|];   replace (8 * (len - 1))%Z with (X - X)%Z in NB by lia;   lazymatch type of NB with bv_unsigned ?w <> _ => pose proof (bv_unsigned_in_range 64 w) as RW; unfold bv_modulus in RW; change (2 ^ Z.of_N 64)%Z with 18446744073709551616%Z in RW end;   change (2 ^ 64)%Z with 18446744073709551616%Z; b2z_lin; lia | apply bignorm_b_upd_other; [apply NB; exact HN | lia | rewrite ?length_le8; lia | lia] ]))); eapply evt_eq; [| eapply HEAD with (len := len) (D := D) (p := p)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia] ] | fail 100 "cut" pc ]
+      | 0xea5d8%Z => first [ eapply evt_eq; [| eapply (in_push) with (len := len) (D := D) (p := p) (cn := cn) (v := v) (P := (D < PMB_NORM_DG)%Z)]; [num_st_eq | exact INV | first [assumption | b2z_lin; lia] | lia | lia | lia | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      | 0xea578%Z => first [ fold_limbz; num_cur_mem ltac:(fun m1 => assert (INV1 : PMBINVg E m1 len D w8 (Z_to_bv 64 761) (Z_to_bv 64 (p_N E)) w32 w40 w48 (Z_to_bv 64 (18446744073709551615 - X)) (Z_to_bv 64 (X / 8)) (0 <= len - 2 /\ D < PMB_NORM_DG)%Z) by (pm_close_with ltac:(intros [HJ HN]; apply bignorm_b_upd_other; [apply NB; exact HN | lia | rewrite ?length_le8; lia | lia]))); eapply evt_eq; [| eapply (in_CA (Z.to_nat len) 0%Z) with (len := len) (D := D) (p := p) (cn := cn)]; [num_st_eq | exact INV1 | lia | lia | lia | lia | lia | lia | lia | lia | lia] | fail 100 "cut" pc ]
+      end).
+  Qed.
+
+  End BODY.
+
+End PMBINT1.

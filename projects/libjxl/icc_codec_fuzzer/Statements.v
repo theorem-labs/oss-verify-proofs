@@ -34,8 +34,8 @@
     TrackingMemoryManager was freed by the end of the run (num_allocations==0,
     allocation map empty, bytes_in_use==0): a leak check on the JxlMemoryManager
     path that holds without LeakSanitizer. [a trap; confirmed in the binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

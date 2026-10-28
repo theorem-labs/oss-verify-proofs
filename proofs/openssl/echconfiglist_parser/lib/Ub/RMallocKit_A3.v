@@ -118,7 +118,7 @@ Ltac rmeta_close2 MRold MSq MUq WMq CH st' MRnew E1 E2 :=
           eapply rw_cells_congr; [ | | | exact CH];
           [ unfold meta_cells; unfold pw; cbn [oconc m_prev m_next m_mem m_avail m_freed meta_word m_last_idx m_freeable m_sizeclass m_maplen m_set_prev m_set_next];
             unfold wz; rewrite ?E1, ?E2; cbn [oconc]; reflexivity
-          | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]);
+          | reflexivity | cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]);
     clear MUq WMq CH end.
 
 (* [comment removed for export] *)

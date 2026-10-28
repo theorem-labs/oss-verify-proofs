@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: openssl/punycode/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: c333873eaa0861bdfd569938507f9d51b1da7c78633dc26170c7c495e54b0e51

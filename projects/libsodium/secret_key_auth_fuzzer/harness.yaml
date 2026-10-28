@@ -140,6 +140,7 @@ checks:
   where: source/secret_key_auth_fuzzer.cc:33-35
   what: crypto_auth (HMAC-SHA512-256) of the whole input under a deterministic-RNG key must pass crypto_auth_verify
     with the same key.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: secret_key_auth_fuzzer

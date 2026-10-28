@@ -10,7 +10,7 @@ From OssFuzzTheorems.Proofs.openssl.pem.lib.Lib Require Import Decode NodesCfg D
 From OssFuzzTheorems.Proofs.openssl.pem.lib Require Import TopLevel Obligations.
 From OssFuzzTheorems.Proofs.openssl.pem.lib.Spec Require Import Prog ModelInv LB_Logic UnforcedK LB_Main ProgDetIface.
 From OssFuzzTheorems.openssl.pem.images Require Import Plain.
-
+From OssFuzzTheorems.openssl.pem.images Require Import Ubsan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Notation nstep := NodesCfg.nstep_c (only parsing).
 Open Scope Z_scope.
@@ -35,3 +35,6 @@ Theorem prog_no_enomem_P :
   prog_no_enomem_stmt psegs pstage Plain.M.init_pc Plain.M.phdrs source_alloc_limit.
 Proof. apply prog_no_enomem_any; [exact segs_low_psegs| unfold KLIM, SMALLREQ, source_alloc_limit; lia]. Qed.
 
+Theorem prog_no_enomem_U :
+  prog_no_enomem_stmt usegs ustage Ubsan.M.init_pc Ubsan.M.phdrs target_alloc_limit.
+Proof. apply prog_no_enomem_any; [exact segs_low_usegs| unfold KLIM, SMALLREQ, target_alloc_limit; lia]. Qed.

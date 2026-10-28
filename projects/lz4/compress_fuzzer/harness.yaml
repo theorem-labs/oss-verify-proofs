@@ -135,6 +135,7 @@ checks:
   where: source/compress_fuzzer.c:46-55
   what: LZ4_compress_default into a fuzzed capacity in [0, LZ4_compressBound]; if it returns >0, LZ4_decompress_safe
     must regenerate exactly size bytes equal to the input.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: compress_fuzzer

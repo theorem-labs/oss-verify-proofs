@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: cgif/cgif_rgb_fuzzer/asan_disagrees_at_most
+bound: '0'
+fingerprint: 6f6e059a5fd5aae20c8c388d8dec426de6d86581ce386d90c644ef3df891b35c

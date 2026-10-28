@@ -27,8 +27,8 @@
     (b) Harness bookkeeping after each state step: the current stream is
     non-NULL and its index is below the stream count (checks the harness's own
     accept/create/swap stream logic). [assert(); confirmed in the binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

@@ -172,6 +172,7 @@ checks:
   live: unknown
   where: source/unicode.cc:154-166
   what: remove_ascii_tab_or_newline leaves no \t, \n or \r in its output
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: unicode

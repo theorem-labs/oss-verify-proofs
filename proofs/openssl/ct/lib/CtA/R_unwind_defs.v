@@ -42,9 +42,26 @@ Definition unwind_trace (pc page bot top maxd bp : Z) (ch : list (Z * Z)) : opti
   if top / 4096 =? 0 then Some [pc]
   else if fr_ok bot (top - 16) bp then uw_loop pc page (top - 16) maxd ch bp [pc]
   else Some [pc].
+
 (* [comment removed for export] *)
+Fixpoint chain_cells (W : list (Z * Z)) (m : mem) (f : Z) (ch : list (Z * Z)) : Prop :=
+  match ch with
+  | [] => True
+  | (ra, fp) :: ch' =>
+      rw_cells ctasegs m (f + -16) [C8 (Z_to_bv 64 fp); C8 (Z_to_bv 64 ra)]
+      /\ (0 <= ra < 2^64 /\ 0 <= fp < 2^64 /\ 16 <= f < 2^64)
+      /\ disjoint_from W (f + -16) 16
+      /\ chain_cells W m fp ch'
+  end.
 
-
+Lemma chain_cells_frame : forall W (m m' : mem) f ch, chain_cells W m f ch -> munch W m m' -> wmono ctasegs m m' ->
+  chain_cells W m' f ch.
+Proof.
+  intros W m m' f ch. revert f. induction ch as [|[ra fp] ch IH]; intros f H MU WM; cbn in *; [exact I|].
+  destruct H as (H1 & H2 & H3 & H4). split; [| split; [exact H2| split; [exact H3| apply IH; assumption]]].
+  apply (rw_cells_transport ctasegs W m m' _ _ H1 MU WM). cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ].
+  exact H3.
+Qed.
 
 (* [comment removed for export] *)
 Definition wr_trace (tr : list Z) (tb : list word) : list word := map (Z_to_bv 64) tr ++ skipn (length tr) tb.

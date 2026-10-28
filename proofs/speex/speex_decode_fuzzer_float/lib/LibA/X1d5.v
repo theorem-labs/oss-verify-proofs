@@ -41,12 +41,12 @@ Ltac olia_no_sec_props := ltac2:(OLia2.no_sec_props ()).
 Ltac olia_clear_sec_except pf0 := let f := ltac2:(p |- OLia2.clear_sec_except1 (Option.get (Ltac1.to_constr p))) in f pf0.
 Ltac olia_os pf0 :=
 lazymatch goal with |- ?G =>
-let pf1 := constr:(ltac:(olia_clear_sec_except pf0; timeout 30 (solve [ os_lia ])) : G) in
+let pf1 := constr:(ltac:(olia_clear_sec_except pf0; timeout 30 (solve [ os_lia ])) : G) in   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
 ldce_keep_install pf0 pf1
 end.
 
 Ltac olia_direct stock :=
-first [ timeout 30 (solve [ os_lia ]) | ldce stock ].
+first [ timeout 30 (solve [ os_lia ]) | ldce stock ].   (* timeout-ok: tiered lia: expiry takes the next tier, and every caller catches a failure of the last one *)
 Ltac olia stock := idtac;
 lazymatch goal with
 | |- ?G => tryif has_evar G then stock

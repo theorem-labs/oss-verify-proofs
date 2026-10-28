@@ -159,6 +159,7 @@ checks:
   what: After parsing the input and draining queued commands, the window's reference count is exactly
     1 (only the harness's own reference), i.e. input processing leaked no window reference and did not
     drop one.
+failure_handlers: none
 statements:
   asan_agrees:
     kind: agreement

@@ -3,7 +3,7 @@
 
 OSS-Fuzz: [projects/leptonica](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/leptonica)
 
-**Status: available.** 37 of OSS-Fuzz's 45 fuzz targets have statements. 148 binaries, 200 MB. 481 statements: 29 proved, 0 known false, 0 suspected false, 0 blocked by the model, 452 open.
+**Status: available.** 37 of OSS-Fuzz's 45 fuzz targets have statements. 148 binaries, 200 MB. 481 statements: 33 proved, 0 known false, 0 suspected false, 0 blocked by the model, 448 open.
 
 Built from leptonica (commit `10bdea2f`).
 
@@ -12,7 +12,7 @@ Built from leptonica (commit `10bdea2f`).
 |---|---|---|---|
 | [affine_fuzzer](affine_fuzzer/) | pixReadMemSpix, then pixAffinePta / pixAffinePtaWithAlpha / pixAffineSequential with EMPTY point arrays (so the calls mostly error out early); outputs destroyed unchecked. | none | 15 |
 | [barcode_fuzzer](barcode_fuzzer/) | pixReadMemSpix, then pixProcessBarcodes (locate, width-extract and decode any barcode); the decoded strings are discarded. | none | 15 |
-| [bilateral_fuzzer](bilateral_fuzzer/) | pixReadMemSpix, then pixBilateral and pixBlockBilateralExact; outputs destroyed unchecked. | none | 15, 2 proved |
+| [bilateral_fuzzer](bilateral_fuzzer/) | pixReadMemSpix, then pixBilateral and pixBlockBilateralExact; outputs destroyed unchecked. | none | 15, 3 proved |
 | [bilinear_fuzzer](bilinear_fuzzer/) | pixReadMemSpix, then pixBilinearPta / pixBilinearPtaWithAlpha with EMPTY point arrays; outputs destroyed unchecked. | none | 15 |
 | [blend_fuzzer](blend_fuzzer/) | pixReadMemSpix, then pixBlend (10 fractions, incl. blending a pix with itself), pixAddAlphaToBlend, pixBlendBackgroundToColor, pixBlendCmap, pixBlendColorByChannel, GrayAdapt, GrayInverse, HardLight, pixFadeWithGray, pixLinearEdgeFade, pixMultiplyByColor, pixSetAlphaOverWhite; outputs discarded. | none | 15 |
 | [boxfunc4_fuzzer](boxfunc4_fuzzer/) | boxaReadMem, then boxaDisplayTiled, boxaGetCoverage, boxaLocationRange, boxaPermutePseudorandom, boxaPermuteRandom, boxaSelectByWHRatio, boxaSelectRange; results discarded. | none | 15 |
@@ -27,12 +27,12 @@ Built from leptonica (commit `10bdea2f`).
 | [dewarp_fuzzer](dewarp_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [edge_fuzzer](edge_fuzzer/) | pixReadMemSpix, then pixMeasureEdgeSmoothness; the three measures are discarded. | none | 15, 3 proved |
 | [enhance_fuzzer](enhance_fuzzer/) | pixReadMemSpix, then TRC/gamma/equalise/darken/brightness/hue/saturation/colour-shift/constant-colour/matrix-colour enhancers and pixTRCMapGeneral on copies; outputs discarded. | none | 9 |
-| [fhmtgen_fuzzer](fhmtgen_fuzzer/) | pixReadMemSpix, then pixHMTDwa_1 (generated DWA hit-miss transform) for every sel in selaAddHitMiss; outputs discarded. | none | 15, 2 proved |
+| [fhmtgen_fuzzer](fhmtgen_fuzzer/) | pixReadMemSpix, then pixHMTDwa_1 (generated DWA hit-miss transform) for every sel in selaAddHitMiss; outputs discarded. | none | 15, 3 proved |
 | [flipdetect_fuzzer](flipdetect_fuzzer/) | pixReadMemSpix, then pixMirrorDetect, pixOrientCorrect and pixOrientDetect; confidences discarded. | none | 15 |
 | [fpix2_fuzzer](fpix2_fuzzer/) | pixReadMemSpix, pix->DPix->FPix conversion, then DPix/FPix arithmetic (AddMultConstant, LinearCombination, ScaleByInteger(1), SetAllArbitrary, GetMax/GetMin, AddContinuedBorder, AffinePta and ProjectivePta with empty ptas) and FPix->DPix; the DPix->FPix->DPix conversion is not compared. | none | 15 |
 | [graphics_fuzzer](graphics_fuzzer/) | pixReadMemSpix, then rendering primitives drawn onto the payload (pixFillPolygon, pixGeneratePtaBoundary, pixRenderBox/Boxa/BoxaBlend/Contours/GridArb/HashBox*/HashMaskArb/LineBlend/PlotFromNuma[Gen]/Polyline*); outputs discarded. | none | 15 |
 | [graymorph_fuzzer](graymorph_fuzzer/) | pixReadMemSpix, then pixCloseGray3, pixDilateGray3, pixErodeGray3, pixOpenGray3 (3x1); outputs discarded. | none | 15, 3 proved |
-| [grayquant_fuzzer](grayquant_fuzzer/) | pixReadMemSpix, then pixDitherTo2bpp, pixDitherToBinary, pixGenerateMaskByBand[32], pixGenerateMaskByDiscr32, pixThresholdGrayArb; outputs discarded. | none | 15, 2 proved |
+| [grayquant_fuzzer](grayquant_fuzzer/) | pixReadMemSpix, then pixDitherTo2bpp, pixDitherToBinary, pixGenerateMaskByBand[32], pixGenerateMaskByDiscr32, pixThresholdGrayArb; outputs discarded. | none | 15, 3 proved |
 | [jpegiostub_fuzzer](jpegiostub_fuzzer/) | pixReadMemSpix, then pixSetChromaSampling(pix, 0). | none | 15, 3 proved |
 | [kernel_fuzzer](kernel_fuzzer/) | pixReadMemSpix, then kernelCreateFromPix(pix, 2, 2). | none | 15, 3 proved |
 | [mask_fuzzer](mask_fuzzer/) | pixReadMemSpix, then a replacement-mask pipeline (pixMaskOverColorPixels, pixMorphSequence, pixSeedfillBinary, pixRemoveBorderConnComps, pixXor) and pixPaintSelfThroughMask; outputs discarded. | none | 15 |
@@ -42,7 +42,7 @@ Built from leptonica (commit `10bdea2f`).
 | [paintcmap_fuzzer](paintcmap_fuzzer/) | pixReadMemSpix, then pixSetSelectCmap and pixSetSelectMaskedCmap on copies. | none | 15, 3 proved |
 | [pix1_fuzzer](pix1_fuzzer/) | pixReadMemSpix, then pixExtractData and free. | none | 15, 3 proved |
 | [pix4_fuzzer](pix4_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [pix_orient_fuzzer](pix_orient_fuzzer/) | pixReadMemSpix, then pixOrientCorrect; confidences and rotation discarded. | none | 15, 2 proved |
+| [pix_orient_fuzzer](pix_orient_fuzzer/) | pixReadMemSpix, then pixOrientCorrect; confidences and rotation discarded. | none | 15, 3 proved |
 | [pix_rotate_shear_fuzzer](pix_rotate_shear_fuzzer/) | Three int16 (angle, x_center, y_center) then pixReadMem of the rest (PNM/JPEG/TIFF/PNG refused up front) and pixRotateShear by angle degrees about the centre; the rotated image is discarded. | none | 15 |
 | [pixa_recog_fuzzer](pixa_recog_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [pixconv_fuzzer](pixconv_fuzzer/) | pixReadMemSpix, then pixConvertGrayToFalseColor, pixThreshold8, pixQuantizeIfFewColors; outputs discarded. | none | 15 |
@@ -77,6 +77,7 @@ By hand: download `leptonica-bin.tar.zst` from release [v2026.10.0](https://gith
 |---|---|
 | [leptonica/bilateral_fuzzer/asan_agrees](../../proofs/leptonica/bilateral_fuzzer/asan_agrees) | proved |
 | [leptonica/bilateral_fuzzer/asan_ubsan_agrees](../../proofs/leptonica/bilateral_fuzzer/asan_ubsan_agrees) | proved |
+| [leptonica/bilateral_fuzzer/ubsan_agrees](../../proofs/leptonica/bilateral_fuzzer/ubsan_agrees) | proved |
 | [leptonica/colorfill_fuzzer/asan_agrees](../../proofs/leptonica/colorfill_fuzzer/asan_agrees) | proved |
 | [leptonica/colorfill_fuzzer/asan_ubsan_agrees](../../proofs/leptonica/colorfill_fuzzer/asan_ubsan_agrees) | proved |
 | [leptonica/colorfill_fuzzer/ubsan_agrees](../../proofs/leptonica/colorfill_fuzzer/ubsan_agrees) | proved |
@@ -85,11 +86,13 @@ By hand: download `leptonica-bin.tar.zst` from release [v2026.10.0](https://gith
 | [leptonica/edge_fuzzer/ubsan_agrees](../../proofs/leptonica/edge_fuzzer/ubsan_agrees) | proved |
 | [leptonica/fhmtgen_fuzzer/asan_agrees](../../proofs/leptonica/fhmtgen_fuzzer/asan_agrees) | proved |
 | [leptonica/fhmtgen_fuzzer/asan_ubsan_agrees](../../proofs/leptonica/fhmtgen_fuzzer/asan_ubsan_agrees) | proved |
+| [leptonica/fhmtgen_fuzzer/ubsan_agrees](../../proofs/leptonica/fhmtgen_fuzzer/ubsan_agrees) | proved |
 | [leptonica/graymorph_fuzzer/asan_agrees](../../proofs/leptonica/graymorph_fuzzer/asan_agrees) | proved |
 | [leptonica/graymorph_fuzzer/asan_ubsan_agrees](../../proofs/leptonica/graymorph_fuzzer/asan_ubsan_agrees) | proved |
 | [leptonica/graymorph_fuzzer/ubsan_agrees](../../proofs/leptonica/graymorph_fuzzer/ubsan_agrees) | proved |
 | [leptonica/grayquant_fuzzer/asan_agrees](../../proofs/leptonica/grayquant_fuzzer/asan_agrees) | proved |
 | [leptonica/grayquant_fuzzer/asan_ubsan_agrees](../../proofs/leptonica/grayquant_fuzzer/asan_ubsan_agrees) | proved |
+| [leptonica/grayquant_fuzzer/ubsan_agrees](../../proofs/leptonica/grayquant_fuzzer/ubsan_agrees) | proved |
 | [leptonica/jpegiostub_fuzzer/asan_agrees](../../proofs/leptonica/jpegiostub_fuzzer/asan_agrees) | proved |
 | [leptonica/jpegiostub_fuzzer/asan_ubsan_agrees](../../proofs/leptonica/jpegiostub_fuzzer/asan_ubsan_agrees) | proved |
 | [leptonica/jpegiostub_fuzzer/ubsan_agrees](../../proofs/leptonica/jpegiostub_fuzzer/ubsan_agrees) | proved |
@@ -104,6 +107,7 @@ By hand: download `leptonica-bin.tar.zst` from release [v2026.10.0](https://gith
 | [leptonica/pix1_fuzzer/ubsan_agrees](../../proofs/leptonica/pix1_fuzzer/ubsan_agrees) | proved |
 | [leptonica/pix_orient_fuzzer/asan_agrees](../../proofs/leptonica/pix_orient_fuzzer/asan_agrees) | proved |
 | [leptonica/pix_orient_fuzzer/asan_ubsan_agrees](../../proofs/leptonica/pix_orient_fuzzer/asan_ubsan_agrees) | proved |
+| [leptonica/pix_orient_fuzzer/ubsan_agrees](../../proofs/leptonica/pix_orient_fuzzer/ubsan_agrees) | proved |
 
 ## Licence
 The licence of leptonica is not recorded here yet. Each binary is a combined work of leptonica, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `leptonica-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `leptonica-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

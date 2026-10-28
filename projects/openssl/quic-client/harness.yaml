@@ -141,6 +141,7 @@ checks:
   where: source/quic-client.c:217-218
   what: 'Harness bookkeeping after each state step: the current stream is non-NULL and its index is below
     the stream count (checks the harness''s own accept/create/swap stream logic).'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: quic-client

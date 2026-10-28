@@ -3,4 +3,4 @@
 
 [opentelemetry.io](https://opentelemetry.io) · OSS-Fuzz: [projects/opentelemetry-go-contrib](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/opentelemetry-go-contrib)
 
-**Status: language pending.** This project's fuzz targets are written in Go. This release covers C and C++; support for Go is being built. [What the statuses mean](../../docs/status.md).
+**Status: language pending.** This project's fuzz targets are written in Go. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for Go is being built. [What the statuses mean](../../docs/status.md).

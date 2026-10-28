@@ -362,7 +362,7 @@ Section SecRecycle2.
     clear SEN5 REN5.
     (* [comment removed for export] *)
     assert (MUA : munch [(lo, bv_unsigned sp); (6765768, 6766384); (pa, pa + 8 * nch); (a, a + msz); (lst + 24, lst + 32); (sh a, sh a + msz / 8); (TH + 2800, TH + 3168)] m m7).
-    { eapply munch_trans; [exact MU|]. eapply munch_weaken; [| exact MU7]. unfold sub_fp; cbn [outside]. intros; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]). }
+    { eapply munch_trans; [exact MU|]. eapply munch_weaken; [| exact MU7]. unfold sub_fp; cbn [outside]. intros; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]). }
     clear MU WM MI5 MU7.
     (* [comment removed for export] *)
     eapply (evt_sreach_lazy_at asegs (maps_subtract L1 a (a + msz)) S Zr _ msF7 _ mo7 Q OK7 VIS7).

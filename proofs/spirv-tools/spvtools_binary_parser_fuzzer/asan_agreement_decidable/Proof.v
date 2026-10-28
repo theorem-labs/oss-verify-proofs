@@ -1,0 +1,5 @@
+From OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer Require Statements.
+From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require ConstAccept.
+
+Theorem asan_agreement_decidable_holds : OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.Statements.asan_agreement_decidable.
+Proof. exact OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.ConstAccept.asan_decidable. Qed.

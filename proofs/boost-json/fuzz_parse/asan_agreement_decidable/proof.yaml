@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: boost-json/fuzz_parse/asan_agreement_decidable
+fingerprint: a98fa219a1878d1696c83ca5801b61dbd6c2f6e55ee3020a52d664d6b6dd6bc4

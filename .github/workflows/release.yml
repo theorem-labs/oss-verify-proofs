@@ -8,13 +8,15 @@
 # record in the facts names the release its file is attached to.  Where nothing
 # is attached to v<release>-src, v<release> holds every file.
 #
-# A maintainer opens a draft GitHub release for the tag and attaches the files
-# the facts attach to it (the rows of `./oft fetch --all --list` whose first
-# field is the tag), then pushes the tag on a commit of main once pr.yml's run
-# for that commit's push to main has passed.  This workflow publishes it only if
+# A draft GitHub release for the tag holds the files the facts attach to it
+# (the rows of `./oft fetch --all --list` whose first field is the tag): a
+# maintainer opens it, or the enrollment workflow's upload (tools/enroll/upload)
+# makes it for a project's archives.  A maintainer pushes the tag on a commit
+# of main once the publishing gate has passed that commit.  This workflow publishes it only if
 #   - the tag is v<release> or v<release>-src, for the release that
 #     release.yaml at the tag describes;
-#   - the tagged commit is on main and pr.yml's run for its push to main passed;
+#   - the tagged commit is on main and the publishing gate passed exactly that
+#     commit (its check run, below);
 #   - the draft holds exactly the files the facts attach to this tag, each
 #     with the SHA-256 the facts pin, and still does just before it is
 #     published (a GPL or LGPL binary archive never ships without its source
@@ -44,7 +46,7 @@ jobs:
     timeout-minutes: 120
     permissions:
       contents: write   # to publish the tag's release, or create it when it attaches no file: nothing else is written
-      actions: read     # to read pr.yml's run for the tagged commit's push to main
+      checks: read      # to read the publishing gate's check run on the tagged commit
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
@@ -57,22 +59,38 @@ jobs:
           want="v$(python -c 'import yaml; print(yaml.safe_load(open("release.yaml"))["release"])')"
           [ "$GITHUB_REF_NAME" = "$want" ] || [ "$GITHUB_REF_NAME" = "$want-src" ] || {
             echo "::error::tag $GITHUB_REF_NAME, but release.yaml says $want (or $want-src, its source release)"; exit 1; }
-      - name: the tagged commit is on main, and pr.yml passed for its push to main
+      - name: the tagged commit is on main, and the publishing gate passed exactly it
         env:
           GH_TOKEN: ${{ github.token }}
+          # The publishing gate, outside this repository, checks the whole release commit before it is pushed here, and
+          # then creates one check run of this name on it, with its own GitHub App.  Only a check run of this name made
+          # by this App counts: a check run is bound to the App whose token created it, and any account or workflow with
+          # write access can create one of any name (a workflow's token creates it as the github-actions App), so the
+          # name alone proves nothing.
+          GATE_CHECK: ossv-gate/publish
+          GATE_APP_ID: "5447700"
         run: |
           set -euo pipefail
-          # pr.yml takes a push to main for a reviewed change.  Its pull_request run judges the merge of a branch
-          # no one has reviewed, so only its push run counts: no other event's, and no other workflow's.
+          # The gate's PASS is the evidence, not a run of this repository's workflows: pr.yml's and release-check.yml's
+          # runs of a push check what that push changes, and a run can be cancelled or stopped by a runner limit while
+          # the commit it would have checked is the one the gate passed.  The gate's newest check run of the name on
+          # the commit decides, so the gate can withdraw a PASS by creating another.
           on_main="$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)"
           case "$on_main" in
             identical|behind) ;;
             *) echo "::error::$GITHUB_SHA is not on main ($on_main): tag a commit of main"; exit 1 ;;
           esac
-          runs="repos/$GITHUB_REPOSITORY/actions/workflows/pr.yml/runs"
-          n="$(gh api "$runs?head_sha=$GITHUB_SHA&event=push&branch=main&status=success&per_page=1" --jq .total_count)"
-          [ "$n" -gt 0 ] || {
-            echo "::error::pr.yml has not passed for the push of $GITHUB_SHA to main: re-run it, then this workflow"; exit 1; }
+          # every check run of that name and App on exactly this commit; the newest (the highest id) decides
+          gate="$(gh api --paginate --method GET "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs" \
+                    -f check_name="$GATE_CHECK" -f app_id="$GATE_APP_ID" -f filter=all -f per_page=100 --jq \
+                    '.check_runs[] | select(.name == env.GATE_CHECK and (.app.id | tostring) == env.GATE_APP_ID
+                                           and .head_sha == env.GITHUB_SHA)
+                     | [.id, .status, .conclusion // "none", .output.title // ""] | @tsv' \
+                  | LC_ALL=C sort -t $'\t' -k1,1nr | awk 'NR == 1')"
+          IFS=$'\t' read -r id status conclusion title <<< "$gate"
+          [ "${status:-}" = completed ] && [ "${conclusion:-}" = success ] || {
+            echo "::error::the publishing gate has not passed $GITHUB_SHA: its newest $GATE_CHECK check run (App $GATE_APP_ID) is ${id:+$id, }${status:-missing}${conclusion:+ $conclusion}${title:+ ($title)}; run the gate on this commit, then re-run this workflow"; exit 1; }
+          echo "the publishing gate passed $GITHUB_SHA: $GATE_CHECK check run $id (App $GATE_APP_ID): $title"
       - name: the facts are well formed and their rendering is current
         run: |
           set -euo pipefail

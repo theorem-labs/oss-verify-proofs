@@ -160,6 +160,7 @@ checks:
   where: source/croaring_fuzzer_cc.cc:154-156
   what: serialize (write) then readSafe must reproduce a bitmap equal to b (after ~25 set operations on
     fuzzed data)
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: croaring_fuzzer_cc

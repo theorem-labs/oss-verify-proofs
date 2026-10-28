@@ -1,0 +1,328 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.Lib Require Import SFModel Arr SysStep ImageA FP ITree Nodes Decode.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.Lib Require Bytes PropExec.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.Spec Require Import Prelim Monad.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.Spec Require Import PrintfModel.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.Spec Require Import StrFun.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.P Require Import Printf_mlib.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.P Require Import Printf_zfacts.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.BA Require Import Fe_pop_arg Fe_printf_iface.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.BA Require Import FX_lib F_memset F_memcpy F_memchr I_strnlen F_fwritex.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.Spec Require Import PrintfModel.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.BA Require Import Fe_printf_core_common.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.A Require Import IcptSpec.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.A Require Import R_m2s I_consts. From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.BA Require Import F_achk.
+From OssFuzzTheorems.Proofs.simdjson.fuzz_element.lib.Lib Require Import StoreFast.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Import ITree.Exc.
+Open Scope Z_scope.
+Open Scope mspec_scope.
+Open Scope bv_scope.
+Set Warnings "-notation-for-abbreviation".
+
+Section PrintfCore.
+  Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+  Context {St : Type}.
+  Variables (Fp B BS : Z) (SINK : (word -> option byte) -> St -> Prop) (TOPOK : Z -> Prop)
+            (OUT : list Z -> M St unit) (OUTFP : Z -> Z -> Z -> Z -> Z -> M St Z).
+  Hypothesis SFR : sink_frame_stmt Fp B BS SINK.
+  Hypothesis SFL : sink_flags_stmt Fp SINK.
+  Hypothesis TOK : topok_stmt TOPOK.
+  Hypothesis HOUT : out_stmt Fp B BS SINK TOPOK OUT.
+  Variables (ra : word) (q : Z) (gp tp : word) (s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e : word)
+            (F : bvmap 5 word) (fc0 : bv 32) (m0 : word -> option byte)
+            (lo : Z) (canary : word) (A : Z) (fmt : list Z) (AP VA : Z) (slots : list word) (nla nlt : word).
+  Hypothesis HF : Forall (fun c => 0 <= c < 256)%Z fmt.
+  Hypothesis LO : (lo <= q - PC_DEPTH)%Z.
+  Hypothesis GLO : (GLOBALS_TOP <= lo)%Z.
+  Hypothesis QHI : (q < 2^63)%Z.
+  Hypothesis TQ : TOPOK q.
+  Hypothesis FRM0 : frm0 fc0.
+
+  Hypothesis HA : (A + zlength fmt <= 1458176 \/ (VA + 8 * zlength slots <= A /\ A + zlength fmt <= 2^62))%Z.
+
+  Hypothesis SEP_F : ((1501024 <= Fp /\ Fp + 232 <= 1512576) \/ (AP + 8 <= Fp /\ Fp + 232 <= VA))%Z.
+  Hypothesis SEP_B : ((7110320 <= B /\ B + BS <= lo /\ B + BS <= 7118848) \/ (AP + 8 <= B /\ B + BS <= VA))%Z.
+  Hypothesis HAP : (q <= AP)%Z.
+  Hypothesis HVA : (AP + 8 <= VA)%Z.
+  Hypothesis A0 : (0 <= A)%Z.
+  Hypothesis VAHI : (VA + 8 * zlength slots <= 2^64)%Z.
+  Hypothesis BS0 : (0 <= BS)%Z.
+
+  Hypothesis RIP : rip_stmt.
+  Hypothesis HA0 : aext m0 lo q A fmt B BS.
+
+  Local Notation ctx_all := (Fe_printf_core_common.ctx_all ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation W := (Fe_printf_core_common.W Fp B BS q lo AP).
+  Local Notation Fok := (Fe_printf_core_common.Fok F).
+  Local Notation Fok_refl := (Fe_printf_core_common.Fok_refl F).
+  Local Notation Fok_trans := (Fe_printf_core_common.Fok_trans F).
+  Local Notation POST := (Fe_printf_core_common.POST (St:=St) Fp B BS SINK ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F m0 lo canary AP).
+  Local Notation hi_cells := (Fe_printf_core_common.hi_cells ra s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e canary).
+  Local Notation lo_cells := (Fe_printf_core_common.lo_cells AP nla nlt).
+  Local Notation finv := (Fe_printf_core_common.finv Fp B BS ra q s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e m0 lo canary A fmt AP VA slots).
+  Local Notation fmt_rng := (Fe_printf_core_common.fmt_rng fmt HF).
+  Local Notation implM_eq_ms := (Fe_printf_core_common.implM_eq_ms (St:=St)).
+  Local Notation sink_store := (Fe_printf_core_common.sink_store (St:=St) Fp B BS SINK SFR).
+  Local Notation sink_call := (Fe_printf_core_common.sink_call (St:=St) Fp B BS SINK SFR).
+  Local Notation arg_ok_W := (Fe_printf_core_common.arg_ok_W Fp B BS q m0 lo A fmt AP VA slots LO SEP_F SEP_B HAP HA0).
+  Local Notation args_ok_W := (Fe_printf_core_common.args_ok_W Fp B BS q m0 lo A fmt AP VA slots LO SEP_F SEP_B HAP HA0).
+  Local Notation lo_cells14 := (Fe_printf_core_common.lo_cells14 AP nla nlt).
+  Local Notation lo_split := (Fe_printf_core_common.lo_split q AP nla nlt).
+  Local Notation lo_join := (Fe_printf_core_common.lo_join q AP nla nlt).
+  Local Notation pop_arg_callq := (Fe_printf_core_common.pop_arg_callq q gp tp lo fmt AP VA slots LO GLO QHI HAP HVA).
+  Local Notation strnlen_callq := (Fe_printf_core_common.strnlen_callq Fp B BS q gp tp m0 lo A fmt AP VA LO GLO QHI SEP_F SEP_B HAP RIP HA0).
+  Local Notation out_postq := (Fe_printf_core_common.out_postq (St:=St) Fp B BS SINK q gp tp lo canary).
+  Local Notation out_callq := (Fe_printf_core_common.out_callq (St:=St) Fp B BS SINK TOPOK OUT TOK HOUT q gp tp m0 lo canary A fmt AP VA slots LO GLO QHI TQ SEP_F SEP_B HAP BS0 HA0).
+  Local Notation memset_callq := (Fe_printf_core_common.memset_callq Fp B BS q gp tp m0 lo A fmt AP VA LO GLO QHI SEP_F SEP_B HAP RIP HA0).
+  Local Notation memset_postq := (Fe_printf_core_common.memset_postq q gp tp lo).
+  Local Notation chkr_W := (Fe_printf_core_common.chkr_W Fp B BS q m0 lo A fmt AP VA LO SEP_F SEP_B HAP HA0).
+  Local Notation ictx_W := (Fe_printf_core_common.ictx_W Fp B BS q m0 lo A fmt AP VA LO SEP_F SEP_B HAP HA0).
+  Local Notation hsh := (Fe_printf_core_common.hsh B BS q m0 lo A fmt HA0).
+  Local Notation chkr_stack0 := (Fe_printf_core_common.chkr_stack0 B BS q m0 lo A fmt HA0).
+  Local Notation chkr_fmt0 := (Fe_printf_core_common.chkr_fmt0 B BS q m0 lo A fmt HA0).
+  Local Notation chkr_pfx0 := (Fe_printf_core_common.chkr_pfx0 B BS q m0 lo A fmt HA0).
+  Local Notation chkr_xdig0 := (Fe_printf_core_common.chkr_xdig0 B BS q m0 lo A fmt HA0).
+  Local Notation chkr_nulls0 := (Fe_printf_core_common.chkr_nulls0 B BS q m0 lo A fmt HA0).
+  Local Notation arg_ok_chk := (Fe_printf_core_common.arg_ok_chk Fp B BS).
+  Local Notation chkr_buf0 := (Fe_printf_core_common.chkr_buf0 B BS q m0 lo A fmt HA0).
+  Local Notation fp_postq := (Fe_printf_core_common.fp_postq (St:=St) Fp B BS SINK q gp tp lo canary).
+  Local Notation fp_callq := (Fe_printf_core_common.fp_callq (St:=St) Fp B BS SINK TOPOK OUTFP TOK q gp tp m0 lo canary A fmt AP VA LO GLO QHI TQ SEP_F SEP_B HAP HA0).
+  Local Notation S_EXIT := (Fe_printf_core_common.S_EXIT (St:=St) Fp B BS SINK ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_SCAN := (Fe_printf_core_common.S_SCAN Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_FLAGS := (Fe_printf_core_common.S_FLAGS Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_WLOOP := (Fe_printf_core_common.S_WLOOP Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_WIDTH := (Fe_printf_core_common.S_WIDTH Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_PLOOP := (Fe_printf_core_common.S_PLOOP Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_PREC := (Fe_printf_core_common.S_PREC Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_PRECS1 := (Fe_printf_core_common.S_PRECS1 Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_PRECS2 := (Fe_printf_core_common.S_PRECS2 Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_STATE := (Fe_printf_core_common.S_STATE Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_DIR := (Fe_printf_core_common.S_DIR Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_END := (Fe_printf_core_common.S_END (St:=St) Fp B BS SINK ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_HEAD := (Fe_printf_core_common.S_HEAD (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_CONV := (Fe_printf_core_common.S_CONV (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation body_loc := (Fe_printf_core_common.body_loc Fp B BS q lo).
+  Local Notation S_TAIL := (Fe_printf_core_common.S_TAIL (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation tregs := (Fe_printf_core_common.tregs Fp q gp tp A).
+  Local Notation tinv := (Fe_printf_core_common.tinv (St:=St) Fp B BS SINK TOPOK OUTFP ra q s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_T6 := (Fe_printf_core_common.S_T6 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_T5 := (Fe_printf_core_common.S_T5 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_T4 := (Fe_printf_core_common.S_T4 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_T3 := (Fe_printf_core_common.S_T3 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_T2 := (Fe_printf_core_common.S_T2 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_T1 := (Fe_printf_core_common.S_T1 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_INTC2 := (Fe_printf_core_common.S_INTC2 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_INTC := (Fe_printf_core_common.S_INTC (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation dloop_post := (Fe_printf_core_common.dloop_post q gp tp).
+  Local Notation S_DLOOP := (Fe_printf_core_common.S_DLOOP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_FMTU2 := (Fe_printf_core_common.S_FMTU2 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_FMTU := (Fe_printf_core_common.S_FMTU (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_CV_D := (Fe_printf_core_common.S_CV_D (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_CV_U := (Fe_printf_core_common.S_CV_U (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation xloop_post := (Fe_printf_core_common.xloop_post q gp tp).
+  Local Notation S_XLOOP := (Fe_printf_core_common.S_XLOOP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_CV_X := (Fe_printf_core_common.S_CV_X (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_CV_S := (Fe_printf_core_common.S_CV_S (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation nullstr_arg_ok := (Fe_printf_core_common.nullstr_arg_ok Fp B BS q lo AP VA LO GLO SEP_F SEP_B HAP).
+  Local Notation S_CV_S2 := (Fe_printf_core_common.S_CV_S2 (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_CV_FP := (Fe_printf_core_common.S_CV_FP (St:=St) Fp B BS SINK TOPOK OUT OUTFP ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation POST1 := (Fe_printf_core_common.POST1 ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary).
+  Local Notation S_EXIT1 := (Fe_printf_core_common.S_EXIT1 Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_P1 := (Fe_printf_core_common.S_P1 Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+  Local Notation S_PRO := (Fe_printf_core_common.S_PRO Fp B BS ra q gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc0 m0 lo canary A fmt AP VA slots nla nlt).
+
+  Notation sfx := (sfx fmt).
+  Notation qq := (q + -544)%Z.
+  Notation SPv := (Z_to_bv 64 (q + -544)).
+  Notation FPv := (Z_to_bv 64 Fp).
+  Ltac hush := idtac.
+  Ltac seps := idtac.
+  Ltac seps_all := idtac.
+  Ltac zs := hush; zstep; try (fix_litstore; mem_after_store_opt).
+  Ltac zst := hush; seps; zstep; try (fix_litstore; mem_after_store_opt); hush.
+  Ltac dest_finv H := let MI := fresh "MI" in let MU := fresh "MU" in let WM := fresh "WM" in let FRhi := fresh "FRhi" in
+    let ST := fresh "ST" in let BY := fresh "BY" in let VAA := fresh "VAA" in let SSP1 := fresh "SSP1" in let SSP2 := fresh "SSP2" in
+    destruct H as (MI & MU & WM & FRhi & ST & BY & VAA & SSP1 & SSP2); unfold W in MU; unfold hi_cells in FRhi;
+    unfold got_ssp, ssp_guard in SSP1, SSP2; unfold va_area in VAA;
+    unfold PC_DEPTH, GLOBALS_TOP in LO, GLO;
+    try (let LT := fresh "LZB" in pose proof (zb_length fmt) as LT;
+         lazymatch goal with _ : length (zb fmt) = length fmt, _ : length (zb fmt) = length fmt |- _ => clear LT | _ => idtac end);
+    try (let LT := fresh "LU" in pose proof (u64s_length slots) as LT;
+         lazymatch goal with _ : length (u64s slots) = _, _ : length (u64s slots) = _ |- _ => clear LT | _ => idtac end);
+    unfold zlength in *; hush.
+  Ltac hyp :=
+    lazymatch goal with
+    | |- rw_cells _ ?m ?A ?cs =>
+        match goal with H : rw_cells _ ?m' ?A' ?cs' |- _ => constr_eq m' m; constr_eq A' A; unify cs' cs; exact H end
+    | |- ?G => match goal with H : ?T |- _ => constr_eq T G; exact H end
+    end.
+  Ltac mk_finv := unfold finv, W, hi_cells, got_ssp, ssp_guard, va_area;
+    split; [hyp|]; split; [hyp|]; split; [hyp|]; split; [hyp|]; split; [first [hyp | hyp_cells] |]; split; [hyp|]; split; [hyp|]; split; hyp.
+  Ltac at_pc p := lazymatch goal with |- evt _ _ (MS _ _ (Z_to_bv 64 ?q0) _ _ _ _) => constr_eq q0 p end.
+  Ltac zsto p := repeat (tryif at_pc p then fail else
+                   lazymatch goal with |- evt _ _ (MS _ _ (Z_to_bv 64 _) _ _ _ _) => zs end).
+  Ltac fix_u8 i := cbv beta; rewrite (u8_lit (znth fmt i)) by (apply fmt_rng; unfold zlength in *; lia).
+  Ltac rd_fmt idx :=
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?m _) =>
+      match goal with BYH : bytes_at _ m A (zb fmt) |- _ =>
+        let RD := fresh "RD" in let RG := fresh "RG" in
+        pose proof (zbytes_read m A fmt idx _ BYH ltac:(unfold zlength in *; lia) eq_refl) as RD;
+        pose proof (fmt_rng idx ltac:(unfold zlength in *; lia)) as RG;
+
+        repeat match type of RD with context [(?a + (?b + ?c))%Z] =>
+          replace (a + (b + c))%Z with (a + b + c)%Z in RD by lia end
+      end end.
+  Ltac the_mi k := lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?m _) => match goal with M : mem_inv _ m |- _ => k M end end.
+  Ltac mseq := cbv delta [mkR]; repeat first [ reflexivity | lazymatch goal with |- @eq Z _ _ => zl | |- @eq nat _ _ => zl end | progress f_equal ].
+  Tactic Notation "jump" tactic3(tac) := eapply evt_eq; [ | tac ]; [ mseq | .. ].
+  Tactic Notation "jumpM" tactic3(tac) :=
+    (lazymatch goal with |- evt _ _ _ => apply evt_done | _ => idtac end);
+    eapply implM_eq_ms; [ | tac ]; [ mseq | .. ].
+  Ltac stmt H := let NX := fresh "NX" in pose proof H as NX; let T := type of NX in let T' := eval red in T in change T' in NX.
+  Tactic Notation "stmt" constr(H) "as" ident(NX) := pose proof H as NX; let T := type of NX in let T' := eval red in T in change T' in NX.
+
+  Local Ltac transport_chunks_extra m a bs n Hn Ha Hl ::=
+    repeat match goal with
+    | H : SINK m ?st |- _ =>
+        first [ apply (sink_store m st a bs) in H; [ | exact Ha | rewrite Hn; exact Hl | rewrite Hn; tslia | rewrite Hn; tslia ]
+              | idtac "note: dropping SINK hypothesis (not provably disjoint from store):" H; clear H ]
+    end.
+  Local Ltac transport_call_extra segs W m m' MU WM ::=
+    repeat match goal with
+    | H : SINK m ?st |- _ =>
+        first [ eapply (sink_call W m m' st) in H;
+                [ | exact MU | exact WM
+                | repeat (apply Forall_cons; [ cbn [fst snd]; tslia | ]); apply Forall_nil
+                | repeat (apply Forall_cons; [ cbn [fst snd]; tslia | ]); apply Forall_nil ]
+              | idtac "note: dropping SINK hypothesis (not provably disjoint from callee footprint):" H; clear H ]
+    end.
+  Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+  Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+  Local Ltac mem_after_store ::= mem_after_store_fast.
+  Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
+  Local Ltac lia ::= lia3.
+  Ltac chk0_tac :=
+    first [ apply chkr_stack0; try unfold zrepeat; unfold zlength in *; rewrite ?repeat_length, ?Z2Nat.id by lia; lia
+          | apply chkr_fmt0; unfold zlength in *; lia
+          | apply chkr_pfx0; unfold PFX_A, zlength in *; lia
+          | apply chkr_xdig0; unfold XDIG_A, zlength in *; lia
+          | match goal with H : chkr m0 ?b ?n |- chkr m0 _ _ => apply (chkr_sub m0 b n _ _ H); unfold zlength in *; lia end ].
+  Ltac out_call :=
+    ileave; eapply implM_bind;
+    [ eapply out_callq;
+      [ match goal with H : SINK _ _ |- _ => exact H end
+      | | |
+      | match goal with H : stk _ _ _ _ |- _ => exact H end
+      | unfold ssp_cells, got_ssp, ssp_guard; split;
+        [ match goal with H : ro_cells _ _ 1486808 _ |- _ => exact H end
+        | match goal with H : ro_cells _ _ 7110312 _ |- _ => exact H end ]
+      | match goal with H : mem_inv _ _ |- _ => exact H end
+      | | | | | |
+      | match goal with H : munch _ m0 _ |- _ => exact H end
+      | match goal with H : wmono _ m0 _ |- _ => exact H end
+      | chk0_tac ]
+    | cbv beta ].
+  Ltac out_ret m :=
+    let st' := fresh "st" in intros [] st'; post_call asegs m;
+    try (let MIn := fresh "MI" in match goal with H : mem_inv _ _ |- _ => rename H into MIn end);
+    ienter;
+    try (lazymatch goal with |- evt _ _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
+           replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ lia | reflexivity ]) end).
+  Ltac fix_rsegs := idtac.
+  Ltac mseq ::= cbv delta [mkR tregs]; repeat first [ reflexivity | lazymatch goal with |- @eq Z _ _ => zl | |- @eq nat _ _ => zl end | progress f_equal ].
+  Ltac dest_tinv H body prefix :=
+    let FI := fresh "FI" in
+    destruct H as (FI & LOW & DIG & PAD & HS & APC & Hk & AOK & FPC & BODY & BRNG & BLOC & BHI & Hn & HPFX & PRNG & PF0 & PF1 & Hpl & PL2 & Hi4 & Hfl & HnI & Hnp & Hplp & BCHK);
+    pose proof FI as FI'; dest_finv FI; unfold lo_cells, ssp_guard in LOW; unfold body_loc in BLOC; unfold INT_MAX in *;
+    pose proof (zb_length body) as LB; pose proof (zb_length prefix) as LP;
+    let BB := fresh "BB" in pose proof (bytes_at_bound _ _ _ _ BODY) as BB; rewrite LB in BB.
+  Ltac mk_tinv :=
+    lazymatch goal with |- tinv ?m _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ =>
+      unfold tinv, body_loc;
+      split; [mk_finv|];
+      split; [unfold lo_cells, ssp_guard; first [hyp | hyp_cells] |];
+      split; [match goal with H : rw_cells _ m (q + -392)%Z _ |- _ => exact H end |];
+      split; [match goal with H : rw_cells _ m (q + -368)%Z _ |- _ => exact H end |];
+      split; [match goal with H : SINK m _ |- _ => exact H end |];
+      split; [match goal with H : rw_cells _ m AP _ |- _ => exact H end |];
+      split; [lia|];
+      split; [assumption|];
+      split; [assumption|];
+      split; [match goal with H : bytes_at _ m _ (zb _) |- _ => exact H end |];
+      repeat (split; [first [assumption | reflexivity | lia | zl | unfold INT_MAX in *; zl] |]); first [assumption | reflexivity | lia | zl | unfold INT_MAX in *; zl]
+    end.
+
+  Lemma star_nodigit : forall k2 ty ps n, (0 <= k2)%Z -> (k2 + 2 < zlength fmt)%Z -> conv_state (sfx (k2 + 2)) = Some (ty, ps, n) ->
+    (57 < znth fmt (k2 + 2))%Z.
+  Proof using.
+    clear -fmt. intros k2 ty ps n Hk2 Hk22 CS.
+    destruct (conv_state_cases _ _ _ _ CS) as [(t & s' & Es & NE & NL & CT & _ & _) | [(t2 & s' & Es & CZ & _ & _) | (t2 & s' & Es & CL & _ & _)]].
+    - destruct (sfx_cons_inv fmt (k2 + 2) t s' ltac:(lia) Es) as (_ & -> & _). pose proof (conv_type_range _ _ CT). lia.
+    - destruct (sfx_cons_inv fmt (k2 + 2) 122 (t2 :: s') ltac:(lia) Es) as (_ & E & _). lia.
+    - destruct (sfx_cons_inv fmt (k2 + 2) 108 (t2 :: s') ltac:(lia) Es) as (_ & E & _). lia.
+  Qed.
+
+  Lemma xp_of_p : forall p, (-2^31 <= p < 2^31)%Z ->
+    Z.lxor (Z.b2z (Z.lxor (bv_unsigned (Z_to_bv 64 (p mod 2 ^ 64))) 9223372036854775808 <? 9223372036854775808)%Z) 1 = Z.b2z (0 <=? p)%Z.
+  Proof using.
+    clear. intros p Hp. rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus. change (2 ^ Z.of_N 64)%Z with (2^64)%Z.
+    rewrite Z.mod_mod by lia. change 9223372036854775808%Z with (2^63)%Z.
+    rewrite zb_lxor_sign by (apply Z.mod_pos_bound; lia).
+    destruct (Z.leb_spec 0 p) as [H|H].
+    - rewrite (Z.mod_small p) by lia. rewrite Z.mod_small by lia.
+      replace (p + 2 ^ 63 <? 2 ^ 63)%Z with false by (symmetry; apply Z.ltb_ge; lia). reflexivity.
+    - replace (p mod 2^64)%Z with (p + 2^64)%Z by (symmetry; rewrite <- (Z.mod_add p 1 (2^64)) by lia; apply Z.mod_small; lia).
+      replace ((p + 2 ^ 64 + 2 ^ 63) mod 2 ^ 64)%Z with (p + 2^63)%Z
+        by (symmetry; rewrite <- (Z.mod_add _ (-1) (2^64)) by lia; rewrite Z.mod_small by lia; lia).
+      replace (p + 2 ^ 63 <? 2 ^ 63)%Z with true by (symmetry; apply Z.ltb_lt; lia). reflexivity.
+  Qed.
+
+  Lemma L_PRECS1 : S_PRECS1.
+  Proof using HF HA HAP LO GLO.
+    intros x1 x5 x6 x7 x10 x11 x13 x14 x15 x16 x17 x18 x19 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 Ft fc m Q k2 ty ps n pfx s2s za pl plp alo ahi j128 _
+           FI LOW Hk2 Hk22 E46 E42 CS HK.
+    pose proof FI as FI'. dest_finv FI. pose proof LOW as LOW'. unfold lo_cells, ssp_guard in LOW.
+    pose proof (star_nodigit _ _ _ _ Hk2 ltac:(zl) CS) as ND.
+    pose proof (fmt_rng (k2 + 2) ltac:(zl)) as RG2.
+    rd_fmt k2. zs. fix_u8 k2. rewrite E46. zs. zs. if_lit.
+    rd_fmt (k2 + 1)%Z. zs. fix_u8 (k2 + 1)%Z. rewrite E42. zs. zs. if_lit.
+    rd_fmt (k2 + 2)%Z. zs. fix_u8 (k2 + 2)%Z. zs. zs. zs. zs. zs. zs. brf K.
+    2:{ exfalso. try rewrite land_M64_id in K by lia. lia. }
+
+    zs. zs. if_lit. zs. zs. if_lit. zs. zs. zs. zs.
+    jump (apply HK).
+  Qed.
+
+  Lemma L_PRECS2 : S_PRECS2.
+  Proof using HF HA HAP HVA LO GLO QHI SEP_F SEP_B VAHI.
+    intros x1 x5 x6 x7 x10 x11 x13 x14 x15 x16 x17 x18 x19 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 Ft fc m Q k2 ty ps n k p w pfx s2s za pl plp alo ahi j128 _
+           FI LOW Hk2 Hk22 E46 E42 CS APC Hk NTH Hp Hw HK.
+    pose proof FI as FI'. dest_finv FI. pose proof LOW as LOW'. unfold lo_cells, ssp_guard in LOW.
+    pose proof (star_nodigit _ _ _ _ Hk2 ltac:(zl) CS) as ND.
+    pose proof (fmt_rng (k2 + 2) ltac:(zl)) as RG2.
+    assert (FPNZ : Fp <> 0%Z) by (unfold PC_DEPTH, GLOBALS_TOP in *; lia).
+    rd_fmt k2. zs. fix_u8 k2. rewrite E46. zs. zs. if_lit.
+    rd_fmt (k2 + 1)%Z. zs. fix_u8 (k2 + 1)%Z. rewrite E42. zs. zs. if_lit.
+    rd_fmt (k2 + 2)%Z. zs. fix_u8 (k2 + 2)%Z. zs. zs. zs. zs. zs. zs. brf K.
+    2:{ exfalso. try rewrite land_M64_id in K by lia. lia. }
+
+    zs. zs. if_lit. zs. zs. brf K1. { exfalso. match type of K1 with ?ty => idtac "K1:"; idtac ty end. try rewrite unsigned_lit in K1 by lia; lia. }
+    zs.   zs.
+    zs.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) => pose proof (munch_refl [(AP, AP + 8)]%Z mc) as MUA; pose proof (wmono_refl asegs mc) as WMA end.
+    zst.
+    pose proof (va_read4 _ _ _ k w _ VAA NTH Hk eq_refl) as RD4. zs.
+    zs. zs. zs.
+    rewrite (sx32_int w p Hp Hw). rewrite (xp_of_p p Hp). rewrite Z_to_bv_mod64.
+    replace (VA + 8 * k + 8)%Z with (VA + 8 * (k + 1))%Z in * by lia.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
+      jump (eapply (HK _ _ _ mc); [ mk_finv | unfold lo_cells, ssp_guard; hyp | hyp | exact MUA | exact WMA ]) end.
+  Qed.
+End PrintfCore.

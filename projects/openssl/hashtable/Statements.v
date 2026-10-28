@@ -27,8 +27,8 @@
     prediction table marks it allocated; OP_FILTER: ossl_ht_filter returns
     exactly 0 or 1 matching value as predicted. Only an empty table in a
     single-input run. [abort(); confirmed in the binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

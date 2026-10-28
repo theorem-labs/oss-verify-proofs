@@ -136,6 +136,7 @@ checks:
   what: 'canonicalisation is a fixpoint: decode(input) -> encode = buf2 (canonical form); decode(buf2)
     -> encode must give the same length and the same 32-bit xorshift checksum as buf2, for each of the
     AllTypes schemas (proto2/proto3 x static/pointer)'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzztest_io_errors

@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* SPDX-License-Identifier: Apache-2.0 *)
 (* The proofs in this file are Anthropic's; the theorem statements were issued by the task authors and are reproduced as issued (see NOTICE). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* [comment removed for export] *)
@@ -9,8 +9,23 @@ Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
 Require LinuxProcessSemantics.LinuxProcessSem.MemImageType.
 Require LinuxProcessSemantics.LinuxProcessSem.Run.
 Require OssFuzzTheorems.zstd.simple_decompress.images.Plain.
+Require OssFuzzTheorems.zstd.simple_decompress.images.Asan.
+Require OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.AsanT.BMain_top.
 Require OssFuzzTheorems.zstd.simple_decompress.images.AsanUbsan.
 Require OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.BothW.BMain_top.
+Require OssFuzzTheorems.zstd.simple_decompress.images.Ubsan.
+Require OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.UbsanMain.
+
+Theorem strong_universal_error_free_simple_decompress_asan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.simple_decompress.images.Plain.M.loaded_segments OssFuzzTheorems.zstd.simple_decompress.images.Plain.M.init_pc OssFuzzTheorems.zstd.simple_decompress.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.simple_decompress.images.Asan.M.loaded_segments OssFuzzTheorems.zstd.simple_decompress.images.Asan.M.init_pc OssFuzzTheorems.zstd.simple_decompress.images.Asan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.AsanT.BMain_top.base_asan_closed.
+Qed.
 
 Theorem strong_universal_error_free_simple_decompress_both :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
@@ -21,6 +36,17 @@ Theorem strong_universal_error_free_simple_decompress_both :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.simple_decompress.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.zstd.simple_decompress.images.AsanUbsan.M.init_pc OssFuzzTheorems.zstd.simple_decompress.images.AsanUbsan.M.phdrs).
 Proof.
   exact OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.BothW.BMain_top.base_both_closed.
+Qed.
+
+Theorem strong_universal_error_free_simple_decompress_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.simple_decompress.images.Plain.M.loaded_segments OssFuzzTheorems.zstd.simple_decompress.images.Plain.M.init_pc OssFuzzTheorems.zstd.simple_decompress.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.zstd.simple_decompress.images.Ubsan.M.loaded_segments OssFuzzTheorems.zstd.simple_decompress.images.Ubsan.M.init_pc OssFuzzTheorems.zstd.simple_decompress.images.Ubsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.UbsanMain.base_ubsan.
 Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)

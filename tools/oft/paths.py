@@ -39,7 +39,13 @@ TABLE = [
     ("hand", "toolchain/runner.Dockerfile"),
     ("hand", "tests/**"),
     ("hand", "tools/oft/**"),
+    # the scripts that carry a merged theorem-labs/oss-verify enrollment into these facts (tools/enroll/README.md),
+    # which enroll.yml and enroll-build.yml run; no check opens them, but keys.checker hashes them with the rest of
+    # tools/, so a change to them changes every part's key (keys.py)
+    ("hand", "tools/enroll/**"),
     ("hand", "analyses/harness-checks/README.md"),
+    ("hand", "analyses/failure-handlers/README.md"),
+    ("hand", "analyses/failure-handlers/failure_handlers.tsv"),
     ("hand", ".github/workflows/pr.yml"),
     ("hand", ".github/workflows/weekly.yml"),
     ("hand", ".github/workflows/release.yml"),
@@ -47,15 +53,29 @@ TABLE = [
     ("hand", ".github/workflows/fetch-drafts.yml"),
     ("hand", ".github/actions/plan-drafts/action.yml"),
     ("hand", ".github/actions/place-drafts/action.yml"),
+    ("hand", ".github/workflows/ledger.yml"),
+    # the workflow that builds the checker and runner images from toolchain/*.Dockerfile and pushes them to ghcr.io
+    ("hand", ".github/workflows/images.yml"),
     ("hand", ".github/actionlint.yaml"),
     # what an agent reads first, and the instructions it follows to add a proof
     ("hand", "AGENTS.md"),
     ("hand", ".claude/skills/adding-a-proof/SKILL.md"),
-    # the facts review: who approves a change to the facts that need judgement (in the internal repository, the code
-    # owners .github/CODEOWNERS names), and the advisory AI review that facts-review.yml runs on a facts pull request
+    # the facts review: the list of the files that need judgement or that the review agent loads (.github/CODEOWNERS),
+    # the advisory AI review that facts-review.yml runs on a facts pull request, and what that review checks
+    # (review.md)
     ("hand", ".github/CODEOWNERS"),
     ("hand", ".github/workflows/facts-review.yml"),
     ("hand", ".claude/skills/review-facts/SKILL.md"),
+    ("hand", "review.md"),
+    # the enrollment workflows: enroll.yml runs tools/enroll/ when an enrollment's checks pass and opens its facts pull
+    # request, and enroll-build.yml builds the enrollment in a run of its own; this repository alone has them, and
+    # `oft release-tree` removes them from the release
+    ("hand", ".github/workflows/enroll.yml"),
+    ("hand", ".github/workflows/enroll-build.yml"),
+    # the released-proof index: proof-index.yml runs proof-index.py when main, ossv/recipes or ossv/candidates moves,
+    # and pushes the branch proof-index; this repository alone has them, and `oft release-tree` removes them
+    ("hand", ".github/workflows/proof-index.yml"),
+    ("hand", ".github/proof-index.py"),
     # which proofs a release publishes, by fuzz target and statement; `oft release-tree` removes it from the release
     ("hand", "approvals.yaml"),
     # findings: library bugs found while proving, on the proof branch until they are public; a maintainer's or a
@@ -70,7 +90,6 @@ TABLE = [
     ("facts", "release.yaml"),
     ("facts", "NOTICE"),
     ("facts", "CHANGELOG.md"),
-    ("facts", "toolchain/toolchain.lock"),
     ("facts", "toolchain/allowed-axioms.txt"),
     ("facts", "projects/{project}/project.yaml"),
     ("facts", "projects/{project}/{harness}/harness.yaml"),

@@ -24,7 +24,7 @@ Not included: **api-driver** (held from this release).
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `fuzz_test_kem`: KEM correctness: for the fuzz-selected algorithm (all OQS_KEM_algs) and a fuzz-seeded RNG, keypair -> encaps -> decaps and the decapsulated shared secret must equal the encapsulated one byte-for-byte.
 
 ## Known issues

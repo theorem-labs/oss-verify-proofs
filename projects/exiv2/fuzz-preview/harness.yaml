@@ -223,6 +223,7 @@ checks:
   live: true
   where: source/fuzz-preview.cpp:14
   what: ImageFactory::open must never return a null image (it throws on unknown formats instead)
+failure_handlers: none
 statements:
   asan_agrees:
     kind: agreement

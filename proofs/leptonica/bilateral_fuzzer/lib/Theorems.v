@@ -15,9 +15,11 @@ Require LinuxProcessSemantics.EquivalenceDefinition.PatchClassifySpec.
 Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 Require OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Plain.
 Require OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Asan.
+Require OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Ubsan.
 Require OssFuzzTheorems.leptonica.bilateral_fuzzer.images.AsanUbsan.
 
 Require OssFuzzTheorems.Proofs.leptonica.bilateral_fuzzer.lib.Top.BaseBilateralAsan.
+Require OssFuzzTheorems.Proofs.leptonica.bilateral_fuzzer.lib.Top.BaseBilateralUbsan.
 Require OssFuzzTheorems.Proofs.leptonica.bilateral_fuzzer.lib.Top.BaseBilateralBoth.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
@@ -191,7 +193,16 @@ Definition b_bilateral_fuzzer_asan_bound_good : Q := 0%Q.
 Definition b_bilateral_fuzzer_asan_bound_diff : Q := 0%Q.
 
 
-
+Theorem strong_universal_error_free_bilateral_fuzzer_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    (LinuxProcessSemantics.LinuxProcessSem.Run.alloc_only_cfg false)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Plain.M.loaded_segments OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Plain.M.init_pc OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Ubsan.M.loaded_segments OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Ubsan.M.init_pc OssFuzzTheorems.leptonica.bilateral_fuzzer.images.Ubsan.M.phdrs).
+Proof.
+exact OssFuzzTheorems.Proofs.leptonica.bilateral_fuzzer.lib.Top.BaseBilateralUbsan.strong_universal_error_free_bilateral_fuzzer_ubsan.
+Qed.
 
 (* [comment removed for export] *)
 

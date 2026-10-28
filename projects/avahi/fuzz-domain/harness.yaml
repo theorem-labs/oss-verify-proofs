@@ -92,6 +92,7 @@ checks:
   live: true
   where: source/fuzz-domain.c:56-57
   what: for ANY input whose normalization succeeds, avahi_domain_equal(s, normalize(s)) must hold
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzz-domain

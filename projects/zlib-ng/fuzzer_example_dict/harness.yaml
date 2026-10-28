@@ -132,6 +132,7 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: true
   where: source/fuzzer_example_dict.c:61-125
   what: Every zlib call must return Z_OK (CHECK_ERR -> exit(1)); deflate(Z_FINISH) into 100+2*deflateBound
@@ -141,11 +142,13 @@ checks:
   strength: full
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
   where: source/fuzzer_example_dict.c:127-130
   what: deflateInit2 (level/windowBits/memLevel/strategy from data[0..3]) with a preset dictionary = first
     data[0] bytes of the input, then inflate supplying the dictionary on Z_NEED_DICT; output must memcmp-equal
     the input.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzzer_example_dict

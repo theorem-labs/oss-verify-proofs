@@ -1,38 +1,89 @@
 #!/usr/bin/env bash
 # Writes the comment facts-review.yml posts on a facts pull request, to standard output:
 #
-#   [HEAD_SHA=<commit>] [BASE_REF=<branch>] tools/oft/ci/facts-review-comment <review.md> [<why there is no review>]
+#   [HEAD_SHA=<commit>] [BASE_REF=<branch>] [TRIES=<lines>] [SERVED=<record>] \
+#     tools/oft/ci/facts-review-comment <review.md> [<why there is no review>]
 #
 # The comment starts with the marker the workflow finds it by, so each run replaces it. Everything this script writes
-# comes before the review's text: what was reviewed, and that the review decides nothing. The review's text comes from a
-# model that read the pull request, so it is refused if it holds what looks like a credential, it cannot open an HTML
-# comment (which could hide what follows it), and it is cut to a length GitHub takes (65,536 characters at most).
+# comes before the review's text: what was reviewed, what answered it, that the review decides nothing, and, when a
+# try of the review ended without one or the review resumed an earlier one, how each try ended (TRIES,
+# facts-review-run's tries.txt, one line a try: only lines of plain words are shown). The review's text comes from a
+# model that read the pull request, so it is refused if it holds what looks like a credential, and it cannot open an
+# HTML comment (which could hide what follows it). It is not cut here: facts-review-run cut it to review.md's 30,000
+# characters, with a line that says so, well inside the 65,536 characters GitHub takes.
+# SERVED is the record of what answered the review, which facts-review-served wrote beside it as the review agent's
+# tool reported it. The review is posted only when the record shows that the provider asked for answered every turn,
+# and the comment names each provider and model that answered, with its turns. Otherwise none of its text is posted,
+# only one line that it is not published and why, with the counts: when another provider, model or endpoint answered,
+# and when what answered is not attributable (no record, no turn, or a turn that names no provider or model). With no
+# review and a record that names no other provider or model, the comment gives the reason there is no review and what
+# answered, as the record shows it: the counts, or why they show nothing.
 set -euo pipefail
 
 review_file=${1:?usage: facts-review-comment <review.md> [<why>]}
 why=${2:-}
 marker='<!-- facts-review -->'
-limit=40000
 # A GitHub identity token (a JWT), an Anthropic token or key, a GitHub token.
 credential='eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sk-ant-[A-Za-z0-9_-]{8,}|gh[opsu]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}'
 
-review=$(cat "$review_file" 2> /dev/null || true)
-if grep -qE -- "$credential" <<< "$review"; then
+# A review that cannot be read is not an empty review: it stops the script with nothing on standard output.
+review=$(cat "$review_file") || { echo "facts-review-comment: could not read $review_file" >&2; exit 1; }
+served_status=0
+served=$(printf '%s\n' "${SERVED:-}" | "$(dirname "$0")/facts-review-served" check) || served_status=$?
+if [ -z "$served" ]; then
+  # The check could not run (its script missing, for one): nothing shows what answered.
+  served_status=3 served="facts-review-served could not check the record of what answered: it is not attributable"
+fi
+withheld=""
+if [ "$served_status" = 1 ] || { [ "$served_status" != 0 ] && [ -n "${review//[[:space:]]/}" ]; }; then
+  review="" withheld=$served
+fi
+# grep answers 1 for "no match" and 2 or more for an error it could not read past. Only the first is an answer: a
+# search that failed has not shown the text holds no credential, so nothing of it is written.
+status=0
+grep -qE -- "$credential" <<< "$review" || status=$?
+if [ "$status" = 0 ]; then
   review="" why="its text held what looks like a credential, so it was not posted"
+elif [ "$status" -gt 1 ]; then
+  echo "facts-review-comment: could not search the review for credentials (grep status $status)" >&2; exit 1
 fi
 review=${review//"<!--"/"&lt;!--"}
-if [ "${#review}" -gt "$limit" ]; then
-  review="${review:0:$limit}"$'\n\n'"(Cut at $limit characters: the rest is in the review job's log.)"
-fi
 
 of=""
 [[ ${HEAD_SHA:-} =~ ^[0-9a-f]{40}$ ]] && of=" of commit ${HEAD_SHA:0:12}"
 [[ ${BASE_REF:-} =~ ^[A-Za-z0-9._/+-]+$ ]] && of="$of against \`$BASE_REF\`"
 
+# How each try ended, when one ended without a review (a review that came on a later try, or none), or when the review
+# resumed the conversation of an earlier review, which the line names, so a reader knows this review looked only at
+# the diff since that one. One fresh try that wrote the review says nothing worth a line.
+plain='^[A-Za-z0-9 ,._()-]{1,300}$'
+tries=()
+while IFS= read -r line; do
+  if [[ $line =~ $plain ]] && [ "${#tries[@]}" -lt 10 ]; then tries+=("$line"); fi
+done <<< "${TRIES:-}"
+if [ "${#tries[@]}" -le 1 ] && [ -n "${review//[[:space:]]/}" ] && [[ ${tries[0]:-} != *"(resumed from "* ]]; then
+  tries=()
+fi
+
 printf '%s\n## Facts review\n\n' "$marker"
 if [ -n "${review//[[:space:]]/}" ]; then
-  printf '<sub>An AI review agent wrote this review%s, following `.claude/skills/review-facts/SKILL.md`. It can be wrong. It is replaced on each push, and it decides nothing: the maintainers approve the facts.</sub>\n\n' "$of"
+  # The backticks are Markdown, not a command substitution.
+  # shellcheck disable=SC2016
+  printf '<sub>An AI review agent wrote this review%s, following `review.md`. It can be wrong. It is replaced on each push, and it decides nothing: the maintainers judge the facts. Answered by %s, as the review agent'"'"'s tool reported it.</sub>\n\n' "$of" "$served"
+  if [ "${#tries[@]}" != 0 ]; then
+    printf '<sub>How each try of the review agent ended: %s' "${tries[0]}"
+    # printf repeats its format for each argument, and once with none: no "; " for a single line.
+    [ "${#tries[@]}" = 1 ] || printf '; %s' "${tries[@]:1}"
+    printf '.</sub>\n\n'
+  fi
   printf '%s\n' "$review"
+elif [ -n "$withheld" ]; then
+  printf 'The AI review agent'"'"'s review of this push%s is not published: %s. The maintainers review the facts.\n' "$of" "$withheld"
 else
-  printf 'The AI review agent did not review this push%s: %s. The maintainers review the facts.\n' "$of" "${why:-the review job failed}"
+  printf 'The AI review agent did not review this push%s: %s. What answered it, as the review agent'"'"'s tool reported it: %s. The maintainers review the facts.\n' "$of" "${why:-the review job failed}" "$served"
+fi
+# With no review, how each try ended, whether the review was not published or did not finish.
+if [ -z "${review//[[:space:]]/}" ] && [ "${#tries[@]}" != 0 ]; then
+  printf '\nHow each try of the review agent ended:\n\n'
+  printf -- '- %s\n' "${tries[@]}"
 fi

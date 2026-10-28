@@ -17,7 +17,7 @@ Built from snappy 1.3.1 (commit `9c28114a`).
 - **`<build>_halts`**: on every input on which the build is never refused memory for exceeding 16 GiB (a premise: an input that needs more is not covered), and when the environment refuses nothing it is not forced to, every execution exits with status 0 or 2, without crashing, failing an assertion, hanging or tripping its sanitizer.
 - **`<build>_agrees`**: on every input on which the plain build is never refused memory for exceeding its budget (a premise), neither build reaches an error, and the two have the same set of observable behaviours: every sequence of writes and exit status one can show, the other can too. A sanitizer report aborts, so this rules out every error the sanitizer build's configuration detects. It does not rule out a run that never ends; only a halts statement does.
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `snappy_compress_fuzzer`: the size returned by Compress equals the size of the output string it wrote; compressed length never exceeds the documented worst-case bound MaxCompressedLength(input.size()); the just-produced compressed buffer is accepted by the validator IsValidCompressedBuffer; for every compression level MinCompressionLevel()..MaxCompressionLevel(): Uncompress(Compress(input, level)) == input, full std::string equality.
 
 ## Known issues

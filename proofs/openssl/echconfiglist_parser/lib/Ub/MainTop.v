@@ -206,8 +206,8 @@ Section Top.
       pose proof HBR2 as (C1 & C2 & C3 & C4 & C5). clear C2.
       assert (HWR2 : wr_at usegs mem2 A 65536) by (eapply (wr_at_of_CB sp0); [exact CB2 | lia]).
       pose proof (KEPT2 2%bv ltac:(clear; cbn; tauto)) as S2. pose proof (KEPT2 4%bv ltac:(clear; cbn; tauto)) as S4.
-      pose proof (KEPT2 8%bv ltac:(clear; cbn; tauto)) as S8. pose proof (KEPT2 18%bv ltac:(clear; cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]))) as S18.
-      pose proof (KEPT2 20%bv ltac:(clear; cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]))) as S20. pose proof (KEPT2 21%bv ltac:(clear; cbn; (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto]))) as S21.
+      pose proof (KEPT2 8%bv ltac:(clear; cbn; tauto)) as S8. pose proof (KEPT2 18%bv ltac:(clear; cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]))) as S18.
+      pose proof (KEPT2 20%bv ltac:(clear; cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]))) as S20. pose proof (KEPT2 21%bv ltac:(clear; cbn; (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto]))) as S21.
       rewrite Q2 in S2. rewrite Q4 in S4. rewrite Q8 in S8. rewrite Q18 in S18. rewrite Q20 in S20. rewrite Q21 in S21.
       assert (ABOVE2 : forall x : word, bv_unsigned sp0 <= bv_unsigned x -> mem2 x = M x).
       { intros x Hx. rewrite <- (Z_to_bv_bv_unsigned x). rewrite <- wa_eq. apply (proj1 (HP2 _ (u64_range x) ltac:(left; lia))). }

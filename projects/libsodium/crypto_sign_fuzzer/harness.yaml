@@ -147,6 +147,7 @@ checks:
   where: source/crypto_sign_fuzzer.cc:54-68
   what: Multi-part (Ed25519ph) signature built with init/update(two halves)/final_create must verify with
     a fresh init/update(same halves)/final_verify.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: crypto_sign_fuzzer

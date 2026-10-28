@@ -10,7 +10,9 @@ Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 Require OssFuzzTheorems.openssl.echconfiglist_parser.images.Plain.
 Require OssFuzzTheorems.openssl.echconfiglist_parser.images.Asan.
 Require OssFuzzTheorems.openssl.echconfiglist_parser.images.Ubsan.
+Require OssFuzzTheorems.openssl.echconfiglist_parser.images.AsanUbsan.
 From OssFuzzTheorems.Proofs.openssl.echconfiglist_parser.lib Require EchTop EchTopAsan.
+Require OssFuzzTheorems.Proofs.openssl.echconfiglist_parser.lib.Both.EchTopAsan.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
   Definition cfg := LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true.
@@ -318,6 +320,17 @@ Theorem strong_universal_error_free_echconfiglist_parser_ubsan :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.echconfiglist_parser.images.Ubsan.M.loaded_segments OssFuzzTheorems.openssl.echconfiglist_parser.images.Ubsan.M.init_pc OssFuzzTheorems.openssl.echconfiglist_parser.images.Ubsan.M.phdrs).
 Proof.
   exact OssFuzzTheorems.Proofs.openssl.echconfiglist_parser.lib.EchTop.strong_universal_error_free_echconfiglist_parser_ubsan.
+Qed.
+
+Theorem strong_universal_error_free_echconfiglist_parser_both :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.echconfiglist_parser.images.Plain.M.loaded_segments OssFuzzTheorems.openssl.echconfiglist_parser.images.Plain.M.init_pc OssFuzzTheorems.openssl.echconfiglist_parser.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.openssl.echconfiglist_parser.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.openssl.echconfiglist_parser.images.AsanUbsan.M.init_pc OssFuzzTheorems.openssl.echconfiglist_parser.images.AsanUbsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.openssl.echconfiglist_parser.lib.Both.EchTopAsan.strong_universal_error_free_echconfiglist_parser_asan.
 Qed.
 
 (* [comment removed for export] *)

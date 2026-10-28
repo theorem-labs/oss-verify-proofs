@@ -3,7 +3,7 @@ import argparse
 import os
 import sys
 
-from . import approvals, check, fetch, generate, ledger, lint, release_tree, revisions
+from . import approvals, check, fetch, generate, ledger, lint, plan, release_tree, revisions
 
 
 def _root(a):
@@ -30,8 +30,12 @@ def cmd_lint(a):
     if a.changed:
         with open(a.changed, encoding="utf-8") as f:
             changed = [l.strip() for l in f if l.strip()]
-    found = lint.run(_root(a), changed=changed, pr_kind=a.pr_kind, base=a.base, skeleton=a.skeleton, release=a.release,
-                     changed_only=a.changed_only, jobs=a.jobs)
+    try:
+        found = lint.run(_root(a), changed=changed, pr_kind=a.pr_kind, base=a.base, skeleton=a.skeleton,
+                         release=a.release, changed_only=a.changed_only, jobs=a.jobs)
+    except lint.ChangedOnlyError as e:
+        print("FAIL oft lint --changed-only: %s" % e)
+        return 1
     for f in found:
         print(f)
     print("oft lint: %d finding(s)" % len(found))
@@ -51,8 +55,7 @@ def cmd_ledger(a):
 
 
 def cmd_fetch(a):
-    return fetch.fetch(_root(a), a.projects, source=a.source, all_projects=a.all, only_check_assets=a.assets_only,
-                       release=a.release, listing=a.list, findings=a.findings)
+    return fetch.cli(_root(a), a)
 
 
 def cmd_verify_sha(a):
@@ -60,12 +63,19 @@ def cmd_verify_sha(a):
 
 
 def cmd_check(a):
-    return check.run(_root(a), a.units, parts=a.parts, allowed=a.allowed, qemu=a.qemu,
-                     timeout=a.timeout, rocqchk=a.rocqchk, record=a.record)
+    return check.cli(_root(a), a)
 
 
 def cmd_plan(a):
-    return check.plan(_root(a), a.changed, a.max_jobs)
+    units = None
+    if a.units:
+        with open(a.units, encoding="utf-8") as f:
+            units = {l.strip() for l in f if l.strip()}
+    if a.explain:
+        return plan.explain(_root(a), a.explain, change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools,
+                            store=a.store, rocqchk=a.rocqchk)
+    return plan.plan(_root(a), change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools, store=a.store,
+                     units=units, max_jobs=a.max_jobs, rocqchk=a.rocqchk)
 
 
 def cmd_release_tree(a):
@@ -74,8 +84,11 @@ def cmd_release_tree(a):
 
 def cmd_approvals(a):
     return approvals.write(_root(a), a.list, approved_by=a.approved_by, date=a.date)
+
+
 def cmd_revisions(a):
-    return revisions.run(_root(a), os.path.abspath(a.previous), write_pins=a.write_pins)
+    return revisions.run(_root(a), os.path.abspath(a.previous), write_pins=a.write_pins,
+                         earlier=[os.path.abspath(p) for p in a.earlier])
 
 
 def main(argv=None):
@@ -98,11 +111,13 @@ def main(argv=None):
                     help="what only a release must satisfy: no placeholder digest or commit (all zeros)")
     li.add_argument("--changed-only", metavar="BASE",
                     help="run the per-file text rules only over the files that differ from commit BASE, or over "
-                         "every file when a fact (a file tools/oft/paths.py classes as facts) or a finding's "
-                         "finding.yaml differs from it (the rules over the whole tree still run)")
+                         "every file when a fact (a file tools/oft/paths.py classes as facts), a finding's "
+                         "finding.yaml, a .gitattributes, tools/oft/lint-exceptions.yaml or the running tools "
+                         "differ from it (the rules over the whole tree still run); --root must be the top of a "
+                         "git checkout")
     li.add_argument("--jobs", type=_processes,
                     help="processes for the per-file text rules, 1 or more (default: every CPU this process may "
-                         "run on)")
+                         "run on, for %d files or more to read)" % lint.PARALLEL_FILES)
     li.set_defaults(fn=cmd_lint)
 
     le = sub.add_parser("ledger", help="the findings ledger over a change's history: every record a commit had from "
@@ -112,16 +127,7 @@ def main(argv=None):
     le.set_defaults(fn=cmd_ledger)
 
     f = sub.add_parser("fetch", help="download a project's binaries and check every SHA-256")
-    f.add_argument("projects", nargs="*")
-    f.add_argument("--all", action="store_true", help="every available project")
-    f.add_argument("--source", help="a directory or URL prefix to take the release assets from")
-    f.add_argument("--assets-only", action="store_true",
-                   help="check every archive's SHA-256 (binaries and source) without unpacking")
-    f.add_argument("--release", help="only the projects whose assets are attached to this release tag")
-    f.add_argument("--list", action="store_true", help="print <release> <file> <sha256> per asset; fetch nothing")
-    f.add_argument("--findings", action="store_true",
-                   help="the unpatched binaries the projects' findings run on (findings/<p>/unpatched.yaml), into "
-                        "findings/<p>/bin/")
+    fetch.add_arguments(f)
     f.set_defaults(fn=cmd_fetch)
 
     v = sub.add_parser("verify-sha", help="check fetched binaries against harness.yaml")
@@ -129,20 +135,24 @@ def main(argv=None):
     v.set_defaults(fn=cmd_verify_sha)
 
     c = sub.add_parser("check", help="build and check statements, proofs and counterexamples")
-    c.add_argument("units", nargs="+", metavar="PROJECT/HARNESS")
-    c.add_argument("--parts", default="statements,proofs,counterexamples")
-    c.add_argument("--allowed", default="toolchain/allowed-axioms.txt")
-    c.add_argument("--qemu", default="qemu-riscv64")
-    c.add_argument("--timeout", type=int, default=600, help="seconds per counterexample or finding run")
-    c.add_argument("--rocqchk", action="store_true",
-                   help="also re-check the compiled libraries with rocqchk (slow: hours for a large proof)")
-    c.add_argument("--record", action="store_true",
-                   help="with --parts findings: run each finding that has no runs yet and print them, to commit")
+    check.add_arguments(c)
     c.set_defaults(fn=cmd_check)
 
-    pl = sub.add_parser("plan", help="the harnesses a change affects, as JSON for CI")
-    pl.add_argument("--changed", required=True, help="a file listing the changed paths")
+    pl = sub.add_parser("plan", help="the parts of units a CI run checks, as JSON for its job matrix")
+    pl.add_argument("--change", default="HEAD",
+                    help="the commit whose proofs/, counterexamples/ and findings/ are checked (default: HEAD)")
+    pl.add_argument("--base", help="the commit the change is judged against: a part whose key is the base's is not "
+                                   "checked (default: none, every part with no recorded pass is)")
+    pl.add_argument("--pr-kind", choices=plan.KINDS, default="release",
+                    help="the kind of change (pr.yml's KIND): for maintainer and contributor the statements are the "
+                         "base's, as pr.yml's check job takes them (default: release, the change's own)")
+    pl.add_argument("--tools", help="the commit of the tools the check jobs run (default: --base, else --change)")
+    pl.add_argument("--store", help="a commit of the branch check-results; without it nothing is recorded")
+    pl.add_argument("--units", metavar="FILE", help="only the units FILE lists, one per line")
     pl.add_argument("--max-jobs", type=int, default=20)
+    pl.add_argument("--rocqchk", action="store_true", help="the check jobs run rocqchk")
+    pl.add_argument("--explain", metavar="PROJECT/HARNESS",
+                    help="print each part of one unit, whether it is checked and why, and every input of its key")
     pl.set_defaults(fn=cmd_plan)
 
     rt = sub.add_parser("release-tree", help="keep only the proofs approvals.yaml lists, in place, and render again")
@@ -159,6 +169,10 @@ def main(argv=None):
     r.add_argument("previous", help="a checkout of the previous release")
     r.add_argument("--write-pins", action="store_true",
                    help="set the pin of each proof that carries forward to its statement's fingerprint here")
+    r.add_argument("--earlier", nargs="+", default=[], metavar="OLDER",
+                   help="checkouts of the releases before the previous one, strictly newest first (by date, then by "
+                        "release): a statement the previous release left out (held or private) is compared with the "
+                        "newest of them that has it")
     r.set_defaults(fn=cmd_revisions)
 
     a = p.parse_args(argv)

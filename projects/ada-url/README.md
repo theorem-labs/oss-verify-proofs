@@ -28,7 +28,7 @@ Not included: **api-driver** (held from this release); **url_pattern** (not buil
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `parse`: all ten components (protocol, href, hostname, pathname, search, hash, port, username, password, host) are equal between ada::url and ada::url_aggregator (asserts at 287-304). After set_href(source) on both, ONLY href is compared again (assert at 313), not the other nine components.
 - `serializers`: is_normalized_windows_drive_letter(s) implies is_windows_drive_letter(s).
 - `unicode`: per-byte classification subset laws: forbidden_host => forbidden_domain, ascii_digit => ascii_hex_digit, lowercase_hex => ascii_hex_digit, and convert_hex_to_binary(c) <= 15 for hex digits; is_double_dot_path_segment and is_single_dot_path_segment are never both true; length/position bounds: prune_hash, trim_c0_whitespace and remove_ascii_tab_or_newline never lengthen; find_authority_delimiter(_special) and get_host_delimiter_location return positions <= size.

@@ -21,8 +21,12 @@ a failed check traps), `asan` (AddressSanitizer; a report aborts) and
 harnesses have only `plain` and one sanitizer build. In a Rust harness, `ubsan`
 means rustc's UB checks, whose failure exits with status 79 after naming its
 source location on standard error, with UndefinedBehaviorSanitizer only in the
-C code its crates build. [building.md](building.md) gives the flags of each
-build and the checks it makes.
+C code its crates build. In a Python harness, the sanitizers instrument the C
+code: CPython, which runs the Python code as bytecode, the port's interpreter
+host and the driver. There an uncaught Python exception other than a
+`SystemExit` or a `MemoryError`, a failed check of the harness included, exits
+with status 79 after naming its source line on standard error.
+[building.md](building.md) gives the flags of each build and the checks it makes.
 
 Statements quantify over every valid process input (the arguments, the
 environment, the file system, standard input, the identities and the limits)
@@ -85,8 +89,11 @@ build uses at most 16 GiB.
 
 Where the harness checks a property, the check is in the binary, and a failed
 check ends the process, a proof of its halts statement proves that property for
-every input that the statement covers. The harness README says which checks
-are seen in the binary.
+every input that the statement covers. The harness README names the checks
+this covers: those seen in the binary, that no linked code can end with a status
+of its own, and, where the check fails by calling `exit()`, whose `exit()`
+reaches the driver's guard ([facts.md](facts.md), "A check" and "Failure
+handlers").
 
 `plain_halts_may_fail` (shape `halts_may_fail`) is stronger in one way. Every
 execution exits, with any status, even when the environment may refuse any
@@ -97,6 +104,8 @@ be false for a reason that has nothing to do with the harness. Many harnesses
 abort on purpose when an allocation fails. Their agreement statements use the
 alloc-forced-only variant below, and most of them have no `_halts_may_fail`
 statement.
+So does every Python harness: CPython ends with `abort()` (a fatal error) when
+some allocations it makes while it starts are refused.
 
 ## Agreement: `<build>_agrees`
 
@@ -113,7 +122,11 @@ whatever the environment refuses in either build:
 A sanitizer report ends the process, so a proof rules out every error that the
 sanitizer build detects ([building.md](building.md)). The plain build's budget
 is 2 GiB in a statement about an ASan build, and 16 GiB in a statement about
-the UBSan build. The sanitizer build may use 512 GiB and has no premise.
+the UBSan build. The sanitizer build may use 512 GiB and has no premise. A
+project may set its own pair for a sanitizer instead (project.yaml `budgets`,
+[facts.md](facts.md)): the statement's term then carries the two sizes, and its
+text names both. Two agrees statements with different budgets claim different
+things: compare the budgets before you compare the statements.
 
 The statement does not say two things. It compares sets of behaviours, not two
 runs in lockstep. And a trace is finite, so a run that never ends shows only
@@ -125,7 +138,7 @@ Some harnesses are stated in a variant. The statement's docstring names it.
 | variant | shape | LPS definition | what changes |
 |---|---|---|---|
 | none | `agrees` | `strong_universal_error_free_T_budgets` | The environment may refuse every kind of call that LPS lets fail, at any time ([semantics.md](semantics.md#vocabulary)). |
-| alloc-forced-only | `agrees_in Env.alloc_forced_only` | `strong_universal_error_free_T_scfg_budgets` | The same, except that a memory request is refused only when the budget is spent or no address range is free. Without it, a harness whose own code aborts when an allocation fails would make the statement false, for a reason that has nothing to do with the sanitizer. It is also used for the AddressSanitizer pairs of a Rust fuzz target: the port's allocation-failure hook writes the failed allocation's size and exits with status 2, and ASan's allocator asks the kernel for memory at other allocations than musl's does, so the two builds, refused at will, could write different lines. |
+| alloc-forced-only | `agrees_in Env.alloc_forced_only` | `strong_universal_error_free_T_scfg_budgets` | The same, except that a memory request is refused only when the budget is spent or no address range is free. Without it, a harness whose own code aborts when an allocation fails would make the statement false, for a reason that has nothing to do with the sanitizer. It is also used for a Python fuzz target, whose interpreter can abort the same way while it starts, and for the AddressSanitizer pairs of a Rust fuzz target: the port's allocation-failure hook writes the failed allocation's size and exits with status 2, and ASan's allocator asks the kernel for memory at other allocations than musl's does, so the two builds, refused at will, could write different lines. |
 | abort read as SIGABRT | `agrees_abort_modelled`, `agrees_in_abort_modelled` | the `_abort` variants | LPS reads `abort()` as death by a signal, not as a step that LPS does not cover. The statement still forbids it. It is used for harnesses (most of them C++) where an uncaught exception reaches `abort()` through the C++ runtime. |
 | RV64GC | the `_rv64gc` shapes (this release uses `agrees_abort_modelled_rv64gc`) | the `_hwcap_rv64gc` variants, for the agreement and classifier shapes | The process is told that its machine has no vector unit. It is used for binaries that take vector code paths when the processor advertises the vector extension. |
 
@@ -174,6 +187,14 @@ inputs turns the question "how often do the builds disagree?" into "how often
 does this program reject an input from the distribution?". That is the route to
 a bound, and a decidability proof that exhibits such a program is its first
 step.
+
+## A Go fuzz target's one statement
+
+A Go fuzz target is the exception to the build and statement counts above: it
+has the plain build only, so its one statement is `plain_halts`, with the exit
+set {0, 2} and no `_halts_may_fail`, agreement, bound or decidability
+statement; `oft lint` refuses any other
+([building.md](building.md#go-fuzz-targets)).
 
 ## Names, identifiers and revisions
 

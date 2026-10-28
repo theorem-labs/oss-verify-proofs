@@ -14,6 +14,7 @@ Require LinuxProcessSemantics.EquivalenceDefinition.PatchClassifySpec.
 Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 Require OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Plain.
 Require OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Asan.
+Require OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Ubsan.
 Require OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.AsanUbsan.
 
 Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmHaltsPlainC.
@@ -21,6 +22,7 @@ Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmCasanBase
 Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmCbothBase.
 Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmHaltsAsanC.
 Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmHaltsBothC.
+Require OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmCubsanBase.
 
 Module SpuriousCfgM <: LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SPURIOUS_CFG.
   Definition cfg := LinuxProcessSemantics.LinuxProcessSem.Run.mkSpuriousCfg false true true true true true.
@@ -98,4 +100,15 @@ Theorem halts_allowed_jsoncons_fuzz_json_cursor_halts_both :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.AsanUbsan.M.init_pc OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.AsanUbsan.M.phdrs).
 Proof.
 exact (OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmHaltsBothC.PmHaltsBothC.halts_both).
+Qed.
+
+Theorem strong_universal_error_free_fuzz_json_cursor_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
+    SpuriousCfgM.cfg
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Plain.M.loaded_segments OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Plain.M.init_pc OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Ubsan.M.loaded_segments OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Ubsan.M.init_pc OssFuzzTheorems.jsoncons.fuzz_json_cursor.images.Ubsan.M.phdrs).
+Proof.
+exact (OssFuzzTheorems.Proofs.jsoncons.fuzz_json_cursor.lib.PmInteg.PmCubsanBase.PmCubsanBase.base_abort).
 Qed.

@@ -36,8 +36,8 @@
     (d) Meshlet vertex round trip: 32-bit vertex references decode back exactly,
     and the 16-bit decode equals the low 16 bits of each input reference
     [assert(); confirmed in the binary]
-    Each check was confirmed in the binary (its assertion text or message is in
-    the binary's bytes), so a failed one ends the process as marked.
+    Each check was confirmed in the binary: its assertion text or message is in
+    the binary's bytes.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

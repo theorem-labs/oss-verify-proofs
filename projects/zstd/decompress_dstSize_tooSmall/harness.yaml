@@ -141,6 +141,7 @@ checks:
   where: source/decompress_dstSize_tooSmall.c:56-64
   what: 'Compress the input at level 1, then decompress into a buffer strictly smaller than the input:
     must fail, and with exactly ZSTD_error_dstSize_tooSmall (empty input: must return 0).'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: decompress_dstSize_tooSmall

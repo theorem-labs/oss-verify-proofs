@@ -1,0 +1,273 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1cd X1bu X1cf X1cc X1c8 X1bs X1c2 X1bn X1bj.
+From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Ubsan.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Agent Require Import X0qb X0pc X0qc X0py X0qp X0pw X0pf X0qq.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Spec Require Import X1ra X1qu X1qv X1qx X1r3 X1r4.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.U Require Import X1m2 X1m3 X1lz X1m5.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Agent Require X0q8.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1bl.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1bv.
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+
+Lemma rregion_addr_facts {RCEIL : RunCeiling} : forall st m rid r,
+rmrep st m -> (s_regions st) !! rid = Some r ->
+4096 <= r_base r /\ r_base r mod 4096 = 0 /\ r_base r + round_up_pg (r_len r) <= alloc_ceiling
+/\ (0 < round_up_pg (r_len r) -> r_base r + round_up_pg (r_len r) <= 0x10000 \/ 0x6e000 <= r_base r).
+Proof.
+intros st m rid r (WF & _) Hr. pose proof WF as (_ & WR & _).
+first [ pose proof (WR rid r Hr) as sfP_; sf_destruct 5%nat sfP_ as RB0 RBAL RL0 RBC RFr | sf_fb; destruct (WR rid r Hr) as (RB0 & RBAL & RL0 & RBC & RFr) ].
+split; [|split; [exact RBAL| split; [exact RBC| intros Hn; exact (rreserved_disjoint1 _ _ RFr Hn)]]].
+clear RFr. Z.div_mod_to_equations. lia.
+Qed.
+
+Lemma rblock_inside {RCEIL : RunCeiling} st LB m blk :
+MFACTS_g (resv:=ref_reserved) st LB -> rmrep st m -> In blk LB ->
+exists r g idx, (s_regions st) !! (fst (blk_slot blk)) = Some r /\ r_kind r = RKGroup
+/\ (s_slots st) !! (blk_slot blk) = Some (g, idx)
+/\ r_base r <= blk_addr blk /\ blk_addr blk + blk_size blk <= r_base r + round_up_pg (r_len r)
+/\ 0 <= blk_size blk
+/\ 4096 <= r_base r /\ r_base r + round_up_pg (r_len r) <= alloc_ceiling
+/\ (r_base r + round_up_pg (r_len r) <= 0x10000 \/ 0x6e000 <= r_base r).
+Proof.
+intros MF MR IN.
+pose proof (proj1 (List.Forall_forall _ _) (mf_blocks _ _ MF) blk IN) as [BS BR BZ].
+first [ sf_destruct 7%nat BS as g idx SL _ _ IDX (off & OFF0 & EA & FIT) | sf_fb; destruct BS as (g & idx & SL & _ & _ & IDX & (off & OFF0 & EA & FIT)) ].
+destruct BR as (r & Hr & Hk).
+pose proof (mf_slots _ _ MF (blk_slot blk) g idx SL) as sfP_; first [ sf_destruct 5%nat sfP_ as b Hm Efst Esnd _ | sf_fb; destruct sfP_ as (b & Hm & Efst & Esnd & _) ].
+change (get_meta_rec (strip st) g) with (get_meta_rec st g) in Hm, Esnd.
+pose proof (mf_gmeta _ _ MF g b Hm) as FG. change (get_meta_rec (strip st) g) with (get_meta_rec st g) in FG. cbv zeta in FG.
+first [ sf_destruct 11%nat FG as _ _ _ LI _ _ _ _ (r' & Hr' & _ & B0 & _ & SPAN) S16 _ | sf_fb; destruct FG as (_ & _ & _ & LI & _ & _ & _ & _ & (r' & Hr' & _ & B0 & _ & SPAN) & S16 & _) ].
+change (s_regions (strip st)) with (s_regions st) in Hr'. rewrite <- Efst in Hr'. rewrite Hr in Hr'. inversion Hr'; subst r'. clear Hr'.
+pose proof (rregion_addr_facts st m _ r MR Hr) as sfP_; first [ sf_destruct 4%nat sfP_ as R4 _ RC RI1 | sf_fb; destruct sfP_ as (R4 & _ & RC & RI1) ].
+first [ unshelve sf_eexists 3%nat; [ exact (r) | exact (g) | exact (idx) | ] | sf_fb; exists r, g, idx ]. split; [exact Hr|]. split; [exact Hk|]. split; [exact SL|].
+pose proof (round_up_pg_ge (r_len r)) as RU.
+rewrite (conc_region' st (blk_slot blk) r Hr) in EA.
+unfold sstart_of in Esnd, SPAN. rewrite Hm in Esnd, SPAN. cbn [default from_option id snd] in Esnd, SPAN. unfold UNIT, IB in *.
+assert (SK : 0 <= get_stride (get_meta_rec st g) * idx) by (apply Z.mul_nonneg_nonneg; lia).
+assert (SKL : get_stride (get_meta_rec st g) * idx + get_stride (get_meta_rec st g) <= get_stride (get_meta_rec st g) * (m_last_idx (get_meta_rec st g) + 1)).
+{ rewrite Z.mul_add_distr_l, Z.mul_1_r. apply Z.add_le_mono_r. apply Z.mul_le_mono_nonneg_l; lia. }
+rewrite Esnd in EA. unfold alloc_ceiling in *.
+assert (RP : 0 < round_up_pg (r_len r)) by lia. specialize (RI1 RP). lia.
+Qed.
+
+Lemma RHEAP_blocks_nodup_proof {RCEIL : RunCeiling} : forall s LB m, RHEAP s LB m -> List.NoDup (map blk_id LB).
+Proof.
+intros s LB m sfH_; first [ sf_destruct 6%nat sfH_ as st LB0 HP _ _ [[_ AR] _] | sf_fb; destruct sfH_ as (st & LB0 & HP & _ & _ & [[_ AR] _]) ]. pose proof (mf_nodup _ _ (X0q8.areach_facts_proof _ _ AR)) as ND.
+eapply Permutation_NoDup; [apply Permutation_map; exact HP|].
+clear -ND. induction LB0 as [|b LB0 IH]; cbn in *; [constructor|].
+inversion ND; subst. constructor; [|apply IH; assumption].
+intros HI. apply H1. apply in_map_iff in HI. destruct HI as (b' & E & HI'). apply in_map_iff. exists b'. split; [|exact HI'].
+unfold blk_slot, blk_id in *. rewrite E. reflexivity.
+Qed.
+
+Lemma RHEAP_block_range_proof {RCEIL : RunCeiling} : forall s LB m b, RHEAP s LB m -> In b LB -> rblock_range (blk_addr b) (blk_size b).
+Proof.
+intros s LB m b sfH_; first [ sf_destruct 6%nat sfH_ as st LB0 HP _ MR [[_ AR] _] | sf_fb; destruct sfH_ as (st & LB0 & HP & _ & MR & [[_ AR] _]) ]; intros HIN. pose proof (X0q8.areach_facts_proof _ _ AR) as MF.
+assert (IN0 : In b LB0) by (eapply Permutation_in; [apply Permutation_sym; exact HP| exact HIN]).
+first [ pose proof (rblock_inside st LB0 m b MF MR IN0) as sfP_; sf_destruct 12%nat sfP_ as r g idx Hr Hk SL LOB HIB BZ R4 RC RI1 | sf_fb; destruct (rblock_inside st LB0 m b MF MR IN0) as (r & g & idx & Hr & Hk & SL & LOB & HIB & BZ & R4 & RC & RI1) ].
+pose proof (proj1 (List.Forall_forall _ _) (mf_blocks _ _ MF) b IN0) as [BS BR _].
+first [ sf_destruct 7%nat BS as g' idx' SL' _ _ _ (off & OFF0 & EA & FIT) | sf_fb; destruct BS as (g' & idx' & SL' & _ & _ & _ & (off & OFF0 & EA & FIT)) ]. rewrite SL in SL'. inversion SL'; subst g' idx'. clear SL'.
+pose proof (mf_slots _ _ MF (blk_slot b) g idx SL) as sfP_; first [ sf_destruct 5%nat sfP_ as bb Hm Efst Esnd IDX | sf_fb; destruct sfP_ as (bb & Hm & Efst & Esnd & IDX) ].
+change (get_meta_rec (strip st) g) with (get_meta_rec st g) in Hm, Esnd, IDX.
+pose proof (mf_gmeta _ _ MF g bb Hm) as FG. change (get_meta_rec (strip st) g) with (get_meta_rec st g) in FG. cbv zeta in FG.
+first [ sf_destruct 12%nat FG as _ _ _ LI _ _ _ _ (r' & Hr' & _ & B0 & B16 & SPAN) S16 SMOD _ | sf_fb; destruct FG as (_ & _ & _ & LI & _ & _ & _ & _ & (r' & Hr' & _ & B0 & B16 & SPAN) & S16 & SMOD & _) ].
+change (s_regions (strip st)) with (s_regions st) in Hr'. rewrite <- Efst in Hr'. rewrite Hr in Hr'. inversion Hr'; subst r'. clear Hr'.
+pose proof MR as (WF & _). pose proof WF as (_ & WR & _). first [ pose proof (WR _ _ Hr) as sfP_; sf_destruct 5%nat sfP_ as RB0 RAL _ RC' RF | sf_fb; destruct (WR _ _ Hr) as (RB0 & RAL & _ & RC' & RF) ].
+unfold sstart_of in SPAN. rewrite Hm in SPAN. cbn [default from_option id snd] in SPAN. unfold UNIT in SPAN, S16.
+assert (32 <= round_up_pg (r_len r)) by nia.
+unfold rblock_range. unfold alloc_ceiling in *. split; [lia|]. split; [|lia].
+rewrite EA. rewrite (conc_region' st (blk_slot b) r Hr). rewrite Esnd. unfold sstart_of. rewrite Hm. cbn [default from_option id snd].
+replace (r_base r + (snd bb + UNIT + get_stride (get_meta_rec st g) * idx) + UNIT * off)
+with (r_base r + snd bb + 16 + get_stride (get_meta_rec st g) * idx + 16 * off) by (unfold UNIT; lia).
+apply (mod16_slot (r_base r) (snd bb) (get_stride (get_meta_rec st g)) idx off); try assumption; lia.
+Qed.
+
+Lemma RHEAP_blocks_disjoint_proof {RCEIL : RunCeiling} : forall s LB m b1 b2,
+RHEAP s LB m -> In b1 LB -> In b2 LB -> blk_id b1 <> blk_id b2 ->
+blk_addr b1 + blk_size b1 <= blk_addr b2 \/ blk_addr b2 + blk_size b2 <= blk_addr b1.
+Proof.
+intros s LB m b1 b2 sfH_; first [ sf_destruct 6%nat sfH_ as st LB0 HP _ MR [[_ AR] _] | sf_fb; destruct sfH_ as (st & LB0 & HP & _ & MR & [[_ AR] _]) ]; intros I1 I2 NE. pose proof (X0q8.areach_facts_proof _ _ AR) as MF.
+assert (IN1 : In b1 LB0) by (eapply Permutation_in; [apply Permutation_sym; exact HP| exact I1]).
+assert (IN2 : In b2 LB0) by (eapply Permutation_in; [apply Permutation_sym; exact HP| exact I2]).
+destruct (decide (blk_slot b1 = blk_slot b2)) as [ES|NS].
+- exfalso. apply NE. pose proof (mf_nodup _ _ MF) as ND.
+clear -ND IN1 IN2 ES. induction LB0 as [|b LB0 IH]; [destruct IN1|]. cbn in ND. inversion ND; subst.
+destruct IN1 as [->|IN1], IN2 as [->|IN2]; [reflexivity| | | apply IH; assumption].
++ exfalso. apply H1. rewrite ES. apply in_map_iff. exists b2; auto.
++ exfalso. apply H1. rewrite <- ES. apply in_map_iff. exists b1; auto.
+- destruct (N.eq_dec (fst (blk_slot b1)) (fst (blk_slot b2))) as [EF|NF].
++ exact (mf_blocks_disjoint _ _ MF b1 b2 IN1 IN2 EF NS).
++ first [ pose proof (rblock_inside st LB0 m b1 MF MR IN1) as sfP_; sf_destruct 9%nat sfP_ as r1 g1 i1 Hr1 Hk1 _ LO1 HI1 _ | sf_fb; destruct (rblock_inside st LB0 m b1 MF MR IN1) as (r1 & g1 & i1 & Hr1 & Hk1 & _ & LO1 & HI1 & _) ].
+first [ pose proof (rblock_inside st LB0 m b2 MF MR IN2) as sfP_; sf_destruct 9%nat sfP_ as r2 g2 i2 Hr2 Hk2 _ LO2 HI2 _ | sf_fb; destruct (rblock_inside st LB0 m b2 MF MR IN2) as (r2 & g2 & i2 & Hr2 & Hk2 & _ & LO2 & HI2 & _) ].
+pose proof MR as (WF & _). pose proof WF as sfP_; first [ sf_destruct 4%nat sfP_ as _ _ DJ _ | sf_fb; destruct sfP_ as (_ & _ & DJ & _) ].
+pose proof (lr_lo_group r1 Hk1). pose proof (lr_lo_group r2 Hk2).
+destruct (DJ _ _ _ _ Hr1 Hr2 NF); lia.
+Qed.
+
+Lemma RHEAP_top_known_proof {RCEIL : RunCeiling} : forall s LB m (p : bptr) A n,
+RHEAP s LB m -> In (p, A, n) LB -> RBIG <= n -> rtop_known s p.
+Proof.
+intros s LB m p A n sfH_; first [ sf_destruct 8%nat sfH_ as st LB0 HP _ MR [_ AR] _ (GK & GE & GB) | sf_fb; destruct sfH_ as (st & LB0 & HP & _ & MR & [_ AR] & _ & (GK & GE & GB)) ]; intros HIN HB.
+assert (IN : In (p, A, n) LB0) by (eapply Permutation_in; [apply Permutation_sym; exact HP| exact HIN]).
+pose proof (GE _ IN) as E. unfold blk_slot, blk_id, blk_addr in E. cbn [fst snd] in E. unfold rtop_known.
+destruct (slot_top st (fst p)) eqn:T; [exact (proj1 E)|]. exfalso.
+first [ pose proof (X0q7.areach_inv _ _ _ AR) as sfP_; sf_destruct 8%nat sfP_ as L LS BL INV _ _ _ CR | sf_fb; destruct (X0q7.areach_inv _ _ _ AR) as (L & LS & BL & INV & _ & _ & _ & CR) ].
+destruct (X0q7.Forall2_In_l _ _ _ _ CR IN) as (k & Hk & (C1 & C2 & C3)).
+destruct k as [[c bo] n0]. unfold X0px.blk_slot, X0px.blk_size, X1po.bslot, X1po.bsize in C1, C2. cbn [fst snd] in C1, C2. subst n0.
+pose proof INV as sfP_; first [ sf_destruct 7%nat sfP_ as _ _ _ _ _ IS _ | sf_fb; destruct sfP_ as (_ & _ & _ & _ & _ & IS & _) ].
+first [ pose proof (X1po.is_blocks _ _ _ IS _ Hk) as sfP_; sf_destruct 4%nat sfP_ as g i Hs _ | sf_fb; destruct (X1po.is_blocks _ _ _ IS _ Hk) as (g & i & Hs & _) ]. cbn [X1po.bslot fst snd] in Hs.
+unfold slot_top in T. rewrite C1, Hs in T. apply Bool.negb_false_iff in T. apply Z.eqb_eq in T.
+pose proof (nested_block_small X1po.x0 st L BL LS INV c g i bo n Hs T Hk). lia.
+Qed.
+
+Lemma rrepfoot_where {RCEIL : RunCeiling} st m a : rmrep st m -> rrepfoot st a ->
+a < alloc_ceiling /\ (RCTX <= a < RCTX + 928 \/ RMLOCK <= a < RMLOCK + 4 \/ RLIBC <= a < RLIBC + 0x38
+\/ RGOT_SSP <= a < RGOT_SSP + 8 \/ RSSP_GUARD <= a < RSSP_GUARD + 8 \/ a < 0x10000 \/ 0x6e000 <= a).
+Proof.
+intros MR RF. pose proof MR as (WF & _). pose proof WF as (_ & WR & _).
+destruct RF as [R1|[R2|[R3|[R4|[(ak & ar & Hak & Rak)|[(b & gh & Hb & Rb)|[(q & rq & v & Hq & Kq & Rq & Cq)|[R8|R9]]]]]]]];
+unfold alloc_ceiling, RCTX, RMLOCK, RLIBC, RNEED_LOCKS, RPAGE_SIZE, RGOT_SSP, RSSP_GUARD in *.
+- lia. - lia. - lia. - lia.
+- first [ pose proof (rarea_conc st ak ar WF Hak) as sfP_; sf_destruct 10%nat sfP_ as ra Hra Ca Sa0 Sa1 _ NK RB0 RBAL RBC | sf_fb; destruct (rarea_conc st ak ar WF Hak) as (ra & Hra & Ca & Sa0 & Sa1 & _ & NK & RB0 & RBAL & RBC) ].
+first [ pose proof (WR _ _ Hra) as sfP_; sf_destruct 5%nat sfP_ as _ _ _ _ RFa | sf_fb; destruct (WR _ _ Hra) as (_ & _ & _ & _ & RFa) ]. pose proof (rreserved_disjoint1 _ _ RFa) as D. unfold alloc_ceiling in RBC.
+pose proof (round_up_pg_ge (r_len ra)). lia.
+- first [ pose proof (rgroup_conc st b gh WF Hb) as sfP_; sf_destruct 9%nat sfP_ as rb Hrb Cb Kb Sb0 Sb1 _ RB0 RBC | sf_fb; destruct (rgroup_conc st b gh WF Hb) as (rb & Hrb & Cb & Kb & Sb0 & Sb1 & _ & RB0 & RBC) ].
+first [ pose proof (WR _ _ Hrb) as sfP_; sf_destruct 5%nat sfP_ as _ _ _ _ RFb | sf_fb; destruct (WR _ _ Hrb) as (_ & _ & _ & _ & RFb) ]. pose proof (rreserved_disjoint1 _ _ RFb) as D. unfold alloc_ceiling in RBC.
+pose proof (round_up_pg_ge (r_len rb)). lia.
+- first [ pose proof (WR _ _ Hq) as sfP_; sf_destruct 5%nat sfP_ as _ _ _ RC RFq | sf_fb; destruct (WR _ _ Hq) as (_ & _ & _ & RC & RFq) ]. pose proof (rreserved_disjoint1 _ _ RFq) as D. unfold alloc_ceiling in RC. lia.
+- lia. - lia.
+Qed.
+
+Lemma RHEAP_frame_proof {RCEIL : RunCeiling} : forall s LB m m' W,
+RHEAP s LB m -> munch W m m' -> wmono rsegs m m' -> Forall (rclient_write_ok LB) W -> RHEAP s LB m'.
+Proof.
+intros s LB m m' W sfH_; first [ sf_destruct 8%nat sfH_ as st LB0 HP Hst MR HI RPL HK | sf_fb; destruct sfH_ as (st & LB0 & HP & Hst & MR & HI & RPL & HK) ]; intros MU WM FW. exists st, LB0. split; [exact HP|]. split; [exact Hst|].
+split; [|split; [exact HI| split; [| exact HK]]].
+2:{
+eapply rw_cells_transport; [exact RPL| exact MU| exact WM|].
+eapply Forall_disjoint_from; [exact FW|]. cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ].
+intros lo hi CW. unfold rclient_write_ok, alloc_ceiling, RREPLACED, RLIBC, RCTX, RSSP_GUARD, RGOT_SSP in CW |- *. cbn [fst snd] in CW.
+destruct CW as [CW|[CW|(b & Hb & B1 & B2)]]; [lia| lia|].
+
+destruct HI as [_ AR]. pose proof (X0q8.areach_facts_proof _ _ AR) as MF.
+assert (INb : In b LB0) by (eapply Permutation_in; [apply Permutation_sym; exact HP| exact Hb]).
+first [ pose proof (rblock_inside st LB0 m b MF MR INb) as sfP_; sf_destruct 12%nat sfP_ as r g idx Hr Hk SL LOB HIB BZ R4 RC RI1 | sf_fb; destruct (rblock_inside st LB0 m b MF MR INb) as (r & g & idx & Hr & Hk & SL & LOB & HIB & BZ & R4 & RC & RI1) ]. lia. }
+destruct HI as [_ AR]. pose proof (X0q8.areach_facts_proof _ _ AR) as MF.
+pose proof MR as (WF & _). pose proof WF as sfP_; first [ sf_destruct 5%nat sfP_ as RS WR DJ WA WG | sf_fb; destruct sfP_ as (RS & WR & DJ & WA & WG) ].
+eapply (rmrep_transport_unowned st m m' W MR MU WM).
+intros lo hi a Hin Ha RF.
+pose proof (proj1 (List.Forall_forall _ _) FW _ Hin) as CW. cbn [fst snd] in CW.
+destruct (rrepfoot_where st m a MR RF) as [AC AW].
+destruct CW as [CW|[CW|(b & Hb & B1 & B2)]]; cbn [fst snd] in *.
+- unfold alloc_ceiling in *. lia.
+- unfold RMLOCK, RLIBC, RCTX, RERRNO, RATP, RGOT_SSP, RSSP_GUARD, alloc_ceiling in *. lia.
+-
+assert (INb : In b LB0) by (eapply Permutation_in; [apply Permutation_sym; exact HP| exact Hb]).
+first [ pose proof (rblock_inside st LB0 m b MF MR INb) as sfP_; sf_destruct 12%nat sfP_ as r g idx Hr Hk SL LOB HIB BZ R4 RC RI1 | sf_fb; destruct (rblock_inside st LB0 m b MF MR INb) as (r & g & idx & Hr & Hk & SL & LOB & HIB & BZ & R4 & RC & RI1) ].
+destruct RF as [R1|[R2|[R3|[R4'|[(ak & ar & Hak & Rak)|[(b' & gh & Hb' & Rb)|[(q & rq & v & Hq & Kq & Rq & Cq)|[R8|R9]]]]]]]].
++ unfold RCTX in R1. lia.
++ unfold RMLOCK in R2. lia.
++ unfold RNEED_LOCKS in R3. lia.
++ unfold RPAGE_SIZE in R4'. lia.
++ first [ pose proof (rarea_conc st ak ar WF Hak) as sfP_; sf_destruct 8%nat sfP_ as ra Hra Ca Sa0 Sa1 _ NK _ | sf_fb; destruct (rarea_conc st ak ar WF Hak) as (ra & Hra & Ca & Sa0 & Sa1 & _ & NK & _) ].
+assert (NEr : fst ak <> fst (blk_slot b)) by (intros E; rewrite E, Hr in Hra; inversion Hra; subst; congruence).
+pose proof (rarea_lr_lo st ak ar ra WF Hak Hra). pose proof (lr_lo_group r Hk).
+destruct (DJ _ _ _ _ Hra Hr NEr); lia.
++ first [ pose proof (rgroup_conc st b' gh WF Hb') as sfP_; sf_destruct 7%nat sfP_ as rb Hrb Cb Kb Sb0 Sb1 _ | sf_fb; destruct (rgroup_conc st b' gh WF Hb') as (rb & Hrb & Cb & Kb & Sb0 & Sb1 & _) ].
+destruct (N.eq_dec (fst b') (fst (blk_slot b))) as [E|NEr].
+* rewrite E, Hr in Hrb. inversion Hrb; subst rb.
+pose proof (mf_hdr_clear _ _ MF b' gh b r Hb' INb (eq_sym E) ltac:(change (s_regions (strip st)) with (s_regions st); rewrite E; exact Hr)) as HC. rewrite Cb in Rb. lia.
+* pose proof (lr_lo_group rb Kb). pose proof (lr_lo_group r Hk). destruct (DJ _ _ _ _ Hrb Hr NEr); lia.
++ destruct (N.eq_dec q (fst (blk_slot b))) as [->|NEr].
+* rewrite Hr in Hq. inversion Hq; subst rq.
+destruct (mf_blk_unknown _ _ MF b r INb Hr a ltac:(lia)) as [h Hh]. rewrite Hh in Cq. discriminate.
+* pose proof (lr_lo_group rq Kq). pose proof (lr_lo_group r Hk). destruct (DJ _ _ _ _ Hq Hr NEr); lia.
++ unfold RGOT_SSP in R8. lia.
++ unfold RSSP_GUARD in R9. lia.
+Qed.
+
+Lemma reservedZ_ref : reservedZ rsegs = ref_reserved.
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma u64arr_of_rw_cells' : forall m A n bs k, rw_cells rsegs m A [CB n bs] -> bs = u64s (repeat (wz 0) k) -> (n = 8 * k)%nat ->
+u64arr rsegs m A (repeat (wz 0) k).
+Proof.
+intros m A n bs k [[Hwf HB] HW] -> Hn. cbn [cells_bytes cbytes app] in HB. rewrite app_nil_r in HB.
+split; [exact HB|]. cbn [cells_size csize] in HW. rewrite repeat_length. replace (8 * Z.of_nat k) with (Z.of_nat (n + 0)) by lia. exact HW.
+Qed.
+
+Ltac rimg_chunk NONE m A cs H :=
+let bs := eval vm_compute in (cells_bytes cs) in
+assert (H : rw_cells rsegs m A cs);
+[ apply (rw_cells_recast rsegs m A [CB (length bs) bs] cs);
+[ apply (rw_cells_image0 rsegs m A bs);
+[ intros a Ha; apply NONE; cbn [length] in Ha; lia | vm_compute; reflexivity | lia | cbn [length]; lia ]
+| cbn; repeat split; exact I | vm_compute; reflexivity | reflexivity ]
+| ].
+
+Lemma RHEAP_init_proof {RCEIL : RunCeiling} : forall (m : mem) (auxv : word),
+(forall a : word, 0x6d748 <= bv_unsigned a < 0x6daf4 -> m a = None) ->
+rw_cells rsegs m 0x6d6d8 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C4 (Z_to_bv 64 0)] ->
+rw_cells rsegs m 0x6d6e0 [C8 auxv; C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 224); C8 (Z_to_bv 64 8); C8 (Z_to_bv 64 0);
+C8 (Z_to_bv 64 4096); CB 48 (repeat (Z_to_bv 8 0) 48)] ->
+rw_cells rsegs m 0x3c0d0 [C8 (Z_to_bv 64 0x6d6b8)] ->
+rw_cells rsegs m 0x6d6b8 [C8 run_canary] ->
+mem_inv rsegs m ->
+RHEAP (ps_init alloc_ceiling (reservedZ rsegs)) [] m
+/\ rw_cells rsegs m RAUXV_CELL [C8 auxv].
+Proof.
+intros m auxv NONE LC LC2 GOT GUARD MI.
+set (st0 := minit 0 alloc_ceiling ref_reserved).
+
+assert (ECX : ctx_head_cells st0 = [C8 (wz 0); C4 (wz 0); C4 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0)]) by reflexivity.
+rimg_chunk NONE m 0x6d750%Z [C8 (wz 0); C4 (wz 0); C4 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0)] CXH.
+rewrite <- ECX in CXH.
+rimg_chunk NONE m (0x6d750 + 80)%Z [CB 384 (u64s (repeat (wz 0) 48))] CXA.
+rimg_chunk NONE m (0x6d750 + 464)%Z [CB 384 (u64s (repeat (wz 0) 48))] CXU.
+rimg_chunk NONE m (0x6d750 + 848)%Z [CB 32 (zeros 32)] CXS.
+rimg_chunk NONE m (0x6d750 + 880)%Z [CB 32 (zeros 32)] CXB.
+rimg_chunk NONE m (0x6d750 + 912)%Z (ctx_tail_cells st0) CXT.
+rimg_chunk NONE m 0x6d748%Z [C4 (wz 0)] ML.
+rimg_chunk NONE m 0x6daf0%Z [C4 (wz 0)] RPL.
+
+pose proof (proj1 (rw_cells_app rsegs m 0x6d6d8 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0)] _) LC) as [_ LC3]. cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ] in LC3.
+pose proof (proj1 (rw_cells_app rsegs m (0x6d6d8 + 3) [C1 (Z_to_bv 8 0)] _) LC3) as [NL _].
+pose proof (proj1 (rw_cells_app rsegs m 0x6d6e0 [C8 auxv] _) LC2) as [AUXC LC16]. cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ] in LC16.
+pose proof (proj1 (rw_cells_app rsegs m (0x6d6e0 + 8) [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 224); C8 (Z_to_bv 64 8); C8 (Z_to_bv 64 0)] _) LC16) as [_ LC48].
+cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ Pos.add] in LC48.
+pose proof (proj1 (rw_cells_app rsegs m _ [C8 (Z_to_bv 64 4096)] _) LC48) as [PS _].
+split.
+2:{ unfold RAUXV_CELL. exact AUXC. }
+exists st0, []. split; [apply Permutation_refl|]. split; [unfold ps_init; cbn [ps_m]; rewrite reservedZ_ref; reflexivity|].
+split.
+2:{ split; [unfold ps_init; cbn [ps_brk]; apply HINV_from_init| split; [unfold RREPLACED; exact RPL|]].
+unfold ps_init; cbn [ps_hdr]. apply rga_init. }
+split; [|split; [|split; [|split; [|split]]]].
+-   split; [reflexivity|]. split; [intros rid r H; rewrite lookup_empty in H; discriminate|].
+split; [intros ? ? ? ? H; rewrite lookup_empty in H; discriminate|].
+split; [intros ? ? H; cbn in H; rewrite lookup_empty in H; discriminate|].
+intros ? ? H; cbn in H; rewrite lookup_empty in H; discriminate.
+- unfold rmrep_ctx, RCTX. split; [exact CXH|]. split; [|split; [|split; [|split]]].
++ replace (actives st0) with (repeat (wz 0) 48) by reflexivity. eapply u64arr_of_rw_cells'; [exact CXA| reflexivity| reflexivity].
++ replace (usages st0) with (repeat (wz 0) 48) by reflexivity. eapply u64arr_of_rw_cells'; [exact CXU| reflexivity| reflexivity].
++ replace (unmap_seqs st0) with (zeros 32) by reflexivity. apply (u8arr_of_rw_cells rsegs m _ 32). exact CXS.
++ replace (bouncess st0) with (zeros 32) by reflexivity. apply (u8arr_of_rw_cells rsegs m _ 32). exact CXB.
++ exact CXT.
+- unfold rmrep_globals, RMLOCK, RNEED_LOCKS, RPAGE_SIZE, RGOT_SSP, RSSP_GUARD. split; [exact ML|]. split; [|split; [|split]].
++ match goal with |- rw_cells _ _ ?G _ => match type of NL with rw_cells _ _ ?A _ => replace G with A by reflexivity end end.
+change (b8 0) with (Z_to_bv 8 0). exact NL.
++ match goal with |- rw_cells _ _ ?G _ => match type of PS with rw_cells _ _ ?A _ => replace G with A by reflexivity end end.
+change (wz 4096) with (Z_to_bv 64 4096). exact PS.
++ change (wz 448184) with (Z_to_bv 64 0x6d6b8). exact GOT.
++ exact GUARD.
+- intros a ar H. cbn in H. rewrite lookup_empty in H. discriminate.
+- intros b gh H. cbn in H. rewrite lookup_empty in H. discriminate.
+- intros rid r H. cbn in H. rewrite lookup_empty in H. discriminate.
+Qed.

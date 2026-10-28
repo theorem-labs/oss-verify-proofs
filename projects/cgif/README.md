@@ -3,16 +3,16 @@
 
 [dloebl/cgif](https://github.com/dloebl/cgif) · OSS-Fuzz: [projects/cgif](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/cgif)
 
-**Status: available.** 3 of OSS-Fuzz's 3 fuzz targets have statements. 12 binaries, 3.9 MB. 45 statements: 6 proved, 0 known false, 0 suspected false, 0 blocked by the model, 39 open.
+**Status: available.** 3 of OSS-Fuzz's 3 fuzz targets have statements. 12 binaries, 3.9 MB. 45 statements: 15 proved, 0 known false, 0 suspected false, 0 blocked by the model, 30 open.
 
 Built from cgif (commit `b1facf77`).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [cgif_file_fuzzer](cgif_file_fuzzer/) | Same config decoding as cgif_fuzzer but writes to /tmp/out.gif via cgif's file path, then unlinks it; return codes ignored, file never read back. | none | 15, 2 proved |
+| [cgif_file_fuzzer](cgif_file_fuzzer/) | Same config decoding as cgif_fuzzer but writes to /tmp/out.gif via cgif's file path, then unlinks it; return codes ignored, file never read back. | none | 15, 4 proved |
 | [cgif_fuzzer](cgif_fuzzer/) | Input decoded as a CGIF_Config + up to 16 frame configs (palettes, pixel data); cgif_newgif/cgif_addframe/cgif_close with a write callback that discards output; return codes ignored. | none | 15 |
-| [cgif_rgb_fuzzer](cgif_rgb_fuzzer/) | Input decoded as CGIFrgb_Config + up to 16 RGB/RGBA frames (<=100x100); cgif_rgb_newgif/addframe/close with a discarding write callback; return codes ignored. | none | 15, 4 proved |
+| [cgif_rgb_fuzzer](cgif_rgb_fuzzer/) | Input decoded as CGIFrgb_Config + up to 16 RGB/RGBA frames (<=100x100); cgif_rgb_newgif/addframe/close with a discarding write callback; return codes ignored. | none | 15, 11 proved |
 
 Not included: **api-driver** (held from this release).
 
@@ -41,12 +41,21 @@ By hand: download `cgif-bin.tar.zst` from release [v2026.10.0](https://github.co
 ## Proofs
 | statement | result |
 |---|---|
+| [cgif/cgif_file_fuzzer/asan_agrees](../../proofs/cgif/cgif_file_fuzzer/asan_agrees) | proved |
 | [cgif/cgif_file_fuzzer/asan_ubsan_agrees](../../proofs/cgif/cgif_file_fuzzer/asan_ubsan_agrees) | proved |
 | [cgif/cgif_file_fuzzer/asan_ubsan_halts](../../proofs/cgif/cgif_file_fuzzer/asan_ubsan_halts) | proved |
+| [cgif/cgif_file_fuzzer/ubsan_agrees](../../proofs/cgif/cgif_file_fuzzer/ubsan_agrees) | proved |
+| [cgif/cgif_rgb_fuzzer/asan_agreement_decidable](../../proofs/cgif/cgif_rgb_fuzzer/asan_agreement_decidable) | proved |
 | [cgif/cgif_rgb_fuzzer/asan_agrees](../../proofs/cgif/cgif_rgb_fuzzer/asan_agrees) | proved |
+| [cgif/cgif_rgb_fuzzer/asan_disagrees_at_most](../../proofs/cgif/cgif_rgb_fuzzer/asan_disagrees_at_most) | proved |
 | [cgif/cgif_rgb_fuzzer/asan_halts](../../proofs/cgif/cgif_rgb_fuzzer/asan_halts) | proved |
+| [cgif/cgif_rgb_fuzzer/asan_ubsan_agreement_decidable](../../proofs/cgif/cgif_rgb_fuzzer/asan_ubsan_agreement_decidable) | proved |
 | [cgif/cgif_rgb_fuzzer/asan_ubsan_agrees](../../proofs/cgif/cgif_rgb_fuzzer/asan_ubsan_agrees) | proved |
+| [cgif/cgif_rgb_fuzzer/asan_ubsan_disagrees_at_most](../../proofs/cgif/cgif_rgb_fuzzer/asan_ubsan_disagrees_at_most) | proved |
 | [cgif/cgif_rgb_fuzzer/asan_ubsan_halts](../../proofs/cgif/cgif_rgb_fuzzer/asan_ubsan_halts) | proved |
+| [cgif/cgif_rgb_fuzzer/plain_halts](../../proofs/cgif/cgif_rgb_fuzzer/plain_halts) | proved |
+| [cgif/cgif_rgb_fuzzer/plain_halts_may_fail](../../proofs/cgif/cgif_rgb_fuzzer/plain_halts_may_fail) | proved |
+| [cgif/cgif_rgb_fuzzer/ubsan_agrees](../../proofs/cgif/cgif_rgb_fuzzer/ubsan_agrees) | proved |
 
 ## Licence
 cgif is under `MIT`. Each binary is a combined work of cgif, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `cgif-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `cgif-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).

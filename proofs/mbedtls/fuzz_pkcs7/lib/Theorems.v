@@ -9,6 +9,8 @@ Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
 Require LinuxProcessSemantics.EquivalenceDefinition.HaltsAllowed.
 Require OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Plain.
 Require OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Asan.
+Require OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Ubsan.
+Require OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.AsanUbsan.
 Require OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.FinalAsan.
 Require OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.FinalHaltsAsan.
 
@@ -21,6 +23,8 @@ Module MbedtlsFuzzPkcs7HaltsAsanExits <: LinuxProcessSemantics.EquivalenceDefini
   Import ListNotations.
   Definition codes : list (stdpp.bitvector.definitions.bv 64) := [Z_to_bv 64 0; Z_to_bv 64 2].
 End MbedtlsFuzzPkcs7HaltsAsanExits.
+Require OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.
+Require OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.
 
 Theorem strong_universal_error_free_fuzz_pkcs7_asan :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_budgets
@@ -44,7 +48,15 @@ Qed.
 
 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
+Theorem strong_universal_error_free_fuzz_pkcs7_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_budgets
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Plain.M.loaded_segments OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Plain.M.init_pc OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Ubsan.M.loaded_segments OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Ubsan.M.init_pc OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Ubsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.ubsan_assembled_shipped.
+Qed.
 
 (* [comment removed for export] *)
 
@@ -55,6 +67,18 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+
+(* [comment removed for export] *)
+
+Theorem strong_universal_error_free_fuzz_pkcs7_both :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_budgets
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Plain.M.loaded_segments OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Plain.M.init_pc OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.AsanUbsan.M.init_pc OssFuzzTheorems.mbedtls.fuzz_pkcs7.images.AsanUbsan.M.phdrs).
+Proof.
+  exact OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.both_assembled_sanitizer.
+Qed.
 
 (* [comment removed for export] *)
 

@@ -623,7 +623,8 @@ Definition segs_low (segs : list Segment) : Prop :=
 
 Lemma segs_low_psegs : segs_low psegs.
 Proof. split; vm_compute; [reflexivity| discriminate]. Qed.
-
+Lemma segs_low_usegs : segs_low usegs.
+Proof. split; vm_compute; [reflexivity| discriminate]. Qed.
 
 Lemma ceil_low : forall segs, segs_low segs -> reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling.
 Proof. intros segs [_ H]. pose proof alloc_ceiling_ge. unfold PGSZ. lia. Qed.

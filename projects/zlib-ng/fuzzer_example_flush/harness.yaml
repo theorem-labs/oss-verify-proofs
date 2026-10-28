@@ -133,6 +133,7 @@ checks:
   strength: partial
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
   where: source/fuzzer_example_flush.c:80-87
   what: deflate 3 bytes with Z_FULL_FLUSH, corrupt compressed byte 3, finish; inflateSync must succeed

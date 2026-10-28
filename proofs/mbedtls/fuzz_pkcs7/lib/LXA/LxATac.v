@@ -194,7 +194,7 @@ Ltac lx_imp_norm :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Ltac lx_arith := lx_pins_hook; lx_prune; lx_clear_seps; lx_zlow_ranges; lx_nz_norm;
-                 first [ lia | timeout 40 (unfold zlow, zswrap in *; lia)
+                 first [ lia | timeout 40 (unfold zlow, zswrap in *; lia)   (* timeout-ok: expiry takes the lx_errsum arm after it, which proves the same goal another way *)
                        | lx_errsum; lx_zlow_norm; lx_bvu_ranges; lx_xor_norm; first [lia | lx_imp_norm; lx_arith_core] ].
 
 (* [comment removed for export] *)
@@ -396,7 +396,7 @@ Ltac lx_app :=
   | |- _ -> _ => first [ eassumption
                        | let G := fresh "G" in intro G;
                          first [ exfalso; clear - G; lia | exfalso; lx_imp_absurd G
-                               | exfalso; lx_prune; lx_clear_seps; timeout 3 lia     (* [comment removed for export] *)
+                               | exfalso; lx_prune; lx_clear_seps; timeout 3 lia     (* [comment removed for export] *)   (* timeout-ok: fast tier: expiry takes the lx_imp_subst arm after it, which proves the goal another way *)
                                (* [comment removed for export] *)
                                | lx_imp_subst G; lx_disj_prune; lx_spine; lx_app ] ]
   | |- @ex _ _ => first [ eassumption | lx_logic ]

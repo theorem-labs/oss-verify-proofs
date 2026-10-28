@@ -136,6 +136,7 @@ checks:
   what: 'OP_FOREACH: ossl_ht_foreach_until finds the key''s value iff the prediction table marks it allocated;
     OP_FILTER: ossl_ht_filter returns exactly 0 or 1 matching value as predicted. Only an empty table
     in a single-input run.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: hashtable

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: cgif/cgif_rgb_fuzzer/asan_agreement_decidable
+fingerprint: 6b0afd79212f24ca575a194da1a3733bbc235214ff3c28b29c9ae9445abba849

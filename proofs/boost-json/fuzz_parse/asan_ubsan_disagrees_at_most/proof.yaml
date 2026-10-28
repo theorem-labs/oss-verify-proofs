@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: boost-json/fuzz_parse/asan_ubsan_disagrees_at_most
+bound: '0'
+fingerprint: ccd7d7f0dde37162411c8f71115519d36dd015395cc8f0efccdd1d2db3cd42eb

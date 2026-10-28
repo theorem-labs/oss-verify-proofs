@@ -1,0 +1,407 @@
+# images.yml: the checker and runner images, built from toolchain/checker.Dockerfile and toolchain/runner.Dockerfile of
+# a commit on main and pushed to ghcr.io under the names release.yaml pins (images.checker and images.runner, less their
+# digests), each with a build provenance attestation (actions/attest-build-provenance) kept in this repository's
+# attestations.
+#
+# It never changes a pin. It prints each pushed digest in the run's summary, and a new digest reaches release.yaml only
+# by a pull request that changes images.checker or images.runner; pr.yml re-checks, in the new image, what runs in it
+# (tools/oft/keys.py: each part's content key holds the image it runs in). A build of the same files gives another
+# digest (the apt mirror state and file times are not pinned), so each run pushes a new digest, under a tag that names
+# the commit and the run: no tag is ever moved, and two runs at once share nothing. A pushed digest is not yet cleared
+# for a release: the every-byte scan of an image is the release gate's image job, and a digest no gate scan has covered
+# may be built and pushed here but must not be pinned in release.yaml.
+#
+# When it runs:
+#   - every push to main; its plan job compares the pushed tree with the one before and builds the images whose inputs
+#     changed, often none. (A `paths:` filter would not do: GitHub skips a push of more than 3,000 changed files whose
+#     first 3,000 hold none of the paths, and a release, the only kind of change lint lets touch toolchain/, changes
+#     some 10,000 files with toolchain/ near the end.)
+#   - daily: the runner is built again when the public repository's tools/oft is another git tree than the one the
+#     newest runner was built from (the summary names both);
+#   - by hand, on main only: gh workflow run images.yml --ref main -f image=both   (or checker, or runner)
+#
+# The run's one verdict is the job `images`, which always runs (a skipped job reports success): the plan passed, and
+# the image job passed when the plan named an image and was skipped when it named none. In any other repository than
+# this one both are skipped, and it says that this repository builds no image.
+#
+# The inputs of each image:
+#   checker  toolchain/checker.Dockerfile and toolchain/lps-core.paths, and the model: rocq-linux-process-semantics at
+#            release.yaml's semantics.commit, cut to the files lps-core.paths lists (the `lps` build context). The
+#            Dockerfile refuses a cut whose hash is not its LPS_TREE_SHA256, so a new model changes the Dockerfile.
+#   runner   toolchain/runner.Dockerfile and tests/toy/ (its self-test), and the tools/oft that the public repository
+#            theorem-labs/oss-verify-proofs has on main (the `oft-tools` build context, with the PyYAML its
+#            requirements.txt pins). The runner exists to run released checks, so it carries the released tools, which
+#            the release gate has scanned; this repository's tools/oft is newer and is not published before a release.
+#            CI never runs the image's copy of oft (tools/oft/ci/check-units.sh mounts the checkout's tools over it).
+#            The image's labels oss-fuzz-theorems.tools.commit and oss-fuzz-theorems.tools.tree name that commit and
+#            the git tree of its tools/oft.
+#
+# Both packages are public, so a push publishes the image at once. The checker holds only public inputs. Before the
+# runner is built, the job refuses tools/oft that breaks a rule oft release-tree applies to it, with this repository's
+# facts (release_tree.tools_problems: a file under tools/oft that discloses what facts.hold holds back, a file at an
+# ignored path, facts with an error). Nothing this workflow adds names this private repository: the images carry no
+# org.opencontainers.image.source label, the job fails if a package is linked to a repository (ghcr.io may link one to
+# the repository whose workflow pushes to it), and the attestation, which names it, the workflow and the commit, is not
+# pushed beside the image. Verify an image with a token that reads this repository:
+#   gh attestation verify oci://<image>@<digest> --repo theorem-labs/<this repository> \
+#     --signer-workflow theorem-labs/<this repository>/.github/workflows/images.yml --source-ref refs/heads/main
+# An image pinned before this workflow existed has no attestation.
+#
+# To push, the workflow's token needs write access to each package: an organization admin adds this repository with
+# the Write role under "Manage Actions access" in the settings of oss-fuzz-theorems-checker and of
+# oss-fuzz-theorems-runner (GitHub has no API for it).
+name: images
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      image:
+        description: the image to build and push
+        type: choice
+        options: [both, checker, runner]
+        default: both
+permissions: {}
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  plan:
+    # this repository only (1425069221 is its id, as `gh api repos/{owner}/{repo} --jq .id` gives it): a release
+    # carries this file to theorem-labs/oss-verify-proofs, and a fork may carry it, and neither builds an image
+    if: github.repository_id == '1425069221'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read       # the pushed commit and the one before it, to compare their trees
+      packages: read       # the runner package's versions, for the daily run
+      attestations: read   # which pushed runner this workflow finished
+    outputs:
+      images: ${{ steps.plan.outputs.images }}
+      tools_commit: ${{ steps.plan.outputs.tools_commit }}
+      tools_tree: ${{ steps.plan.outputs.tools_tree }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          # the job runs no code of the commit; it fetches the commit before it (with this token) and compares the
+          # two trees, which needs no file contents; release.yaml, at the top of the tree, names the pinned runner
+          filter: blob:none
+          sparse-checkout: toolchain
+      - name: the images to build, and the tools/oft a runner would carry
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          CHOICE: ${{ inputs.image }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          [ "$GITHUB_REF" = refs/heads/main ] || { echo "::error::images are built from main only, not $GITHUB_REF"; exit 1; }
+          public="${GITHUB_REPOSITORY_OWNER}/oss-verify-proofs"
+          runner_image=ghcr.io/${GITHUB_REPOSITORY_OWNER}/oss-fuzz-theorems-runner
+          tools_commit=""
+          tools_tree=""
+          # the public repository's main, and the git tree of its tools/oft: what a runner carries
+          public_tools() {
+            [ -z "$tools_commit" ] || return 0
+            tools_commit=$(gh api "repos/$public/commits/main" --jq .sha)
+            tools_tree=$(gh api "repos/$public/contents/tools?ref=$tools_commit" \
+              --jq '.[] | select(.name == "oft" and .type == "dir") | .sha')
+            [[ "$tools_commit" =~ ^[0-9a-f]{40}$ && "$tools_tree" =~ ^[0-9a-f]{40}$ ]] ||
+              { echo "::error::$public main gives no commit and tools/oft tree: '$tools_commit' '$tools_tree'"; return 1; }
+            echo "$public main: $tools_commit, tools/oft tree $tools_tree"
+          }
+          # The newest runner this workflow finished: the newest version with a build- tag whose attestation this
+          # repository holds. A push that failed after it (the registry check, the attestation) leaves a version with
+          # no attestation, and such a version is passed over, so the next daily run builds the runner again.
+          newest_runner() {
+            local digests d n
+            digests=$(gh api "/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${runner_image##*/}/versions?per_page=100" \
+              --jq '[.[] | select(any(.metadata.container.tags[]?; startswith("build-")))] | sort_by(.created_at) | reverse | .[].name') ||
+              { echo "::warning::the runner package's versions could not be read" >&2; return 1; }
+            for d in $digests; do
+              [[ "$d" =~ ^sha256:[0-9a-f]{64}$ ]] || continue
+              # the call answers 200 with an empty list for a digest with no attestation: count them
+              n=$(gh api "repos/$GITHUB_REPOSITORY/attestations/$d" --jq '.attestations | length' 2> /dev/null) || n=0
+              if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt 0 ]; then
+                echo "$runner_image@$d"; return 0
+              fi
+            done
+            echo "::warning::no pushed runner has an attestation of this repository" >&2
+            return 1
+          }
+          # a path that ends in / stands for every file under it
+          declare -A inputs=(
+            [checker]='toolchain/checker.Dockerfile toolchain/lps-core.paths'
+            [runner]='toolchain/runner.Dockerfile tests/toy/'
+          )
+          want=()
+          if [ "$EVENT" = workflow_dispatch ]; then
+            case $CHOICE in
+              both) want=(checker runner) ;;
+              checker | runner) want=("$CHOICE") ;;
+              *) echo "::error::no image '$CHOICE'"; exit 1 ;;
+            esac
+          elif [ "$EVENT" = schedule ]; then
+            # the runner is built again when the public tools/oft are not the ones the newest finished runner carries;
+            # with no such runner, the one release.yaml pins is compared, and an image without the label counts as
+            # another tree
+            public_tools
+            ref=$(newest_runner) || ref=$(sed -n 's/^  runner: //p' release.yaml)
+            [[ "$ref" =~ ^ghcr\.io/[a-z0-9-]+/oss-fuzz-theorems-runner@sha256:[0-9a-f]{64}$ ]] ||
+              { echo "::error::no runner to compare with: '$ref'"; exit 1; }
+            old=$(docker buildx imagetools inspect "$ref" --format '{{json .Image.Config.Labels}}' |
+              jq -r '."oss-fuzz-theorems.tools.tree" // "none"')
+            echo "runner $ref: tools/oft tree $old; the public repository's: $tools_tree" | tee -a "$GITHUB_STEP_SUMMARY"
+            [ "$old" = "$tools_tree" ] || want=(runner)
+          elif [[ "$BEFORE" =~ ^[0-9a-f]{40}$ && "$BEFORE" != 0000000000000000000000000000000000000000 ]] &&
+               git fetch --no-tags --depth=1 origin "$BEFORE" &&
+               git -c core.quotePath=false diff --no-renames --name-only "$BEFORE" HEAD > "$RUNNER_TEMP/changed.txt"; then
+            for image in checker runner; do
+              for path in ${inputs[$image]}; do
+                if [[ $path == */ ]]; then
+                  if grep -q -- "^$path" "$RUNNER_TEMP/changed.txt"; then want+=("$image"); break; fi
+                elif grep -qxF -- "$path" "$RUNNER_TEMP/changed.txt"; then
+                  want+=("$image"); break
+                fi
+              done
+            done
+          else
+            echo "::warning::no tree to compare with ('$BEFORE'): both images are built"
+            want=(checker runner)
+          fi
+          # only a runner build needs the public tools, so a failure to read them never stops a checker build
+          case " ${want[*]-} " in *" runner "*) public_tools ;; esac
+          images=$(jq -cn '$ARGS.positional' --args ${want[@]+"${want[@]}"})
+          {
+            echo "images=$images"
+            echo "tools_commit=$tools_commit"
+            echo "tools_tree=$tools_tree"
+          } >> "$GITHUB_OUTPUT"
+          echo "images to build: $images" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  image:
+    needs: plan
+    if: needs.plan.outputs.images != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.plan.outputs.images) }}
+    # the checker builds Rocq and the model from source: 16 cores, 64 GB
+    runs-on: ${{ matrix.image == 'checker' && 'ubuntu-24.04-16core' || 'ubuntu-24.04' }}
+    timeout-minutes: 180
+    permissions:
+      contents: read      # this commit
+      packages: write     # to push the image
+      id-token: write     # the workflow's identity, which the attestation's signing certificate names
+      attestations: write # to store the attestation
+    env:
+      KEY: ${{ matrix.image }}
+      TOOLS_COMMIT: ${{ needs.plan.outputs.tools_commit }}
+      TOOLS_TREE: ${{ needs.plan.outputs.tools_tree }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+          # every file but the proof libraries, as pr.yml's plan job takes them: the runner's check below loads the
+          # facts (projects/, findings/, release.yaml), and neither image reads proofs/<p>/<h>/lib/
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/proofs/*/*/lib/
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: the tools' dependencies (PyYAML, idna), hash-pinned
+        run: python -m pip install --quiet --require-hashes -r tools/oft/requirements.txt
+      - name: the image's name, from release.yaml
+        id: name
+        run: |
+          set -euo pipefail
+          pin=$(python -c 'import sys, yaml; print(yaml.safe_load(open("release.yaml"))["images"][sys.argv[1]])' "$KEY")
+          [[ "$pin" =~ ^ghcr\.io/theorem-labs/oss-fuzz-theorems-$KEY@sha256:[0-9a-f]{64}$ ]] ||
+            { echo "::error::release.yaml's images.$KEY is not a ghcr.io/theorem-labs/oss-fuzz-theorems-$KEY digest: '$pin'"; exit 1; }
+          name=${pin%@*}
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "tag=$name:build-$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          echo "release.yaml pins $pin"
+      - name: the model, at release.yaml's semantics.commit, cut to toolchain/lps-core.paths
+        if: matrix.image == 'checker'
+        run: |
+          set -euo pipefail
+          read -r repo commit < <(python -c 'import yaml; s = yaml.safe_load(open("release.yaml"))["semantics"]; print(s["repository"], s["commit"])')
+          [ "$repo" = https://github.com/theorem-labs/rocq-linux-process-semantics ] ||
+            { echo "::error::release.yaml's semantics.repository is '$repo'"; exit 1; }
+          [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::release.yaml's semantics.commit is '$commit'"; exit 1; }
+          git init -q "$RUNNER_TEMP/lps-repo"
+          git -C "$RUNNER_TEMP/lps-repo" fetch -q --depth=1 "$repo" "$commit"
+          mkdir "$RUNNER_TEMP/lps"
+          grep -v -e '^#' -e '^$' toolchain/lps-core.paths |
+            xargs -d '\n' git -C "$RUNNER_TEMP/lps-repo" archive "$commit" -- | tar -x -C "$RUNNER_TEMP/lps"
+          # the hash checker.Dockerfile compares with its LPS_TREE_SHA256
+          echo "model $commit, cut to $(find "$RUNNER_TEMP/lps" -type f | wc -l) files: sha256 $(cd "$RUNNER_TEMP/lps" &&
+            find . -type f -printf '%P\n' | LC_ALL=C sort | xargs -d '\n' -r sha256sum | sha256sum | cut -c1-64)"
+      # The runner's tools/oft: the public repository's, at the commit the plan job read, checked out with git so that
+      # its tracked files can be judged too.
+      - name: the public repository's tools/oft, at the plan's commit
+        if: matrix.image == 'runner'
+        run: |
+          set -euo pipefail
+          [[ "$TOOLS_COMMIT" =~ ^[0-9a-f]{40}$ && "$TOOLS_TREE" =~ ^[0-9a-f]{40}$ ]] ||
+            { echo "::error::no public tools from the plan: '$TOOLS_COMMIT' '$TOOLS_TREE'"; exit 1; }
+          pub="$RUNNER_TEMP/public"
+          git init -q "$pub"
+          git -C "$pub" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY_OWNER/oss-verify-proofs"
+          git -C "$pub" fetch -q --depth=1 --filter=blob:none origin "$TOOLS_COMMIT"
+          got=$(git -C "$pub" rev-parse "FETCH_HEAD:tools/oft")
+          [ "$got" = "$TOOLS_TREE" ] || { echo "::error::tools/oft at $TOOLS_COMMIT is $got, not $TOOLS_TREE"; exit 1; }
+          git -C "$pub" sparse-checkout set --cone tools/oft
+          git -C "$pub" checkout -q --detach FETCH_HEAD
+          echo "public tools/oft: commit $TOOLS_COMMIT, tree $TOOLS_TREE, $(find "$pub/tools/oft" -type f | wc -l) files" |
+            tee -a "$GITHUB_STEP_SUMMARY"
+      - name: the public tools/oft breaks no rule of release-tree, by this repository's facts
+        if: matrix.image == 'runner'
+        env:
+          PYTHONPATH: tools
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python - "$RUNNER_TEMP/public" <<'PY'
+          import sys
+          from oft import facts, release_tree
+          problems = release_tree.tools_problems(facts.load("."), checkout=sys.argv[1])
+          for p in problems:
+              print("::error::%s" % p)
+          print("tools/oft may go into the image: %s (%d problem(s))" % ("no" if problems else "yes", len(problems)))
+          sys.exit(1 if problems else 0)
+          PY
+      # The package must stay linked to no repository: GitHub may link a package to the repository whose workflow pushes
+      # to it, and this repository is private.
+      - name: the package is linked to no repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.name.outputs.name }}
+        run: |
+          set -euo pipefail
+          linked=$(gh api "/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${NAME##*/}" --jq '.repository.full_name // ""')
+          [ -z "$linked" ] || { echo "::error::${NAME##*/} is linked to a repository; an organization admin unlinks it in the package's settings"; exit 1; }
+      - name: sign in to ghcr.io
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      # The Dockerfile's last steps are the image's self-test, so an image that fails it is never built. No
+      # provenance or SBOM is attached to the image and no git information is read: BuildKit's would name this
+      # private repository in the public package.
+      - name: build and self-test (toolchain/${{ matrix.image }}.Dockerfile)
+        env:
+          TAG: ${{ steps.name.outputs.tag }}
+          BUILDX_GIT_INFO: "0"
+          BUILDX_GIT_LABELS: "0"
+        run: |
+          set -euo pipefail
+          case $KEY in
+            checker) args=(--build-context "lps=$RUNNER_TEMP/lps" --build-arg "OPAMJOBS=$(nproc)") ;;
+            runner) args=(--build-context "oft-tools=$RUNNER_TEMP/public/tools/oft" --build-context oft-toy=tests/toy
+                          --label "oss-fuzz-theorems.tools.commit=$TOOLS_COMMIT" --label "oss-fuzz-theorems.tools.tree=$TOOLS_TREE") ;;
+          esac
+          start=$(date +%s)
+          docker buildx build -f "toolchain/$KEY.Dockerfile" "${args[@]}" \
+            --label org.opencontainers.image.revision="$GITHUB_SHA" --provenance=false --sbom=false \
+            --progress plain --load -t "$TAG" toolchain/
+          echo "build: $(( $(date +%s) - start )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: push
+        id: push
+        env:
+          NAME: ${{ steps.name.outputs.name }}
+          TAG: ${{ steps.name.outputs.tag }}
+        run: |
+          set -euo pipefail
+          docker push --quiet "$TAG"
+          ref=$(docker image inspect --format '{{index .RepoDigests 0}}' "$TAG")
+          [[ "$ref" =~ ^${NAME//./\\.}@sha256:[0-9a-f]{64}$ ]] || { echo "::error::no digest for the pushed image: '$ref'"; exit 1; }
+          # The registry holds what was built: the pushed manifest names the built image's config, or, for an index,
+          # is the built image's own. Docker's classic image store gives the config digest as the image's id; its
+          # containerd image store (a new install's default from Docker 29) gives the digest of the stored manifest.
+          docker buildx imagetools inspect --raw "$ref" > "$RUNNER_TEMP/manifest.json"
+          case $(jq -r .mediaType "$RUNNER_TEMP/manifest.json") in
+            application/vnd.docker.distribution.manifest.v2+json | application/vnd.oci.image.manifest.v1+json)
+              built=$(jq -r .config.digest "$RUNNER_TEMP/manifest.json") ;;
+            *) built=${ref#*@} ;;
+          esac
+          id=$(docker image inspect --format '{{.Id}}' "$TAG")
+          [ "$built" = "$id" ] || [ "${ref#*@}" = "$id" ] ||
+            { echo "::error::ghcr.io holds $built under $ref, not the image built here ($id)"; exit 1; }
+          {
+            echo "digest=${ref#*@}"
+            echo "ref=$ref"
+            echo "size=$(docker image inspect --format '{{.Size}}' "$TAG") bytes, $(docker image inspect --format '{{len .RootFS.Layers}}' "$TAG") layers"
+          } >> "$GITHUB_OUTPUT"
+      - name: after the push, the package is still linked to no repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.name.outputs.name }}
+        run: |
+          set -euo pipefail
+          linked=$(gh api "/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${NAME##*/}" --jq '.repository.full_name // ""')
+          [ -z "$linked" ] || { echo "::error::the push linked ${NAME##*/} to a repository; an organization admin unlinks it in the package's settings"; exit 1; }
+      - name: the build provenance attestation, in this repository's attestations
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-name: ${{ steps.name.outputs.name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          # not beside the public image: the attestation names this private repository
+          push-to-registry: false
+          create-storage-record: false
+      # only an attested image is offered for a pin, and only once the release gate's image job has scanned it
+      - name: the image, for a pull request that pins it
+        env:
+          REF: ${{ steps.push.outputs.ref }}
+          SIZE: ${{ steps.push.outputs.size }}
+          TAG: ${{ steps.name.outputs.tag }}
+          ATTESTATION: ${{ steps.attest.outputs.attestation-id }}
+        run: |
+          {
+            echo "### $KEY"
+            echo "pushed: \`$REF\` (tag \`${TAG##*:}\`), $SIZE"
+            echo "attestation: $ATTESTATION"
+            if [ "$KEY" = runner ]; then
+              echo "tools/oft: theorem-labs/oss-verify-proofs at $TOOLS_COMMIT, git tree $TOOLS_TREE"
+            fi
+            echo "The every-byte scan of this image is the release gate's image job. Pin it (a pull request that sets"
+            echo "\`images.$KEY\` in release.yaml to this digest) only after a gate scan has covered it."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: sign out
+        if: always()
+        run: docker logout ghcr.io
+
+  images:
+    needs: [plan, image]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: every image the plan named was built and pushed, and none other
+        env:
+          HERE: ${{ github.repository_id == '1425069221' }}
+          PLAN: ${{ needs.plan.result }}
+          IMAGES: ${{ needs.plan.outputs.images }}
+          IMAGE: ${{ needs.image.result }}
+        run: |
+          set -euo pipefail
+          got="plan $PLAN (images ${IMAGES:-unset}), image $IMAGE"
+          if [ "$HERE" != true ]; then
+            [ "$PLAN/$IMAGE" = skipped/skipped ] || { echo "::error::this repository builds no image, yet: $got"; exit 1; }
+            echo "this repository builds no image"; exit 0
+          fi
+          [ "$PLAN" = success ] || { echo "::error::the plan did not pass: $got"; exit 1; }
+          if [ "$IMAGES" = '[]' ]; then
+            [ "$IMAGE" = skipped ] || { echo "::error::the plan named no image, yet: $got"; exit 1; }
+            echo "no image's inputs changed: nothing built"; exit 0
+          fi
+          [ "$IMAGE" = success ] || { echo "::error::an image the plan named was not built and pushed: $got"; exit 1; }
+          echo "built and pushed: $IMAGES"

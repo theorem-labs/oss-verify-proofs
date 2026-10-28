@@ -1,0 +1,508 @@
+#!/usr/bin/env python3
+"""Which provider and model answered the facts review, as the review agent's tool reports them, and whether that is
+the provider and model the review asked for.
+
+  tools/oft/ci/facts-review-served run <directory> <provider>/<model> -- <the agent's command...>
+  tools/oft/ci/facts-review-served check < <directory>/served
+  tools/oft/ci/facts-review-served asked <provider>/<model>
+
+run first reads where the tool will send its requests (endpoint, below). When that is not the API of the provider
+asked for, it does not start the agent. Otherwise it runs the agent's command, whose standard output is its event
+stream (`--output-format stream-json --verbose`), in its own environment, which is the agent's (facts-review-run
+starts it under `env -i`), and writes into <directory>, beside the comment:
+  review.jsonl  the stream, each line as it comes
+  review.json   the stream's last `result` event, as it came: the object `--output-format json` writes; empty when
+                there is none
+  served        the record that facts-review.yml's comment job reads: the line `asked <provider>/<model>`; the line
+                `endpoint <where>`, where the tool sends its requests; a line `usage <provider>/<model>` for each entry
+                of the result's `.modelUsage` (its `provider`, and its `canonicalModel` or else its key); then one line
+                `<provider>/<model> <turns>` for each provider and model that answered, a turn being one model response
+                (one message id); `none` where the tool named none. It is written also when run is stopped.
+It reads each event as it comes and stops the agent at the first model response whose model is not the model asked
+for (or a dated snapshot of it, <model>-YYYYMMDD), or that names no model, and at a line of the stream that is not a
+JSON object, rather than let it spend more turns on a review that will not be posted. It exits with the agent's own
+status when the agent failed by itself, 4 when it did not start or stopped the agent or the record does not show the
+provider and model asked for (the reason on standard error), and 0 otherwise.
+
+check reads a record on standard input and prints one line. It exits 0, with the providers and models that answered
+and their turns, when the tool sent its requests to the provider's own API, the provider and model asked for answered
+every turn, and every `.modelUsage` entry names them too; 1, with why the review is not to be posted and the counts,
+when the endpoint, a provider or a model it names is another; 3, with why, when nothing it names is another but the
+review is not attributable: no endpoint or no turn recorded, a provider or model that the tool did not name, or a
+record it cannot read.
+
+asked exits 0 when run can check <provider>/<model>, and 2, saying why, when it cannot.
+
+What the tool reports, measured on its version 2.1.310, the one facts-review.yml installs:
+- each `assistant` event of the stream carries `.message.model` and `.message.id` from the API's message_start (the
+  tool builds the event from it); a response of two content blocks is two events with one id. A message the tool
+  writes itself (an API error's text, for one) is an `assistant` event whose model is "<synthetic>" and which the tool
+  itself marks `"is_api_error_message": true`: no model answered it, so it is no turn. The model's name alone comes
+  from the response, so "<synthetic>" without that mark is a turn, of another model. The model of every event is
+  checked, not only the first of a message id.
+- the API can hand a response to another model part way (a server fallback). It marks that with a content block
+  `{"type": "fallback", "from": {"model": ...}, "to": {"model": ...}}`; the tool renames the response's model to the
+  new one only when it asked for the fallback itself, so the block's `to.model` is checked too. Variables that could
+  ask the API for one outside the tool (CLAUDE_CODE_EXTRA_BODY, ANTHROPIC_BETAS) are refused, as is the advisorModel
+  setting (a server-side tool that another model answers), and a managed policy helper (policyHelper, policyHelpers),
+  which gives the tool settings, an `env` among them, another way than a settings file's `env`.
+- no event before the last names the provider: `system`/`init` names the model asked for (`.model`) and the key's
+  source, and an `assistant` event names no provider. So a turn's model is checked as it comes, and the provider at
+  the end.
+- the `result` event's `.modelUsage` is keyed by the model the tool asked for, not the one that answered, and each
+  entry's `provider` is the tool's API provider, set from its own configuration ("firstParty" for Anthropic's own API;
+  its schema lists "bedrock", "vertex", "foundry", "anthropicAws", "mantle" and "gateway" besides). `.modelUsage` is
+  {} when no request got a response (a refused key, a provider with no credentials): that names no provider.
+- "firstParty" does not say where the requests went: the tool reports it also when ANTHROPIC_BASE_URL names a proxy
+  (its own policy code calls that a custom endpoint), which could answer with any model and name it as it likes. So
+  the record names the endpoint, and run does not start the agent at another. Of the tool's own variables
+  (ANTHROPIC_*, CLAUDE_CODE_*), in its environment or in any `env` it reads, it allows only the credentials and the
+  knobs of TOOL_VARIABLES: any other is refused, since several send its requests elsewhere (a base URL, a socket, a
+  gateway, a host's credentials file, a settings source this script does not read); an `env` it reads that sets HOME
+  or XDG_CONFIG_HOME, which moves the Anthropic profile, is refused too. It reads the settings files a
+  machine or a user can write, and the global config in each of the files the tool can take it from (.config.json in
+  the config home, and .claude.json and its -staging-oauth, -local-oauth and -custom-oauth names), whose `env` the
+  tool also applies as it starts, and the managed settings of the platform (/etc/claude-code, or /Library/Application
+  Support/ClaudeCode on macOS) and, under WSL, Windows' (/mnt/c/Program Files/ClaudeCode, and the ClaudeCode policy
+  keys of the Windows registry). Remote managed settings that the organization's admin signs (the tool applies routing
+  names only from a verified copy) are not read. It runs on Linux (WSL too) and macOS only: elsewhere the tool's
+  folders are others, and run refuses.
+"""
+import collections
+import glob
+import json
+import os
+import re
+import signal
+import subprocess
+import sys
+import urllib.parse
+
+# The providers a review may ask for, each with the name the tool gives it in `.modelUsage[*].provider` and the host
+# of its own API. An allow list: a provider the tool names otherwise, a new one included, is never taken for the one
+# asked for.
+TOOL_PROVIDER = {"anthropic": ("firstParty", "api.anthropic.com")}
+# The tool's own variables (ANTHROPIC_*, CLAUDE_CODE_*, _CLAUDE_CODE_*), in its environment or a settings file's `env`:
+# only these may be set, besides an ANTHROPIC_BASE_URL of the provider's own API. Each names a credential, or a knob
+# that moves no request and picks no model. An allow list: the tool reads well over a hundred such names, and several
+# (a base URL, a socket, a gateway, a host's credentials file, request fields, headers, settings sources) send its
+# requests elsewhere or let another model answer; a name not on this list, a new one included, is refused.
+TOOL_VARIABLES = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_IDENTITY_TOKEN",
+                  "ANTHROPIC_IDENTITY_TOKEN_FILE", "ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID",
+                  "ANTHROPIC_SERVICE_ACCOUNT_ID", "ANTHROPIC_WORKSPACE_ID", "ANTHROPIC_SCOPE",
+                  "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_ENABLE_TELEMETRY", "CLAUDE_CODE_MAX_OUTPUT_TOKENS")
+TOOL_PREFIXES = ("ANTHROPIC_", "CLAUDE_CODE_", "_CLAUDE_CODE_")
+# Other variables that let another party answer as the provider's API: the TLS settings that would let a proxy do it.
+ELSEWHERE = ("NODE_TLS_REJECT_UNAUTHORIZED", "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR")
+# Variables that move the folder of the Anthropic profile the tool reads, when an `env` it applies as it starts (a
+# global config's) sets them: the profile's base_url is then one profile_base_url does not read. In any `env` but the
+# process environment, which profile_base_url follows, they are refused.
+PROFILE_PLACES = ("HOME", "XDG_CONFIG_HOME")
+# The names the tool gives its global config, .claude<name>.json (its own list, 2.1.310).
+GLOBAL_CONFIG_NAMES = ("", "-staging-oauth", "-local-oauth", "-custom-oauth")
+# The folders of the tool's managed settings (managed-settings.json, managed-settings.d/*.json): the platform's, and
+# under WSL also Windows', whose registry keys (SOFTWARE\Policies\ClaudeCode, value Settings) it reads through REG.
+MANAGED = {"darwin": "/Library/Application Support/ClaudeCode", "linux": "/etc/claude-code",
+           "wsl": "/mnt/c/Program Files/ClaudeCode"}
+REG = "/mnt/c/Windows/System32/reg.exe"
+REG_TIMEOUT = 10   # seconds for one reg.exe query; one that takes longer refuses
+PLATFORM = sys.platform
+PROXIES = ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")   # in any case
+# Settings, outside `env`, that let another model answer part of a review, or give the tool an `env` another way.
+OTHER_MODEL_SETTINGS = ("advisorModel", "policyHelper", "policyHelpers")
+STOPPED = 4         # run: the agent was not started or was stopped, or the record does not show the provider asked for
+UNATTRIBUTED = 3    # check: no other provider or model answered, but a turn names none, or no turn answered
+NAME = re.compile(r"[A-Za-z0-9._:@+\[\]_-]{1,100}")
+SYNTHETIC = "<synthetic>"   # the model of a message the tool writes itself
+
+
+def clean(value):
+    """A provider's or model's name as the record writes it: `none` when there is none, and no character outside
+    NAME's, since the comment shows it."""
+    if not isinstance(value, str) or not value:
+        return "none"
+    return value if NAME.fullmatch(value) else (re.sub(r"[^A-Za-z0-9._:@+\[\]_-]", "?", value)[:100] or "none")
+
+
+def under_wsl():
+    """Whether this runs under WSL, as the tool tells it: WSL_DISTRO_NAME, or a kernel that names Microsoft or WSL."""
+    try:
+        with open("/proc/version") as f:
+            return bool(os.environ.get("WSL_DISTRO_NAME")) or any(w in f.read().lower() for w in ("microsoft", "wsl"))
+    except OSError:
+        return bool(os.environ.get("WSL_DISTRO_NAME"))
+
+
+def registry_settings():
+    """The settings of the Windows registry's ClaudeCode policy keys, as JSON texts, under WSL; raises ValueError for
+    one it cannot read."""
+    texts = []
+    for key in ("HKLM", "HKCU") if os.path.exists(REG) else ():
+        try:
+            answer = subprocess.run([REG, "query", fr"{key}\SOFTWARE\Policies\ClaudeCode", "/v", "Settings"],
+                                    capture_output=True, text=True, timeout=REG_TIMEOUT, stdin=subprocess.DEVNULL)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            raise ValueError(f"reg.exe: {type(e).__name__}") from e
+        if answer.returncode == 1:   # no such key or value
+            continue
+        # The tool's own pattern (2.1.310): the value runs from its line to the end of the output.
+        value = re.search(r"^[ \t]+Settings[ \t]+REG_(?:EXPAND_)?SZ[ \t]+([\s\S]*)", answer.stdout, re.M | re.I)
+        if answer.returncode != 0 or value is None:
+            raise ValueError("reg.exe gave no Settings value")
+        texts.append(value.group(1).rstrip())
+    return texts
+
+
+def add_settings(sources, settings, unreadable="unreadable-settings"):
+    """Adds a settings object's `env`, and its OTHER_MODEL_SETTINGS keys, to `sources`: False when it is no object. An
+    `env` that is no object is named `unreadable`."""
+    if not isinstance(settings, dict):
+        return False
+    env = settings.get("env", {})
+    sources.append(env if isinstance(env, dict) else {unreadable: ""})
+    sources.append({name: "" for name in OTHER_MODEL_SETTINGS if name in settings})
+    return True
+
+
+def asked_for(asked):
+    """(provider, model, the tool's name for the provider, the provider's host) of `<provider>/<model>`."""
+    provider, _, model = asked.partition("/")
+    if provider not in TOOL_PROVIDER or not NAME.fullmatch(model) or model == "none":
+        raise ValueError(f"asked for {clean(asked)}: not <provider>/<model> with a provider of "
+                         f"{', '.join(sorted(TOOL_PROVIDER))}")
+    return (provider, model) + TOOL_PROVIDER[provider]
+
+
+def is_model(name, model):
+    """Whether `name` is the model `model`: the same id, or a dated snapshot of it (`<model>-YYYYMMDD`), the name the
+    API answers with for some aliases."""
+    return name == model or re.fullmatch(re.escape(model) + r"-[0-9]{8}", name) is not None
+
+
+def base_url(value, host):
+    """None when the URL `value` is https://<host> (port 443 at most), else how the record names it:
+    `<scheme>:<host>[:<port>]`, and `+userinfo` when it holds a user or a password, which the record never shows."""
+    try:
+        url = urllib.parse.urlsplit(str(value))
+        port = url.port
+    except ValueError:   # a URL the parser refuses, or a port that is not a number
+        return "unreadable-url"
+    if url.scheme == "https" and url.hostname == host and port in (None, 443) and "@" not in url.netloc:
+        return None
+    named = f"{url.scheme or 'none'}:{url.hostname or 'none'}{f':{port}' if port is not None else ''}"
+    return clean(named + ("+userinfo" if "@" in url.netloc else ""))
+
+
+def profile_base_url():
+    """The `base_url` of the Anthropic profile the tool reads, from <config dir>/configs/<profile>.json: the config dir
+    is ANTHROPIC_CONFIG_DIR, else $XDG_CONFIG_HOME/anthropic, else ~/.config/anthropic; the profile is
+    ANTHROPIC_PROFILE, else the one active_config names, else `default`. None when there is none;
+    `unreadable-profile` when the profile cannot be read."""
+    env = os.environ
+    directory = env.get("ANTHROPIC_CONFIG_DIR", "").strip() or (
+        os.path.join(env["XDG_CONFIG_HOME"].strip(), "anthropic") if env.get("XDG_CONFIG_HOME", "").strip()
+        else os.path.join(env.get("HOME", ""), ".config", "anthropic"))
+    try:
+        with open(os.path.join(directory, "active_config")) as f:
+            active = f.read().strip()
+    except FileNotFoundError:
+        active = ""
+    except (OSError, ValueError):
+        return "unreadable-profile"
+    name = env.get("ANTHROPIC_PROFILE", "").strip() or active or "default"
+    try:
+        with open(os.path.join(directory, "configs", f"{name}.json")) as f:
+            profile = json.load(f)
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError, RecursionError):
+        return "unreadable-profile"
+    if not isinstance(profile, dict):
+        return "unreadable-profile"
+    url = profile.get("base_url")
+    return url if isinstance(url, str) and url.strip() else None
+
+
+def endpoint(host):
+    """Where the tool will send its requests: `host` when nothing sends them elsewhere, else what does, `+`-joined: an
+    ANTHROPIC_BASE_URL, or a profile's base_url, other than https://<host> (as base_url names it), or the name of
+    another variable or setting that could send them elsewhere or let another model answer. It reads the agent's
+    environment, which is this process's, the `env` of each of the tool's settings files and of its global config,
+    which the tool applies as it starts, and the Anthropic profile the tool reads; one it cannot read is
+    `unreadable-settings` or `unreadable-profile`. The global config is whichever of these the tool takes, so all are
+    read: .config.json in the config home (CLAUDE_CONFIG_DIR, else ~/.claude), and .claude<s>.json, for each <s> of
+    GLOBAL_CONFIG_NAMES, in CLAUDE_CONFIG_DIR, else the home directory. An empty file holds no `env`. Managed settings
+    are read from the platform's folder (MANAGED), and under WSL from Windows' folder and registry keys too: one it
+    cannot read is `unreadable-settings` or `unreadable-registry`. On a platform other than Linux or macOS it is
+    `unsupported-platform`."""
+    sources = [os.environ]
+    home = os.environ.get("HOME", "")
+    config = [os.path.join(home, ".claude"), os.environ.get("CLAUDE_CONFIG_DIR")]
+    globals_ = [os.path.join(d, ".config.json") for d in config if d] + \
+        [os.path.join(d, f".claude{name}.json") for d in (home, config[1]) if d for name in GLOBAL_CONFIG_NAMES]
+    if PLATFORM not in ("darwin", "linux"):
+        # Elsewhere (Windows, Cygwin, MSYS) the tool's folders are others than these: nothing here shows them.
+        return "unsupported-platform"
+    wsl = PLATFORM == "linux" and under_wsl()
+    managed = [MANAGED[PLATFORM]] + [MANAGED["wsl"]] * wsl
+    managed_files = [os.path.join(d, "managed-settings.json") for d in managed] + \
+        [p for d in managed for p in sorted(glob.glob(os.path.join(glob.escape(d), "managed-settings.d", "*.json")))]
+    for path in [os.path.join(d, "settings.json") for d in config if d] + globals_ + [".claude/settings.json",
+                 ".claude/settings.local.json"] + managed_files:
+        try:
+            if path in globals_ and os.path.getsize(path) == 0:
+                continue
+            with open(path) as f:
+                settings = json.load(f)
+        except FileNotFoundError:
+            continue
+        except (OSError, ValueError, RecursionError):
+            return "unreadable-settings"
+        if not add_settings(sources, settings):
+            return "unreadable-settings"
+    try:
+        for text in registry_settings() if wsl else ():
+            if not add_settings(sources, json.loads(text), "unreadable-registry"):
+                return "unreadable-registry"
+    except (ValueError, RecursionError):
+        return "unreadable-registry"
+    found = set()
+    profile = profile_base_url()
+    if profile == "unreadable-profile":
+        found.add(profile)
+    elif profile is not None:
+        found.add(base_url(profile, host) or host)
+    for number, env in enumerate(sources):   # sources[0] is the process environment
+        for name, value in env.items():
+            if name == "ANTHROPIC_BASE_URL":
+                found.add(base_url(value, host) or host)
+            elif name.startswith(TOOL_PREFIXES) and name not in TOOL_VARIABLES or name in ELSEWHERE \
+                    or name.upper() in PROXIES or name in OTHER_MODEL_SETTINGS \
+                    or name in ("unreadable-settings", "unreadable-registry") \
+                    or number > 0 and name in PROFILE_PLACES:
+                found.add(clean(name))
+    found.discard(host)
+    return "+".join(sorted(found)) or host
+
+
+def turns(n):
+    return f"{n} turn" if n == 1 else f"{n} turns"
+
+
+def check(record):
+    """(exit status, line) for a record: 0 and the counts when the provider and model asked for answered every turn."""
+    asked, where, used, answered = None, [], [], []
+    for line in record.splitlines():
+        if line.startswith("asked "):
+            asked = line[len("asked "):]
+        elif line.startswith("endpoint "):
+            where.append(line[len("endpoint "):])
+        elif line.startswith("usage ") and "/" in line:
+            used.append(line[len("usage "):].split("/", 1))
+        elif line.strip():
+            served, _, n = line.rpartition(" ")
+            if "/" not in served or not (n.isascii() and n.isdigit()) or int(n) == 0:
+                return UNATTRIBUTED, f"a line of the record of what answered the review is not one: {clean(line)}"
+            answered.append((served.split("/", 1), int(n)))
+    if asked is None:
+        return UNATTRIBUTED, "nothing recorded which provider answered the review: it is not attributable"
+    try:
+        _, model, want, host = asked_for(asked)
+    except ValueError as e:
+        return UNATTRIBUTED, str(e)
+    counts = ", ".join(f"{provider}/{name} ({turns(n)})" for (provider, name), n in answered)
+    usage = ", ".join(f"{provider}/{name}" for provider, name in used) or "nothing"
+    if "unsupported-platform" in where:
+        return 1, f"it asked for {asked}, but the review ran on a platform where nothing shows where the tool " \
+                  "reads its settings"
+    if any(w != host for w in where):
+        return 1, f"it asked for {asked}, whose API is {host}, but the tool's environment or settings set " \
+                  f"{', '.join(clean(w) for w in where)}, which can send its requests elsewhere or let another model " \
+                  f"answer, and {counts or 'no turn'} answered"
+    if any(provider not in ("none", want) or name != "none" and not is_model(name, model)
+           for (provider, name) in used + [served for served, _ in answered]):
+        return 1, f"it asked for {asked}, which the tool calls {want}/{model}, but {counts or 'no turn'} " \
+                  f"answered, and the tool's usage names {usage}"
+    if not where:
+        return UNATTRIBUTED, f"it asked for {asked}, and nothing recorded where the tool sent its requests, though " \
+                             f"{counts or 'no turn'} answered: it is not attributable"
+    if not answered:
+        return UNATTRIBUTED, f"it asked for {asked}, and no turn named the provider and model that answered it: it " \
+                             "is not attributable"
+    if any("none" in (provider, name) for (provider, name), _ in answered):
+        return UNATTRIBUTED, f"it asked for {asked}, and {counts} answered, where none is a provider or model the " \
+                             "tool did not name: it is not attributable"
+    if not used or any("none" in (provider, name) for provider, name in used):
+        return UNATTRIBUTED, f"it asked for {asked}, and {counts} answered, but the tool's usage names {usage}, " \
+                             "where none is a provider or model the tool did not name: it is not attributable"
+    return 0, counts
+
+
+def stop(agent):
+    """Stop the agent and every process it started: it runs in a process group of its own. A second stop of this
+    script while it does so (SIGTERM, SIGINT) waits until it is done, so that the SIGKILL is always sent."""
+    held = {s: signal.signal(s, signal.SIG_IGN) for s in (signal.SIGTERM, signal.SIGINT)}
+    try:
+        try:
+            os.killpg(agent.pid, signal.SIGTERM)
+            agent.wait(timeout=30)
+        except (ProcessLookupError, subprocess.TimeoutExpired):
+            pass
+        try:
+            os.killpg(agent.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        agent.wait()
+    finally:
+        for s, handler in held.items():
+            signal.signal(s, handler)
+
+
+def write_record(directory, asked, where, seen):
+    """Writes `served`, then review.json, from what read has seen so far: the record also when run is stopped."""
+    result = seen["result"]
+    usage = result.get("modelUsage") if result is not None else None
+    # An entry that is not an object names no provider or model: `none`, so the record is not attributable.
+    used = sorted({(clean(u.get("provider")), clean(u.get("canonicalModel") or key)) if isinstance(u, dict)
+                   else ("none", clean(key)) for key, u in usage.items()}) if isinstance(usage, dict) else []
+    provider = "+".join(sorted({provider for provider, _ in used})) or "none"
+    counts = collections.Counter(f"{provider}/{model}" for model in seen["answered"].values())
+    record = f"asked {asked}\nendpoint {where}\n" + "".join(f"usage {provider}/{model}\n" for provider, model in used) \
+        + "".join(f"{served} {n}\n" for served, n in sorted(counts.items()))
+    with open(f"{directory}/served", "w") as f:
+        f.write(record)
+    with open(f"{directory}/review.json", "wb") as f:
+        if result is not None:
+            f.write(seen["result_line"].rstrip(b"\r\n"))
+    return record
+
+
+def run(directory, asked, command):
+    _, model, _, host = asked_for(asked)
+    # What read has seen: message id -> the model that answered it, and the last result event, parsed and as it came.
+    seen = {"answered": {}, "result": None, "result_line": None}
+    stopped, status = None, 0
+    for name in ("review.json", "served"):
+        if os.path.exists(f"{directory}/{name}"):
+            os.remove(f"{directory}/{name}")
+    where = endpoint(host)
+    try:
+        with open(f"{directory}/review.jsonl", "wb") as stream:
+            if where == "unsupported-platform":
+                stopped = f"did not start the agent: on {clean(PLATFORM)}, this script does not know where the " \
+                          "tool reads its settings (it knows Linux, WSL and macOS)"
+            elif where != host:
+                stopped = f"did not start the agent: the tool's environment or settings set {where}, " \
+                          f"which can send its requests elsewhere than {host} or let another model answer"
+            else:
+                status, stopped = read(command, stream, model, seen)
+    finally:
+        record = write_record(directory, asked, where, seen)
+    if stopped:
+        print(f"facts-review-served: {stopped}", file=sys.stderr)
+        return STOPPED
+    if status != 0:
+        return status if status > 0 else 128 - status
+    code, line = check(record)
+    if code != 0:
+        print(f"facts-review-served: {line}", file=sys.stderr)
+        return STOPPED
+    return 0
+
+
+def read(command, stream, model, seen):
+    """Runs the agent and reads its stream into `stream` and `seen`, stopping it at the first model response that is
+    not of `model`, or at a line that is not a JSON object: (the agent's status, why it was stopped)."""
+    answered, stopped, agent = seen["answered"], None, None
+    try:
+        agent = subprocess.Popen(command, stdout=subprocess.PIPE, start_new_session=True)
+        for number, line in enumerate(agent.stdout, 1):
+            stream.write(line)
+            stream.flush()
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except (ValueError, RecursionError) as e:
+                event = e
+            if not isinstance(event, dict):
+                # A line that hides a turn would be a turn not checked. The tool writes only events, one a line.
+                why = "nested too deeply to read" if isinstance(event, RecursionError) else \
+                    "not JSON" if isinstance(event, ValueError) else "not a JSON object"
+                stopped = f"stopped the agent: line {number} of its stream is {why}: what answered is not attributable"
+                seen["result"] = seen["result_line"] = None
+                break
+            if event.get("type") == "result":
+                seen["result"], seen["result_line"] = event, line
+            if event.get("type") != "assistant":
+                continue
+            message = event.get("message") if isinstance(event.get("message"), dict) else {}
+            if message.get("model") == SYNTHETIC and event.get("is_api_error_message") is True:
+                continue
+            key = message.get("id") if isinstance(message.get("id"), str) else f"#{len(answered)}"
+            if key not in answered:
+                answered[key] = clean(message.get("model"))
+            # The response's model, then the model of each server fallback that a content block hands it to; the raw
+            # names are compared, not the record's cut ones. Content that is not a list hides what it holds.
+            content = message.get("content") if message.get("content") is not None else []
+            handed = [block.get("to").get("model") if isinstance(block.get("to"), dict) else None
+                      for block in content if isinstance(block, dict) and block.get("type") == "fallback"] \
+                if isinstance(content, list) else [None]
+            for answer, how in [(message.get("model"), "")] + [(m, " (a server fallback within the response)")
+                                                               for m in handed]:
+                if isinstance(answer, str) and is_model(answer, model):
+                    continue
+                answered[key] = name = clean(answer)
+                name = "no model it named" if name == "none" else name
+                stopped = f"stopped the agent: turn {list(answered).index(key) + 1} was answered by {name}{how}, " \
+                          f"not {model}"
+                break
+            if stopped:
+                break
+        if stopped:
+            stop(agent)
+        return agent.wait(), stopped
+    except BaseException:
+        if agent is not None:
+            stop(agent)
+        raise
+    finally:
+        if agent is not None:
+            agent.stdout.close()
+
+
+def main(argv):
+    usage = "usage: facts-review-served run <directory> <provider>/<model> -- <command...> | check < <record> | " \
+            "asked <provider>/<model>"
+    if argv[:1] == ["check"] and len(argv) == 1:
+        try:
+            code, line = check(sys.stdin.read())
+        except Exception as e:   # a record it cannot read is no evidence, and never the exit of another provider, 1
+            code, line = UNATTRIBUTED, f"the record of what answered the review could not be read " \
+                                       f"({type(e).__name__}): it is not attributable"
+        print(line)
+        return code
+    running = argv[:1] == ["run"] and len(argv) > 4 and argv[3] == "--"
+    if running or argv[:1] == ["asked"] and len(argv) == 2:
+        try:
+            asked_for(argv[2] if running else argv[1])
+        except ValueError as e:
+            print(f"facts-review-served: {e}", file=sys.stderr)
+            return 2
+        if not running:
+            return 0
+        # A stop of this script (the step's timeout, a cancelled run) stops the agent too, through read's cleanup, and
+        # the record is written of what answered until then.
+        signal.signal(signal.SIGTERM, lambda *_: sys.exit(128 + signal.SIGTERM))
+        try:
+            return run(argv[1], argv[2], argv[4:])
+        except Exception as e:   # read stopped the agent already
+            print(f"facts-review-served: could not record what answered the review ({type(e).__name__}): it is not "
+                  "attributable", file=sys.stderr)
+            return STOPPED
+    print(usage, file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

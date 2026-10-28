@@ -39,7 +39,7 @@ Ltac alink_side LO HO :=
         | solve [ left; reflexivity ] | solve [ right; reflexivity ]
         | solve [ lazymatch goal with |- _ = true => vm_compute; reflexivity end ]   (* [comment removed for export] *)
         | solve [ intros; autounfold with alink_unf0; lia ]
-        | solve [ intros; alink_needs LO; autounfold with alink_unf; unfold arl_need_rt; timeout 60 lia ]
+        | solve [ intros; alink_needs LO; autounfold with alink_unf; unfold arl_need_rt; timeout 60 lia ]   (* timeout-ok: expiry takes the eauto and nia arms after it, which prove the same side condition *)
         | solve [ eauto 12 with alink_bud nocore ]
         | solve [ intros; alink_needs LO; autounfold with alink_unf; unfold arl_need_rt; nia ] ].
 Ltac alink_open := match goal with |- ?g => idtac "ALINK-OPEN:" g end.

@@ -138,8 +138,9 @@ checks:
   strength: weak
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
-  where: source/fuzz_iccprofile_transform.c:71
+  where: source/fuzz_iccprofile_transform.c:71-75
   what: The embedded constant sRGB profile must parse (exit(1) otherwise) -- independent of the input,
     so trivially true once it passes once.
 distribution:

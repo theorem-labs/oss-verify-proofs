@@ -10,8 +10,10 @@ Require LinuxProcessSemantics.LinuxProcessSem.Run.
 Require OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Plain.
 Require OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Asan.
 Require OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.AsanUbsan.
+Require OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Ubsan.
 From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib Require FinAgreeA.
 From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib Require FinAgreeB.
+From OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib Require FinAgreeU.
 
 Theorem strong_universal_error_free_speexdec_fuzzer_asan :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
@@ -33,4 +35,15 @@ Theorem strong_universal_error_free_speexdec_fuzzer_both :
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.AsanUbsan.M.loaded_segments OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.AsanUbsan.M.init_pc OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.AsanUbsan.M.phdrs).
 Proof.
 exact OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.FinAgreeB.both_agree.
+Qed.
+
+Theorem strong_universal_error_free_speexdec_fuzzer_ubsan :
+  LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
+    (LinuxProcessSemantics.LinuxProcessSem.Run.alloc_only_cfg false)
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
+    LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Plain.M.loaded_segments OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Plain.M.init_pc OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Plain.M.phdrs)
+    (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Ubsan.M.loaded_segments OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Ubsan.M.init_pc OssFuzzTheorems.speex.speex_decode_fuzzer_float.images.Ubsan.M.phdrs).
+Proof.
+exact OssFuzzTheorems.Proofs.speex.speex_decode_fuzzer_float.lib.FinAgreeU.ubsan_agree.
 Qed.

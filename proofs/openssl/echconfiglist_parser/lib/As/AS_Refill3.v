@@ -392,8 +392,8 @@ Section Refill.
     set (m4 := owin L4 S1 W (zfill (Z_to_bv 64 (FAB + mfa)) (Z_to_bv 64 262144) m2)) in VIS5.
     assert (MU4 : munch [(FAB + mfa, FAB + mfa + 262144); (sh (FAB + mfa), sh (FAB + mfa) + 32768)] m2 m4).
     { intros x Hx. cbn [outside] in Hx. destruct Hx as (Hx1 & Hx2 & _). subst m4.
-      rewrite (owin_munch L4 S1 (sh (FAB + mfa)) 32768 SHB3 ltac:(hci; clear - SHB2 SHB5; try acb; unfold AHI_LO in *; lia) ltac:(hci; clear; lia) _ x) by (cbn [outside]; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])])).
-      apply (zfill_munch (Z_to_bv 64 (FAB + mfa)) (Z_to_bv 64 262144) m2 x). cbn [outside]. rewrite ECUR, E256. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]). }
+      rewrite (owin_munch L4 S1 (sh (FAB + mfa)) 32768 SHB3 ltac:(hci; clear - SHB2 SHB5; try acb; unfold AHI_LO in *; lia) ltac:(hci; clear; lia) _ x) by (cbn [outside]; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])])).
+      apply (zfill_munch (Z_to_bv 64 (FAB + mfa)) (Z_to_bv 64 262144) m2 x). cbn [outside]. rewrite ECUR, E256. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]). }
     assert (WM4 : wmono asegs m2 m4).
     { subst m4. eapply wmono_trans; [apply zfill_wmono | apply owin_wmono]. }
     assert (MI4 : mem_inv asegs m4).

@@ -1,0 +1,296 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From Stdlib Require Import Wf_nat.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib Require Import PropExec.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import Tac WalkLib. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Lib Require Import SegsS0. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import StoreFast.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import BzModel. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz Require Import BzTac BzDefs BzInv. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import BzTables BzLemmasT BzLemmasMtf. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz Require Import BzWalkArith BzWalkArith2 S0_bzd_out. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import BzSepTac.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import CmpMem CmpArith BzCLemmas1.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require BzArr BzCStream BzDState.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require BzDBlock.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require BzDBlock BzDOut BzDOK BzDOKp BzDOKS. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz Require DecCutF DecTacF.
+Import OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzArr OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzCStream OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzDState OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzDBlock.BzDHuff OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzDBlock OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzDOut OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzDOK OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzDOKp OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz.BzDOKS OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz.DecCutF OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz.DecTacF.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz Require Import S0F_bzd_out S0F_bzd_outS. From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz Require Import UKit.
+From Stdlib Require Lia. Unset Lia Cache.
+Import ListNotations. Open Scope bv_scope.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib Require Import ACeil.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Lib Require StoreFastZ StoreFastC.   (* [comment removed for export] *)
+Local Ltac mem_after_store ::= first [ StoreFastC.mem_after_store_fastzc | StoreFastZ.mem_after_store_fastz | mem_after_store_fast ].
+(* [comment removed for export] *)
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import CpsOpen.
+Ltac unhide_disj := repeat match goal with H : id (?A \/ ?B) |- _ => unfold id in H end.
+Ltac hide_disj := repeat match goal with H : ?A \/ ?B |- _ => change (A \/ B) with (id (A \/ B)) in H end.
+Local Ltac tlia ::= first [ Zify.zify; xlia zchecker
+                         | sf_unhide; unhide_disj;
+                           first [ zify_prune_neg; Zify.zify; xlia zchecker
+                                 | zify_prune_plain; Zify.zify; xlia zchecker
+                                 | Zify.zify; xlia zchecker ] ].
+Local Ltac tslia ::= tslia_sep.
+
+(* [comment removed for export] *)
+Record pst := PST { p_oc : Z; p_ol : Z; p_nu : Z; p_k0 : Z; p_tp : Z; p_rn : Z; p_rt : Z; p_cb : Z;
+                    p_out : list Z; p_av : Z; p_tout : Z; p_tol : word; p_toh : word }.
+
+(* [comment removed for export] *)
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import NatLit.
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Bz Require Import BzImg0TacF.
+Local Ltac Zify.zify_pre_hook ::= NatLit.natlen_ctx.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Bz Require RelLiaS.
+(* [comment removed for export] *)
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.Lib Require StepFast.
+Local Ltac Lib.Step.step_core segs R F pc fc rv m ro ::= StepFast.sf_step_core.
+Local Ltac Lib.Step.zstep ::= StepFast.sf_zstep.
+#[local] Ltac2 Set StepFast.sf_foldgoal := Ltac2.Init.true.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+(* [comment removed for export] *)
+From OssFuzzTheorems.Proofs.bzip2.bzip2_compress_target.lib.U.Lib Require RangeFast RangeFastEnv.
+#[local] Ltac2 Set RangeFast.RF.rc_atom_facts := RangeFastEnv.env_atom_facts.
+Local Ltac Lib.ZBridge.flia ::= RangeFast.rc_decide ltac:(first [ assumption | Lib.ZBridge.slim; lia | lia ]).
+Local Ltac Lib.ZBridge.mlia ::= RangeFast.rc_decide ltac:(Z.div_mod_to_equations; lia).
+Local Ltac Bz.BzTac.mlia ::= RangeFast.rc_decide ltac:(Z.div_mod_to_equations; lia).
+#[local] Ltac2 Set RangeFast.RF.rc_or_boxes := fun () => [constr:(@id); constr:(Lib.StoreFast.sf_hide)].
+Local Ltac Bz.BzSepTac.tlia2 ::= first [ RangeFast.rc_prune_lia | Lib.StoreFast.sf_unhide; Bz.BzSepTac.unhide_disj; first [ Lib.StoreFast.zify_prune_neg; Zify.zify; xlia zchecker | Lib.StoreFast.zify_prune_plain; Zify.zify; xlia zchecker | Zify.zify; xlia zchecker ] ].
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Local Ltac tlia ::= RelLiaS.tlia_bzd_r.
+Local Ltac BzSepTac.tlia1 ::= RelLiaS.tlia1_r.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+(* [comment removed for export] *)
+Section ACeilS1. Context {ACEIL__ : ACeil}.
+
+Section SNR.
+  Variable c : foctx.
+  Notation cx := (o_cx c). Notation J := (o_J c). Notation d0 := (o_d c). Notation s0 := (o_s c).
+  Notation S := (b_s (o_cx c)). Notation STRM := (b_strm (o_cx c)). Notation DST := (b_dst (o_cx c)). Notation dlen := (b_dlen (o_cx c)).
+  Notation n := (b_n (o_cx c)). Notation L16 := (b_ll16 (o_cx c)). Notation L4 := (b_ll4 (o_cx c)).
+  Notation snb := (sv_nblock (d_sv (o_d c))). Notation av0 := (s_avail_out (o_s c)). Notation PP := (sv_nblock (d_sv (o_d c)) + 1)%Z.
+  Notation cap := (100000 * b_n (o_cx c))%Z.
+  Notation cf := (d_cftab (o_d c)).
+  Notation F := (o_F c). Notation fc := (o_fc c). Notation KQ := (o_KQ c). Notation m0 := (o_m0 c).
+  Notation RO := (FROs c). Notation WB := (FWB c).
+  Notation RR ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6 :=
+    (FRR c ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6) (only parsing).
+  Hypothesis OK : foctx_ok c. Hypothesis OKS : foctx_okS c. Hypothesis AL : foctx_al c.
+  Hypothesis KJ : FKjoin c (FROs c).
+  Hypothesis KE : FKexit c (FROs c).
+
+  (* [comment removed for export] *)
+  Definition D (p : pst) : dst := set8 d0 (p_oc p) (p_ol p) (p_nu p) (p_k0 p) (p_tp p) (p_rn p) (p_rt p) (p_cb p).
+  Definition Ss (p : pst) : dstrm := smod s0 (p_out p) (p_av p) (p_tout p).
+  Definition Jp (p : pst) : jk := jk_set_o J (p_tol p) (p_toh p).
+  (* [comment removed for export] *)
+  Definition sinv (p : pst) : Prop :=
+    (0 <= p_cb p < 4294967296)%Z /\ (0 <= p_oc p < 256)%Z /\ (0 <= p_ol p <= 260)%Z /\
+    (0 <= p_nu p <= PP + 1)%Z /\ ((0 <= p_k0 p < 256)%Z \/ (p_nu p = 0%Z /\ (cap <= p_tp p)%Z)) /\
+    (0 <= p_tp p < 4294967296)%Z /\ p_rn p = d_rNToGo d0 /\ p_rt p = d_rTPos d0 /\
+    (0 <= p_av p <= av0)%Z /\ Z.of_nat (length (p_out p)) = (dlen - p_av p)%Z.
+
+  Notation cstrm := (Z_to_bv 64 (b_strm (o_cx c))). Notation csnb := (Z_to_bv 64 (sv_nblock (d_sv (o_d c)))).
+  Notation cnn := (Z_to_bv 64 (b_n (o_cx c) * 100000)).
+  Notation c14 := (Z_to_bv 64 14). Notation c3 := (Z_to_bv 64 3). Notation cm4 := (Z_to_bv 64 (-4)).
+  Notation cl16 := (Z_to_bv 64 (b_ll16 (o_cx c))). Notation cl4 := (Z_to_bv 64 (b_ll4 (o_cx c))).
+  Notation cpp := (Z_to_bv 64 (sv_nblock (d_sv (o_d c)) + 1)).
+
+  (* [comment removed for export] *)
+  Definition CH (m : word -> option byte) (p : pst) (dbytes rest : list byte) : Prop :=
+    DSg c m (Jp p) (D p) (Ss p) /\ DESTg c m (Ss p) dbytes rest /\ RO m /\ munch WB m0 m /\ wmono s0segs m0 m.
+
+  (* [comment removed for export] *)
+  Definition MS_ (f : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f)%Z -> (1 <= p_ol p)%Z ->
+      evt s0segs (KQ (K_PM f (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6) F (Z_to_bv 64 0x15928) fc None m (seg_rom s0segs)).
+  (* [comment removed for export] *)
+  Definition HS (f : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a0 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f)%Z -> (1 <= p_av p)%Z ->
+      evt s0segs (KQ (K_PH f (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 a0 cstrm a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6) F (Z_to_bv 64 0x15468) fc None m (seg_rom s0segs)).
+  (* [comment removed for export] *)
+  Definition OUTS (f : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a0 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f)%Z -> (1 <= p_av p)%Z -> (1 <= p_ol p)%Z ->
+      evt s0segs (KQ (K_PH f (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 a0 cstrm a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6) F (Z_to_bv 64 0x15470) fc None m (seg_rom s0segs)).
+  (* [comment removed for export] *)
+  Definition GS (f : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f)%Z -> (1 <= p_av p)%Z -> p_ol p = 0%Z ->
+      evt s0segs (KQ (K_PG f (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s3 s8 t3 t4 t5 t6) F (Z_to_bv 64 0x15514) fc None m (seg_rom s0segs)).
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Definition T1S (f' : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a4 a5 s1 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f' + 1)%Z -> (1 <= p_av p)%Z ->
+      p_ol p = 1%Z -> p_oc p = p_k0 p -> (0 <= p_k0 p < 256)%Z -> (p_nu p < PP)%Z -> (p_tp p < cap)%Z ->
+      evt s0segs (KQ (PG1 (Datatypes.S f') PP (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 (Z_to_bv 64 (p_nu p)) cpp cnn (Z_to_bv 64 (p_k0 p)) a4 a5 (Z_to_bv 64 (indexIntoF (p_tp p) cf)) (Z_to_bv 64 (p_tp p))
+                s1 cm4 s8 t3 t4 t5 t6)
+            F (Z_to_bv 64 0x155b8) fc None m (seg_rom s0segs)).
+  (* [comment removed for export] *)
+  Definition T2S (f' : nat) (p : pst) : Prop :=
+    forall (ra t2 a0 s1 s8 t3 t4 t5 t6 : word) (v16 : Z) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f')%Z -> (1 <= p_av p)%Z ->
+      p_ol p = 2%Z -> p_oc p = p_k0 p -> (0 <= p_k0 p < 256)%Z -> (1 <= p_nu p < PP)%Z -> (p_tp p < cap)%Z ->
+      (0 <= v16 < 65536)%Z -> Z.land (v16 * 4) 4 = Z.land (p_tp p * 4) 4 ->
+      evt s0segs (KQ (PG2 (Datatypes.S f') PP (D p) (Ss p)))
+        (MS (RR ra (Z_to_bv 64 v16) (Z_to_bv 64 (p_tp p)) t2 a0 cpp cnn (Z_to_bv 64 (p_k0 p)) cl16 cl4 (Z_to_bv 64 (indexIntoF (p_tp p) cf))
+                (Z_to_bv 64 (p_nu p)) s1 cm4 s8 t3 t4 t5 t6)
+            F (Z_to_bv 64 0x156b4) fc None m (seg_rom s0segs)).
+  (* [comment removed for export] *)
+  Definition T3S (f' : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s1 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f' - 1)%Z -> (1 <= p_av p)%Z ->
+      p_ol p = 3%Z -> p_oc p = p_k0 p -> (0 <= p_k0 p < 256)%Z -> (2 <= p_nu p < PP)%Z -> (p_tp p < cap)%Z ->
+      evt s0segs (KQ (PG3 (Datatypes.S f') PP (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 (Z_to_bv 64 (indexIntoF (p_tp p) cf)) a1 a2 a3 a4 a5 a6 a7 s1 cm4 s8 t3 t4 t5 t6)
+            F (Z_to_bv 64 0x1572c) fc None m (seg_rom s0segs)).
+  (* [comment removed for export] *)
+  Definition T4S (f' : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s1 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f' - 2)%Z -> (1 <= p_av p)%Z ->
+      p_ol p = 3%Z -> p_oc p = p_k0 p -> (0 <= p_k0 p < 256)%Z -> (3 <= p_nu p < PP)%Z -> (p_tp p < cap)%Z ->
+      evt s0segs (KQ (PG4 (Datatypes.S f') (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 (Z_to_bv 64 (indexIntoF (p_tp p) cf)) a1 a2 a3 a4 a5 a6 a7 s1 cm4 s8 t3 t4 t5 t6)
+            F (Z_to_bv 64 0x157e8) fc None m (seg_rom s0segs)).
+  (* [comment removed for export] *)
+  Definition T5S (f' : nat) (p : pst) : Prop :=
+    forall (ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s1 s8 t3 t4 t5 t6 : word) (m : word -> option byte) (dbytes rest : list byte),
+      CH m p dbytes rest -> sinv p -> (PP - p_nu p <= Z.of_nat f' - 3)%Z -> (1 <= p_av p)%Z ->
+      (4 <= p_ol p <= 259)%Z -> p_oc p = p_k0 p -> (0 <= p_k0 p < 256)%Z -> (4 <= p_nu p <= PP)%Z -> (p_tp p < cap)%Z ->
+      evt s0segs (KQ (PG5 (Datatypes.S f') (D p) (Ss p)))
+        (MS (RR ra t0 t1 t2 (Z_to_bv 64 (indexIntoF (p_tp p) cf)) a1 a2 a3 a4 a5 a6 a7 s1 cm4 s8 t3 t4 t5 t6)
+            F (Z_to_bv 64 0x15894) fc None m (seg_rom s0segs)).
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Ltac unRO H := let GOT := ident:(GOT) in cps_destruct H as (SAV & L16A & L4A & CFA & CRC & RNA & GOT & MI); unfold FGOT in GOT.
+  Ltac unDS H := cps_destruct H as (HD & NBU & MID & SM).
+  Ltac unCH H := let DSm := fresh "DSm" in let DE := fresh "DE" in let ROm := fresh "ROm" in
+    cps_destruct H as (DSm & DE & ROm & MU & WM); unDS DSm; cps_destruct DE as (DSTA & DL & Edb & Lout); unRO ROm.
+  Ltac prep :=
+    let JWF := ident:(JWF) in let ENT := ident:(ENT) in let OK' := fresh "OK" in pose proof OK as OK';
+    cps_destruct OK' as (HS & HSTRM & HDST & Hdlen & SEP_SD & IAS & IAD & JWF & ENT);
+    let OKS' := fresh "OKS" in pose proof OKS as OKS';
+    cps_destruct OKS' as (HSM & HL16 & HL4 & SEP_S16 & SEP_D16 & SEP_S4 & SEP_D4 & SEP_164);
+    cps_destruct ENT as (En & Rn & Esm & Rsnb & Rsnb1 & Rav0 & Lout0 & Eol0 & RtP0 & NK0 & Rcb0 & Roc0 & Rr01 & Rrnd & Rcf & Rtt & Rl16 & Rl4);
+    cps_destruct JWF as (Lp1 & Lp2 & Lp3 & Ls1 & Ls2 & Lq1 & Lq2);
+    unfold FWB in *; pose proof alloc_ceiling_range as ACR;
+    pose proof (zw32_length cf 257 ltac:(lia)) as CFL;
+    pose proof (zh16_length (d_ll16 d0) (200000 * n) ltac:(lia)) as L16L; pose proof (zb8_length (d_ll4 d0) (50000 * n) ltac:(lia)) as L4L;
+    pose proof rnums_words_length as RNL; pose proof crc_words_length as CRCL; hide_disj.
+  Ltac ro_close := unfold FROs, FGOT; repeat match goal with |- _ /\ _ => split end; assumption.
+
+  (* [comment removed for export] *)
+  Ltac cf_load i :=
+    lazymatch goal with CFA : u32arr _ ?mm (S + 1096)%Z _, Rcf : _ -> forall i0 : Z, _ |- _ =>
+      let RD := fresh "RD" in let CR := fresh "CFR" in
+      pose proof (Rcf ltac:(lia) i ltac:(lia)) as CR;
+      pose proof (zw32_read s0segs mm (S + 1096)%Z cf 257 i _ CFA ltac:(lia) eq_refl) as RD;
+      wstep; clear RD; try rewrite (sx32_of_Z (zget cf i)) by lia end.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Lemma snr_B1 : forall (P : machine_state -> Prop) (m : word -> option byte) (idx : Z)
+      (ra a0 a1 a2 a3 a7 s1 s3 s8 t4 t5 t6 : word),
+    RO m -> (0 <= idx < 2147483648)%Z ->
+    (forall (t0 t1 t2 t3 : word) (lo hi : Z), iif_state (zget cf) idx 8 = (lo, hi) ->
+       evt s0segs P (MS (RR ra t0 t1 t2 a0 a1 a2 a3 (Z_to_bv 64 idx) (Z_to_bv 64 hi) (Z_to_bv 64 lo) a7 s1 s3 s8 t3 t4 t5 t6)
+                       F (Z_to_bv 64 0x155b8) fc None m (seg_rom s0segs))) ->
+    forall (k t : nat) (lo hi : Z) (t0 t1 t2 t3 : word), (t + k = 7)%nat -> iif_state (zget cf) idx t = (lo, hi) ->
+      evt s0segs P (MS (RR ra t0 t1 t2 a0 a1 a2 a3 (Z_to_bv 64 idx) (Z_to_bv 64 hi) (Z_to_bv 64 lo) a7 s1 s3 s8 t3 t4 t5 t6)
+                      F (Z_to_bv 64 0x15558) fc None m (seg_rom s0segs)).
+  Proof.
+    intros P m idx. intros until t6. intros ROm Hidx EXIT k.
+    induction k as [|k IH]; intros t lo hi t0 t1 t2 t3 Hk E; unRO ROm; prep;
+      pose proof (iif_stepW (zget cf) idx t lo hi ltac:(lia) E) as SW; cbv zeta in SW;
+      cps_destruct SW as (A & B & Cm & Dh & E1 & XT).
+    - assert (Ht7 : t = 7%nat) by lia. subst t.
+      urun_to 0x15588%Z. cf_load ((lo + hi) / 2)%Z.
+      wstep. wstep. if_cases K; pose proof K as K'; zify_cond K; rewrite ?signed_lit_small in K by lia.
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with false in E1, XT by (symmetry; apply Z.leb_gt; lia).
+        wstep. if_rew K'. clear K'.
+        urun_to 0x155b4%Z.
+        wstep. if_cases K2; zify_cond K2; [exfalso; apply K2; first [apply (proj2 XT); lia | f_equal; apply (proj2 XT); lia] |].
+        eapply EXIT. exact E1.
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with true in E1, XT by (symmetry; apply Z.leb_le; lia).
+        wstep. wstep. if_rew K'. clear K'. wstep.
+        urun_to 0x155b4%Z.
+        wstep. if_cases K2; zify_cond K2; [exfalso; apply K2; first [apply (proj2 XT); lia | f_equal; apply (proj2 XT); lia] |].
+        eapply EXIT. exact E1.
+    - urun_to 0x15588%Z. cf_load ((lo + hi) / 2)%Z.
+      wstep. wstep. if_cases K; pose proof K as K'; zify_cond K; rewrite ?signed_lit_small in K by lia.
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with false in E1, XT by (symmetry; apply Z.leb_gt; lia).
+        wstep. if_rew K'. clear K'.
+        urun_to 0x155b4%Z.
+        wstep. if_cases K2; zify_cond K2; [| exfalso; assert (t = 7%nat) by (apply (proj1 XT); lia); lia].
+        eapply (IH (Datatypes.S t)); [lia| exact E1].
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with true in E1, XT by (symmetry; apply Z.leb_le; lia).
+        wstep. wstep. if_rew K'. clear K'. wstep.
+        urun_to 0x155b4%Z.
+        wstep. if_cases K2; zify_cond K2; [| exfalso; assert (t = 7%nat) by (apply (proj1 XT); lia); lia].
+        eapply (IH (Datatypes.S t)); [lia| exact E1].
+  Time Qed.
+
+  (* [comment removed for export] *)
+  Lemma snr_B2 : forall (P : machine_state -> Prop) (m : word -> option byte) (idx : Z)
+      (ra t0 a1 a2 a3 a4 a5 a7 s1 s3 s8 t6 : word),
+    RO m -> (0 <= idx < 2147483648)%Z ->
+    (forall (t2 t3 t4 t5 : word) (lo hi : Z), iif_state (zget cf) idx 8 = (lo, hi) ->
+       evt s0segs P (MS (RR ra t0 (Z_to_bv 64 idx) t2 (Z_to_bv 64 hi) a1 a2 a3 a4 a5 (Z_to_bv 64 lo) a7 s1 s3 s8 t3 t4 t5 t6)
+                       F (Z_to_bv 64 0x156b4) fc None m (seg_rom s0segs))) ->
+    forall (k t : nat) (lo hi : Z) (t2 t3 t4 t5 : word), (t + k = 7)%nat -> iif_state (zget cf) idx t = (lo, hi) ->
+      evt s0segs P (MS (RR ra t0 (Z_to_bv 64 idx) t2 (Z_to_bv 64 hi) a1 a2 a3 a4 a5 (Z_to_bv 64 lo) a7 s1 s3 s8 t3 t4 t5 t6)
+                      F (Z_to_bv 64 0x15654) fc None m (seg_rom s0segs)).
+  Proof.
+    intros P m idx. intros until t6. intros ROm Hidx EXIT k.
+    induction k as [|k IH]; intros t lo hi t2 t3 t4 t5 Hk E; unRO ROm; prep;
+      pose proof (iif_stepW (zget cf) idx t lo hi ltac:(lia) E) as SW; cbv zeta in SW;
+      cps_destruct SW as (A & B & Cm & Dh & E1 & XT).
+    - assert (Ht7 : t = 7%nat) by lia. subst t.
+      urun_to 0x15684%Z. cf_load ((lo + hi) / 2)%Z.
+      wstep. wstep. if_cases K; pose proof K as K'; zify_cond K; rewrite ?signed_lit_small in K by lia.
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with false in E1, XT by (symmetry; apply Z.leb_gt; lia).
+        wstep. if_rew K'. clear K'.
+        urun_to 0x156b0%Z.
+        wstep. if_cases K2; zify_cond K2; [exfalso; apply K2; first [apply (proj2 XT); lia | f_equal; apply (proj2 XT); lia] |].
+        eapply EXIT. exact E1.
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with true in E1, XT by (symmetry; apply Z.leb_le; lia).
+        wstep. wstep. if_rew K'. clear K'. wstep.
+        urun_to 0x156b0%Z.
+        wstep. if_cases K2; zify_cond K2; [exfalso; apply K2; first [apply (proj2 XT); lia | f_equal; apply (proj2 XT); lia] |].
+        eapply EXIT. exact E1.
+    - urun_to 0x15684%Z. cf_load ((lo + hi) / 2)%Z.
+      wstep. wstep. if_cases K; pose proof K as K'; zify_cond K; rewrite ?signed_lit_small in K by lia.
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with false in E1, XT by (symmetry; apply Z.leb_gt; lia).
+        wstep. if_rew K'. clear K'.
+        urun_to 0x156b0%Z.
+        wstep. if_cases K2; zify_cond K2; [| exfalso; assert (t = 7%nat) by (apply (proj1 XT); lia); lia].
+        eapply (IH (Datatypes.S t)); [lia| exact E1].
+      + replace (zget cf ((lo + hi) / 2) <=? idx) with true in E1, XT by (symmetry; apply Z.leb_le; lia).
+        wstep. wstep. if_rew K'. clear K'. wstep.
+        urun_to 0x156b0%Z.
+        wstep. if_cases K2; zify_cond K2; [| exfalso; assert (t = 7%nat) by (apply (proj1 XT); lia); lia].
+        eapply (IH (Datatypes.S t)); [lia| exact E1].
+  Time Qed.
+
+End SNR.
+End ACeilS1.

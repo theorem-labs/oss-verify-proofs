@@ -1,6 +1,8 @@
 # approvals.yaml: the proofs a release carries, by fuzz target and statement, each with who approved it and when.
 # `./oft release-tree` keeps the proofs of these statements, removes the others, and removes this file;
-# `./oft approvals` writes it from the proofs in a checkout.
+# `./oft approvals` writes it from the proofs in a checkout.  A fuzz target has one entry per source (origin and
+# record), so proofs written here and proofs from a submission on one fuzz target are listed apart; a statement is in
+# one entry of its fuzz target only, and a release carries the union of the statements its entries list.
 tag: oss-fuzz-theorems/approvals/1
 root: {type: ref, name: approvals}
 defs:

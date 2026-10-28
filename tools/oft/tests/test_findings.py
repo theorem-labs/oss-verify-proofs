@@ -11,7 +11,7 @@ from oft.tests.helpers import add_findings, older_shape, tree
 
 KEY = "zlib/checksum_fuzzer/stand-in-abort"
 DIR = "findings/" + KEY
-PRELAUNCH = "theorem-labs/oss-verify" + "-prelaunch"
+INTERNAL = "theorem-labs/oss-verify-proofs" + "-internal"
 
 YAML = DIR + "/finding.yaml"
 UNPATCHED = "findings/zlib/unpatched.yaml"
@@ -192,21 +192,40 @@ class Record(unittest.TestCase):
             t.write(DIR + "/VERDICT.md", "a verdict\n")
             self.assertIn("paths %s/VERDICT.md: matches no path pattern" % DIR, [str(f) for f in t.lint()])
 
-    def test_a_finding_file_over_64_kib(self):
-        with tree() as t:
-            add_findings(t)
-            with open(t.path(DIR, "input.bin"), "ab") as f:
-                f.write(b"x" * (64 << 10))
-            self.assertTrue(any(f.where == DIR + "/input.bin" and "over the 65536-byte cap" in f.msg
-                                for f in t.lint()))
+    def grow(self, t, rel, size):
+        """rel, padded with x to size bytes."""
+        with open(t.path(rel), "ab") as f:
+            f.write(b"x" * (size - os.path.getsize(t.path(rel))))
+
+    def test_an_input_as_long_as_a_full_payload_and_its_header(self):
+        """A bug at a harness's last payload byte needs a payload of the harness's whole length: 64 KiB after the
+        six-byte header for a harness that reads 64 KiB.  input.bin and control.bin take up to 1 MiB."""
+        for rel in (DIR + "/input.bin", DIR + "/control.bin"):
+            for size in ((64 << 10) + 6, 1 << 20):
+                with self.subTest(rel=rel, size=size), tree() as t:
+                    add_findings(t)
+                    self.grow(t, rel, size)
+                    self.assertEqual(facts.load(t.root).errors, [])
+                    self.assertEqual([str(f) for f in t.lint()], [])
+
+    def test_a_finding_file_over_its_cap(self):
+        """input.bin and control.bin: 1 MiB; every other file of a finding: 64 KiB.  lint's paths rule reports it, by
+        its own cap (lint.CAPS), apart from the loader's schema error for the same file."""
+        for rel, cap in ((DIR + "/input.bin", 1 << 20), (DIR + "/control.bin", 1 << 20),
+                         (DIR + "/0001-stand-in.patch", 64 << 10), ("findings/zlib/checksum_fuzzer/series", 64 << 10)):
+            with self.subTest(rel=rel), tree() as t:
+                add_findings(t)
+                self.grow(t, rel, cap + 1)
+                self.assertIn("paths %s: %d bytes, over the %d-byte cap" % (rel, cap + 1, cap),
+                              [str(f) for f in t.lint()])
 
     def test_the_loader_refuses_an_oversize_finding_file_before_lint(self):
-        with tree(render=False) as t:
-            add_findings(t)
-            with open(t.path(DIR, "input.bin"), "ab") as f:
-                f.write(b"x" * (64 << 10))
-            loaded = facts.load(t.root)
-            self.assertIn(DIR + "/input.bin: over the 65536-byte cap", loaded.errors)
+        for rel, cap in ((DIR + "/input.bin", 1 << 20), (DIR + "/control.bin", 1 << 20),
+                         (DIR + "/0001-stand-in.patch", 64 << 10), (YAML, 64 << 10), (UNPATCHED, 64 << 10)):
+            with self.subTest(rel=rel), tree(render=False) as t:
+                add_findings(t)
+                self.grow(t, rel, cap + 1)
+                self.assertIn("%s: over the %d-byte cap" % (rel, cap), facts.load(t.root).errors)
 
     def test_the_loader_never_opens_a_symlinked_finding_file(self):
         with tree(render=False) as t:
@@ -266,7 +285,7 @@ class Record(unittest.TestCase):
             edit(t, YAML, lambda y: y.update(upstream="https://bugs.example.org/show_bug.cgi?id=1"))
             self.assertEqual([str(f) for f in t.lint()], [])
 
-    def test_a_findings_release_tag_and_the_prelaunch_port(self):
+    def test_a_findings_release_tag_and_the_internal_port(self):
         with tree(render=False) as t:
             p = t.yaml("projects/zlib/project.yaml")
         for release, ok in (("findings-zlib", True), ("findings-", False), ("findings-Zlib", False),
@@ -275,8 +294,9 @@ class Record(unittest.TestCase):
                 p["assets"]["bin"]["release"] = release
                 self.assertEqual(schema.validate("project", p) == [], ok)
         p["assets"]["bin"]["release"] = "v2026.11.0"
-        for repository, ok in (("theorem-labs/oss-verify", True), (PRELAUNCH, True),
-                               ("theorem-labs/oss-verify-proofs", False)):
+        for repository, ok in (("theorem-labs/oss-verify", True), (INTERNAL, True),
+                               ("theorem-labs/oss-verify-proofs", False),
+                               ("theorem-labs/oss-verify" + "-prelaunch", False)):
             with self.subTest(repository=repository):
                 p["build"]["oss_verify"] = {"repository": repository, "commit": "d" * 40, "path": "projects/zlib"}
                 self.assertEqual(schema.validate("project", p) == [], ok)
@@ -445,26 +465,17 @@ class Rules(unittest.TestCase):
             self.assertEqual(finding_errors(t), [YAML + ": not-a-defect, but asan_ubsan_agrees is not recorded as "
                                                  "false"])
 
-    def test_held_projects(self):
-        with tree(render=False) as t:
-            add_findings(t)
-            self.assertEqual(facts.held_projects(facts.load(t.root)), {"zlib"})
-            for state, held in (("open", True), ("patched", True), ("reported", True), ("public", False),
-                                ("pruned", False), ("not-a-defect", False)):
-                edit(t, YAML, lambda y: y.update(state=state))
-                self.assertEqual(facts.held_projects(facts.load(t.root)), {"zlib"} if held else set(), state)
-
-    def test_only_a_held_project_builds_from_prelaunch_or_attaches_to_its_findings_release(self):
+    def test_only_a_held_project_builds_from_the_internal_port_or_attaches_to_its_findings_release(self):
         zlib, json = "projects/zlib/project.yaml", "projects/json/project.yaml"
-        prelaunch = zlib + (": build.oss_verify.repository is %s: only a project held "
-                            "by a finding builds from %s" % (PRELAUNCH, PRELAUNCH))
+        internal = zlib + (": build.oss_verify.repository is %s: only a project a finding holds "
+                           "back whole builds from %s" % (INTERNAL, INTERNAL))
 
         def attach(rel, release):
-            return "%s: assets.bin is attached to %s: only a project held by a finding attaches to findings-<project>, " \
-                   "its own" % (rel, release)
+            return "%s: assets.bin is attached to %s: only a project a finding holds back whole attaches to " \
+                   "findings-<project>, its own" % (rel, release)
 
         def port(y):
-            y["build"]["oss_verify"] = {"repository": PRELAUNCH, "commit": "d" * 40,
+            y["build"]["oss_verify"] = {"repository": INTERNAL, "commit": "d" * 40,
                                         "path": "projects/zlib"}
             y["assets"]["port"] = {"release": "v2026.11.0", "file": "zlib-port.tar.zst", "bytes": 1000,
                                    "sha256": "9" * 64}
@@ -474,7 +485,7 @@ class Rules(unittest.TestCase):
             add_findings(t)
             edit(t, zlib, port)
             self.assertEqual(t.generate(), 0, t.last_output)
-            self.assertNotIn(PRELAUNCH, t.read("projects/zlib/README.md"))
+            self.assertNotIn(INTERNAL, t.read("projects/zlib/README.md"))
             self.assertEqual(finding_errors(t), [], "zlib is held: both are allowed")
             edit(t, json, lambda y: y["assets"]["bin"].update(release="findings-json"))
             self.assertEqual(finding_errors(t), [attach(json, "findings-json")])
@@ -482,7 +493,7 @@ class Rules(unittest.TestCase):
             self.assertEqual(finding_errors(t), [attach(json, "findings-zlib")])
             edit(t, json, lambda y: y["assets"]["bin"].update(release="v2026.11.0"))
             edit(t, YAML, lambda y: y.update(state="public", upstream="https://bugs.example.org/1"))
-            self.assertEqual(finding_errors(t), [prelaunch, attach(zlib, "findings-zlib")])
+            self.assertEqual(finding_errors(t), [internal, attach(zlib, "findings-zlib")])
 
     def test_a_finding_with_no_runs_meets_the_rules_of_its_state_while_recording(self):
         with tree(render=False) as t:

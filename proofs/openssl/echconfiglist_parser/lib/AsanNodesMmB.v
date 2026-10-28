@@ -1292,12 +1292,12 @@ Proof.
   - (* [comment removed for export] *) exact Xsp0.
   - (* [comment removed for export] *) intros z Hz. rewrite PM, INMAPS'. rewrite NOACC in Hz. apply andb_prop in Hz as [Hz1 Hz2]. rewrite (Xnasub z Hz1), Hz2. reflexivity.
   - (* [comment removed for export] *) apply Forall_forall. intros m' Hm' Hk'. destruct (DISJF m' Hm') as (Hm0 & Hne' & D).
-    assert (Hnf' : is_fog m' = false) by (apply KNF; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])])). specialize (D Hnf').
+    assert (Hnf' : is_fog m' = false) by (apply KNF; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])])). specialize (D Hnf').
     rewrite PN. pose proof (proj1 (Forall_forall _ _) Xnone m' Hm0 Hk') as X.
     pose proof (proj1 (Forall_forall _ _) HB (amap_den E m') (maps_match_In E _ _ m' Xmaps Hm0 Hnf')) as (C1 & _).
     unfold amap_den in *. apply maps_subtract_keeps; [lia | exact C1 | exact X | cbn [fst snd]; subst hi; lia].
   - (* [comment removed for export] *) apply Forall_forall. intros m' Hm' Hk' x Hx. destruct (DISJF m' Hm') as (Hm0 & Hne' & D).
-    specialize (D ltac:(apply KNF; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]))).
+    specialize (D ltac:(apply KNF; (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]))).
     destruct (proj1 (Forall_forall _ _) Xkinds m' Hm0 Hk' x Hx) as [K1 K2].
     assert (Hxo : bv_unsigned x < lo \/ hi <= bv_unsigned x) by lia.
     rewrite NOACC, K1, (LAZYOUT x Hxo), K2. split; reflexivity.

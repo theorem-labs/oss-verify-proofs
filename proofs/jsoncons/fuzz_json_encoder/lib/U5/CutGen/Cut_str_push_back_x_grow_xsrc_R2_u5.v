@@ -1,0 +1,22 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Corelib Require Import PrimString.
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OssFuzzTheorems.jsoncons.fuzz_json_encoder.images Require Import Ubsan.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require Import Pm6PlanKit_u5.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib. From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.CutCert Require Import Pm6CutKit_u5.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.PmEnc Require Import EncSums_u5.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCodec.
+From OssFuzzTheorems.Proofs.jsoncons.fuzz_json_encoder.lib.U5.CutGen Require Import Cut_str_push_back_x_grow_xsrc_T_u5 Cut_str_push_back_x_grow_xsrc_R0_u5 Cut_str_push_back_x_grow_xsrc_R1_u5.
+Definition dict_Cut_str_push_back_x_grow_xsrc_R2 : CCD.pt := CCD.mk_table 1095%positive "((2 0(1 2)(0 -64))(4 0(0 4)(1 32))(2 0#2(0 -2))(2 6#3(0 3))(4 0(0 8)#4)(2 0#5(0 8))(4 0(0 2)(1 32))(2 0#7(0 -1))((1 48)0)(2#9#8 0)(9#9#8)(0 1048575)(5#12 1 4611686018427387904)(5(1 48)4096 140737488355328)(4(1 48)16)(2 0#7(1 48))(#16 -1)(4 0(0 -2)(1 32))(2 0#18#5)(2 0#19(0 9))(9#17#20)(6#9#6)((0 0)65536)(0 974848)(7#9#6#23#24)((1 2)-8304)(0 8304)(7#9#6#26#27)((1 10)0)(7#9#6#29(0 24))((1 34)0)(7#9#6#31#7)(0 1048576)(5#33 1 4611686018427387904)(2 0#7(0 1))(6 0 0 1#35)(2 9#36(0 1))(5#37 1 1)((1 2)-64)(0#39 8(1 22))((1 2)-56)(0#41 8(1 21))((1 2)-48)(0#43 8(1 20))((1 2)-40)(0#45 8(1 19))((1 2)-32)(0#47 8(1 18))((1 2)-24)(0#49 8(1 9))((1 2)-16)(0#51 8(1 8))((1 2)-8)(0#53 8(1 1))(0#29 8#35)((1 10)8)(0#56 8#8)((1 10)16)(0#58 8(1 34))(5(1 32)12 70368744177664)(5(1 11)0 255)(2#31#8 0)(9#31#7)(6#31#7)(5(1 34)4096 140737488355328)(4(1 34)16)(9#29(0 24))(6#29(0 24))(5(1 10)4096 140737488355328)(4(1 10)8)(0 8240)(9#26#71)(6#26#27)(5(1 2)1099511627776 140737488355328)(4(1 2)16)(7#26#27#29(0 24))(7#26#27#31#7)(7#29(0 24)#31#7)(5#20 0 4611686018427387904)(0 1048574)(5#80 1 4611686018427387904))"%pstring.
+(* [comment removed for export] *)
+Definition t2 : CC.cutpoint := CCD.dec_cp_t dict_Cut_str_push_back_x_grow_xsrc_R2 376%positive "(437084((1 0)(1 65)#1(1 3)(1 4)(1 66)(1 67)(1 68)(1 11)(1 10)(1 48)(1 70)(1 71)(1 72)(1 73)(1 74)(1 75)(1 76)(1 34)#6#8#7(1 48)(1 23)(1 24)(1 25)(1 26)(1 27)(1 77)(1 78)(1 79)(1 80))(#10#11#13#14#15#21#22#25#28#30#32#34#38#40#42#44#46#48#50#52#54#55#57#59#60#61#62#63#64#65#66#67#68#69#70#72#73#74#75#76#77#78#79)81(((1 2)-8304#27)((1 10)0(0 24))((1 34)0#7)((1 48)0#6))()#80)"%pstring.
+Definition BL2 : CA.blocks := Eval vm_compute in CCD.dec_bl_t dict_Cut_str_push_back_x_grow_xsrc_R2 23%positive "(((1 48)#6)((1 34)#7))"%pstring.
+Definition hints2 : list (nat * CC.subst) := hints1.
+Definition o2 : CA.pout := CCD.dec_pout_t dict_Cut_str_push_back_x_grow_xsrc_R2 517%positive "((0(0(436872 437176 798592 718776 779340 778312 779720))(4#81(1 0)))(((718776((1(0 437104))(2#1)(3(1 3))(4(1 4))(5(1 66))(6(1 67))(7(1 68))(8(1 11))(9(1 10))(10(1 34))(11#7)(12(1 71))(13(1 72))(14(1 73))(15(1 74))(16(1 75))(17(1 76))(18(1 34))(19#6)(20#8)(21#7)(22(1 48))(23(1 23))(24(1 24))(25(1 25))(26(1 26))(27(1 27))(28(1 77))(29(1 78))(30(1 79))(31(1 80)))()(#81#10#11#13#14#15#21#22#25#28#30#32#34#38#40#42#44#46#48#50#52#54#55#57#59#60#61#62#63#64#65#66#67#68#69#70#72#73#74#75#76#77#78#79))(1 718776)))()())"%pstring.

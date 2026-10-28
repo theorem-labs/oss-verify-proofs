@@ -145,6 +145,7 @@ checks:
   where: source/sequence_compression_api.c:319-328
   what: ZSTD_compressSequences must accept every generated sequence list; only dstSize_tooSmall in explicit-block-delimiter
     mode is excused.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: sequence_compression_api

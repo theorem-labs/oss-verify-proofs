@@ -24,12 +24,12 @@ The harness makes no check of its own beyond not crashing, so a statement about 
 | `plain_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the plain build exits with any status | open |
 | `ubsan_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the UBSan build exits with any status | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires | [proved](../../../proofs/mbedtls/fuzz_pkcs7/asan_agrees/) |
-| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires | open |
-| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires | open |
-| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
+| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires | [proved](../../../proofs/mbedtls/fuzz_pkcs7/ubsan_agrees/) |
+| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires | [proved](../../../proofs/mbedtls/fuzz_pkcs7/asan_ubsan_agrees/) |
+| `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | [proved](../../../proofs/mbedtls/fuzz_pkcs7/asan_disagrees_at_most/) at b = 0 |
 | `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
 | `asan_ubsan_disagrees_at_most` | P[plain and ASan+UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
-| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | open |
+| `asan_agreement_decidable` | some program decides exactly the inputs where plain and ASan agree | [proved](../../../proofs/mbedtls/fuzz_pkcs7/asan_agreement_decidable/) |
 | `ubsan_agreement_decidable` | some program decides exactly the inputs where plain and UBSan agree | open |
 | `asan_ubsan_agreement_decidable` | some program decides exactly the inputs where plain and ASan+UBSan agree | open |
 

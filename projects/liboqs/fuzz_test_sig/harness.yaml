@@ -132,8 +132,9 @@ checks:
   strength: full
   stops_with: exit
   exit_status: 1
+  exit_reaches_guard: true
   live: unknown
-  where: source/fuzz_test_sig.c:102
+  where: source/fuzz_test_sig.c:102-108
   what: A signature just produced by OQS_SIG_sign over the fuzz message (fuzz-selected algorithm, fuzz-seeded
     RNG keypair) must verify with OQS_SIG_verify under the matching public key.
 statements:

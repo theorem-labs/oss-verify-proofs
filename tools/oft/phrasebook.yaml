@@ -14,13 +14,13 @@ projects:
     words: language pending
     meaning: its fuzz targets are in a language this release does not cover yet
     reasons:
-      python: This project's fuzz targets are written in Python. This release covers C and C++; support for Python is being built.
-      jvm: This project's fuzz targets run on the JVM. This release covers C and C++; support for JVM languages is being built.
-      go: This project's fuzz targets are written in Go. This release covers C and C++; support for Go is being built.
-      rust: This project's fuzz targets are written in Rust. This release covers C and C++, and Rust only for the projects whose fuzz targets OSS Verify builds; support for the others is being built.
-      javascript: This project's fuzz targets are written in JavaScript. This release covers C and C++; support for JavaScript is being built.
-      ruby: This project's fuzz targets are written in Ruby. This release covers C and C++; support for Ruby is being built.
-      lua: This project's fuzz targets are written in Lua. This release covers C and C++; support for Lua is being built.
+      python: This project's fuzz targets are written in Python. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for the others is being built.
+      jvm: This project's fuzz targets run on the JVM. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for JVM languages is being built.
+      go: This project's fuzz targets are written in Go. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for Go is being built.
+      rust: This project's fuzz targets are written in Rust. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for the others is being built.
+      javascript: This project's fuzz targets are written in JavaScript. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for JavaScript is being built.
+      ruby: This project's fuzz targets are written in Ruby. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for Ruby is being built.
+      lua: This project's fuzz targets are written in Lua. This release covers C and C++, and Rust and Python only for the projects whose fuzz targets OSS Verify builds; support for Lua is being built.
   not-yet-built:
     words: not yet built
     meaning: a C or C++ project that has not been built yet, and why
@@ -152,4 +152,5 @@ build_systems:
   make: make
   meson: Meson
   scons: SCons
+  go: OSS-Fuzz's Go helpers, as the OSS Verify port changes them to build a static riscv64 program
   custom: its own build scripts

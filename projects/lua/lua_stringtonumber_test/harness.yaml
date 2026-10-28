@@ -133,6 +133,7 @@ checks:
   live: true
   where: source/lua_stringtonumber_test.c:31
   what: lua_stringtonumber failure (returns 0) leaves the stack unchanged
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: lua_stringtonumber_test

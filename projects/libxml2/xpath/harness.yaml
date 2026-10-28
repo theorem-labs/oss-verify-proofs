@@ -135,6 +135,7 @@ checks:
   where: source/xpath.c:56-61
   what: OOM reporting contract for xmlXPathContextSetCache and xmlXPtrEval (lastError.code == XML_ERR_NO_MEMORY
     iff an injected failure occurred). The document is parsed before injection is armed.
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: xpath

@@ -34,6 +34,7 @@ def check(tree):
     for sid, cx in tree.counterexamples.items():
         _counterexample(tree, sid, cx)
     _approvals(tree)
+    _written_here(tree)
     patches = {}
     for f in sorted(tree.findings.values(), key=lambda f: f.path):
         _finding(tree, f, patches)
@@ -43,40 +44,99 @@ def check(tree):
 
 
 def _approvals(tree):
-    """approvals.yaml: each entry names an included fuzz target, once, of a project no finding holds back and not private
-    (release: private), and statements of it, each once, none of them refuted; a submission names the record of its review, and only a
-    submission does."""
+    """approvals.yaml: each entry names an included fuzz target, at most once per source (origin and record), of a
+    project no finding holds back and not private (release: private), and statements of it, none of them refuted or
+    held back by an open finding of an enrolled project (facts.hold), and each in one entry of its fuzz target only,
+    once; a submission names the record of its review, and only a submission does."""
     if not tree.approvals:
         return
     harnesses = {"%s/%s" % (h.project.name, h.name): h for h in tree.harnesses()}
-    held, private = facts.held_projects(tree), facts.private_projects(tree)
-    seen = set()
+    held = facts.hold(tree)
+    held_ids = held.ids
+    seen, where_listed = {}, {}
     for i, e in enumerate(tree.approvals["fuzz_targets"]):
         where = "approvals.yaml: approvals.fuzz_targets[%d]" % i
         unit = e["fuzz_target"]
+        p = unit.partition("/")[0]
         if unit not in harnesses:
             tree.err(where, "%s is not an included fuzz target" % unit)
         else:
             for s in sorted(set(e["statements"]) - set(harnesses[unit].statements)):
                 tree.err(where, "%s is not a statement of %s" % (s, unit))
-        if unit.split("/")[0] in held:
-            tree.err(where, "%s: a finding holds back project %s, so none of its proofs is published"
-                     % (unit, unit.split("/")[0]))
-        if unit.split("/")[0] in private:
+        if p in held.held:
+            tree.err(where, "%s: a finding holds back project %s, so none of its proofs is published" % (unit, p))
+        if p in held.private:
             tree.err(where, "%s: project %s is private (release: private in its project.yaml), so no public release "
-                            "carries it"
-                     % (unit, unit.split("/")[0]))
+                            "carries it" % (unit, p))
         for s in sorted(set(e["statements"])):
+            if "%s/%s" % (unit, s) in held_ids:
+                tree.err(where, "%s/%s is held back by an open finding, so no release lists it" % (unit, s))
             pd = tree.proofs.get("%s/%s" % (unit, s))
             if pd is not None and pd.refutes:
                 tree.err(where, "%s/%s: its proof is a refutation, which is never listed" % (unit, s))
         for s in sorted({s for s in e["statements"] if e["statements"].count(s) > 1}):
             tree.err(where, "%s/%s is listed twice" % (unit, s))
-        if unit in seen:
-            tree.err(where, "%s is listed twice" % unit)
-        seen.add(unit)
+        source = (unit, e["origin"], e.get("record"))
+        if source in seen:
+            tree.err(where, "%s is listed twice for one source (%s%s): approvals.fuzz_targets[%d] and [%d]"
+                     % (unit, e["origin"], ", record " + e["record"] if "record" in e else "", seen[source], i))
+        seen.setdefault(source, i)
+        for s in sorted(set(e["statements"])):
+            first = where_listed.setdefault((unit, s), i)
+            if first != i:
+                tree.err(where, "%s/%s is listed twice: approvals.fuzz_targets[%d] and [%d]" % (unit, s, first, i))
         if (e["origin"] == "submission") != ("record" in e):
             tree.err(where, "%s: a submission names the record of its review, and only a submission does" % unit)
+
+
+PACKAGE_ORIGIN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]* \(sha256 [0-9a-f]{64}\)")
+
+
+def _written_here(tree):
+    """The build record of a fuzz target whose proofs came from a package (proofs.origin names it and its sha256)
+    lists in proofs.written_here the statements whose proofs were written in this repository, and only such a record
+    has written_here.  approvals.yaml agrees with it: a this-repository entry lists only statements written here, and
+    a submission entry lists none of them, so provenance/, which ships whole, never credits the package with a proof
+    this repository wrote, nor this repository with a proof of the package."""
+    for (p, h), rec in sorted(tree.record_proofs.items()):
+        unit, where = "%s/%s" % (p, h), "proofs/%s/%s/provenance/PROVENANCE.yaml" % (p, h)
+        here, from_package = rec["written_here"], bool(PACKAGE_ORIGIN.match(rec["origin"] or ""))
+        if here is not None and not (isinstance(here, list) and all(isinstance(s, str) for s in here)):
+            tree.err(where, "proofs.written_here must be a list of statement names")
+            here = None
+        elif here is not None and not from_package:
+            tree.err(where, "proofs.written_here: proofs.origin names no package, so every proof of %s was written "
+                     "here and none is singled out" % unit)
+            here = None
+        elif here is not None:
+            har = tree.projects.get(p).harnesses.get(h) if tree.projects.get(p) else None
+            for s in sorted(set(here) - set(har.statements if har else ())):
+                tree.err(where, "proofs.written_here: %s is not a statement of %s" % (s, unit))
+            for s in sorted({s for s in here if here.count(s) > 1}):
+                tree.err(where, "proofs.written_here: %s is listed twice" % s)
+        if not from_package:
+            continue
+        written = set(here or ())
+        for i, e in enumerate(tree.approvals["fuzz_targets"] if tree.approvals else []):
+            if e["fuzz_target"] != unit:
+                continue
+            aw = "approvals.yaml: approvals.fuzz_targets[%d]" % i
+            mine = e["origin"] == "this-repository"
+            for s in sorted(set(e["statements"]) - written if mine else set(e["statements"]) & written):
+                tree.err(aw, "%s/%s: the build record says the proofs of this fuzz target came from a package and "
+                         "proofs.written_here %s it, so a %s entry may not list it"
+                         % (unit, s, "does not name" if mine else "names", e["origin"]))
+
+
+def counts(tree):
+    """release.yaml's counts, as the tree gives them: the cut's tree gives the release's (release_tree._public_release)."""
+    harnesses = list(tree.harnesses())
+    return {
+        "projects": len(tree.projects),
+        "available": len(tree.available()),
+        "harnesses": len(harnesses),
+        "binaries": sum(len(h.builds()) for h in harnesses),
+    }
 
 
 def _release(tree):
@@ -86,13 +146,7 @@ def _release(tree):
     # counts describe the tree this file is in, so the rendered pages and the index agree with them; oft release-tree
     # writes the release's own counts into the cut (release_tree._public_release), which this rule then checks
     harnesses = list(tree.harnesses())
-    n = {
-        "projects": len(tree.projects),
-        "available": len(tree.available()),
-        "harnesses": len(harnesses),
-        "binaries": sum(len(h.builds()) for h in harnesses),
-    }
-    for k, v in n.items():
+    for k, v in counts(tree).items():
         if r["counts"][k] != v:
             tree.err("release.yaml", "counts.%s is %d but the tree has %d" % (k, r["counts"][k], v))
     n_oss_fuzz = tree.oss_fuzz_project_count()
@@ -179,6 +233,31 @@ def _project(tree, proj):
         tree.err(where, "oss_fuzz.path must be projects/%s" % proj.name)
     if facts.port(proj) and facts.port(proj)["path"] != "projects/" + proj.name:
         tree.err(where, "build.oss_verify.path must be projects/%s" % proj.name)
+    # a Go project's binaries are built by the Go toolchain alone (no cgo, so no clang); every other language's C code
+    # by clang
+    build = d.get("build")
+    if build is not None:
+        if d["language"] == "go" and ("go" not in build or "clang" in build):
+            tree.err(where, "a Go project names build.go, the Go toolchain, and no build.clang")
+        if d["language"] != "go" and ("clang" not in build or "go" in build):
+            tree.err(where, "build.clang names the clang that compiled the C code; only a Go project names build.go "
+                            "instead")
+        if (build["system"] == "go") != (d["language"] == "go"):
+            tree.err(where, "build.system is go exactly for a Go project")
+        # the release recipe published no Go binary, so the port built every one, in its Go toolchain image
+        if d["language"] == "go" and "oss_verify" not in build:
+            tree.err(where, "a Go project's binaries are built by the OSS Verify port: it names build.oss_verify")
+        if (GO_BUILDER in build["builder"]) != (d["language"] == "go"):
+            tree.err(where, "build.builder is the port's Go toolchain image (%s) exactly for a Go project"
+                     % GO_BUILDER)
+    for key in ((d.get("budgets") or {}).get("agrees") or {}):
+        try:
+            own = shapes.is_own_pair(key, shapes.project_pair(d, key))
+        except shapes.PairError:
+            continue                # facts.load reports it
+        if own and not proj.notes:
+            # the statements' text says that the project's notes give the reason
+            tree.err(where, "budgets.agrees.%s is this project's own pair, so notes/%s.md says why" % (key, proj.name))
     status, reason = d["status"], d.get("reason")
     reasons = PB["projects"][status]["reasons"]
     if status == "available":
@@ -373,8 +452,9 @@ def _harness(tree, h):
         elif f in lines and int(rng.split("-")[-1]) > lines[f]:
             tree.err(where, "%s.where runs past the end of %s" % (label, f))
     for i, c in enumerate(d["checks"]):
-        if (c["stops_with"] == "exit") != ("exit_status" in c):
-            tree.err(where, "checks[%d]: exit_status goes with stops_with: exit, and only there" % i)
+        for k in ("exit_status", "exit_reaches_guard"):
+            if (c["stops_with"] == "exit") != (k in c):
+                tree.err(where, "checks[%d]: %s goes with stops_with: exit, and only there" % (i, k))
     for name, s in d["statements"].items():
         ex = s.get("exits", "any")
         if s["kind"] != "halts" or ex == "any":
@@ -409,11 +489,52 @@ def _harness(tree, h):
     _distribution(tree, h, where)
     for st in h.statements.values():
         _statement(tree, h, st, where)
+    if h.project.data["language"] == "go":
+        _go_harness(tree, h, where)
+    else:
+        for i, c in enumerate(d["checks"]):
+            if c["stops_with"] == "fail":
+                tree.err(where, "checks[%d]: stops_with: fail is t.Fatal, t.Error or t.Fail in a Go fuzz test" % i)
     kinds = {(s.kind, tuple(s.data["builds"])) for s in h.statements.values()}
     for s in h.statements.values():
         if s.kind in ("bound", "decidability") and ("agreement", tuple(s.data["builds"])) not in kinds:
             tree.err(where, "%s: a bound or decidability statement goes with its pair's agreement statement"
                      % s.name)
+    # A harness that publishes a build has a statement for `oft check` to check, or has withdrawn every one, on purpose
+    # and with a reason: plan leaves such a harness out of every check, so a withheld statement must not be all it has.
+    statuses = {s.data.get("status") for s in h.statements.values()}
+    if h.builds() and not any(s.rendered() for s in h.statements.values()) and statuses != {"withdrawn"}:
+        tree.err(where, "publishes a build, but every statement is withheld, so Statements.v carries none and no check "
+                        "checks it: withhold the builds too, or withdraw the statements")
+
+
+# the stops a Go check can have: a panic, t.Fatal/t.Error/t.Fail, os.Exit, or none (the C, C++ and Python kinds name
+# mechanisms a Go program does not use)
+GO_STOPS = ("panic", "fail", "exit", "print-only", "return-only")
+# the repository of the port's Go toolchain image (the port's infra/toolchains.tsv, its row for language go)
+GO_BUILDER = "ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain-go@"
+
+
+def _go_harness(tree, h, where):
+    """A Go fuzz target has only the plain build (Go's -asan needs cgo, which the port's build turns off, and -msan
+    does not target riscv64), so its one statement is plain_halts, reading budget, allowing exactly the statuses 0 and
+    2: its driver gives no status 3, and every other status it ends with (79, 77, 80, 139) is a failure
+    (docs/building.md, "Go fuzz targets").  It is OSS-Fuzz's or the project's Go fuzz target, never an API driver."""
+    if h.data["origin"] == "this-repository":
+        tree.err(where, "a Go project has no API driver: its driver_api header describes a C driver")
+    for b in sorted(set(h.data["builds"]) - {"plain"}):
+        tree.err(where, "builds.%s: a Go fuzz target has only the plain build" % b)
+    for i, c in enumerate(h.data["checks"]):
+        if c["stops_with"] not in GO_STOPS:
+            tree.err(where, "checks[%d]: a Go check stops with one of %s, not %s"
+                     % (i, ", ".join(GO_STOPS), c["stops_with"]))
+    for st in h.statements.values():
+        if st.kind != "halts" or st.data["reading"] != "budget":
+            tree.err(where, "statements.%s: a Go fuzz target's one statement is plain_halts (reading budget), so no "
+                            "%s statement" % (st.name, st.name))
+        elif st.data.get("exits") == "any" or set(st.data.get("exits") or []) != {0, 2}:
+            tree.err(where, "statements.%s: a Go fuzz target's halts statement allows exactly the statuses 0 and 2"
+                     % st.name)
 
 
 def _bytes_def(body, name, _depth=0):
@@ -498,7 +619,10 @@ def _statement(tree, h, st, where):
         if b not in h.data["builds"]:
             tree.err(w, "names build %s, which harness.yaml does not list" % b)
     try:
-        shapes.term(d)
+        try:
+            shapes.term(d, project=h.project.data)
+        except shapes.PairError:
+            pass    # reported once, against project.yaml (facts.load); term checks every other field before the pair
         if "shape" in d and d["shape"] != shapes.shape_name(d):
             tree.err(w, "shape is %s, but its fields give %s" % (d["shape"], shapes.shape_name(d)))
         if "env" in d and d["env"] != shapes.READING_ENV[d["reading"]]:
@@ -512,7 +636,7 @@ def _statement(tree, h, st, where):
     if d["kind"] != "halts" and "binds_checks" in d:
         tree.err(w, "binds_checks is for halts statements")
     if "binds_checks" in d:
-        computed = any(shapes.binds(c, d) for c in h.data["checks"])
+        computed = any(shapes.binds(c, d, h.data) for c in h.data["checks"])
         if d["binds_checks"] != computed:
             tree.err(w, "binds_checks is %s, but the checks give %s" % (d["binds_checks"], computed))
     status = d["status"]
@@ -592,8 +716,6 @@ def _counterexample(tree, sid, cx):
         tree.err(y, "the control input must exit with an allowed status")
 
 
-# A run's outcome, as `oft check --parts findings` compares it: two runs agree when all of these are equal.
-RUN_FIELDS = ("exit", "signal", "stdout_sha256", "stderr_sha256")
 # The shape of a run as `oft check --record` prints it and the finding schema's `run` allows it: an exit status from 0
 # to 255, the signal that ended it if it is one of these, and the SHA-256 of its stdout and of its stderr.  `oft check
 # --record` prints no run of another shape, and `oft ledger` anchors no record with one.  It is written out here rather
@@ -605,24 +727,11 @@ _SHA256 = re.compile(r"[0-9a-f]{64}")
 
 def run_ok(run):
     """Whether run (one build's run, as finding.yaml records it) has the shape `oft check --record` prints."""
-    if not isinstance(run, dict) or not {"exit", "stdout_sha256", "stderr_sha256"} <= set(run) <= set(RUN_FIELDS):
+    if not isinstance(run, dict) or not {"exit", "stdout_sha256", "stderr_sha256"} <= set(run) <= set(facts.RUN_FIELDS):
         return False
     exit_ok = isinstance(run["exit"], int) and not isinstance(run["exit"], bool) and 0 <= run["exit"] <= 255
     return (exit_ok and run.get("signal", RUN_SIGNALS[0]) in RUN_SIGNALS
             and all(isinstance(run[k], str) and _SHA256.fullmatch(run[k]) for k in ("stdout_sha256", "stderr_sha256")))
-
-
-def shows_false(st, runs):
-    """Whether the runs of one input (build -> run) show the statement false.  An agreement is false when its two
-    builds differ in exit, signal, stdout or stderr, or when either dies by a signal: it requires both runs to be
-    error-free (facts._refute_agreements).  A halts statement is false when its build dies by a signal or exits with a
-    status the statement does not allow."""
-    if st.kind == "agreement":
-        a, b = (runs[x] for x in st.data["builds"])
-        return "signal" in a or "signal" in b or any(a.get(k) != b.get(k) for k in RUN_FIELDS)
-    r = runs[st.data["builds"][0]]
-    exits = st.data.get("exits", "any")
-    return "signal" in r or (exits != "any" and r["exit"] not in exits)
 
 
 # The statuses that record a statement as false: derived from a counterexample or a refutation, or exported.
@@ -658,12 +767,12 @@ def _finding(tree, f, patches):
     for st in sts:
         if any(b not in d["input"] or b not in d["control"] for b in st.data["builds"]):
             continue            # the loader names the missing run
-        false = shows_false(st, d["input"])
+        false = facts.shows_false(st, d["input"])
         if d["state"] == "pruned" and false:
             tree.err(y, "pruned, but its record shows %s false" % st.name)
         elif d["state"] != "pruned" and not false:
             tree.err(y, "the input does not show %s false" % st.name)
-        if shows_false(st, d["control"]):
+        if facts.shows_false(st, d["control"]):
             tree.err(y, "the control does not behave normally: it shows %s false" % st.name)
 
 
@@ -702,20 +811,22 @@ def _series(tree):
 
 
 def _held(tree):
-    """Only a project a finding holds back builds from the port's private
-    prelaunch variant, and only it attaches assets to a findings-<project>
-    release, its own: no shipping release names either."""
-    held = facts.held_projects(tree)
+    """Only a project a finding holds back whole builds from the port's internal
+    copy, and only it attaches assets to a findings-<project>
+    release, its own: no shipping release names either.  An enrolled project
+    whose findings hold back only some of its statements ships its binaries,
+    so it builds from the public port."""
+    held = facts.hold(tree).held
     for proj in tree.projects.values():
         where = os.path.join(proj.dir, "project.yaml")
         port = facts.port(proj)
-        if port and port["repository"] == schema.PRELAUNCH_REPOSITORY and proj.name not in held:
-            tree.err(where, "build.oss_verify.repository is %s: only a project held by a finding builds from %s"
-                     % (schema.PRELAUNCH_REPOSITORY, schema.PRELAUNCH_REPOSITORY))
+        if port and port["repository"] == schema.INTERNAL_PORT_REPOSITORY and proj.name not in held:
+            tree.err(where, "build.oss_verify.repository is %s: only a project a finding holds back whole builds "
+                            "from %s" % (schema.INTERNAL_PORT_REPOSITORY, schema.INTERNAL_PORT_REPOSITORY))
         assets = proj.data.get("assets") or {}
         for k in ("bin", "src", "src_manifest", "port"):
             release = (assets.get(k) or {}).get("release", "")
             if release.startswith("findings-") and (proj.name not in held or release != "findings-" + proj.name):
-                tree.err(where, "assets.%s is attached to %s: only a project held by a finding attaches to "
+                tree.err(where, "assets.%s is attached to %s: only a project a finding holds back whole attaches to "
                                 "findings-<project>, its own" % (k, release))
 

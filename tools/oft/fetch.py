@@ -281,3 +281,33 @@ def verify_sha(root, projects, harness=None, out=sys.stdout):
         return 1
     print("oft verify-sha: %d binaries, %d problem(s)" % (n, bad), file=out)
     return 1 if bad else 0
+
+
+def add_arguments(f):
+    """oft fetch's arguments, for `oft fetch` and for `python3 -m oft.fetch`."""
+    f.add_argument("projects", nargs="*")
+    f.add_argument("--all", action="store_true", help="every available project")
+    f.add_argument("--source", help="a directory or URL prefix to take the release assets from")
+    f.add_argument("--assets-only", action="store_true",
+                   help="check every archive's SHA-256 (binaries and source) without unpacking")
+    f.add_argument("--release", help="only the projects whose assets are attached to this release tag")
+    f.add_argument("--list", action="store_true", help="print <release> <file> <sha256> per asset; fetch nothing")
+    f.add_argument("--findings", action="store_true",
+                   help="the unpatched binaries the projects' findings run on (findings/<p>/unpatched.yaml), into "
+                        "findings/<p>/bin/")
+
+
+def cli(root, a):
+    return fetch(root, a.projects, source=a.source, all_projects=a.all, only_check_assets=a.assets_only,
+                 release=a.release, listing=a.list, findings=a.findings)
+
+
+if __name__ == "__main__":
+    # `python3 -m oft.fetch`, as tools/oft/ci/check-units.sh runs it: the fetch without the modules of the other
+    # commands, which are not part of the checker (keys.NOT_THE_CHECKER)
+    import argparse
+    p = argparse.ArgumentParser(prog="python3 -m oft.fetch", description="oft fetch")
+    p.add_argument("--root", default=".", help="the repository root (default: .)")
+    add_arguments(p)
+    a = p.parse_args()
+    sys.exit(cli(os.path.abspath(a.root), a))

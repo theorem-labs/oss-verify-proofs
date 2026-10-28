@@ -385,8 +385,10 @@ apply (mspec_program (GI []) (prog_with rs (argv_Z (in_argv inp)))).
 Qed.
 
 From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Plain.
+From OssFuzzTheorems.speex.speex_decode_fuzzer_float.images Require Import Ubsan.
 
 Local Notation psegs := Plain.M.loaded_segments.
+Local Notation usegs := Ubsan.M.loaded_segments.
 
 Lemma reserved_top_psegs : 0 < reserved_top (segments_reserved psegs).
 Proof.
@@ -407,6 +409,28 @@ unfold segments_reserved, segment_reservation, Plain.M.loaded_segments, Plain_lo
 cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
 cbn [seg_base seg_size Plain_segment_000 Plain_segment_001 Plain_segment_002 Plain_segment_003]. vm_compute. discriminate.
 Qed.
+Lemma reserved_top_usegs : 0 < reserved_top (segments_reserved usegs).
+Proof.
+unfold segments_reserved, segment_reservation, Ubsan.M.loaded_segments, Ubsan_loaded_segments.
+cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
+cbn [seg_base seg_size Ubsan_segment_000 Ubsan_segment_001 Ubsan_segment_002 Ubsan_segment_003].
+vm_compute. reflexivity.
+Qed.
+Lemma ceil_usegs : reserved_top (segments_reserved usegs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo.
+Proof.
+unfold segments_reserved, segment_reservation, Ubsan.M.loaded_segments, Ubsan_loaded_segments.
+cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
+cbn [seg_base seg_size Ubsan_segment_000 Ubsan_segment_001 Ubsan_segment_002 Ubsan_segment_003].
+vm_compute. discriminate.
+Qed.
+
+Lemma sbk_usegs : reserved_top (segments_reserved usegs) + brk_aslr_max + PGSZ <= 2^40.
+Proof.
+unfold segments_reserved, segment_reservation, Ubsan.M.loaded_segments, Ubsan_loaded_segments.
+cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
+cbn [seg_base seg_size Ubsan_segment_000 Ubsan_segment_001 Ubsan_segment_002 Ubsan_segment_003].
+vm_compute. discriminate.
+Qed.
 
 Theorem prog_plain_model_okN : forall en inp,
 valid_entry (mkImage psegs Plain.M.init_pc Plain.M.phdrs) en inp -> valid_input_core inp ->
@@ -414,3 +438,10 @@ tsafe nstep no_enomem (prog_plain psegs RSTAGE_plain (ceil_of en) (in_argv inp))
 leaves_unreachable_m nstep (prog_plain psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0 psegs source_alloc_limit en inp)
 /\ tsafe nstep nsafe (prog_plain psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0 psegs source_alloc_limit en inp).
 Proof. intros en inp Hv Hi Hne. unfold prog_plain in *. eapply prog_model_ok; [apply reserved_top_psegs| apply ceil_psegs| exact Hv| exact Hi| exact Hne]. Qed.
+
+Theorem prog_ubsan_model_okN : forall en inp,
+valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp -> valid_input_core inp ->
+tsafe nstep no_enomem (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp) ->
+leaves_unreachable_m nstep (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp)
+/\ tsafe nstep nsafe (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp).
+Proof. intros en inp Hv Hi Hne. unfold prog_ubsan in *. eapply prog_model_ok; [apply reserved_top_usegs| apply ceil_usegs| exact Hv| exact Hi| exact Hne]. Qed.

@@ -391,7 +391,7 @@ Section Tail.
   Lemma keptI_sub : forall r : reg, In r keptI -> In r callee_kept.
   Proof using can Hcan64.
     intros r Hr. unfold keptI in Hr. unfold callee_kept. cbn [In] in Hr |- *.
-    repeat (destruct Hr as [<-|Hr]; [(first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])])|]). destruct Hr.
+    repeat (destruct Hr as [<-|Hr]; [(first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])])|]). destruct Hr.
   Qed.
   Lemma keptI_no0 : ~ In (0%bv : reg) keptI.
   Proof. unfold keptI. cbn [In]. intros Hin. repeat (destruct Hin as [E|Hin]; [apply (f_equal bv_unsigned) in E; discriminate E|]). exact Hin. Qed.
@@ -998,7 +998,7 @@ Section Tail.
     unfold callee_saved in Hr. cbn [In] in Hr.
     destruct Hr as [<-|Hr]; [rewrite Pra, G1; reflexivity|].
     destruct Hr as [<-|Hr]; [rewrite Psp, G2; reflexivity|].
-    apply Pcs. cbn [In]. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; timeout 2 tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; timeout 2 tauto end) | tauto])]).
+    apply Pcs. cbn [In]. (first [clear; solve [repeat split; exact I] | (first [clear; solve [repeat split; exact I] | clear; tauto | (lazymatch goal with H1 : _ |- _ => revert H1; clear; tauto end) | tauto])]).
   Qed.
 
   Lemma seg_DE : forall vals R M msF mo, 0 <= P <= 131071 ->

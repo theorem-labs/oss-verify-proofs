@@ -20,7 +20,7 @@ Not included: **api-driver** (held from this release); **fuzztest_proto2_pointer
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
 
-The harnesses whose own checks end the process when they fail, so that their halts statements imply those checks on every input they cover:
+The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `fuzztest_io_errors`: canonicalisation is a fixpoint: decode(input) -> encode = buf2 (canonical form); decode(buf2) -> encode must give the same length and the same 32-bit xorshift checksum as buf2, for each of the AllTypes schemas (proto2/proto3 x static/pointer).
 
 ## Known issues
