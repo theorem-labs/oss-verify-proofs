@@ -104,7 +104,7 @@ class TestsJobCheckout(unittest.TestCase):
 class NoDuneCacheRestore(unittest.TestCase):
     """dune restores a cache entry without hashing the bytes it copies, and the kernel does not check a compiled file
     again when a proof loads it: a valid Statements.vo of a weaker statement put in a restored cache made doctored
-    proofs pass check-units.sh (OSSV-218, 27 October 02:22Z).  So no proof check job restores a dune cache: hashing the
+    proofs pass check-units.sh (27 October 02:22Z).  So no proof check job restores a dune cache: hashing the
     restored files would not catch a rewritten metadata entry, and verifying by rebuilding saves nothing."""
 
     def test_no_proof_check_job_restores_a_dune_cache(self):
