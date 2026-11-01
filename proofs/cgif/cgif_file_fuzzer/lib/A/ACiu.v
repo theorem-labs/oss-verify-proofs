@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 From OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -133,363 +133,475 @@ pose proof (proj1 HJ) as HAR;
 pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HSpres & Hstk & _);
 pose proof Hstk as (Hal16 & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop & Htop2);
 assert (FFS : TFLUSH_STK = 17440) by reflexivity; assert (WS : TCMP_STK = 4112) by reflexivity; assert (Hes : ESTACK = 4096) by reflexivity.
-Ltac wscr_windows E9 :=
-cbn [ss_mem]; let a := fresh "a" in let r := fresh "r" in let Hr := fresh "Hr" in let Hw := fresh "Hw" in
-intros a (r & Hr & Hw); cbn [In] in Hr;
-repeat (destruct Hr as [<- | Hr];
-[cbn [YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hw; cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub] in Hw; rewrite ?ew_ewset_other in Hw by lia;
-rewrite E9, unsigned_lit_small in Hw by lia; unfold wscr; lia |]);
-destruct Hr.
-Ltac off_windows E9 :=
-cbn [ss_mem]; let kk := fresh "kk" in let Hk := fresh "Hk" in let r := fresh "r" in let Hr := fresh "Hr" in let Hw := fresh "Hw" in
-intros kk Hk (r & Hr & Hw); cbn [In] in Hr;
-repeat (destruct Hr as [<- | Hr];
-[cbn [YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hw; cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub] in Hw; rewrite ?ew_ewset_other in Hw by lia;
-rewrite E9, unsigned_lit_small in Hw by lia; lia |]);
-destruct Hr.
+Ltac wscr_windows Hb :=
+  let a := fresh "a" in let rg := fresh "rg" in let Hrg := fresh "Hrg" in let Ha := fresh "Ha" in
+  intros a [rg [Hrg Ha]]; cbn in Hrg;
+  repeat (destruct Hrg as [<- | Hrg]; [cbn [r_base r_wlo r_whi] in Ha; rewrite Hb in Ha; first [unfold wscr; lia | left; lia] | ]);
+  contradiction.
+Ltac off_windows Hb :=
+  let rg := fresh "rg" in let Hrg := fresh "Hrg" in let Ha := fresh "Ha" in
+  intros [rg [Hrg Ha]]; cbn in Hrg;
+  repeat (destruct Hrg as [<- | Hrg]; [cbn [r_base r_wlo r_whi] in Ha; rewrite Hb in Ha; lia | ]);
+  contradiction.
 Definition WKEPT5 : list (bv 5) := [2; 3; 4; 8; 9]%bv.
 Definition s2o_regs := sr_set (sr_set (sr_set sr_atoms 12%bv (SOff 22 0)) 14%bv (SOff 22 1)) 27%bv (SLit 65535).
 Definition s2o_mem : smem :=
-[ YP09.mkRegion (Some 9%nat) 88 96 88 88 [YP09.mkChunk 88 (CVal 8 (SOff 34 0))];
-YP09.mkRegion (Some 9%nat) 152 160 152 160 [];
-YP09.mkRegion (Some 9%nat) 160 168 160 160 [YP09.mkChunk 160 (CVal 8 (SOff 33 0))];
-YP09.mkRegion (Some 9%nat) 168 176 168 176 [];
-YP09.mkRegion (Some 9%nat) 192 232 192 192 [YP09.mkChunk 200 (CVal 8 (SOff 11 0)); YP09.mkChunk 192 (CVal 8 (SOff 33 0));
-YP09.mkChunk 224 (CVal 8 (SOff 36 0)); YP09.mkChunk 216 (CVal 8 (SOff 32 0))];
-YP09.mkRegion (Some 9%nat) 240 256 240 240 [YP09.mkChunk 240 (CVal 8 (SOff 6 0)); YP09.mkChunk 248 (CVal 8 (SOff 35 0))] ].
+  [ YP09.mkRegion (Some 9%nat) 152 176 152 176 [ YP09.mkChunk 160 (CVal 8 (SOff 33 0)) ];
+    YP09.mkRegion (Some 9%nat) 200 232 200 200
+      [ YP09.mkChunk 200 (CVal 8 (SOff 11 0)); YP09.mkChunk 216 (CVal 8 (SOff 36 0)); YP09.mkChunk 224 (CVal 8 (SOff 32 0)) ] ].
 Definition s2o_facts : facts :=
 mkFacts [ (9%nat, mkAF 70368744177664 140737488355328 4); (6%nat, mkAF SB SB 0); (11%nat, mkAF 1 65535 0); (22%nat, mkAF 1 65534 0);
 (25%nat, HPTR 4); (24%nat, HPTR 3); (32%nat, HPTR 0); (36%nat, HPTR 0); (33%nat, mkAF 0 65533 0); (34%nat, mkAF 1 65534 0); (35%nat, HPTR 3) ] [] [].
-Definition ss_s2o : sstate := mkSS 0x1c5c s2o_regs s2o_mem None s2o_facts.
+Definition ss_s2o : sstate := mkSS 7260 s2o_regs s2o_mem None s2o_facts.
 Definition s2t_regs := sr_set sr_atoms 27%bv (SLit 65535).
 Definition s2t_mem : smem :=
-[ YP09.mkRegion (Some 9%nat) 88 96 88 88 [YP09.mkChunk 88 (CVal 8 (SOff 34 0))];
-YP09.mkRegion (Some 9%nat) 160 168 160 160 [YP09.mkChunk 160 (CVal 8 (SOff 33 0))];
-YP09.mkRegion (Some 9%nat) 168 176 168 168 [YP09.mkChunk 168 (CVal 8 (SOff 22 0))];
-YP09.mkRegion (Some 9%nat) 192 232 192 192 [YP09.mkChunk 200 (CVal 8 (SOff 37 0)); YP09.mkChunk 192 (CVal 8 (SOff 33 0));
-YP09.mkChunk 224 (CVal 8 (SOff 36 0)); YP09.mkChunk 216 (CVal 8 (SOff 32 0))];
-YP09.mkRegion (Some 9%nat) 240 256 240 240 [YP09.mkChunk 240 (CVal 8 (SOff 6 0)); YP09.mkChunk 248 (CVal 8 (SOff 35 0))] ].
+  [ YP09.mkRegion (Some 9%nat) 88 232 88 88
+      [ YP09.mkChunk 88 (CVal 8 (SOff 34 0)); YP09.mkChunk 160 (CVal 8 (SOff 33 0)); YP09.mkChunk 168 (CVal 8 (SOff 22 0));
+        YP09.mkChunk 192 (CVal 8 (SOff 33 0)); YP09.mkChunk 200 (CVal 8 (SOff 37 0)) ] ].
 Definition s2t_facts : facts :=
 mkFacts [ (9%nat, mkAF 70368744177664 140737488355328 4); (6%nat, mkAF SB SB 0); (22%nat, mkAF 1 65534 0);
 (25%nat, HPTR 4); (24%nat, HPTR 3); (32%nat, HPTR 0); (36%nat, HPTR 0); (33%nat, mkAF 0 65533 0); (34%nat, mkAF 1 65534 0); (35%nat, HPTR 3);
 (37%nat, mkAF 1 65535 0) ] [] [].
-Definition ss_s2t : sstate := mkSS 0x1d00 s2t_regs s2t_mem None s2t_facts.
+Definition ss_s2t : sstate := mkSS 7424 s2t_regs s2t_mem None s2t_facts.
 Definition s2o_postX (top r : Z) : world SEGS -> config -> Prop :=
-fun W' c' => W' = W /\ exists regs' mem' md' bot,
-c' = mkCfg (mkst regs' (Z_to_bv 64 (BASE + 0x1dd8)) mem' (seg_rom SEGS)) md' /\
-ajournal SEGS B TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc W mem' md' k /\
-wkept B lyc Sc W sp1 memc mem' /\
-(forall r : bv 5, In r WKEPT5 -> getr regs' r = getr regs r) /\
-getr regs' 6 = Z_to_bv 64 SB /\ getr regs' 21 = Z_to_bv 64 g /\ getr regs' 22 = Z_to_bv 64 cfp /\ getr regs' 27 = Z_to_bv 64 65535 /\
-getr regs' 19 = Z_to_bv 64 top /\ getr regs' 15 = Z_to_bv 64 (bot + 1) /\ top <= bot < Hd /\
-val_mem SEGS (mrestrict (w_H W) mem') (sp1 + 216) 8 bimg /\ val_mem SEGS (mrestrict (w_H W) mem') (sp1 + 184) 8 top /\
-(bot = top \/ exists c0, 0 <= c0 < Wd /\ PDp (bot * Wd + c0)) /\ (forall p, (bot + 1) * Wd <= p < (r + 1) * Wd -> ~ PDp p).
+  fun W' c' =>
+    W' = W /\
+    exists (rgO : bvmap 5 word) (mmO : word -> option byte) (mdO : Model) (bot : Z),
+      c' = {| cfg_ms := mkst rgO (Z_to_bv 64 (BASE + 7640)) mmO (seg_rom SEGS); cfg_model := mdO |} /\
+      ajournal SEGS B TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc W mmO mdO k /\
+      wkept B lyc Sc W sp1 memc mmO /\
+      (forall q : Prelude.reg, In q WKEPT5 -> getr rgO q = getr regs q) /\
+      getr rgO 6 = Z_to_bv 64 SB /\
+      getr rgO 21 = Z_to_bv 64 g /\
+      getr rgO 22 = Z_to_bv 64 cfp /\
+      getr rgO 27 = Z_to_bv 64 65535 /\
+      getr rgO 19 = Z_to_bv 64 top /\
+      getr rgO 15 = Z_to_bv 64 (bot + 1) /\
+      top <= bot < Hd /\
+      val_mem SEGS (mrestrict (w_H W) mmO) (sp1 + 216) 8 bimg /\
+      val_mem SEGS (mrestrict (w_H W) mmO) (sp1 + 184) 8 top /\
+      (bot = top \/ exists col, 0 <= col < Wd /\ PDp (bot * Wd + col)) /\
+      (forall px, (bot + 1) * Wd <= px < (r + 1) * Wd -> ~ PDp px).
 Definition s2o_stmtX (m : nat) : Prop :=
-forall (i top v18 : Z) (regsE : bvmap 5 word) memE mdE,
-i - top <= Z.of_nat m -> 0 <= top -> top < i < Hd ->
-ajournal SEGS B TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc W memE mdE k -> wkept B lyc Sc W sp1 memc memE ->
-(forall r : bv 5, In r WKEPT5 -> getr regsE r = getr regs r) ->
-getr regsE 6 = Z_to_bv 64 SB -> getr regsE 25 = Z_to_bv 64 g -> getr regsE 24 = Z_to_bv 64 cfp -> getr regsE 27 = Z_to_bv 64 65535 ->
-getr regsE 14 = Z_to_bv 64 (i + 1) -> getr regsE 12 = Z_to_bv 64 i -> getr regsE 11 = Z_to_bv 64 Wd -> getr regsE 22 = Z_to_bv 64 i ->
-getr regsE 18 = Z_to_bv 64 v18 -> 0 <= v18 < 2 ^ 64 -> v18 mod 2 ^ 32 = i * Wd ->
-val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 216) 8 bimg -> val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 160) 8 top ->
-val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 192) 8 top -> val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 88) 8 (top + 1) ->
-val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 184) 8 top ->
-SRr SEGS W (mkCfg (mkst regsE (Z_to_bv 64 (BASE + 0x1c5c)) memE (seg_rom SEGS)) mdE) (s2o_postX top i).
+  forall (i top v18 : Z) (regsE : bvmap 5 word) (memE : word -> option byte) (mdE : Model),
+    i - top <= Z.of_nat m ->
+    0 <= top ->
+    top < i ->
+    i < Hd ->
+    ajournal SEGS B TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc W memE mdE k ->
+    wkept B lyc Sc W sp1 memc memE ->
+    (forall q : Prelude.reg, In q WKEPT5 -> getr regsE q = getr regs q) ->
+    getr regsE 6 = Z_to_bv 64 SB ->
+    getr regsE 25 = Z_to_bv 64 g ->
+    getr regsE 24 = Z_to_bv 64 cfp ->
+    getr regsE 11 = Z_to_bv 64 Wd ->
+    getr regsE 22 = Z_to_bv 64 i ->
+    getr regsE 12 = Z_to_bv 64 i ->
+    getr regsE 14 = Z_to_bv 64 (i + 1) ->
+    getr regsE 27 = Z_to_bv 64 65535 ->
+    getr regsE 18 = Z_to_bv 64 v18 ->
+    v18 mod 2 ^ 32 = i * Wd ->
+    val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 88) 8 (top + 1) ->
+    val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 160) 8 top ->
+    val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 184) 8 top ->
+    val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 192) 8 top ->
+    val_mem SEGS (mrestrict (w_H W) memE) (sp1 + 216) 8 bimg ->
+    SRr SEGS W {| cfg_ms := mkst regsE (Z_to_bv 64 (BASE + 7260)) memE (seg_rom SEGS); cfg_model := mdE |} (s2o_postX top i).
 Lemma fl_s2o_stepX : forall m, s2o_stmtX m -> s2o_stmtX (Datatypes.S m).
-Proof.
-intros m IH. unfold s2o_stmtX.
-intros i top v18 regsE memE mdE Hm Ht0 Hi HJE WK HKE E6 E25r E22r E27r E20r E12r E11r E24r E18r Rv18 Mv18 V224 V120 V208 V24 V192.
-wctx_names. wprelude HJE. pose proof HJE as HJE0.
-pose proof (proj1 (proj2 HJE)) as HLY. destruct HLY as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & _).
-destruct (al_blocks _ _ LAWS lyc Sc W memE mdE fimg Nb HAR Hfi) as (Hf16 & Hf4096 & Hfceil & Hfh_ia & Hfpres & _). pose proof (proj1 Hfh_ia) as Hfh.
-pose proof (blk_off_imgP _ _ _ _ _ _ fimg Nb HAR Hfi) as Hfh_img.
-destruct (al_blocks _ _ LAWS lyc Sc W memE mdE bimg Nb HAR Hbi) as (Hb16 & Hb4096 & Hbiceil & Hbih_ia & Hbipres & _). pose proof (proj1 Hbih_ia) as Hbih.
-pose proof (blk_off_imgP _ _ _ _ _ _ bimg Nb HAR Hbi) as Hbih_img.
-destruct (al_blocks _ _ LAWS lyc Sc W memE mdE g CGIF_SIZE HAR Hg) as (Hg16 & Hg4096 & Hgceil & Hgh_ia & _ & _). pose proof (proj1 Hgh_ia) as Hgh.
-pose proof (blk_off_imgP _ _ _ _ _ _ g CGIF_SIZE HAR Hg) as Hgh_img.
-destruct (al_blocks _ _ LAWS lyc Sc W memE mdE cfp FRAME_SIZE HAR Hcf) as (Hc16 & Hc4096 & Hcceil & Hcfh_ia & _ & _). pose proof (proj1 Hcfh_ia) as Hcfh.
-pose proof (blk_off_imgP _ _ _ _ _ _ cfp FRAME_SIZE HAR Hcf) as Hcfh_img.
-destruct (al_blocks _ _ LAWS lyc Sc W memE mdE bfp FRAME_SIZE HAR Hbf) as (Hp16 & Hp4096 & Hpceil & Hpfh_ia & _ & _). pose proof (proj1 Hpfh_ia) as Hpfh.
-pose proof (blk_off_imgP _ _ _ _ _ _ bfp FRAME_SIZE HAR Hbf) as Hpfh_img.
-change (req_size CGIF_SIZE) with 96 in *. change (req_size FRAME_SIZE) with 40 in *.
-pose proof (req_size_pos' Nb ltac:(lia)) as [_ HrNb].
-assert (HiW : 0 <= i * Wd /\ i * Wd + Wd <= Nb) by (rewrite HN; clear - Hi Ht0 RW RH; nia).
-assert (HiW32 : i * Wd < 2 ^ 32) by (clear - Hi Ht0 RW RH; nia).
-assert (HSpresE : forall a, sp1 - TCMP_STK <= a < sp1 + 232 -> apresent (w_H W) memE a) by (intros a Ha; apply HSpres; lia).
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memE 240 SB WK ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) Vsb) as VsbE.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memE 248 bfp WK ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) Vbfp) as VbfpE.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memE 200 Wd WK ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) V200) as V200E.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memE 224 fimg WK ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) HFIMG) as V216E.
-remember (Eimg (Ereg regsE [Z_to_bv 64 bimg; Z_to_bv 64 top; Z_to_bv 64 (top + 1); Z_to_bv 64 bfp; Z_to_bv 64 fimg])) as E eqn:HE. assert (HEI : img_env VAL A_LIM E) by (subst E; apply Eimg_env).
-assert (HAE : env_agree 32 (Ereg regsE [Z_to_bv 64 bimg; Z_to_bv 64 top; Z_to_bv 64 (top + 1); Z_to_bv 64 bfp; Z_to_bv 64 fimg]) E) by (rewrite HE; split; [intros nn Hnn; apply Eimg_low; unfold A_TEXT; lia | reflexivity]).
-assert (EE : forall n (r : bv 5), Z.of_nat n = bv_unsigned r -> ew E n = getr regsE r) by (intros n r Hn; subst E; apply ew_Eimg_Ereg_nat; exact Hn).
-assert (E9 : ew E 9 = Z_to_bv 64 sp1) by (rewrite (EE 9%nat 9%bv eq_refl), (HKE 9%bv ltac:(cbv; tauto)); exact H9).
-pose proof (EE 6%nat 6%bv eq_refl) as F6. rewrite E6 in F6.
-pose proof (EE 11%nat 11%bv eq_refl) as E11. rewrite E11r in E11. pose proof (EE 22%nat 22%bv eq_refl) as E24. rewrite E24r in E24.
-pose proof (EE 25%nat 25%bv eq_refl) as E25. rewrite E25r in E25. pose proof (EE 24%nat 24%bv eq_refl) as E22. rewrite E22r in E22.
-pose proof (EE 18%nat 18%bv eq_refl) as E18. rewrite E18r in E18.
-assert (E32 : ew E 32 = Z_to_bv 64 bimg) by (subst E; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsE _ 0)).
-assert (E33 : ew E 33 = Z_to_bv 64 top) by (subst E; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsE _ 1)).
-assert (E34 : ew E 34 = Z_to_bv 64 (top + 1)) by (subst E; exact (ew_Ereg_extra regsE _ 2)).
-assert (E35 : ew E 35 = Z_to_bv 64 bfp) by (subst E; exact (ew_Ereg_extra regsE _ 3)).
-assert (E36 : ew E 36 = Z_to_bv 64 fimg) by (subst E; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsE _ 4)).
-assert (HS : st_ok_pi SEGS VAL E ss_s2o (restrict (w_H W) (mkst regsE (Z_to_bv 64 (BASE + 0x1c5c)) memE (seg_rom SEGS)))).
-{ rewrite restrict_mkst_fx. unfold ss_s2o, s2o_regs. unfold st_ok_pi, abs_ss, setpc. cbn [ss_pc ss_regs ss_fregs ss_mem ss_resv ss_facts].
-apply (rn_st_ok_any E (BASE + 0x1c5c) _ regsE _ _ (mrestrict (w_H W) memE)).
-- subst E. apply regs_ok_pin; [apply regs_ok_pin; [apply regs_ok_pin; [apply regs_ok_Eimg_Ereg | intros X; discriminate X | rewrite E12r; cbn [sv_denot]; rewrite (ew_Eimg_Ereg_nat regsE _ 22 22%bv eq_refl), E24r, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity] | intros X; discriminate X | rewrite E20r; cbn [sv_denot]; rewrite (ew_Eimg_Ereg_nat regsE _ 22 22%bv eq_refl), E24r, unsigned_lit_small by lia; reflexivity] | intros X; discriminate X | rewrite E27r; reflexivity].
-- reflexivity.
-- unfold s2o_mem. repeat apply Forall_cons; try apply Forall_nil; unfold region_ok;
-cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val]; rewrite E9, unsigned_lit_small by lia;
-(split; [lia|]); (split; [lia|]); (split; [intros o Ho; first [lia | apply (apresent_writable SEGS); apply HSpresE; lia]|]).
-+ apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 88 8 _ (top + 1)); [cbn [sv_denot]; rewrite E34, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V24]|]. apply Forall_nil.
-+ apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 160 8 _ top); [cbn [sv_denot]; rewrite E33, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V120]|]. apply Forall_nil.
-+ apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 200 8 _ Wd); [cbn [sv_denot]; rewrite E11, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V200E]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 192 8 _ top); [cbn [sv_denot]; rewrite E33, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V208]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 224 8 _ fimg); [cbn [sv_denot]; rewrite E36, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V216E]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 216 8 _ bimg); [cbn [sv_denot]; rewrite E32, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V224]|]. apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 240 8 _ SB); [cbn [sv_denot]; rewrite F6, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | unfold SB; zside | unfold SB; zside | exact VsbE]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 248 8 _ bfp); [cbn [sv_denot]; rewrite E35, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact VbfpE]|]. apply Forall_nil.
-- unfold s2o_mem. cbn [pairwise_disjoint all_disjoint]. unfold extent_disjoint. cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val]. rewrite E9, !unsigned_lit_small by lia. repeat split; lia.
-- split; [|split; exact I]. cbn [s2o_facts f_atoms atoms_ok]. unfold afact_ok, HPTR. cbn [af_lo af_hi af_al2].
-rewrite E9, F6, E11, E24, E25, E22, E32, E36, E33, E34, E35, !unsigned_lit_small by (unfold SB; lia).
-change (2 ^ 4) with 16. change (2 ^ 3) with 8. rewrite !Z.pow_0_r, !Z.mod_1_r.
-rewrite ?C3 in *. unfold SB. repeat match goal with |- _ /\ _ => split end; try (apply mod16_mod8; assumption);
-first [lia | match goal with |- ?g => idtac "FACT-LEFT" g end]. }
-clear HE. pose proof HS as HS0.
-shok_auto SHOK (SOff 6 0) E (mrestrict (w_H W) memE).
-hei_havoc HS; paj_run_to_tok RUNTO HS HJE SHOK FLBspan 0x1c8c.
-1: { unfold s2o_mem.
-repeat (first [ apply awr_ok_nil
-| apply awr_ok_cons_ro; [cbn; lia|]
-| eapply (awr_ok_cons_gen _ _ _ _ _ _ _ _ _ _ 9%nat); [reflexivity | rewrite E9; apply unsigned_lit_small; lia | cbn [YP09.r_wlo YP09.r_whi]; intros a Ha; left; rewrite FFS; lia |] ]). }
-rename HFr into HFr1. rename HG into HG1. clear HF.
-assert (W1 : forall a, in_wrange E (ss_mem ss_s2o) a -> wscr sp1 a).
-{ unfold ss_s2o, s2o_mem; cbn [ss_mem]. intros a (r & Hr & Hw); cbn [In] in Hr.
-destruct Hr as [<- | [<- | [<- | [<- | [<- | [<- | []]]]]]]; cbn [YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hw; rewrite E9, unsigned_lit_small in Hw by lia; unfold wscr; lia. }
-assert (O1 : forall kk, (sp1 + 88 <= kk < sp1 + 96 \/ sp1 + 160 <= kk < sp1 + 168 \/ sp1 + 184 <= kk < sp1 + 232) -> ~ in_wrange E (ss_mem ss_s2o) kk).
-{ unfold ss_s2o, s2o_mem; cbn [ss_mem]. intros kk Hk (r & Hr & Hw); cbn [In] in Hr.
-destruct Hr as [<- | [<- | [<- | [<- | [<- | [<- | []]]]]]]; cbn [YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hw; rewrite E9, unsigned_lit_small in Hw by lia; lia. }
-pose proof (wkept_trans B _ _ _ _ _ _ _ WK (wkept_of_run B LAWS E _ lyc Sc W memE _ mdE sp1 HAR HFr1 HG1 W1 ltac:(lia) ltac:(lia) HSpresE)) as WK1.
-pose proof (val_mem_run_out E _ W memE _ (sp1 + 216) 8 bimg HFr1 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(intros kk Hk; apply O1; cbn [Z.of_nat] in Hk; lia) V224) as V224a.
-pose proof (val_mem_run_out E _ W memE _ (sp1 + 160) 8 top HFr1 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(intros kk Hk; apply O1; cbn [Z.of_nat] in Hk; lia) V120) as V120a.
-pose proof (val_mem_run_out E _ W memE _ (sp1 + 192) 8 top HFr1 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(intros kk Hk; apply O1; cbn [Z.of_nat] in Hk; lia) V208) as V208a.
-pose proof (val_mem_run_out E _ W memE _ (sp1 + 88) 8 (top + 1) HFr1 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(intros kk Hk; apply O1; cbn [Z.of_nat] in Hk; lia) V24) as V24a.
-pose proof (val_mem_run_out E _ W memE _ (sp1 + 184) 8 top HFr1 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(intros kk Hk; apply O1; cbn [Z.of_nat] in Hk; lia) V192) as V192a.
-cbn [ms_mem restrict mkst] in V224a, V120a, V208a, V24a, V192a.
-lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx ?msx =>
-let r1 := eval vm_compute in (nth 1 (ss_mem ssx) (YP09.mkRegion None 0 0 0 0 [])) in
-pose proof (st_ok_pi_region_nth Ex ssx msx 1 r1 HS ltac:(vm_compute; reflexivity)) as HR1; cbn [ms_mem restrict mkst] in HR1;
-lazymatch type of HR1 with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-pose proof (field_of_region Ex _ 9 sp1 cs lo hi wlo whi 152 8%N (SOff 22 1) (i + 1) HR1
-ltac:(cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite E9; apply unsigned_lit_small; lia) ltac:(cbn; tauto)
-ltac:(cbn [sv_denot]; cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite E24, unsigned_lit_small by lia; reflexivity)
-ltac:(cbn [Z.of_N Z.mul]; lia) ltac:(cbn; lia)) as V56a end; clear HR1;
-let r3 := eval vm_compute in (nth 3 (ss_mem ssx) (YP09.mkRegion None 0 0 0 0 [])) in
-pose proof (st_ok_pi_region_nth Ex ssx msx 3 r3 HS ltac:(vm_compute; reflexivity)) as HR3; cbn [ms_mem restrict mkst] in HR3;
-lazymatch type of HR3 with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-pose proof (field_of_region Ex _ 9 sp1 cs lo hi wlo whi 168 8%N (SOff 22 0) i HR3
-ltac:(cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite E9; apply unsigned_lit_small; lia) ltac:(cbn; tauto)
-ltac:(cbn [sv_denot]; cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite E24, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity)
-ltac:(cbn [Z.of_N Z.mul]; lia) ltac:(cbn; lia)) as V160a end; clear HR3 end.
-cbn [N.to_nat Pos.to_nat Pos.iter_op Nat.add] in V56a, V160a.
-pose proof (regs_kept_of_st_ok_pi _ _ _ regsE _ (18%bv :: 24%bv :: 22%bv :: 25%bv :: WKEPT5) HS ltac:(env_agree32 HAE) ltac:(vm_compute; reflexivity)) as HKr1. cbn [ms_regs restrict] in HKr1.
-lazymatch type of HS with st_ok_pi _ _ ?Ev _ _ =>
-assert (F32 : ew Ev 32 = Z_to_bv 64 bimg) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E32);
-assert (F36 : ew Ev 36 = Z_to_bv 64 fimg) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E36);
-assert (F18 : ew Ev 18 = Z_to_bv 64 v18) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E18);
-assert (F11 : ew Ev 11 = Z_to_bv 64 Wd) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E11);
-assert (UB : U Ev (SAlu ALU_ADD (SOff 32 0) (SAlu ALU_SRL (SAlu ALU_SLL (SOff 18 0) (SLit 32)) (SLit 32))) = bimg + i * Wd)
-by (rewrite (U_add_atom_zext32 Ev 32 _ bimg F32) by lia; rewrite (U_atom Ev 18 v18 F18) by lia; rewrite Mv18; reflexivity);
-assert (UF : U Ev (SAlu ALU_ADD (SOff 36 0) (SAlu ALU_SRL (SAlu ALU_SLL (SOff 18 0) (SLit 32)) (SLit 32))) = fimg + i * Wd)
-by (rewrite (U_add_atom_zext32 Ev 36 _ fimg F36) by lia; rewrite (U_atom Ev 18 v18 F18) by lia; rewrite Mv18; reflexivity);
-rreg_by HS (19%bv : bv 5) (Z_to_bv 64 (bimg + i * Wd)) (eq_trans (denot_lit_U Ev _) (f_equal (Z_to_bv 64) UB)) R19;
-rreg_by HS (26%bv : bv 5) (Z_to_bv 64 (bimg + i * Wd)) (eq_trans (denot_lit_U Ev _) (f_equal (Z_to_bv 64) (eq_trans (U_add_lit0 Ev _) UB))) R26;
-rreg_by HS (20%bv : bv 5) (Z_to_bv 64 (fimg + i * Wd)) (eq_trans (denot_lit_U Ev _) (f_equal (Z_to_bv 64) UF)) R20;
-rreg_by HS (23%bv : bv 5) (Z_to_bv 64 (fimg + i * Wd)) (eq_trans (denot_lit_U Ev _) (f_equal (Z_to_bv 64) (eq_trans (U_add_lit0 Ev _) UF))) R23 end.
-prreg HS (6%bv : bv 5) R6. prreg HS (21%bv : bv 5) R21. prreg HS (27%bv : bv 5) R27.
-pmkst HS.
+Proof using LAWS TCMP HC HGEO HFIMG.
+intros m IH i top v18 regsE memE mdE Ms T0 Ti Ih Jn Wk Kp X6 X25 X24 X11 X22 X12 X14 X27 X18 Mv At88 At160 At184 At192 At216.
+wctx_names. wprelude Jn.
+pose proof (al_blocks _ _ LAWS lyc Sc W memE mdE g CGIF_SIZE HAR Hg) as Bg.
+pose proof (al_blocks _ _ LAWS lyc Sc W memE mdE cfp FRAME_SIZE HAR Hcf) as Bc.
+pose proof (al_blocks _ _ LAWS lyc Sc W memE mdE bfp FRAME_SIZE HAR Hbf) as Bb.
+pose proof (al_blocks _ _ LAWS lyc Sc W memE mdE fimg Nb HAR Hfi) as Bf.
+pose proof (al_blocks _ _ LAWS lyc Sc W memE mdE bimg Nb HAR Hbi) as Bi.
+assert (SPr : 140735332483072 + 13000 <= sp1 /\ sp1 + 384 <= sp0 /\ sp0 <= 2 ^ 47) by lia.
+assert (SBv : SB = 2147450880) by reflexivity.
+assert (Rq : req_size CGIF_SIZE = 96 /\ req_size FRAME_SIZE = 40 /\ req_size Nb = Nb) by (repeat split; try reflexivity; unfold req_size; destruct (Nb =? 0) eqn:Hz; [apply Z.eqb_eq in Hz; lia | reflexivity]).
+assert (B9 : bv_unsigned (getr regsE 9) = sp1).
+{ rewrite (Kp 9%bv) by (unfold WKEPT5; simpl; tauto). rewrite H9. apply u_Z2bv; lia. }
+assert (VK : forall off v mm, wkept B lyc Sc W sp1 memc mm -> 0 <= off -> off + 8 <= 280 ->
+  (forall kk, 0 <= kk < 8 -> ~ wscr sp1 (sp1 + off + kk)) ->
+  val_mem SEGS (mrestrict (w_H W) memc) (sp1 + off) 8 v -> val_mem SEGS (mrestrict (w_H W) mm) (sp1 + off) 8 v).
+{ intros off v mm Hk Ho1 Ho2 Hn Hv. eapply val_mem_wkept; eauto; lia. }
+set (EX := [Z_to_bv 64 fimg; Z_to_bv 64 top; Z_to_bv 64 (top + 1); Z_to_bv 64 bfp; Z_to_bv 64 bimg; Z_to_bv 64 Wd]).
+set (E0 := Eimg (Ereg regsE EX)).
+assert (B9' : base_val E0 (Some 9%nat) = sp1) by exact B9.
+assert (EA0 : env_agree 32 (Ereg regsE EX) E0).
+{ split; [ | reflexivity]. intros n Hn. unfold E0, Eimg. cbn [ew].
+  rewrite (proj2 (Nat.leb_gt A_TEXT n)) by (unfold A_TEXT; lia). reflexivity. }
+assert (GR : forall ss ms r e v, st_ok_pi SEGS VAL E0 ss (restrict (w_H W) ms) ->
+  sr_get (ss_regs ss) r = e -> U E0 e = v -> getr (ms_regs ms) r = Z_to_bv 64 v).
+{ intros ss ms r e v Hs He Hu. rewrite (st_ok_pi_restrict_reg _ _ _ _ r Hs), He. apply denot_of_U2. exact Hu. }
+assert (KR : forall ss ms, st_ok_pi SEGS VAL E0 ss (restrict (w_H W) ms) ->
+  forallb (fun q => sv_eqb (sr_get (ss_regs ss) q) (SOff (Z.to_nat (bv_unsigned q)) 0)) WKEPT5 = true ->
+  forall q, In q WKEPT5 -> getr (ms_regs ms) q = getr regs q).
+{ intros ss ms Hs Hb q Hq. rewrite <- (Kp q Hq). exact (regs_kept_of_st_ok_pi _ _ _ _ _ _ Hs EA0 Hb q Hq). }
+assert (WKS : forall (Ex : env) (rs : smem) (m1 m2 : word -> option byte) (md1 : Model),
+  ajournal SEGS B TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc W m1 md1 k ->
+  frame_of Ex rs (mrestrict (w_H W) m1) (mrestrict (w_H W) m2) ->
+  mem_grows (mrestrict (w_H W) m1) (mrestrict (w_H W) m2) ->
+  (forall a, in_wrange Ex rs a -> wscr sp1 a) -> wkept B lyc Sc W sp1 m1 m2).
+{ intros Ex rs m1 m2 md1 J1 F12 G12 Ww.
+  pose proof J1 as (A1 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & P1 & _).
+  apply (wkept_of_run B LAWS Ex rs lyc Sc W m1 m2 md1 sp1 A1 F12 G12 Ww); [lia | lia | intros a Ha; apply P1; lia]. }
+assert (A32 : ew E0 32 = Z_to_bv 64 fimg) by reflexivity.
+assert (A33 : ew E0 33 = Z_to_bv 64 top) by reflexivity.
+assert (A34 : ew E0 34 = Z_to_bv 64 (top + 1)) by reflexivity.
+assert (A35 : ew E0 35 = Z_to_bv 64 bfp) by reflexivity.
+assert (A36 : ew E0 36 = Z_to_bv 64 bimg) by reflexivity.
+assert (A37 : ew E0 37 = Z_to_bv 64 Wd) by reflexivity.
+assert (ST0 : st_ok_pi SEGS VAL E0 ss_s2o (restrict (w_H W) (mkst regsE (Z_to_bv 64 (BASE + 7260)) memE (seg_rom SEGS)))).
+{ change (restrict (w_H W) (mkst regsE (Z_to_bv 64 (BASE + 7260)) memE (seg_rom SEGS)))
+    with (mkst regsE (Z_to_bv 64 (BASE + 7260)) (mrestrict (w_H W) memE) (seg_rom SEGS)).
+  apply (pa_entry_st_ok_full E0 7260 s2o_regs regsE s2o_mem s2o_facts (mrestrict (w_H W) memE)).
+  - unfold s2o_regs.
+    apply regs_ok_rereg; [apply regs_ok_rereg; [apply regs_ok_rereg; [apply regs_ok_Eimg_Ereg | reflexivity | ] | reflexivity | ] | reflexivity | ].
+    + cbn [sv_denot]. change (ew E0 22) with (getr regsE 22). rewrite at_self, X12, X22. reflexivity.
+    + cbn [sv_denot]. change (ew E0 22) with (getr regsE 22). rewrite X22, u_Z2bv, X14 by lia. reflexivity.
+    + cbn [sv_denot]. exact X27.
+  - reflexivity.
+  - unfold s2o_mem.
+    repeat apply Forall_cons; try apply Forall_nil;
+      unfold region_ok; cbv beta zeta; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks]; rewrite B9';
+      (split; [lia|]); (split; [lia|]); (split; [intros o Ho; apply apresent_writable; apply HSpres; lia|]).
+    + apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ top) | apply Forall_nil].
+      * cbn [sv_denot]. rewrite A33, at_self. reflexivity.
+      * cbn. lia.
+      * cbn. lia.
+      * exact At160.
+    + apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ Wd) | apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ bimg) | apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ fimg) | apply Forall_nil]]].
+      * cbn [sv_denot]. change (ew E0 11) with (getr regsE 11). rewrite at_self. exact X11.
+      * cbn. lia.
+      * cbn. lia.
+      * apply VK; [exact Wk | lia | lia | intros kk Hk; unfold wscr; lia | exact V200].
+      * cbn [sv_denot]. rewrite A36, at_self. reflexivity.
+      * cbn. lia.
+      * cbn. lia.
+      * exact At216.
+      * cbn [sv_denot]. rewrite A32, at_self. reflexivity.
+      * cbn. lia.
+      * cbn. lia.
+      * apply VK; [exact Wk | lia | lia | intros kk Hk; unfold wscr; lia | exact HFIMG].
+  - unfold s2o_mem. cbn [pairwise_disjoint all_disjoint]. unfold extent_disjoint. cbn [r_base r_lo r_hi].
+    rewrite !B9'. repeat split; lia.
+  - unfold facts_ok, s2o_facts. cbn [f_atoms f_conds f_alias atoms_ok conds_ok alias_ok].
+    unfold afact_ok, HPTR. cbn [af_lo af_hi af_al2].
+    change (ew E0 9) with (getr regsE 9). change (ew E0 6) with (getr regsE 6). change (ew E0 11) with (getr regsE 11).
+    change (ew E0 22) with (getr regsE 22). change (ew E0 25) with (getr regsE 25). change (ew E0 24) with (getr regsE 24).
+    rewrite A32, A33, A34, A35, A36.
+    rewrite B9, X6, X11, X22, X25, X24, !u_Z2bv by lia.
+    repeat split; try lia; try apply Z.mod_1_r.
+    + exact Hsp1al.
+    + exact (proj1 Bg).
+    + exact (mod16_mod8 _ (proj1 Bc)).
+    + exact (mod16_mod8 _ (proj1 Bb)). }
+let v := eval vm_compute in (sym_run_toN_pi (@pl_tpi _ PL_asan3_0) 40 7308 ss_s2o) in
+lazymatch v with pair ?s1 ?t1 =>
+  apply (RUNTOP W 40 7308 E0 ss_s2o s1 t1 _ TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc mdE k);
+  [ apply Eimg_env | exact ST0 | vm_compute; reflexivity | exact I | exact Jn | wscr_windows B9' | ]
+end.
+intros ms1 mat1 ST1 Jn1 Fr1 Fr1r Gr1.
+assert (Wk1 : wkept B lyc Sc W sp1 memc (ms_mem ms1)).
+{ apply (wkept_trans _ _ _ _ _ _ _ _ Wk). exact (WKS _ _ _ _ _ Jn Fr1r Gr1 ltac:(wscr_windows B9')). }
+assert (U18 : U E0 (SOff 18 0) = v18 mod 2 ^ 64).
+{ unfold U. cbn [sv_denot]. change (ew E0 18) with (getr regsE 18). rewrite at_self, X18, unsigned_lit.
+  unfold zcanon. rewrite M64_val. reflexivity. }
+assert (M32 : U E0 (SOff 18 0) mod 2 ^ 32 = i * Wd).
+{ rewrite U18, (Z.mod_mod_divide v18 (2 ^ 64) (2 ^ 32)) by (exists (2 ^ 32); reflexivity). exact Mv. }
+assert (UZ32 : U E0 (SAlu ALU_SRL (SAlu ALU_SLL (SOff 18 0) (SLit 32)) (SLit 32)) = i * Wd)
+  by (rewrite U_zext32; exact M32).
+pose proof (st_ok_pi_region_nth _ _ _ 0 _ ST1 eq_refl) as RG0.
+pose proof (st_ok_pi_region_nth _ _ _ 1 _ ST1 eq_refl) as RG1.
+rewrite (st_ok_pi_restrict_mkst _ _ _ _ ST1 eq_refl).
 eapply SRr_bind.
-{ pose proof (fl_s2iX B LAWS TCMP W regs memc mdc sp0 sp1 FP ly S W0 mem0 md0 lyc Sc k fpos ch1 fimg bimg Nb g cfp bfp gvals cvals bvals
-gpal ngp cpal cattr cnlp ctidx bpal battr bnlp btidx Wd Hd HC HGEO (Z.to_nat Wd)) as S2I. unfold s2i_stmtX in S2I.
-lazymatch goal with |- SRr _ _ (mkCfg (mkst (ms_regs ?msX) _ (ms_mem _) _) ?mdX) _ =>
-eapply (S2I 0 (ms_regs msX) (ms_mem msX) mdX i top) end;
-[ rewrite Z2Nat.id by lia; lia | lia | lia | lia | exact HJE | exact WK1
-| intros r Hr; transitivity (getr regsE r); [apply HKr1; cbv [WKEPT5 In] in Hr |- *; tauto | apply HKE; exact Hr]
-| rewrite R6, ?ew_ewset_other by lia; exact F6
-| rewrite (HKr1 25%bv ltac:(cbv; tauto)); exact E25r
-| rewrite (HKr1 24%bv ltac:(cbv; tauto)); exact E22r
-| rewrite R23; f_equal; lia
-| rewrite R20; f_equal; lia
-| rewrite R26; f_equal; lia
-| rewrite R19; f_equal; lia
-| rewrite R21, ?ew_ewset_other by lia; rewrite E11; f_equal; lia
-| exact V208a | exact V56a ]. }
-cbv beta. intros W2 c2 _ (-> & regsI & memI & mdI & pcI & -> & HJI & WKI & LI & HKI & H6I & HexI).
-assert (HSpresI : forall a, sp1 - TCMP_STK <= a < sp1 + 232 -> apresent (w_H W) memI a).
-{ intros a Ha. pose proof HJI as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HSp & _). apply HSp. lia. }
-assert (HK5I : forall r : bv 5, In r WKEPT5 -> getr regsI r = getr regs r).
-{ intros r Hr. rewrite (HKI r) by (cbv [WKEPT5 In] in Hr; repeat (destruct Hr as [<- | Hr]; [reflexivity|]); destruct Hr).
-transitivity (getr regsE r); [apply HKr1; cbv [WKEPT5 In] in Hr |- *; tauto | apply HKE; exact Hr]. }
-assert (I27 : getr regsI 27 = Z_to_bv 64 65535) by (rewrite (HKI 27%bv eq_refl); exact R27).
-assert (I22 : getr regsI 24 = Z_to_bv 64 cfp) by (rewrite (HKI 24%bv eq_refl), (HKr1 24%bv ltac:(cbv; tauto)); exact E22r).
-assert (I25 : getr regsI 25 = Z_to_bv 64 g) by (rewrite (HKI 25%bv eq_refl), (HKr1 25%bv ltac:(cbv; tauto)); exact E25r).
-pose proof (val_mem_lkept W sp1 _ _ (sp1 + 216) 8 _ LI ltac:(lia) ltac:(cbn [Z.of_nat]; lia) V224a) as V224b.
-pose proof (val_mem_lkept W sp1 _ _ (sp1 + 184) 8 _ LI ltac:(lia) ltac:(cbn [Z.of_nat]; lia) V192a) as V192b.
-destruct HexI as [(-> & H22I & XNI) | (-> & Hwit & H11I & H14I & H21I & H22cI)].
-2: {
-apply SRr_ret. split; [reflexivity|]. exists regsI, memI, mdI, i. split; [reflexivity|]. split; [exact HJI|]. split; [exact WKI|].
-split; [exact HK5I|]. split; [exact H6I|]. split; [exact H21I|]. split; [exact H22cI|]. split; [exact I27|].
-split; [exact H11I|]. split; [exact H14I|]. split; [lia|]. split; [exact V224b|]. split; [exact V192b|].
-split; [right; exact Hwit | intros p Hp; exfalso; clear - Hp; lia]. }
-assert (I9 : getr regsI 9 = Z_to_bv 64 sp1) by (rewrite (HKI 9%bv eq_refl), (HKr1 9%bv ltac:(cbv; tauto)); exact (eq_trans (HKE 9%bv ltac:(cbv; tauto)) H9)).
-prreg HS (22%bv : bv 5) R24h. prreg HS (18%bv : bv 5) R18h.
-assert (I24 : getr regsI 22 = Z_to_bv 64 i) by (rewrite H22I, R24h, ?ew_ewset_other by lia; exact E24).
-assert (I18 : getr regsI 18 = Z_to_bv 64 v18) by (rewrite (HKI 18%bv eq_refl), R18h, ?ew_ewset_other by lia; exact E18).
-pose proof (val_mem_lkept W sp1 _ _ (sp1 + 160) 8 _ LI ltac:(lia) ltac:(cbn [Z.of_nat]; lia) V120a) as V120b.
-pose proof (val_mem_lkept W sp1 _ _ (sp1 + 192) 8 _ LI ltac:(lia) ltac:(cbn [Z.of_nat]; lia) V208a) as V208b.
-pose proof (val_mem_lkept W sp1 _ _ (sp1 + 88) 8 _ LI ltac:(lia) ltac:(cbn [Z.of_nat]; lia) V24a) as V24b.
-pose proof (val_mem_lkept W sp1 _ _ (sp1 + 168) 8 _ LI ltac:(lia) ltac:(cbn [Z.of_nat]; lia) V160a) as V160b.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memI 240 SB WKI ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) Vsb) as VsbI.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memI 248 bfp WKI ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) Vbfp) as VbfpI.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memI 200 Wd WKI ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) V200) as V200I.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memI 224 fimg WKI ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) HFIMG) as V216I.
-clear HS HS0 SHOK R19 R26 R20 R23 R6 R21 R27 R24h R18h UB UF F32 F36 F18 F11.
-remember (Eimg (Ereg regsI [Z_to_bv 64 bimg; Z_to_bv 64 top; Z_to_bv 64 (top + 1); Z_to_bv 64 bfp; Z_to_bv 64 fimg; Z_to_bv 64 Wd])) as Et eqn:HEt. assert (HEIt : img_env VAL A_LIM Et) by (subst Et; apply Eimg_env).
-assert (HAEt : env_agree 32 (Ereg regsI [Z_to_bv 64 bimg; Z_to_bv 64 top; Z_to_bv 64 (top + 1); Z_to_bv 64 bfp; Z_to_bv 64 fimg; Z_to_bv 64 Wd]) Et) by (rewrite HEt; split; [intros nn Hnn; apply Eimg_low; unfold A_TEXT; lia | reflexivity]).
-assert (EEt : forall n (r : bv 5), Z.of_nat n = bv_unsigned r -> ew Et n = getr regsI r) by (intros n r Hn; subst Et; apply ew_Eimg_Ereg_nat; exact Hn).
-pose proof (EEt 9%nat 9%bv eq_refl) as T9. rewrite I9 in T9. pose proof (EEt 6%nat 6%bv eq_refl) as T6. rewrite H6I in T6.
-pose proof (EEt 22%nat 22%bv eq_refl) as T24. rewrite I24 in T24. pose proof (EEt 18%nat 18%bv eq_refl) as T18. rewrite I18 in T18.
-pose proof (EEt 25%nat 25%bv eq_refl) as T25. rewrite I25 in T25. pose proof (EEt 24%nat 24%bv eq_refl) as T22. rewrite I22 in T22.
-assert (T32 : ew Et 32 = Z_to_bv 64 bimg) by (subst Et; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsI _ 0)).
-assert (T33 : ew Et 33 = Z_to_bv 64 top) by (subst Et; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsI _ 1)).
-assert (T34 : ew Et 34 = Z_to_bv 64 (top + 1)) by (subst Et; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsI _ 2)).
-assert (T35 : ew Et 35 = Z_to_bv 64 bfp) by (subst Et; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsI _ 3)).
-assert (T36 : ew Et 36 = Z_to_bv 64 fimg) by (subst Et; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsI _ 4)).
-assert (T37 : ew Et 37 = Z_to_bv 64 Wd) by (subst Et; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsI _ 5)).
-assert (HS : st_ok_pi SEGS VAL Et ss_s2t (restrict (w_H W) (mkst regsI (Z_to_bv 64 (BASE + 0x1d00)) memI (seg_rom SEGS)))).
-{ rewrite restrict_mkst_fx. unfold ss_s2t, s2t_regs. unfold st_ok_pi, abs_ss, setpc. cbn [ss_pc ss_regs ss_fregs ss_mem ss_resv ss_facts].
-apply (rn_st_ok_any Et (BASE + 0x1d00) _ regsI _ _ (mrestrict (w_H W) memI)).
-- subst Et. apply regs_ok_pin; [apply regs_ok_Eimg_Ereg | intros X; discriminate X | rewrite I27; reflexivity].
-- reflexivity.
-- unfold s2t_mem. repeat apply Forall_cons; try apply Forall_nil; unfold region_ok;
-cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val]; rewrite T9, unsigned_lit_small by lia;
-(split; [lia|]); (split; [lia|]); (split; [intros o Ho; first [lia | apply (apresent_writable SEGS); apply HSpresI; lia]|]).
-+ apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 88 8 _ (top + 1)); [cbn [sv_denot]; rewrite T34, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V24b]|]. apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 160 8 _ top); [cbn [sv_denot]; rewrite T33, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V120b]|]. apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 168 8 _ i); [cbn [sv_denot]; rewrite T24, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V160b]|]. apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 200 8 _ Wd); [cbn [sv_denot]; rewrite T37, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V200I]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 192 8 _ top); [cbn [sv_denot]; rewrite T33, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V208b]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 224 8 _ fimg); [cbn [sv_denot]; rewrite T36, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V216I]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 216 8 _ bimg); [cbn [sv_denot]; rewrite T32, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V224b]|]. apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 240 8 _ SB); [cbn [sv_denot]; rewrite T6, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | unfold SB; zside | unfold SB; zside | exact VsbI]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS Et _ sp1 248 8 _ bfp); [cbn [sv_denot]; rewrite T35, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact VbfpI]|]. apply Forall_nil.
-- unfold s2t_mem. cbn [pairwise_disjoint all_disjoint]. unfold extent_disjoint. cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val]. rewrite T9, !unsigned_lit_small by lia. repeat split; lia.
-- split; [|split; exact I]. cbn [s2t_facts f_atoms atoms_ok]. unfold afact_ok, HPTR. cbn [af_lo af_hi af_al2].
-rewrite T9, T6, T24, T25, T22, T32, T36, T33, T34, T35, T37, !unsigned_lit_small by (unfold SB; lia).
-change (2 ^ 4) with 16. change (2 ^ 3) with 8. rewrite !Z.pow_0_r, !Z.mod_1_r.
-rewrite ?C3 in *. unfold SB. repeat match goal with |- _ /\ _ => split end; try (apply mod16_mod8; assumption);
-first [lia | match goal with |- ?g => idtac "FACT-LEFT2" g end]. }
-clear HEt. pose proof HS as HS0.
-shok_auto SHOK (SOff 6 0) Et (mrestrict (w_H W) memI).
-pose proof (proj1 HJI) as HARI.
-hei_havoc HS; paj_run_tok RUN HS HJI SHOK FLBspan.
-1: { unfold s2t_mem. repeat (first [ apply awr_ok_nil | apply awr_ok_cons_ro; [cbn; lia|] ]). }
-rename HFr into HFr2. rename HG into HG2. clear HF.
-pose proof (val_mem_run_out Et _ W memI _ (sp1 + 216) 8 bimg HFr2 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V224b) as V224c.
-pose proof (val_mem_run_out Et _ W memI _ (sp1 + 160) 8 top HFr2 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V120b) as V120c.
-pose proof (val_mem_run_out Et _ W memI _ (sp1 + 192) 8 top HFr2 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V208b) as V208c.
-pose proof (val_mem_run_out Et _ W memI _ (sp1 + 88) 8 (top + 1) HFr2 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V24b) as V24c.
-pose proof (val_mem_run_out Et _ W memI _ (sp1 + 184) 8 top HFr2 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V192b) as V192c.
-cbn [ms_mem restrict mkst] in V224c, V120c, V208c, V24c, V192c.
-assert (W2 : forall a, in_wrange Et (ss_mem ss_s2t) a -> wscr sp1 a) by (unfold ss_s2t, s2t_mem; wscr_windows T9).
-pose proof (wkept_trans B _ _ _ _ _ _ _ WKI (wkept_of_run B LAWS Et _ lyc Sc W memI _ mdI sp1 HARI HFr2 HG2 W2 ltac:(lia) ltac:(lia) HSpresI)) as WK2.
-hei_havoc HS; psrr_branch_tok RUN BR HS SHOK FLBspan.
--
-rewrite branch_ltu_U in Hc. rewrite (U_atom _ 33 top) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact T33 | lia]).
-rewrite (U_and_ffff_off _ 22 i (-1)) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact T24 | lia]).
-apply Z.ltb_lt in Hc.
-reshok_bx HS 6%nat. pose proof (proj1 HJI) as HARb.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJI SHOK FLBspan 0x1c5c.
-1: { unfold s2t_mem. repeat (first [ apply awr_ok_nil | apply awr_ok_cons_ro; [cbn; lia|] ]). }
-rename HFr into HFrb. rename HG into HGb. clear HF.
-pose proof (wkept_trans B _ _ _ _ _ _ _ WK2 (wkept_of_run B LAWS _ _ lyc Sc W _ _ _ sp1 HARb HFrb HGb ltac:(wscr_windows T9) ltac:(lia) ltac:(lia) ltac:(pose proof WK2 as [(_ & _ & _ & _ & _ & K6) _]; exact K6))) as WK3.
-pose proof (regs_kept_of_st_ok_pi _ _ _ regsI _ (6%bv :: 24%bv :: 25%bv :: WKEPT5) HS ltac:(env_agree32 HAEt) ltac:(vm_compute; reflexivity)) as HKr3. cbn [ms_regs restrict] in HKr3.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 216) 8 bimg HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V224c) as V224d.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 160) 8 top HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V120c) as V120d.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 192) 8 top HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V208c) as V208d.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 88) 8 (top + 1) HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V24c) as V24d.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 184) 8 top HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V192c) as V192d.
-cbn [ms_mem restrict mkst] in V224d, V120d, V208d, V24d, V192d.
-prreg HS (14%bv : bv 5) Q20. prreg HS (12%bv : bv 5) Q12. prreg HS (11%bv : bv 5) Q11. prreg HS (22%bv : bv 5) Q24. prreg HS (27%bv : bv 5) Q27.
-lazymatch type of HS with st_ok_pi _ _ ?Ev _ _ =>
-assert (G24 : ew Ev 22 = Z_to_bv 64 i) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact T24);
-assert (G18 : ew Ev 18 = Z_to_bv 64 v18) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact T18);
-assert (G37 : ew Ev 37 = Z_to_bv 64 Wd) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact T37);
-rreg_by HS (18%bv : bv 5) (Z_to_bv 64 (U Ev (SAluw ALU_SUB (SOff 18 0) (SOff 37 0)))) (denot_lit_U Ev (SAluw ALU_SUB (SOff 18 0) (SOff 37 0))) Q18;
-assert (Mv : U Ev (SAluw ALU_SUB (SOff 18 0) (SOff 37 0)) mod 2 ^ 32 = (i - 1) * Wd)
-by (rewrite U_subw_mod32, (U_atom Ev 18 v18 G18), (U_atom Ev 37 Wd G37) by lia;
-rewrite <- Zminus_mod_idemp_l, Mv18; replace (i * Wd - Wd) with ((i - 1) * Wd) by lia; apply Z.mod_small; clear - Hi Ht0 RW HiW32; nia);
-pose proof (U_range Ev (SAluw ALU_SUB (SOff 18 0) (SOff 37 0))) as Rv; rewrite M64_val in Rv end.
-pmkst HS.
-eapply SRr_mono.
-{ eapply (IH (i - 1) top); [ lia | exact Ht0 | lia | exact HJI | exact WK3
-| intros r Hr; transitivity (getr regsI r); [apply HKr3; cbv [WKEPT5 In] in Hr |- *; tauto | apply HK5I; exact Hr]
-| rewrite (HKr3 6%bv ltac:(cbv; tauto)); exact H6I
-| rewrite (HKr3 25%bv ltac:(cbv; tauto)); exact I25
-| rewrite (HKr3 24%bv ltac:(cbv; tauto)); exact I22
-| exact Q27
-| rewrite Q20, ?ew_ewset_other by lia; rewrite T24; f_equal; lia
-| rewrite Q12, ?ew_ewset_other by lia; rewrite T24, unsigned_lit_small by lia; f_equal; lia
-| rewrite Q11, ?ew_ewset_other by lia; exact T37
-| rewrite Q24, ?ew_ewset_other by lia; rewrite T24, unsigned_lit_small by lia; f_equal; lia
-| exact Q18 | exact Rv | exact Mv
-| exact V224d | exact V120d | exact V208d | exact V24d | exact V192d ]. }
-cbv beta. intros W3 c3 _ (-> & regs3 & mem3 & md3 & bot3 & -> & HJ3 & WK6 & HK3 & Y1 & Y2 & Y3 & Y4 & Y5 & Y6 & Y7 & Y8 & Y9 & XB9 & XN9).
-split; [reflexivity|]. exists regs3, mem3, md3, bot3. split; [reflexivity|]. split; [exact HJ3|]. split; [exact WK6|]. split; [exact HK3|].
-split; [exact Y1|]. split; [exact Y2|]. split; [exact Y3|]. split; [exact Y4|]. split; [exact Y5|]. split; [exact Y6|]. split; [exact Y7|]. split; [exact Y8|].
-split; [exact Y9|]. split; [exact XB9|].
-intros p Hp. destruct (Z_lt_le_dec p (i * Wd)) as [Hlo | Hhi]; [apply XN9; replace (i - 1 + 1) with i by (clear; lia); clear - Hp Hlo; lia|].
-replace p with (i * Wd + (p - i * Wd)) by (clear; lia). apply XNI. clear - Hp Hhi. lia.
--
-rewrite branch_ltu_U in Hc. rewrite (U_atom _ 33 top) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact T33 | lia]).
-rewrite (U_and_ffff_off _ 22 i (-1)) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact T24 | lia]).
-apply Z.ltb_ge in Hc.
-reshok_bx HS 6%nat. pose proof (proj1 HJI) as HARb.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJI SHOK FLBspan 0x1dd8.
-1: { unfold s2t_mem. repeat (first [ apply awr_ok_nil | apply awr_ok_cons_ro; [cbn; lia|] ]). }
-rename HFr into HFrb. rename HG into HGb. clear HF.
-pose proof (wkept_trans B _ _ _ _ _ _ _ WK2 (wkept_of_run B LAWS _ _ lyc Sc W _ _ _ sp1 HARb HFrb HGb ltac:(wscr_windows T9) ltac:(lia) ltac:(lia) ltac:(pose proof WK2 as [(_ & _ & _ & _ & _ & K6) _]; exact K6))) as WK3.
-pose proof (regs_kept_of_st_ok_pi _ _ _ regsI _ (6%bv :: 24%bv :: WKEPT5) HS ltac:(env_agree32 HAEt) ltac:(vm_compute; reflexivity)) as HKr3. cbn [ms_regs restrict] in HKr3.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 216) 8 bimg HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V224c) as V224d.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 184) 8 top HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows T9) V192c) as V192d.
-cbn [ms_mem restrict mkst] in V224d, V192d.
-prreg HS (21%bv : bv 5) Q21. prreg HS (27%bv : bv 5) Q27. prreg HS (19%bv : bv 5) Q11. prreg HS (15%bv : bv 5) Q14. prreg HS (22%bv : bv 5) Q22x.
-pmkst HS.
-apply SRr_ret. split; [reflexivity|].
-lazymatch goal with |- context [mkCfg (mkst (ms_regs ?msx) _ _ _) ?mdx] => exists (ms_regs msx), (ms_mem msx), mdx, top end.
-split; [reflexivity|]. split; [exact HJI|]. split; [exact WK3|].
-split; [intros r Hr; transitivity (getr regsI r); [apply HKr3; cbv [WKEPT5 In] in Hr |- *; tauto | apply HK5I; exact Hr]|].
-split; [rewrite (HKr3 6%bv ltac:(cbv; tauto)); exact H6I|].
-split; [rewrite Q21, ?ew_ewset_other by lia; exact T25|]. split; [rewrite Q22x, ?ew_ewset_other by lia; exact T22|]. split; [exact Q27|].
-split; [rewrite Q11, ?ew_ewset_other by lia; exact T33|]. split; [rewrite Q14, ?ew_ewset_other by lia; exact T34|]. split; [lia|].
-split; [exact V224d|]. split; [exact V192d|]. split; [left; reflexivity|].
-intros p Hp. assert (Hti : top = i - 1) by lia. rewrite Hti in Hp.
-replace p with (i * Wd + (p - i * Wd)) by (clear; lia). apply XNI. clear - Hp. lia.
+{ apply (fl_s2iX B LAWS TCMP W regs memc mdc sp0 sp1 FP ly S W0 mem0 md0 lyc Sc k fpos ch1 fimg bimg Nb g cfp bfp
+    gvals cvals bvals gpal ngp cpal cattr cnlp ctidx bpal battr bnlp btidx Wd Hd HC HGEO (Z.to_nat Wd)
+    0 (ms_regs ms1) (ms_mem ms1) _ i top).
+  - rewrite Z2Nat.id by lia. lia.
+  - lia.
+  - lia.
+  - lia.
+  - exact Jn1.
+  - exact Wk1.
+  - exact (KR _ _ ST1 eq_refl).
+  - apply (GR _ _ 6%bv (SOff 6 0) _ ST1 eq_refl). apply U_atom; [exact X6 | lia].
+  - apply (GR _ _ 25%bv (SOff 25 0) _ ST1 eq_refl). apply U_atom; [exact X25 | lia].
+  - apply (GR _ _ 24%bv (SOff 24 0) _ ST1 eq_refl). apply U_atom; [exact X24 | lia].
+  - apply (GR _ _ 23%bv (SAlu ALU_ADD (SAlu ALU_ADD (SOff 32 0) (SAlu ALU_SRL (SAlu ALU_SLL (SOff 18 0) (SLit 32)) (SLit 32))) (SLit 0)) _ ST1 eq_refl).
+    rewrite U_add_lit0, (U_add_atom_zext32 E0 32 (SOff 18 0) fimg) by (rewrite ?A32; first [reflexivity | lia]).
+    rewrite M32. lia.
+  - apply (GR _ _ 20%bv (SAlu ALU_ADD (SOff 32 0) (SAlu ALU_SRL (SAlu ALU_SLL (SOff 18 0) (SLit 32)) (SLit 32))) _ ST1 eq_refl).
+    rewrite (U_add_atom_zext32 E0 32 (SOff 18 0) fimg) by (rewrite ?A32; first [reflexivity | lia]).
+    rewrite M32. lia.
+  - apply (GR _ _ 26%bv (SAlu ALU_ADD (SAlu ALU_ADD (SOff 36 0) (SAlu ALU_SRL (SAlu ALU_SLL (SOff 18 0) (SLit 32)) (SLit 32))) (SLit 0)) _ ST1 eq_refl).
+    rewrite U_add_lit0, (U_add_atom_zext32 E0 36 (SOff 18 0) bimg) by (rewrite ?A36; first [reflexivity | lia]).
+    rewrite M32. lia.
+  - apply (GR _ _ 19%bv (SAlu ALU_ADD (SOff 36 0) (SAlu ALU_SRL (SAlu ALU_SLL (SOff 18 0) (SLit 32)) (SLit 32))) _ ST1 eq_refl).
+    rewrite (U_add_atom_zext32 E0 36 (SOff 18 0) bimg) by (rewrite ?A36; first [reflexivity | lia]).
+    rewrite M32. lia.
+  - apply (GR _ _ 21%bv (SOff 11 0) _ ST1 eq_refl).
+    rewrite (U_atom E0 11 Wd); [f_equal; lia | change (ew E0 11) with (getr regsE 11); exact X11 | lia].
+  - eapply val_mem_frame; [exact Fr1r | intros kk Hk; off_windows B9' | lia | lia | ]. exact At192.
+  - apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 152 8 (SOff 22 1) (i + 1) RG0 B9); [cbn; tauto | | lia | lia].
+    cbn [sv_denot]. change (ew E0 22) with (getr regsE 22). rewrite X22, u_Z2bv by lia. reflexivity. }
+intros W2 c2 Wle2 Post2.
+destruct Post2 as (-> & rg2 & mm2 & md2 & pc2 & -> & Jn2 & Wk2 & Lk2 & Pr2 & S6 & Cases).
+assert (Kp2 : forall q, In q WKEPT5 -> getr rg2 q = getr regs q).
+{ intros q Hq. rewrite (Pr2 q) by (revert Hq; unfold WKEPT5; cbn; intros [<-|[<-|[<-|[<-|[<-|[]]]]]]; reflexivity).
+  exact (KR _ _ ST1 eq_refl q Hq). }
+assert (R24 : getr rg2 24 = Z_to_bv 64 cfp)
+  by (rewrite (Pr2 24%bv) by reflexivity; apply (GR _ _ 24%bv (SOff 24 0) _ ST1 eq_refl); apply U_atom; [exact X24 | lia]).
+assert (R25 : getr rg2 25 = Z_to_bv 64 g)
+  by (rewrite (Pr2 25%bv) by reflexivity; apply (GR _ _ 25%bv (SOff 25 0) _ ST1 eq_refl); apply U_atom; [exact X25 | lia]).
+assert (R27 : getr rg2 27 = Z_to_bv 64 65535)
+  by (rewrite (Pr2 27%bv) by reflexivity; apply (GR _ _ 27%bv (SLit 65535) _ ST1 eq_refl); rewrite U_SLit; reflexivity).
+assert (R18 : getr rg2 18 = Z_to_bv 64 (v18 mod 2 ^ 64))
+  by (rewrite (Pr2 18%bv) by reflexivity; apply (GR _ _ 18%bv (SOff 18 0) _ ST1 eq_refl); exact U18).
+assert (L216 : val_mem SEGS (mrestrict (w_H W) mm2) (sp1 + 216) 8 bimg).
+{ eapply val_mem_lkept; [exact Lk2 | lia | lia | ].
+  eapply val_mem_frame; [exact Fr1r | intros kk Hk; off_windows B9' | lia | lia | ]. exact At216. }
+assert (L184 : val_mem SEGS (mrestrict (w_H W) mm2) (sp1 + 184) 8 top).
+{ eapply val_mem_lkept; [exact Lk2 | lia | lia | ].
+  eapply val_mem_frame; [exact Fr1r | intros kk Hk; off_windows B9' | lia | lia | ]. exact At184. }
+assert (L88 : val_mem SEGS (mrestrict (w_H W) mm2) (sp1 + 88) 8 (top + 1)).
+{ eapply val_mem_lkept; [exact Lk2 | lia | lia | ].
+  eapply val_mem_frame; [exact Fr1r | intros kk Hk; off_windows B9' | lia | lia | ]. exact At88. }
+assert (L160 : val_mem SEGS (mrestrict (w_H W) mm2) (sp1 + 160) 8 top).
+{ eapply val_mem_lkept; [exact Lk2 | lia | lia | ].
+  apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 160 8 (SOff 33 0) top RG0 B9); [cbn; tauto | | lia | lia].
+  cbn [sv_denot]. rewrite A33, at_self. reflexivity. }
+assert (L192 : val_mem SEGS (mrestrict (w_H W) mm2) (sp1 + 192) 8 top).
+{ eapply val_mem_lkept; [exact Lk2 | lia | lia | ].
+  eapply val_mem_frame; [exact Fr1r | intros kk Hk; off_windows B9' | lia | lia | ]. exact At192. }
+assert (L200 : val_mem SEGS (mrestrict (w_H W) mm2) (sp1 + 200) 8 Wd)
+  by (apply VK; [exact Wk2 | lia | lia | intros kk Hk; unfold wscr; lia | exact V200]).
+assert (L168 : val_mem SEGS (mrestrict (w_H W) mm2) (sp1 + 168) 8 i).
+{ eapply val_mem_lkept; [exact Lk2 | lia | lia | ].
+  apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 168 8 (SOff 22 0) i RG0 B9); [cbn; tauto | | lia | lia].
+  cbn [sv_denot]. change (ew E0 22) with (getr regsE 22). rewrite at_self. exact X22. }
+destruct Cases as [(-> & R22 & NoDiff) | (-> & (col & Hcol & HPD) & R19 & R15 & R21 & R22)].
+- assert (R22i : getr rg2 22 = Z_to_bv 64 i).
+  { rewrite R22. apply (GR _ _ 22%bv (SOff 22 0) _ ST1 eq_refl). apply U_atom; [exact X22 | lia]. }
+  set (EY := [Z_to_bv 64 fimg; Z_to_bv 64 top; Z_to_bv 64 (top + 1); Z_to_bv 64 bfp; Z_to_bv 64 bimg; Z_to_bv 64 Wd]).
+  set (E1 := Eimg (Ereg rg2 EY)).
+  assert (C9 : bv_unsigned (getr rg2 9) = sp1).
+  { rewrite (Kp2 9%bv) by (unfold WKEPT5; simpl; tauto). rewrite H9. apply u_Z2bv; lia. }
+  assert (C9' : base_val E1 (Some 9%nat) = sp1) by exact C9.
+  assert (EA1 : env_agree 32 (Ereg rg2 EY) E1).
+  { split; [ | reflexivity]. intros n Hn. unfold E1, Eimg. cbn [ew].
+    rewrite (proj2 (Nat.leb_gt A_TEXT n)) by (unfold A_TEXT; lia). reflexivity. }
+  assert (GR1 : forall ss ms r e v, st_ok_pi SEGS VAL E1 ss (restrict (w_H W) ms) ->
+    sr_get (ss_regs ss) r = e -> U E1 e = v -> getr (ms_regs ms) r = Z_to_bv 64 v).
+  { intros ss ms r e v Hs He Hu. rewrite (st_ok_pi_restrict_reg _ _ _ _ r Hs), He. apply denot_of_U2. exact Hu. }
+  assert (KR1 : forall ss ms, st_ok_pi SEGS VAL E1 ss (restrict (w_H W) ms) ->
+    forallb (fun q => sv_eqb (sr_get (ss_regs ss) q) (SOff (Z.to_nat (bv_unsigned q)) 0)) WKEPT5 = true ->
+    forall q, In q WKEPT5 -> getr (ms_regs ms) q = getr regs q).
+  { intros ss ms Hs Hb q Hq. rewrite <- (Kp2 q Hq). exact (regs_kept_of_st_ok_pi _ _ _ _ _ _ Hs EA1 Hb q Hq). }
+  assert (D32 : ew E1 32 = Z_to_bv 64 fimg) by reflexivity.
+  assert (D33 : ew E1 33 = Z_to_bv 64 top) by reflexivity.
+  assert (D34 : ew E1 34 = Z_to_bv 64 (top + 1)) by reflexivity.
+  assert (D35 : ew E1 35 = Z_to_bv 64 bfp) by reflexivity.
+  assert (D36 : ew E1 36 = Z_to_bv 64 bimg) by reflexivity.
+  assert (D37 : ew E1 37 = Z_to_bv 64 Wd) by reflexivity.
+  assert (ST2 : st_ok_pi SEGS VAL E1 ss_s2t (restrict (w_H W) (mkst rg2 (Z_to_bv 64 (BASE + 7424)) mm2 (seg_rom SEGS)))).
+  { change (restrict (w_H W) (mkst rg2 (Z_to_bv 64 (BASE + 7424)) mm2 (seg_rom SEGS)))
+      with (mkst rg2 (Z_to_bv 64 (BASE + 7424)) (mrestrict (w_H W) mm2) (seg_rom SEGS)).
+    apply (pa_entry_st_ok_full E1 7424 s2t_regs rg2 s2t_mem s2t_facts (mrestrict (w_H W) mm2)).
+    - unfold s2t_regs. apply regs_ok_rereg; [apply regs_ok_Eimg_Ereg | reflexivity | ]. cbn [sv_denot]. exact R27.
+    - reflexivity.
+    - unfold s2t_mem.
+      repeat apply Forall_cons; try apply Forall_nil;
+        unfold region_ok; cbv beta zeta; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks]; rewrite C9';
+        (split; [lia|]); (split; [lia|]); (split; [intros o Ho; lia|]).
+      apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ (top + 1)) |
+        apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ top) |
+        apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ i) |
+        apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ top) |
+        apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ Wd) | apply Forall_nil]]]]].
+      + cbn [sv_denot]. rewrite D34, at_self. reflexivity.
+      + cbn. lia.
+      + cbn. lia.
+      + exact L88.
+      + cbn [sv_denot]. rewrite D33, at_self. reflexivity.
+      + cbn. lia.
+      + cbn. lia.
+      + exact L160.
+      + cbn [sv_denot]. change (ew E1 22) with (getr rg2 22). rewrite R22i, u_Z2bv by lia. f_equal; lia.
+      + cbn. lia.
+      + cbn. lia.
+      + exact L168.
+      + cbn [sv_denot]. rewrite D33, at_self. reflexivity.
+      + cbn. lia.
+      + cbn. lia.
+      + exact L192.
+      + cbn [sv_denot]. rewrite D37, at_self. reflexivity.
+      + cbn. lia.
+      + cbn. lia.
+      + exact L200.
+    - unfold s2t_mem. cbn [pairwise_disjoint all_disjoint]. repeat split.
+    - unfold facts_ok, s2t_facts. cbn [f_atoms f_conds f_alias atoms_ok conds_ok alias_ok].
+      unfold afact_ok, HPTR. cbn [af_lo af_hi af_al2].
+      change (ew E1 9) with (getr rg2 9). change (ew E1 6) with (getr rg2 6).
+      change (ew E1 22) with (getr rg2 22). change (ew E1 25) with (getr rg2 25). change (ew E1 24) with (getr rg2 24).
+      rewrite D32, D33, D34, D35, D36, D37.
+      rewrite C9, S6, R22i, R25, R24, !u_Z2bv by lia.
+      repeat split; try lia; try apply Z.mod_1_r.
+      + exact Hsp1al.
+      + exact (proj1 Bg).
+      + exact (mod16_mod8 _ (proj1 Bc)).
+      + exact (mod16_mod8 _ (proj1 Bb)). }
+  assert (UT : U E1 (SOff 33 0) = top) by (apply U_atom; [exact D33 | lia]).
+  assert (UI1 : U E1 (SAlu ALU_AND (SOff 22 (-1)) (SLit 65535)) = i - 1).
+  { rewrite (U_and_ffff_off E1 22 i (-1)) by
+      (first [change (ew E1 22) with (getr rg2 22); exact R22i | lia]). lia. }
+  let v := eval vm_compute in (sym_run_toN_pi (@pl_tpi _ PL_asan3_0) 30 7456 ss_s2t) in
+  lazymatch v with pair ?s3 ?t3 =>
+    apply (RUNTOP W 30 7456 E1 ss_s2t s3 t3 _ TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc md2 k);
+    [ apply Eimg_env | exact ST2 | vm_compute; reflexivity | exact I | exact Jn2 | wscr_windows C9' | ]
+  end.
+  intros ms3 mat3 ST3 Jn3 Fr3 Fr3r Gr3.
+  apply (BR W E1 _ ms3 _ _ BC_LTU (SOff 33 0) (SAlu ALU_AND (SOff 22 (-1)) (SLit 65535)) ST3).
+  + intros Btk ST3b. rewrite branch_ltu_U, UT, UI1 in Btk. apply Z.ltb_lt in Btk.
+    match type of ST3b with st_ok_pi _ _ _ ?ssb _ =>
+      let v := eval vm_compute in (sym_run_toN_pi (@pl_tpi _ PL_asan3_0) 30 7260 ssb) in
+      lazymatch v with pair ?s4 ?t4 =>
+        apply (RUNTOP W 30 7260 E1 ssb s4 t4 ms3 TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc _ k);
+        [ apply Eimg_env | exact ST3b | vm_compute; reflexivity | exact I | exact Jn3 | wscr_windows C9' | ]
+      end
+    end.
+    intros ms4 mat4 ST4 Jn4 Fr4 Fr4r Gr4.
+    rewrite (st_ok_pi_restrict_mkst _ _ _ _ ST4 eq_refl).
+    assert (U18b : U E1 (SOff 18 0) = v18 mod 2 ^ 64).
+    { unfold U. cbn [sv_denot]. change (ew E1 18) with (getr rg2 18). rewrite at_self, R18, unsigned_lit.
+      unfold zcanon. rewrite M64_val. apply Z.mod_mod. lia. }
+    assert (UW1 : U E1 (SOff 37 0) = Wd) by (apply U_atom; [exact D37 | lia]).
+    assert (M32b : U E1 (SOff 18 0) mod 2 ^ 32 = i * Wd).
+    { rewrite U18b, (Z.mod_mod_divide v18 (2 ^ 64) (2 ^ 32)) by (exists (2 ^ 32); reflexivity). exact Mv. }
+    assert (Msub : U E1 (SAluw ALU_SUB (SOff 18 0) (SOff 37 0)) mod 2 ^ 32 = (i - 1) * Wd).
+    { rewrite U_subw_mod32, UW1, <- Zminus_mod_idemp_l, M32b.
+      replace (i * Wd - Wd) with ((i - 1) * Wd) by ring. apply Z.mod_small. nia. }
+    assert (Wk4 : wkept B lyc Sc W sp1 memc (ms_mem ms4)).
+    { apply (wkept_trans _ _ _ _ _ _ _ _ Wk2).
+      apply (wkept_trans _ _ _ _ _ _ (ms_mem ms3)).
+      - exact (WKS _ _ _ _ _ Jn2 Fr3r Gr3 ltac:(wscr_windows C9')).
+      - exact (WKS _ _ _ _ _ Jn3 Fr4r Gr4 ltac:(wscr_windows C9')). }
+    eapply SRr_mono.
+    { apply (IH (i - 1) top (U E1 (SAluw ALU_SUB (SOff 18 0) (SOff 37 0))) (ms_regs ms4) (ms_mem ms4) _).
+      - rewrite Nat2Z.inj_succ in Ms. lia.
+      - exact T0.
+      - exact Btk.
+      - lia.
+      - exact Jn4.
+      - exact Wk4.
+      - exact (KR1 _ _ ST4 eq_refl).
+      - apply (GR1 _ _ 6%bv (SOff 6 0) _ ST4 eq_refl).
+        apply U_atom; [change (ew E1 6) with (getr rg2 6); exact S6 | lia].
+      - apply (GR1 _ _ 25%bv (SOff 25 0) _ ST4 eq_refl).
+        apply U_atom; [change (ew E1 25) with (getr rg2 25); exact R25 | lia].
+      - apply (GR1 _ _ 24%bv (SOff 24 0) _ ST4 eq_refl).
+        apply U_atom; [change (ew E1 24) with (getr rg2 24); exact R24 | lia].
+      - apply (GR1 _ _ 11%bv (SOff 37 0) _ ST4 eq_refl). exact UW1.
+      - apply (GR1 _ _ 22%bv (SOff 22 (-1)) _ ST4 eq_refl).
+        rewrite (U_atom_off E1 22 i (-1)) by
+          (first [change (ew E1 22) with (getr rg2 22); exact R22i | lia]). lia.
+      - apply (GR1 _ _ 12%bv (SOff 22 (-1)) _ ST4 eq_refl).
+        rewrite (U_atom_off E1 22 i (-1)) by
+          (first [change (ew E1 22) with (getr rg2 22); exact R22i | lia]). lia.
+      - apply (GR1 _ _ 14%bv (SOff 22 0) _ ST4 eq_refl).
+        rewrite (U_atom E1 22 i) by (first [change (ew E1 22) with (getr rg2 22); exact R22i | lia]). lia.
+      - apply (GR1 _ _ 27%bv (SLit 65535) _ ST4 eq_refl). rewrite U_SLit. reflexivity.
+      - apply (GR1 _ _ 18%bv (SAluw ALU_SUB (SOff 18 0) (SOff 37 0)) _ ST4 eq_refl). reflexivity.
+      - exact Msub.
+      - eapply val_mem_frame; [exact Fr4r | intros kk Hk; off_windows C9' | lia | lia | ].
+        eapply val_mem_frame; [exact Fr3r | intros kk Hk; off_windows C9' | lia | lia | ]. exact L88.
+      - eapply val_mem_frame; [exact Fr4r | intros kk Hk; off_windows C9' | lia | lia | ].
+        eapply val_mem_frame; [exact Fr3r | intros kk Hk; off_windows C9' | lia | lia | ]. exact L160.
+      - eapply val_mem_frame; [exact Fr4r | intros kk Hk; off_windows C9' | lia | lia | ].
+        eapply val_mem_frame; [exact Fr3r | intros kk Hk; off_windows C9' | lia | lia | ]. exact L184.
+      - eapply val_mem_frame; [exact Fr4r | intros kk Hk; off_windows C9' | lia | lia | ].
+        eapply val_mem_frame; [exact Fr3r | intros kk Hk; off_windows C9' | lia | lia | ]. exact L192.
+      - eapply val_mem_frame; [exact Fr4r | intros kk Hk; off_windows C9' | lia | lia | ].
+        eapply val_mem_frame; [exact Fr3r | intros kk Hk; off_windows C9' | lia | lia | ]. exact L216. }
+    intros Wz cz Wlez Hz.
+    destruct Hz as (-> & rgz & mmz & mdz & bz & Ez & Jnz & Wkz & Kpz & Z6 & Z21 & Z22 & Z27 & Z19 & Z15 & Bz & Z216 & Z184 & Orz & Nrz).
+    split; [reflexivity | ].
+    exists rgz, mmz, mdz, bz.
+    repeat (split; [first [exact Ez | exact Jnz | exact Wkz | exact Kpz | exact Z6 | exact Z21 | exact Z22 | exact Z27 | exact Z19 | exact Z15 | lia | exact Z216 | exact Z184 | exact Orz] | ]).
+    intros px Hpx. destruct (Z_lt_le_dec px (i * Wd)) as [Hlo | Hhi].
+    * apply Nrz. lia.
+    * intros Hbad. apply (NoDiff (px - i * Wd)); [lia | ].
+      replace (i * Wd + (px - i * Wd)) with px by ring. exact Hbad.
+  + intros Bnt ST3b. rewrite branch_ltu_U, UT, UI1 in Bnt. apply Z.ltb_ge in Bnt.
+    assert (Tis : top = i - 1) by lia.
+    match type of ST3b with st_ok_pi _ _ _ ?ssb _ =>
+      let v := eval vm_compute in (sym_run_toN_pi (@pl_tpi _ PL_asan3_0) 30 7640 ssb) in
+      lazymatch v with pair ?s4 ?t4 =>
+        apply (RUNTOP W 30 7640 E1 ssb s4 t4 ms3 TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc _ k);
+        [ apply Eimg_env | exact ST3b | vm_compute; reflexivity | exact I | exact Jn3 | wscr_windows C9' | ]
+      end
+    end.
+    intros ms5 mat5 ST5 Jn5 Fr5 Fr5r Gr5.
+    apply SRr_ret. split; [reflexivity | ].
+    eexists (ms_regs ms5), (ms_mem ms5), _, top.
+    split; [rewrite (st_ok_pi_restrict_mkst _ _ _ _ ST5 eq_refl) at 1; reflexivity | ].
+    split; [exact Jn5 | ].
+    split.
+    { apply (wkept_trans _ _ _ _ _ _ _ _ Wk2).
+      apply (wkept_trans _ _ _ _ _ _ (ms_mem ms3)).
+      - exact (WKS _ _ _ _ _ Jn2 Fr3r Gr3 ltac:(wscr_windows C9')).
+      - exact (WKS _ _ _ _ _ Jn3 Fr5r Gr5 ltac:(wscr_windows C9')). }
+    split; [exact (KR1 _ _ ST5 eq_refl) | ].
+    split; [apply (GR1 _ _ 6%bv (SOff 6 0) _ ST5 eq_refl);
+      apply U_atom; [change (ew E1 6) with (getr rg2 6); exact S6 | lia] | ].
+    split; [apply (GR1 _ _ 21%bv (SOff 25 0) _ ST5 eq_refl);
+      apply U_atom; [change (ew E1 25) with (getr rg2 25); exact R25 | lia] | ].
+    split; [apply (GR1 _ _ 22%bv (SOff 24 0) _ ST5 eq_refl);
+      apply U_atom; [change (ew E1 24) with (getr rg2 24); exact R24 | lia] | ].
+    split; [apply (GR1 _ _ 27%bv (SLit 65535) _ ST5 eq_refl); rewrite U_SLit; reflexivity | ].
+    split; [apply (GR1 _ _ 19%bv (SOff 33 0) _ ST5 eq_refl); exact UT | ].
+    split; [apply (GR1 _ _ 15%bv (SOff 34 0) _ ST5 eq_refl); apply U_atom; [exact D34 | lia] | ].
+    split; [lia | ].
+    split.
+    { eapply val_mem_frame; [exact Fr5r | intros kk Hk; off_windows C9' | lia | lia | ].
+      eapply val_mem_frame; [exact Fr3r | intros kk Hk; off_windows C9' | lia | lia | ]. exact L216. }
+    split.
+    { eapply val_mem_frame; [exact Fr5r | intros kk Hk; off_windows C9' | lia | lia | ].
+      eapply val_mem_frame; [exact Fr3r | intros kk Hk; off_windows C9' | lia | lia | ]. exact L184. }
+    split; [left; reflexivity | ].
+    intros px Hpx Hbad. apply (NoDiff (px - i * Wd)); [lia | ].
+    replace (i * Wd + (px - i * Wd)) with px by ring. exact Hbad.
+- apply SRr_ret. split; [reflexivity | ].
+  exists rg2, mm2, md2, i.
+  split; [reflexivity | ].
+  split; [exact Jn2 | ].
+  split; [exact Wk2 | ].
+  split; [exact Kp2 | ].
+  split; [exact S6 | ].
+  split; [exact R21 | ].
+  split; [exact R22 | ].
+  split; [exact R27 | ].
+  split; [exact R19 | ].
+  split; [exact R15 | ].
+  split; [lia | ].
+  split; [exact L216 | ].
+  split; [exact L184 | ].
+  split; [right; exists col; split; [lia | exact HPD] | ].
+  intros px Hpx. lia.
 Qed.
 Lemma fl_s2oX : forall m, s2o_stmtX m.
 Proof. induction m as [|m IH]; [unfold s2o_stmtX; intros; exfalso; lia | exact (fl_s2o_stepX m IH)]. Qed.
 Definition s2s_regs := sr_set sr_atoms 10%bv (SOff 19 0).
 Definition s2s_mem : smem :=
-[ YP09.mkRegion (Some 9%nat) 88 96 88 96 [];
-YP09.mkRegion (Some 9%nat) 160 168 160 168 [];
-YP09.mkRegion (Some 9%nat) 192 216 192 200 [YP09.mkChunk 200 (CVal 8 (SOff 35 0)); YP09.mkChunk 208 (CVal 8 (SOff 15 0))] ].
+  [ YP09.mkRegion (Some 9%nat) 88 96 88 96 [];
+    YP09.mkRegion (Some 9%nat) 152 176 152 176 [];
+    YP09.mkRegion (Some 9%nat) 184 216 184 200
+      [ YP09.mkChunk 184 (CVal 8 (SOff 19 0)); YP09.mkChunk 200 (CVal 8 (SOff 35 0)); YP09.mkChunk 208 (CVal 8 (SOff 15 0)) ] ].
 Definition s2s_facts : facts :=
 mkFacts [ (9%nat, mkAF 70368744177664 140737488355328 4); (6%nat, mkAF SB SB 0); (19%nat, mkAF 0 65534 0); (15%nat, mkAF 1 65535 0);
 (21%nat, HPTR 4); (22%nat, HPTR 3); (35%nat, mkAF 1 65535 0) ] [] [].
-Definition ss_s2s : sstate := mkSS 0x1c1c s2s_regs s2s_mem None s2s_facts.
+Definition ss_s2s : sstate := mkSS 7196 s2s_regs s2s_mem None s2s_facts.
 Lemma fl_s2X : forall (top : Z) (regsF : bvmap 5 word) memF mdF,
 0 <= top < Hd ->
 ajournal SEGS B TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc W memF mdF k -> wkept B lyc Sc W sp1 memc memF ->
@@ -498,152 +610,176 @@ getr regsF 6 = Z_to_bv 64 SB -> getr regsF 21 = Z_to_bv 64 g -> getr regsF 22 = 
 getr regsF 19 = Z_to_bv 64 top -> getr regsF 10 = Z_to_bv 64 top -> getr regsF 15 = Z_to_bv 64 Hd ->
 val_mem SEGS (mrestrict (w_H W) memF) (sp1 + 184) 8 top -> val_mem SEGS (mrestrict (w_H W) memF) (sp1 + 216) 8 bimg ->
 SRr SEGS W (mkCfg (mkst regsF (Z_to_bv 64 (BASE + 0x1c1c)) memF (seg_rom SEGS)) mdF) (s2o_postX top (Hd - 1)).
-Proof.
-intros top regsF memF mdF Htp1 HJF WK HKF E6 E21r E22r E24r E11r E10r E20r V192 V224.
-wctx_names. wprelude HJF. pose proof HJF as HJF0.
-pose proof (proj1 (proj2 HJF)) as HLY. destruct HLY as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & _).
-destruct (al_blocks _ _ LAWS lyc Sc W memF mdF g CGIF_SIZE HAR Hg) as (Hg16 & Hg4096 & Hgceil & Hgh_ia & _ & _). pose proof (proj1 Hgh_ia) as Hgh.
-pose proof (blk_off_imgP _ _ _ _ _ _ g CGIF_SIZE HAR Hg) as Hgh_img.
-destruct (al_blocks _ _ LAWS lyc Sc W memF mdF cfp FRAME_SIZE HAR Hcf) as (Hc16 & Hc4096 & Hcceil & Hcfh_ia & _ & _). pose proof (proj1 Hcfh_ia) as Hcfh.
-pose proof (blk_off_imgP _ _ _ _ _ _ cfp FRAME_SIZE HAR Hcf) as Hcfh_img.
-destruct (al_blocks _ _ LAWS lyc Sc W memF mdF bimg Nb HAR Hbi) as (Hb16 & Hb4096 & Hbiceil & Hbih_ia & Hbipres & _). pose proof (proj1 Hbih_ia) as Hbih.
-pose proof (blk_off_imgP _ _ _ _ _ _ bimg Nb HAR Hbi) as Hbih_img.
-change (req_size CGIF_SIZE) with 96 in *. change (req_size FRAME_SIZE) with 40 in *.
-pose proof (req_size_pos' Nb ltac:(lia)) as [_ HrNb].
-assert (HSpresF : forall a, sp1 - TCMP_STK <= a < sp1 + 232 -> apresent (w_H W) memF a) by (intros a Ha; apply HSpres; lia).
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memF 200 Wd WK ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) V200) as V200F.
-pose proof (val_mem_wkept B lyc Sc W sp1 memc memF 208 Hd WK ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(intros kk Hkk; unfold wscr; lia) V112) as V208F.
-remember (Eimg (Ereg regsF [Z_to_bv 64 bimg; Z_to_bv 64 bfp; Z_to_bv 64 fimg; Z_to_bv 64 Wd])) as E eqn:HE. assert (HEI : img_env VAL A_LIM E) by (subst E; apply Eimg_env).
-assert (HAE : env_agree 32 (Ereg regsF [Z_to_bv 64 bimg; Z_to_bv 64 bfp; Z_to_bv 64 fimg; Z_to_bv 64 Wd]) E) by (rewrite HE; split; [intros nn Hnn; apply Eimg_low; unfold A_TEXT; lia | reflexivity]).
-assert (EE : forall n (r : bv 5), Z.of_nat n = bv_unsigned r -> ew E n = getr regsF r) by (intros n r Hn; subst E; apply ew_Eimg_Ereg_nat; exact Hn).
-assert (E9 : ew E 9 = Z_to_bv 64 sp1) by (rewrite (EE 9%nat 9%bv eq_refl), (HKF 9%bv ltac:(cbv; tauto)); exact H9).
-pose proof (EE 6%nat 6%bv eq_refl) as F6. rewrite E6 in F6.
-pose proof (EE 19%nat 19%bv eq_refl) as E11. rewrite E11r in E11. pose proof (EE 15%nat 15%bv eq_refl) as E20. rewrite E20r in E20.
-pose proof (EE 21%nat 21%bv eq_refl) as E21. rewrite E21r in E21. pose proof (EE 22%nat 22%bv eq_refl) as E22. rewrite E22r in E22.
-assert (E35 : ew E 35 = Z_to_bv 64 Wd) by (subst E; rewrite Eimg_low by (unfold A_TEXT; lia); exact (ew_Ereg_extra regsF _ 3)).
-assert (HS : st_ok_pi SEGS VAL E ss_s2s (restrict (w_H W) (mkst regsF (Z_to_bv 64 (BASE + 0x1c1c)) memF (seg_rom SEGS)))).
-{ rewrite restrict_mkst_fx. unfold ss_s2s, s2s_regs. unfold st_ok_pi, abs_ss, setpc. cbn [ss_pc ss_regs ss_fregs ss_mem ss_resv ss_facts].
-apply (rn_st_ok_any E (BASE + 0x1c1c) _ regsF _ _ (mrestrict (w_H W) memF)).
-- subst E. apply regs_ok_pin; [apply regs_ok_Eimg_Ereg | intros X; discriminate X | rewrite E10r; cbn [sv_denot]; rewrite (ew_Eimg_Ereg_nat regsF _ 19 19%bv eq_refl), E11r, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity].
-- reflexivity.
-- unfold s2s_mem. repeat apply Forall_cons; try apply Forall_nil; unfold region_ok;
-cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val]; rewrite E9, unsigned_lit_small by lia;
-(split; [lia|]); (split; [lia|]); (split; [intros o Ho; first [lia | apply (apresent_writable SEGS); apply HSpresF; lia]|]).
-+ apply Forall_nil.
-+ apply Forall_nil.
-+ apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 200 8 _ Wd); [cbn [sv_denot]; rewrite E35, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V200F]|].
-apply Forall_cons; [apply (chunk_ok_val SEGS E _ sp1 208 8 _ Hd); [cbn [sv_denot]; rewrite E20, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | zside | zside | exact V208F]|]. apply Forall_nil.
-- unfold s2s_mem. cbn [pairwise_disjoint all_disjoint]. unfold extent_disjoint. cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val]. rewrite E9, !unsigned_lit_small by lia. repeat split; lia.
-- split; [|split; exact I]. cbn [s2s_facts f_atoms atoms_ok]. unfold afact_ok, HPTR. cbn [af_lo af_hi af_al2].
-rewrite E9, F6, E11, E20, E21, E22, E35, !unsigned_lit_small by (unfold SB; lia).
-change (2 ^ 4) with 16. change (2 ^ 3) with 8. rewrite !Z.pow_0_r, !Z.mod_1_r.
-rewrite ?C3 in *. unfold SB. repeat match goal with |- _ /\ _ => split end; try (apply mod16_mod8; assumption);
-first [lia | match goal with |- ?g => idtac "FACT-LEFT3" g end]. }
-clear HE. pose proof HS as HS0.
-shok_auto SHOK (SOff 6 0) E (mrestrict (w_H W) memF).
-hei_havoc HS; paj_run_tok RUN HS HJF SHOK FLBspan.
-1: { unfold s2s_mem.
-repeat (first [ apply awr_ok_nil
-| apply awr_ok_cons_ro; [cbn; lia|]
-| eapply (awr_ok_cons_gen _ _ _ _ _ _ _ _ _ _ 9%nat); [reflexivity | rewrite E9; apply unsigned_lit_small; lia | cbn [YP09.r_wlo YP09.r_whi]; intros a Ha; left; rewrite FFS; lia |] ]). }
-rename HFr into HFr1. rename HG into HG1. clear HF.
-assert (W1 : forall a, in_wrange E (ss_mem ss_s2s) a -> wscr sp1 a) by (unfold ss_s2s, s2s_mem; wscr_windows E9).
-pose proof (wkept_trans B _ _ _ _ _ _ _ WK (wkept_of_run B LAWS E _ lyc Sc W memF _ mdF sp1 HAR HFr1 HG1 W1 ltac:(lia) ltac:(lia) HSpresF)) as WK1.
-pose proof (val_mem_run_out E _ W memF _ (sp1 + 216) 8 bimg HFr1 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(unfold ss_s2s, s2s_mem; off_windows E9) V224) as V224a.
-pose proof (val_mem_run_out E _ W memF _ (sp1 + 184) 8 top HFr1 ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(unfold ss_s2s, s2s_mem; off_windows E9) V192) as V192a.
-cbn [ms_mem restrict mkst] in V224a, V192a.
-hei_havoc HS; psrr_branch_tok RUN BR HS SHOK FLBspan.
--
-rewrite branch_geu_U in Hc. rewrite (U_and_ffff_off _ 19 top 0) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E11 | lia]).
-rewrite (U_and_ffff_off _ 15 Hd (-1)) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E20 | lia]).
-apply (proj1 (negb_true_iff _)) in Hc. apply Z.ltb_ge in Hc.
-reshok_bx HS 6%nat. pose proof (proj1 HJF) as HARb.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJF SHOK FLBspan 0x1dd8.
-1: { unfold s2s_mem.
-repeat (first [ apply awr_ok_nil
-| apply awr_ok_cons_ro; [cbn; lia|]
-| eapply (awr_ok_cons_gen _ _ _ _ _ _ _ _ _ _ 9%nat); [reflexivity | cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite E9; apply unsigned_lit_small; lia | cbn [YP09.r_wlo YP09.r_whi]; intros a Ha; left; rewrite FFS; lia |] ]). }
-rename HFr into HFrb. rename HG into HGb. clear HF.
-pose proof (wkept_trans B _ _ _ _ _ _ _ WK1 (wkept_of_run B LAWS _ _ lyc Sc W _ _ _ sp1 HARb HFrb HGb ltac:(wscr_windows E9) ltac:(lia) ltac:(lia) ltac:(pose proof WK1 as [(_ & _ & _ & _ & _ & K6) _]; exact K6))) as WK2.
-pose proof (regs_kept_of_st_ok_pi _ _ _ regsF _ (6%bv :: 21%bv :: 22%bv :: WKEPT5) HS ltac:(env_agree32 HAE) ltac:(vm_compute; reflexivity)) as HKr2. cbn [ms_regs restrict] in HKr2.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 216) 8 bimg HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows E9) V224a) as V224b.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 184) 8 top HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows E9) V192a) as V192b.
-cbn [ms_mem restrict mkst] in V224b, V192b.
-prreg HS (27%bv : bv 5) Q27. prreg HS (19%bv : bv 5) Q11. prreg HS (15%bv : bv 5) Q14.
-pmkst HS.
-apply SRr_ret. split; [reflexivity|].
-lazymatch goal with |- context [mkCfg (mkst (ms_regs ?msx) _ _ _) ?mdx] => exists (ms_regs msx), (ms_mem msx), mdx, top end.
-split; [reflexivity|]. split; [exact HJF|]. split; [exact WK2|].
-split; [intros r Hr; transitivity (getr regsF r); [apply HKr2; cbv [WKEPT5 In] in Hr |- *; tauto | apply HKF; exact Hr]|].
-split; [rewrite (HKr2 6%bv ltac:(cbv; tauto)); exact E6|]. split; [rewrite (HKr2 21%bv ltac:(cbv; tauto)); exact E21r|].
-split; [rewrite (HKr2 22%bv ltac:(cbv; tauto)); exact E22r|]. split; [exact Q27|].
-split; [rewrite Q11, ?ew_ewset_other by lia; exact E11|]. split; [rewrite Q14, ?ew_ewset_other by lia; rewrite E20; f_equal; lia|]. split; [lia|].
-split; [exact V224b|]. split; [exact V192b|]. split; [left; reflexivity|].
-intros p Hp; exfalso. assert (Htd : top = Hd - 1) by lia. rewrite Htd in Hp. clear - Hp. lia.
--
-rewrite branch_geu_U in Hc. rewrite (U_and_ffff_off _ 19 top 0) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E11 | lia]).
-rewrite (U_and_ffff_off _ 15 Hd (-1)) in Hc by (first [cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E20 | lia]).
-apply (proj1 (negb_false_iff _)) in Hc. apply Z.ltb_lt in Hc.
-reshok_bx HS 6%nat. pose proof (proj1 HJF) as HARb.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJF SHOK FLBspan 0x1c5c.
-1: { unfold s2s_mem.
-repeat (first [ apply awr_ok_nil
-| apply awr_ok_cons_ro; [cbn; lia|]
-| eapply (awr_ok_cons_gen _ _ _ _ _ _ _ _ _ _ 9%nat); [reflexivity | cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite E9; apply unsigned_lit_small; lia | cbn [YP09.r_wlo YP09.r_whi]; intros a Ha; left; rewrite FFS; lia |] ]). }
-rename HFr into HFrb. rename HG into HGb. clear HF.
-pose proof (wkept_trans B _ _ _ _ _ _ _ WK1 (wkept_of_run B LAWS _ _ lyc Sc W _ _ _ sp1 HARb HFrb HGb ltac:(wscr_windows E9) ltac:(lia) ltac:(lia) ltac:(pose proof WK1 as [(_ & _ & _ & _ & _ & K6) _]; exact K6))) as WK2.
-pose proof (regs_kept_of_st_ok_pi _ _ _ regsF _ (6%bv :: 24%bv :: WKEPT5) HS ltac:(env_agree32 HAE) ltac:(vm_compute; reflexivity)) as HKr2. cbn [ms_regs restrict] in HKr2.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 216) 8 bimg HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows E9) V224a) as V224b.
-pose proof (val_mem_run_out _ _ W _ _ (sp1 + 184) 8 top HFrb ltac:(lia) ltac:(cbn [Z.of_nat]; lia) ltac:(off_windows E9) V192a) as V192b.
-cbn [ms_mem restrict mkst] in V224b, V192b.
-lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx ?msx =>
-assert (G11 : ew Ex 19 = Z_to_bv 64 top) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E11);
-assert (G20 : ew Ex 15 = Z_to_bv 64 Hd) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E20);
-assert (G35 : ew Ex 35 = Z_to_bv 64 Wd) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E35);
-assert (G9 : ew Ex 9 = Z_to_bv 64 sp1) by (cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; exact E9);
-let r0 := eval vm_compute in (nth 0 (ss_mem ssx) (YP09.mkRegion None 0 0 0 0 [])) in
-pose proof (st_ok_pi_region_nth Ex ssx msx 0 r0 HS ltac:(vm_compute; reflexivity)) as HR0; cbn [ms_mem restrict mkst] in HR0;
-lazymatch type of HR0 with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-pose proof (field_of_region Ex _ 9 sp1 cs lo hi wlo whi 88 8%N (SOff 19 1) (top + 1) HR0
-ltac:(rewrite G9; apply unsigned_lit_small; lia) ltac:(cbn; tauto)
-ltac:(cbn [sv_denot]; rewrite G11, unsigned_lit_small by lia; reflexivity)
-ltac:(cbn [Z.of_N Z.mul]; lia) ltac:(cbn; lia)) as V24b end; clear HR0;
-let r1 := eval vm_compute in (nth 1 (ss_mem ssx) (YP09.mkRegion None 0 0 0 0 [])) in
-pose proof (st_ok_pi_region_nth Ex ssx msx 1 r1 HS ltac:(vm_compute; reflexivity)) as HR1; cbn [ms_mem restrict mkst] in HR1;
-lazymatch type of HR1 with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-pose proof (field_of_region Ex _ 9 sp1 cs lo hi wlo whi 160 8%N (SAlu ALU_AND (SOff 19 0) (SLit 65535)) top HR1
-ltac:(rewrite G9; apply unsigned_lit_small; lia) ltac:(cbn; tauto)
-ltac:(rewrite denot_lit_U, (U_and_ffff_off Ex 19 top 0 G11) by lia; f_equal; lia)
-ltac:(cbn [Z.of_N Z.mul]; lia) ltac:(cbn; lia)) as V120b end; clear HR1;
-let r2 := eval vm_compute in (nth 2 (ss_mem ssx) (YP09.mkRegion None 0 0 0 0 [])) in
-pose proof (st_ok_pi_region_nth Ex ssx msx 2 r2 HS ltac:(vm_compute; reflexivity)) as HR2; cbn [ms_mem restrict mkst] in HR2;
-lazymatch type of HR2 with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-pose proof (field_of_region Ex _ 9 sp1 cs lo hi wlo whi 192 8%N (SOff 19 0) top HR2
-ltac:(rewrite G9; apply unsigned_lit_small; lia) ltac:(cbn; tauto)
-ltac:(cbn [sv_denot]; rewrite G11, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity)
-ltac:(cbn [Z.of_N Z.mul]; lia) ltac:(cbn; lia)) as V208b end; clear HR2;
-assert (U24 : U Ex (SAlu ALU_SRL (SAlu ALU_ADD (SAlu ALU_SLL (SOff 15 0) (SLit 48)) (SLit (-281474976710656))) (SLit 48)) = Hd - 1) by (apply (U_dec_zext16 Ex 15 Hd G20); lia);
-assert (U18 : U Ex (SMd M_MUL (SOff 35 0) (SAlu ALU_SRL (SAlu ALU_ADD (SAlu ALU_SLL (SOff 15 0) (SLit 48)) (SLit (-281474976710656))) (SLit 48))) = Wd * (Hd - 1))
-by (rewrite U_mul_small; rewrite (U_atom Ex 35 Wd G35), U24 by lia; [reflexivity | clear - RW RH; nia]);
-rreg_by HS (22%bv : bv 5) (Z_to_bv 64 (Hd - 1)) (eq_trans (denot_lit_U Ex _) (f_equal (Z_to_bv 64) U24)) Q24;
-rreg_by HS (18%bv : bv 5) (Z_to_bv 64 (Wd * (Hd - 1))) (eq_trans (denot_lit_U Ex _) (f_equal (Z_to_bv 64) U18)) Q18 end.
-cbn [N.to_nat Pos.to_nat Pos.iter_op Nat.add] in V24b, V120b, V208b.
-prreg HS (27%bv : bv 5) Q27. prreg HS (11%bv : bv 5) Q11. prreg HS (12%bv : bv 5) Q12. prreg HS (14%bv : bv 5) Q20. prreg HS (25%bv : bv 5) Q25.
-pmkst HS.
-eapply (fl_s2oX (Z.to_nat Hd) (Hd - 1) top (Wd * (Hd - 1)));
-[ rewrite Z2Nat.id by lia; lia | lia | lia | exact HJF | exact WK2
-| intros r Hr; transitivity (getr regsF r); [apply HKr2; cbv [WKEPT5 In] in Hr |- *; tauto | apply HKF; exact Hr]
-| rewrite (HKr2 6%bv ltac:(cbv; tauto)); exact E6
-| rewrite Q25, ?ew_ewset_other by lia; exact E21
-| rewrite (HKr2 24%bv ltac:(cbv; tauto)); exact E24r
-| exact Q27
-| rewrite Q20, ?ew_ewset_other by lia; rewrite E20; f_equal; lia
-| rewrite Q12, ?ew_ewset_other by lia; rewrite E20, unsigned_lit_small by lia; f_equal; lia
-| rewrite Q11, ?ew_ewset_other by lia; exact E35
-| exact Q24 | exact Q18
-| clear - RW RH; nia
-| rewrite Z.mod_small; clear - RW RH; nia
-| exact V224b | exact V120b | exact V208b | exact V24b | exact V192b ].
+Proof using LAWS TCMP HC HGEO HFIMG.
+intros top regsF memF mdF Tp Jn Wk Kp X6 X21 X22 X24 X19 X10 X15 At184 At216.
+wctx_names. wprelude Jn.
+pose proof (al_blocks _ _ LAWS lyc Sc W memF mdF g CGIF_SIZE HAR Hg) as Bg.
+pose proof (al_blocks _ _ LAWS lyc Sc W memF mdF cfp FRAME_SIZE HAR Hcf) as Bc.
+assert (SPr : 140735332483072 + 13000 <= sp1 /\ sp1 + 384 <= sp0 /\ sp0 <= 2 ^ 47) by lia.
+assert (SBv : SB = 2147450880) by reflexivity.
+assert (Rq : req_size CGIF_SIZE = 96 /\ req_size FRAME_SIZE = 40) by (split; reflexivity).
+assert (B9 : bv_unsigned (getr regsF 9) = sp1).
+{ rewrite (Kp 9%bv) by (unfold WKEPT5; simpl; tauto). rewrite H9. apply u_Z2bv; lia. }
+assert (VK : forall off v m, wkept B lyc Sc W sp1 memc m -> 0 <= off -> off + 8 <= 280 ->
+  (forall kk, 0 <= kk < 8 -> ~ wscr sp1 (sp1 + off + kk)) ->
+  val_mem SEGS (mrestrict (w_H W) memc) (sp1 + off) 8 v -> val_mem SEGS (mrestrict (w_H W) m) (sp1 + off) 8 v).
+{ intros off v m Hk Ho1 Ho2 Hn Hv. eapply val_mem_wkept; eauto; lia. }
+set (E0 := Eimg (Ereg regsF [Z_to_bv 64 0; Z_to_bv 64 0; Z_to_bv 64 0; Z_to_bv 64 Wd])).
+assert (B9' : base_val E0 (Some 9%nat) = sp1) by exact B9.
+assert (EA0 : env_agree 32 (Ereg regsF [Z_to_bv 64 0; Z_to_bv 64 0; Z_to_bv 64 0; Z_to_bv 64 Wd]) E0).
+{ split; [ | reflexivity]. intros n Hn. unfold E0, Eimg. cbn [ew].
+  rewrite (proj2 (Nat.leb_gt A_TEXT n)) by (unfold A_TEXT; lia). reflexivity. }
+assert (GR : forall ss ms r e v, st_ok_pi SEGS VAL E0 ss (restrict (w_H W) ms) ->
+  sr_get (ss_regs ss) r = e -> U E0 e = v -> getr (ms_regs ms) r = Z_to_bv 64 v).
+{ intros ss ms r e v Hs He Hu. rewrite (st_ok_pi_restrict_reg _ _ _ _ r Hs), He. apply denot_of_U2. exact Hu. }
+assert (KR : forall ss ms, st_ok_pi SEGS VAL E0 ss (restrict (w_H W) ms) ->
+  forallb (fun q => sv_eqb (sr_get (ss_regs ss) q) (SOff (Z.to_nat (bv_unsigned q)) 0)) WKEPT5 = true ->
+  forall q, In q WKEPT5 -> getr (ms_regs ms) q = getr regs q).
+{ intros ss ms Hs Hb q Hq. rewrite <- (Kp q Hq). exact (regs_kept_of_st_ok_pi _ _ _ _ _ _ Hs EA0 Hb q Hq). }
+assert (WKS : forall (Ex : env) (rs : smem) (m1 m2 : word -> option byte) (md1 : Model),
+  ajournal SEGS B TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc W m1 md1 k ->
+  frame_of Ex rs (mrestrict (w_H W) m1) (mrestrict (w_H W) m2) ->
+  mem_grows (mrestrict (w_H W) m1) (mrestrict (w_H W) m2) ->
+  (forall a, in_wrange Ex rs a -> wscr sp1 a) -> wkept B lyc Sc W sp1 m1 m2).
+{ intros Ex rs m1 m2 md1 J1 F12 G12 Ww.
+  pose proof J1 as (A1 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & P1 & _).
+  apply (wkept_of_run B LAWS Ex rs lyc Sc W m1 m2 md1 sp1 A1 F12 G12 Ww); [lia | lia | intros a Ha; apply P1; lia]. }
+assert (ST0 : st_ok_pi SEGS VAL E0 ss_s2s (restrict (w_H W) (mkst regsF (Z_to_bv 64 (BASE + 7196)) memF (seg_rom SEGS)))).
+{ change (restrict (w_H W) (mkst regsF (Z_to_bv 64 (BASE + 7196)) memF (seg_rom SEGS)))
+    with (mkst regsF (Z_to_bv 64 (BASE + 7196)) (mrestrict (w_H W) memF) (seg_rom SEGS)).
+  apply (pa_entry_st_ok_full E0 7196 s2s_regs regsF s2s_mem s2s_facts (mrestrict (w_H W) memF)).
+  - unfold s2s_regs. apply regs_ok_rereg; [apply regs_ok_Eimg_Ereg | reflexivity | ].
+    cbn [sv_denot]. change (ew E0 19) with (getr regsF 19). rewrite at_self, X10, X19. reflexivity.
+  - reflexivity.
+  - unfold s2s_mem.
+    repeat apply Forall_cons; try apply Forall_nil;
+      unfold region_ok; cbv beta zeta; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks]; rewrite B9';
+      (split; [lia|]); (split; [lia|]); (split; [intros o Ho; apply apresent_writable; apply HSpres; lia|]).
+    + constructor.
+    + constructor.
+    + apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ top) | apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ Wd) | apply Forall_cons; [apply (chunk_ok_val _ _ _ _ _ _ _ Hd) | apply Forall_nil]]].
+      * cbn [sv_denot]. change (ew E0 19) with (getr regsF 19). rewrite at_self. exact X19.
+      * cbn. lia.
+      * cbn. lia.
+      * exact At184.
+      * cbn [sv_denot]. change (ew E0 35) with (Z_to_bv 64 Wd). rewrite at_self. reflexivity.
+      * cbn. lia.
+      * cbn. lia.
+      * apply VK; [exact Wk | lia | lia | intros kk Hk; unfold wscr; lia | exact V200].
+      * cbn [sv_denot]. change (ew E0 15) with (getr regsF 15). rewrite at_self. exact X15.
+      * cbn. lia.
+      * cbn. lia.
+      * apply VK; [exact Wk | lia | lia | intros kk Hk; unfold wscr; lia | exact V112].
+  - unfold s2s_mem. cbn [pairwise_disjoint all_disjoint]. unfold extent_disjoint. cbn [r_base r_lo r_hi].
+    rewrite !B9'. repeat split; lia.
+  - unfold facts_ok, s2s_facts. cbn [f_atoms f_conds f_alias atoms_ok conds_ok alias_ok].
+    unfold afact_ok, HPTR. cbn [af_lo af_hi af_al2].
+    change (ew E0 9) with (getr regsF 9). change (ew E0 6) with (getr regsF 6). change (ew E0 19) with (getr regsF 19).
+    change (ew E0 15) with (getr regsF 15). change (ew E0 21) with (getr regsF 21). change (ew E0 22) with (getr regsF 22).
+    change (ew E0 35) with (Z_to_bv 64 Wd).
+    rewrite B9, X6, X19, X15, X21, X22, !u_Z2bv by lia.
+    repeat split; try lia; try apply Z.mod_1_r.
+    + exact Hsp1al.
+    + exact (proj1 Bg).
+    + exact (mod16_mod8 _ (proj1 Bc)). }
+assert (UA : U E0 (SAlu ALU_AND (SOff 19 0) (SLit 65535)) = top).
+{ rewrite (U_and_ffff_off E0 19 top 0) by (exact X19 || lia). lia. }
+assert (UB : U E0 (SAlu ALU_AND (SOff 15 (-1)) (SLit 65535)) = Hd - 1).
+{ rewrite (U_and_ffff_off E0 15 Hd (-1)) by (exact X15 || lia). lia. }
+let v := eval vm_compute in (sym_runN_pi (@pl_tpi _ PL_asan3_0) 30 ss_s2s) in
+lazymatch v with pair ?s1 ?t1 =>
+  apply (RUNP W 30 E0 ss_s2s s1 t1 _ TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc mdF k);
+  [ apply Eimg_env | exact ST0 | vm_compute; reflexivity | exact I | exact Jn | wscr_windows B9' | ]
+end.
+intros ms1 mat1 ST1 Jn1 Fr1 Fr1r Gr1.
+apply (BR W E0 _ ms1 _ _ BC_GEU (SAlu ALU_AND (SOff 19 0) (SLit 65535)) (SAlu ALU_AND (SOff 15 (-1)) (SLit 65535)) ST1).
+- intros Btk ST1b. rewrite branch_geu_U, UA, UB in Btk.
+  assert (TH : top = Hd - 1) by (apply negb_true_iff, Z.ltb_ge in Btk; lia).
+  match type of ST1b with st_ok_pi _ _ _ ?ssb _ =>
+    let v := eval vm_compute in (sym_run_toN_pi (@pl_tpi _ PL_asan3_0) 30 7640 ssb) in
+    lazymatch v with pair ?s2 ?t2 =>
+      apply (RUNTOP W 30 7640 E0 ssb s2 t2 ms1 TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc _ k);
+      [ apply Eimg_env | exact ST1b | vm_compute; reflexivity | exact I | exact Jn1 | wscr_windows B9' | ]
+    end
+  end.
+  intros ms2 mat2 ST2 Jn2 Fr2 Fr2r Gr2.
+  apply SRr_ret. split; [reflexivity | ].
+  eexists (ms_regs ms2), (ms_mem ms2), _, (Hd - 1).
+  split; [rewrite (st_ok_pi_restrict_mkst _ _ _ _ ST2 eq_refl) at 1; reflexivity | ].
+  split; [exact Jn2 | ].
+  split.
+  { apply (wkept_trans _ _ _ _ _ _ _ _ Wk).
+    apply (wkept_trans _ _ _ _ _ _ (ms_mem ms1)).
+    - exact (WKS _ _ _ _ _ Jn Fr1r Gr1 ltac:(wscr_windows B9')).
+    - exact (WKS _ _ _ _ _ Jn1 Fr2r Gr2 ltac:(wscr_windows B9')). }
+  split; [exact (KR _ _ ST2 eq_refl) | ].
+  split; [apply (GR _ _ 6%bv (SOff 6 0) _ ST2 eq_refl); apply U_atom; [exact X6 | lia] | ].
+  split; [apply (GR _ _ 21%bv (SOff 21 0) _ ST2 eq_refl); apply U_atom; [exact X21 | lia] | ].
+  split; [apply (GR _ _ 22%bv (SOff 22 0) _ ST2 eq_refl); apply U_atom; [exact X22 | lia] | ].
+  split; [apply (GR _ _ 27%bv (SLit 65535) _ ST2 eq_refl); rewrite U_SLit; reflexivity | ].
+  split; [apply (GR _ _ 19%bv (SOff 19 0) _ ST2 eq_refl); apply U_atom; [exact X19 | lia] | ].
+  split; [apply (GR _ _ 15%bv (SOff 15 0) _ ST2 eq_refl); apply U_atom; [change (ew E0 15) with (getr regsF 15); rewrite X15; f_equal; lia | lia] | ].
+  split; [lia | ].
+  split.
+  { eapply val_mem_frame; [exact Fr2r | intros kk Hk; off_windows B9' | lia | lia | ].
+    eapply val_mem_frame; [exact Fr1r | intros kk Hk; off_windows B9' | lia | lia | ]. exact At216. }
+  split.
+  { pose proof (st_ok_pi_region_nth _ _ _ 2 _ ST2 eq_refl) as RG2.
+    apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 184 8 (SOff 19 0) top RG2 B9); [cbn; tauto | | lia | lia].
+    cbn [sv_denot]. change (ew E0 19) with (getr regsF 19). rewrite at_self. exact X19. }
+  split; [left; lia | ].
+  intros px Hpx. lia.
+- intros Bnt ST1b. rewrite branch_geu_U, UA, UB in Bnt.
+  assert (TL' : top < Hd - 1) by (apply negb_false_iff, Z.ltb_lt in Bnt; lia).
+  match type of ST1b with st_ok_pi _ _ _ ?ssb _ =>
+    let v := eval vm_compute in (sym_run_toN_pi (@pl_tpi _ PL_asan3_0) 30 7260 ssb) in
+    lazymatch v with pair ?s2 ?t2 =>
+      apply (RUNTOP W 30 7260 E0 ssb s2 t2 ms1 TFLUSH_STK sp0 FP ly S W0 mem0 md0 [(2, fpos)] lyc Sc _ k);
+      [ apply Eimg_env | exact ST1b | vm_compute; reflexivity | exact I | exact Jn1 | wscr_windows B9' | ]
+    end
+  end.
+  intros ms2 mat2 ST2 Jn2 Fr2 Fr2r Gr2.
+  rewrite (st_ok_pi_restrict_mkst _ _ _ _ ST2 eq_refl).
+  assert (UW : U E0 (SOff 35 0) = Wd) by (apply U_atom; [reflexivity | lia]).
+  assert (UZ : U E0 (SAlu ALU_SRL (SAlu ALU_ADD (SAlu ALU_SLL (SOff 15 0) (SLit 48)) (SLit (-281474976710656))) (SLit 48)) = Hd - 1)
+    by (apply U_dec_zext16; [exact X15 | lia]).
+  pose proof (st_ok_pi_region_nth _ _ _ 0 _ ST2 eq_refl) as RG0.
+  pose proof (st_ok_pi_region_nth _ _ _ 1 _ ST2 eq_refl) as RG1.
+  pose proof (st_ok_pi_region_nth _ _ _ 2 _ ST2 eq_refl) as RG2.
+  apply (fl_s2oX (Z.to_nat (Hd - 1 - top)) (Hd - 1) top (Wd * (Hd - 1))).
+  { rewrite Z2Nat.id by lia. lia. }
+  { lia. }
+  { exact TL'. }
+  { lia. }
+  { exact Jn2. }
+  { apply (wkept_trans _ _ _ _ _ _ _ _ Wk).
+    apply (wkept_trans _ _ _ _ _ _ (ms_mem ms1)).
+    - exact (WKS _ _ _ _ _ Jn Fr1r Gr1 ltac:(wscr_windows B9')).
+    - exact (WKS _ _ _ _ _ Jn1 Fr2r Gr2 ltac:(wscr_windows B9')). }
+  { exact (KR _ _ ST2 eq_refl). }
+  { apply (GR _ _ 6%bv (SOff 6 0) _ ST2 eq_refl). apply U_atom; [exact X6 | lia]. }
+  { apply (GR _ _ 25%bv (SOff 21 0) _ ST2 eq_refl). apply U_atom; [exact X21 | lia]. }
+  { apply (GR _ _ 24%bv (SOff 24 0) _ ST2 eq_refl). apply U_atom; [exact X24 | lia]. }
+  { apply (GR _ _ 11%bv (SOff 35 0) _ ST2 eq_refl). exact UW. }
+  { apply (GR _ _ 22%bv _ _ ST2 eq_refl). exact UZ. }
+  { apply (GR _ _ 12%bv (SOff 15 (-1)) _ ST2 eq_refl).
+    rewrite (U_atom_off E0 15 Hd (-1)) by (exact X15 || lia). lia. }
+  { apply (GR _ _ 14%bv (SOff 15 0) _ ST2 eq_refl).
+    apply U_atom; [change (ew E0 15) with (getr regsF 15); rewrite X15; f_equal; lia | lia]. }
+  { apply (GR _ _ 27%bv (SLit 65535) _ ST2 eq_refl). rewrite U_SLit. reflexivity. }
+  { apply (GR _ _ 18%bv (SMd M_MUL (SOff 35 0) (SAlu ALU_SRL (SAlu ALU_ADD (SAlu ALU_SLL (SOff 15 0) (SLit 48)) (SLit (-281474976710656))) (SLit 48))) _ ST2 eq_refl).
+    rewrite U_mul_small; rewrite UW, UZ; [reflexivity | nia]. }
+  { rewrite Z.mod_small by nia. ring. }
+  { apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 88 8 (SOff 19 1) (top + 1) RG0 B9); [cbn; tauto | | lia | lia].
+    cbn [sv_denot]. change (ew E0 19) with (getr regsF 19). rewrite X19, u_Z2bv by lia. reflexivity. }
+  { apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 160 8 (SAlu ALU_AND (SOff 19 0) (SLit 65535)) top RG1 B9); [cbn; tauto | | lia | lia].
+    apply denot_of_U2. exact UA. }
+  { apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 184 8 (SOff 19 0) top RG2 B9); [cbn; tauto | | lia | lia].
+    cbn [sv_denot]. change (ew E0 19) with (getr regsF 19). rewrite at_self. exact X19. }
+  { apply (field_of_region E0 _ 9 sp1 _ _ _ _ _ 192 8 (SOff 19 0) top RG2 B9); [cbn; tauto | | lia | lia].
+    cbn [sv_denot]. change (ew E0 19) with (getr regsF 19). rewrite at_self. exact X19. }
+  { eapply val_mem_frame; [exact Fr2r | intros kk Hk; off_windows B9' | lia | lia | ].
+    eapply val_mem_frame; [exact Fr1r | intros kk Hk; off_windows B9' | lia | lia | ]. exact At216. }
 Qed.
 End f.
 End d.

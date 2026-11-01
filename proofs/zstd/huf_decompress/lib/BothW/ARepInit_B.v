@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -17,105 +17,39 @@ From OssFuzzTheorems.Proofs.zstd.huf_decompress.lib.Common Require Import RunDra
 From OssFuzzTheorems.Proofs.zstd.huf_decompress.lib Require KReplay.
 From Ltac2 Require Import Ltac2.
 Set Default Proof Mode "Classic".
-Ltac2 rds2_cert_ok (v : constr) : bool :=
-  let rec peel c := match Constr.Unsafe.kind c with Constr.Unsafe.Lambda _ b => peel b | _ => c end in
-  match Constr.Unsafe.kind (peel v) with
-  | Constr.Unsafe.LetIn _ w r1 =>
-    match Constr.Unsafe.kind r1 with
-    | Constr.Unsafe.LetIn _ _ r2 =>
-      match Constr.Unsafe.kind r2 with
-      | Constr.Unsafe.LetIn _ f _ =>
-        if Bool.and (Constr.Unsafe.closedn 0 w) (Constr.Unsafe.closedn 0 f) then
-          let chk := Constr.Unsafe.make (Constr.Unsafe.App constr:(Stdlib.micromega.ZMicromega.ZTautoChecker) (Array.of_list [f; w])) in
-          Constr.equal (Std.eval_vm None chk) constr:(true)
-        else false
-      | _ => false
-      end
-    | _ => false
-    end
-  | _ => false
-  end.
+Ltac2 rds2_cert_ok (p : constr) : bool :=
+  match Constr.Unsafe.check p with Val _ => true | Err _ => false end.
 Ltac2 rds2_prove (t : constr) : constr := constr:(ltac2:(ltac1:(intros; lia)) : $t).
 Ltac2 rec rds2_relia (c : constr) : bool * constr :=
-  let mk := Constr.Unsafe.make in
-  match Constr.Unsafe.kind c with
-  | Constr.Unsafe.LetIn b v body =>
-    let (cb, body') := rds2_relia body in
-    let is_arith := match Constr.Binder.name b with Some id => Ident.equal id @__arith | None => false end in
-    if Bool.and is_arith (Constr.Unsafe.closedn 0 (Constr.Binder.type b)) then
-      if rds2_cert_ok v then (if cb then (true, mk (Constr.Unsafe.LetIn b v body')) else (false, c))
-      else (true, mk (Constr.Unsafe.LetIn b (rds2_prove (Constr.Binder.type b)) body'))
-    else
-      let (cv, v') := rds2_relia v in
-      if Bool.or cv cb then (true, mk (Constr.Unsafe.LetIn b v' body')) else (false, c)
-  | Constr.Unsafe.Lambda b body =>
-    let (cb, body') := rds2_relia body in
-    if cb then (true, mk (Constr.Unsafe.Lambda b body')) else (false, c)
-  | Constr.Unsafe.App f args =>
-    let (cf, f') := rds2_relia f in
-    let ch := { contents := cf } in
-    let args' := Array.map (fun a => let (ca, a') := rds2_relia a in (if ca then ch.(contents) := true else ()); a') args in
-    if ch.(contents) then (true, mk (Constr.Unsafe.App f' args')) else (false, c)
-  | Constr.Unsafe.Cast c1 k t =>
-    let (c1c, c1') := rds2_relia c1 in
-    if c1c then (true, mk (Constr.Unsafe.Cast c1' k t)) else (false, c)
-  | Constr.Unsafe.Case ci rt iv scr brs =>
-    let (cs, scr') := rds2_relia scr in
-    let ch := { contents := cs } in
-    let brs' := Array.map (fun a => let (ca, a') := rds2_relia a in (if ca then ch.(contents) := true else ()); a') brs in
-    if ch.(contents) then (true, mk (Constr.Unsafe.Case ci rt iv scr' brs')) else (false, c)
-  | Constr.Unsafe.Fix recs i bs bds =>
-    let ch := { contents := false } in
-    let bds' := Array.map (fun a => let (ca, a') := rds2_relia a in (if ca then ch.(contents) := true else ()); a') bds in
-    if ch.(contents) then (true, mk (Constr.Unsafe.Fix recs i bs bds')) else (false, c)
-  | _ => (false, c)
-  end.
+  let rec claimed (t : constr) : constr :=
+    match Constr.Unsafe.kind t with
+    | Constr.Unsafe.Cast _ _ ty => ty
+    | Constr.Unsafe.Lambda b body => Constr.Unsafe.make (Constr.Unsafe.Prod b (claimed body))
+    | Constr.Unsafe.LetIn b v body => Constr.Unsafe.make (Constr.Unsafe.LetIn b v (claimed body))
+    | _ => Constr.type t
+    end in
+  let moved := { contents := false } in
+  let walk (t : constr) : constr :=
+    let (hit, u) := rds2_relia t in (if hit then moved.(contents) := true else ()); u in
+  if Constr.Unsafe.is_closed c then
+    if rds2_cert_ok c then (false, c) else
+    let inner := Constr.Unsafe.map walk c in
+    if rds2_cert_ok inner then (moved.(contents), inner) else
+    match Control.case (fun () => rds2_prove (claimed inner)) with
+    | Val pr => let (fresh, _) := pr in (true, fresh)
+    | Err _ => (moved.(contents), inner)
+    end
+  else
+    let rebuilt := Constr.Unsafe.map walk c in
+    if moved.(contents) then (true, rebuilt) else (false, c).
 Ltac2 rec rds2_sub (f : constr -> constr option) (c : constr) : bool * constr :=
   match f c with
-  | Some c' => (true, c')
+  | Some r => (true, r)
   | None =>
-    let mk := Constr.Unsafe.make in
-    let sb b :=
-      let (ch, t) := rds2_sub f (Constr.Binder.type b) in
-      if ch then (true, Constr.Binder.unsafe_make (Constr.Binder.name b) (Constr.Binder.relevance b) t) else (false, b) in
-    let arr a :=
-      let ch := { contents := false } in
-      let a' := Array.map (fun x => let (cx, x') := rds2_sub f x in (if cx then ch.(contents) := true else ()); x') a in
-      (ch.(contents), a') in
-    let barr a :=
-      let ch := { contents := false } in
-      let a' := Array.map (fun x => let (cx, x') := sb x in (if cx then ch.(contents) := true else ()); x') a in
-      (ch.(contents), a') in
-    match Constr.Unsafe.kind c with
-    | Constr.Unsafe.LetIn b v body =>
-      let (c1, b') := sb b in let (c2, v') := rds2_sub f v in let (c3, body') := rds2_sub f body in
-      if Bool.or c1 (Bool.or c2 c3) then (true, mk (Constr.Unsafe.LetIn b' v' body')) else (false, c)
-    | Constr.Unsafe.Lambda b body =>
-      let (c1, b') := sb b in let (c2, body') := rds2_sub f body in
-      if Bool.or c1 c2 then (true, mk (Constr.Unsafe.Lambda b' body')) else (false, c)
-    | Constr.Unsafe.Prod b body =>
-      let (c1, b') := sb b in let (c2, body') := rds2_sub f body in
-      if Bool.or c1 c2 then (true, mk (Constr.Unsafe.Prod b' body')) else (false, c)
-    | Constr.Unsafe.App h args =>
-      let (c1, h') := rds2_sub f h in let (c2, args') := arr args in
-      if Bool.or c1 c2 then (true, mk (Constr.Unsafe.App h' args')) else (false, c)
-    | Constr.Unsafe.Cast c1 k t =>
-      let (x1, c1') := rds2_sub f c1 in let (x2, t') := rds2_sub f t in
-      if Bool.or x1 x2 then (true, mk (Constr.Unsafe.Cast c1' k t')) else (false, c)
-    | Constr.Unsafe.Case ci (rt, rr) iv scr brs =>
-      let (c1, rt') := rds2_sub f rt in let (c2, scr') := rds2_sub f scr in let (c3, brs') := arr brs in
-      if Bool.or c1 (Bool.or c2 c3) then (true, mk (Constr.Unsafe.Case ci (rt', rr) iv scr' brs')) else (false, c)
-    | Constr.Unsafe.Fix recs i bs bds =>
-      let (c1, bs') := barr bs in let (c2, bds') := arr bds in
-      if Bool.or c1 c2 then (true, mk (Constr.Unsafe.Fix recs i bs' bds')) else (false, c)
-    | Constr.Unsafe.CoFix i bs bds =>
-      let (c1, bs') := barr bs in let (c2, bds') := arr bds in
-      if Bool.or c1 c2 then (true, mk (Constr.Unsafe.CoFix i bs' bds')) else (false, c)
-    | Constr.Unsafe.Proj p r c1 =>
-      let (x1, c1') := rds2_sub f c1 in
-      if x1 then (true, mk (Constr.Unsafe.Proj p r c1')) else (false, c)
-    | _ => (false, c)
-    end
+    let touched := { contents := false } in
+    let d := Constr.Unsafe.map
+      (fun x => let (k, y) := rds2_sub f x in (if k then touched.(contents) := true else ()); y) c in
+    if touched.(contents) then (true, d) else (false, c)
   end.
 Ltac2 rec rds2_lit (subs : (constr * constr) list) (c : constr) : constr option :=
   match subs with [] => None | (a, b) :: r => if Constr.equal c a then Some b else rds2_lit r c end.
@@ -141,155 +75,217 @@ Section B.
   Let L := mkALayout (LV V) w U.
 
   Lemma arelro_init : arelro m.
-Proof. intros i Hi. unfold ARELRO_LO, ARELRO_HI in Hi. mimg V m HM 0xb1000 0xb3000 IMG. apply IMG. lia. Qed.
+Proof.
+  unfold arelro.
+  apply (mimg_cover bsegs V m asan_mem_facts ARELRO_LO ARELRO_HI HM).
+  vm_compute. reflexivity.
+Qed.
 
   (* [comment removed for export] *)
   Lemma flags85_init : rw_cells bsegs m 0xb7b4d [C1 (Z_to_bv 8 1)].
 Proof.
-    mf V m HM (MCell (ZLit 752456) 8 (ZLit 72340172838010881)) F.
-    assert (F' : rw_cells bsegs m 752456 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1)]) by recast F.
-    do 5 apply rw_cells_tl in F'. apply rw_cells_hd in F'. exact F'.
-  Qed.
+  assert (qw_b7b48 : rw_cells bsegs m 752456 [C8 (Z_to_bv 64 72340172838010881)]).
+  { apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit 752456) 8 (ZLit 72340172838010881)) HM).
+    vm_compute. reflexivity. }
+  assert (cut_at_5 : rw_cells bsegs m 752456
+    ([CB 5 (firstn 5 (le8 (Z_to_bv 64 72340172838010881)))] ++ [C1 (Z_to_bv 8 1)]
+       ++ [CB 2 (skipn 6 (le8 (Z_to_bv 64 72340172838010881)))])).
+  { apply (rw_cells_recast bsegs m 752456 _ _ qw_b7b48).
+    - vm_compute. repeat split.
+    - apply bytes_eq_of_unsigned'. vm_compute. reflexivity.
+    - reflexivity. }
+  apply rw_cells_app in cut_at_5 as [_ from_5].
+  apply rw_cells_app in from_5 as [only_5 _].
+  exact only_5.
+Qed.
 
   Lemma cflags34_init : rw_cells bsegs m 0x14be4a [C1 (Z_to_bv 8 1)].
 Proof.
-    mf V m HM (MCell (ZLit 1359432) 8 (ZLit 128849084416)) F.
-    assert (F' : rw_cells bsegs m 1359432 [C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 30); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0)]) by recast F.
-    do 2 apply rw_cells_tl in F'. apply rw_cells_hd in F'. exact F'.
-  Qed.
+  pose proof (mfact_find bsegs V m asan_mem_facts (MCell (ZLit 1359432) 8 (ZLit 128849084416)) HM)
+    as qw_14be48.
+  cbn [mfact_ok zv cellw] in qw_14be48.
+  specialize (qw_14be48 ltac:(vm_compute; reflexivity)).
+  assert (byte_2_isolated : rw_cells bsegs m 1359432
+    ([CB 2 (firstn 2 (le8 (Z_to_bv 64 128849084416)))] ++ [C1 (Z_to_bv 8 1)]
+       ++ [CB 5 (skipn 3 (le8 (Z_to_bv 64 128849084416)))])).
+  { apply (rw_cells_recast _ _ _ _ _ qw_14be48); [vm_compute; repeat split | | reflexivity].
+    apply bytes_eq_of_unsigned'. vm_compute. reflexivity. }
+  destruct (proj1 (rw_cells_app _ _ _ _ _) byte_2_isolated) as [low_pair rest].
+  destruct (proj1 (rw_cells_app _ _ _ _ _) rest) as [the_flag high_five].
+  exact the_flag.
+Qed.
 
   Theorem arep_rt_init : arep_rt L m.
 Proof.
-    unfold arep_rt.
-    aimg V m HM 0xb2108 [C8 (Z_to_bv 64 0x149da0)] I1.
-    aimg V m HM 0xb2118 [C8 (Z_to_bv 64 0x14be28); C8 (Z_to_bv 64 0xb7af8); C8 (Z_to_bv 64 0xba2f8);
-                          C8 (Z_to_bv 64 0xbafe8); C8 (Z_to_bv 64 0xbaff0); C8 (Z_to_bv 64 0xbafe0)] I2.
-    aimg V m HM 0xb2148 [C8 (Z_to_bv 64 0xb3fa8)] I3.
-    aimg V m HM 0xb2c90 [C8 (Z_to_bv 64 0xbafd9)] I4.
-    aimg V m HM 0xb2d80 [C8 (Z_to_bv 64 0x10)] I5.
-    aimg V m HM 0xb3fa0 [C8 (Z_to_bv 64 0xab458); C8 (Z_to_bv 64 0xab85c)] I6.
-    aimg V m HM 0xbafe8 [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)] I7.
-    aimg V m HM 0x13c560 [C1 (Z_to_bv 8 0)] I8.
-    aimg V m HM 0x13c562 [C1 (Z_to_bv 8 0)] I9.
-    aimg V m HM 0x14bdc0 [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)] I10.
-    aimg V m HM 0x5ed2a0 [C4 (Z_to_bv 64 0)] I11.
-    mf V m HM (MCell (ZLit 752312) 8 (ZLit 1099511627776)) F1.
-    mf V m HM (MCell (ZLit 752320) 2 (ZLit 16)) F2.
-    mf V m HM (MCell (ZLit 752322) 2 (ZLit 2048)) F3.
-    mf V m HM (MCell (ZLit 752324) 1 (ZLit 1)) F4.
-    mf V m HM (MCell (ZLit 752376) 4 (ZLit 4294967295)) F5.
-    mf V m HM (MCell (ZLit 752380) 4 (ZLit 256)) F6.
-    mf V m HM (MCell (ZLit 752384) 4 (ZLit 1024)) F7.
-    mf V m HM (MCell (ZLit 752388) 4 (ZLit 16)) F8.
-    mf V m HM (MCell (ZLit 752392) 4 (ZLit 2048)) F9.
-    mf V m HM (MCell (ZLit 752420) 4 (ZLit 4096)) F10.
-    mf V m HM (MCell (ZLit 752424) 8 (ZLit 816043786240)) F11.
-    assert (F11' : rw_cells bsegs m 752424 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0xbe)]) by recast F11.
-    mf V m HM (MCell (ZLit 762616) 8 (ZLit 2147450880)) F12.
-    mf V m HM (MCell (ZLit 760668) 1 (ZLit 1)) F13.
-    mf V m HM (MCell (ZLit 760672) 1 (ZLit 1)) F14.
-    mf V m HM (MCell (ZLit 760676) 4 (ZLit 0)) F15.
-    mf V m HM (MCell (ZLit 765912) 1 (ZLit 1)) F16.
-    mf V m HM (MCell (ZLit 765913) 1 (ZLit 1)) F17.
-    mf V m HM (MCell (ZLit 765920) 8 (ZLit 140737488355327)) F18.
-    mf V m HM (MCell (ZLit 765948) 4 (ZLit 30)) F19.
-    mf V m HM (MCell (ZLit 1295713) 1 (ZLit 1)) F20.
-    mf V m HM (MCell (ZLit 1351072) 8 (ZLit 4096)) F21.
-    mf V m HM (MCell (ZLit 1359432) 8 (ZLit 128849084416)) F22.
-    mf V m HM (MCell (ZLit 1359520) 8 (ZLit 18446744073709551615)) F23.
-    mf V m HM (MCell (ZLit 6214200) 8 (ZLit 6350392)) F24.
-    mf V m HM (MCell (ZLit 6350392) 8 (ZMul (ZLit 4096) (ZV 228))) F25.
-    mf V m HM (MCell (ZAdd (ZMul (ZLit 4096) (ZV 228)) (ZLit 8)) 4 (ZLit 0)) F26.
-    mf V m HM (MCell (ZAdd (ZMul (ZLit 4096) (ZV 228)) (ZLit 152)) 8 (ZMul (ZLit 4096) (ZV 227))) F27.
-    split; [exact I1|]. split; [exact I2|]. split; [exact I3|]. split; [exact I4|]. split; [exact I5|]. split; [exact I6|].
-    split; [apply rw_cells_cons; [exact F1| apply rw_cells_cons; [exact F2| apply rw_cells_cons; [exact F3| exact F4]]]|].
-    split; [apply rw_cells_cons; [exact F5| apply rw_cells_cons; [exact F6| apply rw_cells_cons; [exact F7| apply rw_cells_cons; [exact F8| exact F9]]]]|].
-    split; [apply rw_cells_cons; [exact F10| exact F11']|].
-    split; [exact flags85_init|].
-    split; [exact F12|]. split; [exact F13|]. split; [exact F14|]. split; [exact F15|].
-    split; [apply rw_cells_cons; [exact F16| exact F17]|].
-    split; [apply rw_cells_cons; [exact F18| exact I7]|].
-    split; [exact F19|].
-    split; [apply rw_cells_cons; [exact I8| apply rw_cells_cons; [exact F20| exact I9]]|].
-    split; [exact F21|]. split; [exact I10|]. split; [exact F22|]. split; [exact cflags34_init|]. split; [exact F23|].
-    split; [exact F24|]. split; [exact F25|]. split; [exact I11|]. split; [exact F26| exact F27].
-  Qed.
+  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  (* three cells whose address or value comes from the layout *)
+  assert (tsd_slot : rw_cells bsegs m ATSD [C8 (Z_to_bv 64 (al_ctx L))]).
+  { unfold L. rewrite LV_ctx.
+    apply (handoff (MCell (ZLit 6350392) 8 (ZMul (ZLit 4096) (ZV 228)))). vm_compute. reflexivity. }
+  assert (ctx_plus8 : rw_cells bsegs m (al_ctx L + 8) [C4 (Z_to_bv 64 0)]).
+  { unfold L. rewrite LV_ctx.
+    apply (handoff (MCell (ZAdd (ZMul (ZLit 4096) (ZV 228)) (ZLit 8)) 4 (ZLit 0))). vm_compute. reflexivity. }
+  assert (ctx_plus152 : rw_cells bsegs m (al_ctx L + 152) [C8 (Z_to_bv 64 (al_t L))]).
+  { unfold L. rewrite LV_ctx, LV_t.
+    apply (handoff (MCell (ZAdd (ZMul (ZLit 4096) (ZV 228)) (ZLit 152)) 8 (ZMul (ZLit 4096) (ZV 227)))).
+    vm_compute. reflexivity. }
+  (* 0xb7b24: one handoff word, then the two halves of the quad word at 0xb7b28 *)
+  assert (trio_b7b24 : rw_cells bsegs m 0xb7b24 [C4 (Z_to_bv 64 0x1000); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0xbe)]).
+  { apply rw_cells_cons.
+    - apply (handoff (MCell (ZLit 752420) 4 (ZLit 4096))). vm_compute. reflexivity.
+    - change (0xb7b24 + Z.of_nat (csize (C4 (Z_to_bv 64 0x1000)))) with 752424.
+      assert (qw_b7b28 : rw_cells bsegs m 752424 [C8 (Z_to_bv 64 816043786240)])
+        by (apply (handoff (MCell (ZLit 752424) 8 (ZLit 816043786240))); vm_compute; reflexivity).
+      apply (rw_cells_recast _ _ _ _ _ qw_b7b28); [vm_compute; repeat split | | reflexivity].
+      apply bytes_eq_of_unsigned'. vm_compute. reflexivity. }
+  pose proof flags85_init as flag_b7b4d.
+  pose proof cflags34_init as flag_14be4a.
+  unfold arep_rt.
+  repeat match goal with |- _ /\ _ => split end.
+  all: let rec fill :=
+    first
+    [ match goal with known : rw_cells _ _ ?a ?cs |- rw_cells _ _ ?a ?cs => exact known end
+    | lazymatch goal with |- context [L] => fail | _ => idtac end;
+      first
+      [ apply (img_chunk V m asan_mem_facts);
+          [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
+          | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]
+      | lazymatch goal with
+        | |- rw_cells _ _ ?a [C8 (Z_to_bv _ ?v)] => apply (handoff (MCell (ZLit a) 8 (ZLit v)))
+        | |- rw_cells _ _ ?a [C4 (Z_to_bv _ ?v)] => apply (handoff (MCell (ZLit a) 4 (ZLit v)))
+        | |- rw_cells _ _ ?a [C2 (Z_to_bv _ ?v)] => apply (handoff (MCell (ZLit a) 2 (ZLit v)))
+        | |- rw_cells _ _ ?a [C1 (Z_to_bv _ ?v)] => apply (handoff (MCell (ZLit a) 1 (ZLit v)))
+        end; vm_compute; reflexivity
+      | lazymatch goal with |- rw_cells _ _ _ (_ :: _ :: _) => idtac end;
+        apply rw_cells_cons;
+          [ fill
+          | lazymatch goal with |- rw_cells _ _ ?a _ => let a' := eval vm_compute in a in change a with a' end;
+            fill ] ] ]
+  in fill.
+Qed.
 
   Theorem arep_rt2_init : arep_rt2 m.
 Proof.
-    unfold arep_rt2.
-    mf V m HM (MCell (ZLit 1359656) 8 (ZLit 16843009)) F1.
-    assert (F1' : rw_cells bsegs m 1359656 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0)]) by recast F1.
-    do 4 apply rw_cells_tl in F1'. apply rw_cells_hd in F1'.
-    mf V m HM (MCell (ZLit 1359544) 8 (ZLit 0)) F2.
-    aimg V m HM 0xb3f50 [C8 (Z_to_bv 64 0xabce4)] I1.
-    split; [exact F1'|]. split; [exact F2| exact I1].
-  Qed.
+  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  assert (byte_14bf2c : rw_cells bsegs m 0x14bf2c [C1 (Z_to_bv 8 0)]).
+  { assert (qw_14bf28 : rw_cells bsegs m 1359656 [C8 (Z_to_bv 64 16843009)])
+      by (apply (handoff (MCell (ZLit 1359656) 8 (ZLit 16843009))); vm_compute; reflexivity).
+    assert (split_4_1_3 : rw_cells bsegs m 1359656
+      ([CB 4 (firstn 4 (le8 (Z_to_bv 64 16843009)))] ++ [C1 (Z_to_bv 8 0)]
+         ++ [CB 3 (skipn 5 (le8 (Z_to_bv 64 16843009)))])).
+    { apply (rw_cells_recast _ _ _ _ _ qw_14bf28); [| | exact eq_refl].
+      + vm_compute. repeat split.
+      + apply bytes_eq_of_unsigned'. vm_compute. reflexivity. }
+    apply rw_cells_app, proj2, rw_cells_app, proj1 in split_4_1_3.
+    exact split_4_1_3. }
+  unfold arep_rt2. split; [exact byte_14bf2c | split].
+  - apply (handoff (MCell (ZLit 0x14beb8) 8 (ZLit 0))). vm_compute. reflexivity.
+  - apply (img_chunk V m asan_mem_facts);
+      [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
+      | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ].
+Qed.
 
   Theorem arep_rt3_init : arep_rt3 m.
 Proof.
-    unfold arep_rt3.
-    aimg V m HM 0xb3e98 [C8 (Z_to_bv 64 0xaada8); C8 (Z_to_bv 64 0xa7c98)] I1.
-    aimg V m HM 0xb3e78 [C8 (Z_to_bv 64 0xb0b5c)] I2.
-    aimg V m HM 0xb3e80 [C8 (Z_to_bv 64 0xa7a10)] I3.
-    aimg V m HM 0xb3f50 [C8 (Z_to_bv 64 0xabce4)] I4.
-    aimg V m HM 0xb3e68 [C8 (Z_to_bv 64 0xab35c)] I5.
-    mf V m HM (MCell (ZLit 1359480) 8 (ZLit 4294967296)) F1.
-    mf V m HM (MCell (ZLit 1359648) 8 (ZLit 72340172838076673)) F2.
-    mf V m HM (MCell (ZLit 762624) 4 (ZLit 1)) F3.
-    mf V m HM (MCell (ZLit 752472) 1 (ZLit 1)) F4.
-    mf V m HM (MCell (ZLit 1351064) 4 (ZLit 0)) F5.
-    aimg V m HM 0xb2108 [C8 (Z_to_bv 64 0x149da0); C8 (Z_to_bv 64 0xb3fe0)] I6.
-    aimg V m HM 0xb3fe0 [C8 (Z_to_bv 64 0x19227)] I7.
-    mf V m HM (MCell (ZLit 1351072) 8 (ZLit 4096)) F6.
-    mf V m HM (MCell (ZLit 1359616) 8 (ZLit 1103823372544)) F7.
-    mf V m HM (MCell (ZLit 1359640) 8 (ZLit 72339073309605888)) F8.
-    mf V m HM (MCell (ZLit 6346064) 8 (ZLit 4096)) F10.
-    split; [exact I1|]. split; [exact I2|]. split; [exact I3|]. split; [exact I4|]. split; [exact I5|].
-    split; [exact F1|]. split; [exact F2|]. split; [exact F3|]. split; [exact F4|]. split; [exact F5|].
-    split; [exact I6|]. split; [exact I7|]. split; [exact F6|]. split; [exact F7|]. split; [exact F8|]. split; [apply premap_canary_any| exact F10].
-  Qed.
+  unfold arep_rt3.
+  repeat match goal with |- _ /\ _ => split end.
+  all: try first
+    [ apply (img_chunk V m asan_mem_facts);
+        [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
+        | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]
+    | lazymatch goal with
+      | |- rw_cells _ _ ?at_ [C8 (Z_to_bv _ ?val)] =>
+          apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit at_) 8 (ZLit val)) HM)
+      | |- rw_cells _ _ ?at_ [C4 (Z_to_bv _ ?val)] =>
+          apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit at_) 4 (ZLit val)) HM)
+      | |- rw_cells _ _ ?at_ [C1 (Z_to_bv _ ?val)] =>
+          apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit at_) 1 (ZLit val)) HM)
+      end; vm_compute; reflexivity ].
+  (* the eight bytes at 0x60d2d0 hold a value only known as V 45 *)
+  pose proof (mfact_find bsegs V m asan_mem_facts (MRo (ZLit 0x60d2d0) 8 (ZV 45)) HM) as seen_v45.
+  specialize (seen_v45 ltac:(vm_compute; reflexivity)).
+  cbn [mfact_ok zv] in seen_v45.
+  assert (open_for_writes : wr_at bsegs m 0x60d2d0 8).
+  { split; [lia | split; [lia |]].
+    intros k k_span. apply BothPlanImages.asan_rw_window.
+    rewrite wa_unsigned; lia. }
+  exists (word_to_le_bytes 8 (Z_to_bv 64 (V 45))).
+  apply rw_cells_of_parts; [split; [reflexivity | exact I] | | exact open_for_writes].
+  cbn [cells_bytes cbytes]. rewrite app_nil_r. exact seen_v45.
+Qed.
 
   Theorem ainstance_init : ainstance L (ST0 V) m.
 Proof.
-    unfold ainstance, AINSTANCE.
-    mf V m HM (MCell (ZLit 748728) 8 (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 208)) (ZMul (ZLit (-4096)) (ZV 209))) (ZLit 65536))) F1.
-    mf V m HM (MCell (ZLit 748744) 8 (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 208)) (ZMul (ZLit (-4096)) (ZV 209))) (ZLit 137439019008))) F2.
-    mf V m HM (MCell (ZLit 748760) 8 (ZLit 4096)) F3.
-    mf V m HM (MCell (ZLit 748768) 8 (ZMul (ZLit 4096) (ZV 226))) F4.
-    aimg V m HM 0xb6d08 [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)] I5.
-    mf V m HM (MCell (ZLit 749376) 1 (ZLit 0)) F6.
-    aimg V m HM 0xb7070 [C1 (Z_to_bv 8 0)] I7.
-    mf V m HM (MCell (ZLit 748736) 4 (ZLit 18446744073709551615)) F8.
-    assert (F8' : rw_cells bsegs m 748736 [C4 (Z_to_bv 64 4294967295)]) by recast F8.
-    mf V m HM (MCell (ZLit 748752) 1 (ZLit 0)) F9.
-    assert (ESB : al_space_beg L = 4096 * V 208%nat + -4096 * V 209%nat + 65536) by (unfold al_space_beg; cbn [al_V L LV Nat.eqb]; lia).
-    split; [rewrite ESB; exact F1|].
-    split; [rewrite ESB; unfold K_SPACE_SIZE; replace (4096 * V 208%nat + -4096 * V 209%nat + 65536 + 2 ^ 37)
-                                                 with (4096 * V 208%nat + -4096 * V 209%nat + 137439019008) by lia; exact F2|].
-    split; [exact F3|]. split; [exact F4|]. split; [exact I5|]. split; [exact F6|]. split; [exact I7|]. split; [exact F8'| exact F9].
-  Qed.
+  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  assert (space_lo : al_space_beg L = 4096 * V 208 + -4096 * V 209 + 65536)
+    by (unfold L; rewrite LV_space_beg; ring).
+  assert (space_hi : al_space_beg L + K_SPACE_SIZE = 4096 * V 208 + -4096 * V 209 + 137439019008)
+    by (rewrite space_lo; unfold K_SPACE_SIZE; lia).
+  assert (ptrs : al_ptr_array L = 4096 * V 226) by (unfold L; apply LV_ptr_array).
+  (* cells the handoff wrote, in address order *)
+  assert (c32 : rw_cells bsegs m (AINSTANCE + 32) [C8 (Z_to_bv 64 (al_space_beg L))]).
+  { rewrite space_lo.
+    apply (handoff (MCell (ZLit 748728) 8 (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 208)) (ZMul (ZLit (-4096)) (ZV 209))) (ZLit 65536)))).
+    vm_compute. reflexivity. }
+  assert (c40 : rw_cells bsegs m (AINSTANCE + 40) [C4 (Z_to_bv 64 4294967295)]).
+  { assert (all_ones : rw_cells bsegs m 748736 [C4 (Z_to_bv 64 18446744073709551615)])
+      by (apply (handoff (MCell (ZLit 748736) 4 (ZLit 18446744073709551615))); vm_compute; reflexivity).
+    apply (rw_cells_recast _ _ _ _ _ all_ones); [exact (conj I I) | | reflexivity].
+    apply bytes_eq_of_unsigned'. vm_compute. reflexivity. }
+  assert (c48 : rw_cells bsegs m (AINSTANCE + 48) [C8 (Z_to_bv 64 (al_space_beg L + K_SPACE_SIZE))]).
+  { rewrite space_hi.
+    apply (handoff (MCell (ZLit 748744) 8 (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 208)) (ZMul (ZLit (-4096)) (ZV 209))) (ZLit 137439019008)))).
+    vm_compute. reflexivity. }
+  assert (c56 : rw_cells bsegs m (AINSTANCE + 56) [C1 (Z_to_bv 8 0)])
+    by (apply (handoff (MCell (ZLit 748752) 1 (ZLit 0))); vm_compute; reflexivity).
+  assert (c64 : rw_cells bsegs m (AINSTANCE + 64) [C8 (Z_to_bv 64 4096)])
+    by (apply (handoff (MCell (ZLit 748760) 8 (ZLit 4096))); vm_compute; reflexivity).
+  assert (c72 : rw_cells bsegs m (AINSTANCE + 72) [C8 (Z_to_bv 64 (al_ptr_array L))]).
+  { rewrite ptrs. apply (handoff (MCell (ZLit 748768) 8 (ZMul (ZLit 4096) (ZV 226)))). vm_compute. reflexivity. }
+  assert (c680 : rw_cells bsegs m (AINSTANCE + 680) [C1 (Z_to_bv 8 0)])
+    by (apply (handoff (MCell (ZLit 749376) 1 (ZLit 0))); vm_compute; reflexivity).
+  (* cells still as the image left them *)
+  assert (counts : rw_cells bsegs m (AINSTANCE + 112) [C8 (Z_to_bv 64 (a_nres (ST0 V))); C8 (Z_to_bv 64 (a_nsec (ST0 V)))]).
+  { change (a_nres (ST0 V)) with 0. change (a_nsec (ST0 V)) with 0.
+    apply (img_chunk V m asan_mem_facts);
+      [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
+      | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]. }
+  assert (c984 : rw_cells bsegs m (AINSTANCE + 984) [C1 (Z_to_bv 8 0)]).
+  { apply (img_chunk V m asan_mem_facts);
+      [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
+      | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]. }
+  exact (conj c32 (conj c48 (conj c64 (conj c72 (conj counts (conj c680 (conj c984 (conj c40 c56)))))))).
+Qed.
 
   (* [comment removed for export] *)
   Theorem aquar_glob_const_init : aquar_glob_const m.
 Proof.
-    unfold aquar_glob_const, AQ_MAX, AQ_MUTEX.
-    mf V m HM (MCell (ZLit 749488) 8 (ZLit 268435456)) F1.
-    mf V m HM (MCell (ZLit 749496) 8 (ZLit 241591905)) F2.
-    mf V m HM (MCell (ZLit 749504) 8 (ZLit 1048576)) F3.
-    mf V m HM (MCell (ZLit 749576) 1 (ZLit 0)) F4.
-    mf V m HM (MCell (ZLit 749577) 1 (ZLit 0)) F5.
-    aimg V m HM 0xb700a [C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0)] I6.
-    split.
-    - apply rw_cells_cons; [exact F1|]. apply rw_cells_cons; [exact F2| exact F3].
-    - apply rw_cells_cons; [exact F4|]. apply rw_cells_cons; [exact F5| exact I6].
-  Qed.
+  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  assert (limits : rw_cells bsegs m AQ_MAX [C8 (Z_to_bv 64 Q_MAX); C8 (Z_to_bv 64 Q_MIN); C8 (Z_to_bv 64 Q_CACHE)]).
+  { apply rw_cells_cons; [apply (handoff (MCell (ZLit 749488) 8 (ZLit Q_MAX))); vm_compute; reflexivity |].
+    change (AQ_MAX + Z.of_nat (csize (C8 (Z_to_bv 64 Q_MAX)))) with 749496.
+    apply rw_cells_cons; [apply (handoff (MCell (ZLit 749496) 8 (ZLit Q_MIN))); vm_compute; reflexivity |].
+    change (749496 + Z.of_nat (csize (C8 (Z_to_bv 64 Q_MIN)))) with 749504.
+    apply (handoff (MCell (ZLit 749504) 8 (ZLit Q_CACHE))). vm_compute. reflexivity. }
+  assert (lock_bytes : rw_cells bsegs m AQ_MUTEX [C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0)]).
+  { apply rw_cells_cons; [apply (handoff (MCell (ZLit 749576) 1 (ZLit 0))); vm_compute; reflexivity |].
+    change (AQ_MUTEX + Z.of_nat (csize (C1 (Z_to_bv 8 0)))) with 749577.
+    apply rw_cells_cons; [apply (handoff (MCell (ZLit 749577) 1 (ZLit 0))); vm_compute; reflexivity |].
+    change (749577 + Z.of_nat (csize (C1 (Z_to_bv 8 0)))) with 749578.
+    apply (img_chunk V m asan_mem_facts);
+      [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
+      | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]. }
+  exact (conj limits lock_bytes).
+Qed.
 
   Theorem aqcache_glob_init : aqcache L m AQ_GCACHE [] [] 0.
 Proof.
-    unfold aqcache, AQ_GCACHE. aimg V m HM 0xb7010 [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)] IG.
-    split; [exact IG| exact Logic.I].
-  Qed.
+  unfold aqcache. split.
+  2: exact I.
+  apply (img_chunk V m asan_mem_facts); [exact HM | | | | |].
+  4, 5: vm_compute; congruence.
+  all: vm_compute; try reflexivity; repeat split.
+Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -324,18 +320,21 @@ Proof.
 
   Theorem aintal_init : aintal false m.
 Proof.
-    unfold aintal, AIA_FLAG.
-    aimg V m HM 0x149d88 [C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0)] I1.
-    split; [exact I1|]. split; [| intros; discriminate].
-    mimg V m HM 0xbb500 (0xbb500 + 0x81030) IMG. mwr V m HM (ZLit 724992) 5620432 W.
-    assert (EQN : Z.of_N (Z.to_N AIA_SIZE) = AIA_SIZE) by (apply Z2N.id; unfold AIA_SIZE; lia).
-    pose proof (img_zero_stk (Z.to_N (AIA_BASE - SEG3)) (Z.to_N AIA_SIZE) m AIA_BASE aia_scan) as K. rewrite EQN in K.
-    apply K.
-    - unfold AIA_BASE, SEG3. reflexivity.
-    - unfold AIA_BASE, AIA_SIZE. lia.
-    - intros i Hi. apply IMG. unfold AIA_BASE, AIA_SIZE in Hi. lia.
-    - eapply wr_at_sub; [exact W| unfold AIA_BASE; lia| unfold AIA_BASE; lia| unfold AIA_BASE, AIA_SIZE; lia].
-  Qed.
+  assert (no_overlay : forall i, AIA_BASE <= i < AIA_BASE + Z.of_N (Z.to_N AIA_SIZE) -> m (wa i) = None).
+  { apply (mimg_cover bsegs V m asan_mem_facts _ _ HM). vm_compute. reflexivity. }
+  assert (writable_seg : wr_at bsegs m 724992 5620432).
+  { apply (mfact_find bsegs V m asan_mem_facts (MWr (ZLit 724992) 5620432) HM). vm_compute. reflexivity. }
+  assert (writable_aia : wr_at bsegs m AIA_BASE (Z.of_N (Z.to_N AIA_SIZE))).
+  { apply (wr_at_sub m 724992 5620432 _ _ writable_seg); vm_compute; congruence. }
+  pose proof (img_zero_stk _ _ m AIA_BASE aia_scan ltac:(vm_compute; reflexivity)
+                ltac:(vm_compute; congruence) no_overlay writable_aia) as aia_stack.
+  unfold aintal. split; [| split].
+  - apply (img_chunk V m asan_mem_facts);
+      [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
+      | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ].
+  - exact aia_stack.
+  - intro never. discriminate never.
+Qed.
 End B.
 End CANSEC1.
 (* [comment removed for export] *)

@@ -210,7 +210,7 @@ Section DivP.
   Hypothesis CA : const_at L MSF 8.
 
   Notation SP := (bv_unsigned sp).
-  Notation SPc := (bv_unsigned sp + -288).
+  Notation SPc := (SP + -288).
   Notation POST := (mpi_binop_post usegs L HI ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc h LB dR (div_mpi_rem_R LB dR dA dB) lo m mo).
 
   (* [comment removed for export] *)
@@ -266,10 +266,11 @@ Section DivP.
 
   (* [comment removed for export] *)
   Notation CST := (cstate usegs L HI h LB mo m SP lo SPc dR es).
-  Local Ltac mc_inst H :=
-    exact (H usegs L HI HLS DIMG HND IMGC SW ROIMG h LB mo m SP lo SPc dR es
-             ACL ltac:(lia) ltac:(lia) HTOP (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 facts0)))))) ) DHI NSR WRR
-             (proj1 (proj2 (proj2 facts0))) (proj1 (proj2 facts0)) (proj1 (proj2 (proj2 (proj2 facts0)))) ESF_ok).
+  Local Ltac mc_inst X :=
+    refine (X usegs L HI HLS DIMG HND IMGC SW ROIMG h LB mo m SP lo SPc dR es ACL _ _ HTOP
+              (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 facts0))))))) DHI NSR WRR
+              (proj1 (proj2 (proj2 facts0))) (proj1 (proj2 facts0)) (proj1 (proj2 (proj2 (proj2 facts0)))) ESF_ok);
+    [ clear - SLO HLS; lia | clear - sp; lia ].
   Definition mc_init := ltac:(mc_inst @cs_init).
   Definition mc_final := ltac:(mc_inst @cs_final).
   Definition mc_binop_l := ltac:(mc_inst @cs_binop_l).
@@ -292,7 +293,7 @@ Section DivP.
   Definition mc_ivs_local := ltac:(mc_inst @cs_ivs_local).
   Definition mc_ivs_w := ltac:(mc_inst @cs_ivs_w).
 
-  Notation SPF := (Z_to_bv 64 (bv_unsigned sp + -288)).
+  Notation SPF := (Z_to_bv 64 SPc).
   Local Ltac dest_cs H :=
     (flat constr:(H) 21%nat; flclear H; intros HH HTc MF LOK SA LA MW WOK EXOK SUB COV FRS EXT PX SOK MI ST CH CHS CXH CXS).
   (* [comment removed for export] *)
@@ -330,14 +331,13 @@ Section DivP.
               (forall d, In d ls -> fst ac + Z.of_nat (cells_size (snd ac)) <= md_addr d \/ md_addr d + 16 <= fst ac))
            (frame cs0 tpc j68 tcs)
 (* [comment removed for export] *).
-  Proof.
-    intros ls cs0 tpc j68 tcs ADDRS SZ0 SZ1 SZ2.
-    assert (LOC : forall d, In d ls -> md_addr d = SP + -144 \/ md_addr d = SP + -160 \/ md_addr d = SP + -176 \/ md_addr d = SP + -192).
-    { intros d Hd. unfold locals_at in ADDRS. destruct ls as [|? [|? [|? [|? [|]]]]]; try discriminate ADDRS. cbn [map] in ADDRS. injection ADDRS as E1 E2 E3 E4.
-      destruct Hd as [<-|[<-|[<-|[<-|[]]]]]; lia. }
-    unfold frame, t2cells.
-    constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd cells_size csize Nat.add]; rewrite ?SZ0, ?SZ1, ?SZ2;
-      (split; [lia| split; [lia| intros d Hd; destruct (LOC d Hd) as [E|[E|[E|E]]]; rewrite E; lia]]).
+  Proof using ra sp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11.
+    intros ls cs0 tpc j68 tcs LOCS SZ0 SZ1 SZ2.
+    assert (ADDRS : forall d, In d ls -> SP + -192 <= md_addr d /\ md_addr d + 16 <= SP + -128).
+    { intros d IN. apply (in_map md_addr) in IN. unfold locals_at in LOCS. rewrite LOCS in IN. cbn in IN. lia. }
+    unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]];
+      cbn [fst snd]; rewrite ?SZ0, ?SZ1, ?SZ2; cbn [cells_size csize t2cells Nat.add];
+      (split; [lia| split; [lia|]]); intros d IN; pose proof (ADDRS d IN); lia.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -349,11 +349,15 @@ Section DivP.
     rw_cells usegs mq (SP + -128) tcs /\ rw_cells usegs mq (SP + -104) REGS
 (* [comment removed for export] *).
   Proof.
-    intros mq moq hq LBq ls dW cs0 tpc j68 tcs CS_. flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros _ _ _ _ _ _ CH _.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CHT.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CHT, CHR. auto.
+    intros mq moq hq LBq ls dW cs0 tpc j68 tcs STq.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (_ & _ & _ & _ & _ & _ & CELLS & _).
+    unfold frame in CELLS.
+    pose proof (Forall_inv CELLS) as C0. pose proof (Forall_inv_tail CELLS) as R1.
+    pose proof (Forall_inv R1) as C1. pose proof (Forall_inv_tail R1) as R2.
+    pose proof (Forall_inv R2) as C2. pose proof (Forall_inv_tail R2) as R3.
+    pose proof (Forall_inv R3) as C3. pose proof (Forall_inv (Forall_inv_tail R3)) as C4'.
+    cbn [fst snd] in C0, C1, C2, C3, C4'.
+    split; [exact C0|]. split; [exact C1|]. split; [exact C2|]. split; [exact C3| exact C4'].
   Qed.
 
   (* [comment removed for export] *)
@@ -368,18 +372,21 @@ Section DivP.
     cstate usegs L HI h LB mo m SP lo SPc dR es m1 moq hq LBq ls dW [] (frame cs0' tpc' j68 tcs) []
 (* [comment removed for export] *).
   Proof.
-    intros mq moq hq LBq ls dW cs0 tpc j68 tcs flo fhi m1 cs0' tpc' CS_ ADDRS MU WM MI1 ST1 F1 F2 C0 SZ0 C1 SZ1 SZ2.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros _ _ CH2 CHT CHR.
-    assert (LOC : forall d, In d ls -> md_addr d = SP + -144 \/ md_addr d = SP + -160 \/ md_addr d = SP + -176 \/ md_addr d = SP + -192).
-    { intros d Hd. unfold locals_at in ADDRS. destruct ls as [|? [|? [|? [|? [|]]]]]; try discriminate ADDRS. cbn [map] in ADDRS. injection ADDRS as Ea Eb Ec Ed.
-      destruct Hd as [<-|[<-|[<-|[<-|[]]]]]; lia. }
-    eapply (mc_hi_write _ _ _ _ _ _ _ _ _ flo fhi []); [exact CS_| exact MU| exact WM| exact MI1| exact ST1| lia| lia| constructor| reflexivity| | |].
-    - intros j d d' Hj Hj'. rewrite Hj in Hj'. injection Hj' as <-. left. split; [| reflexivity]. destruct (LOC d (nth_error_In _ _ Hj)) as [E|[E|[E|E]]]; rewrite E; lia.
-    - unfold frame. constructor; [exact C0| constructor; [exact C1| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd].
-      + eapply rw_cells_transport; [exact CH2| exact MU| exact WM| unfold t2cells; cbn; lia].
-      + eapply rw_cells_transport; [exact CHT| exact MU| exact WM| rewrite SZ2; cbn; lia].
-      + eapply rw_cells_transport; [exact CHR| exact MU| exact WM| cbn; lia].
-    - apply frame_chs; [exact ADDRS| exact SZ0| exact SZ1| exact SZ2].
+    intros mq moq hq LBq ls dW cs0 tpc j68 tcs flo fhi m1 cs0' tpc' STq LOCS MU1 WM1 MI1 ST1 FLO FHI NC0 SZ0 NTP SZ1 SZ2.
+    assert (ADDRS : forall d, In d ls -> SP + -192 <= md_addr d /\ md_addr d + 16 <= SP + -128).
+    { intros d IN. apply (in_map md_addr) in IN. unfold locals_at in LOCS. rewrite LOCS in IN. cbn in IN. lia. }
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ STq) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    apply (mc_hi_write mq moq hq LBq ls dW [] _ [] flo fhi [] m1 ls _ STq MU1 WM1 MI1 ST1);
+      [lia | lia | constructor | reflexivity | | | ].
+    - intros j d d' Ej Ej'. left. rewrite Ej in Ej'. injection Ej' as <-. split; [| reflexivity].
+      pose proof (ADDRS d (nth_error_In _ _ Ej)). lia.
+    - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd].
+      + exact NC0.
+      + exact NTP.
+      + eapply rw_cells_transport; [exact Ft2| exact MU1| exact WM1|]. cbn. lia.
+      + eapply rw_cells_transport; [exact Ftc| exact MU1| exact WM1|]. rewrite SZ2. cbn. lia.
+      + eapply rw_cells_transport; [exact REGq| exact MU1| exact WM1|]. cbn. lia.
+    - apply frame_chs; assumption.
   Qed.
 
   Lemma cs_frame_updT : forall (mq : mem) (moq : Model) (hq : HST usegs L HI) (LBq : list blk) (ls : list mpd) (dW : mpd)
@@ -391,19 +398,21 @@ Section DivP.
     cells_size cs0 = 68%nat -> cells_size tpc = 12%nat ->
     cstate usegs L HI h LB mo m SP lo SPc dR es m1 moq hq LBq ls dW [] (frame cs0 tpc j68 tcs') [].
   Proof.
-    intros mq moq hq LBq ls dW cs0 tpc j68 tcs flo fhi m1 tcs' CS_ ADDRS MU WM MI1 ST1 F1 F2 CT SZ2 SZ0 SZ1.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros CH0 CH1 CH2 _ CHR.
-    assert (LOC : forall d, In d ls -> md_addr d = SP + -144 \/ md_addr d = SP + -160 \/ md_addr d = SP + -176 \/ md_addr d = SP + -192).
-    { intros d Hd. unfold locals_at in ADDRS. destruct ls as [|? [|? [|? [|? [|]]]]]; try discriminate ADDRS. cbn [map] in ADDRS. injection ADDRS as Ea Eb Ec Ed.
-      destruct Hd as [<-|[<-|[<-|[<-|[]]]]]; lia. }
-    eapply (mc_hi_write _ _ _ _ _ _ _ _ _ flo fhi []); [exact CS_| exact MU| exact WM| exact MI1| exact ST1| lia| lia| constructor| reflexivity| | |].
-    - intros j d d' Hj Hj'. rewrite Hj in Hj'. injection Hj' as <-. left. split; [| reflexivity]. destruct (LOC d (nth_error_In _ _ Hj)) as [E|[E|[E|E]]]; rewrite E; lia.
-    - unfold frame. constructor; [| constructor; [| constructor; [| constructor; [exact CT| constructor; [| constructor]]]]]; cbn [fst snd].
-      + eapply rw_cells_transport; [exact CH0| exact MU| exact WM| rewrite SZ0; cbn; lia].
-      + eapply rw_cells_transport; [exact CH1| exact MU| exact WM| rewrite SZ1; cbn; lia].
-      + eapply rw_cells_transport; [exact CH2| exact MU| exact WM| unfold t2cells; cbn; lia].
-      + eapply rw_cells_transport; [exact CHR| exact MU| exact WM| cbn; lia].
-    - apply frame_chs; [exact ADDRS| exact SZ0| exact SZ1| exact SZ2].
+    intros mq moq hq LBq ls dW cs0 tpc j68 tcs flo fhi m1 tcs' STq LOCS MU1 WM1 MI1 ST1 FLO FHI NTC SZ2 SZ0 SZ1.
+    assert (ADDRS : forall d, In d ls -> SP + -192 <= md_addr d /\ md_addr d + 16 <= SP + -128).
+    { intros d IN. apply (in_map md_addr) in IN. unfold locals_at in LOCS. rewrite LOCS in IN. cbn in IN. lia. }
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ STq) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    apply (mc_hi_write mq moq hq LBq ls dW [] _ [] flo fhi [] m1 ls _ STq MU1 WM1 MI1 ST1);
+      [lia | lia | constructor | reflexivity | | | ].
+    - intros j d d' Ej Ej'. left. rewrite Ej in Ej'. injection Ej' as <-. split; [| reflexivity].
+      pose proof (ADDRS d (nth_error_In _ _ Ej)). lia.
+    - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd].
+      + eapply rw_cells_transport; [exact Fcs0| exact MU1| exact WM1|]. rewrite SZ0. cbn. lia.
+      + eapply rw_cells_transport; [exact Ftpc| exact MU1| exact WM1|]. rewrite SZ1. cbn. lia.
+      + eapply rw_cells_transport; [exact Ft2| exact MU1| exact WM1|]. cbn. lia.
+      + exact NTC.
+      + eapply rw_cells_transport; [exact REGq| exact MU1| exact WM1|]. cbn. lia.
+    - apply frame_chs; assumption.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -420,28 +429,50 @@ Section DivP.
           F (Z_to_bv 64 0x21120) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ NUL ADDRS SZ0 SZ1 Hr VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    destruct ls as [|dX [|dY [|dZ [|dT [|]]]]]; try discriminate ADDRS. unfold locals_at in ADDRS. cbn [map] in ADDRS. injection ADDRS as EX EY EZ ET.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 2%nat. intros CX _. flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 2%nat. intros CY _.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 2%nat. intros CZ _. flat constr:((struct_cells _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 2%nat. intros CT _.
-    rewrite EX in CX. rewrite EY in CY. rewrite EZ in CZ. rewrite ET in CT. unfold mpi_cells in CX, CY, CZ, CT.
-    flat constr:((mc_final _ _ _ _ _ _ _ _ CS_ NUL)) 11%nat. intros HH HT MF MW OUT BK PX SOK MI ST CH.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR. clear CH. unfold t2cells in CH2. unfold tcells in CH3.
-    do 14 zstep.
-    release_frame CH0 ST (bv_unsigned sp + -220). release_frame CH1 ST (bv_unsigned sp + -208). release_frame CH2 ST (bv_unsigned sp + -192).
-    release_frame CT ST (bv_unsigned sp + -176). release_frame CZ ST (bv_unsigned sp + -160).
-    release_frame CY ST (bv_unsigned sp + -144). release_frame CX ST (bv_unsigned sp + -128).
-    release_frame CH3 ST (bv_unsigned sp + -104). release_frame CHR ST (bv_unsigned sp).
-    zstep. zstep.
-    apply aevtM_done. unfold mpi_binop_post. do 14 eexists. exists mq, moq, hq, LBq, dW, r.
-    split; [rewrite ?Z_to_bv_bv_unsigned; reflexivity|].
-    split; [exact MI|]. split; [exact ST|]. split; [exact MF|]. split; [exact HT|]. split; [exact HH|]. split; [exact MW|]. split; [exact OUT|].
-    split; [exact PX|]. split; [exact SOK|]. split; [split; [exact Hr| intros _; exact VB]| exact BK].
+    intros mq moq hq LBq ls dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10
+      t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 STq ALLNUL LOCS SZcs SZtp RRANGE BPOS.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ STq) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    assert (FRlo : 0 <= SP + -288) by lia.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof (mc_final _ _ _ _ _ _ _ _ STq ALLNUL) as (_ & _ & _ & MWq & OUTq & KEEPq & PXq & _).
+    assert (STKfull : stk usegs mq lo SP).
+    { destruct STq as (_ & _ & _ & LOKq & _).
+      unfold locals_at in LOCS.
+      destruct ls as [|dX [|dY [|dZ [|dT [|dE rest]]]]]; try discriminate LOCS.
+      cbn in LOCS. injection LOCS as AX AY AZ AT.
+      pose proof (Forall_inv LOKq) as LX. pose proof (Forall_inv_tail LOKq) as LOK1.
+      pose proof (Forall_inv LOK1) as LY. pose proof (Forall_inv_tail LOK1) as LOK2.
+      pose proof (Forall_inv LOK2) as LZ. pose proof (Forall_inv (Forall_inv_tail LOK2)) as LT.
+      destruct LX as (((CX & _) & _) & _). destruct LY as (((CY & _) & _) & _).
+      destruct LZ as (((CZ & _) & _) & _). destruct LT as (((CT & _) & _) & _).
+      rewrite AX in CX. rewrite AY in CY. rewrite AZ in CZ. rewrite AT in CT.
+      apply (stk_release _ _ _ _ _ STKq) in Fcs0; [| lia]. rewrite SZcs in Fcs0.
+      replace (SP + -288 + Z.of_nat 68) with (SP + -220) in Fcs0 by lia.
+      apply (stk_release _ _ _ _ _ Fcs0) in Ftpc; [| lia]. rewrite SZtp in Ftpc.
+      replace (SP + -220 + Z.of_nat 12) with (SP + -208) in Ftpc by lia.
+      apply (stk_release _ _ _ _ _ Ftpc) in Ft2; [| lia]. cbn [cells_size csize t2cells Nat.add] in Ft2.
+      replace (SP + -208 + Z.of_nat 16) with (SP + -192) in Ft2 by lia.
+      apply (stk_release _ _ _ _ _ Ft2) in CT; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CT.
+      replace (SP + -192 + Z.of_nat 16) with (SP + -176) in CT by lia.
+      apply (stk_release _ _ _ _ _ CT) in CZ; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CZ.
+      replace (SP + -176 + Z.of_nat 16) with (SP + -160) in CZ by lia.
+      apply (stk_release _ _ _ _ _ CZ) in CY; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CY.
+      replace (SP + -160 + Z.of_nat 16) with (SP + -144) in CY by lia.
+      apply (stk_release _ _ _ _ _ CY) in CX; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CX.
+      replace (SP + -144 + Z.of_nat 16) with (SP + -128) in CX by lia.
+      apply (stk_release _ _ _ _ _ CX) in Ftc; [| lia]. cbn [cells_size csize tcells Nat.add] in Ftc.
+      replace (SP + -128 + Z.of_nat 24) with (SP + -104) in Ftc by lia.
+      apply (stk_release _ _ _ _ _ Ftc) in REGq; [| lia]. cbn [cells_size csize Nat.add] in REGq.
+      replace (SP + -104 + Z.of_nat 104) with SP in REGq by lia. exact REGq. }
+    do 16 zstep.
+    apply aevtM_done. unfold mpi_binop_post.
+    exists t0, t1, t2, a1, a2, a3, a4, a5, a6, a7, t3, t4, t5, t6, mq, moq, hq, LBq, dW, r.
+    split; [reflexivity|]. split; [exact MIq|]. split; [exact STKfull|]. split; [exact FRMq|].
+    split; [exact TOPq|]. split; [exact HPq|]. split; [exact MWq|]. split; [exact OUTq|].
+    split; [exact PXq|]. split; [exact SOKq|].
+    split; [split; [exact RRANGE| intros _; exact BPOS]| exact KEEPq].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -458,39 +489,39 @@ Section DivP.
           F (Z_to_bv 64 0x21114) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ NUL ADDRS SZ0 SZ1 Hr VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof CS_ as CS2. dest_cs CS2.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR.
-    flat constr:((rw_cells_forget _ _ _ _ CH1)) 2%nat. intros jk HTP. rewrite SZ1 in HTP.
-    zstep. zstep. zstep.
-    pose proof HPZ as SPZ. unfold platform_zeroize_stmt, U_PLATFORM_ZEROIZE in SPZ.
-    eapply aevtM_cut_evt; [exact MK| eapply SPZ with (A := bv_unsigned sp + -220) (n := 12) (lo := lo);
-      rewrite ?unsigned_lit by lia; try eassumption; try reflexivity|].
-    all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP; lia).
-    clear SPZ. cbv beta. intros ms' PO. unfold platform_zeroize_post in PO. destruct_exs PO.
-    flat constr:(PO) 7%nat. flclear PO. intros -> MU WM MI9 HZ ST9 SOK9. rewrite ?unsigned_lit in MU by lia. rewrite ?unsigned_lit in ST9 by lia.
-    lazymatch type of MI9 with mem_inv _ ?mx => rename mx into m9 end.
-    change (Z.to_nat 12) with 12%nat in HZ.
-    replace (ret_pc (Z_to_bv 64 0x21120)) with (Z_to_bv 64 0x21120) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    assert (CS9 : CST m9 moq hq LBq ls dW [] (frame cs0 [CB 12 (repeat (Z_to_bv 8 0) 12)] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (bv_unsigned sp + -220) (bv_unsigned sp + -220 + 12) [(bv_unsigned sp + -288 - 16, bv_unsigned sp + -288)]);
-        [exact CS_| exact MU| exact WM| exact MI9| exact ST9| lia| lia| constructor; [cbn; lia| constructor]| reflexivity| | |].
-      - intros j d d' Hj Hj'. rewrite Hj in Hj'. injection Hj' as <-. left. split; [| reflexivity].
-        destruct ls as [|dX [|dY [|dZ [|dT [|]]]]]; try discriminate ADDRS. unfold locals_at in ADDRS. cbn [map] in ADDRS. injection ADDRS as EX EY EZ ET.
-        destruct j as [|[|[|[|j]]]]; cbn in Hj; [injection Hj as <-; lia| injection Hj as <-; lia| injection Hj as <-; lia| injection Hj as <-; lia| destruct j; discriminate Hj].
-      - unfold frame. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd].
-        + eapply rw_cells_transport; [exact CH0| exact MU| exact WM| cbn; lia].
-        + exact HZ.
-        + eapply rw_cells_transport; [exact CH2| exact MU| exact WM| cbn; lia].
-        + eapply rw_cells_transport; [exact CH3| exact MU| exact WM| cbn; lia].
-        + eapply rw_cells_transport; [exact CHR| exact MU| exact WM| cbn; lia].
-      - apply frame_chs; [exact ADDRS| exact SZ0| reflexivity| reflexivity]. }
-    eapply L_ret; [exact CS9| exact NUL| exact ADDRS| exact SZ0| reflexivity| exact Hr| exact VB].
+    intros mq moq hq LBq ls dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10
+      t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 STq ALLNUL LOCS SZcs SZtp RRANGE BPOS.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ STq) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    do 3 zstep.
+    destruct (rw_cells_forget _ _ _ _ Ftpc) as [old Fold]. rewrite SZtp in Fold.
+    pose proof HPZ as PZ. unfold platform_zeroize_stmt, U_PLATFORM_ZEROIZE in PZ.
+    eapply aevtM_cut_evt; [exact MOKq | eapply PZ with (A := SP + -220) (n := 12) (lo := lo) (junk := old);
+      rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; lia |].
+    intros ms' PO. unfold platform_zeroize_post in PO.
+    destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & m2 & -> & MU2 & WM2 & MI2 & ZR2 & ST2 & SOK2).
+    rewrite ?(unsigned_lit (SP + -288)) in MU2, ST2 by lia.
+    replace (ret_pc (Z_to_bv 64 135456)) with (Z_to_bv 64 135456) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    assert (ADDRS : forall d, In d ls -> SP + -192 <= md_addr d /\ md_addr d + 16 <= SP + -128).
+    { intros d IN. apply (in_map md_addr) in IN. unfold locals_at in LOCS. rewrite LOCS in IN.
+      cbn in IN. lia. }
+    assert (CS2 : cstate usegs L HI h LB mo m SP lo SPc dR es m2 moq hq LBq ls dW []
+                    (frame cs0 [CB (Z.to_nat 12) (repeat (Z_to_bv 8 0) (Z.to_nat 12))] j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_hi_write mq moq hq LBq ls dW [] _ [] (SP + -220) (SP + -220 + 12) [(SP + -288 - 16, SP + -288)] m2 ls _ STq MU2 WM2 MI2 ST2);
+        [lia | lia | constructor; [cbn; lia| constructor] | reflexivity | | | ].
+      - intros j d d' Ej Ej'. left. rewrite Ej in Ej'. injection Ej' as <-. split; [| reflexivity].
+        pose proof (ADDRS d (nth_error_In _ _ Ej)). lia.
+      - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd].
+        + eapply rw_cells_transport; [exact Fcs0| exact MU2| exact WM2|]. rewrite SZcs. cbn. lia.
+        + exact ZR2.
+        + eapply rw_cells_transport; [exact Ft2| exact MU2| exact WM2|]. cbn. lia.
+        + eapply rw_cells_transport; [exact Ftc| exact MU2| exact WM2|]. cbn. lia.
+        + eapply rw_cells_transport; [exact REGq| exact MU2| exact WM2|]. cbn. lia.
+      - apply frame_chs; [exact LOCS| exact SZcs| reflexivity| reflexivity]. }
+    exact (L_ret m2 moq hq LBq ls dW cs0 _ j68 t160 t164 t168 t176 t180 r (Z_to_bv 64 135456) x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10
+             y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13 y14 CS2 ALLNUL LOCS SZcs eq_refl RRANGE BPOS).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -498,8 +529,10 @@ Section DivP.
   Lemma struct_cells4 : ltac2:(CDefT.buildp (gd_tbl_P_mpi_div_mpi ()) "Pmq,P,(3.&40.)(5.(3.&8.))Pmoq,$6.Phq,(7.$4<.VL,VHI,)PLBq,(8.$9.)Pls,(8.$:.)PdW,$:.PCS,(8.(42.$0.(8.$3<.)))Pi,$4=.Pd,$:.P,(4>.$4<.VL,VHI,Vh,VLB,Vmo,Vm,(13.&40.Vsp,)Vlo,(1>.(13.&40.Vsp,)-120.)VdR,$4;.R9.R8.R7.R6.R5.R4.(4?.$9.)R3.(4?.(42.$0.(8.$3<.))))P,(2.(5.$:.)(50.$:.R6.R3.)(51.$:.R2.))(3=.$4<.R;.(15.R3.)(3?.$3<.(5=.(25.&40.(17.R3.)))(3?.$3<.(62.(25.&40.(1>.(23.(13.&40.(25.&40.(53.R3.)))(33.+2.+10.))(18.(33.+2.+10.)(13.&40.(25.&40.(19.R3.)))))))(3?.$3<.(62.(54.R3.))(4?.$3<.)))))")
 (* [comment removed for export] *).
   Proof.
-    intros mq moq hq LBq ls dW CS i d CS_ Hi. flat constr:((struct_cells _ _ _ _ _ _ _ _ _ CS_ Hi)) 2%nat. intros HR _.
-    exact (rw_cells_join_C2C2 usegs _ _ [C8 (Z_to_bv 64 (md_p d))] _ _ [C4 (md_pad d)] HR).
+    intros mq moq hq LBq ls dW CS i d STq NTH.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ STq NTH) as (((CELLS & _) & _) & _).
+    unfold mpi_cells in CELLS.
+    exact (rw_cells_join_C2C2 usegs mq (md_addr d) [C8 (Z_to_bv 64 (md_p d))] _ _ [C4 (md_pad d)] CELLS).
   Qed.
 
   (* [comment removed for export] *)
@@ -515,77 +548,109 @@ Section DivP.
           F (Z_to_bv 64 0x210fc) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ OX OY OZ ADDRS SZ0 SZ1 Hr VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as EX EY EZ ET.
-    pose proof CS_ as CS2. dest_cs CS2. pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR. unfold t2cells in CH2.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 5%nat. intros CT SGT NT TNUL THEAP. rewrite ET in CT.
-    pose proof (struct_cells4 _ _ _ _ _ _ _ 3 dT CS_ eq_refl) as CT4. rewrite ET in CT4.
-    destruct (md_own dT) eqn:OT; [| | exfalso; exact (proj1 (proj2 (proj1 (Forall_forall _ _) LOK dT ltac:(right; right; right; left; reflexivity))) OT)].
-    - (* [comment removed for export] *)
-      flat constr:((TNUL eq_refl)) 2%nat. intros P0 N0. rewrite P0.
-      zstep; if_cases K0; zify_cond K0; [| exfalso; rewrite ?unsigned_lit in K0 by lia; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -192, bv_unsigned sp + -176)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-      clear CT. rewrite P0, N0 in CT4.
+    intros mq moq hq LBq dX dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x1 x2 x3 x4 x5 x6 x7 x8 x9 x10
+      t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin XN YN ZN LOCAT S68 S12 RBND BABS.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (HPin & TOPin & MFin & SOKin & MIin & STKin & _ & MOKin).
+    pose proof (bv_unsigned_in_range 64 sp) as SPbnd. change (bv_modulus 64) with (2^64) in SPbnd.
+    pose proof alloc_ceiling_pos as ACEpos.
+    pose proof LOCAT as ADDRS. unfold locals_at in ADDRS. cbn in ADDRS. injection ADDRS as AdX AdY AdZ AdT.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSin (eq_refl : nth_error [dX; dY; dZ; dT] 3 = Some dT))
+      as (((CELLT & _ & _ & LENT & NBT & OWNF) & SGT) & NST & _ & _ & _ & _ & HEAPF & _).
+    pose proof (struct_cells4 _ _ _ _ _ _ _ 3 dT CSin eq_refl) as JT.
+    rewrite AdT in CELLT, JT.
+    zstep.
+    destruct (md_own dT) eqn:OWNT.
+    - cbn iota in OWNF. destruct OWNF as (PT0 & NT0).
+      rewrite PT0. if_true.
+      clear CELLT.
+      pose proof (munch_refl [(SP + -192, SP + -176)] mq) as MUst.
+      pose proof (wmono_refl usegs mq) as WMst.
       zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -192) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dT)] H) as CT3 end.
-      assert (CS3 : CST m3 moq hq LBq [dX; dY; dZ; set_sg dT 1] dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (bv_unsigned sp + -192) (bv_unsigned sp + -176) []);
-          [exact CS_| exact MU| exact WM| assumption| assumption| lia| lia| constructor| reflexivity| | |].
-        - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-            [left; split; [lia| reflexivity]| left; split; [lia| reflexivity]| left; split; [lia| reflexivity]|].
-          right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite ET, P0, N0. unfold mpi_cells. exact CT3.
-        - unfold frame, t2cells. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd]; assumption.
-        - apply frame_chs; [| exact SZ0| exact SZ1| reflexivity]. unfold locals_at. cbn [map set_sg md_addr]. rewrite EX, EY, EZ, ET. reflexivity. }
-      eapply L_c4; [exact CS3| | | exact SZ0| exact SZ1| exact Hr| exact VB].
-      + constructor; [exact OX| constructor; [exact OY| constructor; [exact OZ| constructor; [cbn; exact OT| constructor]]]].
-      + unfold locals_at. cbn [map set_sg md_addr]. rewrite EX, EY, EZ, ET. reflexivity.
-    - (* [comment removed for export] *)
-      flat constr:((THEAP eq_refl)) 2%nat. intros P0 N1.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 8%nat. intros FLt6 _ _ _ _ _ HF _. flat constr:(FLt6) 2%nat. flclear FLt6. intros FLt7 _. flat constr:(FLt7) 6%nat. flclear FLt7. intros _ _ _ HL _ HO.
-      rewrite OT in HO. flat constr:(HO) 4%nat. flclear HO. intros _ INT _ U32. flat constr:((HF OT)) 5%nat. intros _ P4 _ _ _.
-      zstep; if_cases K0; zify_cond K0; [exfalso; clear - K0 P0 P4 ACL SLO SPB HLS; rewrite ?Z.mod_small in K0 by lia; lia|].
-      unfold mpi_cells in CT. zstep. zstep. zstep.
-      apply u32arr_cells in U32.
-      pose proof HZF as SZF. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in SZF.
+      pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CSin) as (Fc0 & Ftp & Ft2 & Ftc & Freg).
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dT)] JT) as JT2. clear JT.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dT)] JT2
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JT3. clear JT2.
+      assert (CSout : cstate usegs L HI h LB mo m SP lo SPc dR es m1 moq hq LBq [dX; dY; dZ; set_sg dT 1] dW []
+                        (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+      { apply (mc_hi_write mq moq hq LBq _ dW [] _ [] (SP + -192) (SP + -176) [] m1 [dX; dY; dZ; set_sg dT 1] _
+                 CSin MUst WMst MIin STKin); [lia | lia | constructor | reflexivity | | | ].
+        - intros j d d' Ej Ej'.
+          destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-.
+            right. exists 1. split; [reflexivity |]. split; [left; reflexivity |].
+            rewrite AdT, PT0, NT0. exact JT3.
+          + exfalso. destruct j; discriminate Ej.
+        - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd].
+          + eapply rw_cells_transport; [exact Fc0| exact MUst| exact WMst|]. rewrite S68. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftp| exact MUst| exact WMst|]. rewrite S12. cbn. lia.
+          + eapply rw_cells_transport; [exact Ft2| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftc| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Freg| exact MUst| exact WMst|]. cbn. lia.
+        - apply frame_chs; [exact LOCAT| exact S68| exact S12| reflexivity]. }
+      eapply (L_c4 m1 moq hq LBq _ dW cs0 tpc j68 t160 t164 t168 t176 t180 r); [exact CSout | | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+      repeat constructor; assumption.
+    - cbn iota in OWNF. destruct OWNF as (NGE1 & INB & PAL & LIMBS).
+      destruct (HEAPF eq_refl) as (PPOS & PEND & _ & _ & _).
+      assert (PNZ : bv_eqb (Z_to_bv 64 (md_p dT)) (Z_to_bv 64 0) = false).
+      { unfold bv_eqb. rewrite !unsigned_lit by lia. apply Z.eqb_neq. lia. }
+      rewrite PNZ. cbv_concl_iota.
+      unfold mpi_cells in CELLT. unfold MPI_MAX_LIMBS in NBT.
+      zstep. zstep.
+      assert (LEN4 : Z_to_bv 64 (bv_unsigned (zx16 (Z_to_bv 64 (md_n dT))) ≪ 2) = Z_to_bv 64 (4 * md_n dT)).
+      { unfold zx16. rewrite (unsigned_lit (md_n dT)) by lia. rewrite (Z.mod_small (md_n dT)) by lia.
+        rewrite (unsigned_lit (md_n dT)) by lia. rewrite Z.shiftl_mul_pow2 by lia. f_equal. lia. }
+      rewrite LEN4. clear LEN4 CELLT.
+      zstep.
+      pose proof HZF as ZFS. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in ZFS.
+      pose proof (u32arr_cells _ _ _ _ LIMBS) as LBYTES.
+      replace (4 * length (md_limbs dT))%nat with (Z.to_nat (4 * md_n dT)) in LBYTES by lia.
       eapply aevtM_cut.
-      { eapply SZF with (buf := md_p dT) (len := 4 * md_n dT) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc NT; unfold MPI_MAX_LIMBS in *; lia).
-        all: try (right; split; [exact INT| replace (Z.to_nat (4 * md_n dT)) with (4 * length (md_limbs dT))%nat by lia; exact U32]).
-        all: unfold MPI_MAX_LIMBS in NT; rewrite zx16_small by lia; rewrite unsigned_lit by lia; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia. }
-      clear SZF. cbv beta. intros ms' mo' PO. unfold zeroize_and_free_post in PO.
-      flat constr:(PO) 26%nat. flclear PO. intros y0 y1 y2 ya0 ya1 ya2 ya3 ya4 ya5 ya6 ya7 y3 y4 y5 y6 m2 mo2 h2 E MI2 ST2 MF2 HT2 HH2 PX2 SOK2.
-      injection E as -> ->. rewrite ?unsigned_lit in ST2 by lia. rewrite ?unsigned_lit in PX2 by lia.
-      replace (ret_pc (Z_to_bv 64 0x2110c)) with (Z_to_bv 64 0x2110c) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2.
-      (* [comment removed for export] *)
-      pose proof (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2 CT4 ltac:(apply client_range_stack; cbn; lia) ltac:(cbn; lia)) as CT2.
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH0; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ0; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH1; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ1; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH2; [| apply client_range_stack; cbn; lia| cbn; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CHR; [| apply client_range_stack; cbn; lia| cbn; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -192, bv_unsigned sp + -176)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-      pose proof (conj HH2 I) as HH2c. pose proof (conj SOK2 I) as SOK2c. pose proof (conj MI2 I) as MI2c. pose proof (conj ST2 I) as ST2c.
-      clear CT CT4 U32.
+      { eapply ZFS with (buf := md_p dT) (len := 4 * md_n dT) (lo := lo) (junk := u32s (md_limbs dT)).
+        - exact HPin.
+        - right. split; [exact INB | exact LBYTES].
+        - lia.
+        - rewrite unsigned_lit by lia. exact STKin.
+        - rewrite unsigned_lit by lia. lia.
+        - exact ACL.
+        - rewrite unsigned_lit by lia. rewrite TOPin. lia.
+        - rewrite unsigned_lit by lia. lia.
+        - exact DHI.
+        - exact TP.
+        - exact MIin.
+        - exact SOKin.
+        - exact CA.
+        - reflexivity.
+        - reflexivity. }
+      intros ms' mo' ZPOST. unfold zeroize_and_free_post in ZPOST.
+      destruct ZPOST as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & m2 & mo2 & h2
+                         & ECFG & MI2 & STK2 & MF2 & TOP2 & HP2 & PX2 & SOK2).
+      injection ECFG as -> ->.
+      rewrite unsigned_lit in STK2, PX2 by lia.
+      replace (ret_pc (Z_to_bv 64 135436)) with (Z_to_bv 64 135436) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
+      pose proof (heap_presx_rw_cells _ _ _ _ _ _ _ _ _ PX2 JT ltac:(intros a Ha; left; cbn in Ha; lia)
+                    ltac:(cbn; split; [lia | exact I])) as JT2.
+      clear JT.
+      pose proof (fun m3 => mc_release mq moq hq LBq _ dW [] _ [] 3 dT m2 mo2 h2 m3 (md_pad dT) CSin eq_refl OWNT
+                              HP2 TOP2 MF2 PX2 SOK2 MI2 STK2) as REL.
+      pose proof (heap_mok _ _ _ _ _ _ _ HP2) as MOK2.
+      clear HP2 PX2.
+      pose proof (munch_refl [(SP + -192, SP + -176)] m2) as MUst.
+      pose proof (wmono_refl usegs m2) as WMst.
       zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -192) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dT)] H) as CT3 end.
-      flat constr:(HH2c) 2%nat. flclear HH2c. intros HH2' _. flat constr:(SOK2c) 2%nat. flclear SOK2c. intros SOK2' _. flat constr:(MI2c) 2%nat. flclear MI2c. intros MI2' _. flat constr:(ST2c) 2%nat. flclear ST2c. intros ST2' _.
-      assert (MU' : munch [(md_addr dT, md_addr dT + 16)] m2 m3) by (rewrite ET; replace (bv_unsigned sp + -192 + 16) with (bv_unsigned sp + -176) by lia; exact MU).
-      assert (CS3 : CST m3 mo2 h2 (lb_remove (md_p dT) LBq) (set_nth 3 [dX; dY; dZ; dT] (mkMPD (md_addr dT) 1 0 0 [] (md_pad dT) LNull)) dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_release _ _ _ _ _ _ _ _ _ 3 dT m2); [exact CS_| reflexivity| exact OT| exact HH2'| exact HT2| exact MF2| exact PX2| exact SOK2'| exact MI2'| exact ST2'| exact MU'| exact WM| assumption|].
-        rewrite ET. unfold mpi_cells. exact CT3. }
-      cbn [set_nth] in CS3.
-      eapply L_c4; [exact CS3| | | exact SZ0| exact SZ1| exact Hr| exact VB].
-      + constructor; [exact OX| constructor; [exact OY| constructor; [exact OZ| constructor; [cbn; reflexivity| constructor]]]].
-      + unfold locals_at. cbn [map md_addr]. rewrite EX, EY, EZ, ET. reflexivity.
+      match goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m3 end.
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dT)] JT2) as JT3. clear JT2.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dT)] JT3
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JT4. clear JT3.
+      rewrite <- AdT in JT4.
+      assert (MU3 : munch [(md_addr dT, md_addr dT + 16)] m2 m3).
+      { rewrite AdT. replace (SP + -192 + 16) with (SP + -176) by lia. exact MUst. }
+      pose proof (REL m3 MU3 WMst MI2 JT4) as CSout. cbn [set_nth] in CSout.
+      eapply (L_c4 m3 mo2 h2 _ _ dW cs0 tpc j68 t160 t164 t168 t176 t180 r); [exact CSout | | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+      repeat constructor; assumption.
+    - exfalso. exact (NST eq_refl).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -602,76 +667,116 @@ Section DivP.
           F (Z_to_bv 64 0x210dc) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ OX OY ADDRS SZ0 SZ1 Hr VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    pose proof CS_ as CS2. dest_cs CS2. pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR. unfold t2cells in CH2.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 5%nat. intros CT SGT NT TNUL THEAP. rewrite E2 in CT.
-    pose proof (struct_cells4 _ _ _ _ _ _ _ 2 dZ CS_ eq_refl) as CT4. rewrite E2 in CT4.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 2%nat. intros CN _. rewrite E3 in CN. unfold mpi_cells in CN.
-    destruct (md_own dZ) eqn:OT; [| | exfalso; exact (proj1 (proj2 (proj1 (Forall_forall _ _) LOK dZ ltac:(cbn; tauto))) OT)].
-    - (* [comment removed for export] *)
-      flat constr:((TNUL eq_refl)) 2%nat. intros P0 N0. rewrite P0.
-      zstep; if_cases K0; zify_cond K0; [| exfalso; rewrite ?unsigned_lit in K0 by lia; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -176, bv_unsigned sp + -160)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-      clear CT. rewrite P0, N0 in CT4.
-      zstep. zstep. zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -176) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dZ)] H) as CT3 end.
-      assert (CS3 : CST m3 moq hq LBq [dX; dY; set_sg dZ 1; dT] dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (bv_unsigned sp + -176) (bv_unsigned sp + -160) []);
-          [exact CS_| exact MU| exact WM| assumption| assumption| lia| lia| constructor| reflexivity| | |].
-        - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-            try (left; split; [lia| reflexivity]).
-          right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite E2, P0, N0. unfold mpi_cells. exact CT3.
-        - unfold frame, t2cells. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd]; assumption.
-        - apply frame_chs; [| exact SZ0| exact SZ1| reflexivity]. unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity. }
-      eapply L_c3; [exact CS3| exact OX| exact OY| cbn; exact OT| | exact SZ0| exact SZ1| exact Hr| exact VB].
-      unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity.
-    - (* [comment removed for export] *)
-      flat constr:((THEAP eq_refl)) 2%nat. intros P0 N1.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 8%nat. intros FLt8 _ _ _ _ _ HF _. flat constr:(FLt8) 2%nat. flclear FLt8. intros FLt9 _. flat constr:(FLt9) 6%nat. flclear FLt9. intros _ _ _ HL _ HO.
-      rewrite OT in HO. flat constr:(HO) 4%nat. flclear HO. intros _ INT _ U32. flat constr:((HF OT)) 5%nat. intros _ P4 _ _ _.
-      zstep; if_cases K0; zify_cond K0; [exfalso; clear - K0 P0 P4 ACL SLO SPB HLS; rewrite ?Z.mod_small in K0 by lia; lia|].
-      unfold mpi_cells in CT. zstep. zstep. zstep.
-      apply u32arr_cells in U32.
-      pose proof HZF as SZF. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in SZF.
+    intros mq moq hq LBq dX dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x1 x2 x3 x4 x5 x6 x7 x8 x9 x10
+      t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin XN YN LOCAT S68 S12 RBND BABS.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (HPin & TOPin & MFin & SOKin & MIin & STKin & _ & MOKin).
+    pose proof (bv_unsigned_in_range 64 sp) as SPbnd. change (bv_modulus 64) with (2^64) in SPbnd.
+    pose proof alloc_ceiling_pos as ACEpos.
+    pose proof LOCAT as ADDRS. unfold locals_at in ADDRS. cbn in ADDRS. injection ADDRS as AdX AdY AdZ AdT.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSin (eq_refl : nth_error [dX; dY; dZ; dT] 3 = Some dT))
+      as (((TCELL & _) & _) & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSin (eq_refl : nth_error [dX; dY; dZ; dT] 2 = Some dZ))
+      as (((CELLZ & _ & _ & LENZ & NBZ & OWNF) & SGZ) & NSZ & _ & _ & _ & _ & HEAPF & _).
+    pose proof (struct_cells4 _ _ _ _ _ _ _ 2 dZ CSin eq_refl) as JZ.
+    rewrite AdZ in CELLZ, JZ. rewrite AdT in TCELL. unfold mpi_cells in TCELL.
+    zstep.
+    destruct (md_own dZ) eqn:OWNZ.
+    - cbn iota in OWNF. destruct OWNF as (PZ0 & NZ0).
+      rewrite PZ0. if_true.
+      clear CELLZ.
+      zstep. clear TCELL. zstep.
+      pose proof (munch_refl [(SP + -176, SP + -160)] mq) as MUst.
+      pose proof (wmono_refl usegs mq) as WMst.
+      zstep. zstep.
+      match goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m3 end.
+      pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CSin) as (Fc0 & Ftp & Ft2 & Ftc & Freg).
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dZ)] JZ) as JZ2. clear JZ.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dZ)] JZ2
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JZ3. clear JZ2.
+      assert (CSout : cstate usegs L HI h LB mo m SP lo SPc dR es m3 moq hq LBq [dX; dY; set_sg dZ 1; dT] dW []
+                        (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+      { apply (mc_hi_write mq moq hq LBq _ dW [] _ [] (SP + -176) (SP + -160) [] m3 [dX; dY; set_sg dZ 1; dT] _
+                 CSin MUst WMst MIin STKin); [lia | lia | constructor | reflexivity | | | ].
+        - intros j d d' Ej Ej'.
+          destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-.
+            right. exists 1. split; [reflexivity |]. split; [left; reflexivity |].
+            rewrite AdZ, PZ0, NZ0. exact JZ3.
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + exfalso. destruct j; discriminate Ej.
+        - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd].
+          + eapply rw_cells_transport; [exact Fc0| exact MUst| exact WMst|]. rewrite S68. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftp| exact MUst| exact WMst|]. rewrite S12. cbn. lia.
+          + eapply rw_cells_transport; [exact Ft2| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftc| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Freg| exact MUst| exact WMst|]. cbn. lia.
+        - apply frame_chs; [exact LOCAT| exact S68| exact S12| reflexivity]. }
+      eapply (L_c3 m3 moq hq LBq dX dY _ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r);
+        [exact CSout | exact XN | exact YN | exact OWNZ | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+    - cbn iota in OWNF. destruct OWNF as (NGE1 & INB & PAL & LIMBS).
+      destruct (HEAPF eq_refl) as (PPOS & PEND & _ & _ & _).
+      assert (PNZ : bv_eqb (Z_to_bv 64 (md_p dZ)) (Z_to_bv 64 0) = false).
+      { unfold bv_eqb. rewrite !unsigned_lit by lia. apply Z.eqb_neq. lia. }
+      rewrite PNZ. cbv_concl_iota.
+      unfold mpi_cells in CELLZ. unfold MPI_MAX_LIMBS in NBZ.
+      zstep. zstep.
+      assert (LEN4 : Z_to_bv 64 (bv_unsigned (zx16 (Z_to_bv 64 (md_n dZ))) ≪ 2) = Z_to_bv 64 (4 * md_n dZ)).
+      { unfold zx16. rewrite (unsigned_lit (md_n dZ)) by lia. rewrite (Z.mod_small (md_n dZ)) by lia.
+        rewrite (unsigned_lit (md_n dZ)) by lia. rewrite Z.shiftl_mul_pow2 by lia. f_equal. lia. }
+      rewrite LEN4. clear LEN4 CELLZ.
+      zstep.
+      pose proof HZF as ZFS. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in ZFS.
+      pose proof (u32arr_cells _ _ _ _ LIMBS) as LBYTES.
+      replace (4 * length (md_limbs dZ))%nat with (Z.to_nat (4 * md_n dZ)) in LBYTES by lia.
       eapply aevtM_cut.
-      { eapply SZF with (buf := md_p dZ) (len := 4 * md_n dZ) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc NT; unfold MPI_MAX_LIMBS in *; lia).
-        all: try (right; split; [exact INT| replace (Z.to_nat (4 * md_n dZ)) with (4 * length (md_limbs dZ))%nat by lia; exact U32]).
-        all: unfold MPI_MAX_LIMBS in NT; rewrite zx16_small by lia; rewrite unsigned_lit by lia; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia. }
-      clear SZF. cbv beta. intros ms' mo' PO. unfold zeroize_and_free_post in PO.
-      flat constr:(PO) 26%nat. flclear PO. intros y0 y1 y2 ya0 ya1 ya2 ya3 ya4 ya5 ya6 ya7 y3 y4 y5 y6 m2 mo2 h2 E MI2 ST2 MF2 HT2 HH2 PX2 SOK2.
-      injection E as -> ->. rewrite ?unsigned_lit in ST2 by lia. rewrite ?unsigned_lit in PX2 by lia.
-      replace (ret_pc (Z_to_bv 64 0x210ec)) with (Z_to_bv 64 0x210ec) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2.
-      pose proof (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2 CT4 ltac:(apply client_range_stack; cbn; lia) ltac:(cbn; lia)) as CT2.
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CN; [| apply client_range_stack; cbn; lia| cbn; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH0; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ0; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH1; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ1; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH2; [| apply client_range_stack; cbn; lia| cbn; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CHR; [| apply client_range_stack; cbn; lia| cbn; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -176, bv_unsigned sp + -160)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-      pose proof (conj HH2 I) as HH2c. pose proof (conj SOK2 I) as SOK2c. pose proof (conj MI2 I) as MI2c. pose proof (conj ST2 I) as ST2c.
-      clear CT CT4 U32.
-      zstep. zstep. zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -176) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dZ)] H) as CT3 end.
-      flat constr:(HH2c) 2%nat. flclear HH2c. intros HH2' _. flat constr:(SOK2c) 2%nat. flclear SOK2c. intros SOK2' _. flat constr:(MI2c) 2%nat. flclear MI2c. intros MI2' _. flat constr:(ST2c) 2%nat. flclear ST2c. intros ST2' _.
-      assert (MU' : munch [(md_addr dZ, md_addr dZ + 16)] m2 m3) by (rewrite E2; replace (bv_unsigned sp + -176 + 16) with (bv_unsigned sp + -160) by lia; exact MU).
-      assert (CS3 : CST m3 mo2 h2 (lb_remove (md_p dZ) LBq) (set_nth 2 [dX; dY; dZ; dT] (mkMPD (md_addr dZ) 1 0 0 [] (md_pad dZ) LNull)) dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_release _ _ _ _ _ _ _ _ _ 2 dZ m2); [exact CS_| reflexivity| exact OT| exact HH2'| exact HT2| exact MF2| exact PX2| exact SOK2'| exact MI2'| exact ST2'| exact MU'| exact WM| assumption|].
-        rewrite E2. unfold mpi_cells. exact CT3. }
-      cbn [set_nth] in CS3.
-      eapply L_c3; [exact CS3| exact OX| exact OY| cbn; reflexivity| | exact SZ0| exact SZ1| exact Hr| exact VB].
-      unfold locals_at. cbn [map md_addr]. rewrite E0, E1, E2, E3. reflexivity.
+      { eapply ZFS with (buf := md_p dZ) (len := 4 * md_n dZ) (lo := lo) (junk := u32s (md_limbs dZ)).
+        - exact HPin.
+        - right. split; [exact INB | exact LBYTES].
+        - lia.
+        - rewrite unsigned_lit by lia. exact STKin.
+        - rewrite unsigned_lit by lia. lia.
+        - exact ACL.
+        - rewrite unsigned_lit by lia. rewrite TOPin. lia.
+        - rewrite unsigned_lit by lia. lia.
+        - exact DHI.
+        - exact TP.
+        - exact MIin.
+        - exact SOKin.
+        - exact CA.
+        - reflexivity.
+        - reflexivity. }
+      intros ms' mo' ZPOST. unfold zeroize_and_free_post in ZPOST.
+      destruct ZPOST as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & m2 & mo2 & h2
+                         & ECFG & MI2 & STK2 & MF2 & TOP2 & HP2 & PX2 & SOK2).
+      injection ECFG as -> ->.
+      rewrite unsigned_lit in STK2, PX2 by lia.
+      replace (ret_pc (Z_to_bv 64 135404)) with (Z_to_bv 64 135404) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
+      pose proof (heap_presx_rw_cells _ _ _ _ _ _ _ _ _ PX2 JZ ltac:(intros a Ha; left; cbn in Ha; lia)
+                    ltac:(cbn; split; [lia | exact I])) as JZ2.
+      pose proof (heap_presx_rw_cells _ _ _ _ _ _ _ _ _ PX2 TCELL ltac:(intros a Ha; left; cbn in Ha; lia)
+                    ltac:(cbn; split; [lia | exact I])) as TCELL2.
+      clear JZ TCELL.
+      pose proof (fun m3 => mc_release mq moq hq LBq _ dW [] _ [] 2 dZ m2 mo2 h2 m3 (md_pad dZ) CSin eq_refl OWNZ
+                              HP2 TOP2 MF2 PX2 SOK2 MI2 STK2) as REL.
+      pose proof (heap_mok _ _ _ _ _ _ _ HP2) as MOK2.
+      clear HP2 PX2.
+      zstep. clear TCELL2. zstep.
+      pose proof (munch_refl [(SP + -176, SP + -160)] m2) as MUst.
+      pose proof (wmono_refl usegs m2) as WMst.
+      zstep. zstep.
+      match goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m3 end.
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dZ)] JZ2) as JZ3. clear JZ2.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dZ)] JZ3
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JZ4. clear JZ3.
+      rewrite <- AdZ in JZ4.
+      assert (MU3 : munch [(md_addr dZ, md_addr dZ + 16)] m2 m3).
+      { rewrite AdZ. replace (SP + -176 + 16) with (SP + -160) by lia. exact MUst. }
+      pose proof (REL m3 MU3 WMst MI2 JZ4) as CSout. cbn [set_nth] in CSout.
+      eapply (L_c3 m3 mo2 h2 _ dX dY _ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r);
+        [exact CSout | exact XN | exact YN | reflexivity | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+    - exfalso. exact (NSZ eq_refl).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -688,76 +793,116 @@ Section DivP.
           F (Z_to_bv 64 0x210c0) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ OX ADDRS SZ0 SZ1 Hr VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    pose proof CS_ as CS2. dest_cs CS2. pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR. unfold t2cells in CH2.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 5%nat. intros CT SGT NT TNUL THEAP. rewrite E1 in CT.
-    pose proof (struct_cells4 _ _ _ _ _ _ _ 1 dY CS_ eq_refl) as CT4. rewrite E1 in CT4.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 2%nat. intros CN _. rewrite E2 in CN. unfold mpi_cells in CN.
-    destruct (md_own dY) eqn:OT; [| | exfalso; exact (proj1 (proj2 (proj1 (Forall_forall _ _) LOK dY ltac:(cbn; tauto))) OT)].
-    - (* [comment removed for export] *)
-      flat constr:((TNUL eq_refl)) 2%nat. intros P0 N0. rewrite P0.
-      zstep; if_cases K0; zify_cond K0; [| exfalso; rewrite ?unsigned_lit in K0 by lia; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -160, bv_unsigned sp + -144)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-      clear CT. rewrite P0, N0 in CT4.
-      zstep. zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -160) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dY)] H) as CT3 end.
-      assert (CS3 : CST m3 moq hq LBq [dX; set_sg dY 1; dZ; dT] dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (bv_unsigned sp + -160) (bv_unsigned sp + -144) []);
-          [exact CS_| exact MU| exact WM| assumption| assumption| lia| lia| constructor| reflexivity| | |].
-        - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-            try (left; split; [lia| reflexivity]).
-          right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite E1, P0, N0. unfold mpi_cells. exact CT3.
-        - unfold frame, t2cells. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd]; assumption.
-        - apply frame_chs; [| exact SZ0| exact SZ1| reflexivity]. unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity. }
-      eapply L_c2; [exact CS3| exact OX| cbn; exact OT| | exact SZ0| exact SZ1| exact Hr| exact VB].
-      unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity.
-    - (* [comment removed for export] *)
-      flat constr:((THEAP eq_refl)) 2%nat. intros P0 N1.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros FLt10 _ _ _ _ _ HF _. flat constr:(FLt10) 2%nat. flclear FLt10. intros FLt11 _. flat constr:(FLt11) 6%nat. flclear FLt11. intros _ _ _ HL _ HO.
-      rewrite OT in HO. flat constr:(HO) 4%nat. flclear HO. intros _ INT _ U32. flat constr:((HF OT)) 5%nat. intros _ P4 _ _ _.
-      zstep; if_cases K0; zify_cond K0; [exfalso; clear - K0 P0 P4 ACL SLO SPB HLS; rewrite ?Z.mod_small in K0 by lia; lia|].
-      unfold mpi_cells in CT. zstep. zstep. zstep.
-      apply u32arr_cells in U32.
-      pose proof HZF as SZF. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in SZF.
+    intros mq moq hq LBq dX dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x1 x2 x3 x4 x5 x6 x7 x8 x9 x10
+      t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin XN LOCAT S68 S12 RBND BABS.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (HPin & TOPin & MFin & SOKin & MIin & STKin & _ & MOKin).
+    pose proof (bv_unsigned_in_range 64 sp) as SPbnd. change (bv_modulus 64) with (2^64) in SPbnd.
+    pose proof alloc_ceiling_pos as ACEpos.
+    pose proof LOCAT as ADDRS. unfold locals_at in ADDRS. cbn in ADDRS. injection ADDRS as AdX AdY AdZ AdT.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSin (eq_refl : nth_error [dX; dY; dZ; dT] 2 = Some dZ))
+      as (((ZCELL & _) & _) & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSin (eq_refl : nth_error [dX; dY; dZ; dT] 1 = Some dY))
+      as (((CELLY & _ & _ & LENY & NBY & OWNF) & SGY) & NSY & _ & _ & _ & _ & HEAPF & _).
+    pose proof (struct_cells4 _ _ _ _ _ _ _ 1 dY CSin eq_refl) as JY.
+    rewrite AdY in CELLY, JY. rewrite AdZ in ZCELL. unfold mpi_cells in ZCELL.
+    zstep.
+    destruct (md_own dY) eqn:OWNY.
+    - cbn iota in OWNF. destruct OWNF as (PY0 & NY0).
+      rewrite PY0. if_true.
+      clear CELLY.
+      zstep. clear ZCELL.
+      pose proof (munch_refl [(SP + -160, SP + -144)] mq) as MUst.
+      pose proof (wmono_refl usegs mq) as WMst.
+      zstep. zstep.
+      match goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m3 end.
+      pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CSin) as (Fc0 & Ftp & Ft2 & Ftc & Freg).
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dY)] JY) as JY2. clear JY.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dY)] JY2
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JY3. clear JY2.
+      assert (CSout : cstate usegs L HI h LB mo m SP lo SPc dR es m3 moq hq LBq [dX; set_sg dY 1; dZ; dT] dW []
+                        (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+      { apply (mc_hi_write mq moq hq LBq _ dW [] _ [] (SP + -160) (SP + -144) [] m3 [dX; set_sg dY 1; dZ; dT] _
+                 CSin MUst WMst MIin STKin); [lia | lia | constructor | reflexivity | | | ].
+        - intros j d d' Ej Ej'.
+          destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-.
+            right. exists 1. split; [reflexivity |]. split; [left; reflexivity |].
+            rewrite AdY, PY0, NY0. exact JY3.
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + exfalso. destruct j; discriminate Ej.
+        - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd].
+          + eapply rw_cells_transport; [exact Fc0| exact MUst| exact WMst|]. rewrite S68. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftp| exact MUst| exact WMst|]. rewrite S12. cbn. lia.
+          + eapply rw_cells_transport; [exact Ft2| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftc| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Freg| exact MUst| exact WMst|]. cbn. lia.
+        - apply frame_chs; [exact LOCAT| exact S68| exact S12| reflexivity]. }
+      eapply (L_c2 m3 moq hq LBq dX _ dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r);
+        [exact CSout | exact XN | exact OWNY | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+    - cbn iota in OWNF. destruct OWNF as (NGE1 & INB & PAL & LIMBS).
+      destruct (HEAPF eq_refl) as (PPOS & PEND & _ & _ & _).
+      assert (PNZ : bv_eqb (Z_to_bv 64 (md_p dY)) (Z_to_bv 64 0) = false).
+      { unfold bv_eqb. rewrite !unsigned_lit by lia. apply Z.eqb_neq. lia. }
+      rewrite PNZ. cbv_concl_iota.
+      unfold mpi_cells in CELLY. unfold MPI_MAX_LIMBS in NBY.
+      zstep. zstep.
+      assert (LEN4 : Z_to_bv 64 (bv_unsigned (zx16 (Z_to_bv 64 (md_n dY))) ≪ 2) = Z_to_bv 64 (4 * md_n dY)).
+      { unfold zx16. rewrite (unsigned_lit (md_n dY)) by lia. rewrite (Z.mod_small (md_n dY)) by lia.
+        rewrite (unsigned_lit (md_n dY)) by lia. rewrite Z.shiftl_mul_pow2 by lia. f_equal. lia. }
+      rewrite LEN4. clear LEN4 CELLY.
+      zstep.
+      pose proof HZF as ZFS. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in ZFS.
+      pose proof (u32arr_cells _ _ _ _ LIMBS) as LBYTES.
+      replace (4 * length (md_limbs dY))%nat with (Z.to_nat (4 * md_n dY)) in LBYTES by lia.
       eapply aevtM_cut.
-      { eapply SZF with (buf := md_p dY) (len := 4 * md_n dY) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc NT; unfold MPI_MAX_LIMBS in *; lia).
-        all: try (right; split; [exact INT| replace (Z.to_nat (4 * md_n dY)) with (4 * length (md_limbs dY))%nat by lia; exact U32]).
-        all: unfold MPI_MAX_LIMBS in NT; rewrite zx16_small by lia; rewrite unsigned_lit by lia; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia. }
-      clear SZF. cbv beta. intros ms' mo' PO. unfold zeroize_and_free_post in PO.
-      flat constr:(PO) 26%nat. flclear PO. intros y0 y1 y2 ya0 ya1 ya2 ya3 ya4 ya5 ya6 ya7 y3 y4 y5 y6 m2 mo2 h2 E MI2 ST2 MF2 HT2 HH2 PX2 SOK2.
-      injection E as -> ->. rewrite ?unsigned_lit in ST2 by lia. rewrite ?unsigned_lit in PX2 by lia.
-      replace (ret_pc (Z_to_bv 64 0x210d0)) with (Z_to_bv 64 0x210d0) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2.
-      pose proof (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2 CT4 ltac:(apply client_range_stack; cbn; lia) ltac:(cbn; lia)) as CT2.
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CN; [| apply client_range_stack; cbn; lia| cbn; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH0; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ0; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH1; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ1; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH2; [| apply client_range_stack; cbn; lia| cbn; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CHR; [| apply client_range_stack; cbn; lia| cbn; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -160, bv_unsigned sp + -144)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-      pose proof (conj HH2 I) as HH2c. pose proof (conj SOK2 I) as SOK2c. pose proof (conj MI2 I) as MI2c. pose proof (conj ST2 I) as ST2c.
-      clear CT CT4 U32.
-      zstep. zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -160) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dY)] H) as CT3 end.
-      flat constr:(HH2c) 2%nat. flclear HH2c. intros HH2' _. flat constr:(SOK2c) 2%nat. flclear SOK2c. intros SOK2' _. flat constr:(MI2c) 2%nat. flclear MI2c. intros MI2' _. flat constr:(ST2c) 2%nat. flclear ST2c. intros ST2' _.
-      assert (MU' : munch [(md_addr dY, md_addr dY + 16)] m2 m3) by (rewrite E1; replace (bv_unsigned sp + -160 + 16) with (bv_unsigned sp + -144) by lia; exact MU).
-      assert (CS3 : CST m3 mo2 h2 (lb_remove (md_p dY) LBq) (set_nth 1 [dX; dY; dZ; dT] (mkMPD (md_addr dY) 1 0 0 [] (md_pad dY) LNull)) dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_release _ _ _ _ _ _ _ _ _ 1 dY m2); [exact CS_| reflexivity| exact OT| exact HH2'| exact HT2| exact MF2| exact PX2| exact SOK2'| exact MI2'| exact ST2'| exact MU'| exact WM| assumption|].
-        rewrite E1. unfold mpi_cells. exact CT3. }
-      cbn [set_nth] in CS3.
-      eapply L_c2; [exact CS3| exact OX| cbn; reflexivity| | exact SZ0| exact SZ1| exact Hr| exact VB].
-      unfold locals_at. cbn [map md_addr]. rewrite E0, E1, E2, E3. reflexivity.
+      { eapply ZFS with (buf := md_p dY) (len := 4 * md_n dY) (lo := lo) (junk := u32s (md_limbs dY)).
+        - exact HPin.
+        - right. split; [exact INB | exact LBYTES].
+        - lia.
+        - rewrite unsigned_lit by lia. exact STKin.
+        - rewrite unsigned_lit by lia. lia.
+        - exact ACL.
+        - rewrite unsigned_lit by lia. rewrite TOPin. lia.
+        - rewrite unsigned_lit by lia. lia.
+        - exact DHI.
+        - exact TP.
+        - exact MIin.
+        - exact SOKin.
+        - exact CA.
+        - reflexivity.
+        - reflexivity. }
+      intros ms' mo' ZPOST. unfold zeroize_and_free_post in ZPOST.
+      destruct ZPOST as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & m2 & mo2 & h2
+                         & ECFG & MI2 & STK2 & MF2 & TOP2 & HP2 & PX2 & SOK2).
+      injection ECFG as -> ->.
+      rewrite unsigned_lit in STK2, PX2 by lia.
+      replace (ret_pc (Z_to_bv 64 135376)) with (Z_to_bv 64 135376) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
+      pose proof (heap_presx_rw_cells _ _ _ _ _ _ _ _ _ PX2 JY ltac:(intros a Ha; left; cbn in Ha; lia)
+                    ltac:(cbn; split; [lia | exact I])) as JY2.
+      pose proof (heap_presx_rw_cells _ _ _ _ _ _ _ _ _ PX2 ZCELL ltac:(intros a Ha; left; cbn in Ha; lia)
+                    ltac:(cbn; split; [lia | exact I])) as ZCELL2.
+      clear JY ZCELL.
+      pose proof (fun m3 => mc_release mq moq hq LBq _ dW [] _ [] 1 dY m2 mo2 h2 m3 (md_pad dY) CSin eq_refl OWNY
+                              HP2 TOP2 MF2 PX2 SOK2 MI2 STK2) as REL.
+      pose proof (heap_mok _ _ _ _ _ _ _ HP2) as MOK2.
+      clear HP2 PX2.
+      zstep. clear ZCELL2.
+      pose proof (munch_refl [(SP + -160, SP + -144)] m2) as MUst.
+      pose proof (wmono_refl usegs m2) as WMst.
+      zstep. zstep.
+      match goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m3 end.
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dY)] JY2) as JY3. clear JY2.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dY)] JY3
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JY4. clear JY3.
+      rewrite <- AdY in JY4.
+      assert (MU3 : munch [(md_addr dY, md_addr dY + 16)] m2 m3).
+      { rewrite AdY. replace (SP + -160 + 16) with (SP + -144) by lia. exact MUst. }
+      pose proof (REL m3 MU3 WMst MI2 JY4) as CSout. cbn [set_nth] in CSout.
+      eapply (L_c2 m3 mo2 h2 _ dX _ dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r);
+        [exact CSout | exact XN | reflexivity | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+    - exfalso. exact (NSY eq_refl).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -774,78 +919,116 @@ Section DivP.
           F (Z_to_bv 64 0x2109c) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_  ADDRS SZ0 SZ1 Hr VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    pose proof CS_ as CS2. dest_cs CS2. pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR. unfold t2cells in CH2.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 2%nat. intros C0 _. rewrite E0 in C0. unfold mpi_cells in C0.
-    zstep. clear C0.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 5%nat. intros CT SGT NT TNUL THEAP. rewrite E0 in CT.
-    pose proof (struct_cells4 _ _ _ _ _ _ _ 0 dX CS_ eq_refl) as CT4. rewrite E0 in CT4.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 2%nat. intros CN _. rewrite E1 in CN. unfold mpi_cells in CN.
-    destruct (md_own dX) eqn:OT; [| | exfalso; exact (proj1 (proj2 (proj1 (Forall_forall _ _) LOK dX ltac:(cbn; tauto))) OT)].
-    - (* [comment removed for export] *)
-      flat constr:((TNUL eq_refl)) 2%nat. intros P0 N0. rewrite P0.
-      zstep; if_cases K0; zify_cond K0; [| exfalso; rewrite ?unsigned_lit in K0 by lia; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -144, bv_unsigned sp + -128)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-      clear CT. rewrite P0, N0 in CT4.
-      zstep. zstep. zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -144) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dX)] H) as CT3 end.
-      assert (CS3 : CST m3 moq hq LBq [set_sg dX 1; dY; dZ; dT] dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (bv_unsigned sp + -144) (bv_unsigned sp + -128) []);
-          [exact CS_| exact MU| exact WM| assumption| assumption| lia| lia| constructor| reflexivity| | |].
-        - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-            try (left; split; [lia| reflexivity]).
-          right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite E0, P0, N0. unfold mpi_cells. exact CT3.
-        - unfold frame, t2cells. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd]; assumption.
-        - apply frame_chs; [| exact SZ0| exact SZ1| reflexivity]. unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity. }
-      eapply L_c1; [exact CS3| cbn; exact OT| | exact SZ0| exact SZ1| exact Hr| exact VB].
-      unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity.
-    - (* [comment removed for export] *)
-      flat constr:((THEAP eq_refl)) 2%nat. intros P0 N1.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 8%nat. intros FLt12 _ _ _ _ _ HF _. flat constr:(FLt12) 2%nat. flclear FLt12. intros FLt13 _. flat constr:(FLt13) 6%nat. flclear FLt13. intros _ _ _ HL _ HO.
-      rewrite OT in HO. flat constr:(HO) 4%nat. flclear HO. intros _ INT _ U32. flat constr:((HF OT)) 5%nat. intros _ P4 _ _ _.
-      zstep; if_cases K0; zify_cond K0; [exfalso; clear - K0 P0 P4 ACL SLO SPB HLS; rewrite ?Z.mod_small in K0 by lia; lia|].
-      unfold mpi_cells in CT. zstep. zstep. zstep.
-      apply u32arr_cells in U32.
-      pose proof HZF as SZF. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in SZF.
+    intros mq moq hq LBq dX dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x0 xa0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10
+      t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin LOCAT S68 S12 RBND BABS.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (HPin & TOPin & MFin & SOKin & MIin & STKin & _ & MOKin).
+    pose proof (bv_unsigned_in_range 64 sp) as SPbnd. change (bv_modulus 64) with (2^64) in SPbnd.
+    pose proof alloc_ceiling_pos as ACEpos.
+    pose proof LOCAT as ADDRS. unfold locals_at in ADDRS. cbn in ADDRS. injection ADDRS as AdX AdY AdZ AdT.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSin (eq_refl : nth_error [dX; dY; dZ; dT] 1 = Some dY))
+      as (((YCELL & _) & _) & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSin (eq_refl : nth_error [dX; dY; dZ; dT] 0 = Some dX))
+      as (((CELLX & _ & _ & LENX & NBX & OWNF) & SGX) & NSX & _ & _ & _ & _ & HEAPF & _).
+    pose proof (struct_cells4 _ _ _ _ _ _ _ 0 dX CSin eq_refl) as JX.
+    rewrite AdX in CELLX, JX. rewrite AdY in YCELL. unfold mpi_cells in CELLX, YCELL.
+    zstep. zstep.
+    destruct (md_own dX) eqn:OWNX.
+    - cbn iota in OWNF. destruct OWNF as (PX0 & NX0).
+      rewrite PX0. if_true.
+      clear CELLX.
+      zstep. clear YCELL. zstep.
+      pose proof (munch_refl [(SP + -144, SP + -128)] mq) as MUst.
+      pose proof (wmono_refl usegs mq) as WMst.
+      zstep. zstep.
+      match goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m3 end.
+      pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CSin) as (Fc0 & Ftp & Ft2 & Ftc & Freg).
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dX)] JX) as JX2. clear JX.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dX)] JX2
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JX3. clear JX2.
+      assert (CSout : cstate usegs L HI h LB mo m SP lo SPc dR es m3 moq hq LBq [set_sg dX 1; dY; dZ; dT] dW []
+                        (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+      { apply (mc_hi_write mq moq hq LBq _ dW [] _ [] (SP + -144) (SP + -128) [] m3 [set_sg dX 1; dY; dZ; dT] _
+                 CSin MUst WMst MIin STKin); [lia | lia | constructor | reflexivity | | | ].
+        - intros j d d' Ej Ej'.
+          destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+          + injection Ej as <-. injection Ej' as <-.
+            right. exists 1. split; [reflexivity |]. split; [left; reflexivity |].
+            rewrite AdX, PX0, NX0. exact JX3.
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+          + exfalso. destruct j; discriminate Ej.
+        - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd].
+          + eapply rw_cells_transport; [exact Fc0| exact MUst| exact WMst|]. rewrite S68. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftp| exact MUst| exact WMst|]. rewrite S12. cbn. lia.
+          + eapply rw_cells_transport; [exact Ft2| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Ftc| exact MUst| exact WMst|]. cbn. lia.
+          + eapply rw_cells_transport; [exact Freg| exact MUst| exact WMst|]. cbn. lia.
+        - apply frame_chs; [exact LOCAT| exact S68| exact S12| reflexivity]. }
+      eapply (L_c1 m3 moq hq LBq _ dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r);
+        [exact CSout | exact OWNX | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+    - cbn iota in OWNF. destruct OWNF as (NGE1 & INB & PAL & LIMBS).
+      destruct (HEAPF eq_refl) as (PPOS & PEND & _ & _ & _).
+      assert (PNZ : bv_eqb (Z_to_bv 64 (md_p dX)) (Z_to_bv 64 0) = false).
+      { unfold bv_eqb. rewrite !unsigned_lit by lia. apply Z.eqb_neq. lia. }
+      rewrite PNZ. cbv_concl_iota.
+      unfold MPI_MAX_LIMBS in NBX.
+      zstep. zstep.
+      assert (LEN4 : Z_to_bv 64 (bv_unsigned (zx16 (Z_to_bv 64 (md_n dX))) ≪ 2) = Z_to_bv 64 (4 * md_n dX)).
+      { unfold zx16. rewrite (unsigned_lit (md_n dX)) by lia. rewrite (Z.mod_small (md_n dX)) by lia.
+        rewrite (unsigned_lit (md_n dX)) by lia. rewrite Z.shiftl_mul_pow2 by lia. f_equal. lia. }
+      rewrite LEN4. clear LEN4 CELLX.
+      zstep.
+      pose proof HZF as ZFS. unfold zeroize_and_free_stmt, U_ZEROIZE_AND_FREE in ZFS.
+      pose proof (u32arr_cells _ _ _ _ LIMBS) as LBYTES.
+      replace (4 * length (md_limbs dX))%nat with (Z.to_nat (4 * md_n dX)) in LBYTES by lia.
       eapply aevtM_cut.
-      { eapply SZF with (buf := md_p dX) (len := 4 * md_n dX) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc NT; unfold MPI_MAX_LIMBS in *; lia).
-        all: try (right; split; [exact INT| replace (Z.to_nat (4 * md_n dX)) with (4 * length (md_limbs dX))%nat by lia; exact U32]).
-        all: unfold MPI_MAX_LIMBS in NT; rewrite zx16_small by lia; rewrite unsigned_lit by lia; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia. }
-      clear SZF. cbv beta. intros ms' mo' PO. unfold zeroize_and_free_post in PO.
-      flat constr:(PO) 26%nat. flclear PO. intros y0 y1 y2 ya0 ya1 ya2 ya3 ya4 ya5 ya6 ya7 y3 y4 y5 y6 m2 mo2 h2 E MI2 ST2 MF2 HT2 HH2 PX2 SOK2.
-      injection E as -> ->. rewrite ?unsigned_lit in ST2 by lia. rewrite ?unsigned_lit in PX2 by lia.
-      replace (ret_pc (Z_to_bv 64 0x210b0)) with (Z_to_bv 64 0x210b0) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2.
-      pose proof (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2 CT4 ltac:(apply client_range_stack; cbn; lia) ltac:(cbn; lia)) as CT2.
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CN; [| apply client_range_stack; cbn; lia| cbn; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH0; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ0; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH1; [| apply client_range_stack; cbn; lia| cbn; rewrite SZ1; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CH2; [| apply client_range_stack; cbn; lia| cbn; lia].
-      apply (heap_presx_rw_cells usegs L _ _ _ _ _ _ _ PX2) in CHR; [| apply client_range_stack; cbn; lia| cbn; lia].
-      pose proof (munch_refl [(bv_unsigned sp + -144, bv_unsigned sp + -128)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-      pose proof (conj HH2 I) as HH2c. pose proof (conj SOK2 I) as SOK2c. pose proof (conj MI2 I) as MI2c. pose proof (conj ST2 I) as ST2c.
-      clear CT CT4 U32.
-      zstep. zstep. zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with H : rw_cells usegs m3 (bv_unsigned sp + -144) _ |- _ =>
-        pose proof (rw_cells_split_C4 usegs m3 _ [C8 (Z_to_bv 64 0)] (Z_to_bv 64 1) [C4 (md_pad dX)] H) as CT3 end.
-      flat constr:(HH2c) 2%nat. flclear HH2c. intros HH2' _. flat constr:(SOK2c) 2%nat. flclear SOK2c. intros SOK2' _. flat constr:(MI2c) 2%nat. flclear MI2c. intros MI2' _. flat constr:(ST2c) 2%nat. flclear ST2c. intros ST2' _.
-      assert (MU' : munch [(md_addr dX, md_addr dX + 16)] m2 m3) by (rewrite E0; replace (bv_unsigned sp + -144 + 16) with (bv_unsigned sp + -128) by lia; exact MU).
-      assert (CS3 : CST m3 mo2 h2 (lb_remove (md_p dX) LBq) (set_nth 0 [dX; dY; dZ; dT] (mkMPD (md_addr dX) 1 0 0 [] (md_pad dX) LNull)) dW [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_release _ _ _ _ _ _ _ _ _ 0 dX m2); [exact CS_| reflexivity| exact OT| exact HH2'| exact HT2| exact MF2| exact PX2| exact SOK2'| exact MI2'| exact ST2'| exact MU'| exact WM| assumption|].
-        rewrite E0. unfold mpi_cells. exact CT3. }
-      cbn [set_nth] in CS3.
-      eapply L_c1; [exact CS3| cbn; reflexivity| | exact SZ0| exact SZ1| exact Hr| exact VB].
-      unfold locals_at. cbn [map md_addr]. rewrite E0, E1, E2, E3. reflexivity.
+      { eapply ZFS with (buf := md_p dX) (len := 4 * md_n dX) (lo := lo) (junk := u32s (md_limbs dX)).
+        - exact HPin.
+        - right. split; [exact INB | exact LBYTES].
+        - lia.
+        - rewrite unsigned_lit by lia. exact STKin.
+        - rewrite unsigned_lit by lia. lia.
+        - exact ACL.
+        - rewrite unsigned_lit by lia. rewrite TOPin. lia.
+        - rewrite unsigned_lit by lia. lia.
+        - exact DHI.
+        - exact TP.
+        - exact MIin.
+        - exact SOKin.
+        - exact CA.
+        - reflexivity.
+        - reflexivity. }
+      intros ms' mo' ZPOST. unfold zeroize_and_free_post in ZPOST.
+      destruct ZPOST as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & m2 & mo2 & h2
+                         & ECFG & MI2 & STK2 & MF2 & TOP2 & HP2 & PX2 & SOK2).
+      injection ECFG as -> ->.
+      rewrite unsigned_lit in STK2, PX2 by lia.
+      replace (ret_pc (Z_to_bv 64 135344)) with (Z_to_bv 64 135344) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
+      pose proof (heap_presx_rw_cells _ _ _ _ _ _ _ _ _ PX2 JX ltac:(intros a Ha; left; cbn in Ha; lia)
+                    ltac:(cbn; split; [lia | exact I])) as JX2.
+      pose proof (heap_presx_rw_cells _ _ _ _ _ _ _ _ _ PX2 YCELL ltac:(intros a Ha; left; cbn in Ha; lia)
+                    ltac:(cbn; split; [lia | exact I])) as YCELL2.
+      clear JX YCELL.
+      pose proof (fun m3 => mc_release mq moq hq LBq _ dW [] _ [] 0 dX m2 mo2 h2 m3 (md_pad dX) CSin eq_refl OWNX
+                              HP2 TOP2 MF2 PX2 SOK2 MI2 STK2) as REL.
+      pose proof (heap_mok _ _ _ _ _ _ _ HP2) as MOK2.
+      clear HP2 PX2.
+      zstep. clear YCELL2. zstep.
+      pose proof (munch_refl [(SP + -144, SP + -128)] m2) as MUst.
+      pose proof (wmono_refl usegs m2) as WMst.
+      zstep. zstep.
+      match goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m3 end.
+      pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 0)] _ [C4 (md_pad dX)] JX2) as JX3. clear JX2.
+      pose proof (rw_cells_C2_congr _ _ _ [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 1)] _ 0 [C4 (md_pad dX)] JX3
+                    ltac:(rewrite unsigned_lit by lia; reflexivity)) as JX4. clear JX3.
+      rewrite <- AdX in JX4.
+      assert (MU3 : munch [(md_addr dX, md_addr dX + 16)] m2 m3).
+      { rewrite AdX. replace (SP + -144 + 16) with (SP + -128) by lia. exact MUst. }
+      pose proof (REL m3 MU3 WMst MI2 JX4) as CSout. cbn [set_nth] in CSout.
+      eapply (L_c1 m3 mo2 h2 _ _ dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r);
+        [exact CSout | reflexivity | exact LOCAT | exact S68 | exact S12 | exact RBND | exact BABS].
+    - exfalso. exact (NSX eq_refl).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -885,9 +1068,12 @@ Section DivP.
           F (Z_to_bv 64 0x21098) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS SZ0 SZ1 Hr VB.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    zstep. eapply L_c0; [exact CS_| exact ADDRS| exact SZ0| exact SZ1| exact Hr| exact VB].
+    intros mq moq hq LBq dX dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11
+      t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin LOCAT S68 S12 RBND BABS.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (_ & _ & _ & _ & _ & _ & _ & MOKin).
+    zstep.
+    exact (L_c0 mq moq hq LBq dX dY dZ dT dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x0 (Z_to_bv 64 r) x1 x2 x3 x4 x5 x6 x7 x8 x9 x11
+             t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin LOCAT S68 S12 RBND BABS).
   Qed.
 
   (* [comment removed for export] *)
@@ -906,118 +1092,133 @@ Section DivP.
           F (Z_to_bv 64 0x215ac) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS SZ0 SZ1 VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:(facts0) 8%nat. intros R0 R8 RAS RBLK HBR _ _ _.
-    pose proof CS_ as CS2. dest_cs CS2. pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR. unfold t2cells in CH2.
-    flat constr:((a_cells _ _ _ _ _ _ CS_)) 2%nat. intros CA_ SGA. unfold mpi_cells in CA_.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 4%nat. intros CX SGX NX _. rewrite E0 in CX. unfold mpi_cells in CX.
-    (* [comment removed for export] *)
-    zstep. rewrite (sx16_sign _ SGA).
-    pose proof (munch_refl [(bv_unsigned sp + -136, bv_unsigned sp + -134)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
+    intros mq moq hq LBq dX dY dZ dT cs0 tpc j68 t160 t164 t168 t176 t180
+      xra x4 x5 x6 x7 x8 x9 x10 x11 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin LOCS SIZE0 SIZE1 BNZ.
+    pose proof (bv_unsigned_in_range 64 sp) as SPbnd. change (bv_modulus 64) with (2^64) in SPbnd.
+    pose proof alloc_ceiling_pos as CEILpos.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (HEAPq & TOPeq & MOFR & STATq & MINVq & STKq & _ & MOKq).
+    destruct facts0 as (RADDRpos & RADDRal & RADDRside & _ & _ & _ & _ & _).
+    assert (LX : md_addr dX = SP + -144 /\ md_addr dY = SP + -160 /\ md_addr dZ = SP + -176 /\ md_addr dT = SP + -192).
+    { unfold locals_at in LOCS. cbn in LOCS. injection LOCS as AX AY AZ AT. auto. }
+    destruct LX as (AXeq & _).
+    destruct (a_cells _ _ _ _ _ _ CSin) as (ACELLS & ASIGN).
+    destruct (struct_cells _ _ _ _ _ _ _ 0%nat dX CSin eq_refl) as (XCELLS & XSIGN & _).
+    rewrite AXeq in XCELLS. unfold mpi_cells in ACELLS, XCELLS.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CSin) as (FR0 & FR1 & FR2 & FR3 & FR4).
+    unfold t2cells in FR2.
+    pose proof (munch_refl [(SP + -136, SP + -134)] mq) as MUs.
+    pose proof (wmono_refl usegs mq) as WMs.
+    do 2 zstep.
+    assert (SXeq : sx16 (Z_to_bv 64 (md_sg dA)) = Z_to_bv 64 (md_sg dA)).
+    { destruct ASIGN as [SG1 | SG1]; rewrite SG1; apply bv_eq; vm_compute; reflexivity. }
+    rewrite SXeq in XCELLS |- *.
+    set (dX1 := set_sg dX (md_sg dA)).
+    assert (LOCS1 : locals_at [dX1; dY; dZ; dT]) by (unfold locals_at in LOCS |- *; exact LOCS).
+    assert (CS1 : CST m0 moq hq LBq [dX1; dY; dZ; dT] dR [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_hi_write mq moq hq LBq _ dR [] _ [] (SP + -136) (SP + -134) [] m0 [dX1; dY; dZ; dT] _ CSin MUs WMs MINVq STKq);
+        [lia | lia | constructor | reflexivity | | | apply frame_chs; [exact LOCS1 | exact SIZE0 | exact SIZE1 | reflexivity]].
+      - intros j d d' NTH NTH'.
+        destruct j as [|[|[|[|j]]]]; cbn in NTH, NTH'; try (destruct j; discriminate NTH);
+          injection NTH as <-; injection NTH' as <-.
+        + right. exists (md_sg dA). split; [reflexivity|]. split; [exact ASIGN|].
+          rewrite AXeq. exact XCELLS.
+        + left. unfold locals_at in LOCS. cbn in LOCS. injection LOCS as _ AY _ _. split; [lia | reflexivity].
+        + left. unfold locals_at in LOCS. cbn in LOCS. injection LOCS as _ _ AZ _. split; [lia | reflexivity].
+        + left. unfold locals_at in LOCS. cbn in LOCS. injection LOCS as _ _ _ AT. split; [lia | reflexivity].
+      - unfold frame. constructor; [exact FR0|]. constructor; [exact FR1|]. constructor; [exact FR2|].
+        constructor; [exact FR3|]. constructor; [exact FR4| constructor]. }
+    clear FR0 FR1 FR2 FR3 FR4 MUs WMs XCELLS.
+    do 3 zstep.
+    destruct (mc_w_facts _ _ _ _ _ _ _ _ _ CS1) as (MATR & _ & _ & WRq & _).
+    destruct (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX1 CS1 eq_refl) as (MATX1 & _ & _ & _ & CRX1 & CRLX1 & _).
+    destruct (mc_opnd_sep_wl _ _ _ _ _ _ _ _ _ 0%nat dX1 CS1 eq_refl) as (SEPRX & OSRX).
+    assert (CPSEP : copy_sep dR dX1 lo SPc).
+    { apply copy_sep_of_opnd; [exact OSRX|]. cbn [dX1 set_sg md_addr]. lia. }
+    pose proof HCOPY as COPYSPEC. unfold mpi_copy_stmt_x, U_MPI_COPY in COPYSPEC.
+    eapply aevtM_cut; [eapply COPYSPEC with (dX := dR) (dY := dX1) (lo := lo) (LB := LBq) (h := hq);
+      rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; try lia | ].
+    { unfold dX1, set_sg. cbn [md_addr]. rewrite AXeq. reflexivity. }
+    intros ms' mo' PO.
+    destruct PO as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m2 & mo2 & h2 & LB2 & dR2 & rc &
+                    CFG & MINV2 & STK2 & MOFR2 & TOP2 & HEAP2 & MAT2 & OUT2 & PRES2 & STAT2 & RES2).
+    injection CFG as -> ->.
+    rewrite (unsigned_lit (SP + -288)) in STK2, PRES2 by lia.
+    destruct RES2 as ((OUTCOME & ADDR2 & PAD2 & BLK2) & _).
+    assert (CS2 : CST m2 mo2 h2 LB2 [dX1; dY; dZ; dT] dR2 [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_binop_w _ _ _ _ _ _ _ _ _ _ _ _ _ _ CS1 HEAP2 TOP2 MOFR2 MAT2 OUT2 PRES2 STAT2 MINV2 STK2 BLK2 PAD2).
+      destruct OUTCOME as [(_ & _ & NGROW & _) | (_ & NSAME & _)]; lia. }
+    replace (ret_pc (Z_to_bv 64 136640)) with (Z_to_bv 64 136640) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (_ & _ & _ & _ & _ & _ & _ & MOK2).
+    destruct OUTCOME as [(-> & _) | (-> & _)].
+    2:{ unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+        replace (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0)) with false by (vm_compute; reflexivity).
+        eapply L_err; [exact CS2 | exact LOCS1 | exact SIZE0 | exact SIZE1 | lia | exact BNZ]. }
+    zstep. rewrite bv_eqb_refl. cbv [negb].
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CS2) as (FR0 & FR1 & FR2 & FR3 & FR4).
+    unfold t2cells in FR2. unfold tcells in FR3.
+    pose proof (munch_refl [(SP + -128, SP + -104)] m2) as MUt.
+    pose proof (wmono_refl usegs m2) as WMt.
+    do 9 zstep.
+    assert (CS3 : CST m1 mo2 h2 LB2 [dX1; dY; dZ; dT] dR2 []
+                    (frame cs0 tpc j68 (tcells t160 (Z_to_bv 64 0) (Z_to_bv 64 (SP + -124)) (Z_to_bv 64 65537) t180)) []).
+    { apply (cs_frame_updT _ _ _ _ _ _ _ _ _ _ (SP + -128) (SP + -104) m1 _ CS2 LOCS1 MUt WMt MINV2 STK2);
+        [lia | lia | exact FR3 | reflexivity | exact SIZE0 | exact SIZE1]. }
+    set (Tm := {| md_addr := SP + -120; md_sg := 1; md_n := 1; md_p := SP + -124; md_limbs := [Z_to_bv 64 0];
+                  md_pad := t180; md_own := LStatic |}).
+    assert (TOPND : MpiOpnd.stack_opnd usegs m1 (SP + -288) Tm).
+    { pose proof FR3 as TC. take TC 1%nat C160. take TC 1%nat C164.
+      apply (rw_cells_split_C4 usegs m1 (SP + -120) [C8 (Z_to_bv 64 (SP + -124))] _ [C4 t180]) in TC.
+      rewrite (unsigned_lit 65537) in TC by lia. cbn [app] in TC.
+      apply (rw_cells_C2_congr usegs m1 (SP + -120) [C8 (Z_to_bv 64 (SP + -124))] 65537 1 _) in TC; [| reflexivity].
+      apply (rw_cells_C2_congr usegs m1 (SP + -120) [C8 (Z_to_bv 64 (SP + -124)); C2 (Z_to_bv 64 1)] (65537 / 2 ^ 16) 1 _)
+        in TC; [| reflexivity].
+      pose proof (LxPMpiTac.u32arr_of_rw_cells m1 (SP + -124) [Z_to_bv 64 0] C164) as (LIMBS & _).
+      unfold MpiOpnd.stack_opnd. cbn [Tm md_own md_addr md_sg md_n md_p md_limbs md_pad].
+      split; [reflexivity|]. split; [exact TC|].
+      split; [lia|]. split; [lia|]. split; [reflexivity|]. split; [unfold MPI_MAX_LIMBS; lia|].
+      split; [lia|]. split; [lia|]. split; [lia|]. split; [exact LIMBS|]. split; [lia|]. split; [lia|].
+      left; reflexivity. }
+    destruct (mc_w_facts _ _ _ _ _ _ _ _ _ CS3) as (MATR3 & _ & _ & _ & _ & _ & _ & HPR3 & _).
+    pose proof HCMPO as CMPSPEC. unfold mpi_cmp_mpi_stmt_o, U_MPI_CMP_MPI in CMPSPEC.
+    eapply aevtM_cut_evt; [exact MOK2 | eapply CMPSPEC with (dX := dR2) (dY := Tm) (LB := LB2);
+      rewrite ?(unsigned_lit (SP + -288)) by lia |].
+    { left. exact MATR3. }
+    { right. exact TOPND. }
+    { intros OWNH. destruct (HPR3 OWNH) as (PPOS & _). exact PPOS. }
+    { intros OWNT. cbn [Tm md_own] in OWNT. discriminate OWNT. }
+    { exact MINV2. }
+    { rewrite ADDR2. reflexivity. }
+    { reflexivity. }
+    intros ms' CPO. unfold mpi_cmp_post in CPO.
+    destruct CPO as (v0 & v1 & v2 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & v3 & v4 & v5 & v6 & -> & _ & _ & _).
+    replace (ret_pc (Z_to_bv 64 136680)) with (Z_to_bv 64 136680) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
     zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
-    assert (CS1 : CST m1 moq hq LBq [set_sg dX (md_sg dA); dY; dZ; dT] dR [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (bv_unsigned sp + -136) (bv_unsigned sp + -134) []);
-        [exact CS_| exact MU| exact WM| assumption| assumption| lia| lia| constructor| reflexivity| | |].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          try (left; split; [lia| reflexivity]).
-        right. exists (md_sg dA). split; [reflexivity|]. split; [exact SGA|]. rewrite E0. unfold mpi_cells. assumption.
-      - unfold frame, t2cells. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd]; assumption.
-      - apply frame_chs; [| exact SZ0| exact SZ1| reflexivity]. unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity. }
-    clear MU WM.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep.
-    flat constr:((mc_w_facts _ _ _ _ _ _ _ _ _ CS1)) 10%nat. intros MW1 NSW1 EA1 WR1 LW1 CRW1 CRWL1 HFW1 ASW1 WA8.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 _ CS1 eq_refl)) 8%nat. intros MX1 NSX1 _ LX1 CRX1 CRXL1 HFX1 _.
-    flat constr:((mc_opnd_sep_wl _ _ _ _ _ _ _ _ _ 0 _ CS1 eq_refl)) 2%nat. intros SEP1 OPS1.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS1)) 8%nat. intros HH1 HT1 MF1 SOK1 MI1 ST1 _ MK1.
-    pose proof HCOPY as SPC. unfold mpi_copy_stmt_x, U_MPI_COPY in SPC.
-    eapply aevtM_cut.
-    { eapply SPC with (dX := dR) (dY := set_sg dX (md_sg dA)) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HT1; lia).
-      - apply copy_sep_of_opnd; [exact OPS1| cbn [set_sg md_addr]; rewrite E0; lia].
-      - cbn [set_sg md_addr]. rewrite E0. reflexivity. }
-    clear SPC. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    flat constr:(PO) 31%nat. flclear PO. intros y0 y1 y2 ya1 ya2 ya3 ya4 ya5 ya6 ya7 y3 y4 y5 y6 m2 mo2 h2 LB2 dW2 r E MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 (CR & TRIM).
-    injection E as -> ->. rewrite ?unsigned_lit in ST2 by lia. rewrite ?unsigned_lit in PX2 by lia.
-    replace (ret_pc (Z_to_bv 64 0x215c0)) with (Z_to_bv 64 0x215c0) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(CR) 4%nat. flclear CR. intros CR1 CAD CPD CFR.
-    assert (CS3 : CST m2 mo2 h2 LB2 [set_sg dX (md_sg dA); dY; dZ; dT] dW2 [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_w; [exact CS1| exact HH2| exact HT2| exact MF2| exact MA2| exact OUT2| exact PX2| exact SOK2| exact MI2| exact ST2| exact CFR| exact CPD|].
-      destruct CR1 as [(_ & _ & NB)|(_ & EN & _)]; lia. }
-    assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct CR1 as [(Hr0 & _)|(HrF & _)]; [left; exact Hr0| right; exact HrF]).
-    clear CS1 CS_ MX1 MW1 HH HTc MF LOK SA LA MW WOK EXOK SUB COV FRS EXT PX SOK CH CHS CXH CXS MK HH1 HT1 MF1 SOK1 MK1.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS3)) 8%nat. intros HH3 HT3 MF3 SOK3 MI3 ST3 _ MK3.
-    zstep; if_cases K0; zify_cond K0.
-    - eapply L_err; [exact CS3| | exact SZ0| exact SZ1| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB].
-      unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity.
-    - assert (Hr0 : r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia). subst r.
-      assert (ADDRS3 : locals_at [set_sg dX (md_sg dA); dY; dZ; dT]) by (unfold locals_at; cbn [map set_sg md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-      flat constr:((mc_w_facts _ _ _ _ _ _ _ _ _ CS3)) 10%nat. intros MW3 NSW3 EA3 WR3 LW3 CRW3 CRWL3 HFW3 ASW3 WA83.
-      flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS3)) 5%nat. intros FC0 FC1 FC2 FCT FCR. unfold tcells in FCT.
-      pose proof (munch_refl [(bv_unsigned sp + -128, bv_unsigned sp + -104)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-      zstep. zstep. zstep. zstep. zstep. zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m4 end.
-      zstep. zstep.
-      match type of FCT with rw_cells _ _ _ ?tc =>
-        assert (CS4 : CST m4 mo2 h2 LB2 [set_sg dX (md_sg dA); dY; dZ; dT] dW2 [] (frame cs0 tpc j68 tc) [])
-          by (eapply cs_frame_updT; [exact CS3| exact ADDRS3| exact MU| exact WM| assumption| assumption| lia| lia| exact FCT| reflexivity| exact SZ0| exact SZ1])
-      end.
-      clear CS3 MU WM HH3 HT3 MF3 SOK3 MK3 MW3 NSW3 EA3 WR3 LW3 CRW3 CRWL3 HFW3 ASW3 WA83.
-      flat constr:((cs_parts _ _ _ _ _ _ _ CS4)) 8%nat. intros HH4 HT4 MF4 SOK4 MI4 ST4 _ MK4.
-      flat constr:((mc_w_facts _ _ _ _ _ _ _ _ _ CS4)) 10%nat. intros MW4 NSW4 EA4 WR4 LW4 CRW4 CRWL4 HFW4 ASW4 WA84.
-      destruct (rw_cells_split3 _ _ _ [C4 t160] [C4 (Z_to_bv 64 0)] _ FCT) as (FT0 & FL & FS).
-      change (Z.of_nat (cells_size [C4 t160])) with 4 in FL, FS. change (Z.of_nat (cells_size [C4 (Z_to_bv 64 0)])) with 4 in FS.
-      replace (bv_unsigned sp + -128 + 4) with (bv_unsigned sp + -124) in FL, FS by lia.
-      replace (bv_unsigned sp + -124 + 4) with (bv_unsigned sp + -120) in FS by lia.
-      pose proof FL as BL. destruct BL as [[_ BL] _].
-      pose proof HCMPO as SPC. unfold mpi_cmp_mpi_stmt_o, U_MPI_CMP_MPI in SPC.
-      eapply aevtM_cut_evt; [exact MK4| eapply SPC with (LB := LB2) (dX := dW2)
-          (dY := mkMPD (bv_unsigned sp + -120) 1 1 (bv_unsigned sp + -124) [Z_to_bv 64 0] t180 LStatic);
-          rewrite ?unsigned_lit by lia; try eassumption; try reflexivity|].
-      all: try (rewrite ?EA4; reflexivity).
-      { left. exact MW4. }
-      { right. unfold stack_opnd. cbn [md_own md_addr md_sg md_n md_p md_limbs md_pad].
-        split; [reflexivity|]. split.
-        { unfold mpi_cells.
-          pose proof (rw_cells_split_C4 _ _ _ [C8 (Z_to_bv 64 (bv_unsigned sp + -124))] _ [C4 t180] FS) as FS2.
-          cbn [app] in FS2. rewrite unsigned_lit in FS2 by lia. change (65537 / 2 ^ 16) with 1 in FS2.
-          refine (rw_cells_C2_congr _ _ _ [_] _ _ _ FS2 _). reflexivity. }
-        cbn -[Z.modulo Z.pow Z.add Z.mul MPI_MAX_LIMBS u32s bytes_at].
-        split; [Stdlib.micromega.Lia.lia|]. split; [Stdlib.micromega.Lia.lia|]. split; [reflexivity|]. split; [unfold MPI_MAX_LIMBS; Stdlib.micromega.Lia.lia|].
-        split; [Stdlib.micromega.Lia.lia|]. split; [Stdlib.micromega.Lia.lia|]. split; [Stdlib.micromega.Lia.lia|]. split; [exact BL|]. split; [Stdlib.micromega.Lia.lia|]. split; [Stdlib.micromega.Lia.lia|].
-        left; reflexivity. }
-      { intros O. flat constr:((HFW4 O)) 2%nat. intros P0 _. exact P0. }
-      { cbn. intros E. discriminate E. }
-      clear SPC. cbv beta. intros ms' PO. unfold mpi_cmp_post in PO. destruct_exs PO.
-      flat constr:(PO) 4%nat. flclear PO. intros -> _ _ _.
-      replace (mpd_val (mkMPD (bv_unsigned sp + -120) 1 1 (bv_unsigned sp + -124) [Z_to_bv 64 0] t180 LStatic)) with 0
-        by (unfold mpd_val; cbn [md_sg md_limbs limbs_val]; rewrite ?unsigned_lit by lia; reflexivity).
-      replace (ret_pc (Z_to_bv 64 0x215e8)) with (Z_to_bv 64 0x215e8) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      zstep; if_cases K1; zify_cond K1.
-      + zstep. zstep; if_cases KA; zify_cond KA;
-        [ exfalso; rewrite <- EA4 in KA; change 7 with (Z.ones 3) in KA; rewrite Z.land_ones in KA by Stdlib.micromega.Lia.lia;
-          apply KA; change (2^3) with 8; clear - WA84; Stdlib.micromega.Lia.lia |].
-        flat constr:((w_cells _ _ _ _ _ _ _ CS4)) 2%nat. intros CW4 SGW. unfold mpi_cells in CW4.
-        zstep.
-        pose proof (munch_refl [(md_addr dR, md_addr dR + 16)] m4) as MU. pose proof (wmono_refl usegs m4) as WM.
-        clear HH4 SOK4.
-        zstep. zstep.
-        lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m5 end.
-        match type of CS4 with context [frame cs0 tpc j68 ?tc4] =>
-          assert (CS5 : CST m5 mo2 h2 LB2 [set_sg dX (md_sg dA); dY; dZ; dT] (set_sg dW2 1) [] (frame cs0 tpc j68 tc4) [])
-            by (eapply mc_sign_w; [exact CS4| rewrite EA4; exact MU| exact WM| assumption| rewrite EA4; unfold mpi_cells; assumption| left; reflexivity])
-        end.
-        zstep.
-        eapply L_c0; [exact CS5| exact ADDRS3| exact SZ0| exact SZ1| lia| exact VB].
-      + zstep. zstep.
-        eapply L_c0; [exact CS4| exact ADDRS3| exact SZ0| exact SZ1| lia| exact VB].
+    destruct (Z.lt_trichotomy (mpd_val dR2 - mpd_val Tm) 0) as [CNEG | [CZERO | CPOS]].
+    - rewrite (Z.sgn_neg _ CNEG).
+      assert (NEm1 : bv_eqb (Z_to_bv 64 (-1)) (Z_to_bv 64 0) = false) by (vm_compute; reflexivity).
+      rewrite NEm1. do 2 zstep.
+      eapply L_c0; [exact CS3 | exact LOCS1 | exact SIZE0 | exact SIZE1 | lia | exact BNZ].
+    - rewrite (Z.sgn_null _ CZERO), bv_eqb_refl.
+      destruct (w_cells _ _ _ _ _ _ _ CS3) as (RC3 & _).
+      pose proof (rw_cells_bound _ _ _ _ RC3) as RBND3. cbn [cells_size csize mpi_cells Nat.add] in RBND3.
+      zstep.
+      assert (LAND0 : Z.land (md_addr dR) 7 = 0).
+      { change 7 with (Z.ones 3). rewrite Z.land_ones by lia. change (2 ^ 3) with 8. exact RADDRal. }
+      rewrite LAND0. zstep. rewrite bv_eqb_refl. cbv [negb].
+      unfold mpi_cells in RC3. clear MUt WMt.
+      pose proof (munch_refl [(md_addr dR, md_addr dR + 16)] m1) as MUr.
+      pose proof (wmono_refl usegs m1) as WMr.
+      do 3 zstep.
+      assert (CS4 : CST m3 mo2 h2 LB2 [dX1; dY; dZ; dT] (set_sg dR2 1) []
+                      (frame cs0 tpc j68 (tcells t160 (Z_to_bv 64 0) (Z_to_bv 64 (SP + -124)) (Z_to_bv 64 65537) t180)) []).
+      { rewrite <- ADDR2 in MUr, RC3.
+        apply (mc_sign_w _ _ _ _ _ _ _ _ _ m3 1 CS3 MUr WMr MINV2 RC3). left; reflexivity. }
+      zstep.
+      eapply L_c0; [exact CS4 | exact LOCS1 | exact SIZE0 | exact SIZE1 | lia | exact BNZ].
+    - rewrite (Z.sgn_pos _ CPOS).
+      assert (NEp1 : bv_eqb (Z_to_bv 64 1) (Z_to_bv 64 0) = false) by (vm_compute; reflexivity).
+      rewrite NEp1. do 2 zstep.
+      eapply L_c0; [exact CS3 | exact LOCS1 | exact SIZE0 | exact SIZE1 | lia | exact BNZ].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1036,59 +1237,83 @@ Section DivP.
           F (Z_to_bv 64 0x21564) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS SZ1 Hk VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:(facts0) 8%nat. intros R0 R8 RAS RBLK HBR _ _ _.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 5%nat. intros CX SGX NX XNUL XHEAP.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros CF0 CF1 CF2 CFT CFR.
-    zstep; if_cases K0; zify_cond K0; [| exfalso; rewrite ?unsigned_lit in K0 by lia; clear - K0; Stdlib.micromega.Lia.lia].
-    flat constr:((w_cells _ _ _ _ _ _ _ CS_)) 2%nat. intros CW _. pose proof (rw_cells_bound _ _ _ _ CW) as WB. unfold mpi_cells in WB. cbn [cells_size csize Nat.add] in WB. clear CW.
-    zstep; if_cases K1; zify_cond K1; [exfalso; clear - K1 R0 WB; rewrite ?Z.mod_small in K1 by Stdlib.micromega.Lia.lia; Stdlib.micromega.Lia.lia|].
-    zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 8%nat. intros MX NSX _ _ _ _ HF _.
-    pose proof HSHR as SSH. unfold mpi_shift_r_stmt, U_MPI_SHIFT_R in SSH.
-    eapply aevtM_cut_evt; [exact MK| eapply SSH with (LB := LBq) (dX := dX) (count := k) (lo := lo);
-      rewrite ?unsigned_lit by lia; try eassumption; try reflexivity|].
-    all: try (intros O; flat constr:((HF O)) 5%nat; intros P0 P4 _ _ _; split; clear - P0 P4 ACL; Stdlib.micromega.Lia.lia).
-    all: try (rewrite E0; first [left; clear - SLO HLS SPB SPA ACL; Stdlib.micromega.Lia.lia| right; clear - SLO HLS SPB SPA ACL; Stdlib.micromega.Lia.lia]).
-    all: try (intros O; flat constr:((HF O)) 5%nat; intros P0 P4 _ _ _; right; rewrite E0; clear - P4 SLO HLS SPB ACL; Stdlib.micromega.Lia.lia).
-    all: try (rewrite E0; f_equal; clear; Stdlib.micromega.Lia.lia).
-    all: try (clear - SLO HLS SPB SPA ACL; Stdlib.micromega.Lia.lia).
-    clear SSH. cbv beta. intros ms' PO. unfold mpi_shift_r_post in PO.
-    flat constr:(PO) 24%nat. flclear PO. intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? m2 ys2 -> MU WM MI2 ST2 MA2 LEN2 _.
-    rewrite ?unsigned_lit in MU, ST2 by lia.
-    replace (ret_pc (Z_to_bv 64 0x215ac)) with (Z_to_bv 64 0x215ac) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    destruct (md_own dX) eqn:OX; [| | exfalso; exact (NSX eq_refl)].
-    - flat constr:((XNUL eq_refl)) 2%nat. intros _ N0.
-      match type of MU with munch (?r1 :: _) _ _ =>
-        assert (MU' : munch [r1] mq m2) by (eapply munch_weaken; [| exact MU]; intros x [Hx _]; cbn [outside]; rewrite N0; split; [exact Hx| split; [Stdlib.micromega.Lia.lia| exact I]])
-      end.
-      match type of CS_ with context [frame ?a ?b ?c ?d] =>
-        assert (CS2 : CST m2 moq hq LBq [dX; dY; dZ; dT] dR [] (frame a b c d) [])
-      end.
-      { eapply (mc_munch _ _ _ _ _ _ _ _ _ None false false); [exact CS_| exact MU'| exact WM| exact MI2| exact ST2| | reflexivity| | | reflexivity| discriminate].
-        - constructor; [left; cbn [fst snd]; clear - SLO HLS; Stdlib.micromega.Lia.lia| constructor].
-        - intros j d d' Hj Hj'. rewrite Hj in Hj'. injection Hj' as <-. do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C].
-        - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-      eapply L_fin2; [exact CS2| exact ADDRS| reflexivity| exact SZ1| exact VB].
-    - pose proof (proj1 MA2) as MA2'. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in MA2'. try rewrite OX in MA2'.
-      destruct MA2' as (_ & _ & _ & HL2 & _ & _ & _ & _ & U2).
-      match type of CS_ with context [frame ?a ?b ?c ?d] =>
-        assert (CS2 : CST m2 moq hq LBq [set_limbs dX ys2; dY; dZ; dT] dR [] (frame a b c d) [])
-      end.
-      { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 0%nat) false false); [exact CS_| exact MU| exact WM| exact MI2| exact ST2| | reflexivity| | | reflexivity| discriminate].
-        - constructor; [left; cbn [fst snd]; clear - SLO HLS; Stdlib.micromega.Lia.lia| constructor; [right; left; exists 0%nat, dX; split; [reflexivity|]; split; [reflexivity|]; split; [exact OX|]; cbn [fst snd]; clear; Stdlib.micromega.Lia.lia| constructor]].
-        - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-            [ | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-              | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-              | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-          cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OX]|].
-          intros _ _. split; [exact U2| exact HL2].
-        - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-      assert (ADDRS2 : locals_at [set_limbs dX ys2; dY; dZ; dT]) by (unfold locals_at; cbn [map set_limbs md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-      eapply L_fin2; [exact CS2| exact ADDRS2| reflexivity| exact SZ1| exact VB].
+    intros mq moq hq LBq dX dY dZ dT j0 w8 w16 w24 w40 w48 w56 j64 tpc j68 t160 t164 t168 t176 t180 k
+      xra x4 x5 x6 x7 x8 x9 x10 x11 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin LOCS SIZE1 KRNG BNZ.
+    pose proof (bv_unsigned_in_range 64 sp) as SPbnd. change (bv_modulus 64) with (2^64) in SPbnd.
+    pose proof alloc_ceiling_pos as CEILpos.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (HEAPq & TOPeq & MOFR & STATq & MINVq & STKq & _ & MOKq).
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CSin) as (FR0 & FR1 & FR2 & FR3 & FR4).
+    destruct facts0 as (RADDRpos & _ & _ & _ & _ & _ & _ & _).
+    destruct (w_cells _ _ _ _ _ _ _ CSin) as (RCELLS & _).
+    pose proof (rw_cells_bound _ _ _ _ RCELLS) as RBND. cbn [cells_size csize mpi_cells Nat.add] in RBND.
+    zstep. rewrite bv_eqb_refl.
+    zstep.
+    rewrite (bv_eqb_neq (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 0)) by
+      (intros E0; apply (f_equal bv_unsigned) in E0; rewrite !unsigned_lit in E0 by lia; lia).
+    do 3 zstep.
+    assert (LX : md_addr dX = SP + -144 /\ md_addr dY = SP + -160 /\ md_addr dZ = SP + -176 /\ md_addr dT = SP + -192).
+    { unfold locals_at in LOCS. cbn in LOCS. injection LOCS as AX AY AZ AT. auto. }
+    destruct LX as (AXeq & _).
+    destruct (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX CSin eq_refl)
+      as (MATX & NSTX & WRX & _ & _ & _ & HPX & _).
+    destruct (struct_cells _ _ _ _ _ _ _ 0%nat dX CSin eq_refl) as (_ & _ & NRNG & NULLX & _).
+    pose proof HSHR as SHRSPEC. unfold mpi_shift_r_stmt, U_MPI_SHIFT_R in SHRSPEC.
+    eapply aevtM_cut_evt; [exact MOKq | eapply SHRSPEC with (dX := dX) (count := k) (lo := lo) (LB := LBq);
+      rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; try lia |].
+    { intros OWNH. destruct (HPX OWNH) as (PPOS & PEND & _). lia. }
+    { destruct WRX as (_ & _ & SEPX). exact SEPX. }
+    { rewrite AXeq. reflexivity. }
+    intros ms' PO. unfold mpi_shift_r_post in PO.
+    destruct PO as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m2 & xs2 &
+                    -> & MU2 & WM2 & MINV2 & STK2 & MAT2 & LEN2 & _).
+    rewrite (unsigned_lit (SP + -288)) in MU2, STK2 by lia.
+    replace (ret_pc (Z_to_bv 64 136620)) with (Z_to_bv 64 136620) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    assert (OWNcases : md_own dX = LNull \/ md_own dX = LHeap).
+    { destruct (md_own dX); [left; reflexivity | right; reflexivity | exfalso; apply NSTX; reflexivity]. }
+    set (dX2 := {| md_addr := md_addr dX; md_sg := md_sg dX; md_n := md_n dX; md_p := md_p dX; md_limbs := xs2;
+                   md_pad := md_pad dX; md_own := md_own dX |}) in *.
+    assert (WSEL : exists Wsel, munch Wsel mq m2 /\
+                     Forall (w_ok lo SPc [dX; dY; dZ; dT] (Some 0%nat) false false dR []) Wsel).
+    { destruct OWNcases as [OWNX | OWNX].
+      - exists [(SP + -288 - 48, SP + -288)]. split.
+        + eapply munch_weaken; [| exact MU2]. destruct (NULLX OWNX) as (P0 & N0).
+          intros x (OUT1 & _). cbn. rewrite P0, N0. split; [exact OUT1 | split; [lia | exact I]].
+        + constructor; [left; cbn; lia | constructor].
+      - exists [(SP + -288 - 48, SP + -288); (md_p dX, md_p dX + 4 * md_n dX)]. split; [exact MU2|].
+        constructor; [left; cbn; lia|]. constructor; [|constructor].
+        right; left. exists 0%nat, dX. cbn. repeat split; [exact OWNX | lia | lia]. }
+    destruct WSEL as (Wsel & MUsel & WOKsel).
+    assert (CS2 : CST m2 moq hq LBq [dX2; dY; dZ; dT] dR []
+                    (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 w56; CB 4 j64]
+                       tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_munch _ _ _ _ _ _ _ _ _ (Some 0%nat) false false Wsel m2 [dX2; dY; dZ; dT] dR [] CSin MUsel WM2 MINV2 STK2
+               WOKsel eq_refl).
+      - intros j d d' NTH NTH'.
+        destruct j as [|[|[|[|j]]]]; cbn in NTH, NTH'; try (destruct j; discriminate NTH);
+          injection NTH as <-; injection NTH' as <-.
+        + cbn [md_addr md_sg md_n md_p md_pad md_own dX2].
+          split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+          split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split.
+          * intros NOTHEAP.
+            assert (XSnil : xs2 = md_limbs dX).
+            { destruct MATX as ((_ & _ & _ & LENX & _ & _) & _).
+              destruct OWNcases as [OWNX | OWNX]; [| exfalso; apply NOTHEAP; split; [reflexivity | exact OWNX]].
+              destruct (NULLX OWNX) as (_ & N0). rewrite N0 in LENX.
+              assert (L0 : length (md_limbs dX) = 0%nat) by lia.
+              apply length_zero_iff_nil in L0. rewrite L0 in LEN2 |- *.
+              apply length_zero_iff_nil in LEN2. exact LEN2. }
+            subst dX2. rewrite XSnil. destruct dX; reflexivity.
+          * intros _ OWNH. destruct MAT2 as ((_ & _ & _ & LENX2 & _ & OWNP2) & _).
+            cbn [md_own md_p md_limbs dX2] in OWNP2, LENX2 |- *. rewrite OWNH in OWNP2.
+            destruct OWNP2 as (_ & _ & _ & U32). split; [exact U32 | exact LENX2].
+        + do 6 (split; [reflexivity|]). split; [intros _; reflexivity | intros E1; discriminate E1].
+        + do 6 (split; [reflexivity|]). split; [intros _; reflexivity | intros E1; discriminate E1].
+        + do 6 (split; [reflexivity|]). split; [intros _; reflexivity | intros E1; discriminate E1].
+      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity | intros E1; discriminate E1].
+      - intros; reflexivity.
+      - intros E1; discriminate E1. }
+    eapply L_fin2; [exact CS2 | | reflexivity | exact SIZE1 | exact BNZ].
+    unfold locals_at in LOCS |- *. cbn [map md_addr dX2]. exact LOCS.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1120,9 +1345,10 @@ Section DivP.
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "0010?L24928467276.8400000<S2sp1d2N12N0". (* [comment removed for export] *)
   Lemma out_heap : forall mq LBq d, mpd_at usegs mq LBq d -> md_own d <> LStatic -> 1 <= md_n d -> md_own d = LHeap.
-  Proof.
-    intros mq LBq d [(_ & _ & _ & _ & _ & HO) _] NS N1. destruct (md_own d) eqn:O; [| reflexivity| exfalso; exact (NS eq_refl)].
-    flat constr:(HO) 2%nat. flclear HO. intros _ N0. lia.
+  Proof using sp.
+    intros mq LBq d ((_ & _ & _ & _ & _ & OWNF) & _) NOTST ONE.
+    destruct (md_own d) eqn:OWNd; [| reflexivity | exfalso; exact (NOTST eq_refl)].
+    destruct OWNF as [_ ZEROn]. lia.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1163,18 +1389,15 @@ Section DivP.
       (u0 u1 u2 j68 t160 t164 t168 t176 t180 : word) (i : Z)
       (xra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x4 x7 x9 x10 : word),
     cstate usegs L HI h LB mo m SP lo SPc dR es mq moq hq LBq [dX; dY; dZ; dT] dR []
-      (lframe j0 (Z_to_bv 64 (2^64 - (t + 2))) (Z_to_bv 64 k) (Z_to_bv 64 (4 * (t - 1))) (Z_to_bv 64 t) j64 u0 u1 u2 j68
-         (tcells t160 t164 t168 t176 t180)) [] ->
+      (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) [] ->
     locals_at [dX; dY; dZ; dT] ->
     loop_loc dX dY dZ dT n t zp ->
-    t < i <= n - 1 ->
-    i <= ib ->
+    t < i <= ib -> i < n ->
     aevtM usegs moq POST
-      (MS (mkR xra (Z_to_bv 64 SPc) gp tp t0 t1 t2 (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 (md_addr dA)) (Z_to_bv 64 i)
-               a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 0) (Z_to_bv 64 (md_addr dB)) x4 (Z_to_bv 64 (i + 1)) (Z_to_bv 64 (4 * t))
+      (MS (mkR xra (Z_to_bv 64 SPc) gp tp t0 t1 t2 (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 (md_addr dA)) (Z_to_bv 64 i) a1 a2 a3 a4 a5 a6 a7
+               (Z_to_bv 64 0) (Z_to_bv 64 (md_addr dB)) x4 (Z_to_bv 64 (i + 1)) (Z_to_bv 64 (4 * t))
                x7 (Z_to_bv 64 (0xffffffffffffffff - zp)) x9 x10 (Z_to_bv 64 zp) t3 t4 t5 t6)
-          F (Z_to_bv 64 0x211ec) fc None mq (seg_rom usegs))
-(* [comment removed for export] *).
+          F (Z_to_bv 64 0x211ec) fc None mq (seg_rom usegs)).
 
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "0060@L32867416334.141L33675445158.3  L36635088338.141L54794051144.5  L57480193112.141L8638987958.141 00000G00P00g01401801>S2sp1n1t1i2T02IR2NB3SPBS2ib1i2IBS2sp1n1t1i2T02IR2NB3SPBS1n1t1i2IR2K0S2spS2sp1i". (* [comment removed for export] *)
@@ -1195,16 +1418,25 @@ Section DivP.
           F (Z_to_bv 64 0x21554) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K. intros until x10. intros CS_ ADDRS LL T0 IR IB NB Hk.
-    flat constr:(LL) 10%nat. intros _ _ _ _ _ _ _ _ _ VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST _ MK.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros CH0 CH1 CH2 CHT CHR.
-    zstep. zstep. zstep. zstep; if_cases K0; zify_cond K0; rewrite ?unsigned_lit in K0 by lia.
-    - (* [comment removed for export] *)
-      replace (Z_to_bv 64 i) with (Z_to_bv 64 (i + -1 + 1)) by (f_equal; lia).
-      unfold KONT in K. eapply K; [exact CS_| exact ADDRS| exact LL| clear - K0 IR; lia| clear - IB; lia].
-    - eapply L_fin; [exact CS_| exact ADDRS| reflexivity| exact Hk| exact VB].
+    intros n t zp k ib j0 j64 Kont mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i
+      xra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x4 x5 x7 x10 CSq LOCq LLq Tnn Irng Iib Nmax Krng.
+    unfold lframe in CSq.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CSq) as (FRcs & _ & _ & _ & _).
+    pose proof (cs_parts _ _ _ _ _ _ _ CSq) as (_ & _ & _ & _ & _ & _ & _ & MOKq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    do 4 zstep.
+    rewrite bv_ltu_Z, (unsigned_lit t), (unsigned_lit (i + -1)) by lia.
+    destruct (Z.ltb_spec t (i + -1)) as [MORE| LAST].
+    - replace (Z_to_bv 64 i) with (Z_to_bv 64 (i + -1 + 1)) by (f_equal; lia).
+      exact (Kont mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 (i + -1)
+               xra t0 t1 t2 (Z_to_bv 64 t) a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x4 x7 (Z_to_bv 64 (i + -1 + 1)) x10
+               CSq LOCq LLq ltac:(lia) ltac:(lia)).
+    - unfold loop_loc in LLq.
+      exact (L_fin mq moq hq LBq dX dY dZ dT j0 _ _ _ _ _ _ j64 _ j68 t160 t164 t168 t176 t180 k
+               xra x4 (Z_to_bv 64 i) (Z_to_bv 64 (4 * t)) x7 (Z_to_bv 64 (0xffffffffffffffff - zp)) (Z_to_bv 64 i) x10 (Z_to_bv 64 zp)
+               t0 t1 t2 (Z_to_bv 64 (i + -1)) (Z_to_bv 64 t) a2 a3 a4 a5 a6 a7 t3 t4 t5 t6
+               CSq LOCq eq_refl Krng (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 LLq))))))))) ).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1227,257 +1459,305 @@ Section DivP.
           F (Z_to_bv 64 0x214a8) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K T0 NB Hk. intros until x5. intros CS_ ADDRS LL IR IB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST _ MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    (* [comment removed for export] *)
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 8%nat. intros FLt17 _ _ _ _ _ HFZ _. flat constr:(FLt17) 2%nat. flclear FLt17. intros FLt18 _. flat constr:(FLt18) 6%nat. flclear FLt18. intros _ _ _ HLZ HNZ HOZ.
-    rewrite OZ in HOZ. flat constr:(HOZ) 4%nat. flclear HOZ. intros _ INZ PALZ UZ. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. unfold MPI_MAX_LIMBS in HNZ. rewrite PZ in *.
-    rd UZ (i - t - 1).
-    lazymatch goal with |- context [sx32 ?w] => rename w into wq end.
-    set (q := bv_unsigned wq mod 4294967296).
-    assert (QB : 0 <= q < 2^32) by (subst q; apply Z.mod_pos_bound; lia).
-    (* [comment removed for export] *)
-    zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros MY NSY WRY LOY CRY CRYL HFY _.
-    flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 3 1 dT dY CS_ eq_refl eq_refl)) 2%nat. intros SEP31 OPS31.
-    pose proof HMULI as SPM. unfold mpi_mul_int_stmt_g, U_MPI_MUL_INT in SPM.
-    eapply aevtM_cut.
-    { eapply SPM with (dX := dT) (dA := dY) (b := q) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc QB; lia).
-      all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity).
-      - subst q. rewrite bv_unsigned_sx32. apply sxz_mod32. apply Z.mod_pos_bound. lia.
-      - subst q. rewrite bv_unsigned_sx32. apply sxz_zero_iff. apply Z.mod_pos_bound. lia. }
-    clear SPM. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    binop_post PO m2 mo2 h2 LB2 dT2 r E MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 RR.
-    replace (ret_pc (Z_to_bv 64 0x214b8)) with (Z_to_bv 64 0x214b8) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(RR) 2%nat. flclear RR. intros R1 FLt19. flat constr:(FLt19) 4%nat. flclear FLt19. intros KA KP KF KN.
-    assert (CS2 : CST m2 mo2 h2 LB2 (set_nth 3 [dX; dY; dZ; dT] dT2) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS_| reflexivity| exact HH2| exact HT2| exact MF2| exact MA2| exact OUT2| exact PX2| exact SOK2| exact MI2| exact ST2| exact KF]. }
-    cbn [set_nth] in CS2.
-    assert (ADDRS2 : locals_at [dX; dY; dZ; dT2]) by (unfold locals_at; cbn [map]; rewrite KA, E0, E1, E2, E3; reflexivity).
-    assert (LL2 : loop_loc dX dY dZ dT2 n t zp) by (eapply loop_loc_T; [exact LL| eapply out_heap; [exact MA2| exact (proj1 (proj2 OUT2))| lia]| exact KN]).
-    assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct R1 as [(Hr0 & _)|HrF]; [left; exact Hr0| right; exact HrF]).
-    clear MT NST WRT LOT CRT CRTL HFT MY NSY WRY LOY CRY CRYL HFY SEP31 OPS31 R1 KF KP MA2 OUT2 PX2 UZ CS_ LL ADDRS.
-    reopen CS2 HH HTc MF SOK MI ST MK.
-    zstep; if_cases K0; zify_cond K0.
-    { eapply L_err; [exact CS2| exact ADDRS2| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-    assert (r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia). subst r. clear Hr K0.
-    (* [comment removed for export] *)
-    zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 5) with 32. zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT2 CS2 eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-    pose proof HSHL as SPS. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SPS.
-    eapply aevtM_cut.
-    { eapply SPS with (dX := dT2) (count := (i - t - 1) * 32) (lo := lo) (h := h2) (LB := LB2); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc IR T0 NB; lia).
-      all: try (rewrite ?KA, ?E0, ?E1, ?E2, ?E3; reflexivity). }
-    clear SPS. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    binop_post PO m3 mo3 h3 LB3 dT3 r E MI3 ST3 MF3 HT3 HH3 MA3 OUT3 PX3 SOK3 RR.
-    replace (ret_pc (Z_to_bv 64 0x214cc)) with (Z_to_bv 64 0x214cc) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(RR) 2%nat. flclear RR. intros R1 FLt20. flat constr:(FLt20) 4%nat. flclear FLt20. intros KA3 KP3 KF3 KN3.
-    assert (CS3 : CST m3 mo3 h3 LB3 (set_nth 3 [dX; dY; dZ; dT2] dT3) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS2| reflexivity| exact HH3| exact HT3| exact MF3| exact MA3| exact OUT3| exact PX3| exact SOK3| exact MI3| exact ST3| exact KF3]. }
-    cbn [set_nth] in CS3.
-    assert (ADDRS3 : locals_at [dX; dY; dZ; dT3]) by (unfold locals_at; cbn [map]; rewrite KA3, KA, E0, E1, E2, E3; reflexivity).
-    assert (LL3 : loop_loc dX dY dZ dT3 n t zp) by (eapply loop_loc_T; [exact LL2| eapply out_heap; [exact MA3| exact (proj1 (proj2 OUT3))| pose proof LL2 as (_&_&_&_&_&_&_&_&NT2&_); lia]| exact KN3]).
-    assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct R1 as [(Hr0 & _)|HrF]; [left; exact Hr0| right; exact HrF]).
-    clear MT NST WRT LOT CRT CRTL HFT R1 KF3 KP3 MA3 OUT3 PX3 CS2 LL2 ADDRS2.
-    reopen CS3 HH HTc MF SOK MI ST MK.
-    zstep; if_cases K0; zify_cond K0.
-    { eapply L_err; [exact CS3| exact ADDRS3| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-    assert (r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia). subst r. clear Hr K0.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS3 eq_refl)) 8%nat. intros MX NSX WRX LOX CRX CRXL HFX _.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT3 CS3 eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-    flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0 0 dX dX CS3 eq_refl eq_refl)) 2%nat. intros SEP00 OPS00.
-    flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0 3 dX dT3 CS3 eq_refl eq_refl)) 2%nat. intros SEP03 OPS03.
-    pose proof (HAS (-1) (or_intror eq_refl)) as SPA_. 
-    eapply aevtM_cut.
-    { eapply SPA_ with (dX := dX) (dA := dX) (dB := dT3) (lo := lo) (h := h3) (LB := LB3); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-      all: try (rewrite ?KA3, ?KA, ?E0, ?E1, ?E2, ?E3; reflexivity). }
-    clear SPA_. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    binop_post PO m4 mo4 h4 LB4 dX4 r E MI4 ST4 MF4 HT4 HH4 MA4 OUT4 PX4 SOK4 RR.
-    replace (ret_pc (Z_to_bv 64 0x214e4)) with (Z_to_bv 64 0x214e4) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(RR) 2%nat. flclear RR. intros R1 FLt21. flat constr:(FLt21) 4%nat. flclear FLt21. intros KA4 KP4 KF4 KN4.
-    assert (CS4 : CST m4 mo4 h4 LB4 (set_nth 0 [dX; dY; dZ; dT3] dX4) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS3| reflexivity| exact HH4| exact HT4| exact MF4| exact MA4| exact OUT4| exact PX4| exact SOK4| exact MI4| exact ST4| exact KF4]. }
-    cbn [set_nth] in CS4.
-    assert (ADDRS4 : locals_at [dX4; dY; dZ; dT3]) by (unfold locals_at; cbn [map]; rewrite KA4, KA3, KA, E0, E1, E2, E3; reflexivity).
-    assert (LL4 : loop_loc dX4 dY dZ dT3 n t zp) by (eapply loop_loc_X; [exact LL3| eapply out_heap; [exact MA4| exact (proj1 (proj2 OUT4))| lia]| exact KN4]).
-    assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct R1 as [(Hr0 & _)|HrF]; [left; exact Hr0| right; exact HrF]).
-    clear MX NSX WRX LOX CRX CRXL HFX MT NST WRT LOT CRT CRTL HFT SEP00 OPS00 SEP03 OPS03 R1 KF4 KP4 MA4 OUT4 PX4 CS3 LL3 ADDRS3.
-    reopen CS4 HH HTc MF SOK MI ST MK.
-    zstep; if_cases K0; zify_cond K0.
-    { eapply L_err; [exact CS4| exact ADDRS4| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-    assert (r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia). subst r. clear Hr K0.
-    (* [comment removed for export] *)
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS4)) 5%nat. intros CH0 CH1 CH2 CHT CHR. unfold tcells in CHT.
-    pose proof (munch_refl [(SP + -128, SP + -104)] m4) as MU. pose proof (wmono_refl usegs m4) as WM.
-    zstep. zstep. zstep. zstep. zstep. zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m5 end.
-    lazymatch type of CHT with rw_cells _ _ _ [C4 _; C4 ?a; C8 ?b; C4 ?c; C4 _] => remember a as v164 eqn:Ev164 in CHT; remember b as v168 eqn:Ev168 in CHT; remember c as v176 eqn:Ev176 in CHT end.
-    assert (CS5 : CST m5 mo4 h4 LB4 [dX4; dY; dZ; dT3] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 v164 v168 v176 t180)) []).
-    { eapply (cs_frame_updT _ _ _ _ _ _ _ _ _ _ (SP + -128) (SP + -104)); [exact CS4| exact ADDRS4| exact MU| exact WM| assumption| assumption| lia| lia| exact CHT| reflexivity| reflexivity| reflexivity]. }
-    assert (EV168 : v168 = Z_to_bv 64 (SP + -124)) by (rewrite Ev168; rewrite ?unsigned_lit by lia; first [reflexivity| f_equal; lia]).
-    assert (EV176 : le4 v176 = le2 (Z_to_bv 64 1) ++ le2 (Z_to_bv 64 1)).
-    { rewrite Ev176. rewrite le4_split. unfold le2. change (bv_unsigned (Z_to_bv 64 1)) with 1. f_equal; first [reflexivity| rewrite <- Z_to_le_bytes_mod; reflexivity]. }
-    pose proof CHT as CR. take CR 1%nat CA0. take CR 1%nat CL.
-    assert (CR' : rw_cells usegs m5 (SP + -120) (mpi_cells (SP + -124) (Z_to_bv 64 1) 1 t180)).
-    { unfold mpi_cells. eapply rw_cells_reshape; [exact CR| cbn; tauto|]. cbn [cells_bytes cbytes]. rewrite EV168, EV176, <- app_assoc. reflexivity. }
-    set (dTs := mkMPD (SP + -120) 1 1 (SP + -124) [v164] t180 LStatic).
-    assert (OTs : stack_opnd usegs m5 (SP + -288) dTs).
-    { unfold stack_opnd, dTs. cbn [md_own md_addr md_sg md_n md_p md_limbs md_pad length].
-      split; [reflexivity|]. split; [exact CR'|]. split; [clear - SPA; Z.div_mod_to_equations; lia|]. split; [clear - SPB SLO HLS ACL ACP; lia|].
-      split; [reflexivity|]. split; [unfold MPI_MAX_LIMBS; clear; lia|]. split; [clear; lia|]. split; [clear - SPA; Z.div_mod_to_equations; lia|].
-      split; [clear - SPB SLO HLS ACL ACP; lia|]. split; [exact (proj2 (proj1 CL))|]. split; [clear; lia|]. split; [clear - SPB; lia| left; reflexivity]. }
-    clear MU WM CR' EV168 EV176. repeat match goal with H : rw_cells usegs _ _ _ |- _ => clear H end.
-    reopen CS5 HH HTc MF SOK MI ST MK.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX4 CS5 eq_refl)) 8%nat. intros MX NSX WRX LOX CRX CRXL HFX _.
+    intros n t zp k ib j0 j64 Kont Tnn Nmax Krng mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i
+      xra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x5 CSq LOCq LLq Irng Iib.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSq) as (HPq & TOPq & MFq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    pose proof LOCq as ADq. unfold locals_at in ADq. cbn [map] in ADq. injection ADq as ADX ADY ADZ ADT.
+    pose proof LLq as LLparts. unfold loop_loc in LLparts.
+    destruct LLparts as (OWX & NX & OWY & NY & OWZ & PZ & NZ & OWT & NT & BABS).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 2%nat dZ CSq eq_refl) as (MZ & _ & _ & _ & _ & _ & HZ & _).
+    destruct (HZ OWZ) as (PZpos & PZtop & _).
+    destruct MZ as ((_ & _ & _ & LENZ & _ & OWNZ) & _). rewrite OWZ in OWNZ. destruct OWNZ as (_ & _ & _ & ARRZ).
+    destruct (nth_error (md_limbs dZ) (Z.to_nat (i - t - 1))) as [wq|] eqn:NTHq.
+    2: { exfalso. apply nth_error_None in NTHq. lia. }
+    rewrite PZ in ARRZ.
+    rdq ARRZ NTHq (i - t - 1).
+    do 3 zstep.
+    assert (A2lo : bv_unsigned (sx32 wq) mod 2^32 = w32 wq).
+    { rewrite w32_sx32. unfold sxz, w32. pose proof (Z.mod_pos_bound (bv_unsigned wq) (2^32) ltac:(lia)) as WB.
+      destruct (Z.ltb_spec (bv_unsigned wq mod 2^32) (2^31)); lia. }
+    assert (A2z : bv_unsigned (sx32 wq) = 0 <-> w32 wq = 0).
+    { rewrite w32_sx32. unfold sxz, w32. pose proof (Z.mod_pos_bound (bv_unsigned wq) (2^32) ltac:(lia)) as WB.
+      destruct (Z.ltb_spec (bv_unsigned wq mod 2^32) (2^31)); lia. }
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT CSq eq_refl) as (MT & NST & WRT & LOT & _ & _ & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 1%nat dY CSq eq_refl) as (MY & _ & _ & _ & CRY & CRLY & _).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 3%nat 1%nat dT dY CSq eq_refl eq_refl) as (SEPTY & OSTY).
+    pose proof HMULI as MULI. unfold mpi_mul_int_stmt_g, U_MPI_MUL_INT in MULI.
+    eapply aevtM_cut; [eapply MULI with (dX := dT) (dA := dY) (b := w32 wq) (lo := lo) (h := hq) (LB := LBq);
+      rewrite ?(unsigned_lit (SP + -288)) by lia;
+      first [eassumption | reflexivity | (rewrite ?ADX, ?ADY, ?ADZ, ?ADT; reflexivity) | (rewrite TOPq; lia)
+            | (unfold w32; apply Z.mod_pos_bound; lia) | lia | idtac] |].
+    intros ms1 mo1 PO1.
+    binop_post PO1 m1 mo1' h1 LB1 dT1 r1 E1 MI1 ST1 MF1 HT1 HH1 MA1 OUT1 PX1 SOK1 RR1.
+    replace (ret_pc (Z_to_bv 64 136376)) with (Z_to_bv 64 136376) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR1 as (RES1 & KEEP1).
+    pose proof KEEP1 as (ADT1 & _ & BLK1 & NT1).
+    pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 3%nat dT m1 mo1' h1 LB1 dT1 CSq eq_refl HH1 HT1 MF1 MA1 OUT1 PX1 SOK1 MI1 ST1 BLK1)
+      as CS1.
+    cbn [set_nth] in CS1.
+    assert (LOC1 : locals_at [dX; dY; dZ; dT1]).
+    { unfold locals_at. cbn [map]. rewrite ADT1, ADX, ADY, ADZ, ADT. reflexivity. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS1) as (HP1 & TOP1 & _ & SOKq1 & MIq1 & STK1 & _ & MOK1).
+    destruct RES1 as [(R1z & _) | R1e]; subst r1.
+    2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbn iota.
+         eapply L_err; [exact CS1 | exact LOC1 | reflexivity | reflexivity | lia | exact BABS]. }
     zstep.
-    pose proof HCMPO as SPC. unfold mpi_cmp_mpi_stmt_o, U_MPI_CMP_MPI in SPC.
-    eapply aevtM_cut_evt; [exact MK| |].
-    { eapply SPC with (dX := dX4) (dY := dTs) (LB := LB4); rewrite ?unsigned_lit by lia.
-      - left; exact MX.
-      - right; exact OTs.
-      - intros O. flat constr:((HFX O)) 2%nat. intros P0 _. exact P0.
-      - unfold dTs; cbn [md_own]; intros C; discriminate C.
-      - exact MI.
-      - rewrite KA4, E0. first [reflexivity| f_equal; lia].
-      - unfold dTs; cbn [md_addr]. first [reflexivity| f_equal; lia]. }
-    clear SPC. cbv beta. intros ms' PO. unfold mpi_cmp_post in PO. destruct_exs PO. flat constr:(PO) 4%nat. flclear PO. intros -> _ _ _.
-    replace (ret_pc (Z_to_bv 64 0x21508)) with (Z_to_bv 64 0x21508) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    clear CS4 MX NSX WRX LOX CRX CRXL HFX OTs.
-    zstep; if_cases K1.
-      * (* [comment removed for export] *)
-        clear K1. eapply L_ltest; [exact K| exact CS5| exact ADDRS4| exact LL4| exact T0| exact IR| exact IB| exact NB| exact Hk].
-      * (* [comment removed for export] *)
-        clear K1. zstep. zstep. zstep.
-        flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT3 CS5 eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-        flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS5 eq_refl)) 9%nat. intros MY NSY WRY LOY CRY CRYL HFY AY1 _.
-        flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 3 1 dT3 dY CS5 eq_refl eq_refl)) 2%nat. intros SEP31 OPS31.
-        pose proof HCOPY as SPC. unfold mpi_copy_stmt_x, U_MPI_COPY in SPC.
-        eapply aevtM_cut.
-        { eapply SPC with (dX := dT3) (dY := dY) (lo := lo) (h := h4) (LB := LB4); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-          all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-          all: try (rewrite ?KA3, ?KA, ?E0, ?E1, ?E2, ?E3; reflexivity).
-          apply copy_sep_of_opnd; [exact OPS31| rewrite E1; clear - SLO HLS ACL ACP; lia]. }
-        clear SPC. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-        binop_post PO m6 mo6 h6 LB6 dT6 r E MI6 ST6 MF6 HT6 HH6 MA6 OUT6 PX6 SOK6 RR.
-        replace (ret_pc (Z_to_bv 64 0x21518)) with (Z_to_bv 64 0x21518) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-        flat constr:(RR) 2%nat. flclear RR. intros FLt22 _. flat constr:(FLt22) 4%nat. flclear FLt22. intros CR1 KA6 KP6 KF6.
-        assert (CS6 : CST m6 mo6 h6 LB6 (set_nth 3 [dX4; dY; dZ; dT3] dT6) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 v164 v168 v176 t180)) []).
-        { eapply mc_binop_l; [exact CS5| reflexivity| exact HH6| exact HT6| exact MF6| exact MA6| exact OUT6| exact PX6| exact SOK6| exact MI6| exact ST6| exact KF6]. }
-        cbn [set_nth] in CS6.
-        assert (ADDRS6 : locals_at [dX4; dY; dZ; dT6]) by (unfold locals_at; cbn [map]; rewrite KA6, KA4, KA3, KA, E0, E1, E2, E3; reflexivity).
-        assert (KN6 : md_n dT3 <= md_n dT6) by (destruct CR1 as [(_ & _ & NB6)|(_ & EN & _)]; lia).
-        assert (LL6 : loop_loc dX4 dY dZ dT6 n t zp) by (eapply loop_loc_T; [exact LL4| eapply out_heap; [exact MA6| exact (proj1 (proj2 OUT6))| pose proof LL4 as (_&_&_&_&_&_&_&_&NT4); lia]| exact KN6]).
-        assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct CR1 as [(Hr0 & _)|(HrF & _)]; [left; exact Hr0| right; exact HrF]).
-        clear MT NST WRT LOT CRT CRTL HFT MY NSY WRY LOY CRY CRYL HFY SEP31 OPS31 CR1 KF6 KP6 MA6 OUT6 PX6 CS5.
-        reopen CS6 HH HTc MF SOK MI ST MK.
-        zstep; if_cases K0; zify_cond K0.
-        { eapply L_err; [exact CS6| exact ADDRS6| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-        assert (r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia). subst r. clear Hr K0.
-        (* [comment removed for export] *)
-        zstep. zstep. zstep.
-        flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT6 CS6 eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-        pose proof HSHL as SPS. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SPS.
-        eapply aevtM_cut.
-        { eapply SPS with (dX := dT6) (count := (i - t - 1) * 32) (lo := lo) (h := h6) (LB := LB6); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-          all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc IR T0 NB; lia).
-          all: try (rewrite ?KA6, ?KA3, ?KA, ?E0, ?E1, ?E2, ?E3; reflexivity). }
-        clear SPS. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-        binop_post PO m7 mo7 h7 LB7 dT7 r E MI7 ST7 MF7 HT7 HH7 MA7 OUT7 PX7 SOK7 RR.
-        replace (ret_pc (Z_to_bv 64 0x21528)) with (Z_to_bv 64 0x21528) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-        flat constr:(RR) 2%nat. flclear RR. intros R1 FLt23. flat constr:(FLt23) 4%nat. flclear FLt23. intros KA7 KP7 KF7 KN7.
-        assert (CS7 : CST m7 mo7 h7 LB7 (set_nth 3 [dX4; dY; dZ; dT6] dT7) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 v164 v168 v176 t180)) []).
-        { eapply mc_binop_l; [exact CS6| reflexivity| exact HH7| exact HT7| exact MF7| exact MA7| exact OUT7| exact PX7| exact SOK7| exact MI7| exact ST7| exact KF7]. }
-        cbn [set_nth] in CS7.
-        assert (ADDRS7 : locals_at [dX4; dY; dZ; dT7]) by (unfold locals_at; cbn [map]; rewrite KA7, KA6, KA4, KA3, KA, E0, E1, E2, E3; reflexivity).
-        assert (LL7 : loop_loc dX4 dY dZ dT7 n t zp) by (eapply loop_loc_T; [exact LL6| eapply out_heap; [exact MA7| exact (proj1 (proj2 OUT7))| pose proof LL6 as (_&_&_&_&_&_&_&_&NT6); lia]| exact KN7]).
-        assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct R1 as [(Hr0 & _)|HrF]; [left; exact Hr0| right; exact HrF]).
-        clear MT NST WRT LOT CRT CRTL HFT R1 KF7 KP7 MA7 OUT7 PX7 CS6 LL6 ADDRS6.
-        reopen CS7 HH HTc MF SOK MI ST MK.
-        zstep; if_cases K0; zify_cond K0.
-        { eapply L_err; [exact CS7| exact ADDRS7| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-        assert (r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia). subst r. clear Hr K0.
-        (* [comment removed for export] *)
-        zstep. zstep. zstep. zstep. zstep.
-        flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX4 CS7 eq_refl)) 8%nat. intros MX NSX WRX LOX CRX CRXL HFX _.
-        flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT7 CS7 eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-        flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0 0 dX4 dX4 CS7 eq_refl eq_refl)) 2%nat. intros SEP00 OPS00.
-        flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0 3 dX4 dT7 CS7 eq_refl eq_refl)) 2%nat. intros SEP03 OPS03.
-        pose proof (HAS 1 (or_introl eq_refl)) as SPA_.
-        eapply aevtM_cut.
-        { eapply SPA_ with (dX := dX4) (dA := dX4) (dB := dT7) (lo := lo) (h := h7) (LB := LB7); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-          all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-          all: try (rewrite ?KA7, ?KA6, ?KA4, ?KA3, ?KA, ?E0, ?E1, ?E2, ?E3; reflexivity). }
-        clear SPA_. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-        binop_post PO m8 mo8 h8 LB8 dX8 r E MI8 ST8 MF8 HT8 HH8 MA8 OUT8 PX8 SOK8 RR.
-        replace (ret_pc (Z_to_bv 64 0x21540)) with (Z_to_bv 64 0x21540) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-        flat constr:(RR) 2%nat. flclear RR. intros R1 FLt24. flat constr:(FLt24) 4%nat. flclear FLt24. intros KA8 KP8 KF8 KN8.
-        assert (CS8 : CST m8 mo8 h8 LB8 (set_nth 0 [dX4; dY; dZ; dT7] dX8) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 v164 v168 v176 t180)) []).
-        { eapply mc_binop_l; [exact CS7| reflexivity| exact HH8| exact HT8| exact MF8| exact MA8| exact OUT8| exact PX8| exact SOK8| exact MI8| exact ST8| exact KF8]. }
-        cbn [set_nth] in CS8.
-        assert (ADDRS8 : locals_at [dX8; dY; dZ; dT7]) by (unfold locals_at; cbn [map]; rewrite KA8, KA7, KA6, KA4, KA3, KA, E0, E1, E2, E3; reflexivity).
-        assert (LL8 : loop_loc dX8 dY dZ dT7 n t zp) by (eapply loop_loc_X; [exact LL7| eapply out_heap; [exact MA8| exact (proj1 (proj2 OUT8))| pose proof LL7 as (_&NX7&_); lia]| exact KN8]).
-        assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct R1 as [(Hr0 & _)|HrF]; [left; exact Hr0| right; exact HrF]).
-        clear MX NSX WRX LOX CRX CRXL HFX MT NST WRT LOT CRT CRTL HFT SEP00 OPS00 SEP03 OPS03 R1 KF8 KP8 MA8 OUT8 PX8 CS7 LL7 ADDRS7.
-        reopen CS8 HH HTc MF SOK MI ST MK.
-        zstep; if_cases K0; zify_cond K0.
-        { eapply L_err; [exact CS8| exact ADDRS8| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-        assert (r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia). subst r. clear Hr K0.
-        (* [comment removed for export] *)
-        clear HLZ HNZ INZ PALZ HFZ PZ0 PZ4.
-        flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS8 eq_refl)) 8%nat. intros FLt25 _ _ _ _ _ HFZ _. flat constr:(FLt25) 2%nat. flclear FLt25. intros FLt26 _. flat constr:(FLt26) 6%nat. flclear FLt26. intros _ _ _ HLZ HNZ HOZ.
-        rewrite OZ in HOZ. flat constr:(HOZ) 4%nat. flclear HOZ. intros _ INZ PALZ UZ. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. unfold MPI_MAX_LIMBS in HNZ. rewrite PZ in *.
-        assert (ZB : 0 < zp /\ zp + 4 * (i - t - 1) < 2^64) by (clear - PZ0 PZ4 ACL SLO HLS SPB ACP IR NZ T0 HNZ HLZ; lia).
-        zstep; if_cases K0; zify_cond K0; rewrite ?unsigned_lit in K0 by (clear - ZB IR T0; lia).
-        { exfalso; clear - K0 ZB IR T0; lia. }
-        rd UZ (i - t - 1).
-        zstep.
-        pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m8) as MU. pose proof (wmono_refl usegs m8) as WM.
-        pose proof (u32arr_store_ok usegs _ zp (md_limbs dZ) (i - t - 1) _ UZ ltac:(lia) ltac:(f_equal; lia)) as SOKw.
-        zstep.
-        lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] => pose proof (u32arr_write usegs _ zp (md_limbs dZ) (i - t - 1) v UZ ltac:(lia)) as UZ' end.
-        store_done.
-        lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m9 end.
-        lazymatch type of UZ' with u32arr _ _ _ ?l => set (zs9 := l) in UZ' end.
-        assert (CS9 : CST m9 mo8 h8 LB8 [dX8; dY; set_limbs dZ zs9; dT7] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 v164 v168 v176 t180)) []).
-        { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS8| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-          - constructor; [right; left; exists 2%nat, dZ; split; [reflexivity|]; split; [reflexivity|]; split; [exact OZ|]; cbn [fst snd]; clear - IR HNZ NZ T0 PZ; rewrite ?PZ; lia| constructor].
-          - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-              [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-              | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-              | | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-            cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OZ]|].
-            intros _ _. rewrite PZ. split; [exact UZ'| subst zs9; rewrite upd_length; exact HLZ].
-          - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-        eapply L_ltest; [exact K| exact CS9| | apply loop_loc_Z; exact LL8| exact T0| exact IR| exact IB| exact NB| exact Hk].
-        unfold locals_at. cbn [map set_limbs md_addr]. unfold locals_at in ADDRS8. cbn [map] in ADDRS8. exact ADDRS8.
+    change (negb (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0))) with false. cbn iota.
+    do 4 zstep.
+    replace ((i - t - 1) ≪ 5) with (32 * (i - t - 1)) by (rewrite Z.shiftl_mul_pow2 by lia; lia).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT1 CS1 eq_refl) as (MT1 & NST1 & WRT1 & LOT1 & _).
+    pose proof HSHL as SHL. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SHL.
+    eapply aevtM_cut; [eapply SHL with (dX := dT1) (count := 32 * (i - t - 1)) (lo := lo) (h := h1) (LB := LB1);
+      rewrite ?(unsigned_lit (SP + -288)) by lia;
+      first [eassumption | reflexivity | (rewrite ?ADT1, ?ADT; reflexivity) | (rewrite TOP1; lia)
+            | (rewrite unsigned_lit by lia; reflexivity) | lia | idtac] |].
+    intros ms2 mo2 PO2.
+    binop_post PO2 m2 mo2' h2 LB2 dT2 r2 E2 MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 RR2.
+    replace (ret_pc (Z_to_bv 64 136396)) with (Z_to_bv 64 136396) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR2 as (RES2 & KEEP2).
+    pose proof KEEP2 as (ADT2 & _ & BLK2 & NT2).
+    pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 3%nat dT1 m2 mo2' h2 LB2 dT2 CS1 eq_refl HH2 HT2 MF2 MA2 OUT2 PX2 SOK2 MI2 ST2 BLK2)
+      as CS2.
+    cbn [set_nth] in CS2.
+    assert (LOC2 : locals_at [dX; dY; dZ; dT2]).
+    { unfold locals_at. cbn [map]. rewrite ADT2, ADT1, ADX, ADY, ADZ, ADT. reflexivity. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (HP2 & TOP2 & _ & SOKq2 & MIq2 & STK2 & _ & MOK2).
+    destruct RES2 as [(R2z & _) | R2e]; subst r2.
+    2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbn iota.
+         eapply L_err; [exact CS2 | exact LOC2 | reflexivity | reflexivity | lia | exact BABS]. }
+    zstep.
+    change (negb (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0))) with false. cbn iota.
+    do 5 zstep.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX CS2 eq_refl) as (MX2 & NSX2 & WRX2 & LOX2 & CRX2 & CRLX2 & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT2 CS2 eq_refl) as (MT2 & _ & _ & _ & CRT2 & CRLT2 & _).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0%nat 0%nat dX dX CS2 eq_refl eq_refl) as (_ & OSXX2).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0%nat 3%nat dX dT2 CS2 eq_refl eq_refl) as (SEPXT2 & OSXT2).
+    pose proof HAS as ASUB. unfold add_sub_mpi_stmt, U_ADD_SUB_MPI in ASUB.
+    eapply aevtM_cut; [eapply ASUB with (flip := -1) (dX := dX) (dA := dX) (dB := dT2) (lo := lo) (h := h2) (LB := LB2);
+      rewrite ?(unsigned_lit (SP + -288)) by lia;
+      first [eassumption | reflexivity | (left; reflexivity) | (right; reflexivity)
+            | (rewrite ?ADT2, ?ADT1, ?ADT, ?ADX; reflexivity) | (rewrite TOP2; lia) | lia | idtac] |].
+    intros ms3 mo3 PO3.
+    binop_post PO3 m3 mo3' h3 LB3 dX3 r3 E3 MI3 ST3 MF3 HT3 HH3 MA3 OUT3 PX3 SOK3 RR3.
+    replace (ret_pc (Z_to_bv 64 136420)) with (Z_to_bv 64 136420) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR3 as (RES3 & KEEP3).
+    pose proof KEEP3 as (ADX3 & _ & BLK3 & NX3).
+    pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 0%nat dX m3 mo3' h3 LB3 dX3 CS2 eq_refl HH3 HT3 MF3 MA3 OUT3 PX3 SOK3 MI3 ST3 BLK3)
+      as CS3.
+    cbn [set_nth] in CS3.
+    assert (LOC3 : locals_at [dX3; dY; dZ; dT2]).
+    { unfold locals_at. cbn [map]. rewrite ADX3, ADT2, ADT1, ADX, ADY, ADZ, ADT. reflexivity. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS3) as (HP3 & TOP3 & _ & SOKq3 & MIq3 & STK3 & _ & MOK3).
+    destruct RES3 as [(R3z & _) | R3e]; subst r3.
+    2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbn iota.
+         eapply L_err; [exact CS3 | exact LOC3 | reflexivity | reflexivity | lia | exact BABS]. }
+    zstep.
+    change (negb (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0))) with false. cbn iota.
+    unfold lframe in CS3.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CS3) as (FRcs3 & _ & _ & FRtc3 & _).
+    unfold tcells in FRtc3.
+    pose proof (munch_refl [(SP + -128, SP + -104)] m3) as MU. pose proof (wmono_refl usegs m3) as WM.
+    do 5 zstep.
+    rename m0 into m4.
+    pose proof (cs_frame_updT _ _ _ _ _ _ _ _ _ _ _ _ _ _ CS3 LOC3 MU WM MIq3 STK3 ltac:(lia) ltac:(lia) FRtc3 eq_refl eq_refl eq_refl)
+      as CS4.
+    clear MU WM.
+    take FRtc3 1%nat TCpad. take FRtc3 1%nat TClimb.
+    assert (TOPND : MpiOpnd.stack_opnd usegs m4 SPc (mkMPD (SP + -120) 1 1 (SP + -124) [Z_to_bv 64 0] t180 LStatic)).
+    { pose proof (rw_cells_split_C4 usegs m4 (SP + -120) [C8 (Z_to_bv 64 (SP + -124))] (Z_to_bv 64 65537) [C4 t180] FRtc3)
+        as HDR2.
+      cbn [app] in HDR2.
+      apply (rw_cells_C2_congr usegs m4 (SP + -120) [C8 (Z_to_bv 64 (SP + -124))] 65537 1) in HDR2; [| reflexivity].
+      cbn [app] in HDR2.
+      apply (rw_cells_C2_congr usegs m4 (SP + -120) [C8 (Z_to_bv 64 (SP + -124)); C2 (Z_to_bv 64 1)]
+               (bv_unsigned (Z_to_bv 64 65537) / 2 ^ 16) 1) in HDR2; [| reflexivity].
+      cbn [app] in HDR2.
+      unfold MpiOpnd.stack_opnd. cbn [md_own md_addr md_p md_sg md_n md_pad md_limbs length Z.of_nat].
+      split; [reflexivity|]. split; [exact HDR2|].
+      split; [lia|]. split; [lia|]. split; [reflexivity|]. split; [unfold MPI_MAX_LIMBS; lia|]. split; [lia|].
+      split; [lia|]. split; [lia|].
+      split; [exact (u32arr_ro _ _ _ _ (LxPMpiTac.u32arr_of_rw_cells m4 (SP + -124) [Z_to_bv 64 0] TClimb))|].
+      split; [lia|]. split; [lia|]. left; reflexivity. }
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX3 CS4 eq_refl) as (MX4 & NSX4 & _ & _ & _ & _ & HX4 & _).
+    do 3 zstep.
+    pose proof HCMPO as CMPO. unfold mpi_cmp_mpi_stmt_o, U_MPI_CMP_MPI in CMPO.
+    eapply aevtM_cut_evt; [exact MOK3 | eapply CMPO with (dX := dX3) (dY := mkMPD (SP + -120) 1 1 (SP + -124) [Z_to_bv 64 0] t180 LStatic) (LB := LB3);
+      rewrite ?(unsigned_lit (SP + -288)) by lia;
+      first [exact MIq3 | (left; exact MX4) | (right; exact TOPND) | (intros OWN4; exact (proj1 (HX4 OWN4)))
+            | (cbn; discriminate) | (rewrite ADX3, ADX; reflexivity) | reflexivity | idtac] |].
+    intros ms4 PO4. unfold mpi_cmp_post in PO4.
+    destruct PO4 as (c0 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & c8 & c9 & c10 & c11 & c12 & c13 & -> & _ & _ & MI4).
+    replace (ret_pc (Z_to_bv 64 136456)) with (Z_to_bv 64 136456) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    zstep.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT2 CS4 eq_refl) as (MT4 & NST4 & _).
+    assert (OWT2 : md_own dT2 = LHeap) by (apply (out_heap m4 LB3 dT2 MT4 NST4); lia).
+    assert (OWX3 : md_own dX3 = LHeap) by (apply (out_heap m4 LB3 dX3 MX4 NSX4); lia).
+    assert (LL4 : loop_loc dX3 dY dZ dT2 n t zp).
+    { apply (loop_loc_X dX dY dZ dT2 n t zp dX3); [apply (loop_loc_T dX dY dZ dT n t zp dT2); [exact LLq| exact OWT2| lia]
+      | exact OWX3 | lia]. }
+    match goal with |- context [Z_to_bv 64 (Z.sgn ?v)] =>
+      destruct (Z.lt_trichotomy v 0) as [NEG4 | [ZER4 | POS4]];
+      [rewrite (Z.sgn_neg v NEG4) | rewrite ZER4; change (Z.sgn 0) with 0 | rewrite (Z.sgn_pos v POS4)]
+    end;
+    (match goal with |- context [if ?c then _ else _] => let c' := eval vm_compute in c in change c with c'; cbn iota end).
+    2,3: (eapply (L_ltest n t zp k ib j0 j64 Kont); [exact CS4 | exact LOC3 | exact LL4 | lia | lia | lia | lia | exact Krng]).
+    (* X < 0: add T1 back once and decrement the quotient limb *)
+    pose proof (cs_parts _ _ _ _ _ _ _ CS4) as (HP4 & TOP4 & _ & SOKq4 & MIq4 & STK4 & _ & MOK4).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT2 CS4 eq_refl) as (_ & _ & WRT4 & LOT4 & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 1%nat dY CS4 eq_refl) as (MY4 & _ & _ & _ & CRY4 & CRLY4 & _ & YLO4 & _).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 3%nat 1%nat dT2 dY CS4 eq_refl eq_refl) as (SEPTY4 & OSTY4).
+    pose proof (copy_sep_of_opnd dT2 dY lo SPc OSTY4 ltac:(lia)) as CPS4.
+    do 3 zstep.
+    pose proof HCOPY as CPY. unfold mpi_copy_stmt_x, U_MPI_COPY in CPY.
+    eapply aevtM_cut; [eapply CPY with (dX := dT2) (dY := dY) (lo := lo) (h := h3) (LB := LB3);
+      rewrite ?(unsigned_lit (SP + -288)) by lia;
+      first [eassumption | reflexivity | (rewrite ?ADT2, ?ADT1, ?ADT, ?ADY; reflexivity) | (rewrite TOP4; lia) | lia | idtac] |].
+    intros ms5 mo5 PO5.
+    binop_post PO5 m5 mo5' h5 LB5 dT5 r5 E5 MI5 ST5 MF5 HT5 HH5 MA5 OUT5 PX5 SOK5 RR5.
+    replace (ret_pc (Z_to_bv 64 136472)) with (Z_to_bv 64 136472) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR5 as ((RES5 & ADT5 & _ & BLK5) & _).
+    pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 3%nat dT2 m5 mo5' h5 LB5 dT5 CS4 eq_refl HH5 HT5 MF5 MA5 OUT5 PX5 SOK5 MI5 ST5 BLK5)
+      as CS5.
+    cbn [set_nth] in CS5.
+    assert (LOC5 : locals_at [dX3; dY; dZ; dT5]).
+    { unfold locals_at. cbn [map]. rewrite ADT5, ADX3, ADT2, ADT1, ADX, ADY, ADZ, ADT. reflexivity. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS5) as (HP5 & TOP5 & _ & SOKq5 & MIq5 & STK5 & _ & MOK5).
+    destruct RES5 as [(R5z & _ & NT5 & _) | (R5e & _)]; subst r5.
+    2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbn iota.
+         eapply L_err; [exact CS5 | exact LOC5 | reflexivity | reflexivity | lia | exact BABS]. }
+    zstep.
+    change (negb (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0))) with false. cbn iota.
+    do 3 zstep.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT5 CS5 eq_refl) as (MT5 & NST5 & WRT5 & LOT5 & _).
+    eapply aevtM_cut; [eapply SHL with (dX := dT5) (count := 32 * (i - t - 1)) (lo := lo) (h := h5) (LB := LB5);
+      rewrite ?(unsigned_lit (SP + -288)) by lia;
+      first [eassumption | reflexivity | (rewrite ?ADT5, ?ADT2, ?ADT1, ?ADT; reflexivity) | (rewrite TOP5; lia)
+            | (rewrite unsigned_lit by lia; reflexivity) | lia | idtac] |].
+    intros ms6 mo6 PO6.
+    binop_post PO6 m6 mo6' h6 LB6 dT6 r6 E6 MI6 ST6 MF6 HT6 HH6 MA6 OUT6 PX6 SOK6 RR6.
+    replace (ret_pc (Z_to_bv 64 136488)) with (Z_to_bv 64 136488) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR6 as (RES6 & KEEP6).
+    pose proof KEEP6 as (ADT6 & _ & BLK6 & NT6).
+    pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 3%nat dT5 m6 mo6' h6 LB6 dT6 CS5 eq_refl HH6 HT6 MF6 MA6 OUT6 PX6 SOK6 MI6 ST6 BLK6)
+      as CS6.
+    cbn [set_nth] in CS6.
+    assert (LOC6 : locals_at [dX3; dY; dZ; dT6]).
+    { unfold locals_at. cbn [map]. rewrite ADT6, ADT5, ADX3, ADT2, ADT1, ADX, ADY, ADZ, ADT. reflexivity. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS6) as (HP6 & TOP6 & _ & SOKq6 & MIq6 & STK6 & _ & MOK6).
+    destruct RES6 as [(R6z & _) | R6e]; subst r6.
+    2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbn iota.
+         eapply L_err; [exact CS6 | exact LOC6 | reflexivity | reflexivity | lia | exact BABS]. }
+    zstep.
+    change (negb (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0))) with false. cbn iota.
+    do 5 zstep.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX3 CS6 eq_refl) as (MX6 & NSX6 & WRX6 & LOX6 & CRX6 & CRLX6 & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT6 CS6 eq_refl) as (MT6 & _ & _ & _ & CRT6 & CRLT6 & _).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0%nat 0%nat dX3 dX3 CS6 eq_refl eq_refl) as (_ & OSXX6).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0%nat 3%nat dX3 dT6 CS6 eq_refl eq_refl) as (SEPXT6 & OSXT6).
+    eapply aevtM_cut; [eapply ASUB with (flip := 1) (dX := dX3) (dA := dX3) (dB := dT6) (lo := lo) (h := h6) (LB := LB6);
+      rewrite ?(unsigned_lit (SP + -288)) by lia;
+      first [eassumption | reflexivity | (left; reflexivity)
+            | (rewrite ?ADT6, ?ADT5, ?ADT2, ?ADT1, ?ADT, ?ADX3, ?ADX; reflexivity) | (rewrite TOP6; lia) | lia | idtac] |].
+    intros ms7 mo7 PO7.
+    binop_post PO7 m7 mo7' h7 LB7 dX7 r7 E7 MI7 ST7 MF7 HT7 HH7 MA7 OUT7 PX7 SOK7 RR7.
+    replace (ret_pc (Z_to_bv 64 136512)) with (Z_to_bv 64 136512) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR7 as (RES7 & KEEP7).
+    pose proof KEEP7 as (ADX7 & _ & BLK7 & NX7).
+    pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 0%nat dX3 m7 mo7' h7 LB7 dX7 CS6 eq_refl HH7 HT7 MF7 MA7 OUT7 PX7 SOK7 MI7 ST7 BLK7)
+      as CS7.
+    cbn [set_nth] in CS7.
+    assert (LOC7 : locals_at [dX7; dY; dZ; dT6]).
+    { unfold locals_at. cbn [map]. rewrite ADX7, ADT6, ADT5, ADX3, ADT2, ADT1, ADX, ADY, ADZ, ADT. reflexivity. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS7) as (HP7 & TOP7 & _ & SOKq7 & MIq7 & STK7 & _ & MOK7).
+    destruct RES7 as [(R7z & _) | R7e]; subst r7.
+    2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbn iota.
+         eapply L_err; [exact CS7 | exact LOC7 | reflexivity | reflexivity | lia | exact BABS]. }
+    zstep.
+    change (negb (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0))) with false. cbn iota.
+    zstep.
+    rewrite bv_ltu_Z, (unsigned_lit (18446744073709551615 - zp)), (unsigned_lit (4 * (i - t - 1))) by lia.
+    destruct (Z.ltb_spec (18446744073709551615 - zp) (4 * (i - t - 1))) as [TRAP | NOTRAP].
+    { exfalso. clear - TRAP PZtop PZ NZ Irng Tnn ACL SLO SPrng HLS. lia. }
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 2%nat dZ CS7 eq_refl) as (MZ7 & _).
+    destruct MZ7 as ((_ & _ & _ & _ & _ & OWNZ7) & _). rewrite OWZ in OWNZ7. destruct OWNZ7 as (_ & _ & _ & ARRZ7).
+    rewrite PZ in ARRZ7.
+    pose proof (LxPMpiTac.u32rw_cell_at m7 zp (md_limbs dZ) (i - t - 1) (zp + 4 * (i - t - 1)) wq ARRZ7 NTHq ltac:(lia) eq_refl)
+      as CELLq.
+    pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m7) as MU. pose proof (wmono_refl usegs m7) as WM.
+    rdq ARRZ7 NTHq (i - t - 1).
+    zstep.
+    remember (zp + 4 * (i - t - 1)) as eq eqn:EQq.
+    zstep.
+    rename m0 into m8.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 2%nat dZ CS7 eq_refl) as (MZ7b & _).
+    destruct MZ7b as ((_ & _ & _ & _ & _ & OWNZ7b) & _). rewrite OWZ, PZ in OWNZ7b. destruct OWNZ7b as (_ & _ & _ & ARRZ7).
+    pose proof (LxPMpiTac.u32arr_upd_of_cell m7 m8 zp (md_limbs dZ) (i - t - 1) eq wq
+                  (Z_to_bv 64 (bv_unsigned (sx32 wq) + -1)) ARRZ7 NTHq ltac:(lia) EQq MU WM CELLq) as ARR8.
+    set (zs := upd (md_limbs dZ) (Z.to_nat (i - t - 1)) (Z_to_bv 64 (bv_unsigned (sx32 wq) + -1))) in ARR8.
+    assert (WOK8 : Forall (w_ok lo SPc [dX7; dY; dZ; dT6] (Some 2%nat) false false dR []) [(eq, eq + 4)]).
+    { constructor; [| constructor]. unfold w_ok. right; left. exists 2%nat, dZ. cbn [nth_error fst snd].
+      split; [reflexivity|]. split; [reflexivity|]. split; [exact OWZ|]. rewrite PZ. lia. }
+    assert (IDX8 : forall (j : nat) (d d' : mpd), nth_error [dX7; dY; dZ; dT6] j = Some d ->
+              nth_error [dX7; dY; set_limbs dZ zs; dT6] j = Some d' ->
+              md_addr d' = md_addr d /\ md_sg d' = md_sg d /\ md_n d' = md_n d /\ md_p d' = md_p d /\
+              md_pad d' = md_pad d /\ md_own d' = md_own d /\
+              (~ (Some 2%nat = Some j /\ md_own d = LHeap) -> d' = d) /\
+              (Some 2%nat = Some j -> md_own d = LHeap ->
+                 u32arr usegs m8 (md_p d) (md_limbs d') /\ Z.of_nat (length (md_limbs d')) = md_n d)).
+    { intros j d d' Ej Ej'.
+      destruct j as [|[|[|[|j]]]]; cbn [nth_error] in Ej, Ej';
+        [injection Ej as <-; injection Ej' as <- .. | destruct j; cbn in Ej; discriminate Ej].
+      1,2,4: (refine (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl
+                 (conj (fun _ => eq_refl) (fun JE => _)))))))); discriminate JE).
+      refine (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl
+        (conj (fun NOT => False_ind _ (NOT (conj eq_refl OWZ))) (fun _ _ => _)))))))).
+      cbn [set_limbs md_limbs md_p md_n]. rewrite PZ.
+      split; [exact ARR8| apply LxPMpiTac.upd_length_Z; exact LENZ]. }
+    assert (DW8 : md_addr dR = md_addr dR /\ md_sg dR = md_sg dR /\ md_n dR = md_n dR /\ md_p dR = md_p dR /\
+              md_pad dR = md_pad dR /\ md_own dR = md_own dR /\ (~ (false = true /\ md_own dR = LHeap) -> dR = dR) /\
+              (false = true -> md_own dR = LHeap ->
+                 u32arr usegs m8 (md_p dR) (md_limbs dR) /\ Z.of_nat (length (md_limbs dR)) = md_n dR)).
+    { exact (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl (conj eq_refl
+        (conj (fun _ => eq_refl) (fun FT => False_ind _ (diff_false_true FT))))))))). }
+    pose proof (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false [(eq, eq + 4)] m8 [dX7; dY; set_limbs dZ zs; dT6] dR []
+                  CS7 MU WM MIq7 STK7 WOK8 eq_refl IDX8 DW8 (fun _ => eq_refl) (fun FT => False_ind _ (diff_false_true FT))) as CS8.
+    assert (LOC8 : locals_at [dX7; dY; set_limbs dZ zs; dT6]).
+    { unfold locals_at. cbn [map set_limbs md_addr]. rewrite ADX7, ADT6, ADT5, ADX3, ADT2, ADT1, ADX, ADY, ADZ, ADT. reflexivity. }
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX7 CS8 eq_refl) as (MX8 & NSX8 & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT6 CS8 eq_refl) as (MT8 & NST8 & _).
+    assert (OWX7 : md_own dX7 = LHeap) by (apply (out_heap m8 LB7 dX7 MX8 NSX8); lia).
+    assert (OWT6 : md_own dT6 = LHeap) by (apply (out_heap m8 LB7 dT6 MT8 NST8); lia).
+    assert (LL8 : loop_loc dX7 dY (set_limbs dZ zs) dT6 n t zp).
+    { apply (loop_loc_X dX3 dY (set_limbs dZ zs) dT6 n t zp dX7); [| exact OWX7 | lia].
+      apply (loop_loc_T dX3 dY (set_limbs dZ zs) dT2 n t zp dT6); [| exact OWT6 | lia].
+      apply (loop_loc_Z dX3 dY dZ dT2 n t zp zs). exact LL4. }
+    eapply (L_ltest n t zp k ib j0 j64 Kont); [exact CS8 | exact LOC8 | exact LL8 | lia | lia | lia | lia | exact Krng].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   (* [comment removed for export] *)
   Definition ISTATE (n t zp k : Z) (j0 j64 : list byte) (i q : Z) (moq : Model) (ms : machine_state) : Prop :=
     exists (mq : mem) (hq : HST usegs L HI) (LBq : list blk) (dX dY dZ dT : mpd)
-      (u0 u1 u2 j68 t160 t164 t168 t176 t180 wq : word)
+      (u0 u1 u2 j68 t160 t164 t168 t176 t180 wd : word)
       (xra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x5 : word),
-    ms = MS (mkR xra (Z_to_bv 64 SPc) gp tp t0 t1 t2 (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 (md_addr dA)) a0 a1 a2 a3 a4 a5 a6 a7
-               (Z_to_bv 64 0) (Z_to_bv 64 (md_addr dB)) (Z_to_bv 64 (zp + 4 * (i - t - 1))) x5 (Z_to_bv 64 (4 * t))
-               (Z_to_bv 64 (4 * (i - t - 1))) (Z_to_bv 64 (0xffffffffffffffff - zp)) (Z_to_bv 64 i) (Z_to_bv 64 (i - t - 1)) (Z_to_bv 64 zp) t3 t4 t5 t6)
-          F (Z_to_bv 64 0x213e4) fc None mq (seg_rom usegs) /\
-    cstate usegs L HI h LB mo m SP lo SPc dR es mq moq hq LBq [dX; dY; dZ; dT] dR []
-      (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) [] /\
-    locals_at [dX; dY; dZ; dT] /\
-    loop_loc dX dY dZ dT n t zp /\
-    nth_error (md_limbs dZ) (Z.to_nat (i - t - 1)) = Some wq /\
-    bv_unsigned wq mod 2^32 = q
-(* [comment removed for export] *).
+      ms = MS (mkR xra (Z_to_bv 64 SPc) gp tp t0 t1 t2 (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 (md_addr dA)) a0 a1 a2 a3 a4 a5 a6 a7
+                 (Z_to_bv 64 0) (Z_to_bv 64 (md_addr dB)) (Z_to_bv 64 (zp + 4 * (i - t - 1))) x5 (Z_to_bv 64 (4 * t))
+                 (Z_to_bv 64 (4 * (i - t - 1))) (Z_to_bv 64 (0xffffffffffffffff - zp)) (Z_to_bv 64 i) (Z_to_bv 64 (i - t - 1)) (Z_to_bv 64 zp) t3 t4 t5 t6)
+             F (Z_to_bv 64 0x213e4) fc None mq (seg_rom usegs)
+      /\ cstate usegs L HI h LB mo m SP lo SPc dR es mq moq hq LBq [dX; dY; dZ; dT] dR []
+           (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []
+      /\ locals_at [dX; dY; dZ; dT]
+      /\ loop_loc dX dY dZ dT n t zp
+      /\ nth_error (md_limbs dZ) (Z.to_nat (i - t - 1)) = Some wd
+      /\ bv_unsigned wd mod 2^32 = q.
 
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "01M0@D12760851434.177D18696473121.177D25310437757.177D40375623405.177D4662108261.239 D49416158319.239D49532376974.177D55471390793.177D6690581324.239 L10642668194.173L10646928340.174L11254569813.17 L1167931669.177 L1167931669.234 L12610030783.239L12734415834.10 L13072597906.236L13085246180.237L13379996207.4  L13669996297.187L13672109588.216L14678034333.238L14678034333.239L15320268189.209L15795404733.238L16075584073.231L18743961128.4  L18964789310.235L18964789310.239L18964789560.238L18964789560.239L19901862207.239L21175695246.17 L21917923060.174L21923753204.173L24897143244.3  L25622449825.175L25622449825.176L25622450087.177L25736628564.3  L25820589127.177L26305953715.171L28138824896.2  L29010565666.206L31287002149.177L31583138353.3  L33517354533.3  L36436032575.7  L36950940679.2  L36955116083.2  L38076755263.239L39188636933.0  L41480287244.175L41633390655.239L42258615265.177L42468655062.187L42816481324.173L42816481578.176L42816481578.177L45093811327.239L4586513446.175 L46452486793.7  L48576203280.216L48770266301.3  L50982283959.232L52064948629.238L53382726745.238L53749517607.21 L56625524356.177L56996506657.17 L57179347148.18 L582101260.9    L58501596249.2  L59308548964.7  L59308628179.209L59314841581.174L59314955108.2  L59314955108.238L59314955108.7  L62335543678.0  L62867946550.233L62867946800.238L62867946800.239L63561631872.177L63891989021.238L64032823942.176L64032823942.177L64032824192.174L7411612811.177 L7411613069.174 L7411613069.176 L9377572398.18  L9746144436.239 00000100A00S01001101h01i02D03503Q03m04H04d05D06P06f07a08\08k09_0:S0:T0:U0;@0;A0;B0;Q0<B0=30=T0>50?A0?N0?j0@F0@N0@b0A60AL0AV0AW0Ad0Am0An0B`0Bj0C30CC0CD0CE0DQ0DR0Dd0F00F`0G30G\0HE0I10J=0JJ0Jc0K60K?0KV0L50LT0LU0LV0M70M80MO0MV0Mi0NQ0O40O:0OX0Oj0Ok0Q70RC0SO0SP0Sl0TX0UF0V20VF0VW0Vh0Vi0VjFS2sp2dY2dT2wq2v1S2sp2dY2dT2wq2v11wS2sp2dY2dT2wq2v13SPB1w2NT3PT0FS2sp1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ0FS2sp2dY2dT2wq2v13SPB2NT3PT0S2sp1n1t2zp1i2dY2dZ2dT2wq2IR3SPB3PT03dT54PT503PZ0S2sp2dY2dT2wq3SPB2NT3HLT3PT0S2sp2dY2dT2wq3SPB2NT3HLT3PT0S1L2HI2sp1h4HTOP2hq3SPB3HTcS2sp1n1t2zp1i2dY2dZ2dT2wq2IRS2sp1n1t2zp1i2dY2dZ2dT2wq2IR3dT5S1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4S1n1t2zp2T01i2dZ2IR2NZS2sp1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503HLZ3PZ0S2sp1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503HLZ3PZ0S2dY2dT2NT4APTYS1L3HLS2sp2lo3SLO3ACL2zp2dY2dZ2dT2wq3SPB3ACP3PT03PZ0S1L3HLS2sp2lo3SLO3ACL2zp2dY2dZ2dT2wq3SPB3ACP3PT03PZ0FFS2sp2zp2dY2dZ2dT2wq3SPB3PT03ts43PZ01r2Hr2K0FFS2dT2NT3dT53KN5S2sp1n1t2zp1i2dY2dZ2dT2wq2IR3SPB3PT03dT54PT503PZ0S2sp1n1t2zp1i2dY2dZ2dT2wq2IR3SPB3PT03dT54PT503PZ0S2sp1t2zp1i2dY2dZ2dT2wq3dT55Ha_stS2sp1t2zp1i2dY2dZ2dT2wq3dT55Ha_stS1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4S1L2sp2lo3SLOS2sp2dY2dT2wq3SPB2NT3HLT3PT0S2sp2dY2dT2wq3SPB2NT3HLT3PT0S3dT52spS2sp2dY2dT2wq2v13PT0S2sp2dY2dT2wq2v13PT0S2sp2dY2dT2wq2v11w3PT0S3dT54VAL5FS2sp2dY2dT2wqS3dT53NT5FS1L3HLS2sp2lo3SLO3ACL2dY2dT2wq2v13SPB1w2NT3PT03PT4S3dT51x2HxS2sp1x2HxS2u02u12u22K02LRSSS1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4SS2sp1t2T02dY2dT2wqS1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4S1L3HLS2sp2lo3SLO3ACL2dY2dT2wq2v13SPB2NT3PT03PT4S2sp2zp2dY2dZ2dT2wqS1L3HLS2sp2lo3SLO3ACL2dY2dT2wq3SPB2NT3PT4S1L3HLS2sp2lo3SLO3ACL2dY2dT2wq3SPB2NT3PT4S1L3HLS2sp2lo3SLO3ACL2dY2dT2wq2v13SPB2NT3PT4S1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4S2sp2dY2dT2wqS1L3HLS2sp2lo3SLO3ACL3ACPS2sp2zp2dY2dZ2dT2wqS1q2QB2n0S2sp2zp2dY2dZ2dT2wq3dT5S2sp2zp1q2dY2dZ2dT2wq3dT51H3SZ1S2sp2zp1q2dY2dZ2dT2wq2QB3dT52Q1FFS1L3HLS2sp2lo3SLO3ACL3SPA3SPB3ACPFS1n1t2T01i2dZ2IR2NZ3HLZS2dT2NTS2u02u12u22K02K22LRS2sp2zp2dY2dZ2dT2wq3SPB3PT03PZ01r3HrF2K0S2sp1t2T02dY2dT2wq3SPB2NY3HLY3PT01NS2sp1ES2sp2zp1q2dY2dZ2dT2wq3dT52Q11ES2u02u12u22K02LR1ESS1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4S1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4S1L3HLS2sp2lo3SLO3ACL1n1t2zp2T01i2dY2dZ2dT2wq2IR3SPB2NZ3PT03dT54PT503PZ03PZ4FS2sp2zp1q2dY2dZ2dT2wq2QB3dT5S1L3HLS2sp2lo3SLO3ACL2dY2dT2wq2v13SPB2NT3PT4S1L3HLS2sp2lo3SLO3ACL2dY2dT2wq2v13SPB1w2NT3PT4S1L3HLS2sp2lo3SLO3ACL2dY2dT2wq2v13SPB2NT3PT4S2sp2dY2dT2wq2v13PT0S2sp2dY2dT2wq3PT0S2sp2dY2dT2wq3PT0FF". (* [comment removed for export] *)
@@ -1501,156 +1781,223 @@ Section DivP.
           F (Z_to_bv 64 0x21434) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K T0 NB Hk. intros until x5. intros KI IR IB QB CS_ ADDRS LL ZQ QV.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST _ MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 2%nat. intros CT _. rewrite E3 in CT. unfold mpi_cells in CT.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 2%nat. intros CY _. rewrite E1 in CY. unfold mpi_cells in CY.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros FLt27 _ _ _ _ _ HFY _. flat constr:(FLt27) 2%nat. flclear FLt27. intros FLt28 _. flat constr:(FLt28) 6%nat. flclear FLt28. intros _ _ _ HLY HNY HOY.
-    rewrite OY in HOY. flat constr:(HOY) 4%nat. flclear HOY. intros _ _ PALY UY. flat constr:((HFY OY)) 3%nat. intros PY0 PY4 _. unfold MPI_MAX_LIMBS in HNY.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 8%nat. intros FLt29 _ _ _ _ _ HFT _. flat constr:(FLt29) 2%nat. flclear FLt29. intros FLt30 _. flat constr:(FLt30) 6%nat. flclear FLt30. intros _ _ _ HLT HNT HOT.
-    rewrite OT in HOT. flat constr:(HOT) 4%nat. flclear HOT. intros _ INT PALT UT. flat constr:((HFT OT)) 3%nat. intros PT0 PT4 _. unfold MPI_MAX_LIMBS in HNT.
-    flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 3 1 dT dY CS_ eq_refl eq_refl)) 2%nat. intros _ FLt31. flat constr:(FLt31) 4%nat. flclear FLt31. intros _ _ SEPTY _.
-    assert (APTY : md_p dT + 4 * md_n dT <= md_p dY \/ md_p dY + 4 * md_n dY <= md_p dT).
-    { destruct SEPTY as [E|[E|[E|E]]]; [exfalso; apply (f_equal md_addr) in E; rewrite E3, E1 in E; clear - E; lia| exfalso; exact (E OT)| exfalso; rewrite OY in E; discriminate| exact E]. }
-    clear SEPTY. pose proof (conj UY I) as UYc. clear UY.
-    assert (BT : 0 < md_p dT /\ md_p dT + 4 * md_n dT <= SP - 512) by (clear - PT0 PT4 ACL SLO HLS; lia).
-    assert (BY : 0 < md_p dY /\ md_p dY + 4 * md_n dY <= SP - 512) by (clear - PY0 PY4 ACL SLO HLS; lia).
+    intros n t zp k ib j0 j64 KT TNN NCAP KRNG i q mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 wq
+      xra t0 t1 t2 a0 v1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x5 BACK IRNG IBND QRNG CSq LOC LLq ZDIG ZVAL.
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSq) as (_ & _ & _ & _ & MEMq & STKq & _ & MOKq).
+    pose proof LOC as LOC'. unfold locals_at in LOC'. cbn in LOC'. injection LOC' as AX AY AZ AT.
+    destruct LLq as (OX & NX & OY & NY & OZ & PZ & NZ & OT & NT & BPOS).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSq (eq_refl : nth_error [dX; dY; dZ; dT] 3 = Some dT))
+      as ((MTq & _) & _ & _ & _ & _ & _ & HPt & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSq (eq_refl : nth_error [dX; dY; dZ; dT] 1 = Some dY))
+      as ((MYq & _) & _ & _ & _ & _ & _ & HPy & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSq (eq_refl : nth_error [dX; dY; dZ; dT] 2 = Some dZ))
+      as ((MZq & _) & _ & _ & _ & _ & _ & HPz & _).
+    destruct MTq as (STRt & _ & _ & LENt & _ & OWNt). rewrite OT in OWNt. destruct OWNt as (_ & _ & ALt & ARRt).
+    destruct MYq as (STRy & _ & _ & LENy & _ & OWNy). rewrite OY in OWNy. destruct OWNy as (_ & _ & ALy & _).
+    destruct MZq as (_ & _ & _ & LENz & _ & _).
+    specialize (HPt OT) as (PTpos & PTtop & _). specialize (HPy OY) as (PYpos & PYtop & _). specialize (HPz OZ) as (PZpos & PZtop & _).
+    rewrite AT in STRt. rewrite AY in STRy. unfold mpi_cells in STRt, STRy.
+    assert (TPnz : bv_eqb (Z_to_bv 64 (md_p dT)) (Z_to_bv 64 0) = false)
+      by (unfold bv_eqb; rewrite !unsigned_lit by lia; apply Z.eqb_neq; lia).
+    assert (TPal : Z.land (md_p dT) 3 = 0)
+      by (change 3 with (Z.ones 2); rewrite Z.land_ones by lia; change (2 ^ 2) with 4; clear - ALt; lia).
+    assert (LIMB : forall (ws : list word) (j : Z), 0 <= j < Z.of_nat (length ws) -> exists w, nth_error ws (Z.to_nat j) = Some w).
+    { intros ws j JR. destruct (nth_error ws (Z.to_nat j)) as [w|] eqn:NE; [exists w; reflexivity|].
+      apply nth_error_None in NE. lia. }
+    destruct (LIMB (md_limbs dT) 0 ltac:(lia)) as (w0 & W0).
+    destruct (LIMB (md_limbs dT) 1 ltac:(lia)) as (w1 & W1).
+    destruct (LIMB (md_limbs dY) t ltac:(lia)) as (yt & YT).
+    pose proof (LxPMpiTac.u32rw_cell_at mq _ _ 0 (md_p dT) w0 ARRt W0 ltac:(lia) ltac:(lia)) as CT0.
+    pose proof (munch_refl [(md_p dT, md_p dT + 4)] mq) as MU1.
+    pose proof (wmono_refl usegs mq) as WM1.
+    zstep. zstep. rewrite TPnz; cbv_concl_iota. zstep. zstep. rewrite TPal, bv_eqb_refl. change (negb true) with false. cbv_concl_iota.
     zstep.
-    zstep; if_cases KC0; zify_cond KC0; [first [exfalso; clear - KC0 BT BY NT NY T0 SPB PALT PALY; lxu_contra | clear - KC0 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC0]|].
-    zstep. zstep; if_cases KC1; zify_cond KC1; [first [exfalso; clear - KC1 BT BY NT NY T0 SPB PALT PALY; lxu_contra | clear - KC1 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC1]|].
-    pose proof (munch_refl [(md_p dT, md_p dT + 8)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-    pose proof (u32arr_store_ok usegs _ (md_p dT) (md_limbs dT) 0 _ UT ltac:(lia) ltac:(f_equal; lia)) as SOKw.
-    zstep.
-    lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] => pose proof (u32arr_write usegs _ (md_p dT) (md_limbs dT) 0 v UT ltac:(lia)) as UT1 end.
-    rewrite Z.mul_0_r in UT1.
-    store_done. try clear UT; try clear SOKw.
-    flat constr:(UYc) 2%nat. flclear UYc. intros UY _.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) =>
-      apply (fun H => u32arr_transport usegs _ mq mx _ _ H MU WM) in UY; [| cbn; split; [rewrite HLY; clear - APTY NT; lia| exact I]] end.
-    zstep. zstep.
-    zstep; if_cases KC2; zify_cond KC2; [first [exfalso; clear - KC2 BT BY NT NY T0 SPB PALT PALY; lxu_contra | clear - KC2 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC2]|].
-    zstep. zstep. zstep. zstep; if_cases KC3; zify_cond KC3; [first [clear - KC3 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC3 | exfalso; clear - KC3 BT BY NT NY T0 SPB PALT PALY; lxu_contra]|].
-    zstep; if_cases KC4; zify_cond KC4; [first [exfalso; clear - KC4 BT BY NT NY T0 SPB PALT PALY; lxu_contra | clear - KC4 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC4]|].
-    zstep. zstep; if_cases KC5; zify_cond KC5; [first [exfalso; clear - KC5 BT BY NT NY T0 SPB PALT PALY; lxu_contra | clear - KC5 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC5]|].
-    zstep. zstep; if_cases KC6; zify_cond KC6; [first [exfalso; clear - KC6 BT BY NT NY T0 SPB PALT PALY; lxu_contra | clear - KC6 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC6]|].
-    zstep; if_cases KC7; zify_cond KC7; [first [exfalso; clear - KC7 BT BY NT NY T0 SPB PALT PALY; lxu_contra | clear - KC7 BT BY NT NY T0 SPB PALT PALY; lxu_pnull KC7]|].
-    rd UY t. clear UY.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-    lazymatch type of UT1 with u32arr _ _ _ ?l => pose proof (u32arr_store_ok usegs m3 (md_p dT) l 1 _ UT1 ltac:(rewrite upd_length; lia) ltac:(f_equal; lia)) as SOKw end.
-    zstep.
-    lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] =>
-      lazymatch type of UT1 with u32arr _ _ _ ?l => pose proof (u32arr_write usegs m3 (md_p dT) l 1 v UT1 ltac:(rewrite upd_length; lia)) as UT2 end end.
-    rewrite Z.mul_1_r in UT2.
-    store_done. try clear UT1; try clear SOKw.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m4 end.
-    lazymatch type of UT2 with u32arr _ _ _ ?l => set (ts4 := l) in UT2 end.
-    assert (CS4 : CST m4 moq hq LBq [dX; dY; dZ; set_limbs dT ts4] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 3%nat) false false); [exact CS_| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-      - constructor; [right; left; exists 3%nat, dT; split; [reflexivity|]; split; [reflexivity|]; split; [exact OT|]; cbn [fst snd]; clear - NT; lia| constructor].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C] |].
-        cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OT]|].
-        intros _ _. split; [exact UT2| subst ts4; rewrite !upd_length; exact HLT].
-      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-    assert (ADDRS4 : locals_at [dX; dY; dZ; set_limbs dT ts4]) by (unfold locals_at; cbn [map set_limbs md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-    assert (LL4 : loop_loc dX dY dZ (set_limbs dT ts4) n t zp) by (pose proof LL as (B1&B2&B3&B4&B5&B6&B7&B8&B9); repeat (split; [assumption|]); cbn; auto).
-    clear MU WM UT2 CS_ LL ADDRS HFY HFT. try clear CT. try clear CY.
-    reopen CS4 HH HTc MF SOK MI ST MK.
-    (* [comment removed for export] *)
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS4 eq_refl)) 8%nat. intros FLt32 _ _ _ _ _ HFZ _. flat constr:(FLt32) 2%nat. flclear FLt32. intros FLt33 _. flat constr:(FLt33) 6%nat. flclear FLt33. intros _ _ _ HLZ HNZ HOZ.
-    rewrite OZ in HOZ. flat constr:(HOZ) 4%nat. flclear HOZ. intros _ INZ PALZ UZ. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. unfold MPI_MAX_LIMBS in HNZ. rewrite PZ in *.
-    rdq UZ ZQ (i - t - 1).
+    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSq (eq_refl : nth_error [dX; dY; dZ; dT] 3 = Some dT)) as ((MTq0 & _) & _).
+    destruct MTq0 as (_ & _ & _ & _ & _ & OWNt0). rewrite OT in OWNt0. destruct OWNt0 as (_ & _ & _ & ARRt0).
+    pose proof (LxPMpiTac.u32arr_upd_of_cell mq m1 _ _ 0 (md_p dT) w0 v1 ARRt0 W0 ltac:(lia) ltac:(lia) MU1 WM1 CT0) as ARRt1.
+    assert (CS1 : CST m1 moq hq LBq [dX; dY; dZ; set_limbs dT (upd (md_limbs dT) (Z.to_nat 0) v1)] dR []
+                    (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_munch mq moq hq LBq _ dR [] _ [] (Some 3%nat) false false [(md_p dT, md_p dT + 4)] m1 _ dR [] CSq MU1 WM1 MEMq STKq).
+      - constructor; [| constructor]. right; left. exists 3%nat, dT.
+        split; [reflexivity|]. split; [reflexivity|]. split; [exact OT|]. cbn [fst snd]. lia.
+      - reflexivity.
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). split.
+          * intros NO. exfalso. exact (NO (conj eq_refl OT)).
+          * intros _ _. cbn [set_limbs md_limbs md_p]. split; [exact ARRt1 | rewrite upd_length; exact LENt].
+        + destruct j; cbn in Ej; discriminate Ej.
+      - repeat (split; [reflexivity|]). intros FT; discriminate FT.
+      - intros _; reflexivity.
+      - intros FT; discriminate FT. }
+    clear MU1 WM1 ARRt0.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS1 (eq_refl : nth_error [dX; dY; dZ; _] 1 = Some dY)) as ((MY1 & _) & _).
+    destruct MY1 as (_ & _ & _ & _ & _ & OWNy1). rewrite OY in OWNy1. destruct OWNy1 as (_ & _ & _ & ARRy1).
     zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 _ CS4 eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-    flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 3 3 _ _ CS4 eq_refl eq_refl)) 2%nat. intros SEP33 OPS33.
-    pose proof HMULI as SPM. unfold mpi_mul_int_stmt_g, U_MPI_MUL_INT in SPM.
+    rewrite bv_ltu_Z, !unsigned_lit by lia. rewrite (proj2 (Z.ltb_ge _ _)) by lia. cbv_concl_iota.
+    zstep. zstep. zstep. zstep.
+    rewrite (proj2 (Z.ltb_lt 0 (md_p dY))) by lia. rewrite (proj2 (Z.ltb_ge (md_p dY + 4 * t) 1)) by lia.
+    change (Z.lxor (Z.b2z true) (Z.b2z false)) with 1.
+    rewrite (bv_eqb_Z (Z_to_bv 64 1)), !unsigned_lit by lia. change (1 =? 0) with false. cbv_concl_iota.
+    assert (TYnz : bv_eqb (Z_to_bv 64 (md_p dY)) (Z_to_bv 64 0) = false)
+      by (unfold bv_eqb; rewrite !unsigned_lit by lia; apply Z.eqb_neq; lia).
+    assert (TYal : Z.land (md_p dY + 4 * t) 3 = 0)
+      by (change 3 with (Z.ones 2); rewrite Z.land_ones by lia; change (2 ^ 2) with 4; clear - ALy; lia).
+    zstep. rewrite TYnz; cbv_concl_iota. zstep. zstep. rewrite TYal, bv_eqb_refl. change (negb true) with false. cbv_concl_iota.
+    assert (TPm4 : bv_eqb (Z_to_bv 64 (md_p dT)) (Z_to_bv 64 (-4)) = false).
+    { unfold bv_eqb. rewrite unsigned_lit by lia. change (bv_unsigned (Z_to_bv 64 (-4))) with 18446744073709551612.
+      apply Z.eqb_neq. lia. }
+    zstep. zstep. rewrite TPm4; cbv_concl_iota. zstep. rewrite TPnz; cbv_concl_iota.
+    rdq ARRy1 YT t.
+    assert (W1u : nth_error (upd (md_limbs dT) (Z.to_nat 0) v1) (Z.to_nat 1) = Some w1)
+      by (rewrite <- W1; destruct (md_limbs dT); reflexivity).
+    pose proof (LxPMpiTac.u32rw_cell_at m1 _ _ 1 (md_p dT + 4) w1 ARRt1 W1u ltac:(lia) ltac:(lia)) as CT1.
+    clear ARRt1.
+    pose proof (munch_refl [(md_p dT + 4, md_p dT + 4 + 4)] m1) as MU2.
+    pose proof (wmono_refl usegs m1) as WM2.
+    zstep.
+    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m2 end.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS1 (eq_refl : nth_error [dX; dY; dZ; _] 3 = Some _)) as ((MT1 & _) & _).
+    destruct MT1 as (_ & _ & _ & _ & _ & OWNt1). cbn [set_limbs md_own md_p md_limbs] in OWNt1. rewrite OT in OWNt1.
+    destruct OWNt1 as (_ & _ & _ & ARRt1).
+    pose proof (LxPMpiTac.u32arr_upd_of_cell m1 m2 _ _ 1 (md_p dT + 4) w1 (sx32 yt) ARRt1 W1u ltac:(lia) ltac:(lia) MU2 WM2 CT1) as ARRt2.
+    assert (CS2 : CST m2 moq hq LBq [dX; dY; dZ; set_limbs dT (upd (upd (md_limbs dT) (Z.to_nat 0) v1) (Z.to_nat 1) (sx32 yt))] dR []
+                    (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_munch m1 moq hq LBq _ dR [] _ [] (Some 3%nat) false false [(md_p dT + 4, md_p dT + 4 + 4)] m2 _ dR [] CS1 MU2 WM2 MEMq STKq).
+      - constructor; [| constructor]. right; left. exists 3%nat, (set_limbs dT (upd (md_limbs dT) (Z.to_nat 0) v1)).
+        split; [reflexivity|]. split; [reflexivity|]. split; [exact OT|]. cbn [fst snd set_limbs md_p md_n]. lia.
+      - reflexivity.
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+        + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). split.
+          * intros NO. exfalso. exact (NO (conj eq_refl OT)).
+          * intros _ _. cbn [set_limbs md_limbs md_p md_n]. split; [exact ARRt2 | rewrite !upd_length; exact LENt].
+        + destruct j; cbn in Ej; discriminate Ej.
+      - repeat (split; [reflexivity|]). intros FT; discriminate FT.
+      - intros _; reflexivity.
+      - intros FT; discriminate FT. }
+    clear MU2 WM2 ARRt1.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS2 (eq_refl : nth_error [dX; dY; dZ; _] 2 = Some dZ)) as ((MZ2 & _) & _).
+    destruct MZ2 as (_ & _ & _ & _ & _ & OWNz2). rewrite OZ in OWNz2. destruct OWNz2 as (_ & _ & _ & ARRz2).
+    rewrite PZ in ARRz2.
+    rdq ARRz2 ZDIG (i - t - 1).
+    zstep. zstep. zstep.
+    set (dT2 := set_limbs dT (upd (upd (md_limbs dT) (Z.to_nat 0) v1) (Z.to_nat 1) (sx32 yt))) in *.
+    pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (HEAP2 & HT2 & MF2 & STAT2 & MEM2 & STK2 & _ & MOK2).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS2 (eq_refl : nth_error [dX; dY; dZ; dT2] 3 = Some dT2))
+      as (MT2 & NST2 & WR2 & LO2 & CR2 & CRL2 & _).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 3 3 dT2 dT2 CS2 eq_refl eq_refl) as (SEPs & OSEP).
+    assert (AT2 : md_addr dT2 = SP + -192) by exact AT.
+    pose proof HMULI as MULI. unfold mpi_mul_int_stmt_g, U_MPI_MUL_INT in MULI.
     eapply aevtM_cut.
-    { eapply SPM with (dX := set_limbs dT ts4) (dA := set_limbs dT ts4) (b := q) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc QB; lia).
-      all: try (cbn [set_limbs md_addr]; rewrite ?E0, ?E1, ?E2, ?E3; reflexivity).
-      - rewrite bv_unsigned_sx32, sxz_mod32 by (apply Z.mod_pos_bound; lia). exact QV.
-      - rewrite bv_unsigned_sx32, sxz_zero_iff by (apply Z.mod_pos_bound; lia). rewrite QV. tauto. }
-    clear SPM. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    binop_post PO m5 mo5 h5 LB5 dT5 r E MI5 ST5 MF5 HT5 HH5 MA5 OUT5 PX5 SOK5 RR.
-    replace (ret_pc (Z_to_bv 64 0x21494)) with (Z_to_bv 64 0x21494) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(RR) 2%nat. flclear RR. intros R1 FLt34. flat constr:(FLt34) 4%nat. flclear FLt34. intros KA5 KP5 KF5 KN5. cbn [set_limbs md_addr md_pad md_n] in KA5, KP5, KN5.
-    assert (CS5 : CST m5 mo5 h5 LB5 (set_nth 3 [dX; dY; dZ; set_limbs dT ts4] dT5) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS4| reflexivity| exact HH5| exact HT5| exact MF5| exact MA5| exact OUT5| exact PX5| exact SOK5| exact MI5| exact ST5| exact KF5]. }
-    cbn [set_nth] in CS5.
-    assert (ADDRS5 : locals_at [dX; dY; dZ; dT5]) by (unfold locals_at; cbn [map]; rewrite KA5, E0, E1, E2, E3; reflexivity).
-    assert (OT5 : md_own dT5 = LHeap) by (eapply out_heap; [exact MA5| exact (proj1 (proj2 OUT5))| clear - KN5 NT; lia]).
-    assert (LL5 : loop_loc dX dY dZ dT5 n t zp) by (eapply loop_loc_T; [exact LL4| exact OT5| cbn; exact KN5]).
-    assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct R1 as [(Hr0 & _)|HrF]; [left; exact Hr0| right; exact HrF]).
-    clear MT NST WRT LOT CRT CRTL HFT SEP33 OPS33 KF5 KP5 OUT5 PX5 UZ CS4 LL4 ADDRS4.
-    reopen CS5 HH HTc MF SOK MI ST MK.
-    zstep; if_cases K0; zify_cond K0.
-    { eapply L_err; [exact CS5| exact ADDRS5| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-    destruct R1 as [(Hr0 & VAL5 & _)|HrF]; [| exfalso; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in *; lia]. subst r. clear Hr K0.
-    (* [comment removed for export] *)
+    { eapply MULI with (h := hq) (LB := LBq) (dX := dT2) (dA := dT2) (b := q) (lo := lo).
+      all: rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; try lia.
+      - rewrite bv_unsigned_sx32, sxz_mod32; [exact ZVAL | apply Z.mod_pos_bound; lia].
+      - rewrite bv_unsigned_sx32, ZVAL. apply sxz_zero_iff. lia.
+      - rewrite AT2. reflexivity.
+      - rewrite AT2. reflexivity. }
+    intros ms3 moc PO3.
+    binop_post PO3 m3 mo3 h3 LB3 dT3 r3 E3 MEM3 STK3 MF3 HT3 HEAP3 MT3 OUT3 PX3 STAT3 RR3.
+    replace (ret_pc (Z_to_bv 64 136340)) with (Z_to_bv 64 136340) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
+    destruct RR3 as (RES3 & KA3 & _ & KB3 & KN3).
+    assert (CS3 : CST m3 mo3 h3 LB3 [dX; dY; dZ; dT3] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) [])
+      by exact (mc_binop_l _ _ _ _ _ _ _ _ _ 3%nat dT2 m3 mo3 h3 LB3 dT3 CS2 eq_refl HEAP3 HT3 MF3 MT3 OUT3 PX3 STAT3 MEM3 STK3 KB3).
+    pose proof (cs_parts _ _ _ _ _ _ _ CS3) as (_ & _ & _ & _ & _ & _ & _ & MOK3).
+    assert (LOC3 : locals_at [dX; dY; dZ; dT3]).
+    { unfold locals_at in *. cbn [map] in *. rewrite KA3. exact LOC. }
+    destruct RES3 as [(R0 & VAL3 & N3) | RF].
+    2:{ subst r3. change MBEDTLS_ERR_MPI_ALLOC_FAILED with (-16). zstep.
+        change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbv_concl_iota.
+        eapply L_err; [exact CS3 | exact LOC3 | reflexivity | reflexivity | lia | exact BPOS]. }
+    subst r3. zstep. rewrite bv_eqb_refl. change (negb true) with false. cbv_concl_iota.
     zstep. zstep. zstep.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 3 dT5 CS5 eq_refl)) 5%nat. intros CT5 SGT5 NT5 _ _. rewrite KA5, E3 in CT5. unfold mpi_cells in CT5. unfold MPI_MAX_LIMBS in NT5.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT5 CS5 eq_refl)) 8%nat. intros FLt35 _ _ _ _ _ HFT5 _. flat constr:(FLt35) 2%nat. flclear FLt35. intros FLt36 _. flat constr:(FLt36) 6%nat. flclear FLt36. intros _ _ _ HLT5 _ HOT5. rewrite OT5 in HOT5. flat constr:(HOT5) 4%nat. flclear HOT5. intros _ _ PALT5 UT5.
-    flat constr:((HFT5 OT5)) 3%nat. intros PT50 PT54 _.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS5)) 5%nat. intros CH0 CH1 CH2 CHT CHR. unfold t2cells in CH2.
-    eapply aevtM_cut_evt; [exact MK| |].
-    { eapply u_cmp_mpi with (sp := SPF) (m := m5) (X := SP + -192) (P := md_p dT5) (n := md_n dT5) (sg := md_sg dT5) (xs := md_limbs dT5) (pad := md_pad dT5)
-                (Y := SP + -208) (Q := SP + -220) (n' := 3) (sg' := 1) (ys := [u0; u1; u2]) (pad' := j68).
-      all: first [ exact CT5 | exact (proj1 UT5) | exact HLT5 | exact SGT5 | exact CH2 | exact (proj2 (proj1 CH1)) | exact MI | reflexivity | (left; reflexivity)
-                 | (clear - NT5 PT50 PT54 PALT5 SPA SPB SLO HLS ACL ACP; lia) ]. }
-    cbv beta. intros ms' PO. unfold mpi_cmp_post in PO. destruct_exs PO. flat constr:(PO) 4%nat. flclear PO. intros -> _ _ _.
-    replace (ret_pc (Z_to_bv 64 0x214a4)) with (Z_to_bv 64 0x214a4) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    zstep; if_cases K1; zify_cond K1.
-    2: { (* [comment removed for export] *)
-         eapply L_bodyB; [exact K| exact T0| exact NB| exact Hk| exact CS5| exact ADDRS5| exact LL5| exact IR| exact IB]. }
-    (* [comment removed for export] *)
-    assert (Q1 : 1 <= q).
-    { destruct (Z.eq_dec q 0) as [Q0|]; [exfalso| clear - QB n0; lia]. rewrite Q0, Z.mul_0_r in VAL5.
-      assert (LV0 : lval (md_limbs dT5) (md_n dT5) = 0).
-      { rewrite <- (mpd_abs_lval dT5 HLT5). unfold mpd_val in VAL5. unfold mpd_abs. clear - VAL5 SGT5. destruct SGT5 as [E|E]; rewrite E in VAL5; lia. }
-      pose proof (lval_range [u0; u1; u2] 3 ltac:(clear; lia)) as LR.
-      match goal with Ka : 0 < Z.sgn ?e mod _, Kb : Z.sgn ?e2 mod _ < _ |- _ =>
-        rewrite LV0, Z.mul_0_r, Z.mul_1_l, Z.sub_0_l in Ka, Kb; clear - Ka Kb LR;
-        destruct (Z.eq_dec (lval [u0; u1; u2] 3) 0) as [E|NE];
-        [ rewrite E in Ka; cbn in Ka; lia
-        | rewrite (Z.sgn_neg (- lval [u0; u1; u2] 3)) in Kb by lia; cbn in Kb; lia ] end. }
-    repeat match goal with Ka : context [Z.sgn _ mod _] |- _ => clear Ka end.
-    (* [comment removed for export] *)
-    clear HLZ HNZ INZ PALZ PZ0 PZ4 HFZ.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS5 eq_refl)) 8%nat. intros FLt37 _ _ _ _ _ HFZ _. flat constr:(FLt37) 2%nat. flclear FLt37. intros FLt38 _. flat constr:(FLt38) 6%nat. flclear FLt38. intros _ _ _ HLZ HNZ HOZ.
-    rewrite OZ in HOZ. flat constr:(HOZ) 4%nat. flclear HOZ. intros _ INZ PALZ UZ. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. unfold MPI_MAX_LIMBS in HNZ. rewrite PZ in *.
-    rdq UZ ZQ (i - t - 1).
-    zstep.
-    pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m5) as MU. pose proof (wmono_refl usegs m5) as WM.
-    pose proof (u32arr_store_ok usegs _ zp (md_limbs dZ) (i - t - 1) _ UZ ltac:(lia) ltac:(f_equal; lia)) as SOKw.
-    zstep.
-    lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] => pose proof (u32arr_write usegs _ zp (md_limbs dZ) (i - t - 1) v UZ ltac:(lia)) as UZ' end.
-    store_done.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m6 end.
-    lazymatch type of UZ' with u32arr _ _ _ (upd _ _ ?v) => set (wq6 := v) in UZ'; set (zs6 := upd (md_limbs dZ) (Z.to_nat (i - t - 1)) wq6) in UZ' end.
-    assert (CS6 : CST m6 mo5 h5 LB5 [dX; dY; set_limbs dZ zs6; dT5] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS5| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-      - constructor; [right; left; exists 2%nat, dZ; split; [reflexivity|]; split; [reflexivity|]; split; [exact OZ|]; cbn [fst snd]; clear - IR HNZ NZ T0 PZ; rewrite ?PZ; lia| constructor].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-        cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OZ]|].
-        intros _ _. rewrite PZ. split; [exact UZ'| subst zs6; rewrite upd_length; exact HLZ].
-      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-    eapply (KI Q1). unfold ISTATE.
-    exists m6, h5, LB5, dX, dY, (set_limbs dZ zs6), dT5, u0, u1, u2, j68, t160, t164, t168, t176, t180, wq6. do 17 eexists.
-    split; [reflexivity|]. split; [exact CS6|].
-    split; [unfold locals_at; cbn [map set_limbs md_addr]; rewrite KA5, E0, E1, E2, E3; reflexivity|].
-    split; [apply loop_loc_Z; exact LL5|].
-    split; [cbn [set_limbs md_limbs]; subst zs6; rewrite nth_error_upd_same by (clear - HLZ HNZ NZ IR T0; lia); reflexivity|].
-    subst wq6. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64). rewrite bv_unsigned_sx32, QV.
-    pose proof (sxz_range q QB). assert (SZ1 : sxz q <> 0) by (intros E; apply (proj1 (sxz_zero_iff q QB)) in E; lia).
-    rewrite (Z.mod_small (sxz q + -1) (2^64)) by lia. rewrite sxz_add_mod32 by lia. apply Z.mod_small. lia.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CS3) as (_ & FRtp3 & FRt23 & _ & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS3 (eq_refl : nth_error [dX; dY; dZ; dT3] 3 = Some dT3))
+      as (_ & NST3 & _ & _ & _ & _ & HP3 & _).
+    pose (dP := mkMPD (SP + -208) 1 3 (SP + -220) [u0; u1; u2] j68 LStatic).
+    assert (OPP : MpiOpnd.opnd_at usegs m3 LB3 SPc dP).
+    { right. unfold MpiOpnd.stack_opnd, dP. cbn [md_own md_addr md_p md_sg md_n md_pad md_limbs].
+      split; [reflexivity|]. split; [exact FRt23|]. split; [lia|]. split; [lia|]. split; [reflexivity|].
+      split; [split; [lia | unfold MPI_MAX_LIMBS; lia]|]. split; [lia|]. split; [lia|]. split; [lia|].
+      split; [exact (u32arr_ro _ _ _ _ (LxPMpiTac.u32arr_of_rw_cells m3 (SP + -220) [u0; u1; u2] FRtp3))|].
+      split; [lia|]. split; [lia|]. left; reflexivity. }
+    pose proof HCMPO as CMPO. unfold mpi_cmp_mpi_stmt_o, U_MPI_CMP_MPI in CMPO.
+    eapply aevtM_cut_evt; [exact MOK3 | eapply CMPO with (LB := LB3) (dX := dT3) (dY := dP) | ].
+    - rewrite unsigned_lit by lia. apply MpiOpnd.opnd_at_mpd. exact MT3.
+    - rewrite unsigned_lit by lia. exact OPP.
+    - intros OH. exact (proj1 (HP3 OH)).
+    - cbn. intros OH. discriminate OH.
+    - exact MEM3.
+    - rewrite KA3, AT2. reflexivity.
+    - reflexivity.
+    - intros ms4 PO4. unfold mpi_cmp_post in PO4.
+      destruct PO4 as (z0 & z1 & z2 & z3 & z4 & z5 & z6 & z7 & z8 & z9 & z10 & z11 & z12 & z13 & -> & _ & _ & _).
+      replace (ret_pc (Z_to_bv 64 136356)) with (Z_to_bv 64 136356) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
+      zstep.
+      assert (LL3 : loop_loc dX dY dZ dT3 n t zp).
+      { assert (N2 : md_n dT2 = md_n dT) by reflexivity.
+        pose proof (out_heap m3 LB3 dT3 MT3 NST3 ltac:(lia)) as OT3.
+        unfold loop_loc. repeat (split; [assumption|]). split; [lia | exact BPOS]. }
+      assert (VP : 0 <= mpd_val dP).
+      { unfold mpd_val, dP. cbn [md_sg md_limbs]. pose proof (limbs_val_nonneg [u0; u1; u2]). lia. }
+      destruct (Z.lt_trichotomy (mpd_val dT3 - mpd_val dP) 0) as [NEG | [ZER | POS]].
+      + rewrite (Z.sgn_neg _ NEG). change (bv_lts (Z_to_bv 64 0) (Z_to_bv 64 (-1))) with false. cbv_concl_iota.
+        eapply (L_bodyB n t zp k ib j0 j64 KT TNN NCAP KRNG); [exact CS3 | exact LOC3 | exact LL3 | lia | lia].
+      + rewrite (Z.sgn_null _ ZER). change (bv_lts (Z_to_bv 64 0) (Z_to_bv 64 0)) with false. cbv_concl_iota.
+        eapply (L_bodyB n t zp k ib j0 j64 KT TNN NCAP KRNG); [exact CS3 | exact LOC3 | exact LL3 | lia | lia].
+      + rewrite (Z.sgn_pos _ POS). change (bv_lts (Z_to_bv 64 0) (Z_to_bv 64 1)) with true. cbv_concl_iota.
+        assert (Q1 : 1 <= q).
+        { destruct (Z.eq_dec q 0) as [Q0 | QN]; [| lia]. rewrite Q0, Z.mul_0_r in VAL3. lia. }
+        (* the back edge lands on 0x213d8, where the code takes one off Z.p[i-t-1] before the next pass *)
+        pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS3 (eq_refl : nth_error [dX; dY; dZ; dT3] 2 = Some dZ)) as ((ATz3 & _) & _).
+        destruct ATz3 as (_ & _ & _ & _ & _ & LIMBz3). rewrite OZ in LIMBz3. destruct LIMBz3 as (_ & _ & _ & ARRz3).
+        rewrite PZ in ARRz3.
+        pose proof (LxPMpiTac.u32rw_cell_at m3 _ _ (i - t - 1) (zp + 4 * (i - t - 1)) wq ARRz3 ZDIG ltac:(lia) ltac:(lia)) as CELLz.
+        rdq ARRz3 ZDIG (i - t - 1).
+        zstep.
+        pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m3) as MU4.
+        pose proof (wmono_refl usegs m3) as WM4.
+        set (ZA := zp + 4 * (i - t - 1)) in *. zstep. subst ZA.
+        lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m4 end.
+        set (dec := Z_to_bv 64 (bv_unsigned (sx32 wq) + -1)) in *.
+        assert (DEC : bv_unsigned dec mod 2 ^ 32 = q - 1).
+        { unfold dec. rewrite Z_to_bv_unsigned, bv_unsigned_sx32. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
+          rewrite ZVAL. unfold sxz. destruct (Z.ltb_spec q (2 ^ 31)); clear - Q1 QRNG; lia. }
+        pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS3 (eq_refl : nth_error [dX; dY; dZ; dT3] 2 = Some dZ)) as ((ATz3' & _) & _).
+        destruct ATz3' as (_ & _ & _ & _ & _ & LIMBz3'). rewrite OZ in LIMBz3'. destruct LIMBz3' as (_ & _ & _ & ARRz3').
+        pose proof (LxPMpiTac.u32arr_upd_of_cell m3 m4 _ _ (i - t - 1) (zp + 4 * (i - t - 1)) wq dec ARRz3' ZDIG ltac:(lia) ltac:(lia) MU4 WM4 CELLz) as ARRz4.
+        set (zs := upd (md_limbs dZ) (Z.to_nat (i - t - 1)) dec) in ARRz4.
+        assert (CS4 : CST m4 mo3 h3 LB3 [dX; dY; set_limbs dZ zs; dT3] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
+        { apply (mc_munch m3 mo3 h3 LB3 _ dR [] _ [] (Some 2%nat) false false [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m4 _ dR [] CS3 MU4 WM4 MEM3 STK3).
+          - constructor; [| constructor]. right; left. exists 2%nat, dZ.
+            split; [reflexivity|]. split; [reflexivity|]. split; [exact OZ|]. cbn [fst snd]. lia.
+          - reflexivity.
+          - intros j d d' Ej Ej'.
+            destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+            + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+            + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+            + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). split.
+              * intros NO. exfalso. exact (NO (conj eq_refl OZ)).
+              * intros _ _. cbn [set_limbs md_limbs md_p]. split; [exact ARRz4 | unfold zs; rewrite upd_length; exact LENz].
+            + injection Ej as <-. injection Ej' as <-. repeat (split; [reflexivity|]). intros SJ; discriminate SJ.
+            + destruct j; cbn in Ej; discriminate Ej.
+          - repeat (split; [reflexivity|]). intros FT; discriminate FT.
+          - intros _; reflexivity.
+          - intros FT; discriminate FT. }
+        apply (BACK Q1 mo3). unfold ISTATE.
+        exists m4, h3, LB3, dX, dY, (set_limbs dZ zs), dT3, u0, u1, u2, j68, t160, t164, t168, t176, t180, dec.
+        do 17 eexists. split; [reflexivity|].
+        split; [exact CS4|]. split; [exact LOC3|]. split; [exact (loop_loc_Z dX dY dZ dT3 n t zp zs LL3)|].
+        split; [unfold zs; cbn [set_limbs md_limbs]; apply nth_error_upd_same; lia | exact DEC].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1664,51 +2011,71 @@ Section DivP.
     ISTATE n t zp k j0 j64 i q moq ms -> aevtM usegs moq POST ms
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K T0 NB Hk i q moq ms KI IR IB QB IS.
-    unfold ISTATE in IS. destruct IS as (mq & hq & LBq & dX & dY & dZ & dT & u0 & u1 & u2 & j68 & t160 & t164 & t168 & t176 & t180 & wq & xra & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & x5 & -> & CS_ & ADDRS & LL & ZQ & QV).
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST _ MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    (* [comment removed for export] *)
+    intros n t zp k ib j0 j64 KT TNN NCAP KRNG i q moq ms BACK IRNG IBND QRNG IST.
+    destruct IST as (mq & hq & LBq & dX & dY & dZ & dT & u0 & u1 & u2 & j68 & t160 & t164 & t168 & t176 & t180 & wd
+      & xra & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & x5 & -> & CSq & LOC & LLq & ZD & ZV).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    pose proof LOC as LOC'. unfold locals_at in LOC'. cbn in LOC'. injection LOC' as AX AY AZ AT.
+    pose proof LLq as LL0. destruct LL0 as (OX & NX & OY & NY & OZ & PZ & NZ & OT & NT & BPOS).
+    pose proof (cs_parts _ _ _ _ _ _ _ CSq) as (HEAPq & TOPq & FRMq & SOKq & MEMq & STKq & _ & MOKq).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CSq (eq_refl : nth_error [dX; dY; dZ; dT] 3 = Some dT))
+      as (MTq & NSTt & WRt & _).
     zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-    pose proof HLSET as SPL. unfold mpi_lset_stmt, U_MPI_LSET in SPL.
+    pose proof HLSET as LSET. unfold mpi_lset_stmt, U_MPI_LSET in LSET.
     eapply aevtM_cut.
-    { eapply SPL with (dX := dT) (z := 0) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-      all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity). }
-    clear SPL. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    binop_post PO m2 mo2 h2 LB2 dT2 r E MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 RR.
-    replace (ret_pc (Z_to_bv 64 0x213f0)) with (Z_to_bv 64 0x213f0) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(RR) 3%nat. flclear RR. intros R1 KA KF.
-    assert (CS2 : CST m2 mo2 h2 LB2 (set_nth 3 [dX; dY; dZ; dT] dT2) dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS_| reflexivity| exact HH2| exact HT2| exact MF2| exact MA2| exact OUT2| exact PX2| exact SOK2| exact MI2| exact ST2| exact KF]. }
-    cbn [set_nth] in CS2.
-    assert (ADDRS2 : locals_at [dX; dY; dZ; dT2]) by (unfold locals_at; cbn [map]; rewrite KA, E0, E1, E2, E3; reflexivity).
-    clear MT NST WRT LOT CRT CRTL HFT KF MA2 OUT2 PX2 CS_.
-    reopen CS2 HH HTc MF SOK MI ST MK.
-    zstep; if_cases K0; zify_cond K0.
-    { assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct R1 as [(Hr0 & _)|(HrF & _)]; [left; exact Hr0| right; exact HrF]).
-      eapply L_err; [exact CS2| exact ADDRS2| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia| exact VB]. }
-    destruct R1 as [(Hr0 & NT2 & OT2 & [w0 LT2] & SGT2 & PDT2)|(Hr & _)]; [| exfalso; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; lia].
-    subst r. clear K0. rewrite Z.max_l in NT2 by lia. cbn in SGT2.
-    assert (LL2 : loop_loc dX dY dZ dT2 n t zp) by (eapply loop_loc_T; [exact LL| exact OT2| lia]).
-    (* [comment removed for export] *)
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS2)) 5%nat. intros CH0 CH1 CH2 CHT CHR.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS2 eq_refl)) 2%nat. intros CY _. rewrite E1 in CY. unfold mpi_cells in CY.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS2 eq_refl)) 8%nat. intros FLt39 _ _ _ _ _ HFY _. flat constr:(FLt39) 2%nat. flclear FLt39. intros FLt40 _. flat constr:(FLt40) 6%nat. flclear FLt40. intros _ _ _ HLY HNY HOY.
-    rewrite OY in HOY. flat constr:(HOY) 4%nat. flclear HOY. intros _ _ PALY UY. flat constr:((HFY OY)) 3%nat. intros PY0 PY4 _. unfold MPI_MAX_LIMBS in HNY.
-    zstep.
-    zstep; if_cases K1; zify_cond K1; rewrite ?unsigned_lit in K1 by lia.
-    - zstep. eapply L_inner_tail; try eassumption.
-    - zstep. zstep. zstep.
-      zstep; if_cases K2; zify_cond K2; [exfalso; clear - K1 K2 T0 IR NY HNY HLY PY0 PY4 SPB; rewrite ?Z.mod_small in K2 by lia; lia|].
-      zstep. zstep. zstep. zstep; if_cases K3; zify_cond K3; [clear - K1 K3 T0 IR NY HNY HLY PY0 PY4 SPB; rewrite ?Z.mod_small in K3 by lia; lxu_pnull K3|].
-      zstep; if_cases K4; zify_cond K4; [exfalso; clear - K4 PY0; lia|].
-      zstep. zstep; if_cases K5; zify_cond K5;
-        [exfalso; clear - K1 K5 PALY T0 IR NY HNY HLY PY0 PY4 SPB; rewrite ?Z.mod_small in K5 by lia; rewrite land_3_mod in K5; Z.div_mod_to_equations; lia|].
-      rd UY (t - 1). zstep. eapply L_inner_tail; try eassumption.
+    { eapply LSET with (h := hq) (LB := LBq) (dX := dT) (z := 0) (lo := lo).
+      all: rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; try lia.
+      rewrite AT. reflexivity. }
+    intros ms2 moc PO2.
+    binop_post PO2 m2 mo2 h2 LB2 dT2 r2 E2 MEM2 STK2 MF2 HT2 HEAP2 MT2 OUT2 PX2 STAT2 RR2.
+    replace (ret_pc (Z_to_bv 64 136176)) with (Z_to_bv 64 136176) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
+    destruct RR2 as (RES2 & KA2 & KB2).
+    assert (CS2 : CST m2 mo2 h2 LB2 [dX; dY; dZ; dT2] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) [])
+      by exact (mc_binop_l _ _ _ _ _ _ _ _ _ 3%nat dT m2 mo2 h2 LB2 dT2 CSq eq_refl HEAP2 HT2 MF2 MT2 OUT2 PX2 STAT2 MEM2 STK2 KB2).
+    pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (_ & _ & _ & _ & _ & _ & _ & MOK2).
+    assert (LOC2 : locals_at [dX; dY; dZ; dT2]).
+    { unfold locals_at in *. cbn [map] in *. rewrite KA2. exact LOC. }
+    destruct RES2 as [(R0 & N2 & O2 & _) | (RF & DT2)].
+    2:{ subst r2. change MBEDTLS_ERR_MPI_ALLOC_FAILED with (-16). zstep.
+        change (negb (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0))) with true. cbv_concl_iota.
+        eapply L_err; [exact CS2 | exact LOC2 | reflexivity | reflexivity | lia | exact BPOS]. }
+    subst r2. zstep. rewrite bv_eqb_refl. change (negb true) with false. cbv_concl_iota.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CS2) as (FR0 & _ & _ & _ & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS2 (eq_refl : nth_error [dX; dY; dZ; dT2] 1 = Some dY))
+      as ((MY2 & _) & _ & _ & _ & _ & _ & HPy & _).
+    destruct MY2 as (STRy & _ & _ & LENy & _ & OWNy). rewrite OY in OWNy. destruct OWNy as (_ & _ & ALy & ARRy).
+    specialize (HPy OY) as (PYpos & PYtop & _).
+    rewrite AY in STRy. unfold mpi_cells in STRy.
+    assert (LL2 : loop_loc dX dY dZ dT2 n t zp).
+    { unfold loop_loc. split; [exact OX|]. split; [exact NX|]. split; [exact OY|]. split; [exact NY|].
+      split; [exact OZ|]. split; [exact PZ|]. split; [exact NZ|]. split; [exact O2|]. split; [lia | exact BPOS]. }
+    zstep. zstep.
+    destruct (Z.eq_dec t 0) as [T0 | TPOS].
+    - assert (TB : bv_eqb (Z_to_bv 64 t) (Z_to_bv 64 0) = true) by (rewrite T0; apply bv_eqb_refl).
+      rewrite TB. cbv_concl_iota.
+      zstep.
+      eapply (L_inner_tail n t zp k ib j0 j64 KT TNN NCAP KRNG i q m2 mo2 h2 LB2 dX dY dZ dT2 u0 u1 u2 j68 t160 t164 t168 t176 t180 wd);
+        [exact BACK | lia | lia | lia | exact CS2 | exact LOC2 | exact LL2 | exact ZD | exact ZV].
+    - assert (TB : bv_eqb (Z_to_bv 64 t) (Z_to_bv 64 0) = false)
+        by (unfold bv_eqb; rewrite !unsigned_lit by lia; apply Z.eqb_neq; lia).
+      rewrite TB. cbv_concl_iota.
+      destruct (nth_error (md_limbs dY) (Z.to_nat (t - 1))) as [y|] eqn:YT1; [| apply nth_error_None in YT1; lia].
+      zstep. zstep. zstep. zstep.
+      rewrite bv_ltu_Z, !unsigned_lit by lia. rewrite (proj2 (Z.ltb_ge _ _)) by lia. cbv_concl_iota.
+      zstep. zstep. zstep. zstep.
+      rewrite (proj2 (Z.ltb_lt 0 (md_p dY))) by lia. rewrite (proj2 (Z.ltb_ge (md_p dY + 4 * (t - 1)) 1)) by lia.
+      change (Z.lxor (Z.b2z true) (Z.b2z false)) with 1.
+      rewrite (bv_eqb_Z (Z_to_bv 64 1)), !unsigned_lit by lia. change (1 =? 0) with false. cbv_concl_iota.
+      assert (YPnz : bv_eqb (Z_to_bv 64 (md_p dY)) (Z_to_bv 64 0) = false)
+        by (unfold bv_eqb; rewrite !unsigned_lit by lia; apply Z.eqb_neq; lia).
+      assert (YPal : Z.land (md_p dY + 4 * (t - 1)) 3 = 0)
+        by (change 3 with (Z.ones 2); rewrite Z.land_ones by lia; change (2 ^ 2) with 4; clear - ALy; lia).
+      zstep. rewrite YPnz; cbv_concl_iota. zstep. zstep. rewrite YPal, bv_eqb_refl. change (negb true) with false. cbv_concl_iota.
+      rdq ARRy YT1 (t - 1).
+      zstep.
+      eapply (L_inner_tail n t zp k ib j0 j64 KT TNN NCAP KRNG i q m2 mo2 h2 LB2 dX dY dZ dT2 u0 u1 u2 j68 t160 t164 t168 t176 t180 wd);
+        [exact BACK | lia | lia | lia | exact CS2 | exact LOC2 | exact LL2 | exact ZD | exact ZV].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1721,11 +2088,13 @@ Section DivP.
     ISTATE n t zp k j0 j64 i (Z.of_nat N) moq ms -> aevtM usegs moq POST ms
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K T0 NB Hk i IR IB.
-    induction N as [|N IH]; intros moq ms NB2 IS.
-    - eapply (L_inner_body n t zp k ib j0 j64 K T0 NB Hk i (Z.of_nat 0)); [| exact IR| exact IB| clear; lia| exact IS]. intros Q1. exfalso. clear - Q1. lia.
-    - eapply (L_inner_body n t zp k ib j0 j64 K T0 NB Hk i (Z.of_nat (S N))); [| exact IR| exact IB| clear - NB2; lia| exact IS].
-      intros _ moq' ms' IS'. apply IH; [clear - NB2; lia|]. replace (Z.of_nat N) with (Z.of_nat (S N) - 1) by lia. exact IS'.
+    intros n t zp k ib j0 j64 KT TNN NCAP KRNG i IRNG IBND N.
+    induction N as [|N' IHN]; intros moq ms NB IST.
+    - apply (L_inner_body n t zp k ib j0 j64 KT TNN NCAP KRNG i 0 moq ms); [| exact IRNG | exact IBND | lia | exact IST].
+      intros QPOS. exfalso. lia.
+    - apply (L_inner_body n t zp k ib j0 j64 KT TNN NCAP KRNG i (Z.of_nat (S N')) moq ms); [| exact IRNG | exact IBND | lia | exact IST].
+      intros _ moq' ms' IST'. apply IHN; [lia |].
+      replace (Z.of_nat N') with (Z.of_nat (S N') - 1) by lia. exact IST'.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1775,92 +2144,131 @@ Section DivP.
           F (Z_to_bv 64 0x2134c) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K T0 NB Hk. intros until x7. intros CS_ ADDRS LL IR IB ZQ.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST _ MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros CH0 CH1 CH2 CHT CHR. unfold t2cells in CH2.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 8%nat. intros FLt41 _ _ _ _ _ HFX _. flat constr:(FLt41) 2%nat. flclear FLt41. intros FLt42 _. flat constr:(FLt42) 6%nat. flclear FLt42. intros _ _ _ HLX HNX HOX.
-    rewrite OX in HOX. flat constr:(HOX) 4%nat. flclear HOX. intros _ _ PALX UX. flat constr:((HFX OX)) 3%nat. intros PX0 PX4 _. unfold MPI_MAX_LIMBS in HNX.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 8%nat. intros FLt43 _ _ _ _ _ HFZ _. flat constr:(FLt43) 2%nat. flclear FLt43. intros FLt44 _. flat constr:(FLt44) 6%nat. flclear FLt44. intros _ _ _ HLZ HNZ HOZ.
-    rewrite OZ in HOZ. flat constr:(HOZ) 4%nat. flclear HOZ. intros _ INZ PALZ UZ. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. unfold MPI_MAX_LIMBS in HNZ. rewrite PZ in *.
-    (* [comment removed for export] *)
-    pose proof (munch_refl [(bv_unsigned sp + -220, bv_unsigned sp + -208)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-    zstep. zstep; if_cases K0; zify_cond K0; [exfalso; clear - K0 SLO ACL ACP HLS; lia|].
-    zstep. zstep; if_cases K1; zify_cond K1; [exfalso; rewrite land_3_mod in K1; clear - K1 SPA; Z.div_mod_to_equations; lia|].
-    zstep. zstep. zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4.
-    replace ((i + 1) * 4 + md_p dX + -8) with (md_p dX + 4 * (i - 1)) by (clear; lia).
-    zstep. zstep; if_cases K2; zify_cond K2; [exfalso; clear - K2 PX0 PX4 NXl IR T0 ACL SLO HLS SPB; rewrite ?Z.mod_small in K2 by lia; lia|].
-    zstep. zstep. zstep; if_cases K3; zify_cond K3; [clear - K3 PX0 PX4 NXl IR T0 ACL SLO HLS SPB; rewrite ?Z.mod_small in K3 by lia; lxu_pnull K3|].
-    zstep; if_cases K4; zify_cond K4; [exfalso; clear - K4 PX0; lia|].
-    zstep. zstep; if_cases K5; zify_cond K5;
-      [exfalso; clear - K5 PALX PX0 PX4 NXl IR T0 ACL SLO HLS SPB; rewrite ?Z.mod_small in K5 by lia; rewrite land_3_mod in K5; Z.div_mod_to_equations; lia|].
-    zstep. zstep; if_cases K6; zify_cond K6; [exfalso; clear - K6 SLO ACL ACP HLS SPB; lia|].
-    zstep; if_cases K7; zify_cond K7; [exfalso; clear - K7 SLO ACL ACP HLS; lia|].
-    (* [comment removed for export] *)
-    rd UX (i - 1). zstep.
-    zstep; if_cases K8; zify_cond K8; [exfalso; clear - K8 PX0 PX4 NXl IR T0 ACL SLO HLS SPB; rewrite ?Z.mod_small in K8 by lia; lia|].
-    zstep. zstep; if_cases K9; zify_cond K9; [exfalso; clear - K9 SLO ACL ACP HLS SPB; lia|].
-    rd UX i. zstep. zstep. zstep. zstep.
-    (* [comment removed for export] *)
-    zstep; if_cases K10; zify_cond K10; [exfalso; clear - K10 IR T0 NB; lxu_contra|].
-    (* [comment removed for export] *)
-    zstep. rewrite ?Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4. replace ((i - t - 1) * 4) with (4 * (i - t - 1)) by (clear; lia).
-    zstep; if_cases K11; zify_cond K11;
-      [exfalso; clear - K11 PZ0 PZ4 NZ IR T0 NB ACL SLO HLS SPB; rewrite ?Z.mod_small in K11 by lia; lia|].
+    intros n t zp k ib j0 j64 kont tnn nmax krng mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i qw v0
+      xra t0 t1 t2 a3 a4 a6 a7 t3 t4 t5 t6 x4 x7 cst locs lloc iwin iub zdig.
+    pose proof lloc as (ownX & nX & _ & _ & ownZ & pZ & nZ & _).
+    pose proof (cs_parts _ _ _ _ _ _ _ cst) as (_ & _ & _ & _ & miq & stkq & _ & mokq).
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ cst) as (fr0 & fr1 & fr2 & _).
+    pose proof (bv_unsigned_in_range 64 sp) as sprng. change (bv_modulus 64) with (2^64) in sprng.
+    pose proof alloc_ceiling_pos as acpos.
+    assert (ceil64 : alloc_ceiling < 2^64) by lia.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX cst eq_refl) as ((atX & _) & _ & _ & _ & _ & _ & heapX & _).
+    destruct (heapX ownX) as (pXpos & pXtop & _ & _). clear heapX.
+    destruct atX as (_ & _ & _ & lenX & _ & ownpX). rewrite ownX in ownpX. destruct ownpX as (_ & _ & pXal & arrX).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 2%nat dZ cst eq_refl) as ((atZ & _) & _ & _ & _ & _ & _ & heapZ & _).
+    destruct (heapZ ownZ) as (pZpos & pZtop & _ & _). clear heapZ.
+    destruct atZ as (_ & _ & _ & lenZ & _ & ownpZ). rewrite ownZ in ownpZ. destruct ownpZ as (_ & _ & pZal & arrZ).
+    rewrite pZ in pZpos, pZtop, pZal, arrZ.
+    unfold t2cells in fr2.
+    (* T2.p (the 3-limb frame buffer at SP-220) gets v0, X.p[i-1], X.p[i]; the stores stay inside its 12 bytes *)
+    pose proof (munch_refl [(SP + -220, SP + -208)] mq) as mu1. pose proof (wmono_refl usegs mq) as wm1.
+    do 2 zstep. gkill trapA.
+    do 2 zstep. gkill trapB.
+    zstep. rewrite ?Z.shiftl_mul_pow2 by lia.
+    do 4 zstep. gkill trapC.
+    do 3 zstep. gkill trapD.
+    zstep. gkill trapE.
+    do 2 zstep. gkill trapF.
+    do 2 zstep. gkill trapG.
+    zstep. gkill trapH.
+    destruct (nth_error (md_limbs dX) (Z.to_nat (i - 1))) as [wx1|] eqn:nthX1; [| exfalso; apply nth_error_None in nthX1; lia].
+    pose proof (u32arr_read usegs m0 (md_p dX) (md_limbs dX) (i - 1) wx1 (Z_to_bv 64 ((i + 1) * 4 + md_p dX + -8)) arrX nthX1
+                  ltac:(lia) ltac:(unfold wa; f_equal; lia)) as rdX1.
+    zstep. clear rdX1.
+    do 2 zstep. gkill trapI.
+    do 2 zstep. gkill trapJ.
+    destruct (nth_error (md_limbs dX) (Z.to_nat i)) as [wx0|] eqn:nthX0; [| exfalso; apply nth_error_None in nthX0; lia].
+    pose proof (u32arr_read usegs _ (md_p dX) (md_limbs dX) i wx0 (Z_to_bv 64 (md_p dX + 4 * i)) arrX nthX0
+                  ltac:(lia) ltac:(reflexivity)) as rdX0.
+    zstep. clear rdX0 arrX.
+    do 5 zstep. gkill trapK.
+    zstep. rewrite ?Z.shiftl_mul_pow2 by lia.
+    zstep. gkill trapL.
+    pose proof (cs_frame_upd mq moq hq LBq _ dR _ _ j68 (tcells t160 t164 t168 t176 t180) (SP + -220) (SP + -208) m0
+                  _ _ cst locs mu1 wm1 miq stkq ltac:(lia) ltac:(lia) fr0 eq_refl fr1 eq_refl eq_refl) as cs1.
+    clear mu1 wm1.
+    (* Z.p[i-t-1] += 1 *)
+    replace ((i - t - 1) * 4) with (4 * (i - t - 1)) by ring.
     zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
-    lazymatch goal with H : rw_cells usegs m1 (SP + -220) ?cs |- _ => rename H into CT2 end.
-    lazymatch type of CT2 with rw_cells _ _ _ [C4 ?a; C4 ?b; C4 ?c] => set (u0' := a) in CT2; set (u1' := b) in CT2; set (u2' := c) in CT2 end.
-    assert (CS1 : CST m1 moq hq LBq [dX; dY; dZ; dT] dR [] (LFR t k j0 j64 u0' u1' u2' j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (cs_frame_upd _ _ _ _ _ _ _ _ _ _ (bv_unsigned sp + -220) (bv_unsigned sp + -208));
-        [exact CS_| exact ADDRS| exact MU| exact WM| assumption| assumption| lia| lia| exact CH0| reflexivity| exact CT2| reflexivity| reflexivity]. }
-    clear MU WM.
-    (* [comment removed for export] *)
-    pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m1) as MU. pose proof (wmono_refl usegs m1) as WM.
-    lazymatch goal with H : u32arr usegs m1 zp _ |- _ => rename H into UZ1 end.
-    (* [comment removed for export] *)
-    rdq UZ1 ZQ (i - t - 1). zstep.
-    pose proof (u32arr_store_ok usegs _ zp (md_limbs dZ) (i - t - 1) _ UZ1 ltac:(lia) ltac:(f_equal; lia)) as SOKw.
+    pose proof (u32arr_read usegs m0 zp (md_limbs dZ) (i - t - 1) qw (Z_to_bv 64 (zp + 4 * (i - t - 1))) arrZ zdig
+                  ltac:(lia) ltac:(reflexivity)) as rdZ.
+    zstep. clear rdZ.
     zstep.
-    lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] => pose proof (u32arr_write usegs _ zp (md_limbs dZ) (i - t - 1) v UZ1 ltac:(lia)) as UZ2 end.
-    store_done. try clear SOKw.
-    assert (ZQ2 : nth_error (upd (md_limbs dZ) (Z.to_nat (i - t - 1)) (Z_to_bv 64 (bv_unsigned (sx32 qw) + 1))) (Z.to_nat (i - t - 1)) = Some (Z_to_bv 64 (bv_unsigned (sx32 qw) + 1))).
-    { apply nth_error_upd_same. clear - HLZ IR T0 NZ HNZ. lia. }
-    rdq UZ2 ZQ2 (i - t - 1).
+    pose proof (u32arr_store_ok usegs m0 zp (md_limbs dZ) (i - t - 1) (Z_to_bv 64 (zp + 4 * (i - t - 1))) arrZ
+                  ltac:(lia) ltac:(reflexivity)) as okZ.
+    pose proof (u32arr_write usegs m0 zp (md_limbs dZ) (i - t - 1) (Z_to_bv 64 (bv_unsigned (sx32 qw) + 1)) arrZ
+                  ltac:(lia)) as arrZ2.
+    clear arrZ.
+    pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m0) as mu2.
+    pose proof (wmono_refl usegs m0) as wm2.
+    zstep. store_done.
+    set (zs := upd (md_limbs dZ) (Z.to_nat (i - t - 1)) (Z_to_bv 64 (bv_unsigned (sx32 qw) + 1))) in arrZ2.
+    assert (cs2 : CST m1 moq hq LBq [dX; dY; set_limbs dZ zs; dT] dR []
+                    (LFR t k j0 j64 v0 (sx32 wx1) (sx32 wx0) j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_munch m0 moq hq LBq _ dR [] _ [] (Some 2%nat) false false _ m1 _ dR [] cs1 mu2 wm2 miq stkq).
+      - constructor; [| constructor]. right; left. exists 2%nat, dZ. cbn [fst snd].
+        split; [reflexivity|]. split; [reflexivity|]. split; [exact ownZ|]. rewrite pZ. lia.
+      - reflexivity.
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'; try (destruct j; discriminate Ej);
+          injection Ej as Ej; injection Ej' as Ej'; subst d d'; repeat (split; [reflexivity|]).
+        3: split; [intros c; exfalso; apply c; split; [reflexivity| exact ownZ]|].
+        3: intros _ _; cbn [set_limbs md_limbs md_p]; rewrite pZ; split; [exact arrZ2| unfold zs; rewrite upd_length; exact lenZ].
+        all: intros c; discriminate c.
+      - repeat (split; [reflexivity|]). intros c; discriminate c.
+      - intros _; reflexivity.
+      - intros c; discriminate c. }
+    clear mu2 wm2.
+    (* fall through to 0x213d8: the do-while body opens by taking one off Z.p[i-t-1] again *)
+    set (inc := Z_to_bv 64 (bv_unsigned (sx32 qw) + 1)) in *.
+    assert (nthZ : nth_error zs (Z.to_nat (i - t - 1)) = Some inc).
+    { unfold zs. apply nth_error_upd_same. lia. }
+    pose proof (LxPMpiTac.u32rw_cell_at m1 _ _ (i - t - 1) (zp + 4 * (i - t - 1)) inc arrZ2 nthZ ltac:(lia) ltac:(lia)) as cellZ.
+    rdq arrZ2 nthZ (i - t - 1).
     zstep.
+    pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] m1) as mu3.
+    pose proof (wmono_refl usegs m1) as wm3.
+    set (za := zp + 4 * (i - t - 1)) in *. zstep. subst za.
     lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m2 end.
-    pose proof (u32arr_store_ok usegs m2 zp _ (i - t - 1) _ UZ2 ltac:(rewrite upd_length; lia) ltac:(f_equal; lia)) as SOKw.
-    zstep.
-    lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] =>
-      lazymatch type of UZ2 with u32arr _ _ _ ?l => pose proof (u32arr_write usegs m2 zp l (i - t - 1) v UZ2 ltac:(rewrite upd_length; lia)) as UZ3 end end.
-    store_done. try clear SOKw.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-    lazymatch type of UZ3 with u32arr _ _ _ (upd _ _ ?v) => set (wq3 := v) in UZ3; lazymatch type of UZ3 with u32arr _ _ _ ?l => set (zs3 := l) in UZ3 end end.
-    assert (CS3 : CST m3 moq hq LBq [dX; dY; set_limbs dZ zs3; dT] dR [] (LFR t k j0 j64 u0' u1' u2' j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS1| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-      - constructor; [right; left; exists 2%nat, dZ; split; [reflexivity|]; split; [reflexivity|]; split; [exact OZ|]; cbn [fst snd]; clear - IR HNZ NZ T0 PZ; rewrite ?PZ; lia| constructor].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-        cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OZ]|].
-        intros _ _. rewrite PZ. split; [exact UZ3| subst zs3; rewrite !upd_length; exact HLZ].
-      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-    (* [comment removed for export] *)
-    set (q := bv_unsigned qw mod 4294967296).
-    assert (QB : 0 <= q < 2^32) by (subst q; apply Z.mod_pos_bound; lia).
-    eapply (L_inner n t zp k ib j0 j64 K T0 NB Hk i IR IB (Z.to_nat q)); [rewrite Z2Nat.id by lia; lia|].
-    rewrite Z2Nat.id by lia. unfold ISTATE.
-    exists m3, hq, LBq, dX, dY, (set_limbs dZ zs3), dT, u0', u1', u2', j68, t160, t164, t168, t176, t180, wq3. do 17 eexists.
-    split; [reflexivity|]. split; [exact CS3|].
-    split; [unfold locals_at; cbn [map set_limbs md_addr]; rewrite E0, E1, E2, E3; reflexivity|].
-    split; [apply loop_loc_Z; exact LL|].
-    split; [cbn [set_limbs md_limbs]; subst zs3; rewrite nth_error_upd_same by (rewrite upd_length; clear - HLZ HNZ NZ IR T0; lia); reflexivity|].
-    subst wq3 q. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64). rewrite bv_unsigned_sx32.
-    rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64). rewrite bv_unsigned_sx32.
-    change 4294967296 with (2^32). apply q_roundtrip. exact QB.
+    set (dec := Z_to_bv 64 (bv_unsigned (sx32 inc) + -1)) in *.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 2%nat (set_limbs dZ zs) cs2 eq_refl) as ((atZ1 & _) & _).
+    destruct atZ1 as (_ & _ & _ & _ & _ & ownpZ1). cbn [set_limbs md_own md_p md_limbs md_n] in ownpZ1.
+    rewrite ownZ in ownpZ1. destruct ownpZ1 as (_ & _ & _ & arrZ1).
+    pose proof (LxPMpiTac.u32arr_upd_of_cell m1 m2 _ _ (i - t - 1) (zp + 4 * (i - t - 1)) inc dec arrZ1 nthZ ltac:(lia) ltac:(lia) mu3 wm3 cellZ) as arrZ3.
+    set (zs2 := upd zs (Z.to_nat (i - t - 1)) dec) in arrZ3.
+    assert (cs3 : CST m2 moq hq LBq [dX; dY; set_limbs dZ zs2; dT] dR []
+                    (LFR t k j0 j64 v0 (sx32 wx1) (sx32 wx0) j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_munch m1 moq hq LBq _ dR [] _ [] (Some 2%nat) false false _ m2 _ dR [] cs2 mu3 wm3 miq stkq).
+      - constructor; [| constructor]. right; left. exists 2%nat, (set_limbs dZ zs). cbn [fst snd set_limbs md_p md_n].
+        split; [reflexivity|]. split; [reflexivity|]. split; [exact ownZ|]. rewrite pZ. lia.
+      - reflexivity.
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'; try (destruct j; discriminate Ej);
+          injection Ej as Ej; injection Ej' as Ej'; rewrite <- Ej, <- Ej'; repeat (split; [reflexivity|]).
+        3: split; [intros c; exfalso; apply c; split; [reflexivity| exact ownZ]|].
+        3: intros _ _; cbn [set_limbs md_limbs md_p]; split; [exact arrZ3| unfold zs2, zs; rewrite !upd_length; exact lenZ].
+        all: intros c; discriminate c.
+      - repeat (split; [reflexivity|]). intros c; discriminate c.
+      - intros _; reflexivity.
+      - intros c; discriminate c. }
+    pose proof (loop_loc_Z dX dY dZ dT n t zp zs2 lloc) as lloc3.
+    pose proof (Z.mod_pos_bound (bv_unsigned qw) (2^32) ltac:(lia)) as qrng.
+    assert (bumped : bv_unsigned inc mod 2^32 = (bv_unsigned qw mod 2^32 + 1) mod 2^32).
+    { unfold inc. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64).
+      rewrite LxSoundMem.mod_mod_pow2 by lia. rewrite bv_unsigned_sx32. apply sxz_add_mod32. exact qrng. }
+    assert (digit : bv_unsigned dec mod 2^32 = Z.of_nat (Z.to_nat (bv_unsigned qw mod 2^32))).
+    { rewrite Z2Nat.id by lia. unfold dec. rewrite Z_to_bv_unsigned, bv_unsigned_sx32. unfold bv_wrap.
+      change (bv_modulus 64) with (2^64).
+      remember (bv_unsigned inc mod 2^32) as w eqn:Ew. remember (bv_unsigned qw mod 2^32) as u eqn:Eu.
+      pose proof (Z.mod_pos_bound (u + 1) (2^32) ltac:(lia)) as wrng. rewrite <- bumped in wrng.
+      unfold sxz. destruct (Z.ltb_spec w (2 ^ 31)); clear - bumped wrng qrng; lia. }
+    assert (nthZ2 : nth_error zs2 (Z.to_nat (i - t - 1)) = Some dec).
+    { unfold zs2. apply nth_error_upd_same. unfold zs. rewrite upd_length. lia. }
+    apply (L_inner n t zp k ib j0 j64 kont tnn nmax krng i iwin iub (Z.to_nat (bv_unsigned qw mod 2^32)) moq).
+    { rewrite Z2Nat.id by lia. lia. }
+    exists m2, hq, LBq, dX, dY, (set_limbs dZ zs2), dT, v0, (sx32 wx1), (sx32 wx0), j68, t160, t164, t168, t176, t180, dec.
+    do 17 eexists.
+    split; [reflexivity|]. split; [exact cs3|]. split; [exact locs|]. split; [exact lloc3|]. split; [exact nthZ2| exact digit].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1884,27 +2292,35 @@ Section DivP.
           F (Z_to_bv 64 0x21304) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K T0 NB Hk. intros until x7. intros CS_ ADDRS LL IR IB ZQ.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST _ MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros CH0 CH1 CH2 CHT CHR.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 8%nat. intros FLt45 _ _ _ _ _ HFX _. flat constr:(FLt45) 2%nat. flclear FLt45. intros FLt46 _. flat constr:(FLt46) 6%nat. flclear FLt46. intros _ _ _ HLX HNX HOX.
-    rewrite OX in HOX. flat constr:(HOX) 4%nat. flclear HOX. intros _ _ PALX UX. flat constr:((HFX OX)) 3%nat. intros PX0 PX4 _. unfold MPI_MAX_LIMBS in HNX.
-    (* [comment removed for export] *)
-    zstep. zstep; if_cases K0; zify_cond K0; rewrite ?unsigned_lit in K0 by lia.
-    (* [comment removed for export] *)
-    - zstep. zstep. zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4.
-      zstep. zstep; if_cases K1; zify_cond K1; [lxu_pnull K1|].
-      zstep. zstep. zstep. zstep; if_cases K2; zify_cond K2; [exfalso; apply K2; rewrite Z.shiftr_div_pow2 by lia; apply Z.div_small; lia|].
-      zstep; if_cases K3; zify_cond K3; [exfalso; lia|].
-      zstep; if_cases K4; zify_cond K4; [exfalso; lia|].
-      zstep. zstep; if_cases K5; zify_cond K5; [exfalso; rewrite lxu_land3 in K5; clear - K5 PALX; Z.div_mod_to_equations; lia|].
-      rd UX (i - 2).
-      eapply L_bodyA3; [exact K| exact T0| exact NB| exact Hk| exact CS_| exact ADDRS| exact LL| exact IR| exact IB| exact ZQ].
-    (* [comment removed for export] *)
-    - zstep. zstep.
-      eapply L_bodyA3; [exact K| exact T0| exact NB| exact Hk| exact CS_| exact ADDRS| exact LL| exact IR| exact IB| exact ZQ].
+    intros n t zp k ib j0 j64 kont tnn nmax krng mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i qw
+      xra t0 t1 t2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x4 x7 cst locs lloc iwin iub zdig.
+    pose proof lloc as (ownX & nX & _).
+    pose proof (cs_parts _ _ _ _ _ _ _ cst) as (_ & _ & _ & _ & _ & _ & _ & mokq).
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ cst) as (fr0 & _).
+    pose proof (bv_unsigned_in_range 64 sp) as sprng. change (bv_modulus 64) with (2^64) in sprng.
+    pose proof alloc_ceiling_pos as acpos.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX cst eq_refl) as ((atX & _) & _ & _ & _ & _ & _ & heapX & _).
+    destruct (heapX ownX) as (pXpos & pXtop & _ & _).
+    destruct atX as (_ & _ & _ & lenX & _ & ownpX). rewrite ownX in ownpX. destruct ownpX as (_ & _ & pXal & arrX).
+    assert (ceil64 : alloc_ceiling < 2^64) by lia.
+    (* T2.p[0] = (i < 2 ? 0 : X.p[i-2]) *)
+    do 2 zstep. if_cases geq2.
+    - zify_cond geq2.
+      do 2 zstep. rewrite ?Z.shiftl_mul_pow2 by lia.
+      do 3 zstep. gkill trapA.
+      do 4 zstep. gkill trapB.
+      zstep. gkill trapC.
+      zstep. gkill trapD.
+      do 2 zstep. gkill trapE.
+      destruct (nth_error (md_limbs dX) (Z.to_nat (i - 2))) as [wx|] eqn:nthX; [| exfalso; apply nth_error_None in nthX; lia].
+      pose proof (u32arr_read usegs mq (md_p dX) (md_limbs dX) (i - 2) wx (Z_to_bv 64 (md_p dX + (i + -2) * 4)) arrX nthX
+                    ltac:(lia) ltac:(unfold wa; f_equal; lia)) as rdX.
+      zstep.
+      exact (L_bodyA3 n t zp k ib j0 j64 kont tnn nmax krng mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i qw _
+               xra t0 t1 t2 _ _ a6 a7 t3 t4 t5 t6 x4 x7 cst locs lloc iwin iub zdig).
+    - do 2 zstep.
+      exact (L_bodyA3 n t zp k ib j0 j64 kont tnn nmax krng mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i qw _
+               xra t0 t1 t2 _ _ a6 a7 t3 t4 t5 t6 x4 x7 cst locs lloc iwin iub zdig).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1927,104 +2343,107 @@ Section DivP.
           F (Z_to_bv 64 0x211ec) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k ib j0 j64 K T0 NB Hk. intros until x10. intros CS_ ADDRS LL IR IB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST _ MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros CH0 CH1 CH2 CHT CHR.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 2%nat. intros CX _. rewrite E0 in CX. unfold mpi_cells in CX.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 2%nat. intros CY _. rewrite E1 in CY. unfold mpi_cells in CY.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 8%nat. intros FLt51 _ _ _ _ _ HFX _. flat constr:(FLt51) 2%nat. flclear FLt51. intros FLt52 _. flat constr:(FLt52) 6%nat. flclear FLt52. intros _ _ _ HLX HNX HOX.
-    rewrite OX in HOX. flat constr:(HOX) 4%nat. flclear HOX. intros _ _ PALX UX. flat constr:((HFX OX)) 3%nat. intros PX0 PX4 _. unfold MPI_MAX_LIMBS in HNX.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros FLt53 _ _ _ _ _ HFY _. flat constr:(FLt53) 2%nat. flclear FLt53. intros FLt54 _. flat constr:(FLt54) 6%nat. flclear FLt54. intros _ _ _ HLY HNY HOY.
-    rewrite OY in HOY. flat constr:(HOY) 4%nat. flclear HOY. intros _ _ PALY UY. flat constr:((HFY OY)) 3%nat. intros PY0 PY4 _. unfold MPI_MAX_LIMBS in HNY.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 8%nat. intros FLt55 _ _ _ _ _ HFZ _. flat constr:(FLt55) 2%nat. flclear FLt55. intros FLt56 _. flat constr:(FLt56) 6%nat. flclear FLt56. intros _ _ _ HLZ HNZ HOZ.
-    rewrite OZ in HOZ. flat constr:(HOZ) 4%nat. flclear HOZ. intros _ INZ PALZ UZ. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. unfold MPI_MAX_LIMBS in HNZ. rewrite PZ in *.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4.
-    zstep. replace (md_p dX + i * 4) with (md_p dX + 4 * i) by lia.
-    zstep. rewrite (proj2 (Z.ltb_lt 0 (md_p dX)) PX0). change (Z.b2z true) with 1.
-    zstep. zstep; if_cases K0; zify_cond K0; [lxu_pnull K0|].
-    zstep. zstep. zstep. zstep. zstep; if_cases K1; zify_cond K1; [exfalso; apply K1; rewrite Z.shiftr_div_pow2 by lia; apply Z.div_small; lia|].
-    zstep; if_cases K2; zify_cond K2; [exfalso; lia|].
-    zstep. zstep; if_cases K3; zify_cond K3; [exfalso; rewrite lxu_land3 in K3; clear - K3 PALX; Z.div_mod_to_equations; lia|].
-    zstep. zstep. zstep; if_cases K4; zify_cond K4; [exfalso; lia|].
-    zstep. zstep. zstep. zstep; if_cases K5; zify_cond K5; [lxu_pnull K5|].
-    zstep; if_cases K6; zify_cond K6; [exfalso; lia|].
-    zstep. zstep; if_cases K7; zify_cond K7; [exfalso; rewrite lxu_land3 in K7; clear - K7 PALY; Z.div_mod_to_equations; lia|].
-    rd UX i. rd UY t.
-    zstep. zstep.
-    lazymatch goal with |- context [Z_to_bv 64 (i + 1 + ?c)] => replace (Z_to_bv 64 (i + 1 + c)) with (Z_to_bv 64 (i - t - 1)) by (rewrite <- (zbv_add_modulus (i - t - 1)); f_equal; lia) end.
-    assert (ZST : forall xa3 xa4 xa5 xa7 : word, aevtM usegs moq POST
-      (MS (mkR xra (Z_to_bv 64 SPc) gp tp t0 t1 t2 (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 (md_addr dA)) (Z_to_bv 64 (md_p dX + 4 * i)) (Z_to_bv 64 (md_p dX)) (Z_to_bv 64 1) xa3 xa4 xa5 (Z_to_bv 64 ((i - t - 1) * 4)) xa7
-               (Z_to_bv 64 0) (Z_to_bv 64 (md_addr dB)) x4 (Z_to_bv 64 (i + 1)) (Z_to_bv 64 (4 * t))
-               x7 (Z_to_bv 64 (0xffffffffffffffff - zp)) (Z_to_bv 64 i) (Z_to_bv 64 (i - t - 1)) (Z_to_bv 64 zp) t3 t4 t5 t6)
-          F (Z_to_bv 64 0x212d4) fc None mq (seg_rom usegs))).
-    { intros xa3 xa4 xa5 xa7. zstep. replace (zp + (i - t - 1) * 4) with (zp + 4 * (i - t - 1)) by lia.
-      pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-      pose proof (u32arr_store_ok usegs _ zp (md_limbs dZ) (i - t - 1) _ UZ ltac:(lia) ltac:(f_equal; lia)) as SOKw.
-      zstep.
-      lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] => pose proof (u32arr_write usegs _ zp (md_limbs dZ) (i - t - 1) v UZ ltac:(lia)) as UZ1 end.
-      store_done. try clear SOKw.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
-      lazymatch type of UZ1 with u32arr _ _ _ (upd _ _ ?v) => set (wq1 := v) in UZ1; lazymatch type of UZ1 with u32arr _ _ _ ?l => set (zs1 := l) in UZ1 end end.
-      assert (CS1 : CST m1 moq hq LBq [dX; dY; set_limbs dZ zs1; dT] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS_| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-        - constructor; [right; left; exists 2%nat, dZ; split; [reflexivity|]; split; [reflexivity|]; split; [exact OZ|]; cbn [fst snd]; clear - IR HNZ NZ T0 PZ; rewrite ?PZ; lia| constructor].
-        - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-            [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-            | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-            | | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-          cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OZ]|].
-          intros _ _. rewrite PZ. split; [exact UZ1| subst zs1; rewrite !upd_length; exact HLZ].
-        - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-      assert (ZQ1 : nth_error (md_limbs (set_limbs dZ zs1)) (Z.to_nat (i - t - 1)) = Some wq1).
-      { cbn [set_limbs md_limbs]. subst zs1. apply nth_error_upd_same. clear - HLZ HNZ NZ IR T0. lia. }
-      assert (ADDRS1 : locals_at [dX; dY; set_limbs dZ zs1; dT]) by (unfold locals_at; cbn [map set_limbs md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-      pose proof (loop_loc_Z _ _ _ _ _ _ _ zs1 LL) as LL1.
-      zstep.
-      eapply L_bodyA2; [exact K| exact T0| exact NB| exact Hk| exact CS1| exact ADDRS1| exact LL1| exact IR| exact IB| exact ZQ1]. }
-    zstep; if_cases K8.
-    - zstep. zstep. zstep. zstep; if_cases K9; zify_cond K9; [exfalso; apply K9; rewrite ?Z.mod_small by lia; rewrite Z.shiftr_div_pow2 by lia; apply Z.div_small; lia|].
-      zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4.
-      zstep; if_cases K10; zify_cond K10; [exfalso; rewrite ?Z.mod_small in K10 by lia; clear - K10 PZ4 PZ0 NZ IR T0 ACL SLO SPB HLS; lia|].
-      zstep. zstep. replace (zp + (i - t - 1) * 4) with (zp + 4 * (i - t - 1)) by lia.
-      pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-      pose proof (u32arr_store_ok usegs _ zp (md_limbs dZ) (i - t - 1) _ UZ ltac:(lia) ltac:(f_equal; lia)) as SOKw.
-      zstep.
-      lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] => pose proof (u32arr_write usegs _ zp (md_limbs dZ) (i - t - 1) v UZ ltac:(lia)) as UZ1 end.
-      store_done. try clear SOKw.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
-      lazymatch type of UZ1 with u32arr _ _ _ (upd _ _ ?v) => set (wq1 := v) in UZ1; lazymatch type of UZ1 with u32arr _ _ _ ?l => set (zs1 := l) in UZ1 end end.
-      assert (CS1 : CST m1 moq hq LBq [dX; dY; set_limbs dZ zs1; dT] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS_| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-        - constructor; [right; left; exists 2%nat, dZ; split; [reflexivity|]; split; [reflexivity|]; split; [exact OZ|]; cbn [fst snd]; clear - IR HNZ NZ T0 PZ; rewrite ?PZ; lia| constructor].
-        - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-            [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-            | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-            | | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-          cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OZ]|].
-          intros _ _. rewrite PZ. split; [exact UZ1| subst zs1; rewrite !upd_length; exact HLZ].
-        - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-      assert (ZQ1 : nth_error (md_limbs (set_limbs dZ zs1)) (Z.to_nat (i - t - 1)) = Some wq1).
-      { cbn [set_limbs md_limbs]. subst zs1. apply nth_error_upd_same. clear - HLZ HNZ NZ IR T0. lia. }
-      assert (ADDRS1 : locals_at [dX; dY; set_limbs dZ zs1; dT]) by (unfold locals_at; cbn [map set_limbs md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-      pose proof (loop_loc_Z _ _ _ _ _ _ _ zs1 LL) as LL1.
-      eapply L_bodyA2; [exact K| exact T0| exact NB| exact Hk| exact CS1| exact ADDRS1| exact LL1| exact IR| exact IB| exact ZQ1].
-    - zstep. zstep. zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4.
-      zstep. zstep; if_cases K9; zify_cond K9; [lxu_pnull K9|].
-      zstep. zstep. zstep. zstep; if_cases K10; zify_cond K10; [exfalso; apply K10; rewrite ?Z.mod_small by lia; rewrite Z.shiftr_div_pow2 by lia; apply Z.div_small; lia|].
-      zstep; if_cases K11; zify_cond K11; [exfalso; lia|].
-      zstep; if_cases K12; zify_cond K12; [exfalso; lia|].
-      zstep. zstep; if_cases K13; zify_cond K13; [exfalso; rewrite lxu_land3 in K13; clear - K13 PALX; Z.div_mod_to_equations; lia|].
-      zstep. zstep. zstep. zstep; if_cases K14; zify_cond K14; [exfalso; apply K14; rewrite ?Z.mod_small by lia; rewrite Z.shiftr_div_pow2 by lia; apply Z.div_small; lia|].
-      zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4.
-      zstep; if_cases K15; zify_cond K15; [exfalso; rewrite ?Z.mod_small in K15 by lia; clear - K15 PZ4 PZ0 NZ IR T0 ACL SLO SPB HLS; lia|].
-      rd UX (i - 1).
-      zstep. zstep. zstep. zstep. zstep. zstep. zstep; if_cases K16.
-      + apply ZST.
-      + zstep. apply ZST.
+    intros n t zp k ib j0 j64 kont tnn nmax krng mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i
+      xra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x4 x7 x9 x10 cst locs lloc iwin iub.
+    pose proof lloc as (ownX & nX & ownY & nY & ownZ & pZ & nZ & _).
+    pose proof (cs_parts _ _ _ _ _ _ _ cst) as (_ & _ & _ & _ & miq & stkq & _ & mokq).
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ cst) as (fr0 & _).
+    pose proof (bv_unsigned_in_range 64 sp) as sprng. change (bv_modulus 64) with (2^64) in sprng.
+    pose proof alloc_ceiling_pos as acpos.
+    assert (ceil64 : alloc_ceiling < 2^64) by lia.
+    pose proof locs as addrs. unfold locals_at in addrs. cbn [map] in addrs.
+    injection addrs as adX adY adZ adT.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX cst eq_refl) as ((atX & _) & _ & _ & _ & _ & _ & heapX & _).
+    destruct (heapX ownX) as (pXpos & pXtop & _ & _). clear heapX.
+    destruct atX as (sX & _ & _ & lenX & _ & ownpX). rewrite ownX in ownpX. destruct ownpX as (_ & _ & pXal & arrX).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 1%nat dY cst eq_refl) as ((atY & _) & _ & _ & _ & _ & _ & heapY & _).
+    destruct (heapY ownY) as (pYpos & pYtop & _ & _). clear heapY.
+    destruct atY as (sY & _ & _ & lenY & _ & ownpY). rewrite ownY in ownpY. destruct ownpY as (_ & _ & pYal & arrY).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 2%nat dZ cst eq_refl) as ((atZ & _) & _ & _ & _ & _ & _ & heapZ & _).
+    destruct (heapZ ownZ) as (pZpos & pZtop & _ & _). clear heapZ.
+    destruct atZ as (_ & _ & _ & lenZ & _ & ownpZ). rewrite ownZ in ownpZ. destruct ownpZ as (_ & _ & pZal & arrZ).
+    rewrite pZ in pZpos, pZtop, pZal, arrZ.
+    rewrite adX in sX. rewrite adY in sY. unfold mpi_cells in sX, sY.
+    (* X.p + 4i and the UBSan checks on it, then Y.p + 4t *)
+    do 3 zstep. rewrite ?Z.shiftl_mul_pow2 by lia. replace (i * 2 ^ 2) with (4 * i) by ring.
+    do 4 zstep.
+    replace (0 <? md_p dX) with true by (symmetry; apply Z.ltb_lt; lia). cbn [Z.b2z].
+    gkill trA.
+    do 5 zstep. gkill trB.
+    zstep. gkill trC.
+    do 2 zstep. gkill trD.
+    do 3 zstep. gkill trE.
+    do 4 zstep. gkill trF.
+    zstep. gkill trG.
+    do 2 zstep. gkill trH.
+    destruct (nth_error (md_limbs dX) (Z.to_nat i)) as [xi|] eqn:nthXi; [| exfalso; apply nth_error_None in nthXi; lia].
+    pose proof (u32arr_read usegs mq (md_p dX) (md_limbs dX) i xi (Z_to_bv 64 (md_p dX + 4 * i)) arrX nthXi
+                  ltac:(lia) ltac:(reflexivity)) as rdXi.
+    zstep. clear rdXi.
+    destruct (nth_error (md_limbs dY) (Z.to_nat t)) as [yt|] eqn:nthYt; [| exfalso; apply nth_error_None in nthYt; lia].
+    pose proof (u32arr_read usegs mq (md_p dY) (md_limbs dY) t yt (Z_to_bv 64 (md_p dY + 4 * t)) arrY nthYt
+                  ltac:(lia) ltac:(reflexivity)) as rdYt.
+    zstep. clear rdYt.
+    do 3 zstep.
+    replace (i + 1 + (18446744073709551616 - (t + 2))) with (18446744073709551616 + (i - t - 1)) by ring.
+    rewrite zbv_add_modulus.
+    (* X.p[i] >= Y.p[t]: the digit is 0xffffffff; otherwise the capped quotient. All three paths end at the
+       store into Z.p[i-t-1]. *)
+    if_cases xgey; clear xgey.
+    1: (do 4 zstep; gkill trI;
+        zstep; rewrite ?Z.shiftl_mul_pow2 by lia; replace ((i - t - 1) * 2 ^ 2) with (4 * (i - t - 1)) by ring;
+        zstep; gkill trJ;
+        do 2 zstep).
+    2: (do 2 zstep; rewrite ?Z.shiftl_mul_pow2 by lia;
+        do 3 zstep; gkill trK;
+        do 4 zstep; gkill trL;
+        zstep; gkill trM;
+        zstep; gkill trN;
+        do 2 zstep; gkill trO;
+        do 4 zstep; gkill trP;
+        zstep; rewrite ?Z.shiftl_mul_pow2 by lia; replace ((i - t - 1) * 2 ^ 2) with (4 * (i - t - 1)) by ring;
+        zstep; gkill trQ;
+        destruct (nth_error (md_limbs dX) (Z.to_nat (i - 1))) as [xi1|] eqn:nthXi1;
+          [| exfalso; apply nth_error_None in nthXi1; lia];
+        pose proof (u32arr_read usegs mq (md_p dX) (md_limbs dX) (i - 1) xi1 (Z_to_bv 64 (md_p dX + (i + -1) * 4)) arrX nthXi1
+                      ltac:(lia) ltac:(unfold wa; f_equal; lia)) as rdXi1;
+        zstep; clear rdXi1;
+        do 7 zstep;
+        if_cases cap; clear cap; [zstep | do 2 zstep]).
+    all: pose proof (u32arr_store_ok usegs mq zp (md_limbs dZ) (i - t - 1) (Z_to_bv 64 (zp + 4 * (i - t - 1))) arrZ
+                       ltac:(lia) ltac:(reflexivity)) as okZ.
+    all: clear sX sY arrX arrY.
+    all: pose proof (munch_refl [(zp + 4 * (i - t - 1), zp + 4 * (i - t - 1) + 4)] mq) as mu1.
+    all: pose proof (wmono_refl usegs mq) as wm1.
+    all: zstep.
+    all: lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] =>
+           pose proof (u32arr_write usegs mq zp (md_limbs dZ) (i - t - 1) v arrZ ltac:(lia)) as arrZ1;
+           clear arrZ; store_done;
+           set (zs := upd (md_limbs dZ) (Z.to_nat (i - t - 1)) v) in arrZ1;
+           assert (nthZ : nth_error zs (Z.to_nat (i - t - 1)) = Some v) by (unfold zs; apply nth_error_upd_same; lia)
+         end.
+    all: try (lazymatch goal with |- aevtM _ _ _ (MS _ _ (Z_to_bv 64 0x212dc) _ _ _ _) => zstep end).
+    all: assert (cs1 : CST m0 moq hq LBq [dX; dY; set_limbs dZ zs; dT] dR []
+                         (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) [])
+           by (apply (mc_munch mq moq hq LBq _ dR [] _ [] (Some 2%nat) false false _ m0 _ dR [] cst mu1 wm1 miq stkq);
+               [ constructor; [| constructor]; right; left; exists 2%nat, dZ; cbn [fst snd];
+                 split; [reflexivity|]; split; [reflexivity|]; split; [exact ownZ|]; rewrite pZ; lia
+               | reflexivity
+               | intros j d d' Ej Ej';
+                 destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'; try (destruct j; discriminate Ej);
+                 injection Ej as Ej; injection Ej' as Ej'; subst d d'; repeat (split; [reflexivity|]);
+                 [ intros c; discriminate c
+                 | intros c; discriminate c
+                 | split; [intros c; exfalso; apply c; split; [reflexivity| exact ownZ]
+                          | intros _ _; cbn [set_limbs md_limbs md_p]; rewrite pZ; split;
+                            [exact arrZ1| unfold zs; rewrite upd_length; exact lenZ]]
+                 | intros c; discriminate c ]
+               | repeat (split; [reflexivity|]); intros c; discriminate c
+               | intros _; reflexivity
+               | intros c; discriminate c ]).
+    all: exact (L_bodyA2 n t zp k ib j0 j64 kont tnn nmax krng m0 moq hq LBq dX dY (set_limbs dZ zs) dT u0 u1 u2 j68
+                  t160 t164 t168 t176 t180 i _ xra t0 t1 t2 _ _ _ _ _ t3 t4 t5 t6 x4 x7 cs1 locs
+                  (loop_loc_Z dX dY dZ dT n t zp zs lloc) iwin iub nthZ).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -2048,11 +2467,18 @@ Section DivP.
           F (Z_to_bv 64 0x211ec) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k j0 j64 T0 NB Hk.
-    induction D as [|D IH]; intros until x10; intros HD CS_ ADDRS LL IR; [exfalso; clear - HD IR; lia|].
-    eapply (L_bodyA n t zp k (t + Z.of_nat D)); [| exact T0| exact NB| exact Hk| exact CS_| exact ADDRS| exact LL| exact IR| clear - HD; lia].
-    unfold KONT. intros * CS' ADDRS2 LL' IR' IB'.
-    eapply IH; [clear - IB'; lia| exact CS'| exact ADDRS2| exact LL'| clear - IR'; lia].
+    intros n t zp k j0 j64 tnn nmax krng D.
+    induction D as [|D more]; intros mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i
+      xra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x4 x7 x9 x10 fuel cst locs lloc iwin.
+    { exfalso. cbn [Z.of_nat] in fuel. lia. }
+    assert (later : KONT n t zp k (i - 1) j0 j64).
+    { intros mq' moq' hq' LBq' dX' dY' dZ' dT' u0' u1' u2' j68' t160' t164' t168' t176' t180' i'
+        xra' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' x4' x7' x9' x10' cst' locs' lloc' iwin' inmax'.
+      exact (more mq' moq' hq' LBq' dX' dY' dZ' dT' u0' u1' u2' j68' t160' t164' t168' t176' t180' i'
+               xra' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' x4' x7' x9' x10'
+               ltac:(lia) cst' locs' lloc' ltac:(lia)). }
+    exact (L_bodyA n t zp k (i - 1) j0 j64 later tnn nmax krng mq moq hq LBq dX dY dZ dT u0 u1 u2 j68 t160 t164 t168 t176 t180 i
+             xra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x4 x7 x9 x10 cst locs lloc iwin ltac:(lia)).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
   Lemma loop_loc_Ys : ltac2:(CDefT.buildp (gd_tbl_P_mpi_div_mpi ()) "PdX,$:.PdY,$:.PdZ,$:.PdT,$:.Pn,$0.Pt,$0.Pzp,$0.Pys,(8.(3.&40.))P,(64.R8.R7.R6.R5.R4.R3.R2.)(64.R9.(65.R8.R2.)R7.R6.R5.R4.R3.)")
@@ -2077,63 +2503,63 @@ Section DivP.
           F (Z_to_bv 64 0x21198) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS LL TN NB Hk.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros MY NSY _ _ _ _ HF _.
-    flat constr:((HF OY)) 5%nat. intros P0 P4 _ _ _.
-    zstep. zstep. zstep.
-    pose proof HSHR as SSH. unfold mpi_shift_r_stmt, U_MPI_SHIFT_R in SSH.
-    eapply aevtM_cut_evt; [exact MK| eapply SSH with (LB := LBq) (dX := dY) (count := 32 * (n - t)) (lo := lo);
-      rewrite ?unsigned_lit by lia; try eassumption; try reflexivity|].
-    all: try (intros _; split; clear - P0 P4 ACL; lia).
-    all: try (rewrite E1; first [left; clear - SLO HLS SPB SPA ACL; lia| right; clear - SLO HLS SPB SPA ACL; lia]).
-    all: try (intros _; right; rewrite E1; clear - P4 SLO HLS SPB ACL; lia).
-    all: try (rewrite E1; f_equal; clear; lia).
-    all: try (clear - SLO HLS SPB SPA ACL TN NB; lia).
-    clear SSH. cbv beta. intros ms' PO. unfold mpi_shift_r_post in PO.
-    flat constr:(PO) 24%nat. flclear PO. intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? m2 ys2 -> MU WM MI2 ST2 MA2 LEN2 _.
-    rewrite ?unsigned_lit in MU, ST2 by lia.
-    replace (ret_pc (Z_to_bv 64 0x211a4)) with (Z_to_bv 64 0x211a4) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    pose proof (proj1 MA2) as MA2'. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in MA2'. rewrite OY in MA2'.
-    destruct MA2' as (_ & _ & _ & HL2 & _ & _ & _ & _ & U2).
-    assert (CS2 : CST m2 moq hq LBq [dX; set_limbs dY ys2; dZ; dT] dR [] (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 (Z_to_bv 64 t); CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 1%nat) false false); [exact CS_| exact MU| exact WM| exact MI2| exact ST2| | reflexivity| | | reflexivity| discriminate].
-      - constructor; [left; cbn [fst snd]; clear - SLO HLS; lia| constructor; [right; left; exists 1%nat, dY; split; [reflexivity|]; split; [reflexivity|]; split; [exact OY|]; cbn [fst snd]; clear; lia| constructor]].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          [do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C] |
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-        cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OY]|].
-        intros _ _. split; [exact U2| exact HL2].
-      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-    assert (ADDRS2 : locals_at [dX; set_limbs dY ys2; dZ; dT]) by (unfold locals_at; cbn [map set_limbs md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-    pose proof (loop_loc_Ys _ _ _ _ _ _ _ ys2 LL) as LL2.
-    clear MY NSY HF U2 HL2 MA2 LEN2 MU WM CS_ HH HTc MF SOK MI ST CH MK.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS2)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS2)) 5%nat. intros CF0 CF1 CF2 CFT CFR.
-    zstep. zstep.
-    zstep; if_cases K1; zify_cond K1; rewrite ?unsigned_lit in K1 by lia.
-    { eapply L_fin; [exact CS2| exact ADDRS2| reflexivity| exact Hk| exact VB]. }
-    pose proof (munch_refl [(SP + -280, SP + -232)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-    zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-    match type of CF0 with rw_cells _ _ _ [_; _; _; C8 ?a24; _; _; C8 ?a48; _; _] =>
-      assert (W24 : a24 = Z_to_bv 64 (2^64 - (t + 2)));
-      [| assert (W48 : a48 = Z_to_bv 64 (4 * (t - 1)))] end.
-    { rewrite lxor_allones64 by (clear - TN NB; lia). f_equal. clear; lia. }
-    { rewrite Z.shiftl_mul_pow2 by lia. rewrite Z.mod_eq by lia. apply Z_to_bv_eqm. unfold eqm. change (bv_modulus 64) with (2^64).
-      match goal with |- ((?x - ?M * ?q) * _) mod _ = _ => replace ((x - M * q) * 2^2) with (4 * (t - 1) + (- (4 * q)) * 2^64) by (clear; lia) end.
-      rewrite Z_mod_plus_full. reflexivity. }
-    rewrite W24, W48 in CF0.
-    assert (CS3 : CST m3 moq hq LBq [dX; set_limbs dY ys2; dZ; dT] dR [] (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
-    { unfold lframe. eapply (cs_frame_upd _ _ _ _ _ _ _ _ _ _ (SP + -280) (SP + -232));
-        [exact CS2| exact ADDRS2| exact MU| exact WM| exact MI| exact ST| clear; lia| clear; lia| exact CF0| reflexivity| exact CF1| reflexivity| reflexivity]. }
-    rewrite !Z.shiftl_mul_pow2 by lia. change (2^2) with 4. replace (t * 4) with (4 * t) by (clear; lia).
-    eapply (L_iloop n t zp k j0 j64 (proj1 TN) NB Hk (Z.to_nat (n - t)));
-      [rewrite Z2Nat.id by (clear - TN; lia); clear; lia| exact CS3| exact ADDRS2| exact LL2| clear - TN K1; lia].
+    intros n t zp k mq moq hq LBq dX dY dZ dT j0 w8 w16 w24 w40 w48 j64 u0 u1 u2 j68 t160 t164 t168 t176 t180
+      xra x4 x9 x10 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 STq LOCS LLq TN NMAX KRNG.
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof LOCS as ADDRS. unfold locals_at in ADDRS. cbn in ADDRS. injection ADDRS as AX AY AZ AT.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ STq (eq_refl : nth_error [dX; dY; dZ; dT] 1 = Some dY))
+      as (YAT & YNS & _ & _ & _ & _ & YHEAP & _).
+    pose proof LLq as (XOWN & XN & YOWN & YN & ZOWN & ZP & ZN & TOWN & TNn & BABS).
+    destruct (YHEAP YOWN) as (YP0 & YCEIL & _).
+    do 3 zstep.
+    pose proof HSHR as SHR. unfold mpi_shift_r_stmt, U_MPI_SHIFT_R in SHR.
+    eapply aevtM_cut_evt; [exact MOKq | eapply SHR with (LB := LBq) (dX := dY) (count := 32 * (n - t)) (lo := lo);
+      rewrite ?AY, ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; try lia |].
+    intros ms' PO. unfold mpi_shift_r_post in PO.
+    destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & m2 & ys & -> & MU2 & WM2 & MI2 & ST2 & YAT2 & YLEN & YVAL).
+    rewrite ?(unsigned_lit (SP + -288)) in MU2, ST2 by lia.
+    replace (ret_pc (Z_to_bv 64 135588)) with (Z_to_bv 64 135588) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    assert (CS2 : CST m2 moq hq LBq [dX; set_limbs dY ys; dZ; dT] dR []
+      (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 (Z_to_bv 64 t); CB 4 j64]
+         [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
+    { assert (YARR : u32arr usegs m2 (md_p dY) ys /\ Z.of_nat (length ys) = md_n dY).
+      { destruct YAT2 as ((_ & _ & _ & YLEN2 & _ & YOWNF) & _). cbn [md_own md_limbs md_p md_n] in YLEN2, YOWNF.
+        rewrite YOWN in YOWNF. destruct YOWNF as (_ & _ & _ & YARR). split; [exact YARR| exact YLEN2]. }
+      apply (mc_munch mq moq hq LBq _ dR [] _ [] (Some 1%nat) false false _ m2 _ dR [] STq MU2 WM2 MI2 ST2).
+      - constructor; [left; cbn [fst snd]; lia|].
+        constructor; [right; left; exists 1%nat, dY; cbn [fst snd]; repeat split; [exact YOWN| lia| lia]|].
+        constructor.
+      - reflexivity.
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn [nth_error] in Ej, Ej'; [| | | | destruct j; discriminate Ej].
+        all: injection Ej as <-; injection Ej' as <-; do 6 (split; [reflexivity|]).
+        2: split; [intros NOTH; exfalso; apply NOTH; split; [reflexivity| exact YOWN]| intros _ _; exact YARR].
+        all: split; [intros _; reflexivity| intros SOMEj; discriminate SOMEj].
+      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros FLS; discriminate FLS].
+      - intros _; reflexivity.
+      - intros FLS; discriminate FLS. }
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CS2) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    do 3 zstep.
+    rewrite bv_ltu_Z, !unsigned_lit by lia.
+    destruct (Z.ltb_spec t n) as [TLT| TGE]; cbn [negb].
+    2: { eapply L_fin; [exact CS2| exact LOCS| reflexivity| exact KRNG| exact BABS]. }
+    clear MU2 WM2. pose proof (munch_refl [(SPc + 8, SPc + 56)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
+    do 15 zstep.
+    rewrite lxor_allones64 in Fcs0 by lia.
+    replace (18446744073709551615 - (t + 1)) with (2^64 - (t + 2)) in Fcs0 by lia.
+    assert (W48 : Z_to_bv 64 (((t + -1) mod 18446744073709551616) ≪ 2) = Z_to_bv 64 (4 * (t - 1))).
+    { apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with 18446744073709551616.
+      rewrite Z.shiftl_mul_pow2 by lia. rewrite Z.mul_mod_idemp_l by lia. f_equal. lia. }
+    rewrite W48 in Fcs0.
+    replace (Z_to_bv 64 (t ≪ 2)) with (Z_to_bv 64 (4 * t)) by (f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
+    assert (CS3 : CST m0 moq hq LBq [dX; set_limbs dY ys; dZ; dT] dR []
+      (LFR t k j0 j64 u0 u1 u2 j68 (tcells t160 t164 t168 t176 t180)) []).
+    { unfold lframe.
+      apply (cs_frame_upd m2 moq hq LBq _ dR _ _ j68 _ (SPc + 8) (SPc + 56) m0 _ _ CS2 LOCS MU WM MI2 ST2);
+        [lia| lia| exact Fcs0| reflexivity| exact Ftpc| reflexivity| reflexivity]. }
+    eapply (L_iloop n t zp k j0 j64 ltac:(lia) NMAX KRNG (Z.to_nat (n - t))); [lia| exact CS3| exact LOCS| apply loop_loc_Ys; exact LLq| lia].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -2156,84 +2582,113 @@ Section DivP.
           F (Z_to_bv 64 0x20fa0) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros n t zp k vy D. induction D as [|D IH]; intros until t6; intros CS_ ADDRS LL TN NB Hk VX VY VY0; [exfalso; clear - VX; lia|].
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:(LL) 10%nat. intros OX NXl OY NY OZ PZ NZ OT NT VB.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 8%nat. intros MX NSX WRX LOX CRX CRXL HFX _.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros MY NSY WRY LOY CRY CRYL HFY _.
-    pose proof HCMP as SPC. unfold mpi_cmp_mpi_stmt, U_MPI_CMP_MPI in SPC.
-    eapply aevtM_cut_evt; [exact MK| eapply SPC with (dX := dX) (dY := dY) (LB := LBq); try eassumption; try reflexivity|].
-    all: try (rewrite ?E0, ?E1; reflexivity).
-    1:{ intros O. flat constr:((HFX O)) 2%nat. intros P0 _. exact P0. }
-    1:{ intros O. flat constr:((HFY O)) 2%nat. intros P0 _. exact P0. }
-    clear SPC. cbv beta. intros ms' PO. unfold mpi_cmp_post in PO. destruct_exs PO.
-    flat constr:(PO) 4%nat. flclear PO. intros -> _ _ _.
+    intros n t zp k vy D.
+    induction D as [|D IHD]; intros mq moq hq LBq dX dY dZ dT j0 w8 w16 w24 w40 w48 j64 u0 u1 u2 j68 t160 t164 t168 t176 t180
+      xra x10 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 STq LOCS LLq TN NMAX KRNG XVAL YVAL VYPOS.
+    { exfalso. cbn [Z.of_nat] in XVAL. lia. }
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof LOCS as ADDRS. unfold locals_at in ADDRS. cbn in ADDRS. injection ADDRS as AX AY AZ AT.
+    pose proof LLq as (XOWN & XN & YOWN & YN & ZOWN & ZP & ZN & TOWN & TNn & BABS).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ STq (eq_refl : nth_error [dX; dY; dZ; dT] 0 = Some dX))
+      as (XAT & XNS & XWR & XLO & XCR & XCRL & XHEAP & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ STq (eq_refl : nth_error [dX; dY; dZ; dT] 1 = Some dY))
+      as (YAT & YNS & _ & _ & YCR & YCRL & YHEAP & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ STq (eq_refl : nth_error [dX; dY; dZ; dT] 2 = Some dZ))
+      as (ZAT & _ & _ & _ & _ & _ & ZHEAP & _).
+    destruct (XHEAP XOWN) as (XP0 & XCEIL & _).
+    destruct (YHEAP YOWN) as (YP0 & YCEIL & _).
+    destruct (ZHEAP ZOWN) as (ZP0 & ZCEIL & _).
+    do 3 zstep.
+    pose proof HCMP as CMP. unfold mpi_cmp_mpi_stmt, U_MPI_CMP_MPI in CMP.
+    eapply aevtM_cut_evt; [exact MOKq | eapply CMP with (LB := LBq) (dX := dX) (dY := dY);
+      rewrite ?AX, ?AY; try eassumption; try reflexivity; intros _; assumption |].
+    intros ms' PO. unfold mpi_cmp_post in PO.
+    destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & -> & _).
     replace (ret_pc (Z_to_bv 64 0x20fac)) with (Z_to_bv 64 0x20fac) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    clear MX NSX WRX LOX CRX CRXL HFX MY NSY WRY LOY CRY CRYL HFY.
-    pose proof (Z.sgn_spec (mpd_val dX - mpd_val dY)) as SG.
-    zstep; if_cases K0; zify_cond K0; rewrite ?signed_lit_small in K0 by (clear - SG; lia).
-    { (* [comment removed for export] *)
-      eapply L_setup; [exact CS_| exact ADDRS| exact LL| exact TN| exact NB| exact Hk]. }
-    (* [comment removed for export] *)
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 8%nat. intros FLt57 _ _ _ _ _ HFZ _. flat constr:(FLt57) 2%nat. flclear FLt57. intros FLt58 _. flat constr:(FLt58) 6%nat. flclear FLt58. intros _ _ _ HLZ HNZ HOZ.
-    rewrite OZ in HOZ. flat constr:(HOZ) 4%nat. flclear HOZ. intros _ INZ PALZ UZ. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. unfold MPI_MAX_LIMBS in HNZ. rewrite PZ in *.
-    zstep; if_cases KW; zify_cond KW; [exfalso; rewrite ?unsigned_lit in KW by Stdlib.micromega.Lia.lia; rewrite ?Z.mod_small in KW by Stdlib.micromega.Lia.lia; pose proof (@alloc_ceiling_hi L) as ACH; clear - KW PZ0 PZ4 TN NZ HNZ ACH; Stdlib.micromega.Lia.lia|].
+    zstep.
+    destruct (Z.ltb_spec (mpd_val dX) (mpd_val dY)) as [XLTY| YLEX].
+    { rewrite (Z.sgn_neg (mpd_val dX - mpd_val dY)) by lia.
+      replace (bv_lts (Z_to_bv 64 (-1)) (Z_to_bv 64 0)) with true by (vm_compute; reflexivity). cbv iota.
+      eapply L_setup; [exact STq| exact LOCS| exact LLq| lia| lia| exact KRNG]. }
+    assert (SGN : 0 <= Z.sgn (mpd_val dX - mpd_val dY) <= 1).
+    { destruct (Z.eq_dec (mpd_val dX) (mpd_val dY)) as [EQV| NEV].
+      - rewrite EQV, Z.sub_diag. cbn. lia.
+      - rewrite Z.sgn_pos by lia. lia. }
+    rewrite bv_lts_zero_r, unsigned_lit by lia.
+    replace (2^63 <=? Z.sgn (mpd_val dX - mpd_val dY)) with false by (symmetry; apply Z.leb_gt; lia). cbv iota.
+    zstep.
+    rewrite bv_ltu_Z, !unsigned_lit by lia.
+    replace (18446744073709551615 - zp <? 4 * (n - t)) with false by (symmetry; apply Z.ltb_ge; lia). cbv iota.
+    pose proof ZAT as ((_ & _ & _ & ZLEN & _ & ZOWNF) & _). rewrite ZOWN in ZOWNF. destruct ZOWNF as (_ & _ & _ & ZARR).
+    destruct (nth_error (md_limbs dZ) (Z.to_nat (n - t))) as [wz|] eqn:NTHZ;
+      [| apply nth_error_None in NTHZ; lia].
+    pose proof (LxPMpiTac.u32rw_cell_at mq (md_p dZ) (md_limbs dZ) (n - t) (zp + 4 * (n - t)) wz ZARR NTHZ ltac:(lia) ltac:(lia)) as ZC.
+    clear ZARR.
     pose proof (munch_refl [(zp + 4 * (n - t), zp + 4 * (n - t) + 4)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-    rd UZ (n - t). zstep.
-    pose proof (u32arr_store_ok usegs _ zp (md_limbs dZ) (n - t) _ UZ ltac:(lia) ltac:(f_equal; lia)) as SOKw.
-    zstep.
-    lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] => pose proof (u32arr_write usegs _ zp (md_limbs dZ) (n - t) v UZ ltac:(lia)) as UZ2 end.
-    store_done. try clear SOKw.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m2 end.
-    lazymatch type of UZ2 with u32arr _ _ _ ?l => set (zs2 := l) in UZ2 end.
-    assert (CS2 : CST m2 moq hq LBq [dX; dY; set_limbs dZ zs2; dT] dR [] (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 (Z_to_bv 64 t); CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS_| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-      - constructor; [right; left; exists 2%nat, dZ; split; [reflexivity|]; split; [reflexivity|]; split; [exact OZ|]; cbn [fst snd]; clear - TN HNZ NZ PZ; rewrite ?PZ; lia| constructor].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-        cbn [set_limbs md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; [reflexivity| exact OZ]|].
-        intros _ _. rewrite PZ. split; [exact UZ2| subst zs2; rewrite !upd_length; exact HLZ].
-      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-    assert (ADDRS2 : locals_at [dX; dY; set_limbs dZ zs2; dT]) by (unfold locals_at; cbn [map set_limbs md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-    pose proof (loop_loc_Z _ _ _ _ _ _ _ zs2 LL) as LL2.
-    clear MU WM UZ2 CS_. try clear UZ. try clear HFZ. try clear CH. reopen CS2 HH HTc MF SOK MI ST MK.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS2 eq_refl)) 8%nat. intros MX NSX WRX LOX CRX CRXL HFX _.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS2 eq_refl)) 8%nat. intros MY NSY WRY LOY CRY CRYL HFY _.
-    flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0 0 dX dX CS2 eq_refl eq_refl)) 2%nat. intros SEP00 OPS00.
-    flat constr:((mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0 1 dX dY CS2 eq_refl eq_refl)) 2%nat. intros SEP01 OPS01.
-    pose proof (HAS (-1) (or_intror eq_refl)) as SPA_.
-    eapply aevtM_cut.
-    { eapply SPA_ with (dX := dX) (dA := dX) (dB := dY) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-      all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity). }
-    clear SPA_. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
+    clear HPq SOKq. remember (zp + 4 * (n - t)) as ea eqn:EA.
+    do 3 zstep.
+    pose proof ZAT as ((_ & _ & _ & _ & _ & ZOWNF) & _). rewrite ZOWN in ZOWNF. destruct ZOWNF as (_ & _ & _ & ZARR).
+    pose proof (LxPMpiTac.u32arr_upd_of_cell mq m0 (md_p dZ) (md_limbs dZ) (n - t) ea wz _ ZARR NTHZ ltac:(lia) ltac:(lia) MU WM ZC) as ZARR2.
+    clear ZARR.
+    set (zs := upd (md_limbs dZ) (Z.to_nat (n - t)) (Z_to_bv 64 (bv_unsigned (sx32 wz) + 1))) in ZARR2.
+    assert (CS3 : CST m0 moq hq LBq [dX; dY; set_limbs dZ zs; dT] dR []
+      (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 (Z_to_bv 64 t); CB 4 j64]
+         [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
+    { assert (ZLEN2 : Z.of_nat (length zs) = md_n dZ) by (subst zs; rewrite upd_length; exact ZLEN).
+      apply (mc_munch mq moq hq LBq _ dR [] _ [] (Some 2%nat) false false _ m0 _ dR [] STq MU WM MIq STKq).
+      - constructor; [right; left; exists 2%nat, dZ; cbn [fst snd]; repeat split; [exact ZOWN| lia| lia]| constructor].
+      - reflexivity.
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn [nth_error] in Ej, Ej'; [| | | | destruct j; discriminate Ej].
+        all: injection Ej as <-; injection Ej' as <-; do 6 (split; [reflexivity|]).
+        3: split; [intros NOTH; exfalso; apply NOTH; split; [reflexivity| exact ZOWN]| intros _ _; split; [exact ZARR2| exact ZLEN2]].
+        all: split; [intros _; reflexivity| intros SOMEj; discriminate SOMEj].
+      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros FLS; discriminate FLS].
+      - intros _; reflexivity.
+      - intros FLS; discriminate FLS. }
+    clear ZC MU WM ZARR2 TOPq FRMq MIq STKq MOKq XAT YAT ZAT.
+    pose proof (cs_parts _ _ _ _ _ _ _ CS3) as (HP3 & TOP3 & FRM3 & SOK3 & MI3 & STK3 & _ & MOK3).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS3 (eq_refl : nth_error [dX; dY; set_limbs dZ zs; dT] 0 = Some dX))
+      as (XAT3 & _ & XWR3 & XLO3 & XCR3 & XCRL3 & _ & _).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ _ _ CS3 (eq_refl : nth_error [dX; dY; set_limbs dZ zs; dT] 1 = Some dY))
+      as (YAT3 & _ & _ & _ & YCR3 & YCRL3 & _ & _).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0%nat 0%nat _ _ CS3 eq_refl eq_refl) as (_ & OXX).
+    pose proof (mc_opnd_sep_ll _ _ _ _ _ _ _ _ _ 0%nat 1%nat _ _ CS3 eq_refl eq_refl) as (SXY & OXY).
+    do 5 zstep.
+    pose proof HAS as ASUB. unfold add_sub_mpi_stmt, U_ADD_SUB_MPI in ASUB.
+    specialize (ASUB (-1) (or_intror eq_refl)).
+    eapply aevtM_cut; [eapply ASUB with (h := hq) (LB := LBq) (dX := dX) (dA := dX) (dB := dY) (lo := lo) (m := m0) (mo := moq);
+      rewrite ?AX, ?AY, ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; try lia;
+      try (left; reflexivity); try (rewrite <- AX; assumption); rewrite <- AY; assumption |].
+    intros ms' mo' PO.
     binop_post PO m4 mo4 h4 LB4 dX4 r E MI4 ST4 MF4 HT4 HH4 MA4 OUT4 PX4 SOK4 RR.
-    replace (ret_pc (Z_to_bv 64 0x20fd4)) with (Z_to_bv 64 0x20fd4) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(RR) 2%nat. flclear RR. intros R1 FLt59. flat constr:(FLt59) 4%nat. flclear FLt59. intros KA4 KP4 KF4 KN4.
-    assert (CS4 : CST m4 mo4 h4 LB4 (set_nth 0 [dX; dY; set_limbs dZ zs2; dT] dX4) dR [] (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 (Z_to_bv 64 t); CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS2| reflexivity| exact HH4| exact HT4| exact MF4| exact MA4| exact OUT4| exact PX4| exact SOK4| exact MI4| exact ST4| exact KF4]. }
-    cbn [set_nth] in CS4.
-    assert (ADDRS4 : locals_at [dX4; dY; set_limbs dZ zs2; dT]) by (unfold locals_at; cbn [map set_limbs md_addr]; rewrite KA4, E0, E1, E2, E3; reflexivity).
-    assert (LL4 : loop_loc dX4 dY (set_limbs dZ zs2) dT n t zp) by (eapply loop_loc_X; [exact LL2| eapply out_heap; [exact MA4| exact (proj1 (proj2 OUT4))| lia]| exact KN4]).
-    assert (Hr : (r = 0 /\ mpd_val dX4 = mpd_val dX - mpd_val dY) \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED).
-    { destruct R1 as [[Hr0 HV]|HrF]; [left; split; [exact Hr0| rewrite HV; clear; lia]| right; exact HrF]. }
-    clear MX NSX WRX LOX CRX CRXL HFX MY NSY WRY LOY CRY CRYL HFY SEP00 OPS00 SEP01 OPS01 R1 KF4 KP4 MA4 OUT4 PX4 CS2 LL2 ADDRS2.
-    reopen CS4 HH HTc MF SOK MI ST MK.
-    zstep.
-    zstep; if_cases K1; zify_cond K1.
-    - (* [comment removed for export] *)
-      destruct Hr as [[_ HV]|Hr]; [| exfalso; subst r; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in K1; clear - K1; lia].
-      eapply IH; [exact CS4| exact ADDRS4| exact LL4| exact TN| exact NB| exact Hk| clear - HV VX VY VY0 K0 SG; nia| exact VY| exact VY0].
-    - zstep. eapply L_c0; [exact CS4| exact ADDRS4| reflexivity| reflexivity| | exact VB].
-      destruct Hr as [[Hr _]|Hr]; subst r; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in *; clear - K1; lia.
+    replace (ret_pc (Z_to_bv 64 135124)) with (Z_to_bv 64 135124) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR as (RVAL & KEEP4).
+    pose proof KEEP4 as (KADDR & KPAD & KBLK & KN).
+    assert (CS4 : CST m4 mo4 h4 LB4 [dX4; dY; set_limbs dZ zs; dT] dR []
+      (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 (Z_to_bv 64 t); CB 4 j64]
+         [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
+    { exact (mc_binop_l m0 moq hq LBq _ dR [] _ [] 0%nat dX m4 mo4 h4 LB4 dX4 CS3 eq_refl HH4 HT4 MF4 MA4 OUT4 PX4 SOK4 MI4 ST4 KBLK). }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS4) as (_ & _ & _ & _ & _ & _ & _ & MOK4).
+    zstep. zstep.
+    assert (LOCS4 : locals_at [dX4; dY; set_limbs dZ zs; dT]).
+    { unfold locals_at in *. cbn [map] in *. rewrite KADDR. exact LOCS. }
+    destruct RVAL as [(R0 & VAL4)| RFAIL].
+    2: { subst r. replace (bv_eqb (Z_to_bv 64 MBEDTLS_ERR_MPI_ALLOC_FAILED) (Z_to_bv 64 0)) with false by (vm_compute; reflexivity).
+         cbv iota. zstep.
+         eapply L_c0; [exact CS4| exact LOCS4| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED; lia| exact BABS]. }
+    subst r. replace (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0)) with true by (vm_compute; reflexivity). cbv iota.
+    subst ea.
+    pose proof OUT4 as (_ & NS4 & _).
+    assert (OWN4 : md_own dX4 = LHeap) by (apply (out_heap m4 LB4 dX4 MA4 NS4); lia).
+    assert (LL4 : loop_loc dX4 dY (set_limbs dZ zs) dT n t zp).
+    { apply (loop_loc_X dX dY _ dT n t zp dX4); [apply loop_loc_Z; exact LLq| exact OWN4| exact KN]. }
+    rewrite Nat2Z.inj_succ, Z.mul_succ_l in XVAL.
+    remember (Z.of_nat D * vy) as DV eqn:DVE.
+    eapply IHD; [exact CS4| exact LOCS4| exact LL4| lia| lia| exact KRNG| | exact YVAL| exact VYPOS].
+    rewrite DVE in *. lia.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -2255,68 +2710,98 @@ Section DivP.
           F (Z_to_bv 64 0x20f68) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS OX OY OZ PZ OT NT NYX NXZ VX VY Hk VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 5%nat. intros CX SGX HNX XNUL XHEAP. rewrite E0 in CX. unfold mpi_cells in CX. unfold MPI_MAX_LIMBS in HNX.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 5%nat. intros CY SGY HNY YNUL YHEAP. rewrite E1 in CY. unfold mpi_cells in CY. unfold MPI_MAX_LIMBS in HNY.
-    flat constr:((XHEAP OX)) 2%nat. intros PX0 NX1. flat constr:((YHEAP OY)) 2%nat. intros PY0 NY1.
-    (* [comment removed for export] *)
-    zstep. rewrite (zx16_small (md_n dX)) by lia. zstep. rewrite (zx16_small (md_n dY)) by lia.
-    zstep. zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 5) with 32.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros MY NSY WRY LOY CRY CRYL HFY _.
-    pose proof HSHL as SPS. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SPS.
-    eapply aevtM_cut.
-    { eapply SPS with (dX := dY) (count := (md_n dX - md_n dY) * 32) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc HNX HNY NYX; lia).
-      all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity).
-      all: try (f_equal; clear - HNX HNY NYX; lia). }
-    clear SPS. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    binop_post PO m3 mo3 h3 LB3 dY3 r E MI3 ST3 MF3 HT3 HH3 MA3 OUT3 PX3 SOK3 RR.
-    replace (ret_pc (Z_to_bv 64 0x20f84)) with (Z_to_bv 64 0x20f84) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(RR) 2%nat. flclear RR. intros R1 FLt60. flat constr:(FLt60) 4%nat. flclear FLt60. intros KA3 KP3 KF3 KN3.
-    assert (CS3 : CST m3 mo3 h3 LB3 (set_nth 1 [dX; dY; dZ; dT] dY3) dR [] (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS_| reflexivity| exact HH3| exact HT3| exact MF3| exact MA3| exact OUT3| exact PX3| exact SOK3| exact MI3| exact ST3| exact KF3]. }
-    cbn [set_nth] in CS3.
-    assert (ADDRS3 : locals_at [dX; dY3; dZ; dT]) by (unfold locals_at; cbn [map]; rewrite KA3, E0, E1, E2, E3; reflexivity).
-    assert (OY3 : md_own dY3 = LHeap) by (eapply out_heap; [exact MA3| exact (proj1 (proj2 OUT3))| clear - KN3 NY1; lia]).
-    assert (Hr : (r = 0 /\ mpd_val dY3 = mpd_val dY * 2 ^ ((md_n dX - md_n dY) * 32)) \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED).
-    { destruct R1 as [(Hr0 & HV & _)|HrF]; [left; split; [exact Hr0| exact HV]| right; exact HrF]. }
-    clear MY NSY WRY LOY CRY CRYL HFY R1 KF3 KP3 MA3 OUT3 PX3 CS_ CX CY CH.
-    reopen CS3 HH HTc MF SOK MI ST MK.
-    zstep; if_cases K0; zify_cond K0.
-    { eapply L_err; [exact CS3| exact ADDRS3| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB]. }
-    destruct Hr as [[_ HV]|Hr]; [| exfalso; subst r; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in K0; clear - K0; lia]. clear K0.
-    (* [comment removed for export] *)
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS3)) 5%nat. intros CF0 CF1 CF2 CFT CFR.
-    pose proof (munch_refl [(bv_unsigned sp + -288, bv_unsigned sp + -208)] m3) as MU. pose proof (wmono_refl usegs m3) as WM.
-    zstep. zstep. zstep.
-    zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4. zstep. zstep.
-    match type of CF0 with rw_cells _ ?mx _ ?c0 => match type of CF1 with rw_cells _ _ _ ?c1 =>
-      assert (CS4 : CST mx mo3 h3 LB3 [dX; dY3; dZ; dT] dR [] (frame c0 c1 j68 (tcells t160 t164 t168 t176 t180)) [])
-        by (eapply cs_frame_upd; [exact CS3| exact ADDRS3| exact MU| exact WM| assumption| assumption| Stdlib.micromega.Lia.lia| Stdlib.micromega.Lia.lia| exact CF0| reflexivity| exact CF1| reflexivity| reflexivity]) end end.
-    assert (VY3 : 0 < mpd_val dY3) by (rewrite HV; apply Z.mul_pos_pos; [exact VY| apply Z.pow_pos_nonneg; clear - HNX HNY NYX; lia]).
-    replace (Z_to_bv 64 (md_n dX)) with (Z_to_bv 64 ((md_n dX - 1) + 1)) by (f_equal; lia).
-    replace (Z_to_bv 64 (md_n dY)) with (Z_to_bv 64 ((md_n dY - 1) + 1)) by (f_equal; lia).
-    replace ((md_n dX - md_n dY) * 32) with (32 * ((md_n dX - 1) - (md_n dY - 1))) by (clear; lia).
-    replace ((md_n dX - md_n dY) * 4) with (4 * ((md_n dX - 1) - (md_n dY - 1))) by (clear; lia).
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ CS4 eq_refl)) 8%nat. intros _ _ _ _ _ _ HFZ _. flat constr:((HFZ OZ)) 3%nat. intros PZ0 PZ4 _. rewrite PZ in PZ0, PZ4.
+    intros k zp mq moq hq LBq dX dY dZ dT j0 w8 w16 w24 w32 w40 w48 w56 j64 u0 u1 u2 j68 t160 t164 t168 t176 t180
+      xra x5 x6 x7 x8 x9 x10 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6
+      STq LOCS OWX OWY OWZ PZ OWT NT2 NYX NXZ VX VY KR BPOS.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    assert (ADDR4 : md_addr dX = SP + -144 /\ md_addr dY = SP + -160 /\ md_addr dZ = SP + -176 /\ md_addr dT = SP + -192).
+    { unfold locals_at in LOCS. cbn in LOCS. injection LOCS as E1 E2 E3 E4. tauto. }
+    destruct ADDR4 as (AX & AY & AZ & AT).
+    pose proof (struct_cells _ _ _ _ _ _ _ 0%nat dX STq eq_refl) as (CX & SGX & NXr & _ & HPX).
+    pose proof (struct_cells _ _ _ _ _ _ _ 1%nat dY STq eq_refl) as (CY & SGY & NYr & _ & HPY).
+    pose proof (struct_cells _ _ _ _ _ _ _ 2%nat dZ STq eq_refl) as (_ & _ & NZr & _ & _).
+    destruct (HPY OWY) as (YP0 & NY1). destruct (HPX OWX) as (XP0 & NX1).
+    rewrite AX in CX. rewrite AY in CY. unfold mpi_cells in CX, CY.
+    pose (n := md_n dX - 1). assert (En : md_n dX = n + 1) by (unfold n; lia). clearbody n.
+    pose (t := md_n dY - 1). assert (Et : md_n dY = t + 1) by (unfold t; lia). clearbody t.
+    zstep. zstep. rewrite !zx16_small by (unfold MPI_MAX_LIMBS in *; lia). rewrite En, Et.
+    do 5 zstep.
+    assert (E9 : Z_to_bv 64 ((n + 1) mod 18446744073709551616 - (t + 1) mod 18446744073709551616) = Z_to_bv 64 (n - t)).
+    { f_equal. rewrite !Z.mod_small by (unfold MPI_MAX_LIMBS in *; lia). lia. }
+    assert (E6 : Z_to_bv 64 ((((n + 1) mod 18446744073709551616 - (t + 1) mod 18446744073709551616) mod 18446744073709551616) ≪ 5) = Z_to_bv 64 (32 * (n - t))).
+    { f_equal. rewrite Z.shiftl_mul_pow2 by lia. rewrite !Z.mod_small by (unfold MPI_MAX_LIMBS in *; lia). lia. }
+    rewrite E9, E6. clear E9 E6.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 1%nat dY STq eq_refl) as (MAY & NSY & WRY & PLY & CRY & CRLY & HFY & LAY1 & LAY2 & LAY3).
+    pose proof HSHL as SHL. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SHL.
+    eapply aevtM_cut; [eapply SHL with (dX := dY) (count := 32 * (n - t)) (lo := lo) (LB := LBq) (h := hq) (m := mq) (mo := moq);
+      rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity | ].
+    all: try (rewrite AY; reflexivity).
+    1: unfold MPI_MAX_LIMBS in *; lia.
+    1: lia.
+    1: rewrite TOPq; lia.
+    1: lia.
+    intros ms' mo' PO.
+    binop_post PO m2 mo2 h2 LB2 dY2 r E MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 RR.
+    replace (ret_pc (Z_to_bv 64 135044)) with (Z_to_bv 64 135044) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR as (RES & KEEP2). pose proof KEEP2 as (KA2 & KP2 & KB2 & KN2).
+    pose proof (mc_binop_l mq moq hq LBq [dX; dY; dZ; dT] dR [] _ [] 1%nat dY m2 mo2 h2 LB2 dY2 STq eq_refl HH2 HT2 MF2 MA2 OUT2 PX2 SOK2 MI2 ST2 KB2) as CS2.
+    cbn [set_nth] in CS2.
+    assert (LOC2 : locals_at [dX; dY2; dZ; dT]).
+    { unfold locals_at in *. cbn in *. rewrite KA2. exact LOCS. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (_ & _ & _ & _ & _ & _ & _ & MOK2).
+    destruct RES as [(R0 & VAL2 & SG2 & N2) | RERR].
+    2: { subst r. unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+         eapply L_err with (r := -16); [exact CS2 | exact LOC2 | reflexivity | reflexivity | lia | exact BPOS]. }
+    subst r.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CS2) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    pose proof (munch_refl [(SP + -288, SP + -220)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
+    zstep. match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+    zstep. zstep. zstep. do 3 zstep.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 2%nat dZ STq eq_refl) as (_ & _ & _ & _ & _ & _ & HFZ & _).
+    destruct (HFZ OWZ) as (ZP0 & ZP1 & _).
     pose proof (@alloc_ceiling_hi L) as ACH.
-    rewrite ?(Z.mod_small zp 18446744073709551616) by Stdlib.micromega.Lia.lia. rewrite ?(Z.mod_small zp (2^64)) by Stdlib.micromega.Lia.lia. rewrite zb_lxor_ones by Stdlib.micromega.Lia.lia.
-    eapply (L_loop1 (md_n dX - 1) (md_n dY - 1) zp k (mpd_val dY3) (Z.to_nat (mpd_val dX + 1)));
-      [exact CS4| exact ADDRS3| | clear - NYX NY1; lia| clear - HNX; lia| exact Hk| rewrite Z2Nat.id by (clear - VX; lia); clear - VX VY3; nia| reflexivity| exact VY3].
-    unfold loop_loc. split; [exact OX|]. split; [clear; lia|]. split; [exact OY3|]. split; [clear - KN3; lia|].
-    split; [exact OZ|]. split; [exact PZ|]. split; [clear - NXZ; lia|]. split; [exact OT|]. split; [exact NT| exact VB].
+    assert (E9 : Z_to_bv 64 (((n - t) mod 18446744073709551616) ≪ 2) = Z_to_bv 64 (4 * (n - t))).
+    { f_equal. rewrite Z.shiftl_mul_pow2 by lia. rewrite Z.mod_small by (unfold MPI_MAX_LIMBS in *; lia). lia. }
+    assert (E4 : Z_to_bv 64 (zp + ((n - t) mod 18446744073709551616) ≪ 2) = Z_to_bv 64 (zp + 4 * (n - t))).
+    { f_equal. rewrite Z.shiftl_mul_pow2 by lia. rewrite Z.mod_small by (unfold MPI_MAX_LIMBS in *; lia). lia. }
+    assert (E8 : Z_to_bv 64 (Z.lxor (zp mod 18446744073709551616) 18446744073709551615) = Z_to_bv 64 (18446744073709551615 - zp)).
+    { f_equal. rewrite Z.mod_small by lia. apply lxor_allones64. lia. }
+    rewrite E9, E4, E8. clear E9 E4 E8.
+    assert (CS3 : CST m1 mo2 h2 LB2 [dX; dY2; dZ; dT] dR []
+      (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 (Z_to_bv 64 k); C8 w40; C8 w48; C8 (Z_to_bv 64 t); CB 4 j64]
+         [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
+    { eapply cs_frame_upd; [exact CS2 | exact LOC2 | exact MU | exact WM | eassumption | eassumption | lia | lia
+        | exact Fcs0 | reflexivity | exact Ftpc | reflexivity | reflexivity]. }
+    assert (VY2 : 0 < mpd_val dY2).
+    { rewrite VAL2. apply Z.mul_pos_pos; [exact VY | apply Z.pow_pos_nonneg; lia]. }
+    assert (OWY2 : md_own dY2 = LHeap).
+    { apply (out_heap m2 LB2 dY2 MA2); [exact (proj1 (proj2 OUT2)) | lia]. }
+    eapply (L_loop1 n t zp k (mpd_val dY2) (Z.to_nat (mpd_val dX / mpd_val dY2 + 1))).
+    - exact CS3.
+    - exact LOC2.
+    - unfold loop_loc. repeat split; try assumption; lia.
+    - lia.
+    - unfold MPI_MAX_LIMBS in *; lia.
+    - exact KR.
+    - split; [exact VX|].
+      assert (QN : 0 <= mpd_val dX / mpd_val dY2) by (apply Z.div_pos; lia).
+      rewrite Z2Nat.id by lia.
+      pose proof (Z.div_mod (mpd_val dX) (mpd_val dY2) ltac:(lia)) as DM.
+      pose proof (Z.mod_pos_bound (mpd_val dX) (mpd_val dY2) VY2) as MB.
+      nia.
+    - reflexivity.
+    - exact VY2.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   (* [comment removed for export] *)
   Lemma val_lval : forall mq LBq d, mpd_at usegs mq LBq d -> md_sg d = 1 -> mpd_val d = lval (md_limbs d) (md_n d).
-  Proof.
-    intros mq LBq d [(_ & _ & _ & HL & _) _] SG. unfold mpd_val. rewrite SG, Z.mul_1_l. fold (mpd_abs d). apply mpd_abs_lval. exact HL.
+  Proof using.
+    intros mq LBq d ((_ & _ & _ & LEN & _) & _) SG1.
+    unfold mpd_val, lval. rewrite SG1, Z.mul_1_l, <- LEN, Nat2Z.id, firstn_all. reflexivity.
   Qed.
 
   (* [comment removed for export] *)
@@ -2337,93 +2822,113 @@ Section DivP.
           F (Z_to_bv 64 0x20f4c) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS OX OY OZ PZ OT NT NYX NXZ SGX SGY VXY VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 5%nat. intros CY _ HNY YNUL YHEAP. rewrite E1 in CY. unfold mpi_cells in CY. unfold MPI_MAX_LIMBS in HNY.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 8%nat. intros FLt61 _ _ _ _ _ HFY _. flat constr:(FLt61) 2%nat. flclear FLt61. intros FLt62 _. flat constr:(FLt62) 6%nat. flclear FLt62. intros _ _ _ HLY _ HOY.
-    rewrite OY in HOY. flat constr:(HOY) 4%nat. flclear HOY. intros NY1 INY PALY UY. flat constr:((HFY OY)) 3%nat. intros PY0 PY4 _.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 2%nat. intros FLt63 _. flat constr:(FLt63) 2%nat. flclear FLt63. intros FLt64 _. flat constr:(FLt64) 6%nat. flclear FLt64. intros _ _ _ HLX HNX HOX.
-    rewrite OX in HOX. flat constr:(HOX) 2%nat. flclear HOX. intros NX1 _. unfold MPI_MAX_LIMBS in HNX.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 2%nat. intros MX _. flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 2%nat. intros MY _.
-    pose proof (val_lval _ _ _ MX SGX) as VLX. pose proof (val_lval _ _ _ MY SGY) as VLY.
-    pose proof (core_bitlen_mono_val (md_limbs dX) (md_n dX) (md_limbs dY) (md_n dY) ltac:(lia) ltac:(lia) ltac:(rewrite <- VLX, <- VLY; lia)) as BLM.
+    intros zp mq moq hq LBq dX dY dZ dT j0 w8 w16 w24 w32 w40 w48 w56 j64 u0 u1 u2 j68 t160 t164 t168 t176 t180
+      xra x4 x5 x6 x7 x8 x9 x10 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6
+      STq LOCS OWX OWY OWZ PZ OWT NT2 NYX NXZ SG1X SG1Y VYX BPOS.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    assert (ADDR4 : md_addr dX = SP + -144 /\ md_addr dY = SP + -160 /\ md_addr dZ = SP + -176 /\ md_addr dT = SP + -192).
+    { unfold locals_at in LOCS. cbn in LOCS. injection LOCS as E1 E2 E3 E4. tauto. }
+    destruct ADDR4 as (AX & AY & AZ & AT).
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 1%nat dY STq eq_refl) as (MAY & NSY & WRY & PLY & CRY & CRLY & HFY & LAY1 & LAY2 & LAY3).
+    pose proof MAY as ((CY & _ & _ & LENY & NYr & OWNY) & _).
+    rewrite OWY in OWNY. destruct OWNY as (NY1 & INY & ALY & ARRY).
+    destruct (HFY OWY) as (YP0 & YPC & _).
+    rewrite AY in CY. unfold mpi_cells in CY.
+    zstep. zstep. rewrite zx16_small by (unfold MPI_MAX_LIMBS in *; lia).
+    zstep.
+    pose proof HCBL as CBL. unfold mpi_core_bitlen_stmt, U_MPI_CORE_BITLEN in CBL.
+    eapply aevtM_cut_evt; [exact MOKq | eapply CBL with (A := md_p dY) (n := md_n dY) (xs := md_limbs dY);
+      [exact (u32arr_ro _ _ _ _ ARRY) | unfold MPI_MAX_LIMBS in *; lia | lia | | lia | exact MIq | reflexivity | reflexivity] | ].
+    { apply Z.mod_divide in ALY; [| lia]. destruct ALY as (q16 & Q16). apply Z.mod_divide; [lia |]. exists (4 * q16). lia. }
+    intros ms' PO. unfold mpi_core_bitlen_post in PO.
+    destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & -> & _ & _ & _ & ->).
+    replace (ret_pc (Z_to_bv 64 135000)) with (Z_to_bv 64 135000) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    zstep. zstep.
     pose proof (core_bitlen_range (md_limbs dY) (md_n dY) ltac:(lia)) as BLR.
-    (* [comment removed for export] *)
-    zstep. zstep. rewrite (zx16_small (md_n dY)) by lia. zstep.
-    pose proof HCBL as SPB_. unfold mpi_core_bitlen_stmt, U_MPI_CORE_BITLEN in SPB_.
-    eapply aevtM_cut_evt; [exact MK| eapply SPB_ with (A := md_p dY) (n := md_n dY) (xs := md_limbs dY); try eassumption; try reflexivity|].
-    all: try (apply u32arr_ro; exact UY).
-    all: try (clear - HNY HLY; lia).
-    all: try (clear - PALY; apply Z.mod_divide in PALY; [| lia]; apply Z.mod_divide; [lia|]; (flat constr:(PALY) 2%nat; flclear PALY; intros q Hq); exists (4 * q); lia).
-    clear SPB_. cbv beta. intros ms' PO. unfold mpi_core_bitlen_post in PO. destruct_exs PO.
-    flat constr:(PO) 5%nat. flclear PO. intros -> _ _ _ ->.
-    replace (ret_pc (Z_to_bv 64 0x20f58)) with (Z_to_bv 64 0x20f58) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
     set (bl := core_bitlen (md_limbs dY) (md_n dY)) in *.
-    pose proof (Z.mod_pos_bound bl 32 ltac:(lia)) as BM.
-    zstep. rewrite land_31 by lia. zstep.
-    zstep; if_cases K0; zify_cond K0; rewrite ?unsigned_lit in K0 by lia.
-    - (* [comment removed for export] *)
-      zstep. rewrite lxor_ones5 by lia.
-      set (sh := 31 - bl mod 32) in *. assert (SHB : 1 <= sh <= 31) by (subst sh; clear - BM K0; lia).
-      (* [comment removed for export] *)
-      zstep. zstep. zstep.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 8%nat. intros MX_ NSX WRX LOX CRX CRXL HFX _.
-      pose proof HSHL as SPS. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SPS.
-      eapply aevtM_cut.
-      { eapply SPS with (dX := dX) (count := sh) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc SHB; lia).
-        all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity). }
-      clear SPS. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-      binop_post PO m3 mo3 h3 LB3 dX3 r E MI3 ST3 MF3 HT3 HH3 MA3 OUT3 PX3 SOK3 RR.
-      replace (ret_pc (Z_to_bv 64 0x21180)) with (Z_to_bv 64 0x21180) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      flat constr:(RR) 2%nat. flclear RR. intros R1 FLt65. flat constr:(FLt65) 4%nat. flclear FLt65. intros KA3 KP3 KF3 KN3.
-      assert (CS3 : CST m3 mo3 h3 LB3 (set_nth 0 [dX; dY; dZ; dT] dX3) dR [] (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply mc_binop_l; [exact CS_| reflexivity| exact HH3| exact HT3| exact MF3| exact MA3| exact OUT3| exact PX3| exact SOK3| exact MI3| exact ST3| exact KF3]. }
-      cbn [set_nth] in CS3.
-      assert (ADDRS3 : locals_at [dX3; dY; dZ; dT]) by (unfold locals_at; cbn [map]; rewrite KA3, E0, E1, E2, E3; reflexivity).
-      assert (OX3 : md_own dX3 = LHeap) by (eapply out_heap; [exact MA3| exact (proj1 (proj2 OUT3))| clear - KN3 NX1; lia]).
-      assert (Hr : (r = 0 /\ mpd_val dX3 = mpd_val dX * 2 ^ sh /\ md_sg dX3 = md_sg dX /\ md_n dX3 = shift_l_n sh dX) \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED).
-      { destruct R1 as [(Hr0 & HV & HS & HN)|HrF]; [left; auto| right; exact HrF]. }
-      clear MX_ NSX WRX LOX CRX CRXL HFX R1 KF3 KP3 MA3 OUT3 PX3 CY UY CH.
-      reopen CS3 HH HTc MF SOK MI ST MK.
-      zstep; if_cases K1; zify_cond K1.
-      { eapply L_err; [exact CS3| exact ADDRS3| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB]. }
-      destruct Hr as [(_ & HVX & HSX & HNX3)|Hr]; [| exfalso; subst r; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in K1; clear - K1; lia]. clear K1.
-      (* [comment removed for export] *)
-      zstep. zstep. zstep.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY CS3 eq_refl)) 8%nat. intros MY_ NSY WRY LOY CRY CRYL HFY_ _.
-      pose proof HSHL as SPS. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SPS.
-      eapply aevtM_cut.
-      { eapply SPS with (dX := dY) (count := sh) (lo := lo) (h := h3) (LB := LB3); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc SHB; lia).
-        all: try (rewrite ?KA3, ?E0, ?E1, ?E2, ?E3; reflexivity). }
-      clear SPS. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-      binop_post PO m4 mo4 h4 LB4 dY4 r4 E MI4 ST4 MF4 HT4 HH4 MA4 OUT4 PX4 SOK4 RR.
-      replace (ret_pc (Z_to_bv 64 0x21190)) with (Z_to_bv 64 0x21190) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      flat constr:(RR) 2%nat. flclear RR. intros R1 FLt66. flat constr:(FLt66) 4%nat. flclear FLt66. intros KA4 KP4 KF4 KN4.
-      assert (CS4 : CST m4 mo4 h4 LB4 (set_nth 1 [dX3; dY; dZ; dT] dY4) dR [] (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply mc_binop_l; [exact CS3| reflexivity| exact HH4| exact HT4| exact MF4| exact MA4| exact OUT4| exact PX4| exact SOK4| exact MI4| exact ST4| exact KF4]. }
-      cbn [set_nth] in CS4.
-      assert (ADDRS4 : locals_at [dX3; dY4; dZ; dT]) by (unfold locals_at; cbn [map]; rewrite KA4, KA3, E0, E1, E2, E3; reflexivity).
-      assert (OY4 : md_own dY4 = LHeap) by (eapply out_heap; [exact MA4| exact (proj1 (proj2 OUT4))| clear - KN4 NY1; lia]).
-      assert (Hr : (r4 = 0 /\ mpd_val dY4 = mpd_val dY * 2 ^ sh /\ md_sg dY4 = md_sg dY /\ md_n dY4 = shift_l_n sh dY) \/ r4 = MBEDTLS_ERR_MPI_ALLOC_FAILED).
-      { destruct R1 as [(Hr0 & HV & HS & HN)|HrF]; [left; auto| right; exact HrF]. }
-      clear MY_ NSY WRY LOY CRY CRYL HFY_ R1 KF4 KP4 MA4 OUT4 PX4 CS3 ADDRS3.
-      reopen CS4 HH HTc MF SOK MI ST MK.
-      zstep; if_cases K1; zify_cond K1.
-      { eapply L_err; [exact CS4| exact ADDRS4| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB]. }
-      destruct Hr as [(_ & HVY & HSY & HNY4)|Hr]; [| exfalso; subst r4; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in K1; clear - K1; lia]. clear K1.
+    rewrite (Z.mod_small bl) by (unfold MPI_MAX_LIMBS in *; lia). rewrite land_31 by lia.
+    pose proof (Z.mod_pos_bound bl 32 ltac:(lia)) as BLM.
+    destruct (Z.eq_dec (bl mod 32) 31) as [B31 | B31].
+    - rewrite B31. zstep.
+      match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
       zstep.
-      assert (P2 : 0 < 2 ^ sh) by (apply Z.pow_pos_nonneg; clear - SHB; lia).
-      eapply (L_m3 sh zp); [exact CS4| exact ADDRS4| exact OX3| exact OY4| exact OZ| exact PZ| exact OT| exact NT| | | | | clear - SHB; lia| exact VB].
-      + rewrite HNX3, HNY4. apply shift_l_n_mono; [clear - SHB; lia| clear - NYX NY1; lia| exact BLM].
-      + rewrite HNX3. pose proof (shift_l_n_le_succ sh dX ltac:(clear - SHB; lia) ltac:(clear - NX1; lia)). clear - H NXZ. lia.
-      + rewrite HVX. clear - VXY P2. nia.
-      + rewrite HVY. clear - VXY P2. nia.
-    - (* [comment removed for export] *)
-      zstep. eapply (L_m3 0 zp); [exact CS_| exact ADDRS| exact OX| exact OY| exact OZ| exact PZ| exact OT| exact NT| exact NYX| clear - NXZ; lia| clear - VXY; lia| clear - VXY; lia| clear; lia| exact VB].
+      eapply (L_m3 0 zp); [exact STq | exact LOCS | exact OWX | exact OWY | exact OWZ | exact PZ | exact OWT | exact NT2
+        | exact NYX | lia | lia | lia | lia | exact BPOS].
+    - zstep. rewrite (bv_eqb_neq (Z_to_bv 64 (bl mod 32)) (Z_to_bv 64 31)).
+      2: { intros EQ. apply (f_equal bv_unsigned) in EQ. rewrite !unsigned_lit in EQ by lia. exact (B31 EQ). }
+      cbn [negb].
+      zstep. rewrite lxor_ones5 by lia.
+      remember (31 - bl mod 32) as kk eqn:EK.
+      assert (KR : 0 <= kk <= 31) by lia.
+      do 3 zstep.
+      pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat dX STq eq_refl) as (MAX & NSX & WRX & PLX & CRX & CRLX & HFX & LAX1 & LAX2 & LAX3).
+      pose proof HSHL as SHL. unfold mpi_shift_l_stmt, U_MPI_SHIFT_L in SHL.
+      eapply aevtM_cut; [eapply SHL with (dX := dX) (count := kk) (lo := lo) (LB := LBq) (h := hq) (m := mq) (mo := moq);
+        rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity | ].
+      all: try (rewrite AX; reflexivity).
+      1: lia.
+      1: lia.
+      1: rewrite TOPq; lia.
+      1: lia.
+      intros ms1 mo1' PO1.
+      binop_post PO1 m2 mo2 h2 LB2 dX2 r2 E2 MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 RR2.
+      replace (ret_pc (Z_to_bv 64 135552)) with (Z_to_bv 64 135552) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+      destruct RR2 as (RES2 & KEEP2). pose proof KEEP2 as (KA2 & KP2 & KB2 & KN2).
+      pose proof (mc_binop_l mq moq hq LBq [dX; dY; dZ; dT] dR [] _ [] 0%nat dX m2 mo2 h2 LB2 dX2 STq eq_refl HH2 HT2 MF2 MA2 OUT2 PX2 SOK2 MI2 ST2 KB2) as CS2.
+      cbn [set_nth] in CS2.
+      assert (LOC2 : locals_at [dX2; dY; dZ; dT]).
+      { unfold locals_at in *. cbn in *. rewrite KA2. exact LOCS. }
+      pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (HP2 & TOP2 & _ & SOK2' & MI2' & STK2 & _ & MOK2).
+      destruct RES2 as [(R20 & VAL2 & SG2 & N2) | RERR2].
+      2: { subst r2. unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+           match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+           eapply L_err with (r := -16); [exact CS2 | exact LOC2 | reflexivity | reflexivity | lia | exact BPOS]. }
+      subst r2.
+      zstep. match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+      do 3 zstep.
+      pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 1%nat dY CS2 eq_refl) as (MAY2 & NSY2 & WRY2 & PLY2 & _ & _ & _ & _ & _ & _).
+      eapply aevtM_cut; [eapply SHL with (dX := dY) (count := kk) (lo := lo) (LB := LB2) (h := h2) (m := m2) (mo := mo2);
+        rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity | ].
+      all: try (rewrite AY; reflexivity).
+      1: lia.
+      1: lia.
+      1: rewrite TOP2; lia.
+      1: lia.
+      intros ms3 mo3' PO3.
+      binop_post PO3 m3 mo3 h3 LB3 dY3 r3 E3 MI3 ST3 MF3 HT3 HH3 MA3 OUT3 PX3 SOK3 RR3.
+      replace (ret_pc (Z_to_bv 64 135568)) with (Z_to_bv 64 135568) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+      destruct RR3 as (RES3 & KEEP3). pose proof KEEP3 as (KA3 & KP3 & KB3 & KN3).
+      pose proof (mc_binop_l m2 mo2 h2 LB2 [dX2; dY; dZ; dT] dR [] _ [] 1%nat dY m3 mo3 h3 LB3 dY3 CS2 eq_refl HH3 HT3 MF3 MA3 OUT3 PX3 SOK3 MI3 ST3 KB3) as CS3.
+      cbn [set_nth] in CS3.
+      assert (LOC3 : locals_at [dX2; dY3; dZ; dT]).
+      { unfold locals_at in *. cbn in *. rewrite KA3. exact LOC2. }
+      pose proof (cs_parts _ _ _ _ _ _ _ CS3) as (_ & _ & _ & _ & _ & _ & _ & MOK3).
+      destruct RES3 as [(R30 & VAL3 & SG3 & N3) | RERR3].
+      2: { subst r3. unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+           match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+           eapply L_err with (r := -16); [exact CS3 | exact LOC3 | reflexivity | reflexivity | lia | exact BPOS]. }
+      subst r3.
+      zstep. match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+      zstep.
+      destruct (HFX OWX) as (XP0 & _ & _ & NX1 & _).
+      assert (OWX2 : md_own dX2 = LHeap).
+      { apply (out_heap m2 LB2 dX2 MA2); [exact (proj1 (proj2 OUT2)) | lia]. }
+      assert (OWY3 : md_own dY3 = LHeap).
+      { apply (out_heap m3 LB3 dY3 MA3); [exact (proj1 (proj2 OUT3)) | lia]. }
+      assert (BLE : core_bitlen (md_limbs dY) (md_n dY) <= core_bitlen (md_limbs dX) (md_n dX)).
+      { apply core_bitlen_mono_val; [lia | lia |].
+        rewrite <- (val_lval mq LBq dY MAY SG1Y), <- (val_lval mq LBq dX MAX SG1X). lia. }
+      assert (NMONO : md_n dY3 <= md_n dX2).
+      { rewrite N2, N3. apply shift_l_n_mono; [lia | lia | exact BLE]. }
+      assert (NSUCC : md_n dX2 + 1 <= md_n dZ).
+      { rewrite N2. pose proof (shift_l_n_le_succ kk dX KR ltac:(lia)) as SUCC. lia. }
+      assert (PW : 0 < 2 ^ kk) by (apply Z.pow_pos_nonneg; lia).
+      eapply (L_m3 kk zp); [exact CS3 | exact LOC3 | exact OWX2 | exact OWY3 | exact OWZ | exact PZ | exact OWT | exact NT2
+        | exact NMONO | exact NSUCC | | | lia | exact BPOS].
+      + rewrite VAL2. apply Z.mul_nonneg_nonneg; lia.
+      + rewrite VAL3. apply Z.mul_pos_pos; lia.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -2463,205 +2968,205 @@ Section DivP.
           F (Z_to_bv 64 0x20ecc) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS OX OY OZ OT NYX NXA AX AY VAB. assert (VB : 0 < mpd_abs dB) by (clear - VAB; lia).
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    pose proof ADDRS as ADDRS'. unfold locals_at in ADDRS'. cbn [map] in ADDRS'. injection ADDRS' as E0 E1 E2 E3.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS_)) 5%nat. intros CF0 CF1 CF2 CFT CFR. unfold t2cells in CF2.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 5%nat. intros CX SGX HNX _ XHEAP. rewrite E0 in CX. unfold mpi_cells in CX. unfold MPI_MAX_LIMBS in HNX.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 5%nat. intros CY SGY HNY _ YHEAP. rewrite E1 in CY. unfold mpi_cells in CY. unfold MPI_MAX_LIMBS in HNY.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 5%nat. intros CZ SGZ _ ZNUL _. clear CZ.
-    flat constr:((ZNUL OZ)) 2%nat. intros PZ0 NZ0.
-    flat constr:((XHEAP OX)) 2%nat. intros PX0 NX1. flat constr:((YHEAP OY)) 2%nat. intros PY0 NY1.
-    flat constr:((opnd_facts _ _ _ _ _ _ dA CS_ opndA)) 2%nat. intros FLt67 _. flat constr:(FLt67) 2%nat. flclear FLt67. intros FLt68 SGA. flat constr:(FLt68) 6%nat. flclear FLt68.
-    intros CSA HALA HPOSA HLA HNA _. unfold mpi_cells in CSA. unfold MPI_MAX_LIMBS in HNA.
-    first [pose proof (rw_cells_bound _ _ _ _ CSA) as AB| pose proof (ro_cells_bound _ _ _ _ CSA) as AB]. cbn [cells_size csize Nat.add] in AB. clear CSA.
-
-    zstep.
-    pose proof (munch_refl [(SP + -152, SP + -134)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-    zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
+    intros mq moq hq LBq dX dY dZ dT j0 w8 w16 w24 w32 w40 w48 w56 j64 u0 u1 u2 j68 t160 t164 t168 t176 t180
+      xra x4 x5 x6 x7 x8 x9 x10 x11 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6
+      STq LOCS OWX OWY OWZ OWT NYX NXA AXA AYB ABR.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    assert (ADDR4 : md_addr dX = SP + -144 /\ md_addr dY = SP + -160 /\ md_addr dZ = SP + -176 /\ md_addr dT = SP + -192).
+    { unfold locals_at in LOCS. cbn in LOCS. injection LOCS as E1 E2 E3 E4. tauto. }
+    destruct ADDR4 as (AX & AY & AZ & AT).
+    pose proof (struct_cells _ _ _ _ _ _ _ 0%nat dX STq eq_refl) as (CX & SGX & NXr & _ & HPX).
+    pose proof (struct_cells _ _ _ _ _ _ _ 1%nat dY STq eq_refl) as (CY & SGY & NYr & _ & HPY).
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ STq) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    rewrite AX in CX. rewrite AY in CY. unfold mpi_cells in CX, CY.
+    unfold t2cells in Ft2.
+    pose proof (munch_refl [(SP + -160, SP + -128)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
+    zstep. zstep. zstep.
     assert (CS1 : CST m1 moq hq LBq [set_sg dX 1; set_sg dY 1; dZ; dT] dR []
-                    (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (SP + -152) (SP + -134) []);
-        [exact CS_| exact MU| exact WM| assumption| assumption| lia| lia| constructor| reflexivity| | |].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          try (left; split; [lia| reflexivity]).
-        + right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite E0. unfold mpi_cells. assumption.
-        + right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite E1. unfold mpi_cells. assumption.
-      - unfold frame, t2cells. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd]; assumption.
-      - apply frame_chs; [| reflexivity| reflexivity| reflexivity]. unfold locals_at. cbn [map set_sg md_addr]. rewrite E0, E1, E2, E3. reflexivity. }
-    assert (ADDRS1 : locals_at [set_sg dX 1; set_sg dY 1; dZ; dT]) by (unfold locals_at; cbn [map set_sg md_addr]; rewrite E0, E1, E2, E3; reflexivity).
-    clear MU WM CS_ CX CY CH CF0 CF1 CF2 CFT CFR. reopen CS1 HH HTc MF SOK MI ST MK.
-
-    zstep; if_cases KN; zify_cond KN.
-    { exfalso. rewrite ?unsigned_lit, ?Z.mod_small in KN by (clear - HPOSA AB; lia). clear - KN HPOSA. lia. }
-    zstep. zstep; if_cases KA; zify_cond KA.
-    { exfalso. rewrite ?unsigned_lit in KA by (clear - HPOSA AB; lia). change 7 with (Z.ones 3) in KA. rewrite Z.land_ones in KA by lia.
-      apply KA. change (2^3) with 8. clear - HALA. lia. }
-
-    flat constr:((opnd_facts _ _ _ _ _ _ dA CS1 opndA)) 2%nat. intros ((CSA1 & _) & _) _. unfold mpi_cells in CSA1.
-    zstep. rewrite (zx16_small (md_n dA)) by lia. clear CSA1.
-    zstep. zstep. zstep.
-    zstep; if_cases K0; zify_cond K0; rewrite ?unsigned_lit in K0 by lia.
-    { eapply L_c0; [exact CS1| exact ADDRS1| reflexivity| reflexivity| clear; lia| exact VB]. }
-
-    zstep. zstep. zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ ?pc _ _ _ _) => replace pc with (Z_to_bv 64 (hl_calloc L)) by (rewrite HCALLOC; reflexivity) end.
-    eapply aevtM_cut; [ eapply (heap_calloc usegs L HI) with (cnt := md_n dA + 2) (sz := 4) (lo := lo);
-      rewrite ?unsigned_lit by lia; try eassumption; try reflexivity |].
-    all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc HNA K0; lia).
-    intros ms' mo' PO. unfold call_post in PO. destruct_exs PO. flat constr:(PO) 2%nat. flclear PO. intros E PO.
-    injection E as -> ->. rewrite ?unsigned_lit in PO by lia.
-    flat constr:(PO) 7%nat. flclear PO. intros MI2 ST2 MF2 PR2 h2 HT2 RES.
-    lazymatch goal with |- context [ret_pc (Z_to_bv 64 ?x)] =>
-      replace (ret_pc (Z_to_bv 64 x)) with (Z_to_bv 64 x) by (symmetry; apply ret_pc_even; [lia| reflexivity]) end.
-    lazymatch type of MI2 with mem_inv _ ?mx => rename mx into m2 end.
-    lazymatch type of MF2 with mo_frame _ ?mx => rename mx into mo2 end.
-    destruct RES as [[-> HH2] | (A & -> & BRA & HH2 & ZCH)].
-    {
-      assert (CS2 : CST m2 mo2 h2 LBq [set_sg dX 1; set_sg dY 1; dZ; dT] dR []
-                      (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-      { eapply (mc_heap_nop _ _ _ _ _ _ _ _ _ 0); [exact CS1| reflexivity| exact HH2| exact HT2| exact MF2| exact PR2| exact MI2| exact ST2]. }
-      clear CS1 HH HTc MF SOK MI ST MK. reopen CS2 HH HTc MF SOK MI ST MK.
-      zstep; if_cases K1; zify_cond K1; [| exfalso; apply K1; reflexivity].
-      eapply L_c0; [exact CS2| exact ADDRS1| reflexivity| reflexivity| clear; lia| exact VB]. }
-
-    flat constr:(BRA) 5%nat. intros BA0 BA16 _ BA4 _.
-    pose proof alloc_ceiling_bounds as ACV.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 2 dZ CS1 eq_refl)) 2%nat. intros CZ1 _. rewrite E2 in CZ1. unfold mpi_cells in CZ1. rewrite PZ0, NZ0 in CZ1.
-    assert (CZ2 : rw_cells usegs m2 (SP + -176) [C8 (Z_to_bv 64 0); C2 (Z_to_bv 64 (md_sg dZ)); C2 (Z_to_bv 64 0); C4 (md_pad dZ)]).
-    { eapply (heap_pres_rw_cells usegs L LBq _ m1 m2); [exact PR2| exact CZ1|]. intros a Ha. left. cbn [cells_size csize Nat.add] in Ha. clear - Ha. lia. }
-    clear CZ1. pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2.
-    pose proof (munch_refl [(SP + -176, SP + -160)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-    pose proof (conj MI2 (conj ST2 (conj HH2 ZCH))) as PROT.
-    zstep; if_cases K1; zify_cond K1; [exfalso; rewrite ?unsigned_lit in K1 by (clear - BA0 BA4 ACP; lia); clear - K1 BA0; lia|].
-
-    zstep. zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-    rename MI2 into MI3. rename CZ2 into CZ3. try clear ST2. try clear HH2. try clear ZCH. flat constr:(PROT) 4%nat. flclear PROT. intros MI2 ST2 HH2 ZCH.
-    assert (CS3 : CST m3 mo2 h2 ((A, 4 * (md_n dA + 2)) :: LBq)
-              (set_nth 2 [set_sg dX 1; set_sg dY 1; dZ; dT] (mkMPD (md_addr dZ) (md_sg dZ) (md_n dA + 2) A (repeat (Z_to_bv 64 0) (Z.to_nat (md_n dA + 2))) (md_pad dZ) LHeap))
-              dR [] (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_calloc_attach _ _ _ _ _ _ _ _ _ 2 dZ m2 mo2 h2 A (md_n dA + 2) m3 (md_sg dZ) (md_pad dZ));
-        [exact CS1| reflexivity| exact OZ| | exact HT2| exact MF2| exact PR2| exact MI2| exact ST2| | | unfold MPI_MAX_LIMBS; clear - K0 HNA; lia
-        | rewrite E2; replace (SP + -176 + 16) with (SP + -160) by (clear; lia); exact MU| exact WM| exact MI3| rewrite E2; unfold mpi_cells; exact CZ3| exact SGZ].
-      - replace (4 * (md_n dA + 2)) with ((md_n dA + 2) * 4) by (clear; lia). exact HH2.
-      - replace (4 * (md_n dA + 2)) with ((md_n dA + 2) * 4) by (clear; lia). exact BRA.
-      - replace (4 * (md_n dA + 2)) with ((md_n dA + 2) * 4) by (clear; lia). exact ZCH. }
-    cbn [set_nth] in CS3.
-    match type of CS3 with cstate _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ [_; _; ?dz; _] _ _ _ _ => set (dZ3 := dz) in CS3 end.
-    assert (ADDRS3 : locals_at [set_sg dX 1; set_sg dY 1; dZ3; dT]) by (unfold locals_at; cbn [map set_sg md_addr dZ3]; rewrite E0, E1, E2, E3; reflexivity).
-    clear MU WM CS1 CZ3 HH HTc MF SOK MI ST MK MK2 PR2 ZCH MI2 ST2 HH2 MI3. reopen CS3 HH HTc MF SOK MI ST MK.
-
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ3 CS3 eq_refl)) 2%nat. intros FLt69 _. flat constr:(FLt69) 2%nat. flclear FLt69. intros FLt70 _. flat constr:(FLt70) 6%nat. flclear FLt70. intros _ _ _ _ _ HOZ3.
-    cbn [dZ3 md_own md_p md_n md_limbs] in HOZ3. flat constr:(HOZ3) 4%nat. flclear HOZ3. intros _ _ _ UZ3.
-    pose proof (u32arr_cells _ _ _ _ UZ3) as ZCH3. rewrite repeat_length in ZCH3.
-    zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4. zstep. zstep.
-    pose proof U_memset_spec as SPm. unfold memset_stmt in SPm.
-    eapply aevtM_cut_evt; [exact MK| eapply SPm with (junk := u32s (repeat (Z_to_bv 64 0) (Z.to_nat (md_n dA + 2)))); clear SPm | clear SPm].
-    { rewrite !unsigned_lit by (clear - BA0 BA4 ACV HNA K0; lia).
-      replace (Z.to_nat ((md_n dA + 2) * 4)) with (4 * Z.to_nat (md_n dA + 2))%nat by (clear - HNA; lia). exact ZCH3. }
-    { exact MI. }
-    unfold memset_post. cbv beta. intros ms' PO.
-    flat constr:(PO) 20%nat. flclear PO. intros z0 z1 z2 za1 za2 z3 z4 z5 z6 z7 z8 z9 z10 z11 m4 E MUd WMd MI4 ZCH4. subst ms'.
-    rewrite !unsigned_lit in MUd, ZCH4 by (clear - BA0 BA4 ACV HNA K0; lia).
-    lazymatch goal with |- context [ret_pc (Z_to_bv 64 ?x)] =>
-      replace (ret_pc (Z_to_bv 64 x)) with (Z_to_bv 64 x) by (symmetry; apply ret_pc_even; [lia| reflexivity]) end.
-    assert (UZ4 : u32arr usegs m4 A (repeat (Z_to_bv 64 0) (Z.to_nat (md_n dA + 2)))).
-    { eapply u32arr_of_cells; [exact ZCH4|]. rewrite u32s_repeat0. change (0 mod 256) with 0. f_equal. clear - HNA. lia. }
-    assert (ST4 : stk usegs m4 lo SPc).
-    { eapply stk_transport_disjoint; [exact ST| exact MUd| exact WMd|]. cbn. clear - BA0 BA4 ACL HNA. lia. }
-    assert (CS4 : CST m4 mo2 h2 ((A, 4 * (md_n dA + 2)) :: LBq) [set_sg dX 1; set_sg dY 1; dZ3; dT] dR []
-                    (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS3| exact MUd| exact WMd| exact MI4| exact ST4| | reflexivity| | | reflexivity| discriminate].
-      - constructor; [right; left; exists 2%nat, dZ3; split; [reflexivity|]; split; [reflexivity|]; split; [reflexivity|]; cbn [fst snd dZ3 md_p md_n]; clear; lia| constructor].
-      - intros j d d' Hj Hj'. rewrite Hj in Hj'. injection Hj' as <-. do 6 (split; [reflexivity|]). split; [intros _; reflexivity|].
-        intros EJ _. injection EJ as <-. cbn in Hj. injection Hj as <-. cbn [dZ3 md_p md_limbs md_n]. split; [exact UZ4| rewrite repeat_length; clear - HNA; lia].
-      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-    clear UZ3 ZCH3 ZCH4 UZ4 MUd WMd CS3 HH HTc MF SOK MI ST MK ST4 MI4. reopen CS4 HH HTc MF SOK MI ST MK.
-
-    zstep. zstep; if_cases KZ; zify_cond KZ.
-    { exfalso. rewrite ?unsigned_lit in KZ by (clear - BA0 BA4 ACP ACV HNA K0; lia). change 3 with (Z.ones 2) in KZ. rewrite Z.land_ones in KZ by lia.
-      apply KZ. change (2^2) with 4. clear - BA16. lia. }
-
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 2 dZ3 CS4 eq_refl)) 2%nat. intros FLt71 _. flat constr:(FLt71) 2%nat. flclear FLt71. intros FLt72 _. flat constr:(FLt72) 6%nat. flclear FLt72. intros _ _ _ _ _ HOZ5.
-    cbn [dZ3 md_own md_p md_n md_limbs] in HOZ5. flat constr:(HOZ5) 4%nat. flclear HOZ5. intros _ _ _ UZ5.
-    pose proof (munch_refl [(A, A + 4)] m4) as MU. pose proof (wmono_refl usegs m4) as WM.
-    pose proof (u32arr_store_ok usegs _ A _ 0 _ UZ5 ltac:(rewrite repeat_length; clear - HNA; lia) ltac:(f_equal; lia)) as SOKw.
+      (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64]
+         [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_hi_write mq moq hq LBq [dX; dY; dZ; dT] dR [] _ [] (SP + -160) (SP + -128) [] m1
+               [set_sg dX 1; set_sg dY 1; dZ; dT] _ STq MU WM); [eassumption | eassumption | lia | lia | constructor | reflexivity | | | ].
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+        + injection Ej as <-. injection Ej' as <-.
+          right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite AX. exact CX.
+        + injection Ej as <-. injection Ej' as <-.
+          right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. rewrite AY. exact CY.
+        + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+        + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+        + destruct j; discriminate.
+      - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd]; assumption.
+      - apply frame_chs; [| reflexivity | reflexivity | reflexivity].
+        unfold locals_at in *. cbn in *. exact LOCS. }
+    assert (LOC1 : locals_at [set_sg dX 1; set_sg dY 1; dZ; dT]) by (unfold locals_at in *; cbn in *; exact LOCS).
+    pose proof (a_cells _ _ _ _ _ _ CS1) as (CA1 & SGA).
+    pose proof (rw_cells_bound _ _ _ _ CA1) as BA. cbn in BA.
+    pose proof (opnd_facts _ _ _ _ _ _ dA CS1 opndA) as (MAA & _ & _ & _ & _ & _).
+    pose proof MAA as ((_ & ALA & PA & LENA & NAr & _) & _).
+    unfold mpi_cells in CA1.
     zstep.
-    replace (A + 0) with (A + 4 * 0) by (clear; lia).
-    lazymatch goal with |- context [write_to_mem _ _ (le4 ?v)] =>
-      pose proof (u32arr_write usegs _ A _ 0 v UZ5 ltac:(rewrite repeat_length; clear - HNA; lia)) as UZ6 end.
-    store_done. try clear SOKw.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m5 end.
-    lazymatch type of UZ6 with u32arr _ _ _ ?l => set (zs6 := l) in UZ6 end.
-    assert (CS5 : CST m5 mo2 h2 ((A, 4 * (md_n dA + 2)) :: LBq) [set_sg dX 1; set_sg dY 1; set_limbs dZ3 zs6; dT] dR []
-                    (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_munch _ _ _ _ _ _ _ _ _ (Some 2%nat) false false); [exact CS4| exact MU| exact WM| assumption| assumption| | reflexivity| | | reflexivity| discriminate].
-      - constructor; [right; left; exists 2%nat, dZ3; split; [reflexivity|]; split; [reflexivity|]; split; [reflexivity|]; cbn [fst snd dZ3 md_p md_n]; clear - HNA; lia| constructor].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          [ do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]
-          | | do 6 (split; [reflexivity|]); split; [intros _; reflexivity| intros C; discriminate C]].
-        cbn [set_limbs dZ3 md_addr md_sg md_n md_p md_pad md_own md_limbs]. do 6 (split; [reflexivity|]). split; [intros C; exfalso; apply C; split; reflexivity|].
-        intros _ _. split; [exact UZ6| subst zs6; rewrite !upd_length, repeat_length; clear - HNA; lia].
-      - do 6 (split; [reflexivity|]). split; [intros _; reflexivity| intros C; discriminate C]. }
-    set (dZ5 := set_limbs dZ3 zs6) in CS5.
-    assert (ADDRS5 : locals_at [set_sg dX 1; set_sg dY 1; dZ5; dT]) by (unfold locals_at; cbn [map set_sg set_limbs md_addr dZ5 dZ3]; rewrite E0, E1, E2, E3; reflexivity).
-    clear MU WM CS4. try clear UZ5. try clear UZ6. reopen CS5 HH HTc MF SOK MI ST MK.
-
-    flat constr:((opnd_facts _ _ _ _ _ _ dA CS5 opndA)) 2%nat. intros ((CSA5 & _) & _) _. unfold mpi_cells in CSA5.
-    zstep. rewrite (zx16_small (md_n dA)) by lia.
-    flat constr:((cs_frame _ _ _ _ _ _ _ _ _ _ CS5)) 5%nat. intros CG0 CG1 CG2 CGT CGR. unfold t2cells in CG2.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 2 dZ5 CS5 eq_refl)) 2%nat. intros CZ5 _. cbn [dZ5 dZ3 set_limbs md_addr md_p md_sg md_n md_pad] in CZ5. rewrite E2 in CZ5. unfold mpi_cells in CZ5.
-    pose proof (munch_refl [(SP + -168, SP + -166)] m5) as MU. pose proof (wmono_refl usegs m5) as WM.
+    rewrite (bv_eqb_neq (Z_to_bv 64 (md_addr dA)) (Z_to_bv 64 0)).
+    2: { intros EQ. apply (f_equal bv_unsigned) in EQ. rewrite !unsigned_lit in EQ by lia. lia. }
+    cbv beta iota.
     zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m6 end.
-    assert (CS6 : CST m6 mo2 h2 ((A, 4 * (md_n dA + 2)) :: LBq) [set_sg dX 1; set_sg dY 1; set_sg dZ5 1; dT] dR []
-                    (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply (mc_hi_write _ _ _ _ _ _ _ _ _ (SP + -168) (SP + -166) []);
-        [exact CS5| exact MU| exact WM| assumption| assumption| lia| lia| constructor| reflexivity| | |].
-      - intros j d d' Hj Hj'. destruct j as [|[|[|[|j]]]]; cbn in Hj, Hj'; [| | | | destruct j; discriminate Hj]; injection Hj as <-; injection Hj' as <-;
-          try (left; split; [cbn [set_sg md_addr]; lia| reflexivity]).
-        right. exists 1. split; [reflexivity|]. split; [left; reflexivity|]. cbn [dZ5 dZ3 set_limbs md_addr md_p md_n md_pad]. rewrite E2. unfold mpi_cells. assumption.
-      - unfold frame, t2cells. constructor; [| constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]]]; cbn [fst snd]; assumption.
-      - apply frame_chs; [| reflexivity| reflexivity| reflexivity]. unfold locals_at. cbn [map set_sg set_limbs md_addr dZ5 dZ3]. rewrite E0, E1, E2, E3. reflexivity. }
-    set (dZ6 := set_sg dZ5 1) in CS6.
-    assert (ADDRS6 : locals_at [set_sg dX 1; set_sg dY 1; dZ6; dT]) by (unfold locals_at; cbn [map set_sg set_limbs md_addr dZ6 dZ5 dZ3]; rewrite E0, E1, E2, E3; reflexivity).
-    clear MU WM CS5. try clear CZ5. try clear CSA5. try clear CG0. try clear CG1. try clear CG2. try clear CGT. try clear CGR. reopen CS6 HH HTc MF SOK MI ST MK.
-
-    zstep. zstep. zstep.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT CS6 eq_refl)) 8%nat. intros MT NST WRT LOT CRT CRTL HFT _.
-    pose proof HGROW as SPG. unfold mpi_grow_stmt, U_MPI_GROW in SPG.
+    assert (L7 : Z.land (md_addr dA) 7 = 0) by (change 7 with (Z.ones 3); rewrite Z.land_ones by lia; exact ALA).
+    rewrite L7.
+    match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+    zstep. rewrite zx16_small by (unfold MPI_MAX_LIMBS in *; lia).
+    zstep. zstep. zstep. zstep.
+    unfold bv_ltu. rewrite !unsigned_lit by (unfold MPI_MAX_LIMBS in *; lia).
+    destruct (Z.ltb_spec 9998 (md_n dA)) as [BIG | SMALL]; cbv beta iota.
+    { eapply L_c0 with (r := -16); [exact CS1 | exact LOC1 | reflexivity | reflexivity | lia | lia]. }
+    do 4 zstep.
+    pose proof (cs_parts _ _ _ _ _ _ _ CS1) as (HP1 & TOP1 & FRM1 & SOK1 & MI1 & STK1 & _ & MOK1).
     eapply aevtM_cut.
-    { eapply SPG with (dX := dT) (nb := md_n dA + 2) (lo := lo) (LB := (A, 4 * (md_n dA + 2)) :: LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc HNA K0; lia).
-      all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity). }
-    clear SPG. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    binop_post PO m7 mo7 h7 LB7 dT4 r E MI7 ST7 MF7 HT7 HH7 MA4 OUT4 PX4 SOK7 RR.
-    lazymatch goal with |- context [ret_pc (Z_to_bv 64 ?x)] =>
-      replace (ret_pc (Z_to_bv 64 x)) with (Z_to_bv 64 x) by (symmetry; apply ret_pc_even; [lia| reflexivity]) end.
-    flat constr:(RR) 2%nat. flclear RR. intros R1 KF4.
-    assert (CS7 : CST m7 mo7 h7 LB7 (set_nth 3 [set_sg dX 1; set_sg dY 1; dZ6; dT] dT4) dR []
-                    (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64] [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_l; [exact CS6| reflexivity| exact HH7| exact HT7| exact MF7| exact MA4| exact OUT4| exact PX4| exact SOK7| exact MI7| exact ST7| exact KF4]. }
+    { pose proof (heap_calloc usegs L HI) as HC. rewrite HCALLOC in HC. unfold U_CALLOC in HC.
+      eapply HC with (cnt := md_n dA + 2) (sz := 4) (lo := lo) (h := hq) (LB := LBq) (m := m1) (mo := moq);
+        rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity.
+      all: rewrite ?TOP1; lia. }
+    intros ms2 mo2' PO2. unfold call_post in PO2.
+    destruct PO2 as (z0 & z1 & z2 & ret2 & z4 & z5 & z6 & z7 & z8 & z9 & z10 & z11 & z12 & z13 & z14 & m2 & mo2 & E2 & MI2 & ST2 & MF2 & HPR2 & h2 & HT2 & RES2).
+    injection E2 as E2a E2b. subst ms2 mo2'.
+    replace (ret_pc (Z_to_bv 64 134920)) with (Z_to_bv 64 134920) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    rewrite ?(unsigned_lit (SP + -288)) in ST2, HPR2 by lia.
+    destruct RES2 as [(RV0 & HP2) | (A & RVA & BRA & HP2 & ZB2)].
+    { subst ret2. pose proof (heap_mok _ _ _ _ _ _ _ HP2) as MOK2.
+      zstep.
+      match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+      assert (CS2 : CST m2 mo2 h2 LBq [set_sg dX 1; set_sg dY 1; dZ; dT] dR []
+        (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64]
+           [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
+      { exact (mc_heap_nop m1 moq hq LBq _ dR [] _ [] 0%nat (set_sg dX 1) m2 mo2 h2 CS1 eq_refl HP2 HT2 MF2 HPR2 MI2 ST2). }
+      eapply L_c0 with (r := -16); [exact CS2 | exact LOC1 | reflexivity | reflexivity | lia | lia]. }
+    subst ret2. pose proof (heap_mok _ _ _ _ _ _ _ HP2) as MOK2.
+    replace ((md_n dA + 2) * 4) with (4 * (md_n dA + 2)) in BRA, HP2, ZB2 by lia.
+    pose proof BRA as (AP0 & A16 & _ & AHI & _).
+    pose proof (@alloc_ceiling_hi L) as ACH.
+    zstep.
+    rewrite (bv_eqb_neq (Z_to_bv 64 A) (Z_to_bv 64 0)).
+    2: { intros EQ. apply (f_equal bv_unsigned) in EQ. rewrite !unsigned_lit in EQ by lia. lia. }
+    cbv beta iota.
+    pose proof (struct_cells _ _ _ _ _ _ _ 2%nat dZ CS1 eq_refl) as (CZ1 & SGZ & NZr & NULZ & _).
+    destruct (NULZ OWZ) as (PZ0 & NZ0).
+    assert (CZ2 : rw_cells usegs m2 (SP + -176) (mpi_cells (md_p dZ) (Z_to_bv 64 (md_sg dZ)) (md_n dZ) (md_pad dZ))).
+    { apply (heap_pres_rw_cells _ _ _ _ _ _ _ _ HPR2); [rewrite <- AZ; exact CZ1 |].
+      intros a Ra. left. cbn in Ra. lia. }
+    unfold mpi_cells in CZ2. rewrite PZ0, NZ0 in CZ2.
+    assert (NRANGE : 1 <= md_n dA + 2 <= MPI_MAX_LIMBS) by (unfold MPI_MAX_LIMBS in *; lia).
+    pose proof (fun m3x => mc_calloc_attach m1 moq hq LBq _ dR [] _ [] 2%nat dZ m2 mo2 h2 A (md_n dA + 2) m3x (md_sg dZ) (md_pad dZ)
+                  CS1 eq_refl OWZ HP2 HT2 MF2 HPR2 MI2 ST2 BRA ZB2 NRANGE) as ATT.
+    pose proof (munch_refl [(SP + -176, SP + -160)] m2) as MU2. pose proof (wmono_refl usegs m2) as WM2.
+    zstep. zstep. zstep.
+    assert (MU2' : munch [(md_addr dZ, md_addr dZ + 16)] m2 m3) by (rewrite AZ; replace (SP + -176 + 16) with (SP + -160) by lia; exact MU2).
+    assert (CZ3 : rw_cells usegs m3 (md_addr dZ) (mpi_cells A (Z_to_bv 64 (md_sg dZ)) (md_n dA + 2) (md_pad dZ))) by (rewrite AZ; exact CZ2).
+    pose proof (ATT m3 MU2' WM2 MI2 CZ3 SGZ) as CS3. cbn [set_nth] in CS3. clear ATT.
+    do 3 zstep.
+    assert (E2 : Z_to_bv 64 ((md_n dA + 2) ≪ 2) = Z_to_bv 64 (4 * (md_n dA + 2))) by (f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
+    rewrite E2. clear E2.
+    pose proof U_memset_spec as MS0. unfold memset_stmt in MS0.
+    eapply aevtM_cut_evt; [exact MOK2 | eapply MS0; [rewrite !unsigned_lit by lia; exact ZB2 | exact MI2] | ].
+    intros ms4 PO4. unfold memset_post in PO4.
+    destruct PO4 as (v0 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & v8 & v9 & v10 & v11 & v12 & v13 & m4 & -> & MU4 & WM4 & MI4 & ZB4).
+    rewrite !unsigned_lit in MU4, ZB4 by lia. rewrite Zmod_0_l in ZB4.
+    replace (ret_pc (Z_to_bv 64 134948)) with (Z_to_bv 64 134948) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    zstep.
+    assert (L3 : Z.land A 3 = 0).
+    { change 3 with (Z.ones 2). rewrite Z.land_ones by lia.
+      apply Z.mod_divide in A16; [| lia]. destruct A16 as (q16 & Q16). apply Z.mod_divide; [lia |]. exists (4 * q16). lia. }
+    zstep. rewrite L3.
+    match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+    assert (NN : Z.to_nat (md_n dA + 2) = S (S (Z.to_nat (md_n dA)))) by lia.
+    assert (ZC4 : rw_cells usegs m4 A (map C4 (repeat (Z_to_bv 64 0) (Z.to_nat (md_n dA + 2))))).
+    { apply (rw_cells_zeros _ _ _ _ _ ZB4).
+      - generalize (Z.to_nat (md_n dA + 2)). intros k. induction k as [|k IHk]; cbn; [exact I | split; [reflexivity | exact IHk]].
+      - assert (SZK : forall k, cells_size (map C4 (repeat (Z_to_bv 64 0) k)) = (4 * k)%nat).
+        { intros k. induction k as [|k IHk]; cbn; [reflexivity | rewrite IHk; lia]. }
+        rewrite SZK. lia. }
+    clear ZB4. rewrite NN in ZC4. cbn [repeat map] in ZC4.
+    pose proof (munch_refl [(A, A + 4 * (md_n dA + 2))] m4) as MU5. pose proof (wmono_refl usegs m4) as WM5.
+    zstep. rename m0 into m5.
+    assert (ZU5 : u32arr usegs m5 A (repeat (Z_to_bv 64 0) (Z.to_nat (md_n dA + 2)))).
+    { rewrite NN. apply LxPMpiTac.u32arr_of_rw_cells. exact ZC4. }
+    assert (STK5 : stk usegs m5 lo SPc).
+    { apply (stk_transport_disjoint _ _ _ _ _ _ ST2 MU4 WM4). cbn. split; [| exact I]. lia. }
+    match type of CS3 with CST _ ?mo ?h ?lb ?ls ?dw ?ex ?cs ?cx => assert (CS5 : CST m5 mo h lb ls dw ex cs cx) end.
+    { eapply mc_munch with (li := Some 2%nat) (wl := false) (ex := false); [exact CS3 | exact MU4 | exact WM4 | exact MI4 | exact STK5 | | reflexivity | | | |].
+      - constructor; [| constructor]. right. left. exists 2%nat. eexists. split; [reflexivity|]. split; [reflexivity|].
+        cbn. split; [reflexivity|]. lia.
+      - intros j d d' Ej Ej'. rewrite Ej in Ej'. injection Ej' as <-.
+        split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+        split; [reflexivity|]. split; [intros _; reflexivity|].
+        intros Ej2 _. injection Ej2 as <-. cbn in Ej. injection Ej as <-. cbn [md_p md_limbs md_n].
+        split; [exact ZU5 | rewrite repeat_length; lia].
+      - split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+        split; [reflexivity|]. split; [intros _; reflexivity|]. intros FL; discriminate FL.
+      - intros _; reflexivity.
+      - intros FL; discriminate FL. }
+    match type of CS5 with CST _ _ _ _ [_; _; ?z; _] _ _ _ _ => set (dZ5 := z) in CS5 end.
+    pose proof (a_cells _ _ _ _ _ _ CS5) as (CA5 & _). unfold mpi_cells in CA5.
+    zstep. rewrite zx16_small by (unfold MPI_MAX_LIMBS in *; lia).
+    zstep.
+    pose proof (struct_cells _ _ _ _ _ _ _ 2%nat dZ5 CS5 eq_refl) as (CZ5 & _ & _ & _ & _).
+    assert (AZ5 : md_addr dZ5 = SP + -176) by (cbn; exact AZ).
+    rewrite AZ5 in CZ5. unfold mpi_cells in CZ5.
+    clear MU4 MU5 WM4 WM5 MU2 MU2' WM2 MU WM CA5 ZC4.
+    pose proof (munch_refl [(SP + -176, SP + -160)] m5) as MU6. pose proof (wmono_refl usegs m5) as WM6.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ CS5) as (Fcs5 & Ftpc5 & Ft25 & Ftc5 & REG5).
+    unfold t2cells in Ft25.
+    pose proof (cs_parts _ _ _ _ _ _ _ CS5) as (_ & _ & _ & _ & MI5 & ST5 & _ & _).
+    zstep. rename m0 into m6.
+    assert (CS6 : CST m6 mo2 h2 ((A, 4 * (md_n dA + 2)) :: LBq) [set_sg dX 1; set_sg dY 1; set_sg dZ5 1; dT] dR []
+      (frame [CB 8 j0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 j64]
+         [C4 u0; C4 u1; C4 u2] j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_hi_write m5 mo2 h2 _ [set_sg dX 1; set_sg dY 1; dZ5; dT] dR [] _ [] (SP + -176) (SP + -160) [] m6
+               [set_sg dX 1; set_sg dY 1; set_sg dZ5 1; dT] _ CS5 MU6 WM6); [exact MI5 | exact ST5 | lia | lia | constructor | reflexivity | | | ].
+      - intros j d d' Ej Ej'.
+        destruct j as [|[|[|[|j]]]]; cbn in Ej, Ej'.
+        + injection Ej as <-. injection Ej' as <-. left. split; [cbn; lia | reflexivity].
+        + injection Ej as <-. injection Ej' as <-. left. split; [cbn; lia | reflexivity].
+        + injection Ej as <-. injection Ej' as <-. right. exists 1. split; [reflexivity|]. split; [left; reflexivity|].
+          rewrite AZ5. exact CZ5.
+        + injection Ej as <-. injection Ej' as <-. left. split; [lia | reflexivity].
+        + destruct j; discriminate.
+      - unfold frame. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]; cbn [fst snd]; assumption.
+      - apply frame_chs; [| reflexivity | reflexivity | reflexivity]. unfold locals_at in *. cbn in *. exact LOCS. }
+    do 3 zstep.
+    pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 3%nat dT CS6 eq_refl) as (MAT & NST & WRT & PLT & _).
+    pose proof (cs_parts _ _ _ _ _ _ _ CS6) as (HP6 & TOP6 & _ & SOK6 & MI6 & ST6 & _ & MOK6).
+    pose proof HGROW as GRW. unfold mpi_grow_stmt, U_MPI_GROW in GRW.
+    eapply aevtM_cut; [eapply GRW with (dX := dT) (nb := md_n dA + 2) (lo := lo) (LB := (A, 4 * (md_n dA + 2)) :: LBq) (h := h2) (m := m6) (mo := mo2);
+      rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity | ].
+    all: try (rewrite AT; reflexivity).
+    1: lia.
+    1: lia.
+    1: rewrite TOP6; lia.
+    1: lia.
+    intros ms7 mo7' PO7.
+    binop_post PO7 m7 mo7 h7 LB7 dT7 r7 E7 MI7 ST7 MF7 HT7 HH7 MA7 OUT7 PX7 SOK7 RR7.
+    replace (ret_pc (Z_to_bv 64 134984)) with (Z_to_bv 64 134984) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    destruct RR7 as (RES7 & KB7).
+    pose proof (mc_binop_l m6 mo2 h2 _ [set_sg dX 1; set_sg dY 1; set_sg dZ5 1; dT] dR [] _ [] 3%nat dT m7 mo7 h7 LB7 dT7
+                  CS6 eq_refl HH7 HT7 MF7 MA7 OUT7 PX7 SOK7 MI7 ST7 KB7) as CS7.
     cbn [set_nth] in CS7.
-    flat constr:(OUT4) 3%nat. intros KA4 NS4 _.
-    assert (ADDRS4 : locals_at [set_sg dX 1; set_sg dY 1; dZ6; dT4]) by (unfold locals_at; cbn [map set_sg set_limbs md_addr dZ6 dZ5 dZ3]; rewrite KA4, E0, E1, E2, E3; reflexivity).
-    assert (Hr : (r = 0 /\ md_n dT4 = md_n dA + 2) \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED).
-    { destruct R1 as [(Hr0 & _ & HN & _)|[HrF _]]; [left; split; [exact Hr0| rewrite HN; pose proof MT as [(_ & _ & _ & _ & _ & HO) _]; rewrite OT in HO; (flat constr:(HO) 2%nat; flclear HO; intros _ ->); clear - HNA; lia]| right; exact HrF]. }
-    clear MT NST WRT LOT CRT CRTL HFT R1 KF4 MA4 OUT4 PX4 CS6 HH HTc MF SOK MI ST MK.
-    reopen CS7 HH HTc MF SOK MI ST MK.
-
-    zstep; if_cases K2; zify_cond K2.
-    { eapply L_err; [exact CS7| exact ADDRS4| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB]. }
-    destruct Hr as [[_ HNT]|Hr]; [| exfalso; subst r; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in K2; clear - K2; lia]. clear K2.
-    flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 3 dT4 CS7 eq_refl)) 3%nat. intros MT4 NST4 _.
-    assert (OT4 : md_own dT4 = LHeap) by (eapply out_heap; [exact MT4| exact NST4| rewrite HNT; clear - HNA; lia]).
-    eapply (L_m2 A); [exact CS7| exact ADDRS4| cbn; exact OX| cbn; exact OY| reflexivity| reflexivity| exact OT4| rewrite HNT; clear - HNA; lia
-      | cbn; exact NYX| cbn [set_sg set_limbs md_n dZ6 dZ5 dZ3]; clear - NXA; lia| reflexivity| reflexivity| | exact VB].
-    unfold mpd_val. cbn [set_sg md_sg md_limbs]. fold (mpd_abs dX) (mpd_abs dY). rewrite !Z.mul_1_l, AX, AY. exact VAB.
+    assert (LOC7 : locals_at [set_sg dX 1; set_sg dY 1; set_sg dZ5 1; dT7]).
+    { unfold locals_at in *. cbn in *. rewrite (proj1 OUT7). exact LOCS. }
+    pose proof (cs_parts _ _ _ _ _ _ _ CS7) as (_ & _ & _ & _ & _ & _ & _ & MOK7).
+    destruct RES7 as [(R70 & SG7 & N7 & _ & _ & _) | (R7E & ET7)].
+    2: { subst r7. unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+         match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+         eapply L_err with (r := -16); [exact CS7 | exact LOC7 | reflexivity | reflexivity | lia | lia]. }
+    subst r7. zstep.
+    match goal with |- context [if ?c then _ else _] => let v := eval vm_compute in c in change c with v; cbv beta iota end.
+    pose proof (struct_cells _ _ _ _ _ _ _ 3%nat dT CS1 eq_refl) as (_ & _ & _ & NULT & _).
+    destruct (NULT OWT) as (_ & NT0).
+    assert (OWT7 : md_own dT7 = LHeap).
+    { apply (out_heap m7 LB7 dT7 MA7); [exact (proj1 (proj2 OUT7)) | lia]. }
+    eapply (L_m2 A); [exact CS7 | exact LOC7 | exact OWX | exact OWY | reflexivity | reflexivity | exact OWT7 | lia
+      | exact NYX | cbn; lia | reflexivity | reflexivity | | lia].
+    unfold mpd_val, mpd_abs in *. cbn [set_sg md_sg md_limbs]. lia.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -2696,28 +3201,50 @@ Section DivP.
           F (Z_to_bv 64 0x21124) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ NUL ADDRS SZ0 SZ1 Hr VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    destruct ls as [|dX [|dY [|dZ [|dT [|]]]]]; try discriminate ADDRS. unfold locals_at in ADDRS. cbn [map] in ADDRS. injection ADDRS as EX EY EZ ET.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 0 dX CS_ eq_refl)) 2%nat. intros CX _. flat constr:((struct_cells _ _ _ _ _ _ _ 1 dY CS_ eq_refl)) 2%nat. intros CY _.
-    flat constr:((struct_cells _ _ _ _ _ _ _ 2 dZ CS_ eq_refl)) 2%nat. intros CZ _. flat constr:((struct_cells _ _ _ _ _ _ _ 3 dT CS_ eq_refl)) 2%nat. intros CT _.
-    rewrite EX in CX. rewrite EY in CY. rewrite EZ in CZ. rewrite ET in CT. unfold mpi_cells in CX, CY, CZ, CT.
-    flat constr:((mc_final _ _ _ _ _ _ _ _ CS_ NUL)) 11%nat. intros HH HT MF MW OUT BK PX SOK MI ST CH.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CH1.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CH2. pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH)))) as CH3.
-    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail (Forall_inv_tail CH))))) as CHR.
-    cbn [fst snd] in CH0, CH1, CH2, CH3, CHR. clear CH. unfold t2cells in CH2. unfold tcells in CH3.
-    do 13 zstep.
-    release_frame CH0 ST (bv_unsigned sp + -220). release_frame CH1 ST (bv_unsigned sp + -208). release_frame CH2 ST (bv_unsigned sp + -192).
-    release_frame CT ST (bv_unsigned sp + -176). release_frame CZ ST (bv_unsigned sp + -160).
-    release_frame CY ST (bv_unsigned sp + -144). release_frame CX ST (bv_unsigned sp + -128).
-    release_frame CH3 ST (bv_unsigned sp + -104). release_frame CHR ST (bv_unsigned sp).
-    zstep. zstep.
-    apply aevtM_done. unfold mpi_binop_post. do 14 eexists. exists mq, moq, hq, LBq, dW, r.
-    split; [rewrite ?Z_to_bv_bv_unsigned; reflexivity|].
-    split; [exact MI|]. split; [exact ST|]. split; [exact MF|]. split; [exact HT|]. split; [exact HH|]. split; [exact MW|]. split; [exact OUT|].
-    split; [exact PX|]. split; [exact SOK|]. split; [split; [exact Hr| intros _; exact VB]| exact BK].
+    intros mq moq hq LBq ls dW cs0 tpc j68 t160 t164 t168 t176 t180 r xra x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11
+      t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 STq ALLNUL LOCS SZcs SZtp RRANGE BPOS.
+    pose proof (cs_frame _ _ _ _ _ _ _ _ _ _ STq) as (Fcs0 & Ftpc & Ft2 & Ftc & REGq).
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    assert (FRlo : 0 <= SP + -288) by lia.
+    pose proof (cs_parts _ _ _ _ _ _ _ STq) as (HPq & TOPq & FRMq & SOKq & MIq & STKq & _ & MOKq).
+    pose proof (mc_final _ _ _ _ _ _ _ _ STq ALLNUL) as (_ & _ & _ & MWq & OUTq & KEEPq & PXq & _).
+    assert (STKfull : stk usegs mq lo SP).
+    { destruct STq as (_ & _ & _ & LOKq & _).
+      unfold locals_at in LOCS.
+      destruct ls as [|dX [|dY [|dZ [|dT [|dE rest]]]]]; try discriminate LOCS.
+      cbn in LOCS. injection LOCS as AX AY AZ AT.
+      pose proof (Forall_inv LOKq) as LX. pose proof (Forall_inv_tail LOKq) as LOK1.
+      pose proof (Forall_inv LOK1) as LY. pose proof (Forall_inv_tail LOK1) as LOK2.
+      pose proof (Forall_inv LOK2) as LZ. pose proof (Forall_inv (Forall_inv_tail LOK2)) as LT.
+      destruct LX as (((CX & _) & _) & _). destruct LY as (((CY & _) & _) & _).
+      destruct LZ as (((CZ & _) & _) & _). destruct LT as (((CT & _) & _) & _).
+      rewrite AX in CX. rewrite AY in CY. rewrite AZ in CZ. rewrite AT in CT.
+      apply (stk_release _ _ _ _ _ STKq) in Fcs0; [| lia]. rewrite SZcs in Fcs0.
+      replace (SP + -288 + Z.of_nat 68) with (SP + -220) in Fcs0 by lia.
+      apply (stk_release _ _ _ _ _ Fcs0) in Ftpc; [| lia]. rewrite SZtp in Ftpc.
+      replace (SP + -220 + Z.of_nat 12) with (SP + -208) in Ftpc by lia.
+      apply (stk_release _ _ _ _ _ Ftpc) in Ft2; [| lia]. cbn [cells_size csize t2cells Nat.add] in Ft2.
+      replace (SP + -208 + Z.of_nat 16) with (SP + -192) in Ft2 by lia.
+      apply (stk_release _ _ _ _ _ Ft2) in CT; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CT.
+      replace (SP + -192 + Z.of_nat 16) with (SP + -176) in CT by lia.
+      apply (stk_release _ _ _ _ _ CT) in CZ; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CZ.
+      replace (SP + -176 + Z.of_nat 16) with (SP + -160) in CZ by lia.
+      apply (stk_release _ _ _ _ _ CZ) in CY; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CY.
+      replace (SP + -160 + Z.of_nat 16) with (SP + -144) in CY by lia.
+      apply (stk_release _ _ _ _ _ CY) in CX; [| lia]. cbn [cells_size csize mpi_cells Nat.add] in CX.
+      replace (SP + -144 + Z.of_nat 16) with (SP + -128) in CX by lia.
+      apply (stk_release _ _ _ _ _ CX) in Ftc; [| lia]. cbn [cells_size csize tcells Nat.add] in Ftc.
+      replace (SP + -128 + Z.of_nat 24) with (SP + -104) in Ftc by lia.
+      apply (stk_release _ _ _ _ _ Ftc) in REGq; [| lia]. cbn [cells_size csize Nat.add] in REGq.
+      replace (SP + -104 + Z.of_nat 104) with SP in REGq by lia. exact REGq. }
+    do 15 zstep.
+    apply aevtM_done. unfold mpi_binop_post.
+    exists t0, t1, t2, a1, a2, a3, a4, a5, a6, a7, t3, t4, t5, t6, mq, moq, hq, LBq, dW, r.
+    split; [reflexivity|]. split; [exact MIq|]. split; [exact STKfull|]. split; [exact FRMq|].
+    split; [exact TOPq|]. split; [exact HPq|]. split; [exact MWq|]. split; [exact OUTq|].
+    split; [exact PXq|]. split; [exact SOKq|].
+    split; [split; [exact RRANGE| intros _; exact BPOS]| exact KEEPq].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -2744,38 +3271,43 @@ Section DivP.
           F (Z_to_bv 64 0x21084) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ ADDRS NUL SZ0 SZ1 VB.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    flat constr:(facts0) 2%nat. intros R0 _.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    flat constr:((w_cells _ _ _ _ _ _ _ CS_)) 2%nat. intros CW _. pose proof (rw_cells_bound _ _ _ _ CW) as WB. unfold mpi_cells in WB. cbn [cells_size csize Nat.add] in WB. clear CW.
-    zstep; if_cases K0; zify_cond K0; [exfalso; clear - K0 R0 WB; rewrite ?Z.mod_small in K0 by lia; lia|].
-    (* [comment removed for export] *)
-    zstep. zstep. zstep.
-    flat constr:((mc_w_facts _ _ _ _ _ _ _ _ _ CS_)) 10%nat. intros MW NSW EA WR LW CRW CRWL HFW ASW WA8.
-    flat constr:((opnd_facts _ _ _ _ _ _ dA CS_ opndA)) 6%nat. intros MA CRA_ CRAL_ LOA HFA ASA.
-    flat constr:((opnd_sep_w _ _ _ _ _ _ dA CS_ opndA)) 2%nat. intros SEPWA OPSWA.
-    pose proof HCOPY as SPC. unfold mpi_copy_stmt_x, U_MPI_COPY in SPC.
-    eapply aevtM_cut.
-    { eapply SPC with (dX := dR) (dY := dA) (lo := lo) (h := hq) (LB := LBq); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-      all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-      apply copy_sep_of_opnd; [exact OPSWA| pose proof MA as [(_ & _ & P0 & _) _]; clear - P0; lia]. }
-    clear SPC. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-    flat constr:(PO) 31%nat. flclear PO. intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? m2 mo2 h2 LB2 dW2 r E MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 (CR & TRIM).
-    injection E as -> ->. rewrite ?unsigned_lit in ST2 by lia. rewrite ?unsigned_lit in PX2 by lia.
-    replace (ret_pc (Z_to_bv 64 0x21094)) with (Z_to_bv 64 0x21094) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    flat constr:(CR) 4%nat. intros CR1 CAD CPD CFR.
-    assert (CS2 : CST m2 mo2 h2 LB2 [dX; dY; dZ; dT] dW2 [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
-    { eapply mc_binop_w; [exact CS_| exact HH2| exact HT2| exact MF2| exact MA2| exact OUT2| exact PX2| exact SOK2| exact MI2| exact ST2| exact CFR| exact CPD|].
-      destruct CR1 as [(_ & _ & NB)|(_ & EN & _)]; lia. }
-    assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct CR1 as [(Hr0 & _)|(HrF & _)]; [left; exact Hr0| right; exact HrF]).
-    clear CS_ MW MA HH HTc MF SOK MI ST CH MK PX2 OUT2.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS2)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-    zstep; if_cases K1; zify_cond K1.
-    - (* [comment removed for export] *)
-      eapply L_ret0; [exact CS2| exact NUL| exact ADDRS| exact SZ0| exact SZ1| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB].
-    - (* [comment removed for export] *)
-      eapply L_err; [exact CS2| exact ADDRS| exact SZ0| exact SZ1| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB].
+    intros mq moq hq LBq dX dY dZ dT cs0 tpc j68 t160 t164 t168 t176 t180 xra x2 x3 x4 x5 x6 x7 x8 x9 x10 x11
+      t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CSin LOCS NULLS SIZE0 SIZE1 BNZ.
+    pose proof (bv_unsigned_in_range 64 sp) as SPbnd. change (bv_modulus 64) with (2^64) in SPbnd.
+    pose proof alloc_ceiling_pos as CEILpos.
+    pose proof (cs_parts _ _ _ _ _ _ _ CSin) as (HEAPq & TOPeq & MOFR & STATq & MINVq & STKq & _ & MOKq).
+    destruct facts0 as (RADDRpos & RADDRal & RADDRside & _ & _ & _ & SPtop & _).
+    destruct (w_cells _ _ _ _ _ _ _ CSin) as (RCELLS & RSIGN).
+    pose proof (rw_cells_bound _ _ _ _ RCELLS) as RBND. cbn [cells_size csize mpi_cells Nat.add] in RBND.
+    zstep.
+    rewrite (bv_eqb_neq (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 0)) by
+      (intros E0; apply (f_equal bv_unsigned) in E0; rewrite !unsigned_lit in E0 by lia; lia).
+    do 3 zstep.
+    destruct (mc_w_facts _ _ _ _ _ _ _ _ _ CSin) as (MATR & _ & _ & WRq & _).
+    destruct (opnd_facts _ _ _ _ _ _ dA CSin opndA) as (MATA & CRAq & CRALq & _).
+    destruct (opnd_sep_w _ _ _ _ _ _ dA CSin opndA) as (_ & OSRA).
+    assert (CPSEP : copy_sep dR dA lo SPc).
+    { apply copy_sep_of_opnd; [exact OSRA|]. destruct MATA as ((_ & _ & APOS & _) & _). lia. }
+    pose proof HCOPY as COPYSPEC. unfold mpi_copy_stmt_x, U_MPI_COPY in COPYSPEC.
+    eapply aevtM_cut; [eapply COPYSPEC with (dX := dR) (dY := dA) (lo := lo) (LB := LBq) (h := hq);
+      rewrite ?(unsigned_lit (SP + -288)) by lia; try eassumption; try reflexivity; try lia | ].
+    intros ms' mo' PO.
+    destruct PO as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m2 & mo2 & h2 & LB2 & dR2 & rc &
+                    CFG & MINV2 & STK2 & MOFR2 & TOP2 & HEAP2 & MAT2 & OUT2 & PRES2 & STAT2 & RES2).
+    injection CFG as -> ->.
+    rewrite (unsigned_lit (SP + -288)) in STK2, PRES2 by lia.
+    destruct RES2 as ((OUTCOME & ADDR2 & PAD2 & BLK2) & _).
+    assert (CS2 : CST m2 mo2 h2 LB2 [dX; dY; dZ; dT] dR2 [] (frame cs0 tpc j68 (tcells t160 t164 t168 t176 t180)) []).
+    { apply (mc_binop_w _ _ _ _ _ _ _ _ _ _ _ _ _ _ CSin HEAP2 TOP2 MOFR2 MAT2 OUT2 PRES2 STAT2 MINV2 STK2 BLK2 PAD2).
+      destruct OUTCOME as [(_ & _ & NGROW & _) | (_ & NSAME & _)]; lia. }
+    replace (ret_pc (Z_to_bv 64 135316)) with (Z_to_bv 64 135316) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (_ & _ & _ & _ & _ & _ & _ & MOK2).
+    destruct OUTCOME as [(-> & _) | (-> & _)].
+    - zstep. rewrite bv_eqb_refl.
+      eapply L_ret0; [exact CS2 | exact NULLS | exact LOCS | exact SIZE0 | exact SIZE1 | lia | exact BNZ].
+    - unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep.
+      replace (bv_eqb (Z_to_bv 64 (-16)) (Z_to_bv 64 0)) with false by (vm_compute; reflexivity).
+      eapply L_err; [exact CS2 | exact LOCS | exact SIZE0 | exact SIZE1 | lia | exact BNZ].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -2791,195 +3323,243 @@ Section DivP.
       F (Z_to_bv 64 0x20e60) fc None mq (seg_rom usegs))
 (* [comment removed for export] *).
   Proof.
-    intros until t6. intros CS_ MUq WMq.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    flat constr:(MB0) 2%nat. intros _ SGB.
-    pose proof (mpd_val_abs dB SGB) as VAL. pose proof (mpd_abs_nonneg dB) as ABN.
-    assert (SG3 : (Z.sgn (mpd_val dB) = 0 /\ mpd_abs dB = 0) \/ ((Z.sgn (mpd_val dB) = 1 \/ Z.sgn (mpd_val dB) = -1) /\ 0 < mpd_abs dB)).
-    { destruct (Z.lt_trichotomy (mpd_val dB) 0) as [LT|[EQ|GT]].
-      - right. split; [right; exact (Z.sgn_neg _ LT)| lia].
-      - left. rewrite EQ. split; [reflexivity| lia].
-      - right. split; [left; exact (Z.sgn_pos _ GT)| lia]. }
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS_)) 8%nat. intros HH1 HT1 MF1 SOK1 MI1 ST1 CH1 MK1.
-    (* [comment removed for export] *)
-    zstep; if_cases K0; zify_cond K0; rewrite ?Z_to_bv_unsigned in K0; try (unfold bv_wrap in K0; change (bv_modulus 64) with (2^64) in K0).
-    - assert (AB0 : mpd_abs dB = 0).
-      { destruct SG3 as [(_ & A0)|([E|E] & _)]; [exact A0| rewrite E in K0; exfalso; clear - K0; lia| rewrite E in K0; exfalso; clear - K0; lia]. }
-      zstep. zstep.
-      flat constr:((mc_final _ _ _ _ _ _ _ _ CS_ ltac:(constructor))) 11%nat. intros HH HT MF MW OUT BK PX SOK MI ST CH.
-      pose proof (Forall_inv CH) as CH0. pose proof (Forall_inv (Forall_inv_tail CH)) as CHT.
-      pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH))) as CHR. cbn [fst snd] in CH0, CHT, CHR. clear CH. unfold tcells in CHT.
-      do 13 zstep.
-      release_frame CH0 ST (bv_unsigned sp + -128). release_frame CHT ST (bv_unsigned sp + -104). release_frame CHR ST (bv_unsigned sp).
-      zstep. zstep.
-      apply aevtM_done. unfold mpi_binop_post. do 14 eexists. exists mq, mo, h, LB, dR, (-12).
-      split; [rewrite ?Z_to_bv_bv_unsigned; reflexivity|].
-      split; [exact MI|]. split; [exact ST|]. split; [exact MF|]. split; [exact HT|]. split; [exact HH|]. split; [exact MW|]. split; [exact OUT|].
-      split; [exact PX|]. split; [exact SOK|]. split; [split; [clear; lia| intros E'; exfalso; clear - E'; lia]| exact BK].
-    - assert (VB : 0 < mpd_abs dB).
-      { destruct SG3 as [(E & _)|(_ & V)]; [rewrite E in K0; exfalso; clear - K0; lia| exact V]. }
-      (* [comment removed for export] *)
-      pose proof (Forall_inv CH1) as FRJ0. pose proof (Forall_inv (Forall_inv_tail CH1)) as FRT.
-      pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CH1))) as FRR. cbn [fst snd] in FRJ0, FRT, FRR.
-      assert (FRJ : rw_cells usegs mq SPc [CB 160 (cells_bytes [CB 144 j0; C4 (Z_to_bv 64 0); CB 12 j148])]).
-      { eapply rw_cells_reshape; [exact FRJ0| |].
-        - cbn [cells_wf cell_wf]. split; [| exact I]. rewrite cells_bytes_length by exact (cells_at_wf _ _ _ _ (proj1 FRJ0)). reflexivity.
-        - cbn [cells_bytes cbytes]. rewrite !app_nil_r. reflexivity. }
-      clear FRJ0.
-      pose proof (munch_refl [(SPc, SP + -128)] mq) as MU. pose proof (wmono_refl usegs mq) as WM.
-      pose proof (conj HH1 (conj SOK1 (conj MI1 ST1))) as PROT1.
-      do 14 zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m2 end.
-      rename HH1 into HH2. rename SOK1 into SOK2. rename MI1 into MI2. rename ST1 into ST2.
-      flat constr:(PROT1) 4%nat. flclear PROT1. intros HH1 SOK1 MI1 ST1.
-      lazymatch type of FRJ with rw_cells _ _ _ (CB 80 ?a :: _ :: _ :: CB 4 ?b :: _ :: _ :: CB 4 ?c :: _ :: _ :: CB 4 ?d :: _ :: _ :: CB 4 ?e :: _ :: _ :: CB 4 ?f :: _) =>
-        set (J := a) in FRJ; set (j68 := b) in FRJ; set (jT := c) in FRJ; set (jZ := d) in FRJ; set (jY := e) in FRJ; set (jX := f) in FRJ end.
-      pose proof (rw_cells_split_CB usegs m2 _ [] 80 J _ [8;8;8;8;8;8;8;8;4;4;4;4]%nat FRJ eq_refl) as FR2. cbn [mk_CB_cells app] in FR2. clear FRJ.
-      apply (rw_cells_CB8_C8 usegs m2 _ [_]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB8_C8 usegs m2 _ [_; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB8_C8 usegs m2 _ [_; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB8_C8 usegs m2 _ [_; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB8_C8 usegs m2 _ [_; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB8_C8 usegs m2 _ [_; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB8_C8 usegs m2 _ [_; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_split_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_C2_mod16 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      replace (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 196609) / 2 ^ 16)) with (Z_to_bv 64 3) in FR2 by (rewrite unsigned_lit by (clear; lia); reflexivity).
-      change (196609 mod 2 ^ 16) with 1 in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_split_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_split_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_split_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_split_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      apply (rw_cells_CB4_C4 usegs m2 _ [_; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _; _]) in FR2. cbn [app] in FR2.
-      replace (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 1) / 2 ^ 16)) with (Z_to_bv 64 0) in FR2 by (rewrite unsigned_lit by (clear; lia); reflexivity).
-      take FR2 9%nat CF0. take FR2 3%nat CF1. take FR2 4%nat CF2. take FR2 4%nat CT. take FR2 4%nat CZ. take FR2 4%nat CY. rename FR2 into CX.
-      lazymatch type of CF0 with rw_cells _ _ _ ?c => set (cs0 := c) in CF0 end.
-      lazymatch type of CF1 with rw_cells _ _ _ ?c => set (tpc := c) in CF1 end.
-      set (dX0 := mkMPD (SP + -144) 1 0 0 [] (wof jX) LNull). set (dY0 := mkMPD (SP + -160) 1 0 0 [] (wof jY) LNull).
-      set (dZ0 := mkMPD (SP + -176) 1 0 0 [] (wof jZ) LNull). set (dT0 := mkMPD (SP + -192) 1 0 0 [] (wof jT) LNull).
-      assert (ADDRS0 : locals_at [dX0; dY0; dZ0; dT0]) by reflexivity.
-      assert (MU2 : munch [(lo, SP)] m m2).
-      { first [exact MUq| (eapply munch_trans; [exact MUq|]; eapply munch_weaken; [| exact MU]; intros x Hx; cbn in Hx |- *; clear - Hx SLO HLS; lia)]. }
-      assert (WM2 : wmono usegs m m2) by first [exact WMq| exact (wmono_trans _ _ _ _ WMq WM)].
-      assert (ESA : Forall (fun e => mpd_at usegs m LB e) es).
-      { unfold es. destruct ALIAS; [constructor; [exact MB0| constructor]| constructor; [exact MA0| constructor; [exact MB0| constructor]]]. }
-      assert (CS2 : CST m2 mo h LB [dX0; dY0; dZ0; dT0] dR []
-                      (frame cs0 tpc (wof j68) (tcells t160 t164 (Z_to_bv 64 (SP + -144)) (Z_to_bv 64 65537) t180)) []).
-      { eapply mc_init; [exact HH0| exact SOK0| exact MI0| exact MR0| exact ESA| exact MU2| exact WM2| exact MI2| exact ST2| | | |].
-        - subst dX0 dY0 dZ0 dT0. unfold mpi_cells.
-          repeat (constructor; [cbn [md_addr md_own md_p md_n md_limbs md_sg md_pad]; split; [assumption|]; repeat (split; [first [reflexivity| clear - SPA SPB SLO HLS; lia]|]); clear - SPA; lia|]). constructor.
-        - subst dX0 dY0 dZ0 dT0. intros i j di dj Hi Hj NE.
-          destruct i as [|[|[|[|i]]]]; cbn in Hi; [| | | | destruct i; discriminate Hi]; injection Hi as <-;
-          destruct j as [|[|[|[|j]]]]; cbn in Hj; try (destruct j; discriminate Hj); injection Hj as <-; cbn [md_addr]; clear - NE; lia.
-        - unfold frame, t2cells. constructor; [exact CF0| constructor; [exact CF1| constructor; [exact CF2| constructor; [exact FRT| constructor; [exact FRR| constructor]]]]].
-        - apply frame_chs; [exact ADDRS0| reflexivity| reflexivity| reflexivity]. }
-      assert (E0 : md_addr dX0 = SP + -144) by reflexivity. assert (E1 : md_addr dY0 = SP + -160) by reflexivity.
-      assert (E2 : md_addr dZ0 = SP + -176) by reflexivity. assert (E3 : md_addr dT0 = SP + -192) by reflexivity.
-      assert (OX : md_own dX0 = LNull) by reflexivity. assert (OY : md_own dY0 = LNull) by reflexivity.
-      assert (OZ : md_own dZ0 = LNull) by reflexivity. assert (OT : md_own dT0 = LNull) by reflexivity.
-      assert (NX0 : md_n dX0 = 0) by reflexivity. assert (NY0 : md_n dY0 = 0) by reflexivity.
-      assert (NUL0 : Forall (fun d : mpd => md_own d = LNull) [dX0; dY0; dZ0; dT0]) by (repeat constructor).
-      clearbody dX0 dY0 dZ0 dT0.
-      clear CF0 CF1 CF2 CT CZ CY CX FRT FRR MU WM MU2 WM2 HH2 SOK2 MI2 ST2 CS_ HH1 HT1 MF1 SOK1 MI1 ST1 CH1 MK1.
-      flat constr:((cs_parts _ _ _ _ _ _ _ CS2)) 8%nat. intros HH HTc MF SOK MI ST CH MK.
-      flat constr:((opnd_facts _ _ _ _ _ _ dA CS2 opndA)) 6%nat. intros MA _ _ _ HFA _.
-      flat constr:((opnd_facts _ _ _ _ _ _ dB CS2 (or_introl opndB))) 6%nat. intros MB _ _ _ HFB _.
-      flat constr:(MA) 2%nat. intros _ SGA.
-      assert (SGC : (Z.sgn (mpd_abs dA - mpd_abs dB) = -1 /\ mpd_abs dA < mpd_abs dB) \/
-                    ((Z.sgn (mpd_abs dA - mpd_abs dB) = 0 \/ Z.sgn (mpd_abs dA - mpd_abs dB) = 1) /\ mpd_abs dB <= mpd_abs dA)).
-      { destruct (Z.lt_trichotomy (mpd_abs dA - mpd_abs dB) 0) as [LT|[EQ|GT]].
-        - left. split; [exact (Z.sgn_neg _ LT)| lia].
-        - right. rewrite EQ. split; [left; reflexivity| lia].
-        - right. split; [right; exact (Z.sgn_pos _ GT)| lia]. }
-      zstep. zstep. zstep.
-      pose proof HCABS as SPC. unfold mpi_cmp_abs_stmt, U_MPI_CMP_ABS in SPC.
-      eapply aevtM_cut_evt; [exact MK| eapply SPC with (LB := LB) (dX := dA) (dY := dB); try eassumption; try reflexivity|].
-      all: try (intros O; flat constr:((HFA O)) 2%nat; intros P0 _; exact P0).
-      all: try (intros O; flat constr:((HFB O)) 2%nat; intros P0 _; exact P0).
-      clear SPC. cbv beta. intros ms' PO. unfold mpi_cmp_post in PO. destruct_exs PO.
-      flat constr:(PO) 4%nat. flclear PO. intros -> _ _ _.
-      replace (ret_pc (Z_to_bv 64 0x20ea8)) with (Z_to_bv 64 0x20ea8) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      zstep; if_cases K1; zify_cond K1; rewrite ?Z_to_bv_unsigned in K1; try (unfold bv_wrap in K1; change (bv_modulus 64) with (2^64) in K1).
-      { zstep; if_cases KQ; zify_cond KQ; [| exfalso; apply KQ; reflexivity].
-        eapply L_early; [exact CS2| exact ADDRS0| exact NUL0| reflexivity| reflexivity| exact VB]. }
-      assert (VAB : 0 < mpd_abs dB <= mpd_abs dA).
-      { destruct SGC as [(E & _)|(_ & GE)]; [rewrite E in K1; exfalso; clear - K1; lia| lia]. }
-      clear SGC K1.
-      (* [comment removed for export] *)
-      zstep. zstep. zstep.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 0 dX0 CS2 eq_refl)) 8%nat. intros MX NSX WRX LOX CRX CRXL HFX _.
-      flat constr:((opnd_facts _ _ _ _ _ _ dA CS2 opndA)) 6%nat. intros MA' CRA_ CRAL_ LOA HFA' ASA.
-      flat constr:((opnd_sep_l _ _ _ _ _ _ 0 dX0 dA CS2 eq_refl opndA)) 2%nat. intros SEP0A OPS0A.
-      pose proof HCOPY as SPC. unfold mpi_copy_stmt_x, U_MPI_COPY in SPC.
-      eapply aevtM_cut.
-      { eapply SPC with (dX := dX0) (dY := dA) (lo := lo) (h := h) (LB := LB); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-        all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity).
-        apply copy_sep_of_opnd; [exact OPS0A| pose proof MA' as [(_ & _ & P0 & _) _]; clear - P0; lia]. }
-      clear SPC. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-      flat constr:(PO) 31%nat. flclear PO. intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? m3 mo3 h3 LB3 dX3 r E MI3 ST3 MF3 HT3 HH3 MA3 OUT3 PX3 SOK3 (CR & TRIM).
-      injection E as -> ->. rewrite ?unsigned_lit in ST3 by lia. rewrite ?unsigned_lit in PX3 by lia.
-      replace (ret_pc (Z_to_bv 64 0x20eb8)) with (Z_to_bv 64 0x20eb8) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      flat constr:(CR) 4%nat. intros CR1 CAD CPD CFR.
-      assert (CS3 : CST m3 mo3 h3 LB3 (set_nth 0 [dX0; dY0; dZ0; dT0] dX3) dR []
-                      (frame cs0 tpc (wof j68) (tcells t160 t164 (Z_to_bv 64 (SP + -144)) (Z_to_bv 64 65537) t180)) []).
-      { eapply mc_binop_l; [exact CS2| reflexivity| exact HH3| exact HT3| exact MF3| exact MA3| exact OUT3| exact PX3| exact SOK3| exact MI3| exact ST3| exact CFR]. }
+    intros mq j0 j148 t160 t164 t180 xra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 CS0 MU0 WM0.
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    pose proof (cs_parts _ _ _ _ _ _ _ CS0) as (_ & _ & _ & _ & MIq & STq & CELLS & MOKq).
+    pose proof (Forall_inv CELLS) as FA. pose proof (Forall_inv (Forall_inv_tail CELLS)) as FT.
+    pose proof (Forall_inv (Forall_inv_tail (Forall_inv_tail CELLS))) as FG. clear CELLS.
+    cbn [fst snd] in FA, FT, FG.
+    assert (SGB : Z.sgn (mpd_val dB) = 0 \/ Z.sgn (mpd_val dB) = 1 \/ Z.sgn (mpd_val dB) = -1)
+      by (destruct (mpd_val dB); cbn; auto).
+    destruct SGB as [SG0 | SGnz].
+    - (* B = 0: return MBEDTLS_ERR_MPI_DIVISION_BY_ZERO through the epilogue *)
+      rewrite SG0.
+      pose proof (mc_final _ _ _ _ _ _ _ _ CS0 (Forall_nil _)) as (HPq & TOPq & FRMq & MWq & OUTq & KEEPq & PXq & SOKq & _).
+      assert (STfull : stk usegs mq lo SP).
+      { apply (stk_release _ _ _ _ _ STq) in FA; [| lia]. cbn [cells_size csize Nat.add] in FA.
+        replace (SP + -288 + Z.of_nat 160) with (SP + -128) in FA by lia.
+        apply (stk_release _ _ _ _ _ FA) in FT; [| lia]. cbn [cells_size csize tcells Nat.add] in FT.
+        replace (SP + -128 + Z.of_nat 24) with (SP + -104) in FT by lia.
+        apply (stk_release _ _ _ _ _ FT) in FG; [| lia]. cbn [cells_size csize Nat.add] in FG.
+        replace (SP + -104 + Z.of_nat 104) with SP in FG by lia. exact FG. }
+      zstep. if_true. do 17 zstep.
+      apply aevtM_done. unfold mpi_binop_post.
+      exists t0, t1, t2, a1, a2, a3, a4, a5, a6, a7, t3, t4, t5, t6, mq, mo, h, LB, dR, (-12).
+      split; [reflexivity|]. split; [exact MIq|]. split; [exact STfull|]. split; [exact FRMq|].
+      split; [exact TOPq|]. split; [exact HPq|]. split; [exact MWq|]. split; [exact OUTq|].
+      split; [exact PXq|]. split; [exact SOKq|].
+      split; [split; [lia| intros E12; discriminate E12]| exact KEEPq].
+    - assert (BPOS : 0 < mpd_abs dB).
+      { rewrite <- (mpd_val_abs dB (proj2 MB0)).
+        destruct SGnz as [S1|S1]; destruct (mpd_val dB); cbn in S1 |- *; lia. }
+      assert (CONT : forall v : word,
+        aevtM usegs mo POST (MS (mkR xra SPF gp tp t0 t1 t2 (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 (md_addr dA))
+          v a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 0) (Z_to_bv 64 (md_addr dB)) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 0x20e64) fc None mq (seg_rom usegs))).
+      2: { destruct SGnz as [S1|S1]; rewrite S1; zstep; if_false; apply CONT. }
+      intros v. clear SGnz.
+      (* one byte region over the four struct slots and T2, so that the init stores can split it *)
+      apply (rw_cells_merge usegs mq SPc [] [CB 144 j0; C4 (Z_to_bv 64 0); CB 12 j148] []) in FA.
+      cbn [app cells_size csize Nat.add] in FA.
+      set (jall := cells_bytes [CB 144 j0; C4 (Z_to_bv 64 0); CB 12 j148]) in FA. clearbody jall.
+      do 16 zstep.
+      lazymatch goal with Mx : mem_inv usegs ?mm |- aevtM _ _ _ (MS _ _ _ _ _ ?mm _) => rename mm into m1 end.
+      (* cut the stored region into cs0, TP2, T2 and the four local structs *)
+      take FA 1%nat FLO. take FA 3%nat FT2. take FA 3%nat FTT. take FA 3%nat FZZ. take FA 3%nat FYY.
+      apply (rw_cells_split_CB usegs m1 SPc [] 80 _ [] [8; 8; 8; 8; 8; 8; 8; 8; 4; 4; 4; 4]%nat) in FLO; [| reflexivity].
+      cbn [app mk_CB_cells] in FLO.
+      take FLO 9%nat FC0.
+      do 7 (lazymatch type of FC0 with rw_cells ?sg ?mm ?A (?c0 :: ?rest) =>
+        let rec upto cs := lazymatch cs with CB 8%nat _ :: _ => constr:(@nil cell) | ?c :: ?r => let p := upto r in constr:(c :: p) end in
+        let p := upto rest in apply (rw_cells_CB8_C8' sg mm A (c0 :: p)) in FC0; cbn [app] in FC0 end).
+      do 3 (lazymatch type of FLO with rw_cells ?sg ?mm ?A ?cs =>
+        let rec upto cs := lazymatch cs with CB 4%nat _ :: _ => constr:(@nil cell) | ?c :: ?r => let p := upto r in constr:(c :: p) end in
+        let p := upto cs in apply (rw_cells_CB4_C4 sg mm A p) in FLO; cbn [app] in FLO end).
+      apply (rw_cells_split_C4 usegs m1 (SP + -208) [C8 _]) in FT2. cbn [app] in FT2.
+      apply (rw_cells_C2_congr usegs m1 (SP + -208) [C8 _] 196609 1) in FT2; [| reflexivity].
+      apply (rw_cells_C2_congr usegs m1 (SP + -208) [C8 _; C2 _] _ 3) in FT2; [| vm_compute; reflexivity].
+      apply (rw_cells_CB4_C4 usegs m1 (SP + -208) [C8 _; C2 _; C2 _]) in FT2. cbn [app] in FT2.
+      let fresh_struct HS :=
+        lazymatch type of HS with rw_cells ?sg ?mm ?A _ =>
+          apply (rw_cells_split_C4 sg mm A [C8 _]) in HS; cbn [app] in HS;
+          apply (rw_cells_C2_congr sg mm A [C8 _; C2 _] _ 0) in HS; [| vm_compute; reflexivity];
+          apply (rw_cells_CB4_C4 sg mm A [C8 _; C2 _; C2 _]) in HS; cbn [app] in HS end in
+      fresh_struct FTT; fresh_struct FZZ; fresh_struct FYY; fresh_struct FA.
+      (* name the junk words *)
+      lazymatch type of FC0 with rw_cells _ _ _ [CB 8 ?b0; C8 ?b1; C8 ?b2; C8 ?b3; C8 ?b4; C8 ?b5; C8 ?b6; C8 ?b7; CB 4 ?b8] =>
+        set (k0 := b0) in FC0; set (w8 := b1) in FC0; set (w16 := b2) in FC0; set (w24 := b3) in FC0; set (w32 := b4) in FC0;
+        set (w40 := b5) in FC0; set (w48 := b6) in FC0; set (w56 := b7) in FC0; set (k64 := b8) in FC0 end.
+      lazymatch type of FLO with rw_cells _ _ _ [C4 ?b0; C4 ?b1; C4 ?b2] =>
+        set (u0 := b0) in FLO; set (u1 := b1) in FLO; set (u2 := b2) in FLO end.
+      lazymatch type of FT2 with rw_cells _ _ _ [_; _; _; C4 ?b0] => set (j68 := b0) in FT2 end.
+      lazymatch type of FA with rw_cells _ _ _ [_; _; _; C4 ?b0] => set (padX := b0) in FA end.
+      lazymatch type of FYY with rw_cells _ _ _ [_; _; _; C4 ?b0] => set (padY := b0) in FYY end.
+      lazymatch type of FZZ with rw_cells _ _ _ [_; _; _; C4 ?b0] => set (padZ := b0) in FZZ end.
+      lazymatch type of FTT with rw_cells _ _ _ [_; _; _; C4 ?b0] => set (padT := b0) in FTT end.
+      clearbody k0 w8 w16 w24 w32 w40 w48 w56 k64 u0 u1 u2 j68 padX padY padZ padT. clear jall.
+      assert (LOCS : locals_at [mkMPD (SP + -144) 1 0 0 [] padX LNull; mkMPD (SP + -160) 1 0 0 [] padY LNull;
+                                mkMPD (SP + -176) 1 0 0 [] padZ LNull; mkMPD (SP + -192) 1 0 0 [] padT LNull]) by reflexivity.
+      assert (CS1 : CST m1 mo h LB
+        [mkMPD (SP + -144) 1 0 0 [] padX LNull; mkMPD (SP + -160) 1 0 0 [] padY LNull;
+         mkMPD (SP + -176) 1 0 0 [] padZ LNull; mkMPD (SP + -192) 1 0 0 [] padT LNull] dR []
+        (frame [CB 8 k0; C8 w8; C8 w16; C8 w24; C8 w32; C8 w40; C8 w48; C8 w56; CB 4 k64] [C4 u0; C4 u1; C4 u2] j68
+           (tcells t160 t164 (Z_to_bv 64 (SP + -144)) (Z_to_bv 64 65537) t180)) []).
+      { assert (ESm : Forall (fun e : mpd => mpd_at usegs m LB e) es)
+          by (unfold es; destruct ALIAS; repeat apply Forall_cons; try apply Forall_nil; assumption).
+        apply (mc_init m1 _ _ HH0 SOK0 MI0 MR0 ESm MU0 WM0 MIq STq).
+        - repeat apply Forall_cons; try apply Forall_nil; cbn [md_addr md_pad md_own md_p md_n md_limbs md_sg];
+            (split; [assumption| repeat split; try reflexivity; lia]).
+        - intros i j di dj Ei Ej NE.
+          destruct i as [|[|[|[|i]]]]; cbn in Ei; [..| destruct i; discriminate Ei]; injection Ei as <-;
+          (destruct j as [|[|[|[|j]]]]; cbn in Ej; [..| destruct j; discriminate Ej]; injection Ej as <-);
+          cbn [md_addr]; first [lia | exfalso; exact (NE eq_refl)].
+        - unfold frame. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd]; assumption.
+        - apply (frame_chs _ _ _ _ _ LOCS); reflexivity. }
+      clear FT FG FT2 FTT FZZ FYY FA FC0 FLO CS0 MU0 WM0 MIq STq.
+      (* cmp_abs(A, B) *)
+      zstep.
+      pose proof (opnd_facts _ _ _ _ _ _ dA CS1 opndA) as (MA1 & _ & _ & _ & PA1 & _).
+      pose proof (opnd_facts _ _ _ _ _ _ dB CS1 (or_introl opndB)) as (MB1 & _ & _ & _ & PB1 & _).
+      pose proof (cs_parts _ _ _ _ _ _ _ CS1) as (_ & _ & _ & _ & MI1 & _ & _ & _).
+      pose proof HCABS as CABS. unfold mpi_cmp_abs_stmt, U_MPI_CMP_ABS in CABS.
+      eapply aevtM_cut_evt; [exact MOKq | eapply CABS with (LB := LB) (dX := dA) (dY := dB) |].
+      1: exact MA1.
+      1: exact MB1.
+      1: intros O; exact (proj1 (PA1 O)).
+      1: intros O; exact (proj1 (PB1 O)).
+      1: exact MI1.
+      1: reflexivity.
+      1: reflexivity.
+      intros ms' PO. unfold mpi_cmp_post in PO.
+      destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & -> & _ & _ & _).
+      replace (ret_pc (Z_to_bv 64 134824)) with (Z_to_bv 64 134824) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+      clear MA1 MB1 PA1 PB1 MI1 CABS.
+      remember (Z.sgn (mpd_abs dA - mpd_abs dB)) as sgv eqn:Esg.
+      assert (SGV : sgv = -1 \/ (sgv = 0 \/ sgv = 1) /\ mpd_abs dB <= mpd_abs dA).
+      { subst sgv. destruct (Z.ltb_spec (mpd_abs dA) (mpd_abs dB)) as [LT|GE].
+        - left. apply Z.sgn_neg. lia.
+        - right. split; [| exact GE]. destruct (Z.eq_dec (mpd_abs dA) (mpd_abs dB)) as [E|NE].
+          + left. rewrite E, Z.sub_diag. reflexivity.
+          + right. apply Z.sgn_pos. lia. }
+      clear Esg. destruct SGV as [-> | [SGGE ABle]].
+      { (* |A| < |B|: Q is NULL, so straight to the copy of A into R *)
+        zstep. if_true. zstep. if_true.
+        eapply L_early; [exact CS1| exact LOCS| repeat constructor| reflexivity| reflexivity| exact BPOS]. }
+      assert (NLT : bv_lts (Z_to_bv 64 sgv) (Z_to_bv 64 0) = false) by (destruct SGGE as [-> | ->]; reflexivity).
+      zstep. rewrite NLT. cbv_concl_iota. clear NLT SGGE.
+      (* copy(X, A) *)
+      do 3 zstep.
+      pose proof (cs_parts _ _ _ _ _ _ _ CS1) as (HP1 & _ & _ & SOK1 & MI1 & ST1 & _ & _).
+      pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 0%nat _ CS1 eq_refl) as (MX1 & NSX1 & WX1 & _).
+      pose proof (opnd_facts _ _ _ _ _ _ dA CS1 opndA) as (MA1 & CRA1 & CRAL1 & _).
+      pose proof (opnd_sep_l _ _ _ _ _ _ 0%nat _ dA CS1 eq_refl opndA) as (SXA1 & OXA1).
+      pose proof HCOPY as COPY. unfold mpi_copy_stmt_x, U_MPI_COPY in COPY.
+      eapply aevtM_cut; [eapply COPY with (h := h) (LB := LB) (lo := lo) (dX := mkMPD (SP + -144) 1 0 0 [] padX LNull) (dY := dA) |].
+      1: exact HP1.
+      1: exact MX1.
+      1: exact NSX1.
+      1: exact MA1.
+      1: exact SXA1.
+      1: rewrite unsigned_lit by lia; apply copy_sep_of_opnd; [exact OXA1| exact (Z.lt_le_incl _ _ (proj1 (proj2 (proj2 (proj1 MA1)))))].
+      1: exact CRA1.
+      1: exact CRAL1.
+      1: rewrite unsigned_lit by lia; exact WX1.
+      1: rewrite unsigned_lit by lia; exact ST1.
+      1: rewrite unsigned_lit by lia; lia.
+      1: exact ACL.
+      1: rewrite unsigned_lit by lia; lia.
+      1: rewrite unsigned_lit by lia; lia.
+      1: exact DHI.
+      1: exact TP.
+      1: exact MI1.
+      1: exact SOK1.
+      1: exact CA.
+      1: reflexivity.
+      1: reflexivity.
+      clear HP1 MX1 NSX1 WX1 MA1 CRA1 CRAL1 SXA1 OXA1 SOK1 MI1 ST1.
+      intros ms' mo' PO.
+      binop_post PO m2 mo2 h2 LB2 d2 r2 E2 MI2 ST2 MF2 HT2 HH2 MA2 OUT2 PX2 SOK2 RR2.
+      replace (ret_pc (Z_to_bv 64 134840)) with (Z_to_bv 64 134840) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+      pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MOK2.
+      pose proof RR2 as (CR2 & _).
+      pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 0%nat _ m2 mo2 h2 LB2 d2 CS1 eq_refl HH2 HT2 MF2 MA2 OUT2 PX2 SOK2 MI2 ST2
+                    (proj2 (proj2 (proj2 CR2)))) as CS2.
+      cbn [set_nth] in CS2.
+      pose proof (proj1 (proj2 CR2)) as AD2. cbn [md_addr] in AD2.
+      assert (LOCS2 : locals_at [d2; mkMPD (SP + -160) 1 0 0 [] padY LNull; mkMPD (SP + -176) 1 0 0 [] padZ LNull;
+                                 mkMPD (SP + -192) 1 0 0 [] padT LNull])
+        by (unfold locals_at; cbn [map md_addr]; rewrite AD2; reflexivity).
+      destruct CR2 as [[(-> & _ & _) | (-> & _)] _].
+      2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep. if_true.
+           eapply L_err; [exact CS2| exact LOCS2| reflexivity| reflexivity| lia| exact BPOS]. }
+      pose proof (copy_local_facts m2 LB LB2 (mkMPD (SP + -144) 1 0 0 [] padX LNull) dA d2 MA2 (proj2 MA0)
+                    (proj1 (proj2 OUT2)) eq_refl eq_refl (proj1 RR2) (proj2 RR2 eq_refl) ltac:(lia))
+        as (AB2 & N2 & OWN2 & LOW2 & HIB2).
+      clear CS1 LOCS RR2 HH2 HT2 MF2 MA2 OUT2 PX2 SOK2 MI2 ST2 MOKq.
+      zstep. if_false.
+      (* copy(Y, B) *)
+      do 3 zstep.
+      pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (HP2 & _ & _ & SOK2 & MI2 & ST2 & _ & _).
+      pose proof (mc_local_facts _ _ _ _ _ _ _ _ _ 1%nat _ CS2 eq_refl) as (MY2 & NSY2 & WY2 & _).
+      pose proof (opnd_facts _ _ _ _ _ _ dB CS2 (or_introl opndB)) as (MB2 & CRB2 & CRBL2 & _).
+      pose proof (opnd_sep_l _ _ _ _ _ _ 1%nat _ dB CS2 eq_refl (or_introl opndB)) as (SYB2 & OYB2).
+      eapply aevtM_cut; [eapply COPY with (h := h2) (LB := LB2) (lo := lo) (dX := mkMPD (SP + -160) 1 0 0 [] padY LNull) (dY := dB) |].
+      1: exact HP2.
+      1: exact MY2.
+      1: exact NSY2.
+      1: exact MB2.
+      1: exact SYB2.
+      1: rewrite unsigned_lit by lia; apply copy_sep_of_opnd; [exact OYB2| exact (Z.lt_le_incl _ _ (proj1 (proj2 (proj2 (proj1 MB2)))))].
+      1: exact CRB2.
+      1: exact CRBL2.
+      1: rewrite unsigned_lit by lia; exact WY2.
+      1: rewrite unsigned_lit by lia; exact ST2.
+      1: rewrite unsigned_lit by lia; lia.
+      1: exact ACL.
+      1: rewrite unsigned_lit by lia; pose proof (cs_parts _ _ _ _ _ _ _ CS2) as (_ & HTq & _); lia.
+      1: rewrite unsigned_lit by lia; lia.
+      1: exact DHI.
+      1: exact TP.
+      1: exact MI2.
+      1: exact SOK2.
+      1: exact CA.
+      1: reflexivity.
+      1: reflexivity.
+      clear HP2 MY2 NSY2 WY2 MB2 CRB2 CRBL2 SYB2 OYB2 SOK2 MI2 ST2 COPY.
+      intros ms' mo' PO.
+      binop_post PO m3 mo3 h3 LB3 d3 r3 E3 MI3 ST3 MF3 HT3 HH3 MA3 OUT3 PX3 SOK3 RR3.
+      replace (ret_pc (Z_to_bv 64 134856)) with (Z_to_bv 64 134856) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+      pose proof (heap_mok _ _ HI _ _ _ _ HH3) as MOK3.
+      pose proof RR3 as (CR3 & _).
+      pose proof (mc_binop_l _ _ _ _ _ _ _ _ _ 1%nat _ m3 mo3 h3 LB3 d3 CS2 eq_refl HH3 HT3 MF3 MA3 OUT3 PX3 SOK3 MI3 ST3
+                    (proj2 (proj2 (proj2 CR3)))) as CS3.
       cbn [set_nth] in CS3.
-      assert (ADDRS3 : locals_at [dX3; dY0; dZ0; dT0]) by (unfold locals_at; cbn [map]; rewrite CAD, E0, E1, E2, E3; reflexivity).
-      assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct CR1 as [(Hr0 & _)|(HrF & _)]; [left; exact Hr0| right; exact HrF]).
-      flat constr:(OUT3) 3%nat. intros _ NS3 _.
-      clear MX NSX WRX LOX CRX CRXL HFX MA' CRA_ CRAL_ LOA HFA' ASA SEP0A OPS0A CS2 HH HTc MF SOK MI ST MK PX3 OUT3.
-      reopen CS3 HH HTc MF SOK MI ST MK.
-      zstep; if_cases K2; zify_cond K2.
-      { eapply L_err; [exact CS3| exact ADDRS3| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB]. }
-      assert (Hr0 : r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr K2; lia). subst r. clear Hr K2.
-      destruct (copy_local_facts _ _ _ _ _ _ MA3 SGA NS3 OX NX0 CR (TRIM eq_refl) ltac:(clear - VAB; lia)) as (AX & NX3 & OX3 & TRX & BX).
-      clear CR TRIM CR1 CFR MA3.
-      zstep. zstep. zstep.
-      flat constr:((mc_local_facts _ _ _ _ _ _ _ _ _ 1 dY0 CS3 eq_refl)) 8%nat. intros MY NSY WRY LOY CRY CRYL HFY _.
-      flat constr:((opnd_facts _ _ _ _ _ _ dB CS3 (or_introl opndB))) 6%nat. intros MB' CRB_ CRBL_ LOB HFB' ASB.
-      flat constr:((opnd_sep_l _ _ _ _ _ _ 1 dY0 dB CS3 eq_refl (or_introl opndB))) 2%nat. intros SEP1B OPS1B.
-      pose proof HCOPY as SPC. unfold mpi_copy_stmt_x, U_MPI_COPY in SPC.
-      eapply aevtM_cut.
-      { eapply SPC with (dX := dY0) (dY := dB) (lo := lo) (h := h3) (LB := LB3); rewrite ?unsigned_lit by lia; try eassumption; try reflexivity.
-        all: try (clear - SLO HLS ACL ACP SPB SPA DHI HTOP HTc; lia).
-        all: try (rewrite ?E0, ?E1, ?E2, ?E3; reflexivity).
-        apply copy_sep_of_opnd; [exact OPS1B| pose proof MB' as [(_ & _ & P0 & _) _]; clear - P0; lia]. }
-      clear SPC. cbv beta. intros ms' mo' PO. unfold mpi_binop_post in PO.
-      flat constr:(PO) 31%nat. flclear PO. intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? m4 mo4 h4 LB4 dY4 r E MI4 ST4 MF4 HT4 HH4 MA4 OUT4 PX4 SOK4 (CR & TRIM).
-      injection E as -> ->. rewrite ?unsigned_lit in ST4 by lia. rewrite ?unsigned_lit in PX4 by lia.
-      replace (ret_pc (Z_to_bv 64 0x20ec8)) with (Z_to_bv 64 0x20ec8) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-      flat constr:(CR) 4%nat. intros CR1 CAD4 CPD4 CFR4.
-      assert (CS4 : CST m4 mo4 h4 LB4 (set_nth 1 [dX3; dY0; dZ0; dT0] dY4) dR []
-                      (frame cs0 tpc (wof j68) (tcells t160 t164 (Z_to_bv 64 (SP + -144)) (Z_to_bv 64 65537) t180)) []).
-      { eapply mc_binop_l; [exact CS3| reflexivity| exact HH4| exact HT4| exact MF4| exact MA4| exact OUT4| exact PX4| exact SOK4| exact MI4| exact ST4| exact CFR4]. }
-      cbn [set_nth] in CS4.
-      assert (ADDRS4 : locals_at [dX3; dY4; dZ0; dT0]) by (unfold locals_at; cbn [map]; rewrite CAD4, CAD, E0, E1, E2, E3; reflexivity).
-      assert (Hr : r = 0 \/ r = MBEDTLS_ERR_MPI_ALLOC_FAILED) by (destruct CR1 as [(Hr0 & _)|(HrF & _)]; [left; exact Hr0| right; exact HrF]).
-      flat constr:(OUT4) 3%nat. intros _ NS4 _.
-      clear MY NSY WRY LOY CRY CRYL HFY MB' CRB_ CRBL_ LOB HFB' ASB SEP1B OPS1B CS3 HH HTc MF SOK MI ST MK PX4 OUT4.
-      reopen CS4 HH HTc MF SOK MI ST MK.
-      zstep; if_cases K3; zify_cond K3.
-      { eapply L_err; [exact CS4| exact ADDRS4| reflexivity| reflexivity| unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr; lia| exact VB]. }
-      assert (Hr0 : r = 0) by (unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in Hr; clear - Hr K3; lia). subst r. clear Hr K3.
-      flat constr:(MB) 2%nat. intros _ SGB'.
-      destruct (copy_local_facts _ _ _ _ _ _ MA4 SGB' NS4 OY NY0 CR (TRIM eq_refl) ltac:(clear - VAB; lia)) as (AY & NY4 & OY4 & TRY & BY).
-      eapply L_m1; [exact CS4| exact ADDRS4| exact OX3| exact OY4| exact OZ| exact OT| | clear - NX3; lia| exact AX| exact AY| exact VAB].
-      destruct TRY as [T1|T2]; [clear - T1 NX3; lia|].
-      assert (LT : 2 ^ (32 * (md_n dY4 - 1)) < 2 ^ (32 * md_n dX3)) by (clear - T2 BX VAB; lia).
-      apply Z.pow_lt_mono_r_iff in LT; clear - LT NX3 NY4; lia.
+      pose proof (proj1 (proj2 CR3)) as AD3. cbn [md_addr] in AD3.
+      assert (LOCS3 : locals_at [d2; d3; mkMPD (SP + -176) 1 0 0 [] padZ LNull; mkMPD (SP + -192) 1 0 0 [] padT LNull])
+        by (unfold locals_at; cbn [map md_addr]; rewrite AD2, AD3; reflexivity).
+      destruct CR3 as [[(-> & _ & _) | (-> & _)] _].
+      2: { unfold MBEDTLS_ERR_MPI_ALLOC_FAILED. zstep. if_true.
+           eapply L_err; [exact CS3| exact LOCS3| reflexivity| reflexivity| lia| exact BPOS]. }
+      pose proof (copy_local_facts m3 LB2 LB3 (mkMPD (SP + -160) 1 0 0 [] padY LNull) dB d3 MA3 (proj2 MB0)
+                    (proj1 (proj2 OUT3)) eq_refl eq_refl (proj1 RR3) (proj2 RR3 eq_refl) BPOS)
+        as (AB3 & N3 & OWN3 & LOW3 & HIB3).
+      assert (NYX : md_n d3 <= md_n d2).
+      { destruct LOW3 as [ONE3 | POW3]; [lia|].
+        assert (LTP : 2 ^ (32 * (md_n d3 - 1)) < 2 ^ (32 * md_n d2)) by lia.
+        apply (proj2 (Z.pow_lt_mono_r_iff 2 (32 * (md_n d3 - 1)) (32 * md_n d2) ltac:(lia) ltac:(lia))) in LTP. lia. }
+      zstep. if_false.
+      eapply L_m1; [exact CS3| exact LOCS3| exact OWN2| exact OWN3| reflexivity| reflexivity| exact NYX| lia
+                   | exact AB2| exact AB3| lia].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   Lemma es_at : Forall (fun e => mpd_at usegs m LB e) es.
-  Proof. unfold es. destruct ALIAS; [constructor; [exact MB0| constructor]| constructor; [exact MA0| constructor; [exact MB0| constructor]]]. Qed.
+  Proof using MA0 MB0.
+    unfold es. destruct ALIAS.
+    - apply Forall_cons; [exact MB0| apply Forall_nil].
+    - apply Forall_cons; [exact MA0| apply Forall_cons; [exact MB0| apply Forall_nil]].
+  Qed.
 
 
   (* [comment removed for export] *)
@@ -2992,95 +3572,94 @@ Section DivP.
     rw_cells usegs mm Q [C8 (Z_to_bv 64 P); C4 (Z_to_bv 64 65537); C4 w] ->
     0 < Q -> Q mod 8 = 0 -> 0 < P -> P mod 4 = 0 -> SPx <= P -> P + 4 < 2^64 ->
     stack_opnd usegs mm SPx (mkMPD Q 1 1 P [Z_to_bv 64 0] w LStatic).
-  Proof.
-    intros mm P Q SPx w FL FT Q0 Q8 P0 P4 HS HB.
-    pose proof FL as [[_ BL] _].
-    unfold stack_opnd. cbn [md_own md_addr md_sg md_n md_p md_limbs md_pad].
-    split; [reflexivity|]. split.
-    { unfold mpi_cells. eapply rw_cells_reshape; [exact FT| cbn; tauto|].
-      cbn [cells_bytes cbytes]. f_equal. rewrite app_assoc. f_equal. unfold le2, le4. rewrite !unsigned_lit by lia. cbn [Z_to_le_bytes app].
-      refine (f_equal2 (@cons (bv 8)) _ (f_equal2 (@cons (bv 8)) _ (f_equal2 (@cons (bv 8)) _ (f_equal2 (@cons (bv 8)) _ eq_refl))));
-        apply bv_eq; rewrite !Z_to_bv_unsigned; reflexivity. }
-    split; [lia|]. split; [lia|]. split; [reflexivity|]. split; [unfold MPI_MAX_LIMBS; lia|].
-    split; [lia|]. split; [lia|]. split; [lia|]. split; [exact BL|]. split; [lia|]. split; [lia|].
-    left; reflexivity.
+  Proof using DIMG sp.
+    intros mm P Q SPx w LIMB HDR Qpos Qal Ppos Pal LOWP HIGHP.
+    apply (rw_cells_split_C4 usegs mm Q [C8 (Z_to_bv 64 P)] _ [C4 w]) in HDR.
+    rewrite (unsigned_lit 65537) in HDR by lia. cbn [app] in HDR.
+    apply (rw_cells_C2_congr usegs mm Q [C8 (Z_to_bv 64 P)] 65537 1 _) in HDR; [| reflexivity].
+    apply (rw_cells_C2_congr usegs mm Q [C8 (Z_to_bv 64 P); C2 (Z_to_bv 64 1)] (65537 / 2 ^ 16) 1 _) in HDR; [| reflexivity].
+    pose proof (proj1 (LxPMpiTac.u32arr_of_rw_cells mm P [Z_to_bv 64 0] LIMB)) as BYTES.
+    unfold stack_opnd; cbn [md_own md_addr md_p md_sg md_n md_pad md_limbs].
+    split; [reflexivity|]. split; [exact HDR|]. split; [exact Qal|]. split; [exact Qpos|].
+    split; [reflexivity|]. split; [unfold MPI_MAX_LIMBS; lia|]. split; [lia|]. split; [exact Pal|].
+    split; [exact Ppos|]. split; [exact BYTES|]. split; [exact LOWP|]. split; [lia|]. left; reflexivity.
   Qed.
 
-  Local Ltac div_cb4_first H :=
-    lazymatch type of H with rw_cells ?sg ?mm ?A ?cs =>
-      let rec go pre l := lazymatch l with
-        | CB 4 ?bs :: ?post => apply (rw_cells_CB4_C4 sg mm A pre bs post) in H
-        | ?c :: ?rest => go (pre ++ [c]) rest
-        end in go (@nil cell) cs
-    end; cbn [app] in H.
+  Local Ltac div_cb4_first FRc :=
+    let rec upto cs :=
+      lazymatch cs with
+      | CB 4%nat _ :: _ => constr:(@nil cell)
+      | ?c :: ?rest => let p := upto rest in constr:(c :: p)
+      end in
+    lazymatch type of FRc with
+    | rw_cells ?sg ?mm ?A ?cs =>
+        let p := upto cs in
+        apply (rw_cells_CB4_C4 sg mm A p) in FRc; cbn [app] in FRc
+    end.
 
   Lemma L_div : forall (t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6 : word),
     aevtM usegs mo POST (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 0) (Z_to_bv 64 (md_addr dR)) (Z_to_bv 64 (md_addr dA)) (Z_to_bv 64 (md_addr dB)) a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x20df4) fc None m (seg_rom usegs)).
   Proof.
-    intros.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB. pose proof alloc_ceiling_pos as ACP.
-    flat constr:(facts0) 8%nat. intros R0 R8 RAS RBLK HBR _ _ _.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH0) as MK.
-    pose proof ST0 as ST. pose proof MI0 as MI. pose proof es_at as ESA.
-    carve_frame 288%nat ST.
-    pose proof (munch_refl [(bv_unsigned sp - 288, bv_unsigned sp)] m) as MU. pose proof (wmono_refl usegs m) as WM.
-    set (mI := m) in HH0, MR0, MA0, MB0, MI0, SOK0, ST0, ESA.
+    intros t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6.
+    pose proof (bv_unsigned_in_range 64 sp) as SPrng. change (bv_modulus 64) with (2^64) in SPrng.
+    pose proof alloc_ceiling_pos as ACpos.
+    pose proof (heap_mok _ _ HI _ _ _ _ HH0) as MOKm.
+    (* Walk on a name m0 for the entry memory: the frame stores then rewrite only hypotheses over m0, and the
+       section hypotheses over m (HH0, SOK0, MI0, ...) that mc_init and the later walk lemmas depend on stay intact. *)
+    lazymatch goal with |- aevtM ?sg ?mo' ?P (MS ?R ?F' ?pc ?fc' ?rv m ?ro) =>
+      cut (forall m0 : mem, m0 = m -> stk usegs m0 lo SP -> mem_inv usegs m0 -> aevtM sg mo' P (MS R F' pc fc' rv m0 ro));
+      [intros GEN; exact (GEN m eq_refl ST0 MI0)|] end.
+    intros m0 Em0 STw MIw.
+    carve_frame 288%nat STw.
+    pose proof (munch_refl [(lo, SP)] m0) as MUw. pose proof (wmono_refl usegs m0) as WMw.
     do 27 zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
-    lazymatch type of FR with rw_cells _ _ _ (CB 144 ?ja :: _ :: CB 20 ?jb :: _ :: _ :: CB 4 ?jc :: _) =>
-      set (j0 := ja) in FR; set (j20 := jb) in FR; set (j180 := jc) in FR end.
-    apply (rw_cells_split_CB usegs m1 _ [CB 144 j0; C4 (Z_to_bv 64 0)] 20 j20 _ [12; 4; 4]%nat) in FR; [| reflexivity].
-    cbn [mk_CB_cells app] in FR.
-    set (j148 := firstn 12 j20) in FR.
-    div_cb4_first FR. div_cb4_first FR. div_cb4_first FR.
-    set (t160 := le_bytes_to_word (firstn 4 (skipn 12 j20))) in FR.
-    set (t164 := le_bytes_to_word (firstn 4 (skipn 4 (skipn 12 j20)))) in FR.
-    set (t180 := le_bytes_to_word j180) in FR.
-    lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?c2 :: ?c3 :: ?c4 :: ?c5 :: ?c6 :: ?c7 :: ?c8 :: ?rest) =>
-      destruct (rw_cells_split3 usegs m1 _ [c1; c2; c3] [c4; c5; c6; c7; c8] rest FR) as (F1 & F2 & F3) end.
-    cbn [cells_size csize Nat.add] in F2, F3.
-    lazymatch type of F2 with rw_cells _ _ ?a _ => replace a with (bv_unsigned sp + -128) in F2 by (clear; lia) end.
-    lazymatch type of F3 with rw_cells _ _ ?a _ => replace a with (bv_unsigned sp + -104) in F3 by (clear; lia) end.
-    lazymatch type of F1 with rw_cells _ _ _ (?c1 :: ?c2 :: ?c3 :: []) =>
-      destruct (rw_cells_split3 usegs m1 _ [c1] [c2] [c3] F1) as (_ & FL & _) end.
-    lazymatch type of F2 with rw_cells _ _ _ (?c1 :: ?c2 :: ?c3 :: ?c4 :: ?c5 :: []) =>
-      destruct (rw_cells_split3 usegs m1 _ [c1; c2] [c3; c4; c5] [] F2) as (_ & FT & _) end.
-    cbn [cells_size csize Nat.add] in FL, FT.
-    lazymatch type of FL with rw_cells _ _ ?a _ => replace a with (bv_unsigned sp + -144) in FL by (clear; lia) end.
-    lazymatch type of FT with rw_cells _ _ ?a _ => replace a with (bv_unsigned sp + -120) in FT by (clear; lia) end.
-    assert (MU1 : munch [(lo, SP)] m m1).
-    { eapply munch_weaken; [| exact MU]. intros x Hx. cbn in Hx |- *. clear - Hx SLO HLS. lia. }
-    pose proof HH0 as HH0'. pose proof SOK0 as SOK0'. pose proof MI0 as MI0'. pose proof MR0 as MR0'. unfold mI in HH0', SOK0', MI0', MR0', ESA.
-    assert (CS1 : CST m1 mo h LB [] dR [] [(SPc, [CB 144 j0; C4 (Z_to_bv 64 0); CB 12 j148]); (SP + -128, tcells t160 t164 (Z_to_bv 64 (SP + -144)) (Z_to_bv 64 65537) t180); (SP + -104, REGS)] []).
-    { eapply mc_init; [exact HH0'| exact SOK0'| exact MI0'| exact MR0'| exact ESA| exact MU1| exact WM| exact MI| exact ST| constructor| | |].
-      - intros i j di dj Hi. destruct i; discriminate Hi.
-      - constructor; [exact F1| constructor; [exact F2| constructor; [exact F3| constructor]]].
-      - constructor; [| constructor; [| constructor; [| constructor]]]; cbn [fst snd tcells cells_size csize Nat.add]; (split; [clear; lia| split; [clear; lia| intros d []]]). }
-    clear FR F1 F2 F3 MU. rename WM into WM1.
-    flat constr:((cs_parts _ _ _ _ _ _ _ CS1)) 8%nat. intros HH1 HT1 MF1 SOK1 MI1 ST1 CH1 MK1.
-    flat constr:((opnd_facts _ _ _ _ _ _ dB CS1 (or_introl opndB))) 6%nat. intros MB _ _ _ HFB _.
-    pose proof HCMPO as SPC. unfold mpi_cmp_mpi_stmt_o, U_MPI_CMP_MPI in SPC.
-    eapply aevtM_cut_evt; [exact MK1| eapply SPC with (LB := LB) (dX := dB) (dY := mkMPD (SP + -120) 1 1 (SP + -144) [Z_to_bv 64 0] t180 LStatic);
-      [ apply opnd_at_mpd; exact MB
-      | right; rewrite unsigned_lit by lia; eapply div_T_opnd; [exact FL| exact FT| lia ..]
-      | intros O; exact (proj1 (HFB O))
-      | cbn; intros O; discriminate O
-      | exact MI1
-      | reflexivity
-      | reflexivity ]|].
-    clear SPC. cbv beta. intros ms' PO. unfold mpi_cmp_post in PO. destruct_exs PO.
-    flat constr:(PO) 4%nat. flclear PO. intros -> _ _ _.
-    replace (ret_pc (Z_to_bv 64 0x20e60)) with (Z_to_bv 64 0x20e60) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+    subst m0.
+    lazymatch goal with FRx : rw_cells _ ?mm _ (CB 144 ?ja :: C4 _ :: CB 20 ?jb :: _ :: _ :: CB 4 ?jc :: _) |- _ =>
+      rename mm into m2; set (j0 := ja) in FRx; set (jm := jb) in FRx; set (jt := jc) in FRx end.
+    apply (rw_cells_split_CB usegs m2 SPc [CB 144 j0; C4 (Z_to_bv 64 0)] 20 jm _ [12; 4; 4]%nat) in FR; [| reflexivity].
+    cbn [app mk_CB_cells] in FR.
+    do 3 div_cb4_first FR.
+    take FR 3%nat FRA. take FR 5%nat FRT.
+    pose proof FRA as LIMB. take LIMB 1%nat J0c. take LIMB 1%nat LIMB0.
+    pose proof FRT as HDR. take HDR 2%nat T160c.
+    assert (CS1 : CST m2 mo h LB [] dR []
+                    [(SPc, [CB 144 j0; C4 (Z_to_bv 64 0); CB 12 (firstn 12 jm)]);
+                     (SP + -128, tcells (wof (firstn 4 (skipn 12 jm))) (wof (firstn 4 (skipn 4 (skipn 12 jm))))
+                                   (Z_to_bv 64 (SP + -144)) (Z_to_bv 64 65537) (wof jt));
+                     (SP + -104, REGS)] []).
+    { apply (mc_init m2 [] _ HH0 SOK0 MI0 MR0 es_at MUw WMw MIw STw).
+      - apply Forall_nil.
+      - intros i j di dj Ei. destruct i; discriminate Ei.
+      - apply Forall_cons; [exact FRA|]. apply Forall_cons; [exact FRT|]. apply Forall_cons; [exact FR| apply Forall_nil].
+      - repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd cells_size csize tcells Nat.add];
+          (split; [lia| split; [lia| intros d []]]). }
+    pose proof (opnd_facts _ _ _ _ _ _ dB CS1 (or_introl opndB)) as (MB2 & _ & _ & _ & PB2 & _).
+    pose proof HCMPO as CMPO. unfold mpi_cmp_mpi_stmt_o, U_MPI_CMP_MPI in CMPO.
+    eapply aevtM_cut_evt; [exact MOKm | eapply CMPO with (LB := LB) (dX := dB)
+        (dY := mkMPD (SP + -120) 1 1 (SP + -144) [Z_to_bv 64 0] (wof jt) LStatic) |].
+    1: left; exact MB2.
+    1: right; rewrite unsigned_lit by lia; apply div_T_opnd; [exact LIMB0| exact HDR| lia ..].
+    1: intros O; exact (proj1 (PB2 O)).
+    1: intros O; discriminate O.
+    1: exact MIw.
+    1: reflexivity.
+    1: reflexivity.
+    intros ms' PO. unfold mpi_cmp_post in PO.
+    destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & -> & _ & _ & _).
+    replace (ret_pc (Z_to_bv 64 134752)) with (Z_to_bv 64 134752) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
     rewrite div_val_T0, Z.sub_0_r.
-    eapply L_main; [exact CS1| exact MU1| exact WM1].
+    eapply L_main; [exact CS1| exact MUw| exact WMw].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
   End Walk.
 
   Theorem U_mpi_div_mpi_ok : mpi_div_mpi_stmt usegs L HI U_MPI_DIV_MPI MSF.
-  Proof.
-    unfold mpi_div_mpi_stmt, U_MPI_DIV_MPI. intros until lo.
-    intros HH MX MA MB SXA SXB SAB NSX NEB OPA OPB CRA CRAL CRB CRBL WRX XLO ST SLO ACL HTOP SPA DHI TP MI SOK CA -> -> ->.
+  Proof using HCALLOC HLS SW DIMG HND ROIMG IMGC HCOPY HGROW HSHL HCMP HAS HLSET HMULI HCBL HCMPO HSHR HCABS HZF HPZ.
+    unfold mpi_div_mpi_stmt, U_MPI_DIV_MPI.
+    intros ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m mo h LB dX dA dB lo
+      HPm MDX MDA MDB SPXA SPXB SPAB NSTX NEXB OSXA OSXB CRDA CRLA CRDB CRLB WRX RLOX STKm LOW CEIL TOPm ALN DHIm TPm MIm SOKm CMSF
+      A1E A2E A3E.
+    subst a1 a2 a3.
     eapply L_div; eassumption.
   Qed.
 End DivP.

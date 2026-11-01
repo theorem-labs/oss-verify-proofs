@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -29,27 +29,29 @@ Section C.
     apply opnd_at_mpd. assumption.
   Qed.
 
-  Let ROIMG' : forall a, ro_addr usegs (wa a) = true -> 0 <= a < 2^64 -> hl_img_lo L <= a < hl_img_hi L :=
-    fun a H1 H2 => ROIMG a H2 H1.
+  Let ROIMG' : forall a, ro_addr usegs (wa a) = true -> 0 <= a < 2^64 -> hl_img_lo L <= a < hl_img_hi L.
+  Proof.
+    intros a in_ro_segment in_word_range.
+    exact (ROIMG a in_word_range in_ro_segment).
+  Defined.
 
   Ltac callees :=
     lazymatch goal with
-    | |- mpi_copy_stmt_x _ _ _ _ _ => exact (U_mpi_copy_spec_x L HI HFREE HCALLOC HLS SW DIMG HND ROIMG)
-    | |- mpi_grow_stmt _ _ _ _ _ => exact (U_mpi_grow_spec L HI HFREE HCALLOC HLS SW DIMG HND)
-    | |- mpi_shift_l_stmt _ _ _ _ _ => exact (U_mpi_shift_l_spec L HI HFREE HCALLOC HLS SW DIMG HND ROIMG' _ eq_refl)
-    | |- mpi_cmp_mpi_stmt _ _ => exact U_mpi_cmp_mpi_spec
-    | |- mpi_cmp_mpi_stmt_o _ _ => exact U_mpi_cmp_mpi_spec_o
-    | |- mpi_cmp_abs_stmt _ _ => exact U_mpi_cmp_abs_spec
-    | |- mpi_shift_r_stmt _ _ => exact U_mpi_shift_r_spec
-    | |- mpi_cmp_int_stmt _ _ => exact U_mpi_cmp_int_spec
-    | |- add_sub_mpi_stmt _ _ _ _ _ => exact U_add_sub_mpi_spec_closed
-    | |- mpi_lset_stmt _ _ _ _ _ => exact (U_mpi_lset_spec L HI HCALLOC HLS SW DIMG HND)
-    | |- mpi_mul_int_stmt_g _ _ _ _ _ => exact (U_mpi_mul_int_spec_closed L HI HFREE HCALLOC HLS SW DIMG HND ROIMG' IMGC _ eq_refl)
-    | |- mpi_core_bitlen_stmt _ _ => exact U_mpi_core_bitlen_spec
-    | |- mpi_core_shift_r_stmt _ _ => exact U_mpi_core_shift_r_spec
     | |- zeroize_and_free_stmt _ _ _ _ _ => exact (U_zeroize_and_free_spec L HI HFREE HLS SW DIMG)
-    | |- platform_zeroize_stmt _ _ _ _ => apply U_platform_zeroize_spec
-    | |- _ => idtac
+    | |- platform_zeroize_stmt _ _ _ _ => exact (U_platform_zeroize_spec L)
+    | |- mpi_grow_stmt _ _ _ _ _ => exact (U_mpi_grow_spec L HI HFREE HCALLOC HLS SW DIMG HND)
+    | |- mpi_copy_stmt_x _ _ _ _ _ => exact (U_mpi_copy_spec_x L HI HFREE HCALLOC HLS SW DIMG HND ROIMG)
+    | |- mpi_lset_stmt _ _ _ _ _ => exact (U_mpi_lset_spec L HI HCALLOC HLS SW DIMG HND)
+    | |- mpi_shift_l_stmt _ _ _ _ _ =>
+        exact (U_mpi_shift_l_spec L HI HFREE HCALLOC HLS SW DIMG HND ROIMG' U_MEMSET_FUNC eq_refl)
+    | |- mpi_mul_int_stmt_g _ _ _ _ _ =>
+        exact (U_mpi_mul_int_spec L HI HFREE HCALLOC HLS SW DIMG HND ROIMG' IMGC U_mpi_core_mla_vspec U_MEMSET_FUNC eq_refl)
+    | |- add_sub_mpi_stmt _ _ _ _ _ => exact U_add_sub_mpi_spec_closed
+    | |- mpi_shift_r_stmt _ _ => exact U_mpi_shift_r_spec
+    | |- mpi_core_bitlen_stmt _ _ => exact U_mpi_core_bitlen_spec
+    | |- mpi_cmp_abs_stmt _ _ => exact U_mpi_cmp_abs_spec
+    | |- mpi_cmp_mpi_stmt_o _ _ => exact U_mpi_cmp_mpi_spec_o
+    | |- mpi_cmp_mpi_stmt _ _ => exact U_mpi_cmp_mpi_spec
     end.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC ROIMG'"] Theorem U_mpi_div_mpi_spec : forall MSF, MSF = U_MEMSET_FUNC -> mpi_div_mpi_stmt usegs L HI U_MPI_DIV_MPI MSF.
@@ -59,6 +61,10 @@ Section C.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC ROIMG'"] Theorem U_mpi_mod_mpi_spec : forall MSF, MSF = U_MEMSET_FUNC -> mpi_mod_mpi_stmt usegs L HI U_MPI_MOD_MPI' MSF.
   Proof.
-    intros MSF ->. eapply (U_mpi_mod_mpi_ok L HI); try eassumption; callees. apply U_mpi_div_mpi_spec. reflexivity.
+    pose proof (U_mpi_div_mpi_spec U_MEMSET_FUNC eq_refl) as div_mpi_ok.
+    pose proof (U_mpi_mod_mpi_ok L HI HLS SW DIMG HND ROIMG IMGC U_MEMSET_FUNC div_mpi_ok U_mpi_cmp_mpi_spec U_add_sub_mpi_spec_closed) as mod_mpi_ok.
+    intros msf msf_is_memset.
+    rewrite msf_is_memset.
+    exact mod_mpi_ok.
   Qed.
 End C.

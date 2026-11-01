@@ -14,27 +14,27 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
-Definition ls_ok (nS : nat) (fmts : list Z) (L : SSP.ls_addrs) : bool := @PFSpec.ls_ok v2_reloc nS fmts L.
+Definition ls_ok (nS : nat) (fmts : list Z) (L : SSP.ls_addrs) : bool :=
+  PFSpec.ls_ok (RL := v2_reloc) nS fmts L.
 Definition ls_ok1 (L : SSP.ls_addrs) : bool := ls_ok 1 (SSP.ls_fmts1 L) L.
 Definition ls_ok2 (L : SSP.ls_addrs) : bool := ls_ok 2 (SSP.ls_fmts2 L) L.
 
 Section Contracts.
+#[local] Existing Instances v2_reloc v2_data.
+#[local] Existing Instances v2_code v2_sites v2_img v2_rw v2_pf.
 Context {fx : FPState}.
-#[local] Existing Instance v2_reloc.
-#[local] Existing Instance v2_code.
-#[local] Existing Instance v2_sites.
-#[local] Existing Instance v2_data.
-#[local] Existing Instance v2_img.
-#[local] Existing Instance v2_rw.
-#[local] Existing Instance v2_pf.
 
-(* [comment removed for export] *)
 Theorem lept_stderr_s1_contract : forall L, ls_ok1 L = true -> SSP.sum_contract SEGS (SSP.spec_lept_stderr_s1 L).
 Proof.
-ltac2:(KReplay.run1 (kr_t_V2PFSpec ()) ["Contracts"] "p;8g0000j80Tf0g001?g0027g0032g003og004ig005bg006[G0p=1p,2fx#1o"). Qed.
+  intros addrs s1_fmts_checked.
+  refine (PFSpec.lept_stderr_s1_contract addrs _).
+  exact s1_fmts_checked.
+Qed.
 
-(* [comment removed for export] *)
 Theorem lept_stderr_s2_contract : forall L, ls_ok2 L = true -> SSP.sum_contract SEGS (SSP.spec_lept_stderr_s2 L).
 Proof.
-ltac2:(KReplay.run1 (kr_t_V2PFSpec ()) ["Contracts"] "p;8g007Tj80Tf0g001?g0027g0032g003og004ig005bg006[G0p=1p,2fx#1o"). Qed.
+  intros addrs s2_fmt_checked.
+  refine (PFSpec.lept_stderr_s2_contract addrs _).
+  exact s2_fmt_checked.
+Qed.
 End Contracts.

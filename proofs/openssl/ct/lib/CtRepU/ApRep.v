@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.ct.lib.CtLib Require Import ImageCt.
@@ -30,23 +30,32 @@ Lemma ro_cells_agree : forall P m m' A cs,
   agree_on P m m' -> ro_cells ctusegs m A cs -> (forall a, A <= a < A + Z.of_nat (cells_size cs) -> P a) ->
   ro_cells ctusegs m' A cs.
 Proof.
-  intros P m m' A cs HP [Hwf HB] HR. split; [exact Hwf|].
-  eapply bytes_at_agree; eauto. rewrite cells_bytes_length by assumption. exact HR.
+  intros P m m' A cs same [wf_cs bytes_old] cover.
+  assert (bytes_new : bytes_at ctusegs m' A (cells_bytes cs)).
+  { refine (bytes_at_agree P m m' A _ same bytes_old _).
+    rewrite (cells_bytes_length cs wf_cs). exact cover. }
+  exact (conj wf_cs bytes_new).
 Qed.
 
 Lemma u64arr_agree : forall P m m' A ws,
   agree_on P m m' -> u64arr ctusegs m A ws -> (forall a, A <= a < A + 8 * Z.of_nat (length ws) -> P a) -> u64arr ctusegs m' A ws.
 Proof.
-  intros P m m' A ws HP [HB HW] HR. split.
-  - eapply bytes_at_agree; eauto. rewrite u64s_length. intros a Ha. apply HR. lia.
-  - eapply wr_at_agree; eauto.
+  intros P m m' A ws same [bytes_old wr_old] cover.
+  pose proof (wr_at_agree P m m' A _ same wr_old cover) as wr_new.
+  assert (bytes_new : bytes_at ctusegs m' A (u64s ws)).
+  { refine (bytes_at_agree P m m' A _ same bytes_old _).
+    intros a in_span. apply cover. rewrite u64s_length in in_span. lia. }
+  exact (conj bytes_new wr_new).
 Qed.
 Lemma u32arr_agree : forall P m m' A ws,
   agree_on P m m' -> u32arr ctusegs m A ws -> (forall a, A <= a < A + 4 * Z.of_nat (length ws) -> P a) -> u32arr ctusegs m' A ws.
 Proof.
-  intros P m m' A ws HP [HB HW] HR. split.
-  - eapply bytes_at_agree; eauto. rewrite u32s_length. intros a Ha. apply HR. lia.
-  - eapply wr_at_agree; eauto.
+  intros P m m' A ws same [bytes_old wr_old] cover.
+  pose proof (wr_at_agree P m m' A _ same wr_old cover) as wr_new.
+  assert (bytes_new : bytes_at ctusegs m' A (u32s ws)).
+  { refine (bytes_at_agree P m m' A _ same bytes_old _).
+    intros a in_span. apply cover. rewrite u32s_length in in_span. lia. }
+  exact (conj bytes_new wr_new).
 Qed.
 
 Lemma wl_length l : length (wl l) = length l. Proof. unfold wl. apply length_map. Qed.
@@ -296,8 +305,12 @@ Lemma es_at_set_file : forall m A (st : ap_st bptr) adr i v,
   rw_cells ctusegs m (A + ESO_TOP) [C4 (wz (Z.of_nat (as_top st))); C4 (wz (Z.of_nat (as_bottom st)))] ->
   es_at m A (set_file i v st) adr.
 Proof.
-  intros m A st adr i v H0 H1 H2 H3 H4 H5 H6 H7 H8 H9. unfold es_at. cbn -[u32arr u64arr rw_cells wl Z.add Arr.upd map optr osize repeat ERR_NUM Z.of_nat].
-  rewrite map_lset, wl_lset. repeat (split; [assumption|]). assumption.
+  intros m A st adr i v flags marks buf data dsize dflags file line func topbot.
+  pose proof (eq_trans (f_equal wl (map_lset (optr adr) (as_file st) i v))
+                       (wl_lset (map (optr adr) (as_file st)) i (optr adr v))) as file_words.
+  rewrite <- file_words in file.
+  exact (conj flags (conj marks (conj buf (conj data (conj dsize (conj dflags
+           (conj file (conj line (conj func topbot))))))))).
 Qed.
 
 Lemma es_at_set_top : forall m A (st : ap_st bptr) adr (t b : nat),
@@ -313,7 +326,11 @@ Lemma es_at_set_top : forall m A (st : ap_st bptr) adr (t b : nat),
    u64arr ctusegs m (A + ESO_FUNC) (wl (map (optr adr) (as_func st))) ->
    rw_cells ctusegs m (A + ESO_TOP) [C4 (wz (Z.of_nat t)); C4 (wz (Z.of_nat b))] ->
    es_at m A st' adr).
-Proof. intros m A st adr t b. cbn zeta. intros. unfold es_at; cbn -[u32arr u64arr rw_cells wl Z.add map optr osize repeat ERR_NUM Z.of_nat]. repeat (split; [assumption|]). assumption. Qed.
+Proof.
+  intros m A st adr t b st' flags marks buf data dsize dflags file line func topbot.
+  exact (conj flags (conj marks (conj buf (conj data (conj dsize (conj dflags
+           (conj file (conj line (conj func topbot))))))))).
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -321,11 +338,16 @@ Proof. intros m A st adr t b. cbn zeta. intros. unfold es_at; cbn -[u32arr u64ar
 Lemma image_bytes_spec : forall n A bs, image_bytes ctusegs A n = Some bs ->
   forall i, (i < n)%nat -> seg_rom ctusegs (wa (A + Z.of_nat i)) = nth_error bs i.
 Proof.
-  induction n as [|n IH]; intros A bs H i Hi; [lia|]. cbn [image_bytes] in H.
-  destruct (seg_rom ctusegs (wa A)) as [b|] eqn:E; [|discriminate]. destruct (image_bytes ctusegs (A + 1) n) as [bs'|] eqn:E'; [|discriminate].
-  injection H as <-. destruct i as [|i]; cbn [nth_error].
-  - rewrite Z.add_0_r. exact E.
-  - rewrite <- (IH (A + 1) bs' E' i ltac:(lia)). f_equal. f_equal. lia.
+  induction n as [|k step]; intros A bs img i below; [lia|].
+  cbn [image_bytes] in img.
+  destruct (seg_rom ctusegs (wa A)) as [b0|] eqn:first_byte; [|discriminate img].
+  destruct (image_bytes ctusegs (A + 1) k) as [rest|] eqn:tail_bytes; [|discriminate img].
+  injection img as <-.
+  destruct i as [|j].
+  - replace (A + Z.of_nat 0) with A by lia. exact first_byte.
+  - pose proof (step (A + 1) rest tail_bytes j ltac:(lia)) as later.
+    replace (A + 1 + Z.of_nat j) with (A + Z.of_nat (S j)) in later by lia.
+    exact later.
 Qed.
 
 (* [comment removed for export] *)
@@ -333,9 +355,16 @@ Lemma ap_img_ro_cells : forall m A n bs,
   ap_img m -> IMG_LO <= A -> A + Z.of_nat n <= IMG_HI -> image_bytes ctusegs A n = Some bs ->
   ro_cells ctusegs m A [CB n bs].
 Proof.
-  intros m A n bs HI HA HB Hb. pose proof (image_bytes_length _ _ _ _ Hb) as Hlen.
-  split; [cbn; split; [exact Hlen|exact I]|].
-  cbn [cells_bytes cbytes]. rewrite app_nil_r. split; [unfold IMG_LO in HA; lia|]. split; [rewrite Hlen; unfold IMG_HI in HB; lia|].
-  intros i Hi. rewrite Hlen in Hi. rewrite (HI (A + Z.of_nat i)) by (unfold IMG_LO, IMG_HI in *; lia). apply (image_bytes_spec n); [exact Hb|exact Hi].
+  intros m A n bs pristine lo_ok hi_ok img.
+  pose proof (image_bytes_length ctusegs n A bs img) as len_bs.
+  assert (A_nonneg : 0 <= A) by (unfold IMG_LO in lo_ok; lia).
+  assert (end_fits : A + Z.of_nat (length bs) <= 2 ^ 64) by (rewrite len_bs; unfold IMG_HI in hi_ok; lia).
+  assert (reads : forall i : nat, (i < length bs)%nat -> mrd ctusegs m (wa (A + Z.of_nat i)) = nth_error bs i).
+  { intros i below. rewrite len_bs in below.
+    rewrite (pristine (A + Z.of_nat i)) by lia.
+    exact (image_bytes_spec n A bs img i below). }
+  pose proof (conj A_nonneg (conj end_fits reads) : bytes_at ctusegs m A bs) as raw.
+  refine (conj (conj len_bs I) _).
+  cbn [cells_bytes cbytes]. rewrite app_nil_r. exact raw.
 Qed.
 End WithCeiling0.

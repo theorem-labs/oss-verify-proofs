@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -24,9 +24,12 @@ Proof. unfold memalign_plain, NB_BYTES. repeat split; vm_compute; try reflexivit
 (* [comment removed for export] *)
 Lemma rw_CB_of_bytes : forall (m : mem) a bs, bytes_at asegs m a bs -> wr_at asegs m a (Z.of_nat (length bs)) -> rw_cells asegs m a [CB (length bs) bs].
 Proof.
-  intros m a bs BA WR. split.
-  - split; [cbn; split; [reflexivity | exact I] | cbn [cells_bytes cbytes]; rewrite app_nil_r; exact BA].
-  - cbn [cells_size csize]. rewrite Nat.add_0_r. exact WR.
+  intros m a bs got_bytes got_room.
+  assert (one_cell : Z.of_nat (cells_size [CB (length bs) bs]) = Z.of_nat (length bs)) by (cbn [cells_size csize]; lia).
+  split; [| rewrite one_cell; exact got_room].
+  split.
+  - cbn [cells_wf cell_wf]. split; [reflexivity | exact I].
+  - cbn [cells_bytes cbytes]. rewrite app_nil_r. exact got_bytes.
 Qed.
 
 Section HtNew.
@@ -50,571 +53,614 @@ Definition HT_COST : Z := mcost 96 + 1 + mcost 24 + (1 + mcost NB_BYTES) + (1 + 
 
 (* [comment removed for export] *)
 Definition ht_new_stmt : Prop :=
-  forall (Σ : rts RT) PMc (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
-    F fc (m : mem) (lo : Z) (outer : list Z) (conf fcf : Z) (kcf : nat) (ctx : word) (lb : byte) (canary : word),
-  fdfs_only PMc -> mat_stable PMc -> tp = Z_to_bv 64 TP_A -> a0 = Z_to_bv 64 conf ->
+  forall (Σ : rts RT) (PMc : Model -> Prop)
+    (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (outer : list Z)
+    (conf fcf : Z) (kcf : nat) (ctx : word) (lb : byte) (canary : word),
+  fdfs_only PMc -> mat_stable PMc ->
+  tp = Z_to_bv 64 TP_A ->
+  a0 = Z_to_bv 64 conf ->
   In (fcf, kcf) (rt_frames RT Σ) -> fcf <= conf -> conf + 48 <= fcf + fs_size kcf - 8 -> conf mod 8 = 0 ->
-  rw_cells asegs m conf (ht_conf ctx) -> acc asegs m conf 48 -> bv_unsigned ctx <> 0 ->
-  ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo -> lo + RT_STACK + 0x290 <= bv_unsigned sp ->
-  cg_ctx (rt_cg RT Σ) e_ht_new (bv_unsigned ra :: outer) -> uw_chain m sp s0 outer ->
+  rw_cells asegs m conf (ht_conf ctx) -> acc asegs m conf 48 ->
+  bv_unsigned ctx <> 0 ->
+  ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo ->
+  lo + RT_STACK + 656 <= bv_unsigned sp ->
+  cg_ctx (rt_cg RT Σ) e_ht_new (bv_unsigned ra :: outer) ->
+  uw_chain m sp s0 outer ->
   cg_has (rt_cg RT Σ) HT_SITES HT_CALLS ->
-  (length (rt_frames RT Σ) < FRAMES_MAX)%nat -> Z.of_nat (length (rt_live RT Σ)) + 6 <= LIVE_MAX -> HT_COST <= rt_credit RT Σ ->
+  (length (rt_frames RT Σ) < FRAMES_MAX)%nat ->
+  Z.of_nat (length (rt_live RT Σ)) + 6 <= LIVE_MAX ->
+  HT_COST <= rt_credit RT Σ ->
   cl_env m lb canary ->
   cps asegs (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_ht_new m)))
-    (fun c => exists (Σ' : rts RT) (nw lk md q L qp : Z),
-       ASTA RT Σ' PMc (fun ms => exists (m' : mem), ret_st ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 nw) m' ms
-           /\ rt_after RT Σ' (bv_unsigned sp) lo m m'
-           /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) [(G_ALLOW_CUST, G_ALLOW_CUST + 1)] m m'
-           /\ cl_env m' (Z_to_bv 8 1) canary
-           /\ wr_at asegs m' nw 96 /\ acc asegs m' nw 96
-           /\ rw_cells asegs m' nw (ht_tab4 ctx L lk md)
-           /\ rw_cells asegs m' md [C8 (Z_to_bv 64 q); C8 (Z_to_bv 64 q); C8 (Z_to_bv 64 511)]
-           /\ rw_cells asegs m' lk (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0))
-           /\ rw_cells asegs m' L (rcu_head ctx qp)
-           /\ rw_cells asegs m' (L + 48) (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\ rw_cells asegs m' (L + 88) (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0))
-           /\ rw_cells asegs m' (L + 128) cond_cells
-           /\ rw_cells asegs m' (L + 176) (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\ rw_cells asegs m' (L + 216) cond_cells
-           /\ rw_cells asegs m' qp [CB 16 (repeat (Z_to_bv 8 0) 16)]
-           /\ bytes_at asegs m' q (repeat (Z_to_bv 8 0) (Z.to_nat NB_BYTES))) c
-       /\ rt_live RT Σ' = (qp, 16) :: (L, 264) :: (q, NB_BYTES) :: (md, 24) :: (lk, 40) :: (nw, 96) :: rt_live RT Σ
-       /\ rt_frames RT Σ' = rt_frames RT Σ /\ rt_sp0 RT Σ' = rt_sp0 RT Σ
+    (fun c => exists (Σ' : rts RT) (h lk md nb rl rq : Z),
+       ASTA RT Σ' PMc
+         (fun ms => exists m' : mem,
+            ret_st ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 h) m' ms
+            /\ rt_after RT Σ' (bv_unsigned sp) lo m m'
+            /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) [(G_ALLOW_CUST, G_ALLOW_CUST + 1)] m m'
+            /\ cl_env m' (Z_to_bv 8 1) canary
+            /\ rw_cells asegs m' h (ht_tab4 ctx rl lk md) /\ acc asegs m' h 96
+            /\ rw_cells asegs m' lk (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\ acc asegs m' lk 40
+            /\ rw_cells asegs m' md [C8 (Z_to_bv 64 nb); C8 (Z_to_bv 64 nb); C8 (Z_to_bv 64 511)] /\ acc asegs m' md 24
+            /\ rw_cells asegs m' nb [CB (Z.to_nat NB_BYTES) (repeat (Z_to_bv 8 0) (Z.to_nat NB_BYTES))] /\ acc asegs m' nb NB_BYTES
+            /\ rw_cells asegs m' rl (rcu_head ctx rq)
+            /\ rw_cells asegs m' (rl + 48) (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0))
+            /\ rw_cells asegs m' (rl + 88) (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0))
+            /\ rw_cells asegs m' (rl + 128) cond_cells
+            /\ rw_cells asegs m' (rl + 176) (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0))
+            /\ rw_cells asegs m' (rl + 216) cond_cells
+            /\ acc asegs m' rl 264
+            /\ rw_cells asegs m' rq [CB 16 (repeat (Z_to_bv 8 0) 16)] /\ acc asegs m' rq 16) c
+       /\ rt_live RT Σ' = (rq, 16) :: (rl, 264) :: (nb, NB_BYTES) :: (md, 24) :: (lk, 40) :: (h, 96) :: rt_live RT Σ
+       /\ rt_frames RT Σ' = rt_frames RT Σ
+       /\ rt_sp0 RT Σ' = rt_sp0 RT Σ
        /\ rt_credit RT Σ' = rt_credit RT Σ - HT_COST
-       /\ 0 < nw /\ nw mod 16 = 0 /\ nw + 96 < USTACK_TOP /\ 0 < lk /\ lk mod 16 = 0 /\ lk + 40 < USTACK_TOP
-       /\ 0 < md /\ md mod 16 = 0 /\ md + 24 < USTACK_TOP /\ 0 < q /\ q mod 64 = 0 /\ q + NB_BYTES < USTACK_TOP
-       /\ 0 < L /\ L mod 16 = 0 /\ L + 264 < USTACK_TOP /\ 0 < qp /\ qp mod 16 = 0 /\ qp + 16 < USTACK_TOP
+       /\ 0 < h /\ h mod 16 = 0 /\ h + 96 < USTACK_TOP
+       /\ 0 < lk /\ lk mod 16 = 0 /\ lk + 40 < USTACK_TOP
+       /\ 0 < md /\ md mod 16 = 0 /\ md + 24 < USTACK_TOP
+       /\ 0 < nb /\ nb mod 64 = 0 /\ nb + NB_BYTES < USTACK_TOP
+       /\ 0 < rl /\ rl mod 16 = 0 /\ rl + 264 < USTACK_TOP
+       /\ 0 < rq /\ rq mod 16 = 0 /\ rq + 16 < USTACK_TOP
        /\ rt_cg RT Σ' = rt_cg RT Σ).
 
 Theorem ht_new_cps : ht_new_stmt.
 Proof.
-  intros Σ PMc ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo outer conf fcf kcf ctx lb canary
-    FDO MST -> -> INFC FC1 FC2 CAL HC0 ACF0 CTXN ART0 MI0 CALL HSTK CTX UWC CGH Hfr Hlen Hcr ENV.
-  intros T c HA Hk. pose proof CALL as (ST & LOW & LOR & SPT & SPA).
-  pose proof (af_sp0_win RT AF Σ m ART0) as SP0W. pose proof (af_sp0_range RT AF Σ m ART0) as SP0R. set (usp := bv_unsigned sp) in *.
-  assert (NUM : rt_sp0 RT Σ - STACK_WIN <= usp - 96 /\ 0x10007fff8000 <= lo /\ usp <= USTACK_TOP /\ usp <= 2^47) by (unfold RT_STACK, STACK_WIN, USTACK_TOP in *; lia).
-  cl_eu usp (-96) EU1.
-  unfold HT_COST in Hcr. pose proof (wg_mcost_nonneg 96) as MC1. pose proof (wg_mcost_nonneg 24) as MC2. pose proof (wg_mcost_nonneg NB_BYTES) as MC3.
-  pose proof (wg_mcost_nonneg 264) as MC4. pose proof (wg_mcost_nonneg 16) as MC5.
-  destruct (af_client_consts RT AF Σ m ART0) as (_ & SHC & _ & _ & UT).
-  (* [comment removed for export] *)
-  pose proof (af_frames_range RT AF Σ m fcf kcf ART0 INFC) as (FCF0 & FCFLO & FCFIMG & FCFP).
-  pose proof (af_frames_align RT AF Σ m fcf kcf ART0 INFC) as (_ & FCFSEG). unfold SEGTOP_A in FCFSEG.
-  assert (CLO : conf + 48 <= lo) by lia.
-  (* [comment removed for export] *)
+  unfold ht_new_stmt.
+  intros S0 PM ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo outer conf fcf kcf ctx lb canary
+    pm_fds pm_stable tp_is a0_is cf_in cf_from cf_to cf_al8 cf_cells cf_acc ctx_nz
+    art_e inv_e cok_e room_e cgx_e chain_e cgh_e nfr_e nlv_e cred_e env_e.
+  intros T k_e start_e finish.
+  subst tp a0.
+  pose (apart := fun a n b k : Z => a + n <= b \/ b + k <= a).
+  (* runtime facts at entry *)
+  destruct cok_e as (stk_e & win_e & _ & top_e & sp16_e).
+  pose proof (af_sp0_win RT AF S0 m art_e) as sp0_lo.
+  pose proof (af_sp0_range RT AF S0 m art_e) as (_ & sp0_hi).
+  pose proof (af_client_consts RT AF S0 m art_e) as (_ & shdyn_e & _ & _ & ut_e).
+  pose proof (af_frames_range RT AF S0 m fcf kcf art_e cf_in) as (fcf_pos & fcf_win & _ & _).
+  pose proof (af_frames_align RT AF S0 m fcf kcf art_e cf_in) as (_ & fcf_seg).
+  pose proof (afp_frame_mem RT GOBJ AFP S0 m fcf kcf art_e cf_in) as (_ & fcf_47).
+  assert (fs_pos : 0 <= fs_size kcf).
+  { unfold fs_size. rewrite Z.shiftl_mul_pow2 by lia. pose proof (Z.pow_nonneg 2 (Z.of_nat kcf) ltac:(lia)). lia. }
+  unfold SEGTOP_A in fcf_seg.
+  assert (lo_big : 0x10007fff8000 <= lo) by (unfold STACK_WIN in win_e; lia).
+  assert (sp_fit : bv_unsigned sp <= 2^47) by (unfold USTACK_TOP in top_e; lia).
+  assert (lo_sp : lo + 656 <= bv_unsigned sp) by (unfold RT_STACK in room_e; lia).
+  assert (csp_u : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -96)) = bv_unsigned sp + -96) by (apply unsigned_lit; lia).
+  (* the region the caller keeps, and four facts about it *)
+  pose (keep0 := fun x => aclient (rt_live RT S0) (rt_frames RT S0) (bv_unsigned sp) x /\ outside [(G_ALLOW_CUST, G_ALLOW_CUST + 1)] x).
+  assert (keep0_side : forall x, keep0 x -> bv_unsigned sp <= x \/ x < lo).
+  { intros x (kx & _). destruct (aclient_split RT AF S0 m (bv_unsigned sp) x art_e kx) as [up | down]; [left; exact up | right; lia]. }
+  assert (keep0_lift : forall live', (forall e, In e (rt_live RT S0) -> In e live') ->
+            forall x, keep0 x -> aclient live' (rt_frames RT S0) (bv_unsigned sp + -96) x /\ outside [(G_ALLOW_CUST, G_ALLOW_CUST + 1)] x).
+  { intros live' grows x (kx & ox). split; [| exact ox]. apply (aclient_mono _ _ _ _ _ _ _ kx grows); [tauto | lia]. }
+  assert (cf_kept : forall x, conf <= x < conf + 48 -> keep0 x).
+  { intros x xin. split.
+    - apply (acl_frame _ _ _ fcf kcf); [exact cf_in | lia].
+    - cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  assert (cfsh_kept : forall x, shad conf <= x <= shad (conf + 48 - 1) -> keep0 x).
+  { intros x xin. split.
+    - apply (acl_fshadow _ _ _ fcf kcf); [exact cf_in |]. unfold shad in *.
+      pose proof (Z.div_le_mono fcf conf 8 ltac:(lia) ltac:(lia)).
+      assert ((conf + 48 - 1) / 8 < (fcf + fs_size kcf) / 8) by (Z.div_mod_to_equations; lia). lia.
+    - cbn [outside]. unfold shad, SHB, G_ALLOW_CUST in *. split; [| exact I].
+      pose proof (Z.div_pos conf 8 ltac:(lia) ltac:(lia)). lia. }
+  (* frame set-up, up to the first allocation *)
   pose proof (ht_w0 ra sp gp (Z_to_bv 64 TP_A) t0 t1 t2 s0 s1 (Z_to_bv 64 conf) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo
-                ST ltac:(unfold RT_STACK in *; lia) ltac:(lia) ltac:(lia) UT SHC MI0) as W0.
-  cl_lift W0 HA c1 Hc1.
-  destruct (ASTA_unpack RT Σ _ _ c1 Hc1) as (ms1 & (j & m1 & -> & MU1 & WM1 & MI1 & FR1 & ST1) & Hc1'). clear Hc1.
-  fold usp in MU1, FR1, ST1, Hc1'.
-  pose proof (cl_seg_ART RT AF Σ m m1 usp 96 [] ART0 ltac:(lia) ltac:(lia) MU1 ltac:(intros x Hx; exfalso; apply Hx; exact I) WM1) as ART1.
-  pose proof (cl_seg_pres RT AF Σ m m1 usp 96 [] ART0 ltac:(lia) ltac:(lia) MU1) as PR1.
-  assert (AG1 : agree_on (fun x => usp <= x < USTACK_TOP) m m1) by (intros a Ha; apply PR1; [left; exact Ha | exact I]).
-  pose proof (cl_env_seg _ m m1 _ canary ENV MU1 ltac:(cl_fp_lia)) as ENV1.
-  pose proof (uw_chain_agree outer m m1 sp s0 UWC AG1) as UWF1.
-  assert (HC1 : rw_cells asegs m1 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m m1 _ _ HC0); [| exact WM1]. apply (agree_of_munch _ m m1 _ MU1). intros x Hx. unfold ht_conf in Hx. cbn [cells_size csize Nat.add outside app] in *. unfold RT_STACK in *. lia. }
-  destruct (cl_chain_call (rt_cg RT Σ) e_ht_new e_CRYPTO_zalloc SITE_ht_zalloc1 m1 m1 ra s0 sp (Z_to_bv 64 (usp + -96)) outer CTX
-              ltac:(apply (proj1 CGH); wp_in_lit) ltac:(apply (proj2 CGH); wp_in_lit) UWF1 ltac:(intros a _; reflexivity)
-              ltac:(fold usp; replace (usp - 16) with (usp + -96 + Z.of_nat (cells_size [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1])) by (cbn [cells_size csize Nat.add]; lia);
-                    exact (rw_cells_skip m1 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1] [C8 s0; C8 ra] FR1))
-              ltac:(rewrite EU1; fold usp; lia) SPT) as (CTXc1 & UWCc1).
-  (* [comment removed for export] *)
-  apply (C_CZ Σ PMc (Z_to_bv 64 SITE_ht_zalloc1) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 TP_A) t0 t1 t2 sp s1 (Z_to_bv 64 96) (Z_to_bv 64 0x4c8c0) (Z_to_bv 64 186)
-           a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 conf) s5 (Z_to_bv 64 0x7fff8000) s7 s8 s9 s10 s11 t3 t4 t5 t6
-           F fc m1 96 lo (bv_unsigned ra :: outer) lb canary FDO MST eq_refl eq_refl ltac:(lia) ART1 MI1).
-  { fold usp in SPA. cl_call_ok EU1 ST1 LOW SPA 6. }
-  { rewrite EU1. unfold RT_STACK in *. lia. }
-  { rewrite (unsigned_lit SITE_ht_zalloc1) by (unfold SITE_ht_zalloc1; lia). exact CTXc1. }
-  { exact UWCc1. }
-  { apply (cg_has_weaken _ _ _ _ _ CGH); vm_compute; reflexivity. }
-  { lia. }
-  { lia. }
-  { exact ENV1. }
-  { exact Hc1'. }
-  clear Hc1'. intros c2 (Σ1 & nw & Hc2 & LV1 & FRS1 & SP1 & CR1 & NW0 & NW16 & NWU & CG1).
-  destruct (ASTA_unpack RT Σ1 _ _ c2 Hc2) as (ms2 & (m2 & RS2 & (ART2 & MI2 & WM2 & ST2) & PRES2 & ENV2 & WRn2 & ACCn2 & ZERn2) & Hc2'). clear Hc2.
-  destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
-  rewrite EU1 in ST2, PRES2. rewrite (ret_pc_even SITE_ht_zalloc1) in Hc2' by (unfold SITE_ht_zalloc1; lia).
-  assert (INN1 : In (nw, 96) (rt_live RT Σ1)) by (rewrite LV1; left; reflexivity).
-  assert (INFC1 : In (fcf, kcf) (rt_frames RT Σ1)) by (rewrite FRS1; exact INFC).
-  pose proof (afp_live_hi RT GOBJ AFP Σ1 m2 nw 96 ART2 INN1 ltac:(lia)) as NWH.
-  pose proof (af_live_range RT AF Σ1 m2 nw 96 ART2 INN1) as (_ & NWLO & _). rewrite SP1 in NWLO.
-  pose proof (af_frames_range RT AF Σ1 m2 fcf kcf ART2 INFC1) as (_ & _ & _ & FCFP1). specialize (FCFP1 nw 96 INN1). wp_box1 FCFP1.
-  pose proof (wg_mod16_8 _ NW16) as NWA.
-  assert (AG12 : forall a k, (usp + -96 <= a /\ a + k <= USTACK_TOP) \/ (fcf <= a /\ a + k <= fcf + fs_size kcf - 8) -> agree_on (fun x => a <= x < a + k) m1 m2).
-  { intros a k H x Hx. cbv beta in Hx. apply PRES2.
-    - destruct H as [H|H]; [left; lia | apply (acl_frame _ _ _ fcf kcf); [exact INFC | lia]].
-    - cbn [outside]. unfold G_ALLOW_CUST. split; [| exact I]. clear - H Hx NUM HSTK FCFSEG. unfold USTACK_TOP, RT_STACK in *. lia. }
-  clear FCFP.
-  assert (FR2 : rw_cells asegs m2 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m1 m2 _ _ FR1); [| exact WM2]. apply AG12. left. cbn [cells_size csize Nat.add]. clear - NUM. unfold USTACK_TOP in *. lia. }
-  assert (HC2 : rw_cells asegs m2 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m1 m2 _ _ HC1); [| exact WM2]. apply AG12. right. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FC1 FC2. lia. }
-  (* [comment removed for export] *)
-  assert (SHCF : forall x, shad conf <= x <= shad (conf + 48 - 1) -> shad fcf <= x < shad (fcf + fs_size kcf)).
-  { intros x Hx. unfold shad, SHB in *. clear - Hx FC1 FC2 FCF0. Z.div_mod_to_equations. lia. }
-  assert (ACF2 : acc asegs m2 conf 48).
-  { apply (acc_agree m m2 _ _ ACF0 ltac:(lia)). intros x Hx. cbv beta in Hx. pose proof (SHCF (bv_unsigned x) Hx) as Sx.
-    rewrite (PRES2 x ltac:(apply (acl_fshadow _ _ _ fcf kcf); [exact INFC | exact Sx]) ltac:(cbn [outside]; unfold G_ALLOW_CUST, shad, SHB in *; lia)).
-    apply MU1. cbn [outside]. split; [| exact I]. unfold shad, SHB in *. clear - Sx FCFLO NUM LOW HSTK. unfold USTACK_TOP, RT_STACK, STACK_WIN in *. Z.div_mod_to_equations. lia. }
-  assert (AG12u : agree_on (fun x => usp <= x < USTACK_TOP) m1 m2).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG12. left. clear; lia. }
-  pose proof (uw_chain_agree outer m1 m2 sp s0 UWF1 AG12u) as UWF2.
-  (* [comment removed for export] *)
-  pose proof (ht_w1 sp gp (Z_to_bv 64 TP_A) u0 u1 u2 b1 b2 b3 b4 b5 b6 b7 s1 s2 s3 s5 s7 s8 s9 s10 s11 u3 u4 u5 u6 F2 fc2 m2 nw conf ctx
-                NW0 ltac:(unfold USTACK_TOP in *; lia) NWA ltac:(clear - FC1 FCF0; lia) ltac:(unfold USTACK_TOP, STACK_WIN in *; lia) CAL HC2 ACF2 MI2) as W1.
-  fold usp in W1.
-  cl_lift W1 Hc2' c3 Hc3.
-  destruct (ASTA_unpack RT Σ1 _ _ c3 Hc3) as (ms3 & E3 & Hc3'). clear Hc3. unfold ht_w1_post in E3. subst ms3. fold usp in Hc3'.
-  destruct (cl_chain_call (rt_cg RT Σ1) e_ht_new e_lock_new SITE_ht_locknew m2 m2 ra s0 sp (Z_to_bv 64 (usp + -96)) outer ltac:(rewrite CG1; exact CTX)
-              ltac:(rewrite CG1; apply (proj1 CGH); wp_in_lit) ltac:(rewrite CG1; apply (proj2 CGH); wp_in_lit) UWF2 ltac:(intros a _; reflexivity)
-              ltac:(fold usp; replace (usp - 16) with (usp + -96 + Z.of_nat (cells_size [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1])) by (cbn [cells_size csize Nat.add]; lia);
-                    exact (rw_cells_skip m2 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1] [C8 s0; C8 ra] FR2))
-              ltac:(rewrite EU1; fold usp; lia) SPT) as (CTXc2 & UWCc2).
-  assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
-  (* [comment removed for export] *)
-  apply (C_LN Σ1 PMc (Z_to_bv 64 SITE_ht_locknew) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 TP_A) u0 u1 u2 sp (Z_to_bv 64 nw)
-           (Z_to_bv 64 0) (Z_to_bv 64 0) b2 b3 b4 b5 b6 b7 (Z_to_bv 64 (nw + 64)) (Z_to_bv 64 (conf + 40)) (Z_to_bv 64 conf) s5 (Z_to_bv 64 0x7fff8000)
-           (Z_to_bv 64 (Z.shiftr (conf + 40) 3 + 2147450880)) s8 s9 s10 s11 u3 u4 u5 u6
-           F2 fc2 m2 lo (bv_unsigned ra :: outer) (Z_to_bv 8 1) canary FDO MST eq_refl ART2 MI2).
-  { fold usp in SPA. cl_call_ok EU1 ST2 LOW1 SPA 6. }
-  { rewrite EU1. unfold RT_STACK in *. lia. }
-  { rewrite (unsigned_lit SITE_ht_locknew) by (unfold SITE_ht_locknew; lia). exact CTXc2. }
-  { exact UWCc2. }
-  { rewrite CG1. apply (cg_has_weaken _ _ _ _ _ CGH); vm_compute; reflexivity. }
-  { rewrite FRS1. exact Hfr. }
-  { rewrite LV1. cbn [length]. lia. }
-  { rewrite CR1. lia. }
-  { exact ENV2. }
-  { exact Hc3'. }
-  clear Hc3'. intros c4 (Σ2 & lk & Hc4 & LV2 & FRS2 & SP2 & CR2 & LK0 & LK16 & LKU & CG2).
-  destruct (ASTA_unpack RT Σ2 _ _ c4 Hc4) as (ms4 & (m4 & RS4 & (ART4 & MI4 & WM4 & ST4) & PRES4 & ENV4 & HLK4 & ACCl4) & Hc4'). clear Hc4.
-  destruct RS4 as (v0 & v1 & v2 & d1 & d2 & d3 & d4 & d5 & d6 & d7 & v3 & v4 & v5 & v6 & F4 & fc4 & ->).
-  rewrite EU1 in ST4, PRES4. rewrite (ret_pc_even SITE_ht_locknew) in Hc4' by (unfold SITE_ht_locknew; lia).
-  assert (INN2 : In (nw, 96) (rt_live RT Σ2)) by (rewrite LV2; right; exact INN1).
-  assert (INL2 : In (lk, 40) (rt_live RT Σ2)) by (rewrite LV2; left; reflexivity).
-  assert (INFC2 : In (fcf, kcf) (rt_frames RT Σ2)) by (rewrite FRS2; exact INFC1).
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW1).
-  pose proof (af_live_disj RT AF Σ2 m4 lk 40 nw 96 [] (rt_live RT Σ1) ART4 LV2 INN1) as LKN. wp_box1 LKN.
-  assert (AG24 : forall a k, (usp + -96 <= a /\ a + k <= USTACK_TOP) \/ (fcf <= a /\ a + k <= fcf + fs_size kcf - 8) \/ (nw <= a /\ a + k <= nw + 96)
-                             -> agree_on (fun x => a <= x < a + k) m2 m4).
-  { intros a k H x Hx. cbv beta in Hx. apply PRES4.
-    - destruct H as [H|[H|H]]; [left; clear - H Hx; lia | apply (acl_frame _ _ _ fcf kcf); [exact INFC1 | clear - H Hx; lia] | apply (acl_live _ _ _ nw 96); [exact INN1 | clear - H Hx; lia]].
-    - cbn [outside]. unfold G_ALLOW_CUST. split; [| exact I]. clear - H Hx NUM HSTK FCFSEG NWH. unfold USTACK_TOP, RT_STACK in *. lia. }
-  assert (FR4 : rw_cells asegs m4 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m2 m4 _ _ FR2); [| exact WM4]. apply AG24. left. cbn [cells_size csize Nat.add]. clear - NUM. unfold USTACK_TOP in *. lia. }
-  assert (HC4 : rw_cells asegs m4 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m2 m4 _ _ HC2); [| exact WM4]. apply AG24. right; left. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FC1 FC2. lia. }
-  (* [comment removed for export] *)
-  assert (HT4 : rw_cells asegs m4 nw ht_tab0).
-  { assert (HZ : rw_cells asegs m2 nw [CB (Z.to_nat 96) (repeat (Z_to_bv 8 0) (Z.to_nat 96))]) by exact (wp_zero_rw_CB asegs m2 nw 96 ZERn2 WRn2 ltac:(lia)).
-    apply (rw_cells_split_CB asegs _ _ [] 96 _ [] [48; 8; 8; 8; 8; 16]%nat) in HZ; [| reflexivity]. cbn [mk_CB_cells app firstn skipn repeat] in HZ.
-    apply (rw_cells_agree asegs m2 m4 _ _ (rw_cells_recast m2 nw _ ht_tab0 HZ ltac:(cbn; repeat first [exact I | reflexivity | split]) ltac:(reflexivity))); [| exact WM4].
-    apply AG24. right; right. unfold ht_tab0. cbn [cells_size csize Nat.add]. clear; lia. }
-  pose proof (af_acc_live RT AF Σ2 m4 nw 96 ART4 INN2) as (WRn4 & ACCn4).
-  assert (AG24u : agree_on (fun x => usp <= x < USTACK_TOP) m2 m4).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG24. left. clear; lia. }
-  pose proof (uw_chain_agree outer m2 m4 sp s0 UWF2 AG24u) as UWF4.
-  (* [comment removed for export] *)
-  pose proof (ht_w2 sp gp (Z_to_bv 64 TP_A) v0 v1 v2 d1 d2 d3 d4 d5 d6 d7 s5 s8 s9 s10 s11 v3 v4 v5 v6 F4 fc4 m4 nw conf lk
-                NWH ltac:(unfold USTACK_TOP in *; lia) NWA LK0 ltac:(unfold USTACK_TOP in *; lia) ltac:(lia) ltac:(unfold USTACK_TOP, STACK_WIN in *; lia) HT4 ACCn4 MI4) as W2.
-  fold usp in W2.
-  cl_lift W2 Hc4' c5 Hc5.
-  destruct (ASTA_unpack RT Σ2 _ _ c5 Hc5) as (ms5 & (m5 & -> & MU5 & WM5 & MI5 & HT5) & Hc5'). clear Hc5.
-  fold usp in Hc5'.
-  assert (ART5 : ART RT Σ2 m5).
-  { apply (af_frame RT AF Σ2 m4 m5 (usp + -96) ART4 ltac:(rewrite SP2, SP1; lia)); [| exact WM5].
-    intros a Ha. apply MU5. cbn [outside]. split; [| exact I]. intros Hin; apply Ha. apply (acl_live _ _ _ nw 96); [exact INN2 | clear - Hin; lia]. }
-  pose proof (cl_env_seg _ m4 m5 _ canary ENV4 MU5 ltac:(cl_fp_lia)) as ENV5.
-  assert (AG45 : forall a k, (a + k <= nw \/ nw + 96 <= a) -> agree_on (fun x => a <= x < a + k) m4 m5).
-  { intros a k H. apply (agree_of_munch _ m4 m5 _ MU5). intros x Hx. cbv beta in Hx. cbn [outside]. clear - H Hx. lia. }
-  assert (ST5 : stk asegs m5 lo (usp + -96)).
-  { apply (stk_munch _ m4 m5 _ _ ST4 MU5 WM5). intros x Hx. cbn [outside]. clear - Hx NWLO LOW. lia. }
-  assert (FR5 : rw_cells asegs m5 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m4 m5 _ _ FR4); [| exact WM5]. apply AG45. cbn [cells_size csize Nat.add]. clear - NWLO LOW HSTK. unfold RT_STACK in *. lia. }
-  assert (HC5 : rw_cells asegs m5 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m4 m5 _ _ HC4); [| exact WM5]. apply AG45. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FCFP1 FC1 FC2. unfold wp_box in *. lia. }
-  assert (ACF5 : acc asegs m5 conf 48).
-  { apply (acc_agree m2 m5 _ _ ACF2 ltac:(lia)). intros x Hx. cbv beta in Hx. pose proof (SHCF (bv_unsigned x) Hx) as Sx.
-    rewrite (MU5 x ltac:(cbn [outside]; split; [unfold shad, SHB in *; clear - Sx NWH FCFLO NUM; unfold STACK_WIN in *; Z.div_mod_to_equations; lia | exact I])).
-    apply PRES4; [apply (acl_fshadow _ _ _ fcf kcf); [exact INFC1 | exact Sx] | cbn [outside]; unfold G_ALLOW_CUST, shad, SHB in *; lia]. }
-  assert (AG45u : agree_on (fun x => usp <= x < USTACK_TOP) m4 m5).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG45. clear - NWLO LOW HSTK. unfold RT_STACK in *. lia. }
-  pose proof (uw_chain_agree outer m4 m5 sp s0 UWF4 AG45u) as UWF5.
-  (* [comment removed for export] *)
-  assert (BSC : bytes_at asegs m5 conf (cells_bytes (ht_conf ctx))) by exact (rw_cells_bytes_at asegs m5 conf _ HC5).
-  assert (LEN48 : Z.of_nat (length (cells_bytes (ht_conf ctx))) = 48) by reflexivity.
-  assert (CHS : checked_src RT Σ2 m5 (Z_to_bv 64 (usp + -96)) lo conf (Z.of_nat (length (cells_bytes (ht_conf ctx))))).
-  { rewrite LEN48. split.
-    - intros _. split; [exact ACF5|]. right; left. exists fcf, kcf. split; [exact INFC2 | clear - FC1 FC2; lia].
-    - left. clear - CLO; lia. }
-  assert (CHD : checked_dst RT Σ2 m5 (Z_to_bv 64 (usp + -96)) nw (Z.of_nat (length (cells_bytes (ht_conf ctx))))).
-  { rewrite LEN48. split; [| split].
-    - intros _. split; [exact (acc_sub asegs m5 nw 96 nw 48 (proj2 (af_acc_live RT AF Σ2 m5 nw 96 ART5 INN2)) ltac:(lia) ltac:(lia))|].
-      left. exists nw, 96. split; [exact INN2 | clear; lia].
-    - intros i Hi. apply (acl_live _ _ _ nw 96); [exact INN2 | clear - Hi; lia].
-    - exact (wr_at_sub m5 nw 96 nw 48 (proj1 (af_acc_live RT AF Σ2 m5 nw 96 ART5 INN2)) ltac:(lia) ltac:(lia) ltac:(lia)). }
-  apply (MCP Σ2 PMc (Z_to_bv 64 SITE_ht_memcpy) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 TP_A) v0 v1 v2 sp (Z_to_bv 64 nw)
-           (Z_to_bv 64 nw) (Z_to_bv 64 conf) (Z_to_bv 64 48) d3 d4 d5 d6 d7 (Z_to_bv 64 (nw + 64)) (Z_to_bv 64 (conf + 40)) (Z_to_bv 64 conf) s5 (Z_to_bv 64 0x7fff8000)
-           (Z_to_bv 64 (Z.shiftr (conf + 40) 3 + 2147450880)) s8 s9 s10 s11 v3 v4 v5 v6
-           F4 fc4 m5 nw conf (cells_bytes (ht_conf ctx)) lo FDO MST eq_refl eq_refl ltac:(rewrite LEN48; reflexivity)
-           ltac:(clear - NWH NWLO SP0R; unfold USTACK_TOP, STACK_WIN in *; lia) ltac:(clear - FCFSEG FC1 FC2 FCFLO SP0R; unfold USTACK_TOP, STACK_WIN in *; lia) ltac:(rewrite LEN48; clear; lia) BSC CHS CHD
-           ltac:(rewrite LEN48; clear - FCFP1 FC1 FC2; unfold wp_box in *; lia) ART5 MI5).
-  { fold usp in SPA. cl_call_ok EU1 ST5 LOW2 SPA 6. }
-  { exact Hc5'. }
-  clear Hc5'. intros c6 Hc6.
-  destruct (ASTA_unpack RT Σ2 _ _ c6 Hc6) as (ms6 & (m6 & RS6 & (ART6 & MI6 & WM6 & ST6) & PRES6 & CPY6) & Hc6'). clear Hc6.
-  destruct RS6 as (w0 & w1 & w2 & e1 & e2 & e3 & e4 & e5 & e6 & e7 & w3 & w4 & w5 & w6 & F6 & fc6 & ->).
-  rewrite EU1 in ST6, PRES6. rewrite (ret_pc_even SITE_ht_memcpy) in Hc6' by (unfold SITE_ht_memcpy; lia). rewrite LEN48 in PRES6.
-  assert (AG56 : forall a k, ((usp + -96 <= a /\ a + k <= USTACK_TOP) \/ (fcf <= a /\ a + k <= fcf + fs_size kcf - 8) \/ (nw + 48 <= a /\ a + k <= nw + 96)
-                              \/ (shad fcf <= a /\ a + k <= shad (fcf + fs_size kcf))) -> agree_on (fun x => a <= x < a + k) m5 m6).
-  { intros a k H x Hx. cbv beta in Hx. apply PRES6.
-    - destruct H as [H|[H|[H|H]]]; [left; clear - H Hx; lia | apply (acl_frame _ _ _ fcf kcf); [exact INFC2 | clear - H Hx; lia] | apply (acl_live _ _ _ nw 96); [exact INN2 | clear - H Hx; lia] | apply (acl_fshadow _ _ _ fcf kcf); [exact INFC2 | clear - H Hx; lia]].
-    - destruct H as [H|[H|[H|H]]]; [clear - H Hx NWLO LOW HSTK; unfold RT_STACK in *; lia | clear - H Hx FCFP1 FC1 FC2; unfold wp_box in *; lia | clear - H Hx; lia | unfold shad, SHB in *; clear - H Hx NWH FCFLO SP0R NUM; unfold USTACK_TOP, STACK_WIN in *; Z.div_mod_to_equations; lia]. }
-  assert (FR6 : rw_cells asegs m6 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m5 m6 _ _ FR5); [| exact WM6]. apply AG56. left. cbn [cells_size csize Nat.add]. clear - NUM. unfold USTACK_TOP in *. lia. }
-  assert (HC6 : rw_cells asegs m6 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m5 m6 _ _ HC5); [| exact WM6]. apply AG56. right; left. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FC1 FC2. lia. }
-  assert (ACF6 : acc asegs m6 conf 48).
-  { apply (acc_agree m5 m6 _ _ ACF5 ltac:(lia)). intros x Hx. cbv beta in Hx. pose proof (SHCF (bv_unsigned x) Hx) as Sx.
-    apply PRES6; [apply (acl_fshadow _ _ _ fcf kcf); [exact INFC2 | exact Sx] |].
-    unfold shad, SHB in *. clear - Sx NWH FCFLO SP0R NUM. unfold USTACK_TOP, STACK_WIN in *. Z.div_mod_to_equations. lia. }
-  (* [comment removed for export] *)
-  assert (HT6 : rw_cells asegs m6 nw (ht_tab1 ctx lk)).
-  { destruct (proj1 (rw_cells_app m5 nw [CB 48 (repeat (Z_to_bv 8 0) 48)] _) HT5) as [_ TL5]. cbn [cells_size csize Nat.add] in TL5.
-    assert (TL6 : rw_cells asegs m6 (nw + 48) [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 lk); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); CB 16 (repeat (Z_to_bv 8 0) 16)]).
-    { apply (rw_cells_agree asegs m5 m6 _ _ TL5); [| exact WM6]. apply AG56. right; right; left. cbn [cells_size csize Nat.add]. clear; lia. }
-    pose proof (rw_CB_of_bytes m6 nw _ CPY6 ltac:(rewrite LEN48; exact (wr_at_sub m6 nw 96 nw 48 (proj1 (af_acc_live RT AF Σ2 m6 nw 96 ART6 INN2)) ltac:(lia) ltac:(lia) ltac:(lia)))) as HD6.
-    pose proof (rw_cells_recast m6 nw _ (ht_conf ctx) HD6 ltac:(cbn; repeat first [exact I | reflexivity | split]) ltac:(reflexivity)) as HD6'.
-    unfold ht_tab1. change (rw_cells asegs m6 nw (ht_conf ctx ++ [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 lk); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); CB 16 (repeat (Z_to_bv 8 0) 16)])).
-    apply (proj2 (rw_cells_app m6 nw (ht_conf ctx) _)). split; [exact HD6'|]. cbn [cells_size csize Nat.add ht_conf]. exact TL6. }
-  assert (ENV6 : cl_env m6 (Z_to_bv 8 1) canary).
-  { apply (cl_env_pres_ex _ _ _ _ _ m5 m6 _ canary ENV5 PRES6). intros x Hx. pose proof (client_static_range x (cl_cell_static x Hx)) as XR. clear - XR NWH. unfold SEGTOP_A in *. lia. }
-  assert (AG56u : agree_on (fun x => usp <= x < USTACK_TOP) m5 m6).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG56. left. clear; lia. }
-  pose proof (uw_chain_agree outer m5 m6 sp s0 UWF5 AG56u) as UWF6.
-  pose proof (proj2 (af_acc_live RT AF Σ2 m6 nw 96 ART6 INN2)) as ACCn6.
-  (* [comment removed for export] *)
-  pose proof (ht_w3 sp gp (Z_to_bv 64 TP_A) w0 w1 w2 e1 e2 e3 e4 e5 e6 e7 s5 s8 s9 s10 s11 w3 w4 w5 w6 F6 fc6 m6 nw conf lk ctx
-                NWH ltac:(unfold USTACK_TOP in *; lia) NWA ltac:(lia) ltac:(unfold USTACK_TOP, STACK_WIN in *; lia) HT6 ACCn6 MI6) as W3.
-  fold usp in W3.
-  cl_lift W3 Hc6' c7 Hc7.
-  destruct (ASTA_unpack RT Σ2 _ _ c7 Hc7) as (ms7 & (m7 & -> & MU7 & WM7 & MI7 & HT7) & Hc7'). clear Hc7.
-  fold usp in Hc7'.
-  assert (ART7 : ART RT Σ2 m7).
-  { apply (af_frame RT AF Σ2 m6 m7 (usp + -96) ART6 ltac:(rewrite SP2, SP1; lia)); [| exact WM7].
-    intros a Ha. apply MU7. cbn [outside]. split; [| exact I]. intros Hin; apply Ha. apply (acl_live _ _ _ nw 96); [exact INN2 | clear - Hin; lia]. }
-  pose proof (cl_env_seg _ m6 m7 _ canary ENV6 MU7 ltac:(cl_fp_lia)) as ENV7.
-  assert (AG67 : forall a k, (a + k <= nw \/ nw + 96 <= a) -> agree_on (fun x => a <= x < a + k) m6 m7).
-  { intros a k H. apply (agree_of_munch _ m6 m7 _ MU7). intros x Hx. cbv beta in Hx. cbn [outside]. clear - H Hx. lia. }
-  assert (ST7 : stk asegs m7 lo (usp + -96)).
-  { apply (stk_munch _ m6 m7 _ _ ST6 MU7 WM7). intros x Hx. cbn [outside]. clear - Hx NWLO LOW. lia. }
-  assert (FR7 : rw_cells asegs m7 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m6 m7 _ _ FR6); [| exact WM7]. apply AG67. cbn [cells_size csize Nat.add]. clear - NWLO LOW HSTK. unfold RT_STACK in *. lia. }
-  assert (HC7 : rw_cells asegs m7 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m6 m7 _ _ HC6); [| exact WM7]. apply AG67. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FCFP1 FC1 FC2. unfold wp_box in *. lia. }
-  assert (ACF7 : acc asegs m7 conf 48).
-  { apply (acc_agree m6 m7 _ _ ACF6 ltac:(lia)). intros x Hx. cbv beta in Hx. pose proof (SHCF (bv_unsigned x) Hx) as Sx.
-    apply MU7. cbn [outside]. split; [| exact I]. unfold shad, SHB in *. clear - Sx NWH FCFLO NUM; unfold STACK_WIN in *; Z.div_mod_to_equations; lia. }
-  assert (AG67u : agree_on (fun x => usp <= x < USTACK_TOP) m6 m7).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG67. clear - NWLO LOW HSTK. unfold RT_STACK in *. lia. }
-  pose proof (uw_chain_agree outer m6 m7 sp s0 UWF6 AG67u) as UWF7.
-  destruct (cl_chain_call (rt_cg RT Σ2) e_ht_new e_CRYPTO_zalloc SITE_ht_zalloc2 m7 m7 ra s0 sp (Z_to_bv 64 (usp + -96)) outer ltac:(rewrite CG2, CG1; exact CTX)
-              ltac:(rewrite CG2, CG1; apply (proj1 CGH); wp_in_lit) ltac:(rewrite CG2, CG1; apply (proj2 CGH); wp_in_lit) UWF7 ltac:(intros a _; reflexivity)
-              ltac:(fold usp; replace (usp - 16) with (usp + -96 + Z.of_nat (cells_size [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1])) by (cbn [cells_size csize Nat.add]; lia);
-                    exact (rw_cells_skip m7 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1] [C8 s0; C8 ra] FR7))
-              ltac:(rewrite EU1; fold usp; lia) SPT) as (CTXc7 & UWCc7).
-  (* [comment removed for export] *)
-  apply (C_CZ Σ2 PMc (Z_to_bv 64 SITE_ht_zalloc2) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 TP_A) w0 w1 w2 sp (Z_to_bv 64 nw) (Z_to_bv 64 24) (Z_to_bv 64 0x4c8c0) (Z_to_bv 64 218)
-           e3 e4 e5 e6 e7 (Z_to_bv 64 (nw + 64)) (Z_to_bv 64 (conf + 40)) (Z_to_bv 64 conf) (Z_to_bv 64 (nw + 72)) (Z_to_bv 64 0x7fff8000)
-           (Z_to_bv 64 (Z.shiftr (conf + 40) 3 + 2147450880)) (Z_to_bv 64 (Z.shiftr (nw + 72) 3 + 2147450880)) s9 s10 s11 w3 w4 w5 w6
-           F6 fc6 m7 24 lo (bv_unsigned ra :: outer) (Z_to_bv 8 1) canary FDO MST eq_refl eq_refl ltac:(lia) ART7 MI7).
-  { fold usp in SPA. cl_call_ok EU1 ST7 LOW2 SPA 6. }
-  { rewrite EU1. unfold RT_STACK in *. lia. }
-  { rewrite (unsigned_lit SITE_ht_zalloc2) by (unfold SITE_ht_zalloc2; lia). exact CTXc7. }
-  { exact UWCc7. }
-  { rewrite CG2, CG1. apply (cg_has_weaken _ _ _ _ _ CGH); vm_compute; reflexivity. }
-  { rewrite LV2, LV1. cbn [length]. lia. }
-  { rewrite CR2, CR1. lia. }
-  { exact ENV7. }
-  { exact Hc7'. }
-  clear Hc7'. intros c8 (Σ3 & md & Hc8 & LV3 & FRS3 & SP3 & CR3 & MD0 & MD16 & MDU & CG3).
-  destruct (ASTA_unpack RT Σ3 _ _ c8 Hc8) as (ms8 & (m8 & RS8 & (ART8 & MI8 & WM8 & ST8) & PRES8 & ENV8 & WRm8 & ACCm8 & ZERm8) & Hc8'). clear Hc8.
-  destruct RS8 as (x0 & x1 & x2 & g1 & g2 & g3 & g4 & g5 & g6 & g7 & x3 & x4 & x5 & x6 & F8 & fc8 & ->).
-  rewrite EU1 in ST8, PRES8. rewrite (ret_pc_even SITE_ht_zalloc2) in Hc8' by (unfold SITE_ht_zalloc2; lia).
-  assert (INM3 : In (md, 24) (rt_live RT Σ3)) by (rewrite LV3; left; reflexivity).
-  assert (INN3 : In (nw, 96) (rt_live RT Σ3)) by (rewrite LV3; right; exact INN2).
-  assert (INFC3 : In (fcf, kcf) (rt_frames RT Σ3)) by (rewrite FRS3; exact INFC2).
-  assert (LOW3 : rt_sp0 RT Σ3 - STACK_WIN <= lo) by (rewrite SP3; exact LOW2).
-  pose proof (afp_live_hi RT GOBJ AFP Σ3 m8 md 24 ART8 INM3 ltac:(lia)) as MDH.
-  pose proof (af_live_range RT AF Σ3 m8 md 24 ART8 INM3) as (_ & MDLO & _). rewrite SP3, SP2, SP1 in MDLO.
-  pose proof (af_live_disj RT AF Σ3 m8 md 24 nw 96 [] (rt_live RT Σ2) ART8 LV3 INN2) as MDN. wp_box1 MDN.
-  pose proof (af_frames_range RT AF Σ3 m8 fcf kcf ART8 INFC3) as (_ & _ & _ & FCFP3). specialize (FCFP3 md 24 INM3). wp_box1 FCFP3.
-  pose proof (wg_mod16_8 _ MD16) as MDA.
-  assert (AG78 : forall a k, ((usp + -96 <= a /\ a + k <= USTACK_TOP) \/ (fcf <= a /\ a + k <= fcf + fs_size kcf - 8) \/ (nw <= a /\ a + k <= nw + 96)
-                              \/ (shad fcf <= a /\ a + k <= shad (fcf + fs_size kcf))) -> agree_on (fun x => a <= x < a + k) m7 m8).
-  { intros a k H x Hx. cbv beta in Hx. apply PRES8.
-    - destruct H as [H|[H|[H|H]]]; [left; clear - H Hx; lia | apply (acl_frame _ _ _ fcf kcf); [exact INFC2 | clear - H Hx; lia] | apply (acl_live _ _ _ nw 96); [exact INN2 | clear - H Hx; lia] | apply (acl_fshadow _ _ _ fcf kcf); [exact INFC2 | clear - H Hx; lia]].
-    - cbn [outside]. unfold G_ALLOW_CUST. split; [| exact I].
-      destruct H as [H|[H|[H|H]]]; [clear - H Hx NUM HSTK; unfold USTACK_TOP, RT_STACK in *; lia | clear - H Hx FCFSEG; lia | clear - H Hx NWH; lia | unfold shad, SHB in *; clear - H Hx FCFSEG; Z.div_mod_to_equations; lia]. }
-  assert (FR8 : rw_cells asegs m8 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m7 m8 _ _ FR7); [| exact WM8]. apply AG78. left. cbn [cells_size csize Nat.add]. clear - NUM. unfold USTACK_TOP in *. lia. }
-  assert (HC8 : rw_cells asegs m8 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m7 m8 _ _ HC7); [| exact WM8]. apply AG78. right; left. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FC1 FC2. lia. }
-  assert (HT8 : rw_cells asegs m8 nw (ht_tab2 ctx lk)).
-  { apply (rw_cells_agree asegs m7 m8 _ _ HT7); [| exact WM8]. apply AG78. right; right; left. unfold ht_tab2. cbn [cells_size csize Nat.add]. clear; lia. }
-  assert (ACF8 : acc asegs m8 conf 48).
-  { apply (acc_agree m7 m8 _ _ ACF7 ltac:(lia)). intros x Hx. cbv beta in Hx. pose proof (SHCF (bv_unsigned x) Hx) as Sx.
-    apply PRES8; [apply (acl_fshadow _ _ _ fcf kcf); [exact INFC2 | exact Sx] | cbn [outside]; unfold G_ALLOW_CUST, shad, SHB in *; lia]. }
-  assert (HMD8 : rw_cells asegs m8 md [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]).
-  { pose proof (wp_zero_rw_CB asegs m8 md 24 ZERm8 WRm8 ltac:(lia)) as HZ. change (Z.to_nat 24) with 24%nat in HZ.
-    apply (rw_cells_recast m8 md _ _ HZ); [cbn; repeat first [exact I | reflexivity | split] | reflexivity]. }
-  pose proof (proj2 (af_acc_live RT AF Σ3 m8 nw 96 ART8 INN3)) as ACCn8.
-  assert (AG78u : agree_on (fun x => usp <= x < USTACK_TOP) m7 m8).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG78. left. clear; lia. }
-  pose proof (uw_chain_agree outer m7 m8 sp s0 UWF7 AG78u) as UWF8.
-  (* [comment removed for export] *)
-  pose proof (ht_w4 sp gp (Z_to_bv 64 TP_A) x0 x1 x2 g1 g2 g3 g4 g5 g6 g7 s9 s10 s11 x3 x4 x5 x6 F8 fc8 m8 nw conf lk md ctx
-                NWH ltac:(clear - NWU; unfold USTACK_TOP in *; lia) NWA ltac:(clear - FCFSEG FC1; lia) ltac:(clear - FC1 FC2 FCFLO SP0R; unfold USTACK_TOP, STACK_WIN in *; lia) MD0 ltac:(clear - MDU; unfold USTACK_TOP in *; lia) MDA HT8 ACCn8 MI8) as W4.
-  fold usp in W4.
-  cl_lift W4 Hc8' c9 Hc9.
-  destruct (ASTA_unpack RT Σ3 _ _ c9 Hc9) as (ms9 & (m9 & -> & MU9 & WM9 & MI9 & HT9) & Hc9'). clear Hc9.
-  fold usp in Hc9'.
-  assert (ART9 : ART RT Σ3 m9).
-  { apply (af_frame RT AF Σ3 m8 m9 (usp + -96) ART8 ltac:(rewrite SP3, SP2, SP1; lia)); [| exact WM9].
-    intros a Ha. apply MU9. cbn [outside]. split; [| exact I]. intros Hin; apply Ha. apply (acl_live _ _ _ nw 96); [exact INN3 | clear - Hin; lia]. }
-  pose proof (cl_env_seg _ m8 m9 _ canary ENV8 MU9 ltac:(cl_fp_lia)) as ENV9.
-  assert (AG89 : forall a k, (a + k <= nw + 64 \/ nw + 72 <= a) -> agree_on (fun x => a <= x < a + k) m8 m9).
-  { intros a k H. apply (agree_of_munch _ m8 m9 _ MU9). intros x Hx. cbv beta in Hx. cbn [outside]. clear - H Hx. lia. }
-  assert (ST9 : stk asegs m9 lo (usp + -96)).
-  { apply (stk_munch _ m8 m9 _ _ ST8 MU9 WM9). intros x Hx. cbn [outside]. clear - Hx NWLO LOW. lia. }
-  assert (FR9 : rw_cells asegs m9 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m8 m9 _ _ FR8); [| exact WM9]. apply AG89. cbn [cells_size csize Nat.add]. clear - NWLO LOW HSTK. unfold RT_STACK in *. lia. }
-  assert (HC9 : rw_cells asegs m9 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m8 m9 _ _ HC8); [| exact WM9]. apply AG89. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FCFP1 FC1 FC2. unfold wp_box in *. lia. }
-  assert (HMD9 : rw_cells asegs m9 md [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]).
-  { apply (rw_cells_agree asegs m8 m9 _ _ HMD8); [| exact WM9]. apply AG89. cbn [cells_size csize Nat.add]. clear - MDN. unfold wp_box in *. lia. }
-  assert (ACF9 : acc asegs m9 conf 48).
-  { apply (acc_agree m8 m9 _ _ ACF8 ltac:(lia)). intros x Hx. cbv beta in Hx. pose proof (SHCF (bv_unsigned x) Hx) as Sx.
-    apply MU9. cbn [outside]. split; [| exact I]. unfold shad, SHB in *. clear - Sx NWH FCFLO SP0R NUM; unfold USTACK_TOP, STACK_WIN in *; Z.div_mod_to_equations; lia. }
-  assert (AG89u : agree_on (fun x => usp <= x < USTACK_TOP) m8 m9).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG89. clear - NWLO LOW HSTK. unfold RT_STACK in *. lia. }
-  pose proof (uw_chain_agree outer m8 m9 sp s0 UWF8 AG89u) as UWF9.
-  destruct (cl_chain_call (rt_cg RT Σ3) e_ht_new e_anl SITE_ht_anl m9 m9 ra s0 sp (Z_to_bv 64 (usp + -96)) outer ltac:(rewrite CG3, CG2, CG1; exact CTX)
-              ltac:(rewrite CG3, CG2, CG1; apply (proj1 CGH); wp_in_lit) ltac:(rewrite CG3, CG2, CG1; apply (proj2 CGH); wp_in_lit) UWF9 ltac:(intros a _; reflexivity)
-              ltac:(fold usp; replace (usp - 16) with (usp + -96 + Z.of_nat (cells_size [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1])) by (cbn [cells_size csize Nat.add]; lia);
-                    exact (rw_cells_skip m9 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1] [C8 s0; C8 ra] FR9))
-              ltac:(rewrite EU1; fold usp; lia) SPT) as (CTXc9 & UWCc9).
-  (* [comment removed for export] *)
-  apply (C_ANL Σ3 PMc (Z_to_bv 64 SITE_ht_anl) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 TP_A) x0 x1 x2 sp (Z_to_bv 64 nw)
-           (Z_to_bv 64 512) (Z_to_bv 64 (md + 8)) (Z_to_bv 64 512) g3 g4 g5 g6 g7 (Z_to_bv 64 (nw + 64)) (Z_to_bv 64 (conf + 40)) (Z_to_bv 64 conf)
-           (Z_to_bv 64 (nw + 72)) (Z_to_bv 64 0x7fff8000)
-           (Z_to_bv 64 (Z.shiftr (conf + 40) 3 + 2147450880)) (Z_to_bv 64 (Z.shiftr (nw + 72) 3 + 2147450880)) (Z_to_bv 64 (Z.shiftr (nw + 64) 3 + 2147450880))  s10 s11 x3 x4 x5 x6 F8 fc8 m9 lo (bv_unsigned ra :: outer) (md + 8) md 24 (Z_to_bv 8 1) canary
-           FDO MST eq_refl eq_refl eq_refl memalign_plain_nb INM3 ltac:(clear; lia) ltac:(clear; lia) ltac:(clear; lia) ltac:(clear - MDA; Z.div_mod_to_equations; lia) ART9 MI9).
-  { fold usp in SPA. cl_call_ok EU1 ST9 LOW3 SPA 6. }
-  { rewrite EU1. unfold RT_STACK in *. lia. }
-  { rewrite (unsigned_lit SITE_ht_anl) by (unfold SITE_ht_anl; lia). exact CTXc9. }
-  { exact UWCc9. }
-  { rewrite CG3, CG2, CG1. apply (cg_has_weaken _ _ _ _ _ CGH); vm_compute; reflexivity. }
-  { rewrite FRS3, FRS2, FRS1. exact Hfr. }
-  { rewrite LV3, LV2, LV1. cbn [length]. lia. }
-  { rewrite CR3, CR2, CR1. lia. }
-  { exact ENV9. }
-  { exact Hc9'. }
-  clear Hc9'. intros c10 (Σ4 & q & Hc10 & LV4 & FRS4 & SP4 & CR4 & Q0 & Q64 & QU & CG4).
-  destruct (ASTA_unpack RT Σ4 _ _ c10 Hc10) as (ms10 & (m10 & RS10 & (ART10 & MI10 & WM10 & ST10) & PRES10 & ENV10 & WRq10 & ACCq10 & FPC10 & ZERq10) & Hc10'). clear Hc10.
-  destruct RS10 as (y0 & y1 & y2 & h1 & h2 & h3 & h4 & h5 & h6 & h7 & y3 & y4 & y5 & y6 & F10 & fc10 & ->).
-  rewrite EU1 in ST10, PRES10. rewrite (ret_pc_even SITE_ht_anl) in Hc10' by (unfold SITE_ht_anl; lia).
-  assert (INQ4 : In (q, NB_BYTES) (rt_live RT Σ4)) by (rewrite LV4; left; reflexivity).
-  assert (INM4 : In (md, 24) (rt_live RT Σ4)) by (rewrite LV4; right; exact INM3).
-  assert (INN4 : In (nw, 96) (rt_live RT Σ4)) by (rewrite LV4; right; exact INN3).
-  assert (INFC4 : In (fcf, kcf) (rt_frames RT Σ4)) by (rewrite FRS4; exact INFC3).
-  assert (LOW4 : rt_sp0 RT Σ4 - STACK_WIN <= lo) by (rewrite SP4; exact LOW3).
-  pose proof (afp_live_hi RT GOBJ AFP Σ4 m10 q NB_BYTES ART10 INQ4 ltac:(unfold NB_BYTES; lia)) as QHH.
-  pose proof (af_live_range RT AF Σ4 m10 q NB_BYTES ART10 INQ4) as (_ & QLO & _). rewrite SP4, SP3, SP2, SP1 in QLO.
-  pose proof (af_live_disj RT AF Σ4 m10 q NB_BYTES nw 96 [] (rt_live RT Σ3) ART10 LV4 INN3) as QN. wp_box1 QN.
-  pose proof (af_live_disj RT AF Σ4 m10 q NB_BYTES md 24 [] (rt_live RT Σ3) ART10 LV4 INM3) as QM. wp_box1 QM.
-  pose proof (af_frames_range RT AF Σ4 m10 fcf kcf ART10 INFC4) as (_ & _ & _ & FCFP4). specialize (FCFP4 q NB_BYTES INQ4). wp_box1 FCFP4.
-  assert (AG910 : forall a k, ((usp + -96 <= a /\ a + k <= USTACK_TOP) \/ (fcf <= a /\ a + k <= fcf + fs_size kcf - 8) \/ (nw <= a /\ a + k <= nw + 96)
-                               \/ (md <= a /\ a + k <= md + 24 /\ (a + k <= md + 8 \/ md + 16 <= a)) \/ (shad fcf <= a /\ a + k <= shad (fcf + fs_size kcf)))
-                              -> agree_on (fun x => a <= x < a + k) m9 m10).
-  { intros a k H x Hx. cbv beta in Hx. apply PRES10.
-    - destruct H as [H|[H|[H|[H|H]]]]; [left; clear - H Hx; lia | apply (acl_frame _ _ _ fcf kcf); [exact INFC3 | clear - H Hx; lia] | apply (acl_live _ _ _ nw 96); [exact INN3 | clear - H Hx; lia]
-        | apply (acl_live _ _ _ md 24); [exact INM3 | clear - H Hx; lia] | apply (acl_fshadow _ _ _ fcf kcf); [exact INFC3 | clear - H Hx; lia]].
-    - cbn [outside]. split; [| exact I].
-      destruct H as [H|[H|[H|[H|H]]]]; [clear - H Hx MDLO LOW HSTK; unfold RT_STACK in *; lia | clear - H Hx FCFP3 FC1 FC2; unfold wp_box in *; lia | clear - H Hx MDN; unfold wp_box in *; lia | clear - H Hx; lia | unfold shad, SHB in *; clear - H Hx MDH FCFLO SP0R NUM; unfold USTACK_TOP, STACK_WIN in *; Z.div_mod_to_equations; lia]. }
-  assert (FR10 : rw_cells asegs m10 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m9 m10 _ _ FR9); [| exact WM10]. apply AG910. left. cbn [cells_size csize Nat.add]. clear - NUM. unfold USTACK_TOP in *. lia. }
-  assert (HC10 : rw_cells asegs m10 conf (ht_conf ctx)).
-  { apply (rw_cells_agree asegs m9 m10 _ _ HC9); [| exact WM10]. apply AG910. right; left. unfold ht_conf. cbn [cells_size csize Nat.add]. clear - FC1 FC2. lia. }
-  assert (HT10 : rw_cells asegs m10 nw (ht_tab3 ctx lk md)).
-  { apply (rw_cells_agree asegs m9 m10 _ _ HT9); [| exact WM10]. apply AG910. right; right; left. unfold ht_tab3. cbn [cells_size csize Nat.add]. clear; lia. }
-  assert (ACF10 : acc asegs m10 conf 48).
-  { apply (acc_agree m9 m10 _ _ ACF9 ltac:(lia)). intros x Hx. cbv beta in Hx. pose proof (SHCF (bv_unsigned x) Hx) as Sx.
-    apply PRES10; [apply (acl_fshadow _ _ _ fcf kcf); [exact INFC3 | exact Sx] | cbn [outside]; split; [| exact I]; unfold shad, SHB in *; clear - Sx MDH FCFLO SP0R NUM; unfold USTACK_TOP, STACK_WIN in *; Z.div_mod_to_equations; lia]. }
-  assert (HMD10 : rw_cells asegs m10 md [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 q); C8 (Z_to_bv 64 0)]).
-  { destruct (proj1 (rw_cells_app m9 md [C8 (Z_to_bv 64 0)] _) HMD9) as [M0 M12]. cbn [cells_size csize Nat.add] in M12.
-    destruct (proj1 (rw_cells_app m9 (md + 8) [C8 (Z_to_bv 64 0)] _) M12) as [_ M2]. cbn [cells_size csize Nat.add] in M2.
-    apply (proj2 (rw_cells_app m10 md [C8 (Z_to_bv 64 0)] _)). cbn [cells_size csize Nat.add]. split.
-    - apply (rw_cells_agree asegs m9 m10 _ _ M0); [| exact WM10]. apply AG910. right; right; right; left. cbn [cells_size csize Nat.add]. clear; lia.
-    - apply (proj2 (rw_cells_app m10 (md + 8) [C8 (Z_to_bv 64 q)] _)). cbn [cells_size csize Nat.add]. split; [exact FPC10|].
-      replace (md + 8 + 8) with (md + 16) by lia. replace (md + 8 + 8) with (md + 16) in M2 by lia.
-      apply (rw_cells_agree asegs m9 m10 _ _ M2); [| exact WM10]. apply AG910. right; right; right; left. cbn [cells_size csize Nat.add]. clear; lia. }
-  pose proof (proj2 (af_acc_live RT AF Σ4 m10 nw 96 ART10 INN4)) as ACCn10.
-  pose proof (proj2 (af_acc_live RT AF Σ4 m10 md 24 ART10 INM4)) as ACCm10.
-  assert (AG910u : agree_on (fun x => usp <= x < USTACK_TOP) m9 m10).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG910. left. clear; lia. }
-  pose proof (uw_chain_agree outer m9 m10 sp s0 UWF9 AG910u) as UWF10.
-  (* [comment removed for export] *)
-  pose proof (ht_w5 sp gp (Z_to_bv 64 TP_A) y0 y1 y2 h1 h2 h3 h4 h5 h6 h7 s10 s11 y3 y4 y5 y6 F10 fc10 m10 nw conf lk md q ctx
-                NWH ltac:(clear - NWU; unfold USTACK_TOP in *; lia) NWA ltac:(clear - FCFSEG FC1; lia) ltac:(clear - FC1 FC2 FCFLO SP0R; unfold USTACK_TOP, STACK_WIN in *; lia) CAL MDH ltac:(clear - MDU; unfold USTACK_TOP in *; lia) MDA
-                Q0 ltac:(clear - QU; unfold NB_BYTES, USTACK_TOP in *; lia) ltac:(clear - MDN; unfold wp_box in *; lia) ltac:(clear - FCFP1 FC1 FC2; unfold wp_box in *; lia) ltac:(clear - FCFP3 FC1 FC2; unfold wp_box in *; lia)
-                HT10 ACCn10 HMD10 ACCm10 HC10 ACF10 MI10) as W5.
-  fold usp in W5.
-  cl_lift W5 Hc10' c11 Hc11.
-  destruct (ASTA_unpack RT Σ4 _ _ c11 Hc11) as (ms11 & (a2' & m11 & -> & MU11 & WM11 & MI11 & HMD11) & Hc11'). clear Hc11.
-  fold usp in Hc11'.
-  assert (ART11 : ART RT Σ4 m11).
-  { apply (af_frame RT AF Σ4 m10 m11 (usp + -96) ART10 ltac:(rewrite SP4, SP3, SP2, SP1; lia)); [| exact WM11].
-    intros a Ha. apply MU11. cbn [outside]. split; [| exact I]. intros Hin; apply Ha. apply (acl_live _ _ _ md 24); [exact INM4 | clear - Hin; lia]. }
-  pose proof (cl_env_seg _ m10 m11 _ canary ENV10 MU11 ltac:(cl_fp_lia)) as ENV11.
-  assert (AG1011 : forall a k, (a + k <= md \/ md + 24 <= a) -> agree_on (fun x => a <= x < a + k) m10 m11).
-  { intros a k H. apply (agree_of_munch _ m10 m11 _ MU11). intros x Hx. cbv beta in Hx. cbn [outside]. clear - H Hx. lia. }
-  assert (ST11 : stk asegs m11 lo (usp + -96)).
-  { apply (stk_munch _ m10 m11 _ _ ST10 MU11 WM11). intros x Hx. cbn [outside]. clear - Hx MDLO LOW. lia. }
-  assert (FR11 : rw_cells asegs m11 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m10 m11 _ _ FR10); [| exact WM11]. apply AG1011. cbn [cells_size csize Nat.add]. clear - MDLO LOW HSTK. unfold RT_STACK in *. lia. }
-  assert (HT11 : rw_cells asegs m11 nw (ht_tab3 ctx lk md)).
-  { apply (rw_cells_agree asegs m10 m11 _ _ HT10); [| exact WM11]. apply AG1011. unfold ht_tab3. cbn [cells_size csize Nat.add]. clear - MDN. unfold wp_box in *. lia. }
-  assert (ZERq11 : bytes_at asegs m11 q (repeat (Z_to_bv 8 0) (Z.to_nat NB_BYTES))).
-  { apply (bytes_at_agree asegs m10 m11 _ _ ZERq10). rewrite repeat_length, Z2Nat.id by (unfold NB_BYTES; lia). apply AG1011. clear - QM. unfold wp_box in *. lia. }
-  assert (AG1011u : agree_on (fun x => usp <= x < USTACK_TOP) m10 m11).
-  { replace USTACK_TOP with (usp + (USTACK_TOP - usp)) by lia. apply AG1011. clear - MDLO LOW HSTK. unfold RT_STACK in *. lia. }
-  pose proof (uw_chain_agree outer m10 m11 sp s0 UWF10 AG1011u) as UWF11.
-  destruct (cl_chain_call (rt_cg RT Σ4) e_ht_new e_rcu_lock_new SITE_ht_rcu m11 m11 ra s0 sp (Z_to_bv 64 (usp + -96)) outer ltac:(rewrite CG4, CG3, CG2, CG1; exact CTX)
-              ltac:(rewrite CG4, CG3, CG2, CG1; apply (proj1 CGH); wp_in_lit) ltac:(rewrite CG4, CG3, CG2, CG1; apply (proj2 CGH); wp_in_lit) UWF11 ltac:(intros a _; reflexivity)
-              ltac:(fold usp; replace (usp - 16) with (usp + -96 + Z.of_nat (cells_size [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1])) by (cbn [cells_size csize Nat.add]; lia);
-                    exact (rw_cells_skip m11 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1] [C8 s0; C8 ra] FR11))
-              ltac:(rewrite EU1; fold usp; lia) SPT) as (CTXc11 & UWCc11).
-  (* [comment removed for export] *)
-  apply (C_RCU Σ4 PMc (Z_to_bv 64 SITE_ht_rcu) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 TP_A) y0 y1 y2 sp (Z_to_bv 64 nw)
-           (Z_to_bv 64 1) ctx a2' h3 h4 h5 h6 h7 (Z_to_bv 64 (nw + 64)) (Z_to_bv 64 (conf + 40)) (Z_to_bv 64 conf)
-           (Z_to_bv 64 (nw + 72)) (Z_to_bv 64 0x7fff8000)
-           (Z_to_bv 64 (Z.shiftr (conf + 40) 3 + 2147450880)) (Z_to_bv 64 (Z.shiftr (nw + 72) 3 + 2147450880)) (Z_to_bv 64 (Z.shiftr (nw + 64) 3 + 2147450880))  s10 s11 y3 y4 y5 y6 F10 fc10 m11 lo (bv_unsigned ra :: outer) (Z_to_bv 8 1) canary FDO MST eq_refl eq_refl CTXN ART11 MI11).
-  { fold usp in SPA. cl_call_ok EU1 ST11 LOW4 SPA 6. }
-  { rewrite EU1. unfold RT_STACK in *. lia. }
-  { rewrite (unsigned_lit SITE_ht_rcu) by (unfold SITE_ht_rcu; lia). exact CTXc11. }
-  { exact UWCc11. }
-  { rewrite CG4, CG3, CG2, CG1. apply (cg_has_weaken _ _ _ _ _ CGH); vm_compute; reflexivity. }
-  { rewrite FRS4, FRS3, FRS2, FRS1. exact Hfr. }
-  { rewrite LV4, LV3, LV2, LV1. cbn [length]. lia. }
-  { rewrite CR4, CR3, CR2, CR1. lia. }
-  { exact ENV11. }
-  { exact Hc11'. }
-  clear Hc11'. intros c12 (Σ5 & L & qp & Hc12 & LV5 & FRS5 & SP5 & CR5 & L0 & L16 & LU & QP0 & QP16 & QPU & CG5).
-  destruct (ASTA_unpack RT Σ5 _ _ c12 Hc12) as (ms12 & (m12 & RS12 & (ART12 & MI12 & WM12 & ST12) & PRES12 & ENV12 & WRL12 & ACCL12 & WRp12 & ACCp12 & CL0 & CLM1 & CLM2 & CLC1 & CLM3 & CLC2 & CLQ) & Hc12'). clear Hc12.
-  destruct RS12 as (z0 & z1 & z2 & k1 & k2 & k3 & k4 & k5 & k6 & k7 & z3 & z4 & z5 & z6 & F12 & fc12 & ->).
-  rewrite EU1 in ST12, PRES12. rewrite (ret_pc_even SITE_ht_rcu) in Hc12' by (unfold SITE_ht_rcu; lia).
-  assert (INL5 : In (lk, 40) (rt_live RT Σ5)) by (rewrite LV5, LV4, LV3; do 4 right; exact INL2).
-  assert (INN5 : In (nw, 96) (rt_live RT Σ5)) by (rewrite LV5; do 2 right; exact INN4).
-  assert (INM5 : In (md, 24) (rt_live RT Σ5)) by (rewrite LV5; do 2 right; exact INM4).
-  assert (INQ5 : In (q, NB_BYTES) (rt_live RT Σ5)) by (rewrite LV5; do 2 right; exact INQ4).
-  assert (INLL5 : In (L, 264) (rt_live RT Σ5)) by (rewrite LV5; right; left; reflexivity).
-  assert (INQP5 : In (qp, 16) (rt_live RT Σ5)) by (rewrite LV5; left; reflexivity).
-  pose proof (af_live_disj RT AF Σ5 m12 qp 16 nw 96 [] _ ART12 LV5 ltac:(right; exact INN4)) as QPN. wp_box1 QPN.
-  pose proof (af_live_disj RT AF Σ5 m12 L 264 nw 96 [(qp, 16)] _ ART12 LV5 ltac:(right; exact INN4)) as LN. wp_box1 LN.
-  pose proof (af_live_disj RT AF Σ3 m8 md 24 lk 40 [] (rt_live RT Σ2) ART8 LV3 INL2) as MDL. wp_box1 MDL.
-  pose proof (afp_live_hi RT GOBJ AFP Σ2 m4 lk 40 ART4 INL2 ltac:(lia)) as LKH.
-  assert (AG1112 : forall a k, ((usp + -96 <= a /\ a + k <= USTACK_TOP) \/ (nw <= a /\ a + k <= nw + 96) \/ (md <= a /\ a + k <= md + 24) \/ (q <= a /\ a + k <= q + NB_BYTES) \/ (lk <= a /\ a + k <= lk + 40))
-                               -> agree_on (fun x => a <= x < a + k) m11 m12).
-  { intros a k H x Hx. cbv beta in Hx. apply PRES12.
-    - destruct H as [H|[H|[H|[H|H]]]]; [left; clear - H Hx; lia | apply (acl_live _ _ _ nw 96); [exact INN4 | clear - H Hx; lia] | apply (acl_live _ _ _ md 24); [exact INM4 | clear - H Hx; lia]
-        | apply (acl_live _ _ _ q NB_BYTES); [exact INQ4 | clear - H Hx; lia] | apply (acl_live _ _ _ lk 40); [rewrite LV4, LV3; do 2 right; exact INL2 | clear - H Hx; lia]].
-    - cbn [outside]. unfold G_ALLOW_CUST. split; [| exact I]. clear - H Hx NWH MDH QHH LKH NUM HSTK. unfold USTACK_TOP, RT_STACK, NB_BYTES in *. lia. }
-  assert (FR12 : rw_cells asegs m12 (usp + -96) [CB 8 j; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
-  { apply (rw_cells_agree asegs m11 m12 _ _ FR11); [| exact WM12]. apply AG1112. left. cbn [cells_size csize Nat.add]. clear - NUM. unfold USTACK_TOP in *. lia. }
-  assert (HT12 : rw_cells asegs m12 nw (ht_tab3 ctx lk md)).
-  { apply (rw_cells_agree asegs m11 m12 _ _ HT11); [| exact WM12]. apply AG1112. right; left. unfold ht_tab3. cbn [cells_size csize Nat.add]. clear; lia. }
-  assert (HMD12 : rw_cells asegs m12 md [C8 (Z_to_bv 64 q); C8 (Z_to_bv 64 q); C8 (Z_to_bv 64 511)]).
-  { apply (rw_cells_agree asegs m11 m12 _ _ HMD11); [| exact WM12]. apply AG1112. right; right; left. cbn [cells_size csize Nat.add]. clear; lia. }
-  assert (ZERq12 : bytes_at asegs m12 q (repeat (Z_to_bv 8 0) (Z.to_nat NB_BYTES))).
-  { apply (bytes_at_agree asegs m11 m12 _ _ ZERq11). rewrite repeat_length, Z2Nat.id by (unfold NB_BYTES; lia). apply AG1112. right; right; right; left. clear; lia. }
-  pose proof (proj2 (af_acc_live RT AF Σ5 m12 nw 96 ART12 INN5)) as ACCn12.
-  (* [comment removed for export] *)
-  pose proof (ht_w6 ra sp gp (Z_to_bv 64 TP_A) z0 z1 z2 k1 k2 k3 k4 k5 k6 k7 s10 s11 z3 z4 z5 z6 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 F12 fc12 m12 nw conf L lk md lo ctx j
-                ltac:(clear - HSTK; unfold RT_STACK in *; lia) ltac:(clear - NUM; lia) ltac:(clear - NUM; lia) NWH ltac:(clear - NWLO LOW; lia) NWA ltac:(clear - FCFSEG FC1; lia) ltac:(clear - FC1 FC2 FCFLO SP0R; unfold USTACK_TOP, STACK_WIN in *; lia)
-                L0 ltac:(clear - LU; unfold USTACK_TOP in *; lia) ST12 FR12 HT12 ACCn12 MI12) as W6.
-  fold usp in W6.
-  cl_lift W6 Hc12' c13 Hc13.
-  destruct (ASTA_unpack RT Σ5 _ _ c13 Hc13) as (ms13 & (a1' & m13 & -> & MU13 & WM13 & MI13 & ST13 & HT13) & Hc13'). clear Hc13.
-  fold usp in ST13.
-  assert (ART13 : ART RT Σ5 m13).
-  { apply (af_frame RT AF Σ5 m12 m13 usp ART12 ltac:(rewrite SP5, SP4, SP3, SP2, SP1; lia)); [| exact WM13].
-    intros a Ha. apply MU13. cbn [outside]. split; [| exact I]. intros Hin; apply Ha. apply (acl_live _ _ _ nw 96); [exact INN5 | clear - Hin; lia]. }
-  assert (AG1213 : forall a k, (a + k <= nw \/ nw + 96 <= a) -> agree_on (fun x => a <= x < a + k) m12 m13).
-  { intros a k H. apply (agree_of_munch _ m12 m13 _ MU13). intros x Hx. cbv beta in Hx. cbn [outside]. clear - H Hx. lia. }
-  assert (WM013 : wmono asegs m m13).
-  { exact (wmono_trans asegs _ _ _ WM1 (wmono_trans asegs _ _ _ WM2 (wmono_trans asegs _ _ _ WM4 (wmono_trans asegs _ _ _ WM5 (wmono_trans asegs _ _ _ WM6
-          (wmono_trans asegs _ _ _ WM7 (wmono_trans asegs _ _ _ WM8 (wmono_trans asegs _ _ _ WM9 (wmono_trans asegs _ _ _ WM10 (wmono_trans asegs _ _ _ WM11
-          (wmono_trans asegs _ _ _ WM12 WM13))))))))))). }
-  apply Hk. exists Σ5, nw, lk, md, q, L, qp.
-  split; [| split; [rewrite LV5, LV4, LV3, LV2, LV1; reflexivity | split; [rewrite FRS5, FRS4, FRS3, FRS2; exact FRS1 | split; [rewrite SP5, SP4, SP3, SP2; exact SP1 |
-            split; [rewrite CR5, CR4, CR3, CR2, CR1; unfold HT_COST; lia | ]]]]].
-  2: { repeat (split; [assumption|]). rewrite CG5, CG4, CG3, CG2; exact CG1. }
-  eapply ASTA_conseq; [exact Hc13'|]. intros ms <-. exists m13.
-  split; [exists z0, z1, z2, a1', (Z_to_bv 64 0), k3, k4, k5, k6, k7, z3, z4, z5, z6, F12, fc12; reflexivity|].
-  split; [split; [exact ART13 | split; [exact MI13 | split; [exact WM013 | exact ST13]]]|].
-  split.
-  { intros a Ha Ho.
-    assert (A0' : aclient (rt_live RT Σ) (rt_frames RT Σ) (usp + -96) (bv_unsigned a)) by (apply (aclient_mono _ _ _ _ _ _ _ Ha); [auto | auto | clear; lia]).
-    assert (A1 : aclient (rt_live RT Σ1) (rt_frames RT Σ1) (usp + -96) (bv_unsigned a))
-      by (apply (aclient_mono _ _ _ _ _ _ _ A0'); [rewrite LV1; intros e He; right; exact He | rewrite FRS1; auto | clear; lia]).
-    assert (A2 : aclient (rt_live RT Σ2) (rt_frames RT Σ2) (usp + -96) (bv_unsigned a))
-      by (apply (aclient_mono _ _ _ _ _ _ _ A1); [rewrite LV2; intros e He; right; exact He | rewrite FRS2; auto | clear; lia]).
-    assert (A3 : aclient (rt_live RT Σ3) (rt_frames RT Σ3) (usp + -96) (bv_unsigned a))
-      by (apply (aclient_mono _ _ _ _ _ _ _ A2); [rewrite LV3; intros e He; right; exact He | rewrite FRS3; auto | clear; lia]).
-    assert (A4 : aclient (rt_live RT Σ4) (rt_frames RT Σ4) (usp + -96) (bv_unsigned a))
-      by (apply (aclient_mono _ _ _ _ _ _ _ A3); [rewrite LV4; intros e He; right; exact He | rewrite FRS4; auto | clear; lia]).
-    pose proof (newchunk_apart RT AF Σ Σ1 m2 nw 96 (usp + -96) _ ART2 LV1 FRS1 SP1 ltac:(clear - NUM; lia) ltac:(clear; lia) A0') as Nn.
-    pose proof (newchunk_apart RT AF Σ2 Σ3 m8 md 24 (usp + -96) _ ART8 LV3 FRS3 SP3 ltac:(rewrite SP2, SP1; clear - NUM; lia) ltac:(clear; lia) A2) as Nm.
-    rewrite (MU13 a ltac:(cbn [outside]; clear - Nn; lia)).
-    rewrite (PRES12 a A4 Ho).
-    rewrite (MU11 a ltac:(cbn [outside]; clear - Nm; lia)).
-    rewrite (PRES10 a A3 ltac:(cbn [outside]; clear - Nm; split; [lia | exact I])).
-    rewrite (MU9 a ltac:(cbn [outside]; clear - Nn; lia)).
-    rewrite (PRES8 a A2 Ho).
-    rewrite (MU7 a ltac:(cbn [outside]; clear - Nn; lia)).
-    rewrite (PRES6 a A2 ltac:(clear - Nn; lia)).
-    rewrite (MU5 a ltac:(cbn [outside]; clear - Nn; lia)).
-    rewrite (PRES4 a A1 Ho).
-    rewrite (PRES2 a A0' Ho).
-    exact (PR1 a Ha I). }
-  split; [exact (cl_env_seg _ m12 m13 _ canary ENV12 MU13 ltac:(cl_fp_lia))|].
-  pose proof (af_acc_live RT AF Σ5 m13 nw 96 ART13 INN5) as (WRn13 & ACCn13).
-  split; [exact WRn13|]. split; [exact ACCn13|].
-  split; [exact HT13|].
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ HMD12); [apply AG1213; cbn [cells_size csize Nat.add]; clear - MDN; unfold wp_box in *; lia | exact WM13]|].
-  split.
-  { apply (rw_cells_agree asegs m4 m13 _ _ HLK4); [| exact (wmono_trans asegs _ _ _ WM5 (wmono_trans asegs _ _ _ WM6 (wmono_trans asegs _ _ _ WM7 (wmono_trans asegs _ _ _ WM8
-             (wmono_trans asegs _ _ _ WM9 (wmono_trans asegs _ _ _ WM10 (wmono_trans asegs _ _ _ WM11 (wmono_trans asegs _ _ _ WM12 WM13))))))))].
-    intros x Hx. unfold mutex_cells in Hx. cbn [cells_size csize Nat.add] in Hx.
-    rewrite (MU13 x ltac:(cbn [outside]; clear - Hx LKN; unfold wp_box in *; lia)).
-    rewrite (PRES12 x ltac:(apply (acl_live _ _ _ lk 40); [rewrite LV4, LV3; do 2 right; exact INL2 | clear - Hx; lia]) ltac:(cbn [outside]; unfold G_ALLOW_CUST; clear - Hx LKH; lia)).
-    rewrite (MU11 x ltac:(cbn [outside]; clear - Hx MDL; unfold wp_box in *; lia)).
-    rewrite (PRES10 x ltac:(apply (acl_live _ _ _ lk 40); [rewrite LV3; right; exact INL2 | clear - Hx; lia]) ltac:(cbn [outside]; clear - Hx MDL; unfold wp_box in *; split; [lia | exact I])).
-    rewrite (MU9 x ltac:(cbn [outside]; clear - Hx LKN; unfold wp_box in *; lia)).
-    rewrite (PRES8 x ltac:(apply (acl_live _ _ _ lk 40); [exact INL2 | clear - Hx; lia]) ltac:(cbn [outside]; unfold G_ALLOW_CUST; clear - Hx LKH; lia)).
-    rewrite (MU7 x ltac:(cbn [outside]; clear - Hx LKN; unfold wp_box in *; lia)).
-    rewrite (PRES6 x ltac:(apply (acl_live _ _ _ lk 40); [exact INL2 | clear - Hx; lia]) ltac:(clear - Hx LKN; unfold wp_box in *; lia)).
-    apply (MU5 x). cbn [outside]. clear - Hx LKN. unfold wp_box in *. lia. }
-  assert (AGL : forall a k, (L <= a /\ a + k <= L + 264) \/ (qp <= a /\ a + k <= qp + 16) -> agree_on (fun x => a <= x < a + k) m12 m13).
-  { intros a k H. apply AG1213. clear - H LN QPN. unfold wp_box in *. lia. }
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ CL0); [apply AGL; left; unfold rcu_head; cbn [cells_size csize Nat.add]; lia | exact WM13]|].
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ CLM1); [apply AGL; left; unfold mutex_cells; cbn [cells_size csize Nat.add]; lia | exact WM13]|].
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ CLM2); [apply AGL; left; unfold mutex_cells; cbn [cells_size csize Nat.add]; lia | exact WM13]|].
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ CLC1); [apply AGL; left; unfold cond_cells; cbn [cells_size csize Nat.add]; lia | exact WM13]|].
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ CLM3); [apply AGL; left; unfold mutex_cells; cbn [cells_size csize Nat.add]; lia | exact WM13]|].
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ CLC2); [apply AGL; left; unfold cond_cells; cbn [cells_size csize Nat.add]; lia | exact WM13]|].
-  split; [apply (rw_cells_agree asegs m12 m13 _ _ CLQ); [apply AGL; right; cbn [cells_size csize Nat.add]; lia | exact WM13]|].
-  apply (bytes_at_agree asegs m12 m13 _ _ ZERq12). rewrite repeat_length, Z2Nat.id by (unfold NB_BYTES; lia). apply AG1213. clear - QN. unfold wp_box in *. lia.
+                stk_e ltac:(lia) lo_big sp_fit ut_e shdyn_e inv_e) as walk.
+  cl_lift walk start_e k_f at_f.
+  destruct (ASTA_unpack RT S0 PM _ k_f at_f) as (ms_f & (junk_f & m_f & -> & mu_f & wm_f & inv_f & frame_f & stk_f) & at_f'). clear at_f.
+  assert (art_f : ART RT S0 m_f).
+  { apply (cl_seg_ART RT AF S0 m m_f (bv_unsigned sp) 96 [] art_e ltac:(lia) ltac:(lia) mu_f); [| exact wm_f].
+    intros x no. exfalso. apply no. exact I. }
+  assert (ag_f : agree_on keep0 m m_f).
+  { apply (agree_of_munch _ m m_f _ mu_f). intros x kx. cbn [outside].
+    destruct (keep0_side x kx); (split; [lia | exact I]). }
+  assert (env_f : cl_env m_f lb canary).
+  { apply (cl_env_seg _ m m_f lb canary env_e mu_f). apply cl_fp_cons; [| exact cl_fp_nil]. unfold ssp_guard. right; left. lia. }
+  (* helper facts that later steps of this proof use *)
+  pose proof (rw_cells_skip m_f _ [CB 8 junk_f; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1] [C8 s0; C8 ra] frame_f) as link_f.
+  cbn [cells_size csize Nat.add] in link_f.
+  replace (bv_unsigned sp + -96 + Z.of_nat 80) with (bv_unsigned sp - 16) in link_f by lia.
+  pose (above := fun x => bv_unsigned sp - 96 <= x < USTACK_TOP).
+  assert (link_at : forall (mi : mem) r G, agree_on above m_f mi -> wmono asegs m_f mi ->
+            In (r, e_ht_new) HT_SITES -> In (r, G) HT_CALLS -> 0 <= r < 2^64 ->
+            cg_ctx (rt_cg RT S0) G (bv_unsigned (Z_to_bv 64 r) :: bv_unsigned ra :: outer)
+            /\ uw_chain mi (Z_to_bv 64 (bv_unsigned sp + -96)) sp (bv_unsigned ra :: outer)).
+  { intros mi r G ag wm site call r_rng. rewrite (unsigned_lit r r_rng).
+    apply (cl_chain_call (rt_cg RT S0) e_ht_new G r m mi ra s0 sp (Z_to_bv 64 (bv_unsigned sp + -96)) outer cgx_e).
+    - exact (cg_has_site _ _ _ _ _ cgh_e site).
+    - exact (cg_has_call _ _ _ _ _ cgh_e call).
+    - exact chain_e.
+    - apply (agree_trans _ m m_f mi).
+      + apply (agree_sub _ _ _ _ ag_f). intros x xr. split; [apply acl_stack; exact xr |].
+        cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I].
+      + apply (agree_sub _ _ _ _ ag). intros x xr. unfold above. lia.
+    - apply (rw_cells_agree asegs m_f mi _ _ link_f); [| exact wm].
+      apply (agree_sub _ _ _ _ ag). intros x xr. cbn [cells_size csize Nat.add] in xr. unfold above. lia.
+    - rewrite csp_u. lia.
+    - exact top_e. }
+  assert (above_pres : forall live frs W (ma mb : mem), rt_pres_fp live frs (bv_unsigned sp + -96) W ma mb ->
+            (forall x, bv_unsigned sp - 96 <= x -> outside W x) -> agree_on above ma mb).
+  { intros live frs W ma mb pres outw. apply (agree_of_pres_fp _ _ _ _ _ _ _ pres). intros x xr. unfold above in xr.
+    split; [apply acl_stack; lia | apply outw; lia]. }
+  assert (above_munch : forall W (ma mb : mem), munch W ma mb -> (forall x, bv_unsigned sp - 96 <= x -> outside W x) -> agree_on above ma mb).
+  { intros W ma mb mu outw. apply (agree_of_munch _ _ _ _ mu). intros x xr. unfold above in xr. apply outw. lia. }
+  assert (keep_pres : forall live W (ma mb : mem), rt_pres_fp live (rt_frames RT S0) (bv_unsigned sp + -96) W ma mb ->
+            (forall e, In e (rt_live RT S0) -> In e live) -> (forall x, keep0 x -> outside W x) -> agree_on keep0 ma mb).
+  { intros live W ma mb pres grows outw. apply (agree_of_pres_fp _ _ _ _ _ _ _ pres). intros x kx.
+    split; [exact (proj1 (keep0_lift live grows x kx)) | exact (outw x kx)]. }
+  assert (cf_at : forall mi, agree_on keep0 m mi -> wmono asegs m mi -> rw_cells asegs mi conf (ht_conf ctx) /\ acc asegs mi conf 48).
+  { intros mi ag wm. split.
+    - apply (rw_cells_agree asegs m mi _ _ cf_cells); [| exact wm]. exact (agree_sub _ _ _ _ ag cf_kept).
+    - apply (acc_agree m mi conf 48 cf_acc); [lia |]. exact (agree_sub _ _ _ _ ag cfsh_kept). }
+  assert (art_walk : forall Si (ma mb : mem) p n a b, ART RT Si ma -> rt_sp0 RT Si = rt_sp0 RT S0 -> In (p, n) (rt_live RT Si) ->
+            p <= a -> b <= p + n -> munch [(a, b)] ma mb -> wmono asegs ma mb -> ART RT Si mb).
+  { intros Si ma mb p n a b art same inl pa bp mu wm. apply (af_frame RT AF Si ma mb (bv_unsigned sp) art); [rewrite same; lia | | exact wm].
+    intros w far. apply mu. cbn [outside]. split; [| exact I]. intros win. apply far. apply (acl_live _ _ _ p n); [exact inl | lia]. }
+  assert (env_walk : forall a b (ma mb : mem) lb', cl_env ma lb' canary -> munch [(a, b)] ma mb -> ssp_guard + 8 <= a -> cl_env mb lb' canary).
+  { intros a b ma mb lb' env mu far. apply (cl_env_seg _ ma mb lb' canary env mu). apply cl_fp_cons; [right; left; exact far | exact cl_fp_nil]. }
+  assert (mcz : mcost 96 = 0 /\ mcost 24 = 0 /\ mcost NB_BYTES = 0 /\ mcost 264 = 0 /\ mcost 16 = 0) by (repeat split; reflexivity).
+  destruct mcz as (mc96 & mc24 & mcnb & mc264 & mc16).
+  assert (cost3 : HT_COST = 3) by (unfold HT_COST; rewrite mc96, mc24, mcnb, mc264, mc16; reflexivity).
+  rewrite cost3 in cred_e.
+  assert (room_c : forall need, need <= 560 -> lo + RT_STACK + need <= bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -96))).
+  { intros need small. rewrite csp_u. unfold RT_STACK in *. lia. }
+  (* the table header: CRYPTO_zalloc(96) *)
+  destruct (link_at m_f SITE_ht_zalloc1 e_CRYPTO_zalloc (fun _ _ => eq_refl) (wmono_refl asegs m_f)
+              ltac:(unfold HT_SITES; left; reflexivity) ltac:(unfold HT_CALLS; left; reflexivity)
+              ltac:(unfold SITE_ht_zalloc1; lia)) as (cgx_1 & chain_1).
+  assert (cok_f : call_ok RT S0 m_f (Z_to_bv 64 (bv_unsigned sp + -96)) lo).
+  { unfold call_ok. rewrite csp_u. split; [exact stk_f |]. unfold RT_STACK, USTACK_TOP in *. repeat split; lia. }
+  assert (cz_cg0 : cg_has (rt_cg RT S0) [(SITE_cz_malloc, e_CRYPTO_zalloc); (SITE_cm_malloc, e_CRYPTO_malloc)]
+                     [(SITE_cz_malloc, e_CRYPTO_malloc); (SITE_cm_malloc, e_malloc)])
+    by (apply (cg_has_weaken _ _ _ _ _ cgh_e); vm_compute; reflexivity).
+  assert (cr_1 : mcost 96 <= rt_credit RT S0) by (rewrite mc96; lia).
+  refine (C_CZ S0 PM _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m_f 96 lo (bv_unsigned ra :: outer) lb canary
+            pm_fds pm_stable eq_refl eq_refl ltac:(lia) art_f inv_f cok_f (room_c 256 ltac:(lia))
+            cgx_1 chain_1 cz_cg0 ltac:(lia) cr_1 env_f T k_f at_f' _).
+  intros k_h got_h.
+  destruct got_h as (S1 & h & at_h & live_h & frs_h & sp0_h & cred_h & h_pos & h_al & h_top & cg_h).
+  destruct (ASTA_unpack RT S1 PM _ k_h at_h) as (ms_h & (m_h & ret_h & aft_h & pres_h & env_h & wr_h & _ & zero_h) & at_h'). clear at_h.
+  destruct ret_h as (t0b & t1b & t2b & a1b & a2b & a3b & a4b & a5b & a6b & a7b & t3b & t4b & t5b & t6b & Fb & fcb & ->).
+  destruct aft_h as (art_h & inv_h & wm_h & stk_h).
+  rewrite (ret_pc_even SITE_ht_zalloc1) in at_h' by (unfold SITE_ht_zalloc1; lia).
+  rewrite csp_u in stk_h, pres_h.
+  assert (h_in : In (h, 96) (rt_live RT S1)) by (rewrite live_h; left; reflexivity).
+  pose proof (afp_live_hi RT GOBJ AFP S1 m_h h 96 art_h h_in ltac:(lia)) as h_hi.
+  pose proof (af_live_range RT AF S1 m_h h 96 art_h h_in) as (_ & h_win & _).
+  rewrite sp0_h in h_win.
+  assert (h_lo : h + 96 <= lo) by (unfold STACK_WIN in *; lia).
+  assert (cf_h : apart fcf (fs_size kcf) h 96).
+  { unfold apart. apply (proj2 (proj2 (proj2 (af_frames_range RT AF S1 m_h fcf kcf art_h ltac:(rewrite frs_h; exact cf_in))))). exact h_in. }
+  assert (h_fresh : forall x, keep0 x -> ~ (h <= x < h + 96)).
+  { intros x kx. exact (wg_newchunk_apart RT AF S0 S1 m_h [(h, 96)] h 96 (bv_unsigned sp) x art_h live_h (or_introl eq_refl) frs_h sp0_h
+                          ltac:(lia) ltac:(lia) (proj1 kx)). }
+  assert (ag_h : agree_on keep0 m m_h).
+  { apply (agree_trans _ m m_f m_h ag_f). apply (keep_pres _ _ m_f m_h pres_h); [tauto | exact (fun x kx => proj2 kx)]. }
+  assert (up_h : agree_on above m_f m_h).
+  { apply (above_pres _ _ _ m_f m_h pres_h). intros x far. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  assert (mono_h : wmono asegs m m_h) by exact (wmono_trans _ _ _ _ wm_f wm_h).
+  destruct (cf_at m_h ag_h mono_h) as (cfc_h & cfa_h).
+  assert (h_al8 : h mod 8 = 0) by (apply wg_mod16_8; exact h_al).
+  (* reads of the config, no store, up to the lock allocation *)
+  pose proof (ht_w1 sp gp (Z_to_bv 64 TP_A) t0b t1b t2b a1b a2b a3b a4b a5b a6b a7b s1 s2 s3 s5 s7 s8 s9 s10 s11 t3b t4b t5b t6b Fb fcb m_h h conf ctx
+                h_pos ltac:(unfold USTACK_TOP in *; lia) h_al8 ltac:(lia) ltac:(lia) cf_al8 cfc_h cfa_h inv_h) as walk.
+  cl_lift walk at_h' k_g at_g.
+  destruct (ASTA_unpack RT S1 PM _ k_g at_g) as (ms_g & -> & at_g'). clear at_g.
+  (* the table lock: CRYPTO_THREAD_lock_new() *)
+  destruct (link_at m_h SITE_ht_locknew e_lock_new up_h wm_h
+              ltac:(unfold HT_SITES; right; left; reflexivity) ltac:(unfold HT_CALLS; right; left; reflexivity)
+              ltac:(unfold SITE_ht_locknew; lia)) as (cgx_2 & chain_2).
+  rewrite <- cg_h in cgx_2.
+  assert (cok_h : call_ok RT S1 m_h (Z_to_bv 64 (bv_unsigned sp + -96)) lo).
+  { unfold call_ok. rewrite csp_u, sp0_h. split; [exact stk_h |]. unfold RT_STACK, USTACK_TOP in *. repeat split; lia. }
+  assert (ln_cg1 : cg_has (rt_cg RT S1) [(SITE_ln_zalloc, e_lock_new); (SITE_cz_malloc, e_CRYPTO_zalloc); (SITE_cm_malloc, e_CRYPTO_malloc)]
+                     [(SITE_ln_zalloc, e_CRYPTO_zalloc); (SITE_cz_malloc, e_CRYPTO_malloc); (SITE_cm_malloc, e_malloc)])
+    by (rewrite cg_h; apply (cg_has_weaken _ _ _ _ _ cgh_e); vm_compute; reflexivity).
+  refine (C_LN S1 PM _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m_h lo (bv_unsigned ra :: outer) (Z_to_bv 8 1) canary
+            pm_fds pm_stable eq_refl art_h inv_h cok_h (room_c 512 ltac:(lia)) cgx_2 chain_2 ln_cg1
+            ltac:(rewrite frs_h; exact nfr_e) ltac:(rewrite live_h; cbn [length]; lia) ltac:(rewrite cred_h, mc96; lia) env_h T k_g at_g' _).
+  intros k_l got_l.
+  destruct got_l as (S2 & lk & at_l & live_l & frs_l & sp0_l & cred_l & lk_pos & lk_al & lk_top & cg_l).
+  destruct (ASTA_unpack RT S2 PM _ k_l at_l) as (ms_l & (m_l & ret_l & aft_l & pres_l & env_l & lk_cells & lk_acc) & at_l'). clear at_l.
+  destruct ret_l as (t0c & t1c & t2c & a1c & a2c & a3c & a4c & a5c & a6c & a7c & t3c & t4c & t5c & t6c & Fc & fcc & ->).
+  destruct aft_l as (art_l & inv_l & wm_l & stk_l).
+  rewrite (ret_pc_even SITE_ht_locknew) in at_l' by (unfold SITE_ht_locknew; lia).
+  rewrite csp_u in stk_l, pres_l.
+  rewrite live_h in live_l. rewrite frs_h in frs_l, pres_l. rewrite sp0_h in sp0_l. rewrite cg_h in cg_l. rewrite cred_h in cred_l.
+  assert (lk_in : In (lk, 40) (rt_live RT S2)) by (rewrite live_l; left; reflexivity).
+  assert (h_in2 : In (h, 96) (rt_live RT S2)) by (rewrite live_l; right; left; reflexivity).
+  pose proof (af_live_range RT AF S2 m_l lk 40 art_l lk_in) as (_ & lk_win & _).
+  rewrite sp0_l in lk_win.
+  assert (lk_lo : lk + 40 <= lo) by (unfold STACK_WIN in *; lia).
+  pose proof (afp_live_hi RT GOBJ AFP S2 m_l lk 40 art_l lk_in ltac:(lia)) as lk_hi.
+  assert (lk_h : apart lk 40 h 96).
+  { unfold apart. apply (wg_live_apart RT AF S2 m_l [] lk 40 (rt_live RT S1) h 96 art_l); [rewrite live_l, live_h; reflexivity | rewrite live_h; left; reflexivity]. }
+  assert (ag_l : agree_on keep0 m m_l).
+  { apply (agree_trans _ m m_h m_l ag_h). apply (keep_pres _ _ m_h m_l pres_l); [rewrite live_h; intros e ein; right; exact ein | exact (fun x kx => proj2 kx)]. }
+  assert (up_l : agree_on above m_f m_l).
+  { apply (agree_trans _ m_f m_h m_l up_h). apply (above_pres _ _ _ m_h m_l pres_l). intros x far. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  (* the zeroed header, as the walk wants it *)
+  pose proof (rw_CB_of_bytes m_h h _ zero_h wr_h) as h_zero.
+  assert (h_tab0 : rw_cells asegs m_h h ht_tab0).
+  { apply (rw_cells_recast m_h h _ _ h_zero); [cbn; repeat split | reflexivity]. }
+  assert (h_tab0' : rw_cells asegs m_l h ht_tab0).
+  { apply (wg_keep_live _ _ _ _ m_h m_l h 96 h ht_tab0 h_tab0 pres_l wm_l); [rewrite live_h; left; reflexivity | lia | cbn; lia |].
+    intros x xr. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  pose proof (af_acc_live RT AF S2 m_l h 96 art_l h_in2) as (_ & h_acc_l).
+  (* storing the lock pointer, up to the copy of the config *)
+  pose proof (ht_w2 sp gp (Z_to_bv 64 TP_A) t0c t1c t2c a1c a2c a3c a4c a5c a6c a7c s5 s8 s9 s10 s11 t3c t4c t5c t6c Fc fcc m_l h conf lk
+                h_hi ltac:(unfold USTACK_TOP in *; lia) h_al8 lk_pos ltac:(unfold USTACK_TOP in *; lia) ltac:(lia) ltac:(lia)
+                h_tab0' h_acc_l inv_l) as walk.
+  cl_lift walk at_l' k_p at_p.
+  destruct (ASTA_unpack RT S2 PM _ k_p at_p) as (ms_p & (m_p & -> & mu_p & wm_p & inv_p & h_cells_p) & at_p'). clear at_p.
+  assert (art_p : ART RT S2 m_p) by exact (art_walk S2 m_l m_p h 96 (h + 56) (h + 64) art_l sp0_l h_in2 ltac:(lia) ltac:(lia) mu_p wm_p).
+  assert (ag_p : agree_on keep0 m m_p).
+  { apply (agree_trans _ m m_l m_p ag_l). apply (agree_of_munch _ _ _ _ mu_p). intros x kx. cbn [outside]. split; [| exact I].
+    pose proof (h_fresh x kx). lia. }
+  assert (up_p : agree_on above m_f m_p).
+  { apply (agree_trans _ m_f m_l m_p up_l). apply (above_munch _ _ _ mu_p). intros x far. cbn [outside]. split; [lia | exact I]. }
+  assert (stk_p : stk asegs m_p lo (bv_unsigned sp + -96)).
+  { apply (stk_munch _ m_l m_p _ _ stk_l mu_p wm_p). intros x xr. cbn [outside]. split; [lia | exact I]. }
+  assert (env_p : cl_env m_p (Z_to_bv 8 1) canary) by exact (env_walk _ _ m_l m_p _ env_l mu_p ltac:(unfold ssp_guard; lia)).
+  assert (mono_p : wmono asegs m m_p) by exact (wmono_trans _ _ _ _ (wmono_trans _ _ _ _ mono_h wm_l) wm_p).
+  destruct (cf_at m_p ag_p mono_p) as (cfc_p & cfa_p).
+  (* the config copy: __asan_memcpy(ht, conf, 48) *)
+  assert (cfb_len : Z.of_nat (length (cells_bytes (ht_conf ctx))) = 48).
+  { rewrite cells_bytes_length by (cbn; repeat split). reflexivity. }
+  assert (a2_48 : Z_to_bv 64 48 = Z_to_bv 64 (Z.of_nat (length (cells_bytes (ht_conf ctx))))) by (rewrite cfb_len; reflexivity).
+  assert (src_ok : checked_src RT S2 m_p (Z_to_bv 64 (bv_unsigned sp + -96)) lo conf (Z.of_nat (length (cells_bytes (ht_conf ctx))))).
+  { rewrite cfb_len. split.
+    - intros _. split; [exact cfa_p |]. right; left. exists fcf, kcf. split; [rewrite frs_l; exact cf_in | lia].
+    - left. lia. }
+  assert (dst_ok : checked_dst RT S2 m_p (Z_to_bv 64 (bv_unsigned sp + -96)) h (Z.of_nat (length (cells_bytes (ht_conf ctx))))).
+  { rewrite cfb_len. exact (Fz_mkit.live_checked_dst RT AF S2 m_p _ h 96 h 48 art_p h_in2 ltac:(lia) ltac:(lia) ltac:(lia)). }
+  assert (cok_p : call_ok RT S2 m_p (Z_to_bv 64 (bv_unsigned sp + -96)) lo).
+  { unfold call_ok. rewrite csp_u, sp0_l. split; [exact stk_p |]. unfold RT_STACK, USTACK_TOP in *. repeat split; lia. }
+  refine (MCP S2 PM _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m_p h conf (cells_bytes (ht_conf ctx)) lo
+            pm_fds pm_stable eq_refl eq_refl a2_48 ltac:(lia) ltac:(lia) ltac:(rewrite cfb_len; lia)
+            (rw_cells_bytes_at asegs m_p conf (ht_conf ctx) cfc_p) src_ok dst_ok ltac:(rewrite cfb_len; unfold apart in cf_h; lia) art_p inv_p cok_p T k_p at_p' _).
+  intros k_y got_y. unfold icpt_post in got_y.
+  destruct (ASTA_unpack RT S2 PM _ k_y got_y) as (ms_y & (m_y & ret_y & aft_y & pres_y & copied_y) & at_y'). clear got_y.
+  destruct ret_y as (t0d & t1d & t2d & a1d & a2d & a3d & a4d & a5d & a6d & a7d & t3d & t4d & t5d & t6d & Fd & fcd & ->).
+  destruct aft_y as (art_y & inv_y & wm_y & stk_y).
+  rewrite (ret_pc_even SITE_ht_memcpy) in at_y' by (unfold SITE_ht_memcpy; lia).
+  rewrite csp_u in stk_y, pres_y. rewrite cfb_len in pres_y.
+  assert (ag_y : agree_on keep0 m m_y).
+  { apply (agree_trans _ m m_p m_y ag_p). apply (agree_of_pres_ex _ _ _ _ _ _ _ _ pres_y). intros x kx.
+    split; [| pose proof (h_fresh x kx); lia]. rewrite frs_l.
+    exact (proj1 (keep0_lift (rt_live RT S2) ltac:(rewrite live_l; intros e ein; right; right; exact ein) x kx)). }
+  assert (up_y : agree_on above m_f m_y).
+  { apply (agree_trans _ m_f m_p m_y up_p). apply (agree_of_pres_ex _ _ _ _ _ _ _ _ pres_y). intros x xr. unfold above in xr.
+    split; [apply acl_stack; lia | lia]. }
+  assert (env_y : cl_env m_y (Z_to_bv 8 1) canary).
+  { apply (cl_env_pres_ex _ _ _ _ _ m_p m_y _ _ env_p pres_y). intros x cx.
+    pose proof (client_static_range x (cl_cell_static x cx)) as xr. unfold SEGTOP_A in xr. lia. }
+  (* the header now starts with the config *)
+  pose proof (rw_cells_tail m_p h _ _ h_cells_p) as h_rest_p. cbn [csize] in h_rest_p.
+  assert (h_rest_y : rw_cells asegs m_y (h + 48) [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 lk); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); CB 16 (repeat (Z_to_bv 8 0) 16)]).
+  { apply (rw_cells_agree asegs m_p m_y _ _ h_rest_p); [| exact wm_y].
+    apply (agree_of_pres_ex _ _ _ _ _ _ _ _ pres_y). intros x xr. cbn [cells_size csize Nat.add] in xr.
+    split; [apply (acl_live _ _ _ h 96); [exact h_in2 | lia] | lia]. }
+  assert (h_wr48 : wr_at asegs m_y h 48).
+  { apply (wr_at_wm m_p m_y h 48); [| exact wm_y]. apply (wr_at_sub m_p h 96 h 48); [exact (proj2 h_cells_p) | lia | lia | lia]. }
+  pose proof (rw_CB_of_bytes m_y h _ copied_y ltac:(rewrite cfb_len; exact h_wr48)) as h_cfg_y.
+  assert (h_conf_y : rw_cells asegs m_y h (ht_conf ctx)).
+  { apply (rw_cells_recast m_y h _ _ h_cfg_y); [cbn; repeat split | exact (eq_sym (app_nil_r _))]. }
+  assert (h_tab1 : rw_cells asegs m_y h (ht_tab1 ctx lk)).
+  { change (ht_tab1 ctx lk) with (ht_conf ctx ++ [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 lk); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); CB 16 (repeat (Z_to_bv 8 0) 16)]).
+    apply (proj2 (rw_cells_app m_y h _ _)). split; [exact h_conf_y | exact h_rest_y]. }
+  pose proof (af_acc_live RT AF S2 m_y h 96 art_y h_in2) as (_ & h_acc_y).
+  (* stores the default free callback at h+8 and 512 at h+72, up to the second allocation *)
+  pose proof (ht_w3 sp gp (Z_to_bv 64 TP_A) t0d t1d t2d a1d a2d a3d a4d a5d a6d a7d s5 s8 s9 s10 s11 t3d t4d t5d t6d Fd fcd m_y h conf lk ctx
+                h_hi ltac:(unfold USTACK_TOP in *; lia) h_al8 ltac:(lia) ltac:(lia) h_tab1 h_acc_y inv_y) as walk.
+  cl_lift walk at_y' k_r at_r.
+  destruct (ASTA_unpack RT S2 PM _ k_r at_r) as (ms_r & (m_r & -> & mu_r & wm_r & inv_r & h_tab2) & at_r'). clear at_r.
+  assert (art_r : ART RT S2 m_r) by exact (art_walk S2 m_y m_r h 96 h (h + 96) art_y sp0_l h_in2 ltac:(lia) ltac:(lia) mu_r wm_r).
+  assert (ag_r : agree_on keep0 m m_r).
+  { apply (agree_trans _ m m_y m_r ag_y). apply (agree_of_munch _ _ _ _ mu_r). intros x kx. cbn [outside]. split; [| exact I].
+    pose proof (h_fresh x kx). lia. }
+  assert (up_r : agree_on above m_f m_r).
+  { apply (agree_trans _ m_f m_y m_r up_y). apply (above_munch _ _ _ mu_r). intros x far. cbn [outside]. split; [lia | exact I]. }
+  assert (stk_r : stk asegs m_r lo (bv_unsigned sp + -96)).
+  { apply (stk_munch _ m_y m_r _ _ stk_y mu_r wm_r). intros x xr. cbn [outside]. split; [lia | exact I]. }
+  assert (env_r : cl_env m_r (Z_to_bv 8 1) canary) by exact (env_walk _ _ m_y m_r _ env_y mu_r ltac:(unfold ssp_guard; lia)).
+  assert (wf_r : wmono asegs m_f m_r) by exact (wmono_trans _ _ _ _ (wmono_trans _ _ _ _ (wmono_trans _ _ _ _ (wmono_trans _ _ _ _ wm_h wm_l) wm_p) wm_y) wm_r).
+  (* the mutable part: CRYPTO_zalloc(24) *)
+  destruct (link_at m_r SITE_ht_zalloc2 e_CRYPTO_zalloc up_r wf_r
+              ltac:(unfold HT_SITES; right; right; left; reflexivity) ltac:(unfold HT_CALLS; right; right; left; reflexivity)
+              ltac:(unfold SITE_ht_zalloc2; lia)) as (cgx_3 & chain_3).
+  rewrite <- cg_l in cgx_3.
+  assert (cok_r : call_ok RT S2 m_r (Z_to_bv 64 (bv_unsigned sp + -96)) lo).
+  { unfold call_ok. rewrite csp_u, sp0_l. split; [exact stk_r |]. unfold RT_STACK, USTACK_TOP in *. repeat split; lia. }
+  assert (cz_cg2 : cg_has (rt_cg RT S2) [(SITE_cz_malloc, e_CRYPTO_zalloc); (SITE_cm_malloc, e_CRYPTO_malloc)]
+                     [(SITE_cz_malloc, e_CRYPTO_malloc); (SITE_cm_malloc, e_malloc)]) by (rewrite cg_l; exact cz_cg0).
+  refine (C_CZ S2 PM _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m_r 24 lo (bv_unsigned ra :: outer) (Z_to_bv 8 1) canary
+            pm_fds pm_stable eq_refl eq_refl ltac:(lia) art_r inv_r cok_r (room_c 256 ltac:(lia))
+            cgx_3 chain_3 cz_cg2 ltac:(rewrite live_l; cbn [length]; lia) ltac:(rewrite cred_l, mc24, mc96; lia) env_r T k_r at_r' _).
+  intros k_z got_z.
+  destruct got_z as (S3 & md & at_z & live_z & frs_z & sp0_z & cred_z & md_pos & md_al & md_top & cg_z).
+  destruct (ASTA_unpack RT S3 PM _ k_z at_z) as (ms_z & (m_z & ret_z & aft_z & pres_z & env_z & wr_md & _ & zero_md) & at_z'). clear at_z.
+  destruct ret_z as (t0e & t1e & t2e & a1e & a2e & a3e & a4e & a5e & a6e & a7e & t3e & t4e & t5e & t6e & Fe & fce & ->).
+  destruct aft_z as (art_z & inv_z & wm_z & stk_z).
+  rewrite (ret_pc_even SITE_ht_zalloc2) in at_z' by (unfold SITE_ht_zalloc2; lia).
+  rewrite csp_u in stk_z, pres_z.
+  rewrite live_l in live_z. rewrite frs_l in frs_z, pres_z. rewrite sp0_l in sp0_z. rewrite cg_l in cg_z. rewrite cred_l in cred_z.
+  assert (md_in : In (md, 24) (rt_live RT S3)) by (rewrite live_z; left; reflexivity).
+  assert (h_in3 : In (h, 96) (rt_live RT S3)) by (rewrite live_z; right; right; left; reflexivity).
+  assert (lk_in3 : In (lk, 40) (rt_live RT S3)) by (rewrite live_z; right; left; reflexivity).
+  pose proof (afp_live_hi RT GOBJ AFP S3 m_z md 24 art_z md_in ltac:(lia)) as md_hi.
+  pose proof (af_live_range RT AF S3 m_z md 24 art_z md_in) as (_ & md_win & _).
+  rewrite sp0_z in md_win.
+  assert (md_lo : md + 24 <= lo) by (unfold STACK_WIN in *; lia).
+  assert (md_h : apart md 24 h 96).
+  { unfold apart. apply (wg_live_apart RT AF S3 m_z [] md 24 ((lk, 40) :: (h, 96) :: rt_live RT S0) h 96 art_z);
+      [rewrite live_z; reflexivity | right; left; reflexivity]. }
+  assert (md_lk : apart md 24 lk 40).
+  { unfold apart. apply (wg_live_apart RT AF S3 m_z [] md 24 ((lk, 40) :: (h, 96) :: rt_live RT S0) lk 40 art_z);
+      [rewrite live_z; reflexivity | left; reflexivity]. }
+  assert (cf_md : apart fcf (fs_size kcf) md 24).
+  { unfold apart. apply (proj2 (proj2 (proj2 (af_frames_range RT AF S3 m_z fcf kcf art_z ltac:(rewrite frs_z; exact cf_in))))). exact md_in. }
+  assert (md_fresh : forall x, keep0 x -> ~ (md <= x < md + 24)).
+  { intros x kx. exact (wg_newchunk_apart RT AF S0 S3 m_z [(md, 24); (lk, 40); (h, 96)] md 24 (bv_unsigned sp) x art_z live_z (or_introl eq_refl) frs_z sp0_z
+                          ltac:(lia) ltac:(lia) (proj1 kx)). }
+  assert (ag_z : agree_on keep0 m m_z).
+  { apply (agree_trans _ m m_r m_z ag_r). apply (keep_pres _ _ m_r m_z pres_z); [rewrite live_l; intros e ein; right; right; exact ein | exact (fun x kx => proj2 kx)]. }
+  assert (up_z : agree_on above m_f m_z).
+  { apply (agree_trans _ m_f m_r m_z up_r). apply (above_pres _ _ _ m_r m_z pres_z). intros x far. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  assert (h_tab2' : rw_cells asegs m_z h (ht_tab2 ctx lk)).
+  { apply (wg_keep_live _ _ _ _ m_r m_z h 96 h _ h_tab2 pres_z wm_z); [rewrite live_l; right; left; reflexivity | lia | cbn; lia |].
+    intros x xr. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  pose proof (af_acc_live RT AF S3 m_z h 96 art_z h_in3) as (_ & h_acc_z).
+  assert (md_al8 : md mod 8 = 0) by (apply wg_mod16_8; exact md_al).
+  (* storing the mutable part, up to the bucket allocation *)
+  pose proof (ht_w4 sp gp (Z_to_bv 64 TP_A) t0e t1e t2e a1e a2e a3e a4e a5e a6e a7e s9 s10 s11 t3e t4e t5e t6e Fe fce m_z h conf lk md ctx
+                h_hi ltac:(unfold USTACK_TOP in *; lia) h_al8 ltac:(lia) ltac:(lia) md_pos ltac:(unfold USTACK_TOP in *; lia) md_al8
+                h_tab2' h_acc_z inv_z) as walk.
+  cl_lift walk at_z' k_n at_n.
+  destruct (ASTA_unpack RT S3 PM _ k_n at_n) as (ms_n & (m_n & -> & mu_n & wm_n & inv_n & h_tab3) & at_n'). clear at_n.
+  assert (art_n : ART RT S3 m_n) by exact (art_walk S3 m_z m_n h 96 (h + 64) (h + 72) art_z sp0_z h_in3 ltac:(lia) ltac:(lia) mu_n wm_n).
+  assert (ag_n : agree_on keep0 m m_n).
+  { apply (agree_trans _ m m_z m_n ag_z). apply (agree_of_munch _ _ _ _ mu_n). intros x kx. cbn [outside]. split; [| exact I].
+    pose proof (h_fresh x kx). lia. }
+  assert (up_n : agree_on above m_f m_n).
+  { apply (agree_trans _ m_f m_z m_n up_z). apply (above_munch _ _ _ mu_n). intros x far. cbn [outside]. split; [lia | exact I]. }
+  assert (stk_n : stk asegs m_n lo (bv_unsigned sp + -96)).
+  { apply (stk_munch _ m_z m_n _ _ stk_z mu_n wm_n). intros x xr. cbn [outside]. split; [lia | exact I]. }
+  assert (env_n : cl_env m_n (Z_to_bv 8 1) canary) by exact (env_walk _ _ m_z m_n _ env_z mu_n ltac:(unfold ssp_guard; lia)).
+  assert (wf_n : wmono asegs m_f m_n) by exact (wmono_trans _ _ _ _ (wmono_trans _ _ _ _ wf_r wm_z) wm_n).
+  (* the zeroed mutable part, cell by cell *)
+  assert (md_zero : rw_cells asegs m_z md [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]).
+  { apply (rw_cells_recast m_z md _ _ (rw_CB_of_bytes m_z md _ zero_md wr_md)); [cbn; repeat split | reflexivity]. }
+  destruct (proj1 (rw_cells_app m_z md [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)] [C8 (Z_to_bv 64 0)]) md_zero) as (md01_z & md2_z').
+  assert (md2_z : rw_cells asegs m_z (md + 16) [C8 (Z_to_bv 64 0)]) by exact md2_z'. clear md2_z'.
+  pose proof (rw_cells_head m_z md _ _ md01_z) as md0_z. clear md01_z.
+  assert (md0_n : rw_cells asegs m_n md [C8 (Z_to_bv 64 0)]).
+  { apply (wg_keep_seg _ m_z m_n _ _ md0_z mu_n wm_n). intros x xr. cbn [cells_size csize Nat.add] in xr. cbn [outside].
+    unfold apart in md_h. split; [lia | exact I]. }
+  assert (md2_n : rw_cells asegs m_n (md + 16) [C8 (Z_to_bv 64 0)]).
+  { apply (wg_keep_seg _ m_z m_n _ _ md2_z mu_n wm_n). intros x xr. cbn [cells_size csize Nat.add] in xr. cbn [outside].
+    unfold apart in md_h. split; [lia | exact I]. }
+  (* the bucket array: alloc_new_neighborhood_list(512, &md->neighborhood_ptr_to_free) *)
+  destruct (link_at m_n SITE_ht_anl e_anl up_n wf_n
+              ltac:(unfold HT_SITES; right; right; right; left; reflexivity) ltac:(unfold HT_CALLS; right; right; right; left; reflexivity)
+              ltac:(unfold SITE_ht_anl; lia)) as (cgx_4 & chain_4).
+  rewrite <- cg_z in cgx_4.
+  change e_anl with Fz_I2_anl.e_anl in cgx_4.
+  assert (cok_n : call_ok RT S3 m_n (Z_to_bv 64 (bv_unsigned sp + -96)) lo).
+  { unfold call_ok. rewrite csp_u, sp0_z. split; [exact stk_n |]. unfold RT_STACK, USTACK_TOP in *. repeat split; lia. }
+  assert (anl_cg3 : cg_has (rt_cg RT S3) ANL_SITES ANL_CALLS) by (rewrite cg_z; apply (cg_has_weaken _ _ _ _ _ cgh_e); vm_compute; reflexivity).
+  refine (C_ANL S3 PM _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m_n lo (bv_unsigned ra :: outer) (md + 8) md 24 (Z_to_bv 8 1) canary
+            pm_fds pm_stable eq_refl eq_refl eq_refl memalign_plain_nb md_in ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia)
+            art_n inv_n cok_n (room_c 560 ltac:(lia)) cgx_4 chain_4 anl_cg3
+            ltac:(rewrite frs_z; exact nfr_e) ltac:(rewrite live_z; cbn [length]; lia) ltac:(rewrite cred_z, mcnb, mc24, mc96; lia) env_n T k_n at_n' _).
+  intros k_b got_b.
+  destruct got_b as (S4 & nb & at_b & live_b & frs_b & sp0_b & cred_b & nb_pos & nb_al & nb_top & cg_b).
+  destruct (ASTA_unpack RT S4 PM _ k_b at_b) as (ms_b & (m_b & ret_b & aft_b & pres_b & env_b & wr_nb & _ & md1_b & zero_nb) & at_b'). clear at_b.
+  destruct ret_b as (t0f & t1f & t2f & a1f & a2f & a3f & a4f & a5f & a6f & a7f & t3f & t4f & t5f & t6f & Ff & fcn & ->).
+  destruct aft_b as (art_b & inv_b & wm_b & stk_b).
+  rewrite (ret_pc_even SITE_ht_anl) in at_b' by (unfold SITE_ht_anl; lia).
+  rewrite csp_u in stk_b, pres_b.
+  rewrite live_z in live_b. rewrite frs_z in frs_b, pres_b. rewrite sp0_z in sp0_b. rewrite cg_z in cg_b. rewrite cred_z in cred_b.
+  assert (nb_in : In (nb, NB_BYTES) (rt_live RT S4)) by (rewrite live_b; left; reflexivity).
+  assert (md_in4 : In (md, 24) (rt_live RT S4)) by (rewrite live_b; right; left; reflexivity).
+  assert (h_in4 : In (h, 96) (rt_live RT S4)) by (rewrite live_b; right; right; right; left; reflexivity).
+  pose proof (af_live_range RT AF S4 m_b nb NB_BYTES art_b nb_in) as (_ & nb_win & _).
+  rewrite sp0_b in nb_win.
+  assert (nb_lo : nb + NB_BYTES <= lo) by (unfold STACK_WIN in *; lia).
+  pose proof (afp_live_hi RT GOBJ AFP S4 m_b nb NB_BYTES art_b nb_in ltac:(unfold NB_BYTES; lia)) as nb_hi.
+  assert (nb_apart : forall p n, In (p, n) ((md, 24) :: (lk, 40) :: (h, 96) :: rt_live RT S0) -> nb + NB_BYTES <= p \/ p + n <= nb).
+  { intros p n pin. apply (wg_live_apart RT AF S4 m_b [] nb NB_BYTES ((md, 24) :: (lk, 40) :: (h, 96) :: rt_live RT S0) p n art_b); [rewrite live_b; reflexivity | exact pin]. }
+  assert (nb_md : apart nb NB_BYTES md 24) by (unfold apart; apply nb_apart; left; reflexivity).
+  assert (nb_lk : apart nb NB_BYTES lk 40) by (unfold apart; apply nb_apart; right; left; reflexivity).
+  assert (nb_h : apart nb NB_BYTES h 96) by (unfold apart; apply nb_apart; right; right; left; reflexivity).
+  assert (ag_b : agree_on keep0 m m_b).
+  { apply (agree_trans _ m m_n m_b ag_n). apply (keep_pres _ _ m_n m_b pres_b); [rewrite live_z; intros e ein; right; right; right; exact ein |].
+    intros x kx. cbn [outside]. split; [| exact I]. pose proof (md_fresh x kx). lia. }
+  assert (up_b : agree_on above m_f m_b).
+  { apply (agree_trans _ m_f m_n m_b up_n). apply (above_pres _ _ _ m_n m_b pres_b). intros x far. cbn [outside]. split; [lia | exact I]. }
+  assert (wf_b : wmono asegs m_f m_b) by exact (wmono_trans _ _ _ _ wf_n wm_b).
+  (* header, mutable part and config at the bucket return *)
+  assert (h_tab3_b : rw_cells asegs m_b h (ht_tab3 ctx lk md)).
+  { apply (wg_keep_live _ _ _ _ m_n m_b h 96 h _ h_tab3 pres_b wm_b); [exact h_in3 | lia | cbn; lia |].
+    intros x xr. cbn [cells_size csize Nat.add ht_tab3] in xr. cbn [outside]. unfold apart in md_h. split; [lia | exact I]. }
+  assert (md0_b : rw_cells asegs m_b md [C8 (Z_to_bv 64 0)]).
+  { apply (wg_keep_live _ _ _ _ m_n m_b md 24 md _ md0_n pres_b wm_b); [exact md_in | lia | cbn; lia |].
+    intros x xr. cbn [cells_size csize Nat.add] in xr. cbn [outside]. split; [lia | exact I]. }
+  assert (md2_b : rw_cells asegs m_b (md + 16) [C8 (Z_to_bv 64 0)]).
+  { apply (wg_keep_live _ _ _ _ m_n m_b md 24 (md + 16) _ md2_n pres_b wm_b); [exact md_in | lia | cbn; lia |].
+    intros x xr. cbn [cells_size csize Nat.add] in xr. cbn [outside]. split; [lia | exact I]. }
+  assert (md_cells_b : rw_cells asegs m_b md [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 nb); C8 (Z_to_bv 64 0)]).
+  { apply (proj2 (rw_cells_app m_b md [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 nb)] [C8 (Z_to_bv 64 0)])).
+    split; [apply rw_cells_join2; [exact md0_b | exact md1_b] | exact md2_b]. }
+  pose proof (af_acc_live RT AF S4 m_b h 96 art_b h_in4) as (_ & h_acc_b).
+  pose proof (af_acc_live RT AF S4 m_b md 24 art_b md_in4) as (_ & md_acc_b).
+  destruct (cf_at m_b ag_b (wmono_trans _ _ _ _ wm_f wf_b)) as (cfc_b & cfa_b).
+  (* bucket pointers and mask, up to the rcu lock *)
+  pose proof (ht_w5 sp gp (Z_to_bv 64 TP_A) t0f t1f t2f a1f a2f a3f a4f a5f a6f a7f s10 s11 t3f t4f t5f t6f Ff fcn m_b h conf lk md nb ctx
+                h_hi ltac:(unfold USTACK_TOP in *; lia) h_al8 ltac:(lia) ltac:(lia) cf_al8 md_hi ltac:(unfold USTACK_TOP in *; lia) md_al8
+                nb_pos ltac:(unfold USTACK_TOP, NB_BYTES in *; lia) ltac:(unfold apart in md_h; lia) ltac:(unfold apart in cf_h; lia)
+                ltac:(unfold apart in cf_md; lia)
+                h_tab3_b h_acc_b md_cells_b md_acc_b cfc_b cfa_b inv_b) as walk.
+  cl_lift walk at_b' k_d at_d.
+  destruct (ASTA_unpack RT S4 PM _ k_d at_d) as (ms_d & (a2g & m_d & -> & mu_d & wm_d & inv_d & md_cells_d) & at_d'). clear at_d.
+  assert (art_d : ART RT S4 m_d) by exact (art_walk S4 m_b m_d md 24 md (md + 24) art_b sp0_b md_in4 ltac:(lia) ltac:(lia) mu_d wm_d).
+  assert (ag_d : agree_on keep0 m m_d).
+  { apply (agree_trans _ m m_b m_d ag_b). apply (agree_of_munch _ _ _ _ mu_d). intros x kx. cbn [outside]. split; [| exact I].
+    pose proof (md_fresh x kx). lia. }
+  assert (up_d : agree_on above m_f m_d).
+  { apply (agree_trans _ m_f m_b m_d up_b). apply (above_munch _ _ _ mu_d). intros x far. cbn [outside]. split; [lia | exact I]. }
+  assert (stk_d : stk asegs m_d lo (bv_unsigned sp + -96)).
+  { apply (stk_munch _ m_b m_d _ _ stk_b mu_d wm_d). intros x xr. cbn [outside]. split; [lia | exact I]. }
+  assert (env_d : cl_env m_d (Z_to_bv 8 1) canary) by exact (env_walk _ _ m_b m_d _ env_b mu_d ltac:(unfold ssp_guard; lia)).
+  assert (wf_d : wmono asegs m_f m_d) by exact (wmono_trans _ _ _ _ wf_b wm_d).
+  assert (h_tab3_d : rw_cells asegs m_d h (ht_tab3 ctx lk md)).
+  { apply (wg_keep_seg _ m_b m_d _ _ h_tab3_b mu_d wm_d). intros x xr. cbn [cells_size csize Nat.add ht_tab3] in xr. cbn [outside].
+    unfold apart in md_h. split; [lia | exact I]. }
+  (* the rcu lock: ossl_rcu_lock_new(1, ctx) *)
+  destruct (link_at m_d SITE_ht_rcu e_rcu_lock_new up_d wf_d
+              ltac:(unfold HT_SITES; right; right; right; right; left; reflexivity) ltac:(unfold HT_CALLS; right; right; right; right; left; reflexivity)
+              ltac:(unfold SITE_ht_rcu; lia)) as (cgx_5 & chain_5).
+  rewrite <- cg_b in cgx_5.
+  change e_rcu_lock_new with Fz_T_rcuw.e_rcu_lock_new in cgx_5.
+  assert (cok_d : call_ok RT S4 m_d (Z_to_bv 64 (bv_unsigned sp + -96)) lo).
+  { unfold call_ok. rewrite csp_u, sp0_b. split; [exact stk_d |]. unfold RT_STACK, USTACK_TOP in *. repeat split; lia. }
+  assert (rcu_cg4 : cg_has (rt_cg RT S4) RCU_SITES RCU_CALLS) by (rewrite cg_b; apply (cg_has_weaken _ _ _ _ _ cgh_e); vm_compute; reflexivity).
+  refine (C_RCU S4 PM _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m_d lo (bv_unsigned ra :: outer) (Z_to_bv 8 1) canary
+            pm_fds pm_stable eq_refl ctx_nz eq_refl art_d inv_d cok_d (room_c 464 ltac:(lia)) cgx_5 chain_5 rcu_cg4
+            ltac:(rewrite frs_b; exact nfr_e) ltac:(rewrite live_b; cbn [length]; lia) ltac:(rewrite cred_b, mcnb, mc24, mc96; lia) env_d T k_d at_d' _).
+  intros k_u got_u.
+  destruct got_u as (S5 & rl & rq & at_u & live_u & frs_u & sp0_u & cred_u & rl_pos & rl_al & rl_top & rq_pos & rq_al & rq_top & cg_u).
+  destruct (ASTA_unpack RT S5 PM _ k_u at_u)
+    as (ms_u & (m_u & ret_u & aft_u & pres_u & env_u & head_u & mx1_u & mx2_u & cd1_u & mx3_u & cd2_u & rl_acc_u & rq_cells_u & rq_acc_u) & at_u').
+  clear at_u.
+  destruct ret_u as (t0g & t1g & t2g & a1g & a2h & a3g & a4g & a5g & a6g & a7g & t3g & t4g & t5g & t6g & Fg & fcg & ->).
+  destruct aft_u as (art_u & inv_u & wm_u & stk_u).
+  rewrite (ret_pc_even SITE_ht_rcu) in at_u' by (unfold SITE_ht_rcu; lia).
+  rewrite csp_u in stk_u, pres_u.
+  rewrite live_b in live_u. rewrite frs_b in frs_u, pres_u. rewrite sp0_b in sp0_u. rewrite cg_b in cg_u. rewrite cred_b in cred_u.
+  assert (rq_in : In (rq, 16) (rt_live RT S5)) by (rewrite live_u; left; reflexivity).
+  assert (rl_in : In (rl, 264) (rt_live RT S5)) by (rewrite live_u; right; left; reflexivity).
+  assert (nb_in5 : In (nb, NB_BYTES) (rt_live RT S5)) by (rewrite live_u; do 2 right; left; reflexivity).
+  assert (md_in5 : In (md, 24) (rt_live RT S5)) by (rewrite live_u; do 3 right; left; reflexivity).
+  assert (lk_in5 : In (lk, 40) (rt_live RT S5)) by (rewrite live_u; do 4 right; left; reflexivity).
+  assert (h_in5 : In (h, 96) (rt_live RT S5)) by (rewrite live_u; do 5 right; left; reflexivity).
+  assert (lk_in4 : In (lk, 40) (rt_live RT S4)) by (rewrite live_b; do 2 right; left; reflexivity).
+  assert (rl_h : apart rl 264 h 96).
+  { unfold apart. apply (wg_live_apart RT AF S5 m_u [(rq, 16)] rl 264 ((nb, NB_BYTES) :: (md, 24) :: (lk, 40) :: (h, 96) :: rt_live RT S0) h 96 art_u);
+      [rewrite live_u; reflexivity | do 4 right; left; reflexivity]. }
+  assert (rq_h : apart rq 16 h 96).
+  { unfold apart. apply (wg_live_apart RT AF S5 m_u [] rq 16 ((rl, 264) :: (nb, NB_BYTES) :: (md, 24) :: (lk, 40) :: (h, 96) :: rt_live RT S0) h 96 art_u);
+      [rewrite live_u; reflexivity | do 4 right; left; reflexivity]. }
+  assert (ag_u : agree_on keep0 m m_u).
+  { apply (agree_trans _ m m_d m_u ag_d). apply (keep_pres _ _ m_d m_u pres_u); [rewrite live_b; intros e ein; do 4 right; exact ein | exact (fun x kx => proj2 kx)]. }
+  assert (up_u : agree_on above m_f m_u).
+  { apply (agree_trans _ m_f m_d m_u up_d). apply (above_pres _ _ _ m_d m_u pres_u). intros x far. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  assert (wf_u : wmono asegs m_f m_u) by exact (wmono_trans _ _ _ _ wf_d wm_u).
+  assert (h_tab3_u : rw_cells asegs m_u h (ht_tab3 ctx lk md)).
+  { apply (wg_keep_live _ _ _ _ m_d m_u h 96 h _ h_tab3_d pres_u wm_u); [exact h_in4 | lia | cbn; lia |].
+    intros x xr. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  pose proof (af_acc_live RT AF S5 m_u h 96 art_u h_in5) as (_ & h_acc_u).
+  assert (frame_u : rw_cells asegs m_u (bv_unsigned sp + -96) [CB 8 junk_f; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
+  { apply (rw_cells_agree asegs m_f m_u _ _ frame_f); [| exact wf_u].
+    apply (agree_sub _ _ _ _ up_u). intros x xr. cbn [cells_size csize Nat.add] in xr. unfold above. lia. }
+  (* the lock pointer, the frame release and the return of the table *)
+  pose proof (ht_w6 ra sp gp (Z_to_bv 64 TP_A) t0g t1g t2g a1g a2h a3g a4g a5g a6g a7g s10 s11 t3g t4g t5g t6g s0 s1 s2 s3 s4 s5 s6 s7 s8 s9
+                Fg fcg m_u h conf rl lk md lo ctx junk_f
+                ltac:(lia) lo_big sp_fit h_hi h_lo h_al8 ltac:(lia) ltac:(lia) rl_pos ltac:(unfold USTACK_TOP in *; lia)
+                stk_u frame_u h_tab3_u h_acc_u inv_u) as walk.
+  cl_lift walk at_u' k_x at_x.
+  destruct (ASTA_unpack RT S5 PM _ k_x at_x) as (ms_x & (a1x & m_x & -> & mu_x & wm_x & inv_x & stk_x & h_tab4) & at_x'). clear at_x.
+  assert (art_x : ART RT S5 m_x) by exact (art_walk S5 m_u m_x h 96 h (h + 96) art_u sp0_u h_in5 ltac:(lia) ltac:(lia) mu_x wm_x).
+  assert (ag_x : agree_on keep0 m m_x).
+  { apply (agree_trans _ m m_u m_x ag_u). apply (agree_of_munch _ _ _ _ mu_x). intros x kx. cbn [outside]. split; [| exact I].
+    pose proof (h_fresh x kx). lia. }
+  assert (env_x : cl_env m_x (Z_to_bv 8 1) canary) by exact (env_walk _ _ m_u m_x _ env_u mu_x ltac:(unfold ssp_guard; lia)).
+  assert (mono_x : wmono asegs m m_x) by exact (wmono_trans _ _ _ _ wm_f (wmono_trans _ _ _ _ wf_u wm_x)).
+  (* what the later steps left in place, block by block *)
+  assert (blk_pres : forall live frs W (ma mb : mem) p n, rt_pres_fp live frs (bv_unsigned sp + -96) W ma mb -> In (p, n) live ->
+            (forall x, p <= x < p + n -> outside W x) -> agree_on (fun x => p <= x < p + n) ma mb).
+  { intros live frs W ma mb p n pres pin outw. apply (agree_of_pres_fp _ _ _ _ _ _ _ pres). intros x xr.
+    split; [apply (acl_live _ _ _ p n); [exact pin | exact xr] | exact (outw x xr)]. }
+  assert (blk_munch : forall a b (ma mb : mem) p n, munch [(a, b)] ma mb -> b <= p \/ p + n <= a -> agree_on (fun x => p <= x < p + n) ma mb).
+  { intros a b ma mb p n mu far. apply (agree_of_munch _ _ _ _ mu). intros x xr. cbn [outside]. split; [lia | exact I]. }
+  assert (lk_kept : agree_on (fun x => lk <= x < lk + 40) m_l m_x).
+  { unfold apart in lk_h, md_lk.
+    apply (agree_trans _ m_l m_u m_x); [| apply (blk_munch _ _ _ _ _ _ mu_x); lia].
+    apply (agree_trans _ m_l m_d m_u); [| apply (blk_pres _ _ _ _ _ _ _ pres_u lk_in4); intros x xr; cbn [outside]; unfold G_ALLOW_CUST; split; [lia | exact I]].
+    apply (agree_trans _ m_l m_b m_d); [| apply (blk_munch _ _ _ _ _ _ mu_d); lia].
+    apply (agree_trans _ m_l m_n m_b); [| apply (blk_pres _ _ _ _ _ _ _ pres_b lk_in3); intros x xr; cbn [outside]; split; [lia | exact I]].
+    apply (agree_trans _ m_l m_z m_n); [| apply (blk_munch _ _ _ _ _ _ mu_n); lia].
+    apply (agree_trans _ m_l m_r m_z); [| apply (blk_pres _ _ _ _ _ _ _ pres_z lk_in); intros x xr; cbn [outside]; unfold G_ALLOW_CUST; split; [lia | exact I]].
+    apply (agree_trans _ m_l m_y m_r); [| apply (blk_munch _ _ _ _ _ _ mu_r); lia].
+    apply (agree_trans _ m_l m_p m_y); [apply (blk_munch _ _ _ _ _ _ mu_p); lia |].
+    apply (agree_of_pres_ex _ _ _ _ _ _ _ _ pres_y). intros x xr. split; [apply (acl_live _ _ _ lk 40); [exact lk_in | exact xr] | lia]. }
+  assert (wl_x : wmono asegs m_l m_x).
+  { apply (wmono_trans _ _ m_u _); [| exact wm_x]. apply (wmono_trans _ _ m_d _); [| exact wm_u]. apply (wmono_trans _ _ m_b _); [| exact wm_d].
+    apply (wmono_trans _ _ m_n _); [| exact wm_b]. apply (wmono_trans _ _ m_z _); [| exact wm_n]. apply (wmono_trans _ _ m_r _); [| exact wm_z].
+    apply (wmono_trans _ _ m_y _); [| exact wm_r]. exact (wmono_trans _ _ _ _ wm_p wm_y). }
+  assert (md_kept : agree_on (fun x => md <= x < md + 24) m_d m_x).
+  { unfold apart in md_h. apply (agree_trans _ m_d m_u m_x); [| apply (blk_munch _ _ _ _ _ _ mu_x); lia].
+    apply (blk_pres _ _ _ _ _ _ _ pres_u md_in4). intros x xr. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  pose proof (wp_zero_rw_CB asegs m_b nb NB_BYTES zero_nb wr_nb ltac:(unfold NB_BYTES; lia)) as nb_zero_b.
+  assert (nb_kept : agree_on (fun x => nb <= x < nb + NB_BYTES) m_b m_x).
+  { unfold apart in nb_md, nb_h.
+    apply (agree_trans _ m_b m_u m_x); [| apply (blk_munch _ _ _ _ _ _ mu_x); lia].
+    apply (agree_trans _ m_b m_d m_u); [apply (blk_munch _ _ _ _ _ _ mu_d); lia |].
+    apply (blk_pres _ _ _ _ _ _ _ pres_u nb_in). intros x xr. cbn [outside]. unfold G_ALLOW_CUST. split; [lia | exact I]. }
+  assert (nb_size : Z.of_nat (cells_size [CB (Z.to_nat NB_BYTES) (repeat (Z_to_bv 8 0) (Z.to_nat NB_BYTES))]) = NB_BYTES).
+  { cbn [cells_size csize]. rewrite Nat.add_0_r, Z2Nat.id; [reflexivity | unfold NB_BYTES; lia]. }
+  assert (rl_kept : agree_on (fun x => rl <= x < rl + 264) m_u m_x) by (unfold apart in rl_h; apply (blk_munch _ _ _ _ _ _ mu_x); lia).
+  assert (rq_kept : agree_on (fun x => rq <= x < rq + 16) m_u m_x) by (unfold apart in rq_h; apply (blk_munch _ _ _ _ _ _ mu_x); lia).
+  assert (wd_x : wmono asegs m_d m_x) by exact (wmono_trans _ _ _ _ wm_u wm_x).
+  assert (wb_x : wmono asegs m_b m_x) by exact (wmono_trans _ _ _ _ wm_d wd_x).
+  (* the caller's view *)
+  apply finish. exists S5, h, lk, md, nb, rl, rq. split.
+  - apply (ASTA_conseq RT S5 PM _ _ k_x at_x'). intros ms <-. exists m_x.
+    split; [do 16 eexists; reflexivity |].
+    split; [exact (conj art_x (conj inv_x (conj mono_x stk_x))) |].
+    split; [intros a ka oa; exact (ag_x a (conj ka oa)) |].
+    split; [exact env_x |].
+    split; [exact h_tab4 |].
+    split; [exact (proj2 (af_acc_live RT AF S5 m_x h 96 art_x h_in5)) |].
+    split.
+    { apply (rw_cells_agree asegs m_l m_x _ _ lk_cells); [| exact wl_x].
+      apply (agree_sub _ _ _ _ lk_kept). intros x xr. cbn [mutex_cells cells_size csize Nat.add] in xr. lia. }
+    split; [exact (proj2 (af_acc_live RT AF S5 m_x lk 40 art_x lk_in5)) |].
+    split.
+    { apply (rw_cells_agree asegs m_d m_x _ _ md_cells_d); [| exact wd_x].
+      apply (agree_sub _ _ _ _ md_kept). intros x xr. cbn [cells_size csize Nat.add] in xr. lia. }
+    split; [exact (proj2 (af_acc_live RT AF S5 m_x md 24 art_x md_in5)) |].
+    split.
+    { apply (rw_cells_agree asegs m_b m_x _ _ nb_zero_b); [| exact wb_x].
+      apply (agree_sub _ _ _ _ nb_kept). intros x xr. rewrite nb_size in xr. exact xr. }
+    split; [exact (proj2 (af_acc_live RT AF S5 m_x nb NB_BYTES art_x nb_in5)) |].
+    split.
+    { apply (rw_cells_agree asegs m_u m_x _ _ head_u); [| exact wm_x].
+      apply (agree_sub _ _ _ _ rl_kept). intros x xr. cbn [rcu_head cells_size csize Nat.add] in xr. lia. }
+    split.
+    { apply (rw_cells_agree asegs m_u m_x _ _ mx1_u); [| exact wm_x].
+      apply (agree_sub _ _ _ _ rl_kept). intros x xr. cbn [mutex_cells cells_size csize Nat.add] in xr. lia. }
+    split.
+    { apply (rw_cells_agree asegs m_u m_x _ _ mx2_u); [| exact wm_x].
+      apply (agree_sub _ _ _ _ rl_kept). intros x xr. cbn [mutex_cells cells_size csize Nat.add] in xr. lia. }
+    split.
+    { apply (rw_cells_agree asegs m_u m_x _ _ cd1_u); [| exact wm_x].
+      apply (agree_sub _ _ _ _ rl_kept). intros x xr. cbn [cond_cells cells_size csize Nat.add] in xr. lia. }
+    split.
+    { apply (rw_cells_agree asegs m_u m_x _ _ mx3_u); [| exact wm_x].
+      apply (agree_sub _ _ _ _ rl_kept). intros x xr. cbn [mutex_cells cells_size csize Nat.add] in xr. lia. }
+    split.
+    { apply (rw_cells_agree asegs m_u m_x _ _ cd2_u); [| exact wm_x].
+      apply (agree_sub _ _ _ _ rl_kept). intros x xr. cbn [cond_cells cells_size csize Nat.add] in xr. lia. }
+    split; [exact (proj2 (af_acc_live RT AF S5 m_x rl 264 art_x rl_in)) |].
+    split.
+    { apply (rw_cells_agree asegs m_u m_x _ _ rq_cells_u); [| exact wm_x].
+      apply (agree_sub _ _ _ _ rq_kept). intros x xr. cbn [cells_size csize Nat.add] in xr. lia. }
+    exact (proj2 (af_acc_live RT AF S5 m_x rq 16 art_x rq_in)).
+  - rewrite live_u, frs_u, sp0_u, cg_u, cred_u, cost3, ?mc96, ?mc24, ?mcnb.
+    repeat split; first [reflexivity | assumption | lia].
 Qed.
 End HtNew.

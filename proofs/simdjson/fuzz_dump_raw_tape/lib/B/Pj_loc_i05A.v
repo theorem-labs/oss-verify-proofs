@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -22,18 +22,23 @@ Import ListNotations.
 Open Scope bv_scope.
 
 Definition call_once_post_5 (ra sp gp tp t0 t1 t2 s0 s1 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
-    (F : bvmap 5 word) (fc : bv 32) (lo k : Z) (canary : word) (pad1 j8 : list byte) (pad2 : word) (m : word -> option byte) : machine_state -> Prop :=
-  fun ms' => exists a0 a1 a2 a3 a4 a5 m',
-    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-             F (ret_pc ra) fc None m' (seg_rom bsegs)
-    /\ munch [(bv_unsigned sp - 160, bv_unsigned sp); (0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z m m'
-    /\ wmono bsegs m m' /\ mem_inv bsegs m'
-    /\ stk bsegs m' lo (bv_unsigned sp)
-    /\ rw_cells bsegs m' (bv_unsigned sp) [CB 8 j8; C8 (Z_to_bv 64 0x6aa780); C8 (Z_to_bv 64 (bv_unsigned sp + 24)); C8 (Z_to_bv 64 (bv_unsigned sp + 8))]
-    /\ rw_cells bsegs m' 0x6aa780 [C8 (Z_to_bv 64 18446744073709551615); C4 (Z_to_bv 64 (k + 1))]
-    /\ rw_cells bsegs m' 0x6aa768 [C4 (Z_to_bv 64 (k + 1))]
-    /\ rw_cells bsegs m' 0x6ab480 [CB 4 (repeat (Z_to_bv 8 0) 4); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0)]
-    /\ rw_cells bsegs m' 0x6ab4a8 [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); CB 16 pad1; C4 (Z_to_bv 64 0); C4 pad2; C8 (Z_to_bv 64 0)].
+    (F : bvmap 5 word) (fc : bv 32) (lo k : Z) (canary : word) (pad1 j8 : list byte) (pad2 : word) (m : mem)
+    : machine_state -> Prop :=
+  fun st => exists (r0 r1 r2 r3 r4 r5 : word) (mf : mem),
+    st = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 r0 r1 r2 r3 r4 r5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+            F (ret_pc ra) fc None mf (seg_rom bsegs)
+    /\ munch [((bv_unsigned sp - 160)%Z, bv_unsigned sp); (6989672%Z, 6989676%Z); (6989696%Z, 6989708%Z);
+              (6993028%Z, 6993032%Z); (6993072%Z, 6993080%Z); (6993096%Z, 6993100%Z); (6993104%Z, 6993112%Z)] m mf
+    /\ wmono bsegs m mf
+    /\ mem_inv bsegs mf
+    /\ stk bsegs mf lo (bv_unsigned sp)
+    /\ rw_cells bsegs mf (bv_unsigned sp)
+         [CB 8 j8; C8 (Z_to_bv 64 6989696); C8 (Z_to_bv 64 (bv_unsigned sp + 24)); C8 (Z_to_bv 64 (bv_unsigned sp + 8))]
+    /\ rw_cells bsegs mf 6989696 [C8 (Z_to_bv 64 18446744073709551615); C4 (Z_to_bv 64 (k + 1))]
+    /\ rw_cells bsegs mf 6989672 [C4 (Z_to_bv 64 (k + 1))]
+    /\ rw_cells bsegs mf 6993024 [CB 4 (repeat (Z_to_bv 8 0) 4); C4 z64; C4 z64]
+    /\ ro_cells bsegs mf 7126568 [C8 canary]
+    /\ rw_cells bsegs mf 6993064 [C8 z64; C8 z64; CB 16 pad1; C4 z64; C4 pad2; C8 z64].
 
 Lemma call_once_spec_5 : forall ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo k : Z) (canary tl idv : word) (pad1 j8 : list byte) (pad2 : word),
@@ -50,37 +55,32 @@ Lemma call_once_spec_5 : forall ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 
                s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 0x147b40) fc None m (seg_rom bsegs)).
 Proof.
-  intros until pad2. intros ST LO LOLO HI PACK FLAG NID RK MUT GOT CAN CV LP MI.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 160, bv_unsigned sp); (0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z m) as MU.
-  pose proof (wmono_refl bsegs m) as WM.
-  carve_frame 64%nat ST.
-  do 15 lstep.
-  call mutex_lock_spec; [hyp_by_addr | exact MI |].
-  rename POST into MUT.
-  lstep. lstep. lstep. if_true. lstep. lstep. if_true.
-  lstep. lstep. lstep. lstep. lstep.
-  call_sp mutex_unlock_spec; [exact ST | lia | lia | exact MUT | assumption |].
-  rename PC into ST. rename POST into MUT.
-
-  lstep. lstep.
-  lstep. lstep. lstep. lstep. lstep. lstep.
-  amo_step. amo32_fix_lit.
-  replace (sx32 (Z_to_bv 64 k)) with (Z_to_bv 64 k)
-    by (unfold sx32; f_equal; rewrite unsigned_lit by lia; symmetry; apply swrap32_small; lia).
-  lstep. lstep. lstep.
-  lstep. lstep. lstep.
-  call mutex_lock_spec; [exact MUT | assumption |].
-  rename POST into MUT.
-  lstep. lstep. lstep. lstep. lstep. lstep. lstep.
-  call_sp mutex_unlock_spec; [exact ST | lia | lia | exact MUT | assumption |].
-  rename PC into ST. rename POST into MUT.
-  lstep. lstep.
-  call_sp cond_broadcast_spec; [exact ST | lia | lia | exact GOT | exact CAN | exact CV | exact LP | assumption |].
-  rename PC into ST. rename POST into CV.
-  do 9 lstep.
-  release_frame FR ST (bv_unsigned sp).
-  unfold call_once_post_5. sys_finish.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo k canary tl idv pad1 j8 pad2
+    STACK ROOM FLOOR SPHI ARGS IDCELL CTR KRANGE MUTEX GOTC CANC CONDV PADLEN MEMOK.
+  pose proof (munch_refl [((bv_unsigned sp - 160)%Z, bv_unsigned sp); (6989672%Z, 6989676%Z); (6989696%Z, 6989708%Z);
+              (6993028%Z, 6993032%Z); (6993072%Z, 6993080%Z); (6993096%Z, 6993100%Z); (6993104%Z, 6993112%Z)] m) as FOOT.
+  pose proof (wmono_refl bsegs m) as GROW.
+  carve_frame 64%nat STACK.
+  steps_to 1457564%Z.
+  call mutex_lock_spec; [exact MUTEX | exact MEMOK |].
+  steps_to 1458824%Z.
+  call_sp mutex_unlock_spec; [exact STACK | lia | lia | assumption | assumption |].
+  steps_to 1336212%Z.
+  amo_step.
+  amo32_fix_lit.
+  assert (SXK : sx32 (Z_to_bv 64 k) = Z_to_bv 64 k)
+    by (unfold sx32; rewrite unsigned_lit by lia; rewrite swrap32_small by lia; reflexivity).
+  rewrite SXK.
+  steps_to 1457564%Z.
+  call mutex_lock_spec; [assumption | assumption |].
+  steps_to 1458824%Z.
+  call_sp mutex_unlock_spec; [eassumption | lia | lia | assumption | assumption |].
+  steps_to 1450036%Z.
+  call_sp cond_broadcast_spec; [eassumption | lia | lia | eassumption | eassumption | eassumption | eassumption | assumption |].
+  steps_to 1342528%Z.
+  lstep.
+  lazymatch goal with S : stk bsegs _ lo _ |- _ => release_frame FR S (bv_unsigned sp) end.
+  finish.
 Qed.
 
 Section AevtPieces.
@@ -92,15 +92,18 @@ Variable PMc : Model -> Prop.
 Hypothesis FDO : fdfs_only PMc.
 Hypothesis MST : mat_stable PMc.
 
-Definition append_postA_5 (Σ : rts RT) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word)
-    (fc : bv 32) (lo : Z) (m : word -> option byte) : machine_state -> Prop :=
-  fun ms' => exists (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (F : bvmap 5 word) (m' : mem),
-    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-             F (ret_pc ra) fc None m' (seg_rom bsegs)
-    /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) [(0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80)]%Z m m' /\ wmono bsegs m m' /\ mem_inv bsegs m' /\ ART RT Σ m'
-    /\ (stk bsegs m' lo (bv_unsigned sp)
-    /\ rw_cells bsegs m' 0x6aac38 [C8 (Z_to_bv 64 0x6aac50); C8 (Z_to_bv 64 0x6aac80); C8 (Z_to_bv 64 0x6aad40)]
-    /\ rw_cells bsegs m' 0x6aac78 [CB 8 (repeat (Z_to_bv 8 0) 8)]).
+Definition append_postA_5 (Σ : rts RT) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (fc : bv 32) (lo : Z) (m : mem)
+    : machine_state -> Prop :=
+  fun st => exists (u0 u1 u2 r0 r1 r2 r3 r4 r5 r6 r7 u3 u4 u5 u6 : word) (G : bvmap 5 word) (mf : mem),
+    st = MS (mkR ra sp gp tp u0 u1 u2 s0 s1 r0 r1 r2 r3 r4 r5 r6 r7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 u3 u4 u5 u6)
+            G (ret_pc ra) fc None mf (seg_rom bsegs)
+    /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) [(6990912%Z, 6990920%Z); (6990968%Z, 6990976%Z)] m mf
+    /\ wmono bsegs m mf
+    /\ mem_inv bsegs mf
+    /\ ART RT Σ mf
+    /\ stk bsegs mf lo (bv_unsigned sp)
+    /\ rw_cells bsegs mf 6990904 [C8 (Z_to_bv 64 6990928); C8 (Z_to_bv 64 6990976); C8 (Z_to_bv 64 6991168)]
+    /\ rw_cells bsegs mf 6990968 [C8 z64].
 
 Lemma append_aevt_5 : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo : Z) (junk8 : list byte),
@@ -112,38 +115,49 @@ Lemma append_aevt_5 : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s
   aevt RT PMc Σ K (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 0x6aac38) (Z_to_bv 64 1) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 0x14502c) fc None m (seg_rom bsegs)).
 Proof using AF RTC MCI FDO MST.
-  intros until junk8. intros ST LO LOR SPT SPA VEC SLOT MI ART0 HK.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80)]%Z m) as MU.
-  pose proof (wmono_refl bsegs m) as WM.
-  astart (bv_unsigned sp) [(0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80)]%Z.
+  intros Σ K ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo junk8
+    STK ROOM WIN TOP ALIGN VEC SLOT MEMOK ART0 KONT.
+  pose proof (wmono_refl bsegs m) as GROW.
+  astart (bv_unsigned sp) [(6990912%Z, 6990920%Z); (6990968%Z, 6990976%Z)].
+  pose proof (munch_refl [((bv_unsigned sp - 80)%Z, bv_unsigned sp); (6990912%Z, 6990920%Z)] m) as MU.
   apply (aevt_evt RT AF PMc MST).
-  carve_frame 80%nat ST.
-  do 17 lstep. if_true. lstep. if_false.
-  do 5 lstep.
-  acall_sp (memsetA_spec RT RTC PMc FDO MST Σ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  F fc _ 0x6aac78 0 8 junk8 lo); [exact SLOT | lia | lia | lia | lia | a_chk | a_cl | exact ARTX | assumption | a_call_ok | apost_call].
-  rename PC into ST. rename POST into SLOT. change (Z.to_nat 8) with 8%nat in SLOT. change (0 mod 256)%Z with 0%Z in SLOT.
-  do 15 lstep.
-  release_frame FR ST (bv_unsigned sp).
+  carve_frame 80%nat STK.
+  steps_to 519824%Z.
+  acallc (memsetA_spec RT RTC PMc FDO MST) clearing idtac by (first [ eassumption | a_ul | a_chk | a_cl | a_call_ok ]).
+  lazymatch goal with
+  | ZERO8 : rw_cells bsegs _ 6990968 [CB _ _] |- _ =>
+      change (Z.to_nat 8) with 8%nat in ZERO8;
+      apply (Sj_num_kit.num_cb8_c8 bsegs _ 6990968 [] []) in ZERO8; cbn [app] in ZERO8;
+      replace (le_bytes_to_word (repeat (Z_to_bv 8 (0 mod 256)) 8)) with z64 in ZERO8
+        by (apply bv_eq; vm_compute; reflexivity)
+  end.
+  steps_to 1331692%Z.
+  lstep.
+  lazymatch goal with S : stk bsegs _ lo _ |- _ => release_frame FR S (bv_unsigned sp) end.
   afinish.
 Qed.
 
-Definition install_postA_5 (Σ : rts RT) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word)
-    (fc : bv 32) (lo v : Z) (canary : word) (pad1 : list byte) (pad2 : word) (m : word -> option byte) : machine_state -> Prop :=
-  fun ms' => exists (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (F : bvmap 5 word) (m' : mem),
-    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-             F (ret_pc ra) fc None m' (seg_rom bsegs)
-    /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) [(0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6aaad8, 0x6aaae0); (0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80);
-              (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z m m'
-    /\ wmono bsegs m m' /\ mem_inv bsegs m' /\ ART RT Σ m'
-    /\ (stk bsegs m' lo (bv_unsigned sp)
-    /\ rw_cells bsegs m' 0x6aa780 [C8 (Z_to_bv 64 18446744073709551615); C4 (Z_to_bv 64 6)]
-    /\ rw_cells bsegs m' 0x6aa768 [C4 (Z_to_bv 64 6)]
-    /\ rw_cells bsegs m' 0x6aaad8 [C8 (Z_to_bv 64 (v + 1))]
-    /\ rw_cells bsegs m' 0x6aac38 [C8 (Z_to_bv 64 0x6aac50); C8 (Z_to_bv 64 0x6aac80); C8 (Z_to_bv 64 0x6aad40)]
-    /\ rw_cells bsegs m' 0x6aac78 [C8 (Z_to_bv 64 0x6aaad0)]
-    /\ rw_cells bsegs m' 0x6ab480 [CB 4 (repeat (Z_to_bv 8 0) 4); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0)]
-    /\ rw_cells bsegs m' 0x6ab4a8 [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); CB 16 pad1; C4 (Z_to_bv 64 0); C4 pad2; C8 (Z_to_bv 64 0)]).
+Definition install_postA_5 (Σ : rts RT) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (fc : bv 32)
+    (lo v : Z) (canary : word) (pad1 : list byte) (pad2 : word) (m : mem) : machine_state -> Prop :=
+  fun st => exists (u0 u1 u2 r0 r1 r2 r3 r4 r5 r6 r7 u3 u4 u5 u6 : word) (G : bvmap 5 word) (mf : mem),
+    st = MS (mkR ra sp gp tp u0 u1 u2 s0 s1 r0 r1 r2 r3 r4 r5 r6 r7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 u3 u4 u5 u6)
+            G (ret_pc ra) fc None mf (seg_rom bsegs)
+    /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp)
+         [(6989672%Z, 6989676%Z); (6989696%Z, 6989708%Z); (6990552%Z, 6990560%Z); (6990912%Z, 6990920%Z);
+          (6990968%Z, 6990976%Z); (6993028%Z, 6993032%Z); (6993072%Z, 6993080%Z); (6993096%Z, 6993100%Z);
+          (6993104%Z, 6993112%Z)] m mf
+    /\ wmono bsegs m mf
+    /\ mem_inv bsegs mf
+    /\ ART RT Σ mf
+    /\ stk bsegs mf lo (bv_unsigned sp)
+    /\ rw_cells bsegs mf 6989696 [C8 (Z_to_bv 64 18446744073709551615); C4 (Z_to_bv 64 6)]
+    /\ rw_cells bsegs mf 6989672 [C4 (Z_to_bv 64 6)]
+    /\ rw_cells bsegs mf 6990552 [C8 (Z_to_bv 64 (v + 1))]
+    /\ rw_cells bsegs mf 6990904 [C8 (Z_to_bv 64 6990928); C8 (Z_to_bv 64 6990976); C8 (Z_to_bv 64 6991168)]
+    /\ rw_cells bsegs mf 6990968 [C8 (Z_to_bv 64 6990544)]
+    /\ rw_cells bsegs mf 6993024 [CB 4 (repeat (Z_to_bv 8 0) 4); C4 z64; C4 z64]
+    /\ ro_cells bsegs mf 7126568 [C8 canary]
+    /\ rw_cells bsegs mf 6993064 [C8 z64; C8 z64; CB 16 pad1; C4 z64; C4 pad2; C8 z64].
 
 Lemma install_aevt_5 : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo v : Z) (canary tl idv : word) (pad1 junk8 : list byte) (pad2 : word),
@@ -162,75 +176,78 @@ Lemma install_aevt_5 : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 
   aevt RT PMc Σ K (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 0x6aac28) (Z_to_bv 64 0x6aaad0) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 0x12ddb4) fc None m (seg_rom bsegs)).
 Proof using AF RTC MCI FDO MST.
-  intros until pad2. intros ST LO LOR SPT SPA HI IDF NID RC RV VEC SLOT MUT GOT CAN CV LP MI ART0 HK.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 240, bv_unsigned sp); (0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6aaad8, 0x6aaae0); (0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80);
-              (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z m) as MU.
-  pose proof (wmono_refl bsegs m) as WM.
-  astart (bv_unsigned sp) [(0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6aaad8, 0x6aaae0); (0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80);
-              (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z.
+  intros Σ K ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo v
+    canary tl idv pad1 junk8 pad2
+    STK ROOM WIN TOP ALIGN SMALL IDC CTR REFC VRANGE VEC SLOT MUTEX GOTC CANC CONDV PADLEN MEMOK ART0 KONT.
+  pose proof (wmono_refl bsegs m) as GROW.
+  astart (bv_unsigned sp)
+    [(6989672%Z, 6989676%Z); (6989696%Z, 6989708%Z); (6990552%Z, 6990560%Z); (6990912%Z, 6990920%Z);
+     (6990968%Z, 6990976%Z); (6993028%Z, 6993032%Z); (6993072%Z, 6993080%Z); (6993096%Z, 6993100%Z);
+     (6993104%Z, 6993112%Z)].
+  pose proof (munch_refl
+    [((bv_unsigned sp - 240)%Z, bv_unsigned sp); (6989672%Z, 6989676%Z); (6989696%Z, 6989708%Z);
+     (6990552%Z, 6990560%Z); (6990968%Z, 6990976%Z); (6993028%Z, 6993032%Z); (6993072%Z, 6993080%Z);
+     (6993096%Z, 6993100%Z); (6993104%Z, 6993112%Z)] m) as MU.
   apply (aevt_evt RT AF PMc MST).
-  carve_frame 80%nat ST.
-  do 7 lstep.
-  do 9 lstep. if_false.
-  do 10 lstep.
-  lazymatch type of FR with
-  | rw_cells _ _ _ (?c0 :: ?c1 :: ?c2 :: ?c3 :: ?rest) =>
-      apply (rw_cells_app bsegs _ _ [c0; c1; c2; c3] rest) in FR; destruct FR as [PACK FR]
-  end.
-  cbn [cells_size csize Nat.add] in FR.
-  replace (bv_unsigned sp + -80 + Z.of_nat 32)%Z with (bv_unsigned sp + -48)%Z in FR by lia.
-  assert (Hsp : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -80)) = (bv_unsigned sp + -80)%Z) by (apply unsigned_lit; lia).
-  replace (bv_unsigned sp + -56)%Z with (bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -80)) + 24)%Z in PACK by lia.
-  replace (bv_unsigned sp + -72)%Z with (bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -80)) + 8)%Z in PACK by lia.
-  replace (bv_unsigned sp + -64)%Z with (bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -80)) + 16)%Z by lia.
-  rewrite <- Hsp in PACK at 1. rewrite <- Hsp in ST.
-  call call_once_spec_5;
-    [exact ST | lia | lia | lia | exact PACK | exact IDF | exact NID | lia | exact MUT | exact GOT | exact CAN | exact CV | exact LP | assumption |].
-  rename PC into ST. rewrite Hsp in ST. clear PACK. rename PC0 into PACK. rename PC1 into IDF. rename PC2 into NID. rename PC3 into MUT. rename POST into CV.
-  change (5 + 1)%Z with 6%Z in *.
-  lstep.
-  replace (sx32 (Z_to_bv 64 6)) with (Z_to_bv 64 6) by (vm_compute; reflexivity).
-  lstep. lstep.
+  carve_frame 80%nat STK.
+  steps_to 1342272%Z.
+  lazymatch type of FR with rw_cells _ _ _ (?c0 :: ?c1 :: ?c2 :: ?c3 :: ?rest) =>
+    destruct (proj1 (rw_cells_app bsegs _ _ [c0; c1; c2; c3] rest) FR) as [ARGS FRHI]; clear FR end.
+  cbn [cells_size csize Nat.add] in FRHI.
+  replace (bv_unsigned sp + -80 + Z.of_nat 32)%Z with (bv_unsigned sp + -48)%Z in FRHI by lia.
+  replace (Z_to_bv 64 (bv_unsigned sp + -64)) with (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -80)) + 16))
+    by (rewrite unsigned_lit by lia; f_equal; lia).
+  call_sp call_once_spec_5;
+    [ exact STK | lia | lia | lia
+    | replace (bv_unsigned sp + -80 + 24)%Z with (bv_unsigned sp + -56)%Z by lia;
+      replace (bv_unsigned sp + -80 + 8)%Z with (bv_unsigned sp + -72)%Z by lia; exact ARGS
+    | eassumption | eassumption | lia | eassumption | eassumption | eassumption | eassumption | eassumption
+    | assumption | ].
+  steps_to 1236520%Z.
+  change (Z_to_bv 64 (5 + 1)) with (Z_to_bv 64 6) in *.
+  replace (sx32 (Z_to_bv 64 6)) with (Z_to_bv 64 6) by (apply bv_eq; vm_compute; reflexivity).
   amo_step.
-  change (amo_val AMO_ADD (Z_to_bv 64 v) (Z_to_bv 64 1)) with (Z_to_bv 64 v + Z_to_bv 64 1 : word) in RC. rewrite lit_add_lit in RC.
-  lstep. lstep. lstep. lstep. lstep. lstep.
-  lstep. if_false.
-  lstep. lstep. if_false.
-  lstep. lstep. lstep.
-  acall_sp (append_aevt_5 Σ); [exact ST | a_ul | exact LOR | a_ul | a_mod16 | exact VEC | exact SLOT | assumption | exact ARTX | apost_call].
-  rename PC into ST. rename PC0 into VEC. rename POST into SLOT.
-  lstep. lstep. lstep. lstep. lstep.
-  replace (le_bytes_to_word (repeat (Z_to_bv 8 0) 8)) with z64 by (apply bv_eq; vm_compute; reflexivity).
-  lstep. if_true.
-  lstep. lstep. lstep.
-  do 8 lstep.
-  rewrite ?unsigned_lit in PACK by lia.
-  release_frame PACK ST (bv_unsigned sp + -48)%Z.
-  release_frame FR ST (bv_unsigned sp).
+  cbn [amo_val] in REFC. rewrite lit_add_lit in REFC.
+  steps_to 1331244%Z.
+  acall_sp append_aevt_5;
+    [ eassumption | a_ul | a_ul | a_ul | a_mod16 | eassumption | eassumption | eassumption | eassumption | apost_call ].
+  steps_to 1236680%Z.
+  lstep.
+  lazymatch goal with
+  | S : stk bsegs _ lo (bv_unsigned sp + -80)%Z, LOW : rw_cells bsegs _ (bv_unsigned sp + -80)%Z _ |- _ =>
+      release_frame LOW S (bv_unsigned sp + -48)%Z
+  end.
+  lazymatch goal with S : stk bsegs _ lo (bv_unsigned sp + -48)%Z |- _ => release_frame FRHI S (bv_unsigned sp) end.
   afinish.
 Qed.
 
-Definition seg_postA_5 (Σ : rts RT) (sp gp tp s1 s4 s5 s6 s7 s8 s9 s10 s11 : word)
-    (fc : bv 32) (lo : Z) (m : word -> option byte) : machine_state -> Prop :=
-  fun ms' => exists (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (F : bvmap 5 word) (m' : mem),
-    ms' = MS (mkR (Z_to_bv 64 0x12d230) sp gp tp t0 t1 t2 (Z_to_bv 64 0x6aac28) s1 a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 0x6aa7f8) (Z_to_bv 64 0x6aa7f0) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-             F (Z_to_bv 64 0x12d230) fc None m' (seg_rom bsegs)
-    /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) [(0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6aa7f0, 0x6aa7fa); (0x6aaad0, 0x6aaae8); (0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80);
-              (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z m m'
-    /\ wmono bsegs m m' /\ mem_inv bsegs m' /\ ART RT Σ m'
-    /\ (stk bsegs m' lo (bv_unsigned sp)
-    /\ rw_cells bsegs m' 0x6aa780 [C8 (Z_to_bv 64 18446744073709551615); C4 (Z_to_bv 64 6)]
-    /\ rw_cells bsegs m' 0x6aa768 [C4 (Z_to_bv 64 6)]
-    /\ rw_cells bsegs m' 0x6aa7f0 [C8 (Z_to_bv 64 0x33380)]
-    /\ rw_cells bsegs m' 0x6aa7f8 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1)]
-    /\ rw_cells bsegs m' 0x6aaad0 [C8 (Z_to_bv 64 0x16c6b0)]
-    /\ rw_cells bsegs m' 0x6aaad8 [C8 (Z_to_bv 64 1)]
-    /\ rw_cells bsegs m' 0x6aaae0 [C8 (Z_to_bv 64 0x33380)]
-    /\ rw_cells bsegs m' 0x6aac38 [C8 (Z_to_bv 64 0x6aac50); C8 (Z_to_bv 64 0x6aac80); C8 (Z_to_bv 64 0x6aad40)]
-    /\ rw_cells bsegs m' 0x6aac78 [C8 (Z_to_bv 64 0x6aaad0)]
-    /\ rw_cells bsegs m' 0x6ab480 [CB 4 (repeat (Z_to_bv 8 0) 4); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0)]
-    /\ rw_cells bsegs m' 0x6ab4a8 [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); CB 16 (repeat (Z_to_bv 8 0) 16); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]).
+Definition seg_postA_5 (Σ : rts RT) (sp gp tp s1 s4 s5 s6 s7 s8 s9 s10 s11 : word) (fc : bv 32) (lo : Z) (m : mem)
+    : machine_state -> Prop :=
+  fun st => exists (u0 u1 u2 r0 r1 r2 r3 r4 r5 r6 r7 u3 u4 u5 u6 : word) (G : bvmap 5 word) (mf : mem),
+    st = MS (mkR (Z_to_bv 64 1233456) sp gp tp u0 u1 u2 (Z_to_bv 64 6990888) s1 r0 r1 r2 r3 r4 r5 r6 r7
+                 (Z_to_bv 64 6989816) (Z_to_bv 64 6989808) s4 s5 s6 s7 s8 s9 s10 s11 u3 u4 u5 u6)
+            G (Z_to_bv 64 1233456) fc None mf (seg_rom bsegs)
+    /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp)
+         [(6989672%Z, 6989676%Z); (6989696%Z, 6989708%Z); (6989808%Z, 6989818%Z); (6990544%Z, 6990568%Z);
+          (6990912%Z, 6990920%Z); (6990968%Z, 6990976%Z); (6993028%Z, 6993032%Z); (6993072%Z, 6993080%Z);
+          (6993096%Z, 6993100%Z); (6993104%Z, 6993112%Z)] m mf
+    /\ wmono bsegs m mf
+    /\ mem_inv bsegs mf
+    /\ ART RT Σ mf
+    /\ stk bsegs mf lo (bv_unsigned sp)
+    /\ rw_cells bsegs mf 6989696 [C8 (Z_to_bv 64 18446744073709551615); C4 (Z_to_bv 64 6)]
+    /\ rw_cells bsegs mf 6989672 [C4 (Z_to_bv 64 6)]
+    /\ rw_cells bsegs mf 6989808 [C8 (Z_to_bv 64 209792)]
+    /\ rw_cells bsegs mf 6989816 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1)]
+    /\ rw_cells bsegs mf 6990544 [C8 (Z_to_bv 64 1492656)]
+    /\ rw_cells bsegs mf 6990552 [C8 (Z_to_bv 64 1)]
+    /\ rw_cells bsegs mf 6990560 [C8 (Z_to_bv 64 209792)]
+    /\ rw_cells bsegs mf 6990904 [C8 (Z_to_bv 64 6990928); C8 (Z_to_bv 64 6990976); C8 (Z_to_bv 64 6991168)]
+    /\ rw_cells bsegs mf 6990968 [C8 (Z_to_bv 64 6990544)]
+    /\ rw_cells bsegs mf 6993024 [CB 4 (repeat (Z_to_bv 8 0) 4); C4 z64; C4 z64]
+    /\ ro_cells bsegs mf 7127163 [C1 (Z_to_bv 8 0)]
+    /\ rw_cells bsegs mf 7127384 [C4 z64]
+    /\ rw_cells bsegs mf 6993064 [C8 z64; C8 z64; CB 16 (repeat (Z_to_bv 8 0) 16); C4 z64; C4 z64; C8 z64].
 
 Lemma seg_aevt_5 : forall Σ K ra sp gp tp t0 t1 t2 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo : Z) (canary : word),
@@ -254,32 +271,21 @@ Lemma seg_aevt_5 : forall Σ K ra sp gp tp t0 t1 t2 s1 a0 a1 a2 a3 a4 a5 a6 a7 s
   aevt RT PMc Σ K (MS (mkR ra sp gp tp t0 t1 t2 (Z_to_bv 64 0x6aac28) s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 (Z_to_bv 64 0x6aa7f0) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 0x12d200) fc None m (seg_rom bsegs)).
 Proof using AF RTC MCI FDO MST.
-  intros until canary. intros ST LO LOR SPT SPA HI IDF NID CLOC GUARD FC0 RC FC16 VEC SLOT MUT GOT CAN NL LK CV MI ART0 HK.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 496, bv_unsigned sp); (0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6aa7f0, 0x6aa7fa); (0x6aaad0, 0x6aaae8); (0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80);
-              (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z m) as MU.
-  pose proof (wmono_refl bsegs m) as WM.
-  astart (bv_unsigned sp) [(0x6aa780, 0x6aa78c); (0x6aa768, 0x6aa76c); (0x6aa7f0, 0x6aa7fa); (0x6aaad0, 0x6aaae8); (0x6aac40, 0x6aac48); (0x6aac78, 0x6aac80);
-              (0x6ab484, 0x6ab488); (0x6ab4b0, 0x6ab4b8); (0x6ab4c8, 0x6ab4cc); (0x6ab4d0, 0x6ab4d8)]%Z.
+  intros Σ K ra sp gp tp t0 t1 t2 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo canary
+    STK ROOM WIN TOP ALIGN SMALL IDC CTR CLOC GUARD VPTR REFC TAB VEC SLOT MUTEX GOTC CANC NLB NLW CONDV MEMOK ART0 KONT.
+  pose proof (wmono_refl bsegs m) as GROW.
+  astart (bv_unsigned sp)
+    [(6989672%Z, 6989676%Z); (6989696%Z, 6989708%Z); (6989808%Z, 6989818%Z); (6990544%Z, 6990568%Z);
+     (6990912%Z, 6990920%Z); (6990968%Z, 6990976%Z); (6993028%Z, 6993032%Z); (6993072%Z, 6993080%Z);
+     (6993096%Z, 6993100%Z); (6993104%Z, 6993112%Z)].
+  pose proof (munch_refl [((bv_unsigned sp - 496)%Z, bv_unsigned sp); (6989808%Z, 6989818%Z); (6990544%Z, 6990568%Z)] m)
+    as MU.
   apply (aevt_evt RT AF PMc MST).
-  do 7 lstep.
-  if_true.
-  do 6 lstep.
-  if_true.
-  do 3 lstep.
-  if_false.
-  do 2 lstep.
-  if_false.
-  do 7 lstep.
-  if_false.
-  do 5 lstep.
-  lstep.
-  acall (newlocale_aevt RT AF RTC MCI PMc FDO MST Σ); [exact ST | a_ul | exact LOR | a_ul | a_mod16 | lia | exact GOT | exact CAN | exact NL | exact LK | assumption | exact ARTX | apost_call].
-  rename POST into ST.
-  do 13 lstep.
-  lstep.
-  acall (install_aevt_5 Σ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 0%Z); [exact ST | a_ul | exact LOR | a_ul | a_mod16 | lia | exact IDF | exact NID | exact RC | lia | exact VEC | exact SLOT | exact MUT | exact GOT | exact CAN | exact CV | reflexivity | assumption | exact ARTX | apost_call].
-  change (0 + 1)%Z with 1%Z in *.
+  steps_to 1379708%Z.
+  acallc (newlocale_aevt RT AF RTC MCI PMc FDO MST) clearing idtac by (first [ eassumption | a_ul ]).
+  steps_to 1236404%Z.
+  acallc install_aevt_5 clearing idtac by (first [ eassumption | a_ul | reflexivity ]).
+  change (Z_to_bv 64 (0 + 1)) with (Z_to_bv 64 1) in *.
   afinish.
 Qed.
 

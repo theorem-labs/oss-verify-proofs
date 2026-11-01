@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -79,12 +79,20 @@ Lemma zero_split32 : forall (m : mem) A N, (32 <= N)%Z ->
   rw_cells ctasegs m A [CB 32 (repeat (Z_to_bv 8 0) 32)]
   /\ rw_cells ctasegs m (A + 32) [CB (Z.to_nat (N - 32)) (repeat (Z_to_bv 8 0) (Z.to_nat (N - 32)))].
 Proof.
-  intros m A N HN H.
-  assert (E : Z.to_nat N = (32 + Z.to_nat (N - 32))%nat) by lia.
-  rewrite E, repeat_app in H.
-  apply (sec_rw_app2 m A [CB 32 (repeat (Z_to_bv 8 0) 32)] [CB (Z.to_nat (N - 32)) (repeat (Z_to_bv 8 0) (Z.to_nat (N - 32)))]).
-  eapply sec_relist; [exact H| | cbn [cells_bytes cbytes app]; rewrite !app_nil_r; reflexivity].
-  cbn [cells_wf cell_wf app]. rewrite !repeat_length. repeat split; reflexivity || exact I.
+  intros m A N N_ge32 zeros_all.
+  assert (N_cut : Z.to_nat N = (32 + Z.to_nat (N - 32))%nat) by lia.
+  rewrite N_cut, repeat_app in zeros_all.
+  destruct zeros_all as [[wf_all bytes_all] wr_all].
+  cbn [cells_bytes cbytes cells_size csize] in bytes_all, wr_all.
+  rewrite app_nil_r in bytes_all. rewrite Nat.add_0_r in wr_all.
+  assert (two_pieces : rw_cells ctasegs m A
+            ([CB 32 (repeat (Z_to_bv 8 0) 32)] ++ [CB (Z.to_nat (N - 32)) (repeat (Z_to_bv 8 0) (Z.to_nat (N - 32)))])).
+  { split; [split|].
+    - cbn [app cells_wf cell_wf]. rewrite !repeat_length. exact (conj eq_refl (conj eq_refl I)).
+    - cbn [app cells_bytes cbytes]. rewrite app_nil_r. exact bytes_all.
+    - cbn [app cells_size csize]. rewrite Nat.add_0_r. exact wr_all. }
+  apply sec_rw_app2 in two_pieces. destruct two_pieces as [low_part high_part].
+  split; [exact low_part | exact high_part].
 Qed.
 
 (* [comment removed for export] *)
@@ -101,7 +109,10 @@ Definition sb_K (P SZ PAB nres n T : Z) (ws : list word) (mm md : word) (m : mem
   /\ rw_cells ctasegs m (shad (P + 4096 + SZ))
        [CB (Z.to_nat ((sa_msz SZ - 4096 - SZ) / 8)) (repeat (Z_to_bv 8 250) (Z.to_nat ((sa_msz SZ - 4096 - SZ) / 8)))]
   /\ rw_cells ctasegs m (T + 2872) [C8 (Z_to_bv 64 (bv_unsigned mm + 1)); C8 (Z_to_bv 64 (bv_unsigned md + sa_msz SZ))]
-  /\ sec_core m PAB nres (n + 1) /\ sec_pad m /\ sec_junk m /\ u64arr ctasegs m PAB (upd ws (Z.to_nat n) (Z_to_bv 64 P)).
+  /\ sec_core m PAB nres (n + 1)
+  /\ sec_pad m
+  /\ sec_junk m
+  /\ u64arr ctasegs m PAB (upd ws (Z.to_nat n) (Z_to_bv 64 P)).
 
 Lemma sb_common : forall ra sp gp t0 t1 t2 a6 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (mA : mem) (SZ P PAB nres n TCX T lo : Z) (ws : list word) (mm md : word) (shj1 shj2 : list byte)
@@ -152,111 +163,150 @@ Lemma sb_common : forall ra sp gp t0 t1 t2 a6 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 
                  (Z_to_bv 64 sec_mmap_ecall) (Z_to_bv 64 222) fc None mA (seg_rom ctasegs))
           (mkEffect (Z_to_bv 64 P) [] [(Z_to_bv 64 P, Z_to_bv 64 (roundup4k (sa_msz SZ)))])).
 Proof.
-  intros until Q. intros HSZ HP GP GT GX GA APT APX ATX APA ATA Hn Hlen Hnres Hnres16 Hn20 FR MF ST MM PG PS TH TS SC PAD SJ ARR
-    SRG SH1 SH2 HLOH HLO HSP MI K0.
-  pose proof (sa_msz_facts SZ ltac:(lia)) as [MS1 MS2].
-  pose proof HSZ as (HSZ1 & HSZ2 & HSZ3).
-  pose proof GP as GP0. pose proof GT as GT0. pose proof GX as GX0. pose proof GA as GA0.
-  pose proof APT as APT0. pose proof APX as APX0. pose proof ATX as ATX0. pose proof APA as APA0. pose proof ATA as ATA0.
-  apply box in GP0, GT0, GX0, GA0, APT0, APX0, ATX0, APA0, ATA0.
-  destruct GP as (GP1 & GP2 & GP3 & GP4). destruct GT as (GT1 & GT2 & GT3 & GT4). destruct GX as (GX1 & GX2 & GX3 & GX4).
-  destruct GA as (GA1 & GA2 & GA3 & GA4).
-  unfold sapart, img_hull_lo, img_hull_hi, kHighShadowEnd in *.
-  (* [comment removed for export] *)
-  assert (GP4' : (12365824 <= P)%Z) by (destruct GP4; lia). clear GP4.
-  assert (GA4' : (12365824 <= PAB)%Z) by (destruct GA4; lia).
-  clear GA4.
-  pose proof (sa_shad_facts P SZ lo HP ltac:(lia) ltac:(lia) (unbox _ GP0) ltac:(lia)) as (SR1 & SR2 & SR3 & SR4 & SR5 & SR6 & SR7 & SR8 & SRc).
-  rewrite SR7 in SH2. apply box in SR7.
-  set (z8 := (SZ / 8)%Z) in *. set (ms8 := (sa_msz SZ / 8)%Z) in *. clearbody z8 ms8.
-  assert (MS8 : (8704 <= ms8)%Z) by lia.
-  assert (HL8 : (8 * nres <= 0x800000)%Z) by lia.
-  apply box in HP, MS2, HSZ2, Hnres16, HSZ.
-  (* [comment removed for export] *)
-  unfold sec_page, i_sec_page in PG. change (INST + 0x40)%Z with 6744600%Z in PG.
-  ps_cells_destr PS.
-  destruct TH as ((KI & KK & TSD & T0) & TT).
-  unfold g_tsd_key_inited, g_tsd_key, pth_tsd, g_pthread_tsd_main, tpA in KI, KK, TSD, T0.
-  destruct SC as (CH & NR & MX). change i_sec_chunks with 6744608%Z in CH. change i_sec_nres with 6744648%Z in NR.
-  change i_sec_mutex with 6745216%Z in MX.
-  unfold sec_pad in PAD. change (i_sec_mutex + 1)%Z with 6745217%Z in PAD.
-  destruct SJ as ((b & jj & w1 & w2 & w3 & w4 & SJ1) & (bl & Hbl & SJ2) & (ga & gm & SJ3)).
-  change i_sec_sorted with 6744664%Z in SJ1. change i_sec_bylog with 6744704%Z in SJ2. change i_gstat_alloc with 6745240%Z in SJ3.
-  pose proof MM as (G1 & G2 & G3 & G4 & G5). clear MM.
-  unfold sec_range, i_sec_range in SRG. change (INST + 0x50)%Z with 6744616%Z in SRG.
-  destruct FR as (jf & FR).
-  pose proof (munch_refl (sb_W (bv_unsigned sp) P SZ T PAB n) mA) as MU. unfold sb_W in MU.
-  change i_sec_nres with 6744648%Z in MU. change i_sec_sorted with 6744664%Z in MU. change i_sec_bylog with 6744704%Z in MU.
-  change i_gstat_alloc with 6745240%Z in MU. change i_sec_mutex with 6745216%Z in MU.
-  pose proof (wmono_refl ctasegs mA) as WM.
-  pose proof (roundup4k_id (sa_msz SZ) (unbox _ MS2)) as RU.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn [Z.of_N] in RSP.
-  assert (ESP : bv_unsigned (Z_to_bv 64 (bv_unsigned sp - 96)) = (bv_unsigned sp - 96)%Z) by (apply unsigned_lit; lia).
+  intros ra sp gp t0 t1 t2 a6 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc mA
+    SZ P PAB nres n TCX T lo ws mm md shj1 shj2 Q.
+  intros sz_facts p_page obj_P obj_T obj_X obj_A part_PT part_PX part_TX part_PA part_TA
+    n_le ws_len nres_le nres_mod n_lt frame_A frame_M stack_A gcells_A page_A pois_A thr_A stat_A
+    core_A pad_A junk_A arr_A range_A shlo_A shhi_A lo_shad lo_sp sp_hi inv_A cont.
+  destruct sz_facts as (sz_lo & sz_mod & sz_hi).
+  pose proof (sa_msz_facts SZ ltac:(lia)) as (msz_span & msz_mod).
+  assert (msz_id : roundup4k (sa_msz SZ) = sa_msz SZ) by (apply roundup4k_id; exact msz_mod).
+  assert (p_mod8 : (P mod 8 = 0)%Z) by (Z.div_mod_to_equations; lia).
+  assert (msz_mod8 : (sa_msz SZ mod 8 = 0)%Z) by (Z.div_mod_to_equations; lia).
+  pose proof obj_P as (p_pos & p_top & p_mem & p_img).
+  pose proof obj_T as (t_pos & t_top & t_mem & t_img).
+  pose proof obj_X as (x_pos & x_top & x_mem & x_img).
+  pose proof obj_A as (a_pos & a_top & a_mem & a_img).
+  assert (shad_lo_P : (SHB <= shad P)%Z) by (unfold shad, SHB; Z.div_mod_to_equations; lia).
+  assert (shad_tail : (shad (P + 4096 + SZ) + (sa_msz SZ - 4096 - SZ) / 8 = shad (P + sa_msz SZ))%Z)
+    by (unfold shad; Z.div_mod_to_equations; nia).
+  assert (shad_lo_cap : (shad P + 512 <= shad (P + 4096 + SZ))%Z) by (unfold shad; Z.div_mod_to_equations; lia).
+  assert (shad_mid_le : (shad (P + 4096 + SZ) <= shad (P + sa_msz SZ))%Z) by (unfold shad; Z.div_mod_to_equations; lia).
+  assert (shad_end : (shad (P + sa_msz SZ) <= kHighShadowEnd + 1)%Z)
+    by (unfold shad, SHB, kHighShadowEnd in *; Z.div_mod_to_equations; lia).
+  assert (shad_lo_top : (shad P + 512 <= lo)%Z) by (unfold shad, SHB in *; Z.div_mod_to_equations; lia).
+  assert (shad_hi_top : (shad (P + 4096 + SZ) + (sa_msz SZ - 4096 - SZ) / 8 <= lo)%Z)
+    by (unfold shad, SHB in *; Z.div_mod_to_equations; lia).
+  assert (shad_top_lo : (shad (P + sa_msz SZ) <= lo)%Z) by lia.
+  assert (shad_lo_hi : (SHB <= shad (P + 4096 + SZ))%Z) by lia.
+  assert (shad_lo_end : (shad P + 512 <= kHighShadowEnd + 1)%Z) by lia.
+  destruct frame_A as (jf & frame_A).
+  destruct thr_A as ((tsd_init & tsd_key & tsd_ptr & tsd_main) & tcx_cell).
+  unfold g_tsd_key_inited, g_tsd_key, pth_tsd, g_pthread_tsd_main in tsd_init, tsd_key, tsd_ptr, tsd_main.
+  destruct pois_A as (ps_cf & (ps_m2s1 & ps_m2s2 & ps_m2s3) & (ps_ss1 & ps_ss2) & ps_can & ps_thr).
+  unfold g_got_common_flags, g_can_poison, g_cf_clear_shadow_mmap_threshold in ps_cf, ps_can, ps_thr.
+  unfold g_got_real_memset, g_real_memset in ps_ss1, ps_ss2.
+  destruct core_A as (chunks_A & nres_A & mutex_A).
+  destruct junk_A as ((b & jj & w1 & w2 & w3 & w4 & sorted_A) & (bl & bl_len & bylog_A) & (ga & gm & gstat_A)).
+  unfold sec_range in range_A. unfold sec_page in page_A. unfold sec_pad in pad_A.
+  pose proof (munch_refl (sb_W (bv_unsigned sp) P SZ T PAB n) mA) as foot.
+  pose proof (wmono_refl ctasegs mA) as mono.
+  unfold sb_W, i_sec_mutex, i_sec_nres, i_sec_sorted, i_sec_bylog, i_gstat_alloc, INST, g_instance in foot.
+  change i_sec_chunks with 6744608%Z in chunks_A. change i_sec_nres with 6744648%Z in nres_A.
+  change i_sec_mutex with 6745216%Z in mutex_A. change (i_sec_mutex + 1)%Z with 6745217%Z in pad_A.
+  change i_sec_sorted with 6744664%Z in sorted_A. change i_sec_bylog with 6744704%Z in bylog_A.
+  change i_gstat_alloc with 6745240%Z in gstat_A. change i_sec_range with 6744616%Z in range_A.
+  change i_sec_page with 6744600%Z in page_A.
+  unfold gobj, sapart, img_hull_lo, img_hull_hi, kHighShadowEnd, SHB in *.
   hide_disj.
-  eapply evt_cut; [eapply (mod_B_spec (Z_to_bv 64 sa_retA) (Z_to_bv 64 (bv_unsigned sp - 96)) gp (Z_to_bv 64 tpA)
-      t0 t1 t2 a6 (Z_to_bv 64 SZ) s4 (Z_to_bv 64 8) s6 s7 (Z_to_bv 64 7) s9 s10 s11 t3 t4 t5 t6 F fc mA
-      (Z_to_bv 64 GSTAT) (Z_to_bv 64 SEC) (Z_to_bv 64 (sa_msz SZ)) P (sa_msz SZ) (Z_to_bv 64 sec_name) lo) | post_call ctasegs mA].
-  all: rewrite ?RU, ?ESP.
-  1-3: lia.
-  1:{ unfold hide, img_hull_lo, img_hull_hi. right. lia. }
-  1:{ exact MF. }
-  1:{ unfold mm_gcells. repeat (split; [assumption|]). assumption. }
-  1:{ replace (bv_unsigned sp - 96 - 48)%Z with (bv_unsigned sp - 144)%Z by lia. exact ST. }
-  1:{ unfold kHighShadowEnd. lia. }
-  1-2: lia.
-  1:{ exact MI. }
-  hide_disj.
-  unfold sa_retA. replace (ret_pc (Z_to_bv 64 0x1a0910)) with (Z_to_bv 64 0x1a0910) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-  rewrite RU in PC. destruct (zero_split32 _ P (sa_msz SZ) ltac:(lia) PC) as [HD RMP]. clear PC. rewrite ESP in PC0.
-  eapply (sa_p2 (Z_to_bv 64 (bv_unsigned sp - 96)) gp s4 s6 s7 s9 s10 s11 F fc _ P SZ TCX T nres n lo mm md shj1 shj2).
-  1:{ pose proof (unbox _ HSZ2). lia. }
-  1:{ exact (unbox _ HP). }
-  1:{ exact (unbox _ GP0). }
-  1:{ exact (unbox _ GT0). }
-  1:{ exact (unbox _ GX0). }
-  1:{ exact (unbox _ APT0). }
-  1:{ exact (unbox _ APX0). }
-  1:{ exact (unbox _ ATX0). }
-  1:{ lia. }
-  1:{ unfold sec_page, i_sec_page. exact PG. }
-  1:{ unfold ps_cells, m2s_cells, setshadow_cells, g_got_common_flags, g_can_poison, g_cf_clear_shadow_mmap_threshold,
-        g_got_real_memset, g_real_memset, musl_memset_entry, SHB, kHighMemEnd.
-      refine (conj _ (conj (conj _ (conj _ _)) (conj (conj _ _) (conj _ _)))); assumption. }
-  1:{ unfold thread_cells, tsd_cells, g_tsd_key_inited, g_tsd_key, pth_tsd, g_pthread_tsd_main.
-      split; [split; [exact KI|split; [exact KK|split; [exact TSD|exact T0]]]|exact TT]. }
-  1:{ exact TS. }
-  1:{ exact HD. }
-  1:{ exact SH1. }
-  1:{ rewrite (unbox _ SR7). exact SH2. }
-  1:{ exact MX. }
-  1:{ exact PAD. }
-  1:{ exact NR. }
-  1:{ rewrite ESP. exact PC0. }
-  1:{ unfold kHighShadowEnd. lia. }
-  1:{ rewrite ESP. lia. }
-  1:{ rewrite ESP. lia. }
-  1:{ assumption. }
-  intros m2 ra2 t0' t1' t2' a1' a2' a4' a5' a6' a7' t3' t4' t5' t6' MU2 WM2 MI2 HDF SH1' SH2' TS' LW ST2.
-  clear GX0 GX3 GX4 APX APX0 ATX ATX0.
-  rewrite (unbox _ SR7) in SH2'.
-  clear PG KI KK TSD T0 TT CF GOT GRM RM CP SHB0 HM THR HD SH1 SH2 MX PAD TS PC0 POST.
-  unfold sa_W2 in MU2. rewrite ESP in MU2. change i_sec_mutex with 6745216%Z in MU2.
-  transport_after_call ctasegs x13 m2 MU2 WM2. clear MU2 WM2.
-  hide_disj.
-  (* [comment removed for export] *)
-  destruct (msb_exists (sa_msz SZ) ltac:(lia)) as (k & Hk & Hx).
-  apply (sec_rw_app2 _ 6744648 [C8 (Z_to_bv 64 nres)] [C8 (Z_to_bv 64 n)]) in NR. destruct NR as [NR1 NR2].
-  eapply (clz_block _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m2 (Z_to_bv 64 (sa_msz SZ)) k nres _ NR1 Hk).
-  1:{ rewrite unsigned_lit by lia. exact Hx. }
-  intros a1'' a2'' a5'' a6''.
-  apply (sec_rw_app2 _ P [C8 (Z_to_bv 64 P); C8 (Z_to_bv 64 (sa_msz SZ)); C8 (Z_to_bv 64 SZ)] [C8 (Z_to_bv 64 0)]) in HDF.
-  destruct HDF as [HD3 HI].
-  rewrite ESP in ST2.
-  rewrite <- (unbox _ SR7) in SH2'.
-  eapply (K0 m2 ra2 t0' t1' t2' a1'' a2'' a5'' a6'' a7' t3' t4' t5' t6' k jf b jj w1 w2 w3 w4 ga gm bl).
-  all: first [ assumption
-             | (apply (sec_rw_app2 _ 6744648 [C8 (Z_to_bv 64 nres)] [C8 (Z_to_bv 64 n)]); split; assumption)
-             | (unfold mm_gcells; repeat (split; [assumption|]); assumption)
-             | (unfold sec_range, i_sec_range; exact SRG)
-             | exact HI ].
+  eapply evt_cut.
+  { eapply (mod_B_spec (Z_to_bv 64 sa_retA) (Z_to_bv 64 (bv_unsigned sp - 96)) gp (Z_to_bv 64 tpA) t0 t1 t2 a6
+              (Z_to_bv 64 SZ) s4 (Z_to_bv 64 8) s6 s7 (Z_to_bv 64 7) s9 s10 s11 t3 t4 t5 t6 F fc mA
+              (Z_to_bv 64 GSTAT) (Z_to_bv 64 SEC) (Z_to_bv 64 (sa_msz SZ)) P (sa_msz SZ) (Z_to_bv 64 sec_name) lo);
+      rewrite ?(unsigned_lit (bv_unsigned sp - 96)), ?msz_id by lia.
+    - lia.
+    - lia.
+    - lia.
+    - unfold hide; unfold img_hull_lo, img_hull_hi; exact p_img.
+    - exact frame_M.
+    - exact gcells_A.
+    - replace (bv_unsigned sp - 96 - 48)%Z with (bv_unsigned sp - 144)%Z by lia. exact stack_A.
+    - unfold kHighShadowEnd; lia.
+    - lia.
+    - lia.
+    - exact inv_A. }
+  intros ms1 post_M.
+  destruct post_M as (u0 & u1 & u2 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & m1 & -> &
+                      foot_M & mono_M & inv_1 & zeros_1 & stack_1 & gcells_1).
+  rewrite msz_id in foot_M, zeros_1.
+  rewrite ?(unsigned_lit (bv_unsigned sp - 96)) in foot_M, stack_1 by lia.
+  destruct gcells_1 as (gc1 & gc2 & gc3 & gc4 & gc5).
+  (* the shadow of the object is separated from the object itself, in either half of the address space *)
+  assert (sep_lo : (shad P + 512 <= P \/ P + sa_msz SZ <= shad P)%Z).
+  { unfold hide in p_mem. unfold shad, SHB in *. destruct p_mem as [low | high]; [right | left];
+      Z.div_mod_to_equations; lia. }
+  assert (sep_hi : (shad (P + 4096 + SZ) + (sa_msz SZ - 4096 - SZ) / 8 <= P \/ P + sa_msz SZ <= shad (P + 4096 + SZ))%Z).
+  { unfold hide in p_mem. unfold shad, SHB in *. destruct p_mem as [low | high]; [right | left];
+      Z.div_mod_to_equations; lia. }
+  apply box in shlo_A. apply box in shhi_A.
+  transport_after_call ctasegs mA m1 foot_M mono_M.
+  pose proof (rw_cells_transport ctasegs _ mA m1 _ _ (unbox _ shlo_A) foot_M mono_M
+                ltac:(cbn [disjoint_from cells_size csize Nat.add];
+                      split; [lia | split; [lia | exact I]])) as shlo_1.
+  pose proof (rw_cells_transport ctasegs _ mA m1 _ _ (unbox _ shhi_A) foot_M mono_M
+                ltac:(cbn [disjoint_from cells_size csize Nat.add];
+                      split; [lia | split; [lia | exact I]])) as shhi_1.
+  clear shlo_A shhi_A foot_M mono_M inv_A frame_M gcells_A.
+  unfold sa_retA. rewrite (ret_pc_even 0x1a0910) by lia.
+  (* the mmap returns the zeroed object at P; carve its header off the body *)
+  destruct (zero_split32 m1 P (sa_msz SZ) ltac:(lia) zeros_1) as (hdr_zero & body_zero). clear zeros_1.
+  (* 0x1a0910 .. 0x1a0a0c: poison both shadow ends, count the mapping, write the header, take the mutex *)
+  apply (sa_p2 (Z_to_bv 64 (bv_unsigned sp - 96)) gp s4 s6 s7 s9 s10 s11 F fc m1 P SZ TCX T nres n lo mm md shj1 shj2 Q).
+  - split; [lia | split; [exact sz_mod | exact sz_hi]].
+  - exact p_page.
+  - exact obj_P.
+  - exact obj_T.
+  - exact obj_X.
+  - exact part_PT.
+  - exact part_PX.
+  - exact part_TX.
+  - lia.
+  - unfold sec_page. change i_sec_page with 6744600%Z. exact page_A.
+  - unfold ps_cells, m2s_cells, setshadow_cells, g_got_common_flags, g_can_poison,
+      g_cf_clear_shadow_mmap_threshold, g_got_real_memset, g_real_memset.
+    refine (conj _ (conj (conj _ (conj _ _)) (conj (conj _ _) (conj _ _)))); assumption.
+  - unfold thread_cells, tsd_cells, g_tsd_key_inited, g_tsd_key, pth_tsd, g_pthread_tsd_main.
+    refine (conj (conj _ (conj _ (conj _ _))) _); assumption.
+  - exact stat_A.
+  - exact hdr_zero.
+  - exact shlo_1.
+  - exact shhi_1.
+  - change i_sec_mutex with 6745216%Z. exact mutex_A.
+  - unfold sec_pad. change (i_sec_mutex + 1)%Z with 6745217%Z. exact pad_A.
+  - change i_sec_nres with 6744648%Z. exact nres_A.
+  - rewrite (unsigned_lit (bv_unsigned sp - 96)) by lia. exact stack_1.
+  - unfold kHighShadowEnd. lia.
+  - rewrite (unsigned_lit (bv_unsigned sp - 96)) by lia. lia.
+  - rewrite (unsigned_lit (bv_unsigned sp - 96)) by lia. lia.
+  - exact inv_1.
+  - intros m2 ra2 t0' t1' t2' a1' a2' a4' a5' a6' a7' t3' t4' t5' t6'
+      foot_2 mono_2 inv_2 hdr_2 shlo_2 shhi_2 stat_2 mutex_2 stack_2.
+    rewrite (unsigned_lit (bv_unsigned sp - 96)) in foot_2, stack_2 by lia.
+    unfold sa_W2, i_sec_mutex, INST, g_instance in foot_2.
+    transport_after_call ctasegs m1 m2 foot_2 mono_2.
+    clear foot_2 mono_2.
+    assert (hdr3 : rw_cells ctasegs m2 P [C8 (Z_to_bv 64 P); C8 (Z_to_bv 64 (sa_msz SZ)); C8 (Z_to_bv 64 SZ)])
+      by exact (proj1 (proj1 (sec_rw_app2 m2 P [C8 (Z_to_bv 64 P); C8 (Z_to_bv 64 (sa_msz SZ)); C8 (Z_to_bv 64 SZ)]
+                                           [C8 (Z_to_bv 64 0)]) hdr_2)).
+    assert (idx0 : rw_cells ctasegs m2 (P + 24) [C8 (Z_to_bv 64 0)])
+      by exact (proj2 (proj1 (sec_rw_app2 m2 P [C8 (Z_to_bv 64 P); C8 (Z_to_bv 64 (sa_msz SZ)); C8 (Z_to_bv 64 SZ)]
+                                           [C8 (Z_to_bv 64 0)]) hdr_2)).
+    clear hdr_2.
+    (* 0x1a0a0c .. 0x1a0ab4: s3 gets 63 - log2 of the mapped size, the count of its leading zero bits *)
+    pose proof (Z.log2_spec (sa_msz SZ) ltac:(lia)) as (log_lo & log_hi).
+    assert (log_rng : (0 <= Z.log2 (sa_msz SZ) < 64)%Z)
+      by (split; [apply Z.log2_nonneg | apply Z.log2_lt_pow2; lia]).
+    change SEC with 6744600%Z.
+    eapply (clz_block _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ _ (Z.log2 (sa_msz SZ)) nres Q).
+    + exact (proj1 (proj1 (sec_rw_app2 m2 6744648 [C8 (Z_to_bv 64 nres)] [C8 (Z_to_bv 64 n)]) nres_A)).
+    + exact log_rng.
+    + rewrite (unsigned_lit (sa_msz SZ)) by lia. split; [exact log_lo | exact log_hi].
+    + intros a1'' a2'' a5'' a6''.
+      assert (gcells_now : mm_gcells m2)
+        by (unfold mm_gcells; refine (conj _ (conj _ (conj _ (conj _ _)))); assumption).
+      assert (range_now : sec_range m2 PAB)
+        by (unfold sec_range; change i_sec_range with 6744616%Z; exact range_A).
+      change 6744600%Z with SEC.
+      apply (cont m2 ra2 t0' t1' t2' a1'' a2'' a5'' a6'' a7' t3' t4' t5' t6' (Z.log2 (sa_msz SZ))
+                  jf b jj w1 w2 w3 w4 ga gm bl); try eassumption; try lia.
 Qed.

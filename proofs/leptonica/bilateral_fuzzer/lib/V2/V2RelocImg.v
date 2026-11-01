@@ -10,28 +10,23 @@ Ltac2 kr_t_V2RelocImg () := "K47Corelib4Init5Logic2eq01C6ARocqVerifyHarness?Agen
 Local Open Scope Z_scope.
 
 Lemma v2_cells_ok : @cells_check v2_reloc canon_cells = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocImg ()) [] "p;2p;3g0000j22Tg000Jj21Tg001Pj30Tg001jR0g002JR1'2g002jg003b'1=001do"). Qed.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 
-Definition v2_img : RelocImg v2_reloc := {| rl_cells_ok := v2_cells_ok |}.
+Definition v2_img : RelocImg v2_reloc := Build_RelocImg _ v2_cells_ok.
 
 Lemma v2_data_wseg : wseg_ok (@rl_segs v2_reloc) (Z_to_bv 64 0x45000) (Z.to_nat (@rl_img_hi v2_reloc - 0x45000)) = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocImg ()) [] "p;2p;1p;3g0000j2<Tg004hj1;Tg005gj13Tg006Ej11Tg006jj12Tg007Oj1:Tg007mj24Tg008Sj15Tg009Tj26Tg00:1j17Tg00:Qj38Tg001Pj39Tf0#1#1p=0g001jR0g002JR1'<g002jR2#;g00;NR3#0#0#0#3%13#0#2#1#2#0#0#0#0#0#0#:R3'4%52/63#738=901do"). Qed.
+Proof. now vm_compute. Qed.
 
 Lemma v2_data_ok : (0 <=? 0x45000) && (0x45000 <=? @rl_img_hi v2_reloc) && (@rl_img_hi v2_reloc <=? 2^32) = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocImg ()) [] "p;2g0000j20Tg001jg002J'0o"). Qed.
+Proof. apply eq_refl. Qed.
 
-Definition v2_data : RelocData v2_reloc := {| rl_data_lo := 0x45000; rl_data_ok := v2_data_ok; rl_data_wseg := v2_data_wseg |}.
+Definition v2_data : RelocData v2_reloc := Build_RelocData _ 0x45000 v2_data_ok v2_data_wseg.
 
 Lemma v2_hull_ok : @hull_okb v2_reloc v2_data = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocImg ()) [] "p;2p;3g0000j22Tg00<3j21Tg001Pj30Tg001jR0g002JR1'2g002jg00=7'1=001do"). Qed.
+Proof. lazy. constructor. Qed.
 Lemma v2_spans_ok : @spans_check v2_reloc v2_data canon_spans = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocImg ()) [] "p;2p;3g0000j22Tg00>1j31Tg001Pj30Tg001jR0g002JR1'2g002jg00=7g00?831=001do"). Qed.
+Proof. vm_compute. exact eq_refl. Qed.
 Lemma v2_orders_ok : @orders_check v2_reloc canon_spans canon_order = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocImg ()) [] "p;2p;3g0000j22Tg00@@j31Tg001Pj30Tg001jR0g002JR1'2g002jg00?8g00AH31=001do"). Qed.
-Definition v2_spans : RelocSpans v2_reloc v2_data := {| rl_hull_ok := v2_hull_ok; rl_spans_ok := v2_spans_ok; rl_orders_ok := v2_orders_ok |}.
+Proof. vm_cast_no_check (eq_refl true). Qed.
+Definition v2_spans : RelocSpans v2_reloc v2_data :=
+  {| rl_orders_ok := v2_orders_ok; rl_hull_ok := v2_hull_ok; rl_spans_ok := v2_spans_ok |}.

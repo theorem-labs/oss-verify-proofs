@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -33,40 +33,17 @@ end.
 
 Lemma gcqb_cell : forall m q, mem_inv rsegs m -> 0 <= q < 16 -> exists bs, length bs = 4%nat /\ ro_cells rsegs m (78700 + 4 * q) [CB 4 bs].
 Proof.
-intros m q MI Hq. assert (C : q = 0 \/ q = 1 \/ q = 2 \/ q = 3 \/ q = 4 \/ q = 5 \/ q = 6 \/ q = 7 \/ q = 8 \/ q = 9 \/ q = 10 \/ q = 11 \/ q = 12 \/ q = 13 \/ q = 14 \/ q = 15) by lia.
-destruct C as [-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> |[-> | ->]]]]]]]]]]]]]]].
-- exists [Z_to_bv 8 132; Z_to_bv 8 211; Z_to_bv 8 122; Z_to_bv 8 63]. split; [reflexivity|]. change (78700 + 4 * 0) with 78700.
-apply (ro_cells_image rsegs m 78700 [Z_to_bv 8 132; Z_to_bv 8 211; Z_to_bv 8 122; Z_to_bv 8 63] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 222; Z_to_bv 8 84; Z_to_bv 8 164; Z_to_bv 8 63]. split; [reflexivity|]. change (78700 + 4 * 1) with 78704.
-apply (ro_cells_image rsegs m 78704 [Z_to_bv 8 222; Z_to_bv 8 84; Z_to_bv 8 164; Z_to_bv 8 63] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 80; Z_to_bv 8 83; Z_to_bv 8 215; Z_to_bv 8 63]. split; [reflexivity|]. change (78700 + 4 * 2) with 78708.
-apply (ro_cells_image rsegs m 78708 [Z_to_bv 8 80; Z_to_bv 8 83; Z_to_bv 8 215; Z_to_bv 8 63] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 153; Z_to_bv 8 18; Z_to_bv 8 13; Z_to_bv 8 64]. split; [reflexivity|]. change (78700 + 4 * 3) with 78712.
-apply (ro_cells_image rsegs m 78712 [Z_to_bv 8 153; Z_to_bv 8 18; Z_to_bv 8 13; Z_to_bv 8 64] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 190; Z_to_bv 8 217; Z_to_bv 8 56; Z_to_bv 8 64]. split; [reflexivity|]. change (78700 + 4 * 4) with 78716.
-apply (ro_cells_image rsegs m 78716 [Z_to_bv 8 190; Z_to_bv 8 217; Z_to_bv 8 56; Z_to_bv 8 64] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 143; Z_to_bv 8 54; Z_to_bv 8 114; Z_to_bv 8 64]. split; [reflexivity|]. change (78700 + 4 * 5) with 78720.
-apply (ro_cells_image rsegs m 78720 [Z_to_bv 8 143; Z_to_bv 8 54; Z_to_bv 8 114; Z_to_bv 8 64] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 33; Z_to_bv 8 176; Z_to_bv 8 158; Z_to_bv 8 64]. split; [reflexivity|]. change (78700 + 4 * 6) with 78724.
-apply (ro_cells_image rsegs m 78724 [Z_to_bv 8 33; Z_to_bv 8 176; Z_to_bv 8 158; Z_to_bv 8 64] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 141; Z_to_bv 8 238; Z_to_bv 8 207; Z_to_bv 8 64]. split; [reflexivity|]. change (78700 + 4 * 7) with 78728.
-apply (ro_cells_image rsegs m 78728 [Z_to_bv 8 141; Z_to_bv 8 238; Z_to_bv 8 207; Z_to_bv 8 64] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 126; Z_to_bv 8 58; Z_to_bv 8 8; Z_to_bv 8 65]. split; [reflexivity|]. change (78700 + 4 * 8) with 78732.
-apply (ro_cells_image rsegs m 78732 [Z_to_bv 8 126; Z_to_bv 8 58; Z_to_bv 8 8; Z_to_bv 8 65] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 178; Z_to_bv 8 128; Z_to_bv 8 50; Z_to_bv 8 65]. split; [reflexivity|]. change (78700 + 4 * 9) with 78736.
-apply (ro_cells_image rsegs m 78736 [Z_to_bv 8 178; Z_to_bv 8 128; Z_to_bv 8 50; Z_to_bv 8 65] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 54; Z_to_bv 8 229; Z_to_bv 8 105; Z_to_bv 8 65]. split; [reflexivity|]. change (78700 + 4 * 10) with 78740.
-apply (ro_cells_image rsegs m 78740 [Z_to_bv 8 54; Z_to_bv 8 229; Z_to_bv 8 105; Z_to_bv 8 65] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 29; Z_to_bv 8 61; Z_to_bv 8 153; Z_to_bv 8 65]. split; [reflexivity|]. change (78700 + 4 * 11) with 78744.
-apply (ro_cells_image rsegs m 78744 [Z_to_bv 8 29; Z_to_bv 8 61; Z_to_bv 8 153; Z_to_bv 8 65] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 166; Z_to_bv 8 202; Z_to_bv 8 200; Z_to_bv 8 65]. split; [reflexivity|]. change (78700 + 4 * 12) with 78748.
-apply (ro_cells_image rsegs m 78748 [Z_to_bv 8 166; Z_to_bv 8 202; Z_to_bv 8 200; Z_to_bv 8 65] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 234; Z_to_bv 8 140; Z_to_bv 8 3; Z_to_bv 8 66]. split; [reflexivity|]. change (78700 + 4 * 13) with 78752.
-apply (ro_cells_image rsegs m 78752 [Z_to_bv 8 234; Z_to_bv 8 140; Z_to_bv 8 3; Z_to_bv 8 66] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 125; Z_to_bv 8 95; Z_to_bv 8 44; Z_to_bv 8 66]. split; [reflexivity|]. change (78700 + 4 * 14) with 78756.
-apply (ro_cells_image rsegs m 78756 [Z_to_bv 8 125; Z_to_bv 8 95; Z_to_bv 8 44; Z_to_bv 8 66] MI); [vm_compute; reflexivity | lia | cbn; lia].
-- exists [Z_to_bv 8 16; Z_to_bv 8 221; Z_to_bv 8 97; Z_to_bv 8 66]. split; [reflexivity|]. change (78700 + 4 * 15) with 78760.
-apply (ro_cells_image rsegs m 78760 [Z_to_bv 8 16; Z_to_bv 8 221; Z_to_bv 8 97; Z_to_bv 8 66] MI); [vm_compute; reflexivity | lia | cbn; lia].
+intros m q memOk qRange.
+pose (romb := fun z => match seg_rom rsegs (wa z) with Some v => v | None => Z_to_bv 8 0 end).
+set (word4 := map (fun d => romb (78700 + 4 * q + d)) [0; 1; 2; 3]).
+exists word4. split; [reflexivity |].
+change (ro_cells rsegs m (78700 + 4 * q) [CB (length word4) word4]).
+apply ro_cells_image; [exact memOk | | lia | cbn [word4 length map]; lia].
+assert (qList : In q (map Z.of_nat (seq 0 16))).
+{ apply in_map_iff. exists (Z.to_nat q). split; [lia | apply in_seq; lia]. }
+cbn [seq map Z.of_nat] in qList.
+repeat (destruct qList as [<- | qList]; [vm_compute; reflexivity |]).
+destruct qList.
 Qed.
 
 Section Seg.
@@ -162,12 +139,13 @@ Qed.
 
 Definition dadd_post (PD PI : Z) (is : list word)
 (xra xsp xs0 xs1 a5 a6 a7 s3 s5 s6 s7 s8 s9 s10 t0 t1 t2 t3 t4 t5 t6 : word) (m : mem) : machine_state -> Prop :=
-fun ms' => exists (F' : bvmap 5 word) (fc' : bv 32) (m' : mem) (dws : list word),
-ms' = MS (mkR xra xsp gp tp t0 t1 t2 xs0 xs1 (Z_to_bv 64 160) (Z_to_bv 64 (2^64 - 1 - PD)) (Z_to_bv 64 (2^64 - 1 - PI)) (Z_to_bv 64 160)
-(Z_to_bv 64 (PD + 160)) a5 a6 a7 (Z_to_bv 64 0) s3 (Z_to_bv 64 (PI + 160)) s5 s6 s7 s8 s9 s10 (Z_to_bv 64 0) t3 t4 t5 t6)
-F' (Z_to_bv 64 0x2f778) fc' None m' (seg_rom rsegs)
-/\ munch [(PD, PD + 160)] m m' /\ wmono rsegs m m' /\ mem_inv rsegs m' /\ frm0 fc'
-/\ rw_cells rsegs m' PD (f32 dws) /\ length dws = 40%nat /\ rw_cells rsegs m' PI (f32 is) /\ length is = 40%nat.
+fun ms => exists (Fe : bvmap 5 word) (fce : bv 32) (me : mem) (sums : list word),
+ms = MS (mkR xra xsp gp tp t0 t1 t2 xs0 xs1 (Z_to_bv 64 160) (Z_to_bv 64 (2^64 - 1 - PD)) (Z_to_bv 64 (2^64 - 1 - PI))
+(Z_to_bv 64 160) (Z_to_bv 64 (PD + 160)) a5 a6 a7
+(Z_to_bv 64 0) s3 (Z_to_bv 64 (PI + 160)) s5 s6 s7 s8 s9 s10 (Z_to_bv 64 0) t3 t4 t5 t6)
+Fe (Z_to_bv 64 0x2f778) fce None me (seg_rom rsegs)
+/\ munch [(PD, PD + 160)] m me /\ wmono rsegs m me /\ mem_inv rsegs me /\ frm0 fce
+/\ rw_cells rsegs me PD (f32 sums) /\ length sums = 40%nat /\ rw_cells rsegs me PI (f32 is) /\ length is = 40%nat.
 
 #[using="Type"] Lemma dadd_loop : forall (PD PI : Z) (xra xsp xs0 xs1 a5 a6 a7 s3 s5 s6 s7 s8 s9 s10 t0 t1 t2 t3 t4 t5 t6 : word)
 (mN : mem) rest irest idone done (q r : Z) F fc m,
@@ -182,183 +160,154 @@ evt rsegs (dadd_post PD PI (idone ++ irest) xra xsp xs0 xs1 a5 a6 a7 s3 s5 s6 s7
 (Z_to_bv 64 q) a5 a6 a7 (Z_to_bv 64 (Z.of_nat (length rest))) s3 (Z_to_bv 64 r) s5 s6 s7 s8 s9 s10 (Z_to_bv 64 (Z.of_nat (length rest))) t3 t4 t5 t6)
 F (Z_to_bv 64 0x2f740) fc None m (seg_rom rsegs)).
 Proof.
-intros PD PI xra xsp xs0 xs1 a5 a6 a7 s3 s5 s6 s7 s8 s9 s10 t0 t1 t2 t3 t4 t5 t6 mN.
-induction rest as [|y rest IHr]; intros irest idone done q r F fc m LN Li Lid L1 Hq Hr P0 I0 E64 I64 AP MI MU WM FRM DONE YR IDONE XR;
-[cbn in L1; lia|].
-destruct irest as [|x irest']; [cbn in Li; lia|]. cbn [length] in LN, Li, L1.
-pose proof (rw_cells_bound _ _ _ _ XR) as BX; rewrite cells_size_f32 in BX; cbn [length] in BX.
-pose proof (rw_cells_bound _ _ _ _ YR) as BY; rewrite cells_size_f32 in BY; cbn [length] in BY.
-pose proof (rw_cells_bound _ _ _ _ DONE) as BD; rewrite cells_size_f32 in BD.
-pose proof (rw_cells_bound _ _ _ _ IDONE) as BS; rewrite cells_size_f32 in BS.
-unfold apart in AP. rewrite !f32_cons in XR. rewrite !f32_cons in YR.
-zstep. cbn [length]. if_false_z. zstep. if_false_z. zstep. if_false_z. zstep. if_false_z.
-zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep.
-destruct rest as [|y' rest'].
-- destruct irest'; [| cbn in Li; lia]. rewrite f32_nil in XR, YR.
-cbn [length] in *.
-if_false_z.
-replace (q + 4) with (PD + 160) by lia. replace (r + 4) with (PI + 160) by lia.
-replace (4 * Z.of_nat (length done) + 4) with 160 by lia. replace (Z.of_nat 1 + -1) with 0 by lia.
-unfold dadd_post.
-chunk_snoc IDONE XR. apply f32_snoc1' in IDONE.
-chunk_snoc DONE YR. apply f32_snoc1' in DONE.
-finish.
-all: first [ exact DONE | rewrite length_app; cbn [length]; lia | f_equal; f_equal; lia ].
-- destruct irest' as [|x' irest'']; [cbn in Li; lia|]. cbn [length] in *.
-if_true_z.
-chunk_uncons XR as X1. chunk_snoc IDONE X1. apply f32_snoc1' in IDONE.
-chunk_uncons YR as Y1. chunk_snoc DONE Y1. apply f32_snoc1' in DONE.
-replace (idone ++ x :: x' :: irest'') with ((idone ++ [x]) ++ x' :: irest'') by (rewrite <- app_assoc; reflexivity).
-replace (4 * Z.of_nat (length done) + 4) with (4 * Z.of_nat (length (done ++ [fadd_s RNE (nan_box (low32 y)) (nan_box (low32 x))]))) by (rewrite length_app; cbn [length]; lia).
-replace (Z.of_nat (Datatypes.S (Datatypes.S (length rest'))) + -1) with (Z.of_nat (length (y' :: rest'))) by (cbn [length]; lia).
-eapply (IHr (x' :: irest'') (idone ++ [x]) (done ++ [fadd_s RNE (nan_box (low32 y)) (nan_box (low32 x))]) (q + 4) (r + 4)).
-all: try eassumption.
-all: first [ rewrite !f32_cons; exact_at XR | rewrite f32_cons; exact_at YR | rewrite ?length_app; cbn [length] in *; lia ].
+intros PD PI xra xsp xs0 xs1 a5 a6 a7 s3 s5 s6 s7 s8 s9 s10 t0 t1 t2 t3 t4 t5 t6 mN rest.
+induction rest as [|x more onMore]; intros irest idone done q r F fc m sumLen iLen idLen restPos qAt rAt.
+- cbn in restPos. lia.
+- destruct irest as [|y imore]; [cbn in iLen; lia|].
+  intros PDlo PIlo PDhi PIhi disj memOk munchD monoD frmOk doneC restC idoneC irestC.
+  cbn [length] in sumLen, iLen, restPos |- *.
+  rewrite f32_cons in restC, irestC.
+  unfold apart in disj.
+  pose proof (rw_cells_bound _ _ _ _ doneC) as doneB. rewrite cells_size_f32 in doneB.
+  pose proof (rw_cells_bound _ _ _ _ idoneC) as idoneB. rewrite cells_size_f32 in idoneB.
+  zstep. fdec. fupto 194420.
+  remember (fadd_s RNE (nan_box (low32 x)) (nan_box (low32 y))) as v eqn:vDef. clear vDef.
+  chunk_uncons restC as vC. chunk_snoc doneC vC. apply f32_snoc1' in doneC.
+  chunk_uncons irestC as yC. chunk_snoc idoneC yC. apply f32_snoc1' in idoneC.
+  destruct more as [|x2 more2].
+  + destruct imore as [|y2 imore2]; [|cbn in iLen; lia].
+    cbn [length] in sumLen.
+    zstep. fdec.
+    replace (4 * Z.of_nat (length done) + 4) with 160 by lia.
+    replace (q + 4) with (PD + 160) by lia.
+    replace (r + 4) with (PI + 160) by lia.
+    change (Z.of_nat (Datatypes.S (length (@nil word))) + -1) with 0.
+    finish.
+    * exact doneC.
+    * rewrite length_app. cbn [length]. lia.
+    * rewrite length_app. cbn [length]. lia.
+  + destruct imore as [|y2 imore2]; [cbn in iLen; lia|].
+    cbn [length] in sumLen, iLen.
+    zstep. fdec.
+    replace (4 * Z.of_nat (length done) + 4) with (4 * Z.of_nat (length (done ++ [v]))) by (rewrite length_app; cbn [length]; lia).
+    replace (Z.of_nat (Datatypes.S (length (x2 :: more2))) + -1) with (Z.of_nat (length (x2 :: more2))) by (cbn [length]; lia).
+    rewrite (app_assoc idone [y] (y2 :: imore2)).
+    apply onMore; cbn [length] in *; rewrite ?length_app; cbn [length]; try lia; try assumption.
 Qed.
 
 Definition at_L2_40 (low : dec_state bptr) (dtx : Z) (s1 : sbd_state bptr) (r : smrec) (sub : Z) (b : bits_st bptr) : machine_state -> Prop :=
-fun ms => exists (Fx : bvmap 5 word) (fc : bv 32) (m : mem) (kk : iclob) (xra xa0 xs2 xs3 xs4 xs9 xs11 : word)
-(j : sb_junk) (ows : list word) (stb : list byte) (fr : sframe) (vpi ver vq viq vak vexc : list word),
-ms = MS (mkR xra (Z_to_bv 64 (usp + -672)) gp tp (c_t0 kk) (c_t1 kk) (c_t2 kk) sp (Z_to_bv 64 S)
-xa0 (c_a1 kk) (c_a2 kk) (c_a3 kk) (c_a4 kk) (c_a5 kk) (c_a6 kk) (c_a7 kk)
-xs2 xs3 xs4 (Z_to_bv 64 (OUT + 4 * sbd_frame_size s0)) (Z_to_bv 64 (18446744073709551615 - (usp + -512))) (Z_to_bv 64 160)
-(Z_to_bv 64 (usp + -672)) xs9 (Z_to_bv 64 (usp + -512)) xs11
-(c_t3 kk) (c_t4 kk) (c_t5 kk) (c_t6 kk))
-Fx (Z_to_bv 64 0x2f8b8) fc None m (seg_rom rsegs)
-/\ frm0 fc /\ sbctx X true m s1 low b j ows stb /\ stk rsegs m lo (usp + -672) /\ frame_at X m fr
-/\ lframe X fr dtx /\ f_136 fr = Z_to_bv 64 (usp + -512) /\ f_168 fr = Z_to_bv 64 (OUT + 640 + 160 * sub)
-/\ f_192 fr = Z_to_bv 64 (sub * 4) /\ f_200 fr = Z_to_bv 64 sub
+fun ms => exists (Fj : bvmap 5 word) (fcj : bv 32) (mj : mem) (cl : iclob) (wra wa0 ws2 ws3 ws4 ws9 ws11 : word)
+(jk : sb_junk) (outs : list word) (stw : list byte) (sfr : sframe) (pig erms ql iql akl excs : list word),
+ms = MS (mkR wra (Z_to_bv 64 (usp + -672)) gp tp (c_t0 cl) (c_t1 cl) (c_t2 cl) sp (Z_to_bv 64 S)
+wa0 (c_a1 cl) (c_a2 cl) (c_a3 cl) (c_a4 cl) (c_a5 cl) (c_a6 cl) (c_a7 cl)
+ws2 ws3 ws4 (Z_to_bv 64 (OUT + 4 * sbd_frame_size s0)) (Z_to_bv 64 (18446744073709551615 - (usp + -512))) (Z_to_bv 64 160)
+(Z_to_bv 64 (usp + -672)) ws9 (Z_to_bv 64 (usp + -512)) ws11 (c_t3 cl) (c_t4 cl) (c_t5 cl) (c_t6 cl))
+Fj (Z_to_bv 64 0x2f8b8) fcj None mj (seg_rom rsegs)
+/\ frm0 fcj /\ sbctx X true mj s1 low b jk outs stw /\ stk rsegs mj lo (usp + -672) /\ frame_at X mj sfr /\ lframe X sfr dtx
+/\ f_136 sfr = Z_to_bv 64 (usp + -512) /\ f_168 sfr = Z_to_bv 64 (OUT + 640 + 160 * sub)
+/\ f_192 sfr = Z_to_bv 64 (sub * 4) /\ f_200 sfr = Z_to_bv 64 sub
 /\ sb_smrec_at mo (sbd_submodeID s1) = Some r /\ 0 <= sub <= 3
-/\ (xs9 = match sbd_innov_save s0 with None => Z_to_bv 64 0 | Some _ => Z_to_bv 64 (OUT + 1280 + 320 * sub) end)
-/\ rw_cells rsegs m (usp + -400) (f32 vpi) /\ length vpi = 4%nat
-/\ rw_cells rsegs m (usp + -416) (f32 ver) /\ length ver = 4%nat
-/\ rw_cells rsegs m (usp + -448) (f32 vq) /\ length vq = 8%nat
-/\ rw_cells rsegs m (usp + -480) (f32 viq) /\ length viq = 8%nat
-/\ rw_cells rsegs m (usp + -512) (f32 vak) /\ length vak = 8%nat
-/\ rw_cells rsegs m (usp + -672) (f32 vexc) /\ length vexc = 40%nat.
+/\ ws9 = match sbd_innov_save s0 with Some _ => Z_to_bv 64 (OUT + 1280 + 320 * sub) | None => Z_to_bv 64 0 end
+/\ rw_cells rsegs mj (usp + -400) (f32 pig) /\ length pig = 4%nat /\ rw_cells rsegs mj (usp + -416) (f32 erms) /\ length erms = 4%nat
+/\ rw_cells rsegs mj (usp + -448) (f32 ql) /\ length ql = 8%nat /\ rw_cells rsegs mj (usp + -480) (f32 iql) /\ length iql = 8%nat
+/\ rw_cells rsegs mj (usp + -512) (f32 akl) /\ length akl = 8%nat /\ rw_cells rsegs mj (usp + -672) (f32 excs) /\ length excs = 40%nat.
 
 Definition at_L2_80 (low : dec_state bptr) (dtx : Z) (s1 : sbd_state bptr) (r : smrec) (sub : Z) (b : bits_st bptr) : machine_state -> Prop :=
-fun ms => exists (Fx : bvmap 5 word) (fc : bv 32) (m : mem) (kk : iclob) (xra xa0 xs2 xs3 xs4 xs9 xs11 : word)
-(j : sb_junk) (ows : list word) (stb : list byte) (fr : sframe) (vpi ver vq viq vak vexc : list word),
-ms = MS (mkR xra (Z_to_bv 64 (usp + -832)) gp tp (c_t0 kk) (c_t1 kk) (c_t2 kk) sp (Z_to_bv 64 S)
-xa0 (c_a1 kk) (c_a2 kk) (c_a3 kk) (c_a4 kk) (c_a5 kk) (c_a6 kk) (c_a7 kk)
-xs2 xs3 xs4 (Z_to_bv 64 (OUT + 4 * sbd_frame_size s0)) (Z_to_bv 64 (18446744073709551615 - (usp + -512))) (Z_to_bv 64 320)
-(Z_to_bv 64 (usp + -832)) xs9 (Z_to_bv 64 (usp + -512)) xs11
-(c_t3 kk) (c_t4 kk) (c_t5 kk) (c_t6 kk))
-Fx (Z_to_bv 64 0x2f8b8) fc None m (seg_rom rsegs)
-/\ frm0 fc /\ sbctx X true m s1 low b j ows stb /\ stk rsegs m lo (usp + -832) /\ frame_at X m fr
-/\ lframe X fr dtx /\ f_136 fr = Z_to_bv 64 (usp + -512) /\ f_168 fr = Z_to_bv 64 (OUT + 1280 + 320 * sub)
-/\ f_192 fr = Z_to_bv 64 (sub * 4) /\ f_200 fr = Z_to_bv 64 sub
+fun ms => exists (Fj : bvmap 5 word) (fcj : bv 32) (mj : mem) (cl : iclob) (wra wa0 ws2 ws3 ws4 ws9 ws11 : word)
+(jk : sb_junk) (outs : list word) (stw : list byte) (sfr : sframe) (pig erms ql iql akl excs : list word),
+ms = MS (mkR wra (Z_to_bv 64 (usp + -832)) gp tp (c_t0 cl) (c_t1 cl) (c_t2 cl) sp (Z_to_bv 64 S)
+wa0 (c_a1 cl) (c_a2 cl) (c_a3 cl) (c_a4 cl) (c_a5 cl) (c_a6 cl) (c_a7 cl)
+ws2 ws3 ws4 (Z_to_bv 64 (OUT + 4 * sbd_frame_size s0)) (Z_to_bv 64 (18446744073709551615 - (usp + -512))) (Z_to_bv 64 320)
+(Z_to_bv 64 (usp + -832)) ws9 (Z_to_bv 64 (usp + -512)) ws11 (c_t3 cl) (c_t4 cl) (c_t5 cl) (c_t6 cl))
+Fj (Z_to_bv 64 0x2f8b8) fcj None mj (seg_rom rsegs)
+/\ frm0 fcj /\ sbctx X true mj s1 low b jk outs stw /\ stk rsegs mj lo (usp + -832) /\ frame_at X mj sfr /\ lframe X sfr dtx
+/\ f_136 sfr = Z_to_bv 64 (usp + -512) /\ f_168 sfr = Z_to_bv 64 (OUT + 1280 + 320 * sub)
+/\ f_192 sfr = Z_to_bv 64 (sub * 4) /\ f_200 sfr = Z_to_bv 64 sub
 /\ sb_smrec_at mo (sbd_submodeID s1) = Some r /\ 0 <= sub <= 3
-/\ (xs9 = match sbd_innov_save s0 with None => Z_to_bv 64 0 | Some _ => Z_to_bv 64 (OUT + 2560 + 640 * sub) end)
-/\ rw_cells rsegs m (usp + -400) (f32 vpi) /\ length vpi = 4%nat
-/\ rw_cells rsegs m (usp + -416) (f32 ver) /\ length ver = 4%nat
-/\ rw_cells rsegs m (usp + -448) (f32 vq) /\ length vq = 8%nat
-/\ rw_cells rsegs m (usp + -480) (f32 viq) /\ length viq = 8%nat
-/\ rw_cells rsegs m (usp + -512) (f32 vak) /\ length vak = 8%nat
-/\ rw_cells rsegs m (usp + -832) (f32 vexc) /\ length vexc = 80%nat.
+/\ ws9 = match sbd_innov_save s0 with Some _ => Z_to_bv 64 (OUT + 2560 + 640 * sub) | None => Z_to_bv 64 0 end
+/\ rw_cells rsegs mj (usp + -400) (f32 pig) /\ length pig = 4%nat /\ rw_cells rsegs mj (usp + -416) (f32 erms) /\ length erms = 4%nat
+/\ rw_cells rsegs mj (usp + -448) (f32 ql) /\ length ql = 8%nat /\ rw_cells rsegs mj (usp + -480) (f32 iql) /\ length iql = 8%nat
+/\ rw_cells rsegs mj (usp + -512) (f32 akl) /\ length akl = 8%nat /\ rw_cells rsegs mj (usp + -832) (f32 excs) /\ length excs = 80%nat.
 
 #[using="RCEIL k IH"] Lemma sbL2f_40 : FS = 40 -> forall low dtx s1 r sub b ms, sm_innovation_unquant (smr_sm r) = None ->
 at_L1_40 X low dtx s1 r sub b ms -> evt rsegs (at_L2_40 low dtx s1 r sub (ub b 5)) ms.
 Proof.
-intros EFS low dtx s1 r sub b ms HKI AT.
-first [ sf_destruct 43%nat AT as Fx fc m kk xra xa0 xs9 xs11 j ows stb fr vpi ver vq viq vak vexc -> FRM CTX ST FRA LFR F136e F168e F192e F200e SAT Hsub Exs9 VPI Lvpi VER Lver VQ Lvq VIQ Lviq VAK Lvak VEXC Lvexc | sf_fb; destruct AT as (Fx & fc & m & kk & xra & xa0 & xs9 & xs11 & j & ows & stb & fr & vpi & ver & vq & viq & vak & vexc & -> & FRM & CTX & ST & FRA & LFR & F136e & F168e & F192e & F200e & SAT & Hsub & Exs9 & VPI & Lvpi & VER & Lver & VQ & Lvq & VIQ & Lviq & VAK & Lvak & VEXC & Lvexc) ].
-pose proof LFR as sfP_; first [ sf_destruct 25%nat sfP_ as F0e F8e F16e F24e F32e F40e F56e F64e F72e F80e F88e F96e F104e F112e F120e F128e F144e F152e F160e F176e F184e F208e F216e Fdtx DTX01 | sf_fb; destruct sfP_ as (F0e & F8e & F16e & F24e & F32e & F40e & F56e & F64e & F72e & F80e & F88e & F96e & F104e & F112e & F120e & F128e & F144e & F152e & F160e & F176e & F184e & F208e & F216e & Fdtx & DTX01) ].
-open_ihyps IH. open_ctx CTX. destruct FRA as [FL FV]. unfold sframe_cells in FL. unfold fr_saves in FV. cbv zeta in FV.
-pose proof INV as sfP_; first [ sf_destruct 7%nat sfP_ as _ _ Iffs1 _ Inb1 Ilpc1 _ | sf_fb; destruct sfP_ as (_ & _ & Iffs1 & _ & Inb1 & Ilpc1 & _) ].
-assert (Hfs1 : sbd_frame_size s1 = 4 * FS) by (rewrite Efr; exact Hfs).
-rewrite EFS in *.
-pose proof INV0 as (Imo & _).
-pose proof (USPk _ _ IH (-672) ltac:(lia)) as USPX.
-set (id := sbd_submodeID s1) in *.
-first [ pose proof (sb_smrec_at_some mo id r SAT) as sfP_; sf_destruct 6%nat sfP_ as INr SMS Hid SPE LSPH UWBN | sf_fb; destruct (sb_smrec_at_some mo id r SAT) as (INr & SMS & Hid & SPE & LSPH & UWBN) ].
-
-assert (SUBPok : 0 < SUBP mo < 2^62 /\ SUBP mo mod 8 = 0) by (destruct Imo as [E|E]; rewrite E; vm_compute; repeat split; reflexivity).
-assert (AL0 : (SUBP mo + 8 * id) mod 8 = 0) by (replace (SUBP mo + 8 * id) with (SUBP mo + id * 8) by lia; rewrite Z.mod_add by lia; lia).
-pose proof (sb_smrecs_ptr r INr) as (RLO & RHI & RAL). unfold RTABLES_LO, RTABLES_HI in RLO, RHI.
-zstep. rewrite (sx32_lit id) by lia. zstep. rewrite Emo. zstep. zstep. rewrite (Z.shiftl_mul_pow2 id 3) by lia. change (2 ^ 3) with 8.
-replace (SUBP mo + id * 8) with (SUBP mo + 8 * id) by lia.
-zstep. zstep. zstep. if_false_z.
-zstep. zstep. zstep. zstep. zstep. rewrite (lxor_sign_nn id) by lia. bdec. lit_if.
-zstep. if_false_z.
-zstep. zstep. rewrite (land7_al _ AL0). if_false_z.
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-pose proof (sb_sub_ptr_read mm mo id _ (sb_tables_of_pristine mm TP) Imo ltac:(lia) eq_refl) as RD;
-pose proof (sb_tables_of_pristine mm TP) as sfP_; first [ sf_destruct 4%nat sfP_ as _ _ TR _ | sf_fb; destruct sfP_ as (_ & _ & TR & _) ] end.
-zstep. clear RD. rewrite SPE.
-zstep. if_false_z.
-zstep. zstep. rewrite (land7_al _ RAL). if_false_z.
-zstep.
-pose proof (TR r INr) as SMC. unfold smrec_cells in SMC. cbv zeta in SMC. rewrite HKI in SMC. cbn [innov_entry] in SMC.
-unfold A_split_cb_shape_sign_unquant, A_noise_codebook_unquant in SMC.
-zstep. clear SMC TR.
-
-zstep. zstep. zstep. zstep. zstep. try if_true_x.
-
-zstep. zstep. rewrite F160e. zstep.
-call (X1g7.speex_bits_unpack_unsigned_spec A D b 5); [exact REP | exact BOK | lia | exact MI |].
-rewrite (unpack_eta b 5) in *. cbn [fst snd] in *. after_bits REP (ub b 5).
-pose proof (ub_ok b 5 BOK ltac:(lia)) as BOK5. pose proof (ub_same b 5) as (U5sz & U5o & U5c).
-pose proof (speex_bits_unpack_unsigned_ok b 5 _ _ BOK ltac:(lia) (unpack_eta b 5)) as (_ & Q32 & _).
-match goal with H : ?v = Z_to_bv 64 (uv b 5) |- _ => subst v end.
-name_post. try rename FRMc into FRM. try rename STc into ST. try rewrite USPX in ST.
-
-zstep. zstep. rewrite (swrap32_small (uv b 5 + -10)) by lia. rewrite (lts_lit_k (uv b 5 + -10) (uv b 5)) by lia.
-replace (uv b 5 + -10 <? uv b 5) with true by (symmetry; apply Z.ltb_lt; lia). if_false_x.
-zstep. zstep. zstep. zstep.
-call ((h_exp _ (ih_hyps _ _ IH)) lo); [rewrite USPX; exact ST | rewrite USPX; unfold EXP_DEPTH; lia | exact MI | exact FRM |].
-cbv beta delta [callR]. clear FRM. name_post. rename FRMc into FRM. rename STc into ST. rewrite USPX in ST.
-
-zstep. zstep. zstep. fp_join 0x2f7b8.
-{ zstep. if_cases Kc; [apply evt_done; eexists; reflexivity | zstep; apply evt_done; eexists; reflexivity]. }
-cbv beta. intros ms1 (Fx1 & ->).
-
-zstep. zstep. zstep. zstep. rewrite F128e, F16e. rewrite Efs. rewrite (sx32_lit 40) by lia. rewrite (lts_zero_lit 40) by lia. if_false_x.
-zstep. rewrite F8e. zstep. if_false_z.
-zstep. zstep. zstep. zstep. zstep. zstep. zstep.
-
-pose proof (ih_out4 _ _ IH) as OUT4.
-assert (TMO : sbmode_struct mo = A_sb_wb_mode) by (rewrite (proj1 (FS40_mode EFS)); reflexivity).
-rewrite TMO.
-replace (Z.lxor (usp + -672) 18446744073709551615) with (2^64 - 1 - (usp + -672)) by (rewrite zb_lxor_ones by lia; lia).
+intros fs40 low dtx s1 r sub b ms noInnov atL1.
+unfold at_L1_40 in atL1.
+destruct atL1 as (Fx & fc & m & kk & xra & xa0 & xs9 & xs11 & j & ows & stb & fr & vpi & ver & vq & viq & vak & vexc
+  & -> & frmOk & ctx & stack & frame & lfr & fr136 & fr168 & fr192 & fr200 & smrecAt & subRange & s9Def
+  & piC & piLen & erC & erLen & qC & qLen & iqC & iqLen & akC & akLen & excC & excLen).
+open_ihyps IH. open_ctx ctx. rewrite fs40 in *.
+destruct (FS40_mode fs40) as [wbMode _].
+destruct frame as [frCells frSaves]. unfold sframe_cells in frCells.
+pose proof lfr as (l0 & l8 & l16 & l24 & l32 & l40 & l56 & l64 & l72 & l80 & l88 & l96 & l104 & l112 & l120 & l128
+  & l144 & l152 & l160 & l176 & l184 & l208 & l216 & ldtx & dtxRange).
+assert (recAtWB : sb_smrec_at ModeWB (sbd_submodeID s1) = Some r) by (rewrite <- wbMode; exact smrecAt).
+pose proof (sb_smrec_at_some _ _ _ recAtWB) as (inRecs & _ & idRange & ptrEq & _ & _).
+pose proof (sb_smrecs_ptr r inRecs) as ptrRange. unfold RTABLES_LO, RTABLES_HI in ptrRange.
+pose proof (sb_tables_of_pristine m TP) as tables.
+pose proof (sb_sub_ptr_read m ModeWB (sbd_submodeID s1) _ tables (or_introl eq_refl) ltac:(lia) eq_refl) as subRd.
+rewrite ptrEq in subRd. change (SUBP ModeWB) with 245272 in subRd.
+pose proof tables as (_ & _ & recCells & _). clear tables.
+specialize (recCells r inRecs). unfold smrec_cells in recCells. rewrite noInnov in recCells.
+(* submode pointer and innovation_unquant slot *)
+zstep. rewrite (sx32_lit (sbd_submodeID s1)) by lia.
+zstep. rewrite Emo, wbMode. change (SUBP ModeWB) with 245272.
+fupto 194432.
+clear subRd recCells.
+(* folding branch: quant = unpack(bits, 5) *)
+zstep. zstep. rewrite l160. zstep.
+call (speex_bits_unpack_unsigned_spec A D b 5); [exact REP | exact BOK | lia | exact MI |].
+rewrite unpack_eta in PC, POST. cbn [fst snd] in PC, POST. subst x.
+pose proof (speex_bits_unpack_unsigned_ok b 5 _ _ BOK ltac:(lia) (unpack_eta b 5)) as (bokU & vRange & _).
+pose proof (ub_same b 5) as (ubSz & ubOwn & ubChars).
+zstep. rewrite (swrap32_small (uv b 5 + -10)) by lia. zstep. fdec.
+fupto 211376.
+(* g = exp(...) *)
+pose proof (USPk _ _ IH (-672) ltac:(lia)) as usp672.
+pose proof (lay_A_stk _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ LAY) as aStk.
+call (h_exp _ (ih_hyps _ _ IH) lo); [rewrite usp672; exact stack | rewrite usp672; unfold EXP_DEPTH; lia | exact MI0 | exact FRM |].
+unfold callR. zstep. zstep. zstep.
+fp_join 194488.
+{ zstep. lazymatch goal with |- context [if ?c then _ else _] => destruct c end.
+  - apply evt_done. eexists. reflexivity.
+  - zstep. apply evt_done. eexists. reflexivity. }
+intros msJ (Fy & ->).
+zstep. rewrite Efs. zstep. rewrite l128. zstep. rewrite l16, wbMode. change (sbmode_struct ModeWB) with 245232.
+zstep. fdec. zstep. rewrite l8.
+fupto 194540.
+rewrite (sx32_lit 40) by lia. rewrite (zb_lxor_ones (usp + -672)) by lia.
 replace (usp + -668) with (usp + -672 + 4) by lia.
-pose proof FL as FLc. chunk_splitk FLc at 26%nat as FLa. clear FLa. chunk_splitk FLc at 1%nat as F208c. clear FLc. rewrite F208e in F208c.
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-pose proof (sb_tables_of_pristine mm TP) as sfP_; first [ sf_destruct 11%nat sfP_ as _ _ _ _ _ _ _ _ _ TWB _ | sf_fb; destruct sfP_ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & TWB & _) ] end.
-unfold sb_wb_mode_cells in TWB. chunk_splitk TWB at 7%nat as TWa. clear TWa. chunk_splitk TWB at 1%nat as TFV. clear TWB.
-pose proof (f32_split rsegs _ _ ows (Z.to_nat (160 + 40 * sub)) ltac:(rewrite Lows; lia) XO) as [_ XO2].
-pose proof (f32_split rsegs _ _ (skipn (Z.to_nat (160 + 40 * sub)) ows) 40%nat ltac:(rewrite length_skipn, Lows; lia) XO2) as [XSRC _]. clear XO2.
-replace (OUT + 4 * Z.of_nat (Z.to_nat (160 + 40 * sub))) with (OUT + 640 + 160 * sub) in XSRC by lia.
-assert (LSRC : length (firstn 40%nat (skipn (Z.to_nat (160 + 40 * sub)) ows)) = 40%nat) by (rewrite length_firstn, length_skipn, Lows; lia).
-set (src := firstn 40%nat (skipn (Z.to_nat (160 + 40 * sub)) ows)) in *. clearbody src.
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
-call (fold_loop (OUT + 640 + 160 * sub) (usp + -672) 40%nat (40 * sub) (OUT + 4 * sbd_frame_size s0) OUT A_sb_wb_mode _
-_ _ _ _ _ _ _ _ _ _ _ _ _ mc 19%nat src [] vexc [] 0 0 _ _ _ _ _ _ mc);
-[ exact LSRC | rewrite Lvexc, LSRC; reflexivity | reflexivity | cbn [length]; rewrite LSRC; reflexivity | reflexivity | lia
-| lia | lia | lia | lia | first [lia | (rewrite Hfs; replace (OUT + 4 * (4 * 40)) with (OUT + 160 * 4) by lia; rewrite Z.mod_add by lia; exact OUT4)]
-| lia | lia | lia | lia
-| unfold apart; pose proof (lay_OUT_stk _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ LAY); lia
-| unfold apart; lia | unfold apart, A_sb_wb_mode; lia
-| exact MI | apply munch_refl | apply wmono_refl | exact FRM
-| exact_at F208c | exact TFV
-| rewrite f32_nil; apply rw_cells_nil; lia | exact_at VEXC
-| rewrite f32_nil; apply rw_cells_nil; lia | exact_at XSRC | ] end.
-cbv beta. clear FRM. try clear VEXC. try clear XSRC. name_post. rename FRMc into FRM. try rename STc into ST.
+(* the folding loop *)
+destruct (f32_split rsegs _ _ ows (Z.to_nat (160 + 40 * sub)) ltac:(lia) XO) as [_ owsRest].
+destruct (f32_split rsegs _ _ (skipn (Z.to_nat (160 + 40 * sub)) ows) 40 ltac:(rewrite length_skipn; lia) owsRest) as [owsMid _].
+clear owsRest.
+replace (OUT + 4 * Z.of_nat (Z.to_nat (160 + 40 * sub))) with (OUT + 4 * sbd_frame_size s0 + 4 * (40 * sub)) in owsMid by lia.
+pose proof frCells as frTail. do 26 (let junk := fresh in chunk_uncons frTail as junk; clear junk).
+chunk_uncons frTail as f208C. clear frTail. rewrite l208 in f208C.
+pose proof (sb_wb_mode_of_pristine _ TP) as wbCells. unfold sb_wb_mode_cells in wbCells.
+do 7 (let junk := fresh in chunk_uncons wbCells as junk; clear junk).
+chunk_uncons wbCells as gainC. clear wbCells. unfold A_sb_wb_mode in gainC.
+pose proof (lay_OUT_stk _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ LAY) as outStk.
+pose proof (ih_out4 _ _ IH) as out4.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mNow _) =>
+  call (fold_loop (OUT + 4 * sbd_frame_size s0 + 4 * (40 * sub)) (usp + -672) 40 (40 * sub) (OUT + 4 * sbd_frame_size s0) OUT 245232
+    (Z_to_bv 64 1063675494) _ _ _ _ _ _ _ _ _ _ _ _ _ mNow 19 (firstn 40 (skipn (Z.to_nat (160 + 40 * sub)) ows)) [] vexc [] 0 0
+    _ _ _ _ _ _ _) end.
+1-28: first [ reflexivity | assumption | apply munch_refl | apply wmono_refl
+  | rewrite ?length_firstn, ?length_skipn; cbn [length]; lia
+  | apply rw_cells_nil; lia | exact_at f208C | exact_at gainC | exact_at excC | exact_at owsMid
+  | unfold apart; lia | lia ].
+(* at the join 0x2f8b8 *)
 apply evt_done. unfold at_L2_40.
-lazymatch goal with H : rw_cells _ _ (usp + -672) (f32 ?w) |- _ => set (DWS := w) in * end.
-eexists _, _, _, (ICL _ _ _ _ _ _ _ _ _ _ _ _ _ _), _, _, _, _, _, _, _.
-exists j, ows, stb, fr, vpi, ver, vq, viq, vak, DWS.
-split; [reflexivity|]. split; [exact FRM|].
-split. { close_ctxE EFS MU. }
-split; [exact ST|]. split; [unfold frame_at, fr_saves, sframe_cells; cbv zeta; split; [exact FL | exact FV]|].
-split; [exact LFR|].
-split; [exact F136e|]. split; [exact F168e|]. split; [exact F192e|]. split; [exact F200e|].
-split; [exact SAT|]. split; [exact Hsub|]. split; [exact Exs9|].
-split; [exact VPI|]. split; [exact Lvpi|]. split; [exact VER|]. split; [exact Lver|]. split; [exact VQ|]. split; [exact Lvq|].
-split; [exact VIQ|]. split; [exact Lviq|]. split; [exact VAK|]. split; [exact Lvak|].
-split; assumption.
-
-Unshelve. all: exact (Z_to_bv 64 0).
+eexists _, _, _, (ICL _ _ _ _ _ _ _ _ _ _ _ _ _ _), _, _, _, _, _, xs9, xs11, j, ows, stb, fr, vpi, ver, vq, viq, vak, _.
+split; [reflexivity |].
+rewrite usp672 in *.
+split; [assumption |].
+split; [close_ctxE fs40 MU |].
+split; [assumption |].
+split; [unfold frame_at; split; assumption |].
+repeat (split; [eassumption |]). eassumption.
 Qed.
 
 End Seg.

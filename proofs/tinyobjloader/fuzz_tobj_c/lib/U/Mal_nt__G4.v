@@ -107,9 +107,16 @@ Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
-Ltac od_pw := repeat (first [ match goal with |- _ /\ _ => split | |- Forall _ _ => constructor | |- True => exact I end
-                             | progress (cbv [U.Mal_nt__G2.Mal_nt_Z.od_pairwise U.Mal_nt__G2.Mal_nt_Z.od_disj U.Mal_nt__G2.Mal_nt_Z.needs_ring U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.fcond U.Mal_nt__G2.Mal_nt_Z.od_disj0 U.Mal_nt__G2.Mal_nt_Z.zkind U.Mal_nt__G2.Mal_nt_Z.ctx_lo U.Mal_nt__G1.Mal_nt_D.dsz U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.fptr]) ]);
-              try assumption; try lia; try congruence.
+Ltac od_pw :=
+  cbn [U.Mal_nt__G2.Mal_nt_Z.od_pairwise];
+  repeat lazymatch goal with
+         | |- True => exact I
+         | |- _ /\ _ => split
+         | |- Forall _ _ => constructor
+         | |- U.Mal_nt__G2.Mal_nt_Z.od_disj _ _ _ _ _ _ => unfold U.Mal_nt__G2.Mal_nt_Z.od_disj
+         end;
+  cbn;
+  try solve [ exact I | lia | congruence ].
 
 Section V.
 
@@ -326,11 +333,20 @@ Sa4S62Sb2Sa9Vs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8Sa8Vs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8A
 Proof using HMI HP12 Hall Hdepth Hgd Hml Hsc48 Hsp Hu. change (ss_facts S_p0) with (([F_freeable; F_all] ++ F_sc48 ++ [SPNot (SPBranch BC_EQ nt_maplen (SLit 0))]) ++ [] ++ F_base). apply ZF_pre. constructor. Qed.
 Lemma ok_p0 : Forall od_ok ds_p0.
 Proof using HMI Hgd Hn0 Hsc48 Hu.
-  constructor.
-  { split; [split; [reflexivity | exact I]|]. cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.krec]. split; [exact I|]. exists am. split; [exact HMg_inst|]. split; [reflexivity|]. split; [reflexivity|].
-    rewrite ze140, ze_lit, ze133, ze134, Hn0. pose proof R_all as R. repeat split; try reflexivity; apply Z.mod_small; lia. }
-  constructor; [apply od_ok_got|]. constructor; [apply od_ok_guard|]. constructor; [apply od_ok_sct|].
-  constructor; [apply (od_ok_act_entry Hsc48)|]. constructor; [apply (od_ok_usage_entry Hsc48) | constructor].
+  pose proof (U.Mal_nt__G2.Mal_nt_Z.od_ok_gmeta_entry s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd)
+    as [_ [_ (a0 & MTa0 & Mem0 & Bits0 & Prev0 & _ & Avl0 & Frd0)]].
+  assert (a0 = am) as ->.
+  { change (MT s g = Some (MUsed a0)) in MTa0. rewrite HMg_inst in MTa0. congruence. }
+  unfold ds_p0. apply Forall_cons.
+  - split; [split; [reflexivity | exact I] | split; [exact I|]].
+    exists am. split; [exact HMg_inst|]. do 3 (split; [assumption|]).
+    split; [rewrite Hn0; reflexivity | split; assumption].
+  - apply Forall_cons; [exact od_ok_got|].
+    apply Forall_cons; [exact od_ok_guard|].
+    apply Forall_cons; [exact od_ok_sct|].
+    apply Forall_cons; [exact (od_ok_act_entry Hsc48)|].
+    apply Forall_cons; [exact (od_ok_usage_entry Hsc48)|].
+    apply Forall_nil.
 Qed.
 Lemma pw_p0 : od_pairwise ds_p0. Proof using Hgd Hsc48 Hsp Kc md tr. clear HKc Hsm_pre EmW Evm. pose proof Hsc48' as SC. unfold ds_p0. od_pw. Qed.
 
@@ -420,11 +436,18 @@ Proof using HMI HP12 Hall Hdepth Hgd Hml Hnb Hng Hsc48 Hsp Hu.
 Qed.
 Lemma ok_p1a : Forall od_ok ds_p1a.
 Proof using HMI HP12 Hgd Hng Hsc48 Hsp Hu.
-  constructor.
-  { split; [split; [reflexivity | exact I]|]. cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.krec]. split; [exact I|]. exists am. split; [exact HMg_inst|]. split; [reflexivity|]. split; [reflexivity|].
-    rewrite !ze12, ze133, ze134, Hng, (Hpg1 Hng). pose proof R_all as R. unfold zG, U.Mal_nt__G1.Mal_nt_I.zG. repeat split; try reflexivity; apply Z.mod_small; lia. }
-  constructor; [apply od_ok_got|]. constructor; [apply od_ok_guard|]. constructor; [apply od_ok_sct|].
-  constructor; [apply (od_ok_act_entry Hsc48)|]. constructor; [apply (od_ok_usage_entry Hsc48) | constructor].
+  pose proof (U.Mal_nt__G2.Mal_nt_Z.od_ok_gmeta_entry s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd)
+    as [_ [_ (a1 & MTa1 & Mem1 & Bits1 & _ & _ & Avl1 & Frd1)]].
+  assert (a1 = am) as ->.
+  { pose proof (eq_trans (eq_sym MTa1) HMg_inst) as Ea. injection Ea as Ea. exact Ea. }
+  assert (R12 : zeval zr1 zl1 (v 12) = optrA L (Some g)) by (rewrite ze12; reflexivity).
+  unfold ds_p1a. apply Forall_cons.
+  - split; [split; [reflexivity | exact I] | split; [exact I|]].
+    exists am. split; [exact HMg_inst|]. split; [exact Mem1|]. split; [exact Bits1|].
+    split; [rewrite (Hpg1 Hng); exact R12|].
+    split; [rewrite Hng; exact R12|]. split; assumption.
+  - repeat (apply Forall_cons); [exact od_ok_got | exact od_ok_guard | exact od_ok_sct
+      | exact (od_ok_act_entry Hsc48) | exact (od_ok_usage_entry Hsc48) | apply Forall_nil].
 Qed.
 Lemma pw_p1a : od_pairwise ds_p1a. Proof using Hgd Hsc48 Hsp Kc md tr. clear HKc Hsm_pre EmW Evm. pose proof Hsc48' as SC. unfold ds_p1a. od_pw. Qed.
 Lemma P1acert : ltac2:(tb__ "0|0|
@@ -433,9 +456,11 @@ Proof using . vm_cast_no_check (@eq_refl bool true). Qed.
 Lemma okC_p1a : ltac2:(tb__ "0|0|
 S0S3aS0R1Sf8A3S13S3aS0R2Sf7A3S13Sb8Vs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;S9bVs;Vg;Vam;A3R2AaSd7R2A1A2A2F_;Fd;").
 Proof using Erd Ewok HIr HMI HP13 HP13w HU Hgd Hgd_holds Hml Hng Hsc48 Hsp Hu mW.
-  intros d [<-|[<-|[]]].
-  - split; [right; left; reflexivity|]. split; [|exact I]. cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at]. split; [exact Hsc48|]. rewrite ze_lit, (act_m_none Hng). reflexivity.
-  - split; [right; right; left; reflexivity | exact okC_usage].
+  pose proof (act_m_none Hng) as ActNone.
+  intros d Hd. destruct Hd as [<-|Hd]; [|destruct Hd as [<-|[]]].
+  - split; [right; left; reflexivity|]. split; [|exact I].
+    split; [exact Hsc48|]. rewrite ActNone. reflexivity.
+  - split; [do 2 right; left; reflexivity | exact okC_usage].
 Qed.
 Lemma ent_p1a : ltac2:(tb__ "0|0|
 S0S3aS0R1Sf7A3S15Sb7Vs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;R2A9S3aS0R2Sf8A3A2F_;Fd;").
@@ -443,10 +468,13 @@ Proof using . intros d [<-|[<-|[<-|[<-|[]]]]]; [left; apply od_ok_sct | right; l
 Lemma locs_p1a : ltac2:(tb__ "0|1|
 S4dS3aS4dR1S22S4dS9aVs;Vg;Vam;A3S18S4dS53S3dS52S43Z8Sa7Vam;A1A2A2A1S1eS4dA1A3A3A3S15S3aS4dR2SdcVg;A1A3S16S0S0S13S3aS0R1Sf8A3S13S3cS2Vs;VL;Vg;Vam;R1A5S4eVL;R3A2M0A2S3eG0S1Vs;VL;Vg;Vam;R1A5A2A2A2Ld;A2A2F_;Fl;").
 Proof using HMI Hgd Hng Hsc48 rho.
-  clear HR2g. intros l Hl. unfold l1_locs in Hl. rewrite Hng, sptr_eqb_refl in Hl. pose proof Hctx as HCX.
-  apply in_app_iff in Hl as [Hl|Hl]; [apply in_app_iff in Hl as [Hl|Hl]; [|left; exact Hl]|].
-  - destruct Hl as [<-|[]]. right. exists (OD_act (SLit 0)). split; [left; reflexivity|]. unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz loc_addr]. rewrite HCX. unfold CTX_active. lia.
-  - right. destruct (locs_usage [] l Hl) as (d & [<-|[]] & R). exists (OD_usage E_usage). split; [right; left; reflexivity | exact R].
+  intros l Hl. unfold l1_locs in Hl. rewrite Hng, sptr_eqb_refl in Hl.
+  apply in_app_or in Hl as [Hl|Hl]; [destruct Hl as [<-|Hmeta] | ].
+  - right. exists (OD_act (SLit 0)). split; [left; reflexivity|].
+    unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn. rewrite Hctx. unfold CTX_active. lia.
+  - left. exact Hmeta.
+  - right. destruct (locs_usage [OD_act (SLit 0)] l Hl) as (d & Hd & Rd).
+    exists d. split; [|exact Rd]. destruct Hd as [<-|[<-|[]]]; [right; left | left]; reflexivity.
 Qed.
 Theorem variant_p1a : ltac2:(tb__ "0|0|
 VTR;S8fS27VK;Sc3VrhoW;A4SbeS27S29Vrho;S93S27S83S92VX;VU;S90Vsr;VL;A2VKc;A7A4A2").
@@ -499,13 +527,25 @@ Proof using HMI HP12 Hall Hbr Hdepth Hgd Hml Hng Hsc48 Hsp Hu.
 Qed.
 Lemma ok_p1b : Forall od_ok ds_p1b.
 Proof using HMI HP12 Hbr Hgd Hng Hsc48 Hsp Hu.
+  assert (Pv : am_prev am = Some g) by exact (proj1 (self_ring Hng)).
+  pose proof (U.Mal_nt__G2.Mal_nt_Z.od_ok_gmeta_entry s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd)
+    as [_ [_ (ab & MTab & Memb & Bitsb & _ & _ & Avlb & Frdb)]].
+  assert (Eab : Some (MUsed ab) = Some (MUsed am)) by (rewrite <- MTab; exact HMg_inst).
+  injection Eab as Eab. subst ab.
+  unfold ds_p1b.
   constructor.
-  { split; [split; [reflexivity | exact I]|]. cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.krec]. split; [exact I|]. exists am. split; [exact HMg_inst|]. split; [reflexivity|]. split; [reflexivity|].
-    rewrite !ze12, ze133, ze134, Hng, (proj1 (self_ring Hng)). pose proof R_all as R. unfold zG, U.Mal_nt__G1.Mal_nt_I.zG. repeat split; try reflexivity; apply Z.mod_small; lia. }
-  constructor; [apply od_ok_got|]. constructor; [apply od_ok_guard|]. constructor; [apply od_ok_sct|].
-  constructor; [apply (od_ok_act_entry Hsc48)|]. constructor; [apply (od_ok_usage_entry Hsc48)|]. constructor; [apply (od_ok_bnc_entry Hbr) | constructor].
+  { split; [split; [reflexivity | exact I]|].
+    split; [exact I|]. exists am.
+    split; [exact HMg_inst|]. split; [exact Memb|]. split; [exact Bitsb|].
+    rewrite Pv, Hng, ze12. split; [reflexivity|]. split; [reflexivity|]. split; assumption. }
+  constructor; [exact od_ok_got|]. constructor; [exact od_ok_guard|]. constructor; [exact od_ok_sct|].
+  constructor; [exact (od_ok_act_entry Hsc48)|]. constructor; [exact (od_ok_usage_entry Hsc48)|].
+  constructor; [exact (od_ok_bnc_entry Hbr)|]. constructor.
 Qed.
-Lemma pw_p1b : od_pairwise ds_p1b. Proof using Hbr Hgd Hsc48 Hsp Kc md tr. clear HKc Hsm_pre EmW Evm. pose proof Hsc48' as SC. pose proof Hbr as BR. unfold sc, U.Mal_nt__G1.Mal_nt_I.sc in BR. unfold ds_p1b. od_pw. Qed.
+Lemma pw_p1b : od_pairwise ds_p1b.
+Proof using Hbr Hgd Hsc48 Hsp Kc md tr.
+  unfold ds_p1b. od_pw.
+Qed.
 Lemma P1bcert : ltac2:(tb__ "0|2|
 S12S19S24S3bS7eS7eS7fS19Lx;S82R1A1S24Sd4S80R1A1M0S10cA2Sa3G0A1A2M1S24Sd1S10bG0A2Sa2G0A1A2G1G1G1G1G1X7fx7Llf;ScbA3S3bS0S9S10bA3A2S1aA3").
 Proof using . vm_cast_no_check (@eq_refl bool true). Qed.
@@ -515,47 +555,64 @@ S49S13S12S19S32Vs;Vg;Vam;A3S1aA3S9fVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;Vms;VmW;VK;VdsP
 Theorem variant_p1b : ltac2:(tb__ "0|0|
 VTR;S8fS27VK;Sc4VrhoW;A4SbeS27S29Vrho;S93S27S83S92VX;VU;S90Vsr;VL;A2VKc;A7A4A2").
 Proof using EmW Erd Evm Ewok HIr HKc HMI HP12 HP13 HP13w HR2g HU HXz HZ Hall Hbr Hdepth Hgd Hgd_holds Hm_sct Hml Hng Hreach Hrom Hsc48 Hsm_pre Hsp Hsp_high Hu Hzs TR_disj TR_ex TR_pure TR_refl TR_seq.
-  pose proof P1bcert as C. apply andb_prop in C as [C Hds]. pose proof Hsc48' as SC. pose proof Hbr as BR. unfold sc, U.Mal_nt__G1.Mal_nt_I.sc in BR.
-  assert (Hcond : forall d, In d dsP1_p1b -> dcond d) by (intros d [<-|[<-|[<-|[<-|[<-|[]]]]]]; try exact I; [exact Hsc48 | exact Hbr]).
-  assert (DSP : Forall DS dsP1_p1b) by (apply Forall_forall; intros d Hd; split; [exact (proj1 (forallb_forall _ _) Hds d Hd) | exact (Hcond d Hd)]).
-  assert (Hpw : od_pairwise dsP1_p1b) by (clear C Hds HKc Hsm_pre EmW Evm; cbn; od_pw).
-  assert (Xnew : forall d, In d ds_new1 -> Forall (od_disj d) dsP1_p1b) by (clear C Hds HKc Hsm_pre EmW Evm; intros d [<-|[<-|[]]]; cbn; od_pw).
-  eapply TR_seq.
-  - apply (segRm mW CUTSP 600 S_p1b L_p1b (fun w => LQP segsU NF rho (Posts_nt segsU C_U NTE_U X U (mkMA sr L) Kc) w \/ Q1ok dsP1_p1b w) rhoW eq_refl ltac:(unfold Pos.le; cbn; discriminate) run_p1b' (agrees_refl rhoW)).
-    intros Lf rho'' [tr0 [msL md0]] Hin Hag HSP.
-    pose proof (proj1 (forallb_forall _ _) C Lf Hin) as CL. cbn beta in CL.
-    destruct (lf_reason Lf).
-    2:{
-        apply andb_prop in CL as [CL FR].
-        pose proof (free_reason_sound Hng Hbr mW rho'' (lf_state Lf) _ FR Hag HSP) as HOKf.
-        destruct (prefix_link dsP1_p1b (lf_state Lf) rho'' tr0 msL md0 CL DSP Hpw Hcond Xnew (Xlive_new (lf_state Lf)) I Hag HSP)
-          as (m1 & rhoB & RID & HagB & HSPB).
-        right. split; [exact HOKf|]. unfold prefix_leaf_okb in CL.
-        exists (gl_pv (lf_state Lf)), (gl_nv (lf_state Lf)), m1, rhoB. split; [|split; [exact RID | split; [exact HagB | exact HSPB]]].
-        repeat (apply andb_prop in CL as [CL ?X]). apply pvnv_okb_sound. assumption. }
-    all: apply andb_prop in CL as [CL KR]; pose proof (keep_reason_sound Hng Hbr mW rho'' (lf_state Lf) _ KR Hag HSP) as HNOK;
-         pose proof HSP as [HsmF HKw]; cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HKw; destruct (HKc _ _ HKw) as (_ & -> & ->);
-         left; apply (finish_keep Hng HNOK (lf_state Lf) dsK_p1b rho'' msL Hag HsmF HKw CL);
-         [intros d [<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]; [right; left; reflexivity | left; apply od_ok_got | left; apply od_ok_guard | left; apply od_ok_sct | left; apply (od_ok_act_entry Hsc48) | left; apply (od_ok_usage_entry Hsc48) | left; apply (od_ok_bnc_entry Hbr)]
-         | left; reflexivity].
-  - apply TR_disj; [apply TR_refl|]. unfold Q1ok, Q1.
-    apply TR_pure; intros HOK.
-    apply TR_ex; intros pv. apply TR_ex; intros nv. apply TR_ex; intros m1. apply TR_ex; intros rhoB.
-    apply TR_pure; intros Hpv. apply TR_pure; intros RID. apply TR_pure; intros HagB.
-    refine (mid_triple HOK dsP1_p1b dsCP1_p1b _ _ _ _ _ _ pv nv m1 rhoB Hpv RID HagB).
-    + intros d [<-|[<-|[<-|[<-|[<-|[]]]]]]; [left; apply od_ok_sct | right; left; reflexivity | right; right; left; reflexivity | left; apply (od_ok_bnc_entry Hbr) | left; apply od_ok_got].
-    + intros d [<-|[<-|[]]].
-      * split; [right; left; reflexivity|]. split; [|exact I]. cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at]. split; [exact Hsc48|]. rewrite ze_lit, (act_m_none Hng). reflexivity.
-      * split; [right; right; left; reflexivity | exact okC_usage].
-    + clear HR2g. intros l Hl. unfold l1_locs in Hl. rewrite Hng, sptr_eqb_refl in Hl. pose proof Hctx as HCX.
-      apply in_app_iff in Hl as [Hl|Hl]; [apply in_app_iff in Hl as [Hl|Hl]; [|left; exact Hl]|].
-      * destruct Hl as [<-|[]]. right. exists (OD_act (SLit 0)). split; [left; reflexivity|]. unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz loc_addr]. rewrite HCX. unfold CTX_active. lia.
-      * right. destruct (locs_usage [] l Hl) as (d & [<-|[]] & R). exists (OD_usage E_usage). split; [right; left; reflexivity | exact R].
-    + clear C Hds HKc Hsm_pre EmW Evm. intros b cs d [<-|[<-|[]]]; cbn; od_pw.
-    + apply X_generic_t2new. clear C Hds HKc Hsm_pre EmW Evm. intros d e Hd Hnr He; cbn in Hd, He.
-      repeat (destruct Hd as [<-|Hd]); try destruct Hd; repeat (destruct He as [<-|He]); try destruct He; cbn in Hnr; cbn; od_pw.
-    + apply X_generic_T. clear C Hds HKc Hsm_pre EmW Evm. intros d e Hd Hnr He; cbn in Hd, He.
-      repeat (destruct Hd as [<-|Hd]); try destruct Hd; repeat (destruct He as [<-|He]); try destruct He; cbn in Hnr; cbn; od_pw.
+  set (Fin := LQP segsU NF rho (Posts_nt segsU C_U NTE_U X U {| ma_s := sr; ma_L := L |} Kc)).
+  pose proof P1bcert as Cert. apply andb_prop in Cert as [CertLeaves CertDS].
+  assert (Cond1 : forall d, In d dsP1_p1b -> dcond d).
+  { intros d Hd. destruct Hd as [<-|[<-|[<-|[<-|[<-|[]]]]]]; cbn; first [exact I | exact Hsc48 | exact Hbr]. }
+  assert (DS1 : Forall DS dsP1_p1b).
+  { apply Forall_forall. intros d Hd. split; [exact (proj1 (forallb_forall _ _) CertDS d Hd) | exact (Cond1 d Hd)]. }
+  assert (PW1 : od_pairwise dsP1_p1b) by (clear HKc Hsm_pre EmW Evm; unfold dsP1_p1b; od_pw).
+  assert (New1 : forall d, In d ds_new1 -> Forall (od_disj d) dsP1_p1b).
+  { clear HKc Hsm_pre EmW Evm. intros d Hd. cbn in Hd. repeat destruct Hd as [<-|Hd]; try contradiction; cbn; od_pw. }
+  apply (TR_seq _ (fun w => Q1ok dsP1_p1b w \/ Fin w)).
+  - apply (segRm mW CUTSP 600 S_p1b L_p1b _ rhoW eq_refl ltac:(apply Pos.leb_le; reflexivity) run_p1b' (agrees_refl rhoW)).
+    intros Lf rho2 w InLf AgLf SPLf.
+    pose proof (proj1 (forallb_forall _ _) CertLeaves Lf InLf) as CertLf. cbn beta in CertLf.
+    assert (Branch : (prefix_leaf_okb dsP1_p1b (lf_state Lf) && free_reason_okb (lf_state Lf) = true)
+                     \/ (keep_okb (lf_state Lf) dsK_p1b && keep_reason_okb (lf_state Lf) = true))
+      by (destruct (lf_reason Lf); auto).
+    clear CertLf.
+    destruct Branch as [CutOk|KeepOk].
+    + apply andb_prop in CutOk as [PrefOk FreeOk].
+      left. split; [exact (free_reason_sound Hng Hbr mW rho2 (lf_state Lf) w FreeOk AgLf SPLf)|].
+      destruct w as [tr0 [msL md0]].
+      destruct (prefix_link dsP1_p1b (lf_state Lf) rho2 tr0 msL md0 PrefOk DS1 PW1 Cond1 New1 (Xlive_new (lf_state Lf)) I AgLf SPLf)
+        as (m1 & rhoB & Ride & AgB & SPB).
+      exists (gl_pv (lf_state Lf)), (gl_nv (lf_state Lf)), m1, rhoB.
+      split; [|split; [exact Ride | split; [exact AgB | exact SPB]]].
+      apply pvnv_okb_sound.
+      unfold prefix_leaf_okb in PrefOk. apply andb_prop in PrefOk as [PrefOk _]. apply andb_prop in PrefOk as [_ PvNv].
+      exact PvNv.
+    + apply andb_prop in KeepOk as [KeepShape KeepWhy].
+      right. pose proof (keep_reason_sound Hng Hbr mW rho2 (lf_state Lf) w KeepWhy AgLf SPLf) as NotOk.
+      destruct w as [tr0 [msL md0]]. destruct SPLf as [SmLf KLf]. cbn in KLf.
+      destruct (HKc tr0 md0 KLf) as (_ & Etr & Emd). subst tr0 md0.
+      apply (finish_keep Hng NotOk (lf_state Lf) dsK_p1b rho2 msL AgLf SmLf KLf KeepShape).
+      * intros d Hd. destruct Hd as [<-|Hd]; [right; left; reflexivity | left].
+        destruct Hd as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]];
+          first [ exact od_ok_got | exact od_ok_guard | exact od_ok_sct | exact (od_ok_act_entry Hsc48)
+                | exact (od_ok_usage_entry Hsc48) | exact (od_ok_bnc_entry Hbr) ].
+      * left. reflexivity.
+  - apply TR_disj; [|apply TR_refl].
+    unfold Q1ok. apply TR_pure. intros Hok. unfold Q1.
+    apply TR_ex; intros pvS. apply TR_ex; intros nvS. apply TR_ex; intros mS. apply TR_ex; intros rhoS.
+    apply TR_pure; intros InPV. apply TR_pure; intros RideS. apply TR_pure; intros AgS.
+    refine (mid_triple Hok dsP1_p1b dsCP1_p1b _ _ (locs_p1a Hng) _ _ _ pvS nvS mS rhoS InPV RideS AgS).
+    + intros d Hd. destruct Hd as [<-|[<-|[<-|[<-|[<-|[]]]]]].
+      * left. exact od_ok_sct.
+      * right. left. reflexivity.
+      * right. right. left. reflexivity.
+      * left. exact (od_ok_bnc_entry Hbr).
+      * left. exact od_ok_got.
+    + intros d Hd. destruct (okC_p1a Hng d Hd) as [_ Hrest]. split; [|exact Hrest].
+      destruct Hd as [<-|[<-|[]]]; [right; left | right; right; left]; reflexivity.
+    + clear HKc Hsm_pre EmW Evm. intros b cs d Hd. destruct Hd as [<-|[<-|[]]]; cbn; od_pw.
+    + apply X_generic_t2new. clear HKc Hsm_pre EmW Evm. intros d e Hd NRd He. cbn in Hd, He.
+      repeat (destruct Hd as [<-|Hd]); try contradiction; repeat (destruct He as [<-|He]); try contradiction;
+        cbn in NRd; cbn; od_pw.
+    + apply X_generic_T. clear HKc Hsm_pre EmW Evm. intros d e Hd NRd He. cbn in Hd, He.
+      repeat (destruct Hd as [<-|Hd]); try contradiction; repeat (destruct He as [<-|He]); try contradiction;
+        cbn in NRd; cbn; od_pw.
 Qed.
 End VarP1b.
 End V.
@@ -577,9 +634,16 @@ Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
-Ltac od_pw := repeat (first [ match goal with |- _ /\ _ => split | |- Forall _ _ => constructor | |- True => exact I end
-                             | progress (cbv [U.Mal_nt__G2.Mal_nt_Z.od_pairwise U.Mal_nt__G2.Mal_nt_Z.od_disj U.Mal_nt__G2.Mal_nt_Z.needs_ring U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.fcond U.Mal_nt__G2.Mal_nt_Z.od_disj0 U.Mal_nt__G2.Mal_nt_Z.zkind U.Mal_nt__G2.Mal_nt_Z.ctx_lo U.Mal_nt__G1.Mal_nt_D.dsz U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.fptr]) ]);
-              try assumption; try lia; try congruence.
+Ltac od_pw :=
+  cbn [U.Mal_nt__G2.Mal_nt_Z.od_pairwise];
+  repeat lazymatch goal with
+         | |- True => exact I
+         | |- _ /\ _ => split
+         | |- Forall _ _ => constructor
+         | |- U.Mal_nt__G2.Mal_nt_Z.od_disj _ _ _ _ _ _ => unfold U.Mal_nt__G2.Mal_nt_Z.od_disj
+         end;
+  cbn;
+  try solve [ exact I | lia | congruence ].
 
 Section V.
 
@@ -815,15 +879,22 @@ Proof using HMI HP12 Hall Hdepth Hgd Hml HnS Hnh Hsc48 Hsp Hu.
 Qed.
 Lemma ok_p2n : Forall od_ok ds_p2n.
 Proof using HMI HR2g HXz Hgd HnS Hnh Hpn Hsc48 Hu.
-  destruct (RG HnS) as (p & n & ap & an & En & Hng & Ep & Hpg & _ & _ & _ & _ & _ & _ & EnQ & EpQ & _).
-  constructor.
-  { split; [split; [reflexivity | exact I]|]. cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.krec]. split; [exact I|]. exists am. split; [exact HMg_inst|]. split; [reflexivity|]. split; [reflexivity|].
-    rewrite !ze141, ze133, ze134. pose proof R_all as R.
-    assert (Epn : p = n) by (rewrite <- EpQ, <- EnQ; exact Hpn).
-    rewrite En. rewrite Ep. cbn [optrA]. rewrite (zNx_eq n En), Epn. repeat split; try reflexivity; apply Z.mod_small; flia. }
-  constructor; [apply od_ok_got|]. constructor; [apply od_ok_guard|]. constructor; [apply od_ok_sct|].
-  constructor; [apply (od_ok_act_entry Hsc48)|]. constructor; [apply (od_ok_usage_entry Hsc48)|]. constructor; [|constructor].
-  apply (od_ok_nmeta_entry (v 153) (HnN HnS) eq_refl). rewrite ze153. pose proof RN. apply Z.mod_small. flia.
+  destruct (RG HnS) as (p & n & ap & an & Enx & Hng & Epv & Hpg & _ & _ & _ & _ & _ & _ & EnQ & EpQ & _).
+  assert (Zn : zeval zr1 zl1 (v 141) = addr_of L n) by (rewrite ze141; exact (zNx_eq n Enx)).
+  assert (Epn : p = n) by (rewrite <- EpQ, <- EnQ; exact Hpn).
+  pose proof (od_ok_gmeta_entry) as [_ [_ (a2 & MTa2 & Mem2 & Bits2 & _ & _ & Avl2 & Frd2)]].
+  assert (a2 = am) as ->.
+  { change (MT s g = Some (MUsed a2)) in MTa2. rewrite HMg_inst in MTa2. injection MTa2 as E2. symmetry. exact E2. }
+  unfold ds_p2n.
+  apply Forall_cons.
+  { split; [split; [reflexivity | exact I] | split; [exact I|]].
+    exists am. split; [exact HMg_inst|]. split; [exact Mem2|]. split; [exact Bits2|].
+    split; [rewrite Epv, Zn, Epn; reflexivity|]. split; [rewrite Enx, Zn; reflexivity|]. split; assumption. }
+  do 5 (apply Forall_cons; [first [ exact od_ok_got | exact od_ok_guard | exact od_ok_sct
+                                 | exact (od_ok_act_entry Hsc48) | exact (od_ok_usage_entry Hsc48) ]|]).
+  apply Forall_cons; [|apply Forall_nil].
+  apply (od_ok_nmeta_entry (v 153) (HnN HnS) eq_refl).
+  rewrite ze153. pose proof RN as RNb. apply Z.mod_small. lia.
 Qed.
 Lemma pw_p2n : od_pairwise ds_p2n. Proof using HMI HR2g Hgd HnS Hnh Hsc48 Hsp Hu Kc md tr. clear HKc Hsm_pre EmW Evm. pose proof Hsc48' as SC. pose proof (HnN HnS). pose proof (nQ_ng HnS). unfold ds_p2n. od_pw. Qed.
 Lemma P2ncert : ltac2:(tb__ "0|0|
@@ -842,17 +913,17 @@ Proof using HMI Hgd Hsc48 Hu. intros d [<-|[<-|[<-|[<-|[<-|[]]]]]]; [left; apply
 Lemma locs_p2n : ltac2:(tb__ "0|1|
 S4dS3aS4dR1S22S4dS9aVs;Vg;Vam;A3S18S4dS53S3dS52S43Z8Sa7Vam;A1A2A2A1S1eS4dA1A3A3A3S15S3aS4dR2SdcVg;A1A3S16S0S0S13S3aS0R1SfeA3S13S3cS2Vs;VL;Vg;Vam;R1A5S4eVL;R3A2M0A2S3eG0S1Vs;VL;Vg;Vam;R1A5A2A2A2Ld;A2A2F_;Fl;").
 Proof using HMI HR2g Hgd HnS Hnh Hpn Hsc48 Hu rho.
-  intros l Hl. rewrite (l1_locs_gen HnS) in Hl. unfold dq_locs in Hl. rewrite Hpn in Hl.
-  replace (osptr_eqb (active_hd s sc) (Some g)) with false in Hl.
-  2:{ symmetry. destruct (active_hd s sc) as [h|]; [cbn; apply sptr_eqb_neq; intros ->; exact (Hnh eq_refl) | reflexivity]. }
-  unfold sc, U.Mal_nt__G1.Mal_nt_I.sc in Hl. replace (osptr_eqb (active_hd s (am_sc am)) (Some g)) with false in Hl.
-  2:{ symmetry. destruct (active_hd s (am_sc am)) as [h|] eqn:E; [cbn; apply sptr_eqb_neq; intros ->; exact (Hnh E) | reflexivity]. }
-  rewrite !app_nil_r in Hl.
-  assert (MN : In l (meta_locs nQ) -> exists d, In d dsCP1_p2n /\ dlo d <= loc_addr L l < dhi d).
-  { intros Hm. apply (locs_meta_klo KN (OD_meta KN (v 141) (v 141) (v 153) (v 155))); [exact (HnN HnS) | right; left; reflexivity | reflexivity | reflexivity | exact Hm]. }
-  apply in_app_iff in Hl as [Hl|Hl]; [|right; destruct (locs_usage [OD_meta KN (v 141) (v 141) (v 153) (v 155)] l Hl) as (d & Hd & R); exists d; split; [exact Hd | exact R]].
-  apply in_app_iff in Hl as [Hl|Hl]; [|left; exact Hl].
-  right. apply in_app_iff in Hl as [Hl|Hl]; exact (MN Hl).
+  pose proof (HnN HnS) as KcN.
+  intros l Hl. rewrite (l1_locs_gen HnS) in Hl. unfold dq_locs in Hl.
+  change (active_hd s (am_sc am)) with (active_hd s sc) in Hl.
+  replace (osptr_eqb (active_hd s sc) (Some g)) with false in Hl
+    by (symmetry; apply Bool.not_true_iff_false; intros Eb; apply Hnh; apply osptr_eqb_eq; exact Eb).
+  rewrite !app_nil_r, Hpn, !in_app_iff in Hl.
+  destruct Hl as [[[Hm|Hm]|Hm]|Hm].
+  1,2: right; apply (locs_meta_klo KN (OD_meta KN (v 141) (v 141) (v 153) (v 155)) dsCP1_p2n l KcN);
+       [right; left; reflexivity | reflexivity | reflexivity | exact Hm].
+  - left. exact Hm.
+  - right. exact (locs_usage [OD_meta KN (v 141) (v 141) (v 153) (v 155)] l Hm).
 Qed.
 Theorem variant_p2n : ltac2:(tb__ "0|0|
 VTR;S8fS27VK;Sc6VrhoW;A4SbeS27S29Vrho;S93S27S83S92VX;VU;S90Vsr;VL;A2VKc;A7A4A2").
@@ -943,17 +1014,25 @@ Qed.
 Lemma locs_p3n : ltac2:(tb__ "0|1|
 S4dS3aS4dR1S22S4dS9aVs;Vg;Vam;A3S18S4dS53S3dS52S43Z8Sa7Vam;A1A2A2A1S1eS4dA1A3A3A3S15S3aS4dR2SdcVg;A1A3S16S0S0S13S3aS0R1S104A3S13S3cS2Vs;VL;Vg;Vam;R1A5S4eVL;R3A2M0A2S3eG0S1Vs;VL;Vg;Vam;R1A5A2A2A2Ld;A2A2F_;Fl;").
 Proof using HMI HR2g Hgd HnS Hnh Hsc48 Hu rho.
-  intros l Hl. rewrite (l1_locs_gen HnS) in Hl. unfold dq_locs in Hl.
-  replace (osptr_eqb (active_hd s sc) (Some g)) with false in Hl.
-  2:{ symmetry. destruct (active_hd s sc) as [h|]; [cbn; apply sptr_eqb_neq; intros ->; exact (Hnh eq_refl) | reflexivity]. }
-  unfold sc, U.Mal_nt__G1.Mal_nt_I.sc in Hl. replace (osptr_eqb (active_hd s (am_sc am)) (Some g)) with false in Hl.
-  2:{ symmetry. destruct (active_hd s (am_sc am)) as [h|] eqn:E; [cbn; apply sptr_eqb_neq; intros ->; exact (Hnh E) | reflexivity]. }
+  intros l Hl.
+  rewrite (l1_locs_gen HnS) in Hl. unfold dq_locs in Hl.
+  change (active_hd s (am_sc am)) with (active_hd s sc) in Hl.
+  destruct (osptr_eqb (active_hd s sc) (Some g)) eqn:Ehd.
+  { exfalso. apply Hnh. apply osptr_eqb_eq. exact Ehd. }
   rewrite !app_nil_r in Hl.
-  apply in_app_iff in Hl as [Hl|Hl]; [|right; destruct (locs_usage [OD_meta KN (v 140) (v 157) (v 153) (v 155); OD_meta KP (v 159) (v 141) (v 112) (v 113)] l Hl) as (d & Hd & R); exists d; split; [exact Hd | exact R]].
-  apply in_app_iff in Hl as [Hl|Hl]; [|left; exact Hl].
-  right. apply in_app_iff in Hl as [Hl|Hl].
-  - apply (locs_meta_klo KP (OD_meta KP (v 159) (v 141) (v 112) (v 113))); [exact (HpN HnS) | right; right; left; reflexivity | reflexivity | reflexivity | exact Hl].
-  - apply (locs_meta_klo KN (OD_meta KN (v 140) (v 157) (v 153) (v 155))); [exact (HnN HnS) | right; left; reflexivity | reflexivity | reflexivity | exact Hl].
+  apply in_app_or in Hl as [Hl|Husg]; [apply in_app_or in Hl as [Hl|Hg]; [apply in_app_or in Hl as [Hp|Hn]|]|].
+  - right. apply (locs_meta_klo KP (OD_meta KP (v 159) (v 141) (v 112) (v 113)) dsCP1_p3n l (HpN HnS)).
+    + do 2 right. left. reflexivity.
+    + reflexivity.
+    + reflexivity.
+    + exact Hp.
+  - right. apply (locs_meta_klo KN (OD_meta KN (v 140) (v 157) (v 153) (v 155)) dsCP1_p3n l (HnN HnS)).
+    + right. left. reflexivity.
+    + reflexivity.
+    + reflexivity.
+    + exact Hn.
+  - left. exact Hg.
+  - right. exact (locs_usage _ l Husg).
 Qed.
 Theorem variant_p3n : ltac2:(tb__ "0|0|
 VTR;S8fS27VK;Sc8VrhoW;A4SbeS27S29Vrho;S93S27S83S92VX;VU;S90Vsr;VL;A2VKc;A7A4A2").
@@ -1009,16 +1088,23 @@ Proof using HMI HP12 Hall Hdepth Hgd Hhd Hml HnS Hsc48 Hsp Hu.
 Qed.
 Lemma ok_p2h : Forall od_ok ds_p2h.
 Proof using HMI HXz Hgd Hhd HnS Hpn Hsc48 Hu.
-  destruct (RG HnS) as (p & n & ap & an & En & Hng & Ep & Hpg & _ & _ & _ & _ & _ & _ & EnQ & EpQ & _).
+  destruct (RG HnS) as (p & n & ap & an & Enx & Hng & Epv & Hpg & _ & _ & _ & _ & _ & _ & EnQ & EpQ & _).
+  assert (Zn : zeval zr1 zl1 (v 141) = addr_of L n).
+  { rewrite ze141. apply zNx_eq. exact Enx. }
+  assert (Epn : p = n) by (rewrite <- EpQ, <- EnQ; exact Hpn).
+  pose proof (od_ok_gmeta_entry) as [_ [_ (ah & MTah & Memh & Bitsh & _ & _ & Avlh & Frdh)]].
+  pose proof (eq_trans (eq_sym MTah) HMg_inst) as Eah. injection Eah as Eah. subst ah.
+  unfold ds_p2h.
   constructor.
-  { split; [split; [reflexivity | exact I]|]. cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.krec]. split; [exact I|]. exists am. split; [exact HMg_inst|]. split; [reflexivity|]. split; [reflexivity|].
-    rewrite !ze141, ze133, ze134. pose proof R_all as R.
-    assert (Epn : p = n) by (rewrite <- EpQ, <- EnQ; exact Hpn).
-    rewrite En. rewrite Ep. cbn [optrA]. rewrite (zNx_eq n En), Epn. repeat split; try reflexivity; apply Z.mod_small; flia. }
-  constructor; [apply od_ok_got|]. constructor; [apply od_ok_guard|]. constructor; [apply od_ok_sct|].
-  constructor; [apply (od_ok_act_entry Hsc48)|]. constructor; [apply (od_ok_usage_entry Hsc48)|].
-  constructor; [apply (od_ok_nmeta_entry (SLit 0) (HnN HnS) eq_refl); rewrite ze_lit, (avail_n0 HnS Hhd); reflexivity|].
-  constructor; [apply od_ok_grp_entry | constructor].
+  - split; [split; [reflexivity | exact I]|]. split; [exact I|].
+    exists am. split; [exact HMg_inst|]. split; [exact Memh|]. split; [exact Bitsh|].
+    rewrite Epv, Enx, Zn, Epn. split; [reflexivity|]. split; [reflexivity|]. split; assumption.
+  - constructor; [exact od_ok_got|]. constructor; [exact od_ok_guard|]. constructor; [exact od_ok_sct|].
+    constructor; [exact (od_ok_act_entry Hsc48)|]. constructor; [exact (od_ok_usage_entry Hsc48)|].
+    constructor.
+    { apply (od_ok_nmeta_entry (SLit 0) (HnN HnS) eq_refl).
+      rewrite (avail_n0 HnS Hhd), ze_lit. reflexivity. }
+    constructor; [exact od_ok_grp_entry | constructor].
 Qed.
 Lemma pw_p2h : od_pairwise ds_p2h. Proof using HMI Hgd HnS Hsc48 Hsp Hu Kc md tr. clear HKc Hsm_pre EmW Evm. pose proof Hsc48' as SC. pose proof (HnN HnS). pose proof (nQ_ng HnS). unfold ds_p2h. od_pw. Qed.
 Lemma P2hcert : ltac2:(tb__ "0|0|
@@ -1040,14 +1126,17 @@ Qed.
 Lemma locs_p2h : ltac2:(tb__ "0|1|
 S4dS3aS4dR1S22S4dS9aVs;Vg;Vam;A3S18S4dS53S3dS52S43Z8Sa7Vam;A1A2A2A1S1eS4dA1A3A3A3S15S3aS4dR2SdcVg;A1A3S16S0S0S13S3aS0R1SfbA3S13S3cS2Vs;VL;Vg;Vam;R1A5S4eVL;R3A2M0A2S3eG0S1Vs;VL;Vg;Vam;R1A5A2A2A2Ld;A2A2F_;Fl;").
 Proof using HMI Hgd Hhd HnS Hpn Hsc48 Hu rho.
-  intros l Hl. rewrite (l1_locs_head HnS Hhd), Hpn in Hl. pose proof Hctx as HCX.
-  assert (MN : In l (meta_locs nQ) -> exists d, In d dsCP1_p2h /\ dlo d <= loc_addr L l < dhi d).
-  { intros Hm. apply (locs_meta_klo KN (OD_meta KN (v 141) (v 141) E_avN E_frN)); [exact (HnN HnS) | right; right; left; reflexivity | reflexivity | reflexivity | exact Hm]. }
-  apply in_app_iff in Hl as [Hl|Hl]; [|right; destruct (locs_usage [OD_meta KN (v 141) (v 141) E_avN E_frN] l Hl) as (d & Hd & R); exists d; split; [right; exact Hd | exact R]].
-  apply in_app_iff in Hl as [Hl|Hl]; [|right; exact (MN Hl)].
-  apply in_app_iff in Hl as [Hl|Hl]; [|left; exact Hl].
-  apply in_app_iff in Hl as [Hl|Hl]; [right; apply in_app_iff in Hl as [Hl|Hl]; exact (MN Hl)|].
-  destruct Hl as [<-|[]]. right. exists (OD_act (v 141)). split; [left; reflexivity|]. unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz loc_addr]. rewrite HCX. unfold CTX_active. flia.
+  assert (ActRange : dlo (OD_act (v 141)) <= loc_addr L (LCtx (CTX_active + 8 * sc)) < dhi (OD_act (v 141))).
+  { unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn. rewrite Hctx. unfold CTX_active. lia. }
+  intros l Hl. rewrite (l1_locs_head HnS Hhd), Hpn in Hl.
+  repeat rewrite in_app_iff in Hl.
+  destruct Hl as [[[[[Hm|Hm]|Hact]|Hg]|Hm]|Husg].
+  3: { right. destruct Hact as [<-|[]]. exists (OD_act (v 141)). split; [left; reflexivity | exact ActRange]. }
+  3: { left. exact Hg. }
+  4: { right. destruct (locs_usage [] l Husg) as (d & [<-|[]] & Rd).
+       exists (OD_usage E_usage). split; [right; left; reflexivity | exact Rd]. }
+  all: right; apply (locs_meta_klo KN (OD_meta KN (v 141) (v 141) E_avN E_frN) dsCP1_p2h l (HnN HnS));
+       [do 2 right; left; reflexivity | reflexivity | reflexivity | exact Hm].
 Qed.
 Theorem variant_p2h : ltac2:(tb__ "0|0|
 VTR;S8fS27VK;Sc5VrhoW;A4SbeS27S29Vrho;S93S27S83S92VX;VU;S90Vsr;VL;A2VKc;A7A4A2").
@@ -1133,16 +1222,29 @@ Qed.
 Lemma locs_p3h : ltac2:(tb__ "0|1|
 S4dS3aS4dR1S22S4dS9aVs;Vg;Vam;A3S18S4dS53S3dS52S43Z8Sa7Vam;A1A2A2A1S1eS4dA1A3A3A3S15S3aS4dR2SdcVg;A1A3S16S0S0S13S3aS0R1S101A3S13S3cS2Vs;VL;Vg;Vam;R1A5S4eVL;R3A2M0A2S3eG0S1Vs;VL;Vg;Vam;R1A5A2A2A2Ld;A2A2F_;Fl;").
 Proof using HMI Hgd Hhd HnS Hsc48 Hu rho.
-  intros l Hl. rewrite (l1_locs_head HnS Hhd) in Hl. pose proof Hctx as HCX.
-  assert (MN : In l (meta_locs nQ) -> exists d, In d dsCP1_p3h /\ dlo d <= loc_addr L l < dhi d).
-  { intros Hm. apply (locs_meta_klo KN (OD_meta KN (v 140) (v 157) E_avN E_frN)); [exact (HnN HnS) | right; right; left; reflexivity | reflexivity | reflexivity | exact Hm]. }
-  assert (MP : In l (meta_locs pQ) -> exists d, In d dsCP1_p3h /\ dlo d <= loc_addr L l < dhi d).
-  { intros Hm. apply (locs_meta_klo KP (OD_meta KP (v 159) (v 141) (v 112) (v 113))); [exact (HpN HnS) | do 3 right; left; reflexivity | reflexivity | reflexivity | exact Hm]. }
-  apply in_app_iff in Hl as [Hl|Hl]; [|right; destruct (locs_usage [OD_meta KN (v 140) (v 157) E_avN E_frN; OD_meta KP (v 159) (v 141) (v 112) (v 113)] l Hl) as (d & Hd & R); exists d; split; [right; exact Hd | exact R]].
-  apply in_app_iff in Hl as [Hl|Hl]; [|right; exact (MN Hl)].
-  apply in_app_iff in Hl as [Hl|Hl]; [|left; exact Hl].
-  apply in_app_iff in Hl as [Hl|Hl]; [right; apply in_app_iff in Hl as [Hl|Hl]; [exact (MP Hl) | exact (MN Hl)]|].
-  destruct Hl as [<-|[]]. right. exists (OD_act (v 141)). split; [left; reflexivity|]. unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz loc_addr]. rewrite HCX. unfold CTX_active. flia.
+  intros l Hl.
+  apply in_app_or in Hl as [Hl|Husg].
+  2: { right. destruct (locs_usage [OD_act (v 141)] l Husg) as (d & Hd & Rd). exists d. split; [|exact Rd].
+       destruct Hd as [<-|[<-|[]]]; [right; left | left]; reflexivity. }
+  rewrite (l1_locs_head HnS Hhd) in Hl.
+  apply in_app_or in Hl as [Hl|HnQ2].
+  2: { right. apply (locs_meta_klo KN (OD_meta KN (v 140) (v 157) E_avN E_frN) dsCP1_p3h l (HnN HnS));
+       [right; right; left | | |]; [reflexivity | reflexivity | reflexivity | exact HnQ2]. }
+  apply in_app_or in Hl as [Hl|Hgm]; [|left; exact Hgm].
+  apply in_app_or in Hl as [Hl|Hact].
+  - apply in_app_or in Hl as [HpQ|HnQ].
+    + right. apply (locs_meta_klo KP (OD_meta KP (v 159) (v 141) (v 112) (v 113)) dsCP1_p3h l (HpN HnS)).
+      * do 3 right. left. reflexivity.
+      * reflexivity.
+      * reflexivity.
+      * exact HpQ.
+    + right. apply (locs_meta_klo KN (OD_meta KN (v 140) (v 157) E_avN E_frN) dsCP1_p3h l (HnN HnS)).
+      * right. right. left. reflexivity.
+      * reflexivity.
+      * reflexivity.
+      * exact HnQ.
+  - right. destruct Hact as [Eact|[]]. subst l. exists (OD_act (v 141)). split; [left; reflexivity|].
+    unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn. rewrite Hctx. unfold CTX_active. lia.
 Qed.
 Theorem variant_p3h : ltac2:(tb__ "0|0|
 VTR;S8fS27VK;Sc7VrhoW;A4SbeS27S29Vrho;S93S27S83S92VX;VU;S90Vsr;VL;A2VKc;A7A4A2").
@@ -1185,9 +1287,16 @@ Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
-Ltac od_pw := repeat (first [ match goal with |- _ /\ _ => split | |- Forall _ _ => constructor | |- True => exact I end
-                             | progress (cbv [U.Mal_nt__G2.Mal_nt_Z.od_pairwise U.Mal_nt__G2.Mal_nt_Z.od_disj U.Mal_nt__G2.Mal_nt_Z.needs_ring U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.fcond U.Mal_nt__G2.Mal_nt_Z.od_disj0 U.Mal_nt__G2.Mal_nt_Z.zkind U.Mal_nt__G2.Mal_nt_Z.ctx_lo U.Mal_nt__G1.Mal_nt_D.dsz U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.fptr]) ]);
-              try assumption; try lia; try congruence.
+Ltac od_pw :=
+  cbn [U.Mal_nt__G2.Mal_nt_Z.od_pairwise];
+  repeat lazymatch goal with
+         | |- True => exact I
+         | |- _ /\ _ => split
+         | |- Forall _ _ => constructor
+         | |- U.Mal_nt__G2.Mal_nt_Z.od_disj _ _ _ _ _ _ => unfold U.Mal_nt__G2.Mal_nt_Z.od_disj
+         end;
+  cbn;
+  try solve [ exact I | lia | congruence ].
 
 Lemma cell_holds_zero (L0 : layout) (bv : byteview) (c : mcell) : ltac2:(tb__ "0|2|
 S15S12S57S5cVc;A1M0S5aZ0M1A1A3S12S57G0S5dS21S30A1A1A3A2S25S106R1S59Vc;A1A2S12S1cS2dA1Vbv;S3dS4eVL0;S58Vc;A1A2S47R2A1A2A1S1dS2dG1A2A3F_;Fk;S55VL0;Vbv;Vc;A3F_;F_;").
@@ -1490,114 +1599,153 @@ Local Abbreviation OLD := (@U.Mal_nt__G3.Mal_nt_V7.OLD s L g am rho scut dsC dsB
 
 Theorem VIN : ltac2:(tb__ "0|0|
 S4fS3aS4fR1S22S4fS56Vs';A1SeeVs';A1A3A3Se8Vs;VL;Vg;Vam;VdsC;R2A6S55VL;Vbv1;R3A3F_;F_;Fc;").
-Proof using HI' HMI HP12 HSF_match HSF_objs HXz HXz' HagF Hdelta Hdepth HdsB HdsC HdsF_DS HdsF_cond HdsO Hgd Hsc48 Hscut HsmF Hsp Hu m' touched touchedB.
-  intros c Hc (k & Hk & d & HdC & Rk). destruct (HdsC d HdC) as (Hd & Hok' & Hrom'). pose proof Hctx as HCX.
-  pose proof D_keys as DK.
-  assert (AGq : forall q dd, loc_addr L (LMem (padd q dd)) = addr_of L q + dd) by (intros q dd; unfold addr_of, loc_addr; destruct q; cbn [padd]; lia).
-  destruct d as [| | |kk pv nv av fv|hv|x|ua ub uc ud|x|fk five pv nv|ux|bx|gx| |c0| | | | |cs]; try (destruct Hrom'; fail); cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at] in Hok'; unfold U.Mal_nt__G1.Mal_nt_D.dhi in Rk; cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz] in Rk.
-  -
-    destruct Hok' as (Hkc & a' & M' & Emem & Ebits & E1 & E2 & E3 & E4).
-    pose proof (klo_ptr kk Hkc) as EK. change (U.Mal_nt__G1.Mal_nt_D.klo s L g am kk) with (klo kk) in Rk. rewrite EK in Rk.
-    assert (CM : cmeets L c (addr_of L (kptr kk)) META_SIZE) by (exists k; split; [exact Hk|]; unfold META_SIZE; lia).
-    pose proof (meta_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' (kptr kk) c ltac:(rewrite DK; apply kptr_key) Hc CM) as IN.
-    rewrite M' in IN. cbn [meta_slot_cells] in IN.
-    unfold META_prev, META_next, META_mem, META_avail, META_freed, META_bits in IN.
-    destruct IN as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]].
-    + eapply (cell_from_odW (OD_meta kk pv nv av fv) 0 8 pv _ (optrA L (am_prev a'))); [exact (inX_C _ HdC) | cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | apply cellZ_optr | rewrite E1; reflexivity].
-    + eapply (cell_from_odW (OD_meta kk pv nv av fv) 8 8 nv _ (optrA L (am_next a'))); [exact (inX_C _ HdC) | cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | apply cellZ_optr | rewrite E2; reflexivity].
-    + eapply (cell_from_odW (OD_meta kk pv nv av fv) 16 8 (kmemv kk) _ (addr_of L (am_mem a'))); [exact (inX_C _ HdC) | cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | reflexivity | rewrite ze_kmemv, Emem; reflexivity].
-    + eapply (cell_from_odW (OD_meta kk pv nv av fv) 24 4 av _ (am_avail a')); [exact (inX_C _ HdC) | cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | reflexivity |].
-      rewrite <- E3. change (2 ^ (8 * Z.of_nat 4)) with (2 ^ 32). rewrite Z.mod_mod by lia. reflexivity.
-    + eapply (cell_from_odW (OD_meta kk pv nv av fv) 28 4 fv _ (am_freed a')); [exact (inX_C _ HdC) | cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | reflexivity |].
-      rewrite <- E4. change (2 ^ (8 * Z.of_nat 4)) with (2 ^ 32). rewrite Z.mod_mod by lia. reflexivity.
-    + eapply (cell_from_odW (OD_meta kk pv nv av fv) 32 8 (kbitsv kk) _ (meta_bits a')); [exact (inX_C _ HdC) | cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | reflexivity | rewrite ze_kbitsv, Ebits; reflexivity].
-  -
-    destruct Hok' as [Hsc' Ehv].
-    assert (CM : cmeets L c (ly_ctx L + (CTX_active + 8 * sc)) 8) by (exists k; split; [exact Hk|]; rewrite HCX; unfold CTX_active, sc, U.Mal_nt__G1.Mal_nt_I.sc in *; lia).
-    pose proof (ctx_active_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c sc Hsc' Hc CM) as ->.
-    eapply (cell_from_odW (OD_act hv) 0 8 hv _ (optrA L (active_hd s' sc))); [exact (inX_C _ HdC) | left; reflexivity | | reflexivity | apply cellZ_optr | rewrite Ehv; reflexivity].
-    cbn [mc_loc loc_addr U.Mal_nt__G1.Mal_nt_D.dlo]. rewrite HCX. unfold CTX_active. lia.
-  -
-    assert (CM : cmeets L c (ly_ctx L + CTX_seq) 1) by (exists k; split; [exact Hk|]; rewrite HCX; unfold CTX_seq; lia).
-    pose proof (ctx_seq_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c Hc CM) as ->.
-    eapply (cell_from_odW (OD_seq x) 0 1 x _ (st_seq s')); [exact (inX_C _ HdC) | left; reflexivity | | reflexivity | reflexivity |].
-    + cbn [mc_loc loc_addr U.Mal_nt__G1.Mal_nt_D.dlo]. rewrite HCX. unfold CTX_seq. lia.
-    + change (2 ^ (8 * Z.of_nat 1)) with (2 ^ 8). symmetry. exact Hok'.
-  -
-    destruct Hok' as (E0 & E1 & E2 & E3).
-    set (k' := loc_addr L (mc_loc c) + Z.of_nat k - (369616 + 848)).
-    assert (Hk' : 0 <= k' < 32) by (unfold k'; lia).
-    assert (CM : cmeets L c (ly_ctx L + (CTX_unmap_seq + k')) 1) by (exists k; split; [exact Hk|]; rewrite HCX; unfold CTX_unmap_seq; unfold k'; lia).
-    pose proof (ctx_useq_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c k' Hk' Hc CM) as Ec.
-    pose proof (inv_ctx HI') as (_ & _ & LenU & _ & _ & UB & _).
-    assert (BY : 0 <= nth (Z.to_nat k') (st_unmap_seq s') 0 < 256).
-    { pose proof (UB (nth (Z.to_nat k') (st_unmap_seq s') 0) ltac:(apply nth_In; rewrite LenU; lia)). lia. }
-    set (j := Z.to_nat (k' / 8)). set (t := Z.to_nat (k' mod 8)).
-    assert (Hjt : (Z.to_nat k' = 8 * j + t)%nat /\ (t < 8)%nat /\ (j < 4)%nat) by (unfold j, t; pose proof (Z.div_mod k' 8 ltac:(lia)); pose proof (Z.mod_pos_bound k' 8 ltac:(lia)); lia).
-    destruct Hjt as (Ejt & Ht8 & Hj4).
-    rewrite Ec. eapply (cell_from_od_subW (OD_useq ua ub uc ud) (8 * Z.of_nat j) 8 (nth j [ua; ub; uc; ud] (SLit 0)) t _ (nth (Z.to_nat k') (st_unmap_seq s') 0)); [exact (inX_C _ HdC) | | | cbn [mc_w]; lia | reflexivity |].
-    + destruct j as [|[|[|[|]]]]; cbn [nth]; [in_list4 ltac:(idtac) | in_list4 ltac:(right) | in_list4 ltac:(right; right) | in_list4 ltac:(right; right; right) | lia].
-    + cbn [mc_loc loc_addr U.Mal_nt__G1.Mal_nt_D.dlo]. rewrite HCX. unfold CTX_unmap_seq. unfold j, t. pose proof (Z.div_mod k' 8 ltac:(lia)). pose proof (Z.mod_pos_bound k' 8 ltac:(lia)). lia.
-    + intros jj Hjj. cbn [mc_w] in Hjj |- *. assert (jj = 0%nat) as -> by lia. rewrite Nat.add_0_r.
-      assert (EU : zeval zr1 zl1 (nth j [ua; ub; uc; ud] (SLit 0)) = udw (st_unmap_seq s') j) by (destruct j as [|[|[|[|]]]]; cbn [nth]; [exact E0 | exact E1 | exact E2 | exact E3 | lia]).
-      rewrite EU, (udw_byte _ j t Ht8) by (rewrite <- Ejt; exact BY). rewrite Ejt.
-      unfold le_byte. change (2 ^ (8 * Z.of_nat 1)) with 256. change (8 * Z.of_nat 0) with 0. rewrite Z.shiftr_0_r, Z.mod_mod by lia. apply Z.mod_small. rewrite <- Ejt. exact BY.
-  -
-    assert (CM : cmeets L c (ly_ctx L + CTX_free_meta_head) 8) by (exists k; split; [exact Hk|]; rewrite HCX; unfold CTX_free_meta_head; lia).
-    pose proof (ctx_fmh_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c Hc CM) as ->.
-    eapply (cell_from_odW (OD_fmh x) 0 8 x _ (optrA L (st_free_meta_head s'))); [exact (inX_C _ HdC) | left; reflexivity | | reflexivity | apply cellZ_optr | rewrite Hok'; reflexivity].
-    cbn [mc_loc loc_addr U.Mal_nt__G1.Mal_nt_D.dlo]. rewrite HCX. unfold CTX_free_meta_head. lia.
-  -
-    destruct Hok' as (Hfc & pr & nx & M' & _ & _ & E1 & E2).
-    pose proof (flo_ptr fk Hfc) as EK. rewrite EK in Rk.
-    assert (CM : cmeets L c (addr_of L (fptr fk)) META_SIZE) by (exists k; split; [exact Hk|]; unfold META_SIZE; lia).
-    pose proof (meta_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' (fptr fk) c ltac:(rewrite DK; apply fptr_key; exact Hfc) Hc CM) as IN.
-    rewrite M' in IN. cbn [meta_slot_cells] in IN.
-    unfold META_prev, META_next, META_mem, META_avail, META_freed, META_bits in IN.
-    assert (INC : forall off w e, In (off, w, e) (if five then [(0, 8%nat, pv); (8, 8%nat, nv); (16, 8%nat, SLit 0); (24, 8%nat, SLit 0); (32, 8%nat, SLit 0)]
-                                                 else [(0, 8%nat, pv); (8, 8%nat, nv); (16, 8%nat, SLit 0); (24, 4%nat, SLit 0); (28, 4%nat, SLit 0); (32, 8%nat, SLit 0)]) ->
-                   In (off, w, e) (dcells (OD_free fk five pv nv))) by (intros; assumption).
-    destruct IN as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]].
-    + eapply (cell_from_odW (OD_free fk five pv nv) 0 8 pv _ (optrA L pr)); [exact (inX_C _ HdC) | apply INC; destruct five; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | apply cellZ_optr | rewrite E1; reflexivity].
-    + eapply (cell_from_odW (OD_free fk five pv nv) 8 8 nv _ (optrA L nx)); [exact (inX_C _ HdC) | apply INC; destruct five; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; reflexivity | reflexivity | apply cellZ_optr | rewrite E2; reflexivity].
-    + eapply (cell_from_od_zeroW (OD_free fk five pv nv) 16 8 (SLit 0) 0); [exact (inX_C _ HdC) | apply INC; destruct five; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; cbn; lia | cbn; lia | reflexivity | reflexivity].
+Proof using HI' HMI HP12 HSF_match HSF_objs HXz HXz' HagF Hdelta Hdepth HdsB HdsC HdsF_DS HdsF_cond HdsO Hgd Hsc48 Hscut HsmF Hsp Hu.
+  intros c Hc (k & Hk & d & HdC & Rk).
+  destruct (HdsC d HdC) as (HdF & AtS' & Chg).
+  pose proof (inX_C d HdC) as HdX.
+  unfold U.Mal_nt__G1.Mal_nt_D.dhi in Rk.
+  destruct d; cbn in Chg; try contradiction; cbn in Rk.
+  - destruct AtS' as [Kk (a & MTa & Mem & Bits & Prv & Nxt & Avl & Frd)].
+    assert (Key' : In (kptr k0) (keys s')) by (rewrite D_keys; exact (kptr_key k0)).
+    assert (Base : dlo (OD_meta k0 pv nv av fv) = addr_of L (kptr k0)) by exact (klo_ptr k0 Kk).
+    rewrite (klo_ptr k0 Kk) in Rk.
+    assert (Meet : cmeets L c (addr_of L (kptr k0)) META_SIZE) by (exists k; split; [exact Hk | unfold META_SIZE; lia]).
+    pose proof (meta_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' (kptr k0) c Key' Hc Meet) as InSlot.
+    rewrite MTa in InSlot.
+    destruct InSlot as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]].
+    + apply (cell_from_odW _ 0 8 pv _ (optrA L (am_prev a)) HdX);
+        [left; reflexivity | cbn [mc_loc]; rewrite AGq, Base; unfold META_prev; lia | reflexivity | apply cellZ_optr | rewrite Prv; reflexivity].
+    + apply (cell_from_odW _ 8 8 nv _ (optrA L (am_next a)) HdX);
+        [right; left; reflexivity | cbn [mc_loc]; rewrite AGq, Base; unfold META_next; lia | reflexivity | apply cellZ_optr | rewrite Nxt; reflexivity].
+    + apply (cell_from_odW _ 16 8 (kmemv k0) _ (addr_of L (am_mem a)) HdX);
+        [do 2 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, Base; unfold META_mem; lia | reflexivity | reflexivity | rewrite ze_kmemv, Mem; reflexivity].
+    + apply (cell_from_odW _ 24 4 av _ (am_avail a) HdX);
+        [do 3 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, Base; unfold META_avail; lia | reflexivity | reflexivity | rewrite <- Avl, Z.mod_mod; [reflexivity | apply Z.pow_nonzero; lia]].
+    + apply (cell_from_odW _ 28 4 fv _ (am_freed a) HdX);
+        [do 4 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, Base; unfold META_freed; lia | reflexivity | reflexivity | rewrite <- Frd, Z.mod_mod; [reflexivity | apply Z.pow_nonzero; lia]].
+    + apply (cell_from_odW _ 32 8 (kbitsv k0) _ (meta_bits a) HdX);
+        [do 5 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, Base; unfold META_bits; lia | reflexivity | reflexivity | rewrite ze_kbitsv, Bits; reflexivity].
+  - destruct AtS' as [ScA HvA].
+    assert (MeetA : cmeets L c (ly_ctx L + (CTX_active + 8 * sc)) 8)
+      by (exists k; split; [exact Hk | rewrite Hctx; unfold CTX_active; lia]).
+    rewrite (ctx_active_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c sc ScA Hc MeetA).
+    apply (cell_from_odW _ 0 8 hv _ (optrA L (active_hd s' sc)) HdX);
+      [left; reflexivity | cbn; rewrite Hctx; unfold CTX_active; lia | reflexivity | apply cellZ_optr | rewrite HvA; reflexivity].
+  - assert (MeetS : cmeets L c (ly_ctx L + CTX_seq) 1)
+      by (exists k; split; [exact Hk | rewrite Hctx; unfold CTX_seq; lia]).
+    destruct (ctx_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c CTX_seq 1 Hc
+                ltac:(unfold CTX_seq; lia) ltac:(unfold CTX_seq, CTX_SIZE; lia) MeetS) as [InCtx (o & Eo & O1 & O2)].
+    rewrite (ctx_cells_at_seq s' c o InCtx Eo O1 O2).
+    apply (cell_from_odW _ 0 1 x _ (st_seq s') HdX);
+      [left; reflexivity | cbn; rewrite Hctx; unfold CTX_seq; lia | reflexivity | reflexivity | exact (eq_sym AtS')].
+  - destruct AtS' as (Ea & Eb & Ec & Ed).
+    assert (UdwByte : forall (q t : nat), (t < 8)%nat ->
+              le_byte (udw (st_unmap_seq s') q) 8 t = nth (8 * q + t) (st_unmap_seq s') 0 mod 2 ^ 8).
+    { intros q t Ht.
+      pose proof (nth_enc_bytes 8 t (udw (st_unmap_seq s') q) Ht (Nat.le_refl 8)) as NB.
+      rewrite udw_enc in NB. unfold ubytes in NB.
+      rewrite (nth_indep _ _ (Z_to_bv 8 (nth (8 * q + 0) (st_unmap_seq s') 0))) in NB
+        by (rewrite length_map, length_seq; exact Ht).
+      rewrite (map_nth (fun kk : nat => Z_to_bv 8 (nth (8 * q + kk) (st_unmap_seq s') 0))), seq_nth in NB by exact Ht.
+      apply (f_equal bv_unsigned) in NB. rewrite !Z_to_bv_unsigned, !bv_wrap8_mod in NB.
+      rewrite (Z.mod_small (le_byte _ _ _)) in NB by (unfold le_byte; apply Z.mod_pos_bound; lia).
+      rewrite <- NB. reflexivity. }
+    assert (Byte1 : forall z, le_byte z 1 0 = z mod 2 ^ 8).
+    { intros z. unfold le_byte. change (8 * Z.of_nat 0) with 0. change (8 * Z.of_nat 1) with 8.
+      rewrite Z.shiftr_0_r. change 256 with (2 ^ 8). apply Z.mod_mod. lia. }
+    set (kk := loc_addr L (mc_loc c) + Z.of_nat k - (369616 + 848)).
+    assert (Kr : 0 <= kk < 32) by (unfold kk; lia).
+    assert (MeetU : cmeets L c (ly_ctx L + (CTX_unmap_seq + kk)) 1)
+      by (exists k; split; [exact Hk | rewrite Hctx; unfold CTX_unmap_seq, kk; lia]).
+    rewrite (ctx_useq_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c kk Kr Hc MeetU).
+    assert (Zn : Z.of_nat (Z.to_nat kk) = kk) by (apply Z2Nat.id; lia).
+    set (n := Z.to_nat kk) in *.
+    assert (Quad : (n < 8)%nat \/ (8 <= n < 16)%nat \/ (16 <= n < 24)%nat \/ (24 <= n < 32)%nat) by lia.
+    destruct Quad as [Qd|[Qd|[Qd|Qd]]].
+    + apply (cell_from_od_subW _ 0 8 a n _ (nth n (st_unmap_seq s') 0) HdX);
+        [left; reflexivity | cbn; rewrite Hctx; unfold CTX_unmap_seq; lia | cbn; lia | reflexivity |].
+      intros j Hj. cbn in Hj. replace j with 0%nat by lia.
+      rewrite Byte1, Ea, UdwByte by lia. do 3 f_equal. lia.
+    + apply (cell_from_od_subW _ 8 8 b (n - 8) _ (nth n (st_unmap_seq s') 0) HdX);
+        [right; left; reflexivity | cbn; rewrite Hctx; unfold CTX_unmap_seq; lia | cbn; lia | reflexivity |].
+      intros j Hj. cbn in Hj. replace j with 0%nat by lia.
+      rewrite Byte1, Eb, UdwByte by lia. do 3 f_equal. lia.
+    + apply (cell_from_od_subW _ 16 8 c0 (n - 16) _ (nth n (st_unmap_seq s') 0) HdX);
+        [do 2 right; left; reflexivity | cbn; rewrite Hctx; unfold CTX_unmap_seq; lia | cbn; lia | reflexivity |].
+      intros j Hj. cbn in Hj. replace j with 0%nat by lia.
+      rewrite Byte1, Ec, UdwByte by lia. do 3 f_equal. lia.
+    + apply (cell_from_od_subW _ 24 8 d (n - 24) _ (nth n (st_unmap_seq s') 0) HdX);
+        [do 3 right; left; reflexivity | cbn; rewrite Hctx; unfold CTX_unmap_seq; lia | cbn; lia | reflexivity |].
+      intros j Hj. cbn in Hj. replace j with 0%nat by lia.
+      rewrite Byte1, Ed, UdwByte by lia. do 3 f_equal. lia.
+  - assert (MeetF : cmeets L c (ly_ctx L + CTX_free_meta_head) 8)
+      by (exists k; split; [exact Hk | rewrite Hctx; unfold CTX_free_meta_head; lia]).
+    destruct (ctx_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c CTX_free_meta_head 8 Hc
+                ltac:(unfold CTX_free_meta_head; lia) ltac:(unfold CTX_free_meta_head, CTX_SIZE; lia) MeetF) as [InCtx (o & Eo & O1 & O2)].
+    rewrite (ctx_cells_at_fmh s' c o InCtx Eo O1 O2).
+    apply (cell_from_odW _ 0 8 x _ (optrA L (st_free_meta_head s')) HdX);
+      [left; reflexivity | cbn; rewrite Hctx; unfold CTX_free_meta_head; lia | reflexivity | apply cellZ_optr | rewrite AtS'; reflexivity].
+  - destruct AtS' as [Fk (pr & nx & MTf & _ & _ & Hpv & Hnv)].
+    assert (KeyF : In (fptr k0) (keys s')) by (rewrite D_keys; exact (fptr_key k0 Fk)).
+    assert (BaseF : dlo (OD_free k0 five pv nv) = addr_of L (fptr k0)) by exact (flo_ptr k0 Fk).
+    rewrite (flo_ptr k0 Fk) in Rk.
+    assert (MeetF : cmeets L c (addr_of L (fptr k0)) META_SIZE) by (exists k; split; [exact Hk | unfold META_SIZE; lia]).
+    pose proof (meta_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' (fptr k0) c KeyF Hc MeetF) as InSlot.
+    rewrite MTf in InSlot.
+    destruct InSlot as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]].
+    + apply (cell_from_odW _ 0 8 pv _ (optrA L pr) HdX);
+        [destruct five; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_prev; lia | reflexivity | apply cellZ_optr | rewrite Hpv; reflexivity].
+    + apply (cell_from_odW _ 8 8 nv _ (optrA L nx) HdX);
+        [destruct five; right; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_next; lia | reflexivity | apply cellZ_optr | rewrite Hnv; reflexivity].
+    + apply (cell_from_od_zeroW _ 16 8 (SLit 0) 0 _ HdX);
+        [destruct five; do 2 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_mem; lia | cbn; lia | reflexivity | reflexivity].
     + destruct five.
-      * eapply (cell_from_od_zeroW (OD_free fk true pv nv) 24 8 (SLit 0) 0); [exact (inX_C _ HdC) | apply INC; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; cbn; lia | cbn; lia | reflexivity | reflexivity].
-      * eapply (cell_from_od_zeroW (OD_free fk false pv nv) 24 4 (SLit 0) 0); [exact (inX_C _ HdC) | apply INC; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; cbn; lia | cbn; lia | reflexivity | reflexivity].
+      * apply (cell_from_od_zeroW _ 24 8 (SLit 0) 0 _ HdX);
+          [do 3 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_avail; lia | cbn; lia | reflexivity | reflexivity].
+      * apply (cell_from_od_zeroW _ 24 4 (SLit 0) 0 _ HdX);
+          [do 3 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_avail; lia | cbn; lia | reflexivity | reflexivity].
     + destruct five.
-      * eapply (cell_from_od_zeroW (OD_free fk true pv nv) 24 8 (SLit 0) 4); [exact (inX_C _ HdC) | apply INC; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; cbn; lia | cbn; lia | reflexivity | reflexivity].
-      * eapply (cell_from_od_zeroW (OD_free fk false pv nv) 28 4 (SLit 0) 0); [exact (inX_C _ HdC) | apply INC; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; cbn; lia | cbn; lia | reflexivity | reflexivity].
-    + eapply (cell_from_od_zeroW (OD_free fk five pv nv) 32 8 (SLit 0) 0); [exact (inX_C _ HdC) | apply INC; destruct five; cbn; tauto | cbn [mc_loc U.Mal_nt__G1.Mal_nt_D.dlo]; rewrite AGq, <- EK; cbn; lia | cbn; lia | reflexivity | reflexivity].
-  -
-    destruct Hok' as [Hsc' Eu].
-    assert (CM : cmeets L c (ly_ctx L + (CTX_usage + 8 * sc)) 8) by (exists k; split; [exact Hk|]; rewrite HCX; unfold CTX_usage, sc, U.Mal_nt__G1.Mal_nt_I.sc in *; lia).
-    pose proof (ctx_usage_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c sc Hsc' Hc CM) as ->.
-    eapply (cell_from_odW (OD_usage ux) 0 8 ux _ (usage_of s' sc)); [exact (inX_C _ HdC) | left; reflexivity | | reflexivity | unfold usage_of, znth; reflexivity | rewrite Eu; reflexivity].
-    cbn [mc_loc loc_addr U.Mal_nt__G1.Mal_nt_D.dlo]. rewrite HCX. unfold CTX_usage, sc, U.Mal_nt__G1.Mal_nt_I.sc. lia.
-  -
-    destruct Hok' as [Hr Eb].
-    assert (CM : cmeets L c (ly_ctx L + (CTX_bounces + (sc - 7))) 1) by (exists k; split; [exact Hk|]; rewrite HCX; unfold CTX_bounces, sc, U.Mal_nt__G1.Mal_nt_I.sc in *; lia).
-    pose proof (ctx_bounce_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c (sc - 7) ltac:(unfold sc, U.Mal_nt__G1.Mal_nt_I.sc in *; lia) Hc CM) as ->.
-    eapply (cell_from_odW (OD_bnc bx) 0 1 bx _ (nth (Z.to_nat (sc - 7)) (st_bounces s') 0)); [exact (inX_C _ HdC) | left; reflexivity | | reflexivity | reflexivity |].
-    + cbn [mc_loc loc_addr U.Mal_nt__G1.Mal_nt_D.dlo]. rewrite HCX. unfold CTX_bounces, sc, U.Mal_nt__G1.Mal_nt_I.sc. lia.
-    + change (2 ^ (8 * Z.of_nat 1)) with (2 ^ 8). unfold znth in Eb. symmetry. exact Eb.
-  -
-    destruct Hok' as [[LenU UB] Ecs].
-    set (k' := loc_addr L (mc_loc c) + Z.of_nat k - (369616 + 848)).
-    assert (Hk' : 0 <= k' < 32) by (unfold k'; lia).
-    assert (CM : cmeets L c (ly_ctx L + (CTX_unmap_seq + k')) 1) by (exists k; split; [exact Hk|]; rewrite HCX; unfold CTX_unmap_seq; unfold k'; lia).
-    pose proof (ctx_useq_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c k' Hk' Hc CM) as Ec.
-    assert (BY : 0 <= nth (Z.to_nat k') (st_unmap_seq s') 0 < 256).
-    { pose proof (UB (nth (Z.to_nat k') (st_unmap_seq s') 0) ltac:(apply nth_In; rewrite LenU; lia)). lia. }
-    destruct (coverD (OD_useqL cs) (loc_addr L (mc_loc c) + Z.of_nat k) (HdsF _ Hd) eq_refl ltac:(unfold U.Mal_nt__G1.Mal_nt_D.dhi; cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz]; lia)) as (off & w & e & Hin & Roff).
-    cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dcells] in Hin, Roff.
-    destruct (useq_okb_cell cs off w e (DS_x _ (HdsF _ Hd)) Hin) as (C1 & C2 & C3).
-    rewrite Ec. eapply (cell_from_od_subW (OD_useqL cs) off w e (Z.to_nat (k' - off)) _ (nth (Z.to_nat k') (st_unmap_seq s') 0)); [exact (inX_C _ HdC) | exact Hin | | cbn [mc_w]; unfold k' in *; lia | reflexivity |].
-    + cbn [mc_loc loc_addr U.Mal_nt__G1.Mal_nt_D.dlo]. rewrite HCX. unfold CTX_unmap_seq. unfold k' in *. lia.
-    + intros jj Hjj. cbn [mc_w] in Hjj |- *. assert (jj = 0%nat) as -> by lia. rewrite Nat.add_0_r.
-      rewrite (Ecs off w e Hin (Z.to_nat (k' - off)) ltac:(unfold k' in *; lia)).
-      replace (Z.to_nat off + Z.to_nat (k' - off))%nat with (Z.to_nat k') by (unfold k' in *; lia).
-      unfold le_byte. change (2 ^ (8 * Z.of_nat 1)) with 256. change (8 * Z.of_nat 0) with 0. rewrite Z.shiftr_0_r, Z.mod_mod by lia. apply Z.mod_small. exact BY.
+      * apply (cell_from_od_zeroW _ 24 8 (SLit 0) 4 _ HdX);
+          [do 3 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_freed; lia | cbn; lia | reflexivity | reflexivity].
+      * apply (cell_from_od_zeroW _ 28 4 (SLit 0) 0 _ HdX);
+          [do 4 right; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_freed; lia | cbn; lia | reflexivity | reflexivity].
+    + apply (cell_from_od_zeroW _ 32 8 (SLit 0) 0 _ HdX);
+        [destruct five; [do 4 right | do 5 right]; left; reflexivity | cbn [mc_loc]; rewrite AGq, BaseF; unfold META_bits; lia | cbn; lia | reflexivity | reflexivity].
+  - destruct AtS' as [ScU HxU].
+    assert (MeetU : cmeets L c (ly_ctx L + (CTX_usage + 8 * sc)) 8)
+      by (exists k; split; [exact Hk | rewrite Hctx; unfold CTX_usage; lia]).
+    destruct (ctx_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c (CTX_usage + 8 * sc) 8 Hc
+                ltac:(unfold CTX_usage; lia) ltac:(unfold CTX_usage, CTX_SIZE; lia) MeetU) as [InCtx (o & Eo & O1 & O2)].
+    rewrite (ctx_cells_at_usage s' c sc o ScU InCtx Eo O1 O2).
+    apply (cell_from_odW _ 0 8 x _ (nth (Z.to_nat sc) (st_usage s') 0) HdX);
+      [left; reflexivity | cbn; rewrite Hctx; unfold CTX_usage; lia | reflexivity | reflexivity | rewrite HxU; reflexivity].
+  - destruct AtS' as [ScB HxB].
+    assert (MeetB : cmeets L c (ly_ctx L + (CTX_bounces + (sc - 7))) 1)
+      by (exists k; split; [exact Hk | rewrite Hctx; unfold CTX_bounces; lia]).
+    rewrite (ctx_bounce_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c (sc - 7) ltac:(lia) Hc MeetB).
+    apply (cell_from_odW _ 0 1 x _ (nth (Z.to_nat (sc - 7)) (st_bounces s') 0) HdX);
+      [left; reflexivity | cbn; rewrite Hctx; unfold CTX_bounces; lia | reflexivity | reflexivity | exact (eq_sym HxB)].
+  - destruct AtS' as [[LenU RngU] BytesU].
+    pose proof (HdsF _ HdF) as DSd. pose proof (DS_x _ DSd) as OkCs. cbn in OkCs.
+    pose proof (proj2 (U.Mal_nt__G3.Mal_nt_V7.HdsC_sub s L g am i rho gd rd0 dsF dsC s' HdsC _ HdC)) as RomNone.
+    set (kk := loc_addr L (mc_loc c) + Z.of_nat k - (369616 + 848)).
+    assert (Kr : 0 <= kk < 32) by (unfold kk; lia).
+    assert (MeetU : cmeets L c (ly_ctx L + (CTX_unmap_seq + kk)) 1)
+      by (exists k; split; [exact Hk | rewrite Hctx; unfold CTX_unmap_seq, kk; lia]).
+    rewrite (ctx_useq_cell (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c kk Kr Hc MeetU).
+    destruct (coverD _ (369616 + 848 + kk) DSd RomNone ltac:(unfold U.Mal_nt__G1.Mal_nt_D.dhi; cbn; lia))
+      as (off & w & e & InCs & Cover).
+    cbn in Cover.
+    destruct (useq_okb_cell cs off w e OkCs InCs) as (OffLo & OffHi & Wb).
+    assert (InL : In (nth (Z.to_nat kk) (st_unmap_seq s') 0) (st_unmap_seq s')) by (apply nth_In; lia).
+    pose proof (RngU _ InL) as ByteR.
+    apply (cell_from_od_subW _ off w e (Z.to_nat (kk - off)) _ (nth (Z.to_nat kk) (st_unmap_seq s') 0) HdX);
+      [exact InCs | cbn; rewrite Hctx; unfold CTX_unmap_seq; rewrite Z2Nat.id by lia; lia | cbn; lia | reflexivity |].
+    intros j Hj. cbn in Hj. replace j with 0%nat by lia.
+    rewrite (BytesU off w e InCs (Z.to_nat (kk - off) + 0)%nat ltac:(lia)).
+    replace (Z.to_nat off + (Z.to_nat (kk - off) + 0))%nat with (Z.to_nat kk) by lia.
+    cbn [mc_w]. unfold le_byte. change (8 * Z.of_nat 0) with 0. change (8 * Z.of_nat 1) with 8.
+    rewrite Z.shiftr_0_r, Z.mod_small, Z.mod_small; lia.
 Qed.
 
 Lemma init_true : st_init_done s = true.
@@ -1620,165 +1768,197 @@ Qed.
 
 Theorem VINv : ltac2:(tb__ "0|0|
 S4fS3aS4fR1S22S4fS56Vs';A1SeeVs';A1A3A3Se7Vs;VL;Vg;Vam;Vrho;Vscut;VdsC;VdsB;R2A9S55VL;Vbv1v;R3A3F_;F_;Fc;").
-Proof using HI' HMI HP12 HSF_match HSF_objs HXz HXz' HagF Hdelta Hdepth HdsB HdsC HdsCB_g HdsF_DS HdsF_cond HdsF_ent HdsO Hgd Hsc48 Hscut HsmF Hsp Hsp_high Hu bv1 mV touched.
-  intros c Hc (k0 & Hk0 & T0). pose proof (cell_spanI (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c Hc) as SP. pose proof D_keys as DK.
-  assert (CB : forall k, (k < mc_w c)%nat -> loc_addr L (mc_loc c) + Z.of_nat k < topL L).
-  { intros k Hk. exact (cell_below_ceiling c k Hc Hk). }
-  destruct T0 as [T0|[T0|[T0|T0]]].
-  -
-    pose proof (VIN c Hc ltac:(exists k0; split; [exact Hk0 | exact T0])) as H.
-    assert (NZ : forall k, (k < mc_w c)%nat -> ~ in_zslots L X (loc_addr L (mc_loc c) + Z.of_nat k)).
-    { intros k Hk (q & Hq & Rq).
-      assert (Kq : In q (keys s')) by (rewrite DK; exact (X_key q Hq)).
-      pose proof (meta_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' q c Kq Hc ltac:(exists k; split; [exact Hk | exact Rq])) as IN.
-      pose proof (meta_slot_cells_inside q (MT s' q) c IN) as [I1 I2].
-      apply (touched_nz _ (touchedC_real _ T0)). exists q. split; [exact Hq|]. unfold META_SIZE. lia. }
-    assert (NG : forall k, (k < mc_w c)%nat -> ~ gslot (loc_addr L (mc_loc c) + Z.of_nat k)).
-    { intros k Hk Gk. assert (Kg : In g (keys s')) by (rewrite DK; exact g_key).
-      pose proof (meta_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' g c Kg Hc ltac:(exists k; split; [exact Hk | unfold gslot, zG, U.Mal_nt__G1.Mal_nt_I.zG, META_SIZE in *; lia])) as IN.
-      pose proof (meta_slot_cells_inside g (MT s' g) c IN) as [I1 I2].
-      apply (touchedCB_ng _ (or_introl T0)). unfold gslot, zG, U.Mal_nt__G1.Mal_nt_I.zG in *. lia. }
-    assert (E : forall k, (k < mc_w c)%nat -> bv1v (loc_addr L (mc_loc c) + Z.of_nat k) = bv1 (loc_addr L (mc_loc c) + Z.of_nat k)).
-    { intros k Hk. unfold bv1v, bv1. apply views_at. rewrite m'v_nz; rewrite ?u64_of_sum by lia; [| exact (NG k Hk) | exact (NZ k Hk)].
-      apply m'c_nstk. rewrite u64_of_sum by lia. intros S. pose proof (stk_high _ S). pose proof (CB k Hk). lia. }
-    unfold cell_holds in *. cbn zeta in *.
-    destruct (mc_val c); try (intros k Hk; rewrite (E k Hk); exact (H k Hk)).
-    destruct H as (b & Hb & Hm5). exists b. split; [|exact Hm5].
-    rewrite <- Hb. rewrite <- (Z.add_0_r (loc_addr L (mc_loc c))). change 0 with (Z.of_nat 0). apply E.
-    exact (cell_w_posI s' c Hc).
-  -   exfalso. destruct T0 as (d & HdB & R). destruct (HdsB d HdB) as (_ & _ & _ & NC & _).
-    apply (NC c Hc). exists k0. split; [exact Hk0 | lia].
-  -
-    assert (Kg : In g (keys s')) by (rewrite DK; exact g_key).
-    pose proof (meta_zone (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' g c Kg Hc ltac:(exists k0; split; [exact Hk0 | unfold gslot, zG, U.Mal_nt__G1.Mal_nt_I.zG, META_SIZE in *; lia])) as IN.
-    pose proof (meta_slot_cells_inside g (MT s' g) c IN) as [I1 I2].
-    rewrite (HXz' g ltac:(left; reflexivity)) in IN. cbn [meta_slot_cells] in IN.
+Proof using HI' HMI HP12 HSF_match HSF_objs HXz HXz' HagF Hdelta Hdepth HdsB HdsC HdsCB_g HdsF_DS HdsF_cond HdsF_ent HdsO Hgd Hsc48 Hscut HsmF Hsp Hsp_high Hu mV.
+  intros c img_c met.
+  destruct met as (k0 & k0_lt & hitV).
+  set (a := loc_addr L (mc_loc c)) in *.
+  pose proof (cell_spanI _ _ _ _ _ HI' HXr' HL' c img_c) as span.
+  fold a in span.
+  assert (keys_s' : forall q, In q (keys s) -> In q (keys s')) by (intros q kq; rewrite D_keys; exact kq).
+  assert (slot_holds : forall q k, In q (keys s') -> (k < mc_w c)%nat -> addr_of L q <= a + Z.of_nat k < addr_of L q + 40 ->
+            In c (meta_slot_cells q (MT s' q)) /\ addr_of L q <= a /\ a + Z.of_nat (mc_w c) <= addr_of L q + 40).
+  { intros q k kq k_lt k_rng.
+    assert (in_slot : In c (meta_slot_cells q (MT s' q))).
+    { apply (meta_zone _ _ _ _ _ HI' HXr' HL' q c kq img_c). exists k. split; [exact k_lt | cbv [META_SIZE]; exact k_rng]. }
+    split; [exact in_slot | exact (meta_slot_cells_inside q (MT s' q) c in_slot)]. }
+  assert (gslot_iff : forall x, gslot x <-> addr_of L g <= x < addr_of L g + 40).
+  { intros x. unfold U.Mal_nt__G3.Mal_nt_V7.gslot. change (U.Mal_nt__G1.Mal_nt_I.zG L g) with (addr_of L g). tauto. }
+  assert (g_in' : In g (keys s')) by (apply keys_s'; exact g_key).
+  assert (below_top : forall k, (k < mc_w c)%nat -> a + Z.of_nat k < topL L) by (intros k k_lt; exact (cell_below_ceiling c k img_c k_lt)).
+  destruct hitV as [hitC | [hitB | [hitG | hitS]]].
+  - (* the met byte lies in a changed range: VIN gives the cell in bv1, the view of the memory after the run *)
+    pose proof (VIN c img_c (ex_intro _ k0 (conj k0_lt hitC))) as old_holds.
+    assert (same_byte : forall k, (k < mc_w c)%nat -> bv1v (a + Z.of_nat k) = bv1 (a + Z.of_nat k)).
+    { intros k k_lt.
+      assert (rng : 0 <= a + Z.of_nat k < 2 ^ 64) by lia.
+      assert (not_stack : ~ stk (a + Z.of_nat k)).
+      { intros on_stack. pose proof (stk_high _ on_stack). pose proof (below_top k k_lt). lia. }
+      assert (not_g : ~ gslot (a + Z.of_nat k)).
+      { intros on_g. apply gslot_iff in on_g.
+        destruct (slot_holds g k g_in' k_lt on_g) as (_ & lo_g & hi_g).
+        apply (touchedCB_ng (a + Z.of_nat k0) (or_introl hitC)). apply gslot_iff. lia. }
+      assert (not_z : ~ in_zslots L X (a + Z.of_nat k)).
+      { intros (q & q_X & q_rng). cbv [META_SIZE] in q_rng.
+        destruct (slot_holds q k (keys_s' q (X_key q q_X)) k_lt q_rng) as (_ & lo_q & hi_q).
+        apply (touched_nz (a + Z.of_nat k0) (touchedC_real _ hitC)).
+        exists q. split; [exact q_X | cbv [META_SIZE]; lia]. }
+      pose proof (WalkArith.u64 _ rng) as unsig.
+      assert (mem_eq : m'v (Z_to_bv 64 (a + Z.of_nat k)) = m' (Z_to_bv 64 (a + Z.of_nat k))).
+      { rewrite m'v_nz by (rewrite unsig; assumption). rewrite m'c_nstk by (rewrite unsig; assumption). reflexivity. }
+      exact (proj1 (views_at _ _ _ mem_eq)). }
+    assert (w_pos : (0 < mc_w c)%nat) by lia.
+    unfold cell_holds in old_holds |- *. fold a in old_holds |- *.
+    destruct (mc_val c) as [z | p | z | ];
+      [ intros k k_lt; rewrite same_byte by exact k_lt; exact (old_holds k k_lt)
+      | intros k k_lt; rewrite same_byte by exact k_lt; exact (old_holds k k_lt)
+      | destruct old_holds as (b & b_at & b_mod); exists b; split; [ pose proof (same_byte 0%nat w_pos) as s0; rewrite Z.add_0_r in s0; rewrite s0; exact b_at | exact b_mod ]
+      | intros k k_lt; rewrite same_byte by exact k_lt; exact (old_holds k k_lt) ].
+  - (* a freed range: HdsB says no cell of s' meets it *)
+    exfalso. destruct hitB as (d & d_B & d_rng).
+    destruct (HdsB d d_B) as (_ & _ & _ & no_meet & _).
+    apply (no_meet c img_c). exists k0. split; [exact k0_lt | lia].
+  - (* the slot of g: the cell is one of g's zombie meta cells *)
+    apply gslot_iff in hitG.
+    destruct (slot_holds g k0 g_in' k0_lt hitG) as (g_cells & lo_g & hi_g).
+    rewrite (HXz' g (or_introl eq_refl)) in g_cells.
     apply cell_holds_zero.
-    + destruct IN as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]; cbn; tauto.
-    + intros k Hk. apply bv_zero; [|unfold gslot, zG, U.Mal_nt__G1.Mal_nt_I.zG in *; lia]. pose proof (CB k Hk). pose proof (ceiling_small L). lia.
-  -   exfalso. pose proof (stk_high _ T0). pose proof (CB k0 Hk0). lia.
+    + cbn [meta_slot_cells In] in g_cells.
+      destruct g_cells as [<- | [<- | [<- | [<- | [<- | [<- | []]]]]]]; cbn [mc_val];
+        first [right; reflexivity | left; reflexivity].
+    + intros k k_lt. apply bv_zero; [lia | apply gslot_iff; lia].
+  - (* the stack: no image cell reaches it *)
+    exfalso. pose proof (stk_high _ hitS). pose proof (below_top k0 k0_lt). lia.
 Qed.
 
 Theorem minvI' : ltac2:(tb__ "0|1|
 Se0S83S18S30Vg;VX;A3S1dS23S30S2dA2S20S30S2dSaaVs;Vg;Vam;A3SacVs;Vg;Vam;A3A4A2VU;S90Vs';VL;A2S89S27Se2VL;VX;Vg;Vrho;VmV;VmsF;VrhoF;Vscut;VdsF;A9M0A2S8aS27G0A2Vvm;A8").
-Proof using Erd Ewok HI' HMI HP12 HSF_match HSF_objs HXz HXz' HZ HagF Hbounded' Hdelta Hdepth HdsB HdsC HdsCB_g HdsF_DS HdsF_cond HdsF_ent HdsO Hgd Hgd_holds Hlocs Hm_sct Hrom Hsc48 Hscut HsmF Hsp Hsp_high Hu touched touchedB touchedC.
-  unfold MInvI.
-  refine (minv_postG C_U (Inv X (Some (g, i)) U) (Inv (g :: X) (Some (gPar, iPar)) U) s s' L (Glue.rd_of segsU mV) (Glue.rd_of segsU m'v) (Glue.wok_of segsU mV) (Glue.wok_of segsU m'v) vm
-            HMI0 HI' Hbounded' HL' D_fp D_ub Hvm' touchedV touchedV_dec V1v VINv VMv OLD _ _ _ statics_in_image_U _ _ _).
-  - intros c Hc. exact (cell_spanI (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL' c Hc).
-  - intros x Hx. exact (owned_spanI s' L HL' x Hx).
-  - intros c Hc. exact (cell_w_posI s' c Hc).
-  -
-    intros x T Himg. pose proof Hctx as HCX. pose proof g_zone as GZ. unfold mc_errno. cbn [mc_img_lo mc_img_hi mc_ctx mc_tp C_U] in *.
-    destruct T as [T|[(d & HdB & R)|[T|T]]]; [| exfalso; destruct (HdsB d HdB) as (_ & _ & _ & _ & IMG & _); unfold U.Mal_nt__G1.Mal_nt_D.dhi in *; lia
-                                         | exfalso; unfold gslot in T; lia
-                                         | exfalso; pose proof (stk_high x T); top_ranges; lia ].
-    destruct T as (d & HdC & R). destruct (HdsC d HdC) as (Hd & Hok' & Hrom').
-    unfold U.Mal_nt__G1.Mal_nt_D.dhi in R.
-    destruct d as [| | |kk pv nv av fv|hv|sx|ua ub uc ud|fx|fk five pv nv|ux|bx|gx| |c0| | | | |cs]; try (destruct Hrom'; fail); cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz] in R; cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at] in Hok'.
-    + exfalso. destruct Hok' as (Hkc & _). pose proof (k_zone kk Hkc) as ZK. change (U.Mal_nt__G1.Mal_nt_D.klo s L g am kk) with (klo kk) in R. lia.
-    + left. pose proof R_all. unfold CTX_SIZE, sc, U.Mal_nt__G1.Mal_nt_I.sc in *. lia.
-    + left. unfold CTX_SIZE. lia.
-    + left. unfold CTX_SIZE. lia.
-    + left. unfold CTX_SIZE. lia.
-    + exfalso. destruct Hok' as (Hfc & _). pose proof (f_zone fk Hfc) as ZK. lia.
-    + left. destruct Hok' as [Hsc' _]. unfold CTX_SIZE, sc, U.Mal_nt__G1.Mal_nt_I.sc in *. lia.
-    + left. destruct Hok' as [Hr _]. unfold CTX_SIZE, sc, U.Mal_nt__G1.Mal_nt_I.sc in *. lia.
-    + left. unfold CTX_SIZE. lia.
-  -
-    intros x Hx. unfold mc_errno in Hx. cbn [mc_ctx mc_tp mc_libc mc_replaced mc_lock mc_size_classes mc_small_cnt_tab mc_med_cnt_tab mc_ctz_tab mc_chk_guard_got mc_chk_guard C_U] in *.
-    unfold CTX_SIZE in Hx. lia.
-  - intros Hf. exfalso. rewrite D_init, init_true in Hf. discriminate.
+Proof using Erd Ewok HI' HMI HP12 HSF_match HSF_objs HXz HXz' HZ HagF Hbounded' Hdelta Hdepth HdsB HdsC HdsCB_g HdsF_DS HdsF_cond HdsF_ent HdsO Hgd Hgd_holds Hlocs Hm_sct Hrom Hsc48 Hscut HsmF Hsp Hsp_high Hu.
+  refine (minv_postG C_U (Inv X (Some (g, i)) U) (Inv (g :: X) (Some (gPar, iPar)) U) s s' L
+            (rd_of segsU mV) (rd_of segsU m'v) (wok_of segsU mV) (wok_of segsU m'v) vm
+            HMI0 HI' Hbounded' HL' D_fp D_ub Hvm' touchedV touchedV_dec V1v VINv VMv OLD _ _ _ _ _ _ _).
+  - exact (cell_spanI (g :: X) (Some (gPar, iPar)) U s' L HI' HXr' HL').
+  - exact (owned_spanI s' L HL').
+  - exact (cell_w_posI s').
+  - unfold statics_in_image. cbv zeta. rewrite errno_U. unfold CTX_SIZE, PGSZ, UNIT. cbn. lia.
+  - intros x Tx Img. rewrite errno_U. unfold CTX_SIZE. cbn [mc_ctx mc_img_lo mc_img_hi C_U] in Img |- *.
+    destruct Tx as [(d & HdC & Rd) | [(d & HdB & Rd) | [Gs | Sk]]].
+    + destruct (HdsC d HdC) as (_ & AtS' & Chg).
+      unfold U.Mal_nt__G1.Mal_nt_D.dhi in Rd.
+      destruct d; cbn in Chg; try contradiction; cbn in Rd;
+        first
+          [ left; clear - Rd Hsc48; lia
+          | left; destruct AtS' as [Sb _]; clear - Rd Sb; lia
+          | exfalso; destruct AtS' as [Kk _]; pose proof (k_zone k Kk) as KZ; clear - KZ Rd Img; lia
+          | exfalso; destruct AtS' as [Fk _]; pose proof (f_zone k Fk) as FZ; clear - FZ Rd Img; lia ].
+    + destruct (HdsB d HdB) as (_ & _ & _ & _ & Far & _ & _).
+      exfalso. clear - Far Rd Img. lia.
+    + pose proof g_zone as GZ. unfold U.Mal_nt__G3.Mal_nt_V7.gslot in Gs.
+      exfalso. clear - GZ Gs Img. lia.
+    + pose proof (stk_high x Sk) as Above. pose proof (topL_range L) as Ceil.
+      exfalso. clear - Above Ceil Img. lia.
+  - intros x Hx. rewrite errno_U in Hx. unfold CTX_SIZE in Hx. cbn in Hx |- *. clear - Hx. lia.
+  - intros Hinit. rewrite D_init, init_true in Hinit. discriminate.
 Qed.
 
 Theorem keptC : ltac2:(tb__ "0|1|
 S2dS13S3cZ0R1A2S3eR1S3fZ2Z40A2A2A2S14S91S83S90Vs;VL;A2R2A3A1S14S91S83S90Vs';VL;A2R3A3A1S14S110S83R4A2A1S14S10fS83R5A2A1S14Se9Vrho;Vscut;R6A3A1S12S1cS4aQ8A1A1Se5Vrho;VmsF;VrhoF;Vscut;VdsF;S4cQ40R7A2M0A6S72Vrho;G0A2A3F_;F_;F_;F_;F_;F_;Fa;").
-Proof using EmW Erd Ewok HMI HP12 HXz HZ HagF Hdepth HdsB HdsC HdsF_DS HdsF_cond HdsF_ent HdsO Hgd Hm_sct Hsc48 Hscut HsmF Hsp Hu touched touchedB touchedC.
-  intros a Ha NO NO' NE NS NSTK. rewrite (m'c_nstk (Z_to_bv 64 a)) by (rewrite u64_of_sum by lia; exact NSTK). unfold m'.
-  destruct (in_ranges_dec rhoF NRELW (Z_to_bv 64 a)) as [IN|OUT].
-  2:{ rewrite <- EmW. apply (m'_outW a Ha). intros d Hd R. apply OUT.
-      exists (obj_of d). split; [apply in_map; exact Hd|]. rewrite (rngD d rhoF (HdsF d Hd) HagF). cbn [fst snd]. rewrite u64_of_sum by lia. exact R. }
-  unfold in_ranges in IN. destruct IN as (o & Ho & R). unfold NRELW in Ho. apply in_map_iff in Ho as (d & <- & Hd).
-  rewrite (rngD d rhoF (HdsF d Hd) HagF) in R. rewrite u64_of_sum in R by lia. cbn [fst snd] in R. unfold U.Mal_nt__G1.Mal_nt_D.dhi in R.
-  pose proof Hctx as HCX.
-  assert (OWN : alloc_owned L s a -> False) by (intros H; apply NO; unfold ma_owned, owned; cbn [ma_s ma_L]; left; exact H).
-
-  assert (KEYOWN : forall q, In q (keys s) -> addr_of L q <= a < addr_of L q + 40 -> alloc_owned L s a).
-  { intros q Hq Hx.
-    assert (C6 : forall off (w : nat) vv, In (MCell (LMem (padd q off)) w vv) (meta_slot_cells q (MT s q)) ->
-               addr_of L q + off <= a < addr_of L q + off + Z.of_nat w -> alloc_owned L s a).
-    { intros off w vv Hin Hx'.
-      pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL _ (meta_cells_in_imageI X (Some (g, i)) U s HI q _ Hq Hin) (Z.to_nat (a - (addr_of L q + off))) ltac:(cbn [mc_w]; lia)) as OW.
-      cbn [mc_loc] in OW. replace (loc_addr L (LMem (padd q off)) + Z.of_nat (Z.to_nat (a - (addr_of L q + off)))) with a in OW; [exact OW|].
-      unfold addr_of, loc_addr. destruct q; cbn [padd]. unfold addr_of in Hx'. cbn in Hx'. lia. }
-
-    assert (SLOTS : forall x, exists v0 v1 v2 v3 v4 v5, meta_slot_cells q x =
-              [MCell (LMem (padd q 0)) 8 v0; MCell (LMem (padd q 8)) 8 v1; MCell (LMem (padd q 16)) 8 v2;
-               MCell (LMem (padd q 24)) 4 v3; MCell (LMem (padd q 28)) 4 v4; MCell (LMem (padd q 32)) 8 v5]).
-    { intros [[pr nx| |a0]|]; cbn; do 6 eexists; reflexivity. }
-    destruct (SLOTS (MT s q)) as (v0 & v1 & v2 & v3 & v4 & v5 & ES). rewrite ES in C6.
-    destruct (Z_lt_dec a (addr_of L q + 8)); [eapply (C6 0 8%nat); [cbn; tauto | cbv [Z.of_nat Pos.of_succ_nat Pos.succ]; lia]|].
-    destruct (Z_lt_dec a (addr_of L q + 16)); [eapply (C6 8 8%nat); [cbn; tauto | cbv [Z.of_nat Pos.of_succ_nat Pos.succ]; lia]|].
-    destruct (Z_lt_dec a (addr_of L q + 24)); [eapply (C6 16 8%nat); [cbn; tauto | cbv [Z.of_nat Pos.of_succ_nat Pos.succ]; lia]|].
-    destruct (Z_lt_dec a (addr_of L q + 28)); [eapply (C6 24 4%nat); [cbn; tauto | cbv [Z.of_nat Pos.of_succ_nat Pos.succ]; lia]|].
-    destruct (Z_lt_dec a (addr_of L q + 32)); [eapply (C6 28 4%nat); [cbn; tauto | cbv [Z.of_nat Pos.of_succ_nat Pos.succ]; lia]|].
-    eapply (C6 32 8%nat); [cbn; tauto | cbv [Z.of_nat Pos.of_succ_nat Pos.succ]; lia]. }
-  destruct d as [| | |kk pv nv av fv|hv|sx|ua ub uc ud|fx|fk five pv nv|ux|bx|gx| |c0| | | | |cs]; cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz] in R.
-  - exfalso. apply NS. unfold alloc_static. cbn. right; left. lia.
-  - exfalso. apply NS. unfold alloc_static. cbn. right; right. lia.
-  -
-    rewrite (m'_inW OD_sct a Hd R Ha).
-    pose proof (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 HsmF))))) (Z_to_bv 64 a)) as RO. cbn [fst snd cfg_ms] in RO.
-    rewrite RO by (replace a with (0x108ec + (a - 0x108ec)) by lia; apply ro_sct_P; lia).
-    rewrite <- EmW. symmetry. replace a with (0x108ec + (a - 0x108ec)) by lia. apply Hm_sct_W. lia.
-  - exfalso. apply OWN. change (U.Mal_nt__G1.Mal_nt_D.klo s L g am kk) with (klo kk) in R.
-    destruct (HdsF_ent _ Hd) as [[_ Hok]|HdX]; [|destruct (inX_cases _ HdX) as [HdC|[HdO|HdB]]].
-    + cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at] in Hok. apply (KEYOWN (kptr kk) (kptr_key kk)). rewrite (klo_ptr kk (proj1 Hok)) in R. lia.
-    + destruct (HdsC _ HdC) as (_ & Hok & _). cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at] in Hok. apply (KEYOWN (kptr kk) (kptr_key kk)). rewrite (klo_ptr kk (proj1 Hok)) in R. lia.
-    + destruct (HdsO _ HdO) as (_ & _ & R1 & R2). unfold U.Mal_nt__G1.Mal_nt_D.dhi in R2. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz] in R1, R2. change (U.Mal_nt__G1.Mal_nt_D.klo s L g am kk) with (klo kk) in R1, R2.
-      apply (KEYOWN g g_key). unfold zG, U.Mal_nt__G1.Mal_nt_I.zG in *. lia.
-    + destruct (HdsB _ HdB) as (_ & _ & _ & _ & _ & _ & OWB). apply OWB. unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz]. change (U.Mal_nt__G1.Mal_nt_D.klo s L g am kk) with (klo kk). lia.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX. unfold CTX_SIZE, sc, U.Mal_nt__G1.Mal_nt_I.sc in *. pose proof R_all. lia.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX. unfold CTX_SIZE. lia.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX. unfold CTX_SIZE. lia.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX. unfold CTX_SIZE. lia.
-  - exfalso. apply OWN.
-    destruct (HdsF_ent _ Hd) as [[_ Hok]|HdX]; [|destruct (inX_cases _ HdX) as [HdC|[HdO|HdB]]].
-    + cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at] in Hok. apply (KEYOWN (fptr fk) (fptr_key fk (proj1 Hok))). rewrite (flo_ptr fk (proj1 Hok)) in R. lia.
-    + destruct (HdsC _ HdC) as (_ & Hok & _). cbn [U.Mal_nt__G1.Mal_nt_Db.od_ok_at] in Hok. apply (KEYOWN (fptr fk) (fptr_key fk (proj1 Hok))). rewrite (flo_ptr fk (proj1 Hok)) in R. lia.
-    + destruct (HdsO _ HdO) as (_ & _ & R1 & R2). unfold U.Mal_nt__G1.Mal_nt_D.dhi in R2. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz] in R1, R2.
-      apply (KEYOWN g g_key). unfold zG, U.Mal_nt__G1.Mal_nt_I.zG in *. lia.
-    + destruct (HdsB _ HdB) as (_ & _ & _ & _ & _ & _ & OWB). apply OWB. unfold U.Mal_nt__G1.Mal_nt_D.dhi. cbn [U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.dsz]. lia.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX.
-    assert (Hr : 0 <= sc < 48) by exact (proj2 (HdsF _ Hd)). unfold CTX_SIZE, sc, U.Mal_nt__G1.Mal_nt_I.sc in *. lia.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX.
-    assert (Hr : 7 <= sc < 39) by exact (proj2 (HdsF _ Hd)). unfold CTX_SIZE, sc, U.Mal_nt__G1.Mal_nt_I.sc in *. lia.
-  - exfalso. apply OWN. destruct grp_byte as (c & CI & AD & Wc & _).
-    pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL c CI 0%nat ltac:(lia)) as OW. rewrite AD, Z.add_0_r in OW.
-    replace a with (zNm + 8) by (unfold zNm, U.Mal_nt__G1.Mal_nt_I.zNm in *; lia). exact OW.
-  -   exfalso. apply OWN. pose proof (proj2 (HdsF _ Hd)) as HC. cbn [U.Mal_nt__G1.Mal_nt_D.dcond] in HC.
-    pose proof (hdr_cells HC) as (C4 & C3 & C2 & _).
-    assert (AG : forall d, loc_addr L (LMem (padd (am_mem am) d)) = zM + d) by (intros d; unfold zM, U.Mal_nt__G1.Mal_nt_I.zM; apply AGq).
-    destruct (Z_lt_dec a (zM - 3)); [|destruct (Z_lt_dec a (zM - 2))].
-    + pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL (MCell (LMem (padd (am_mem am) (-4))) 1 (VZ 0)) C4 0%nat ltac:(cbn [mc_w]; lia)) as OW. cbn [mc_loc] in OW. rewrite AG in OW. replace a with (zM + -4 + Z.of_nat 0) by lia. exact OW.
-    + pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL (MCell (LMem (padd (am_mem am) (-3))) 1 (VZ zHb)) C3 0%nat ltac:(cbn [mc_w]; lia)) as OW. cbn [mc_loc] in OW. rewrite AG in OW. replace a with (zM + -3 + Z.of_nat 0) by lia. exact OW.
-    + pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL (MCell (LMem (padd (am_mem am) (-2))) 2 (VZ zOff)) C2 (Z.to_nat (a - (zM - 2))) ltac:(cbn [mc_w]; lia)) as OW. cbn [mc_loc] in OW. rewrite AG in OW. replace a with (zM + -2 + Z.of_nat (Z.to_nat (a - (zM - 2)))) by lia. exact OW.
-  -   exfalso. apply OWN. pose proof (proj2 (HdsF _ Hd)) as HC. cbn [U.Mal_nt__G1.Mal_nt_D.dcond] in HC.
-    pose proof (proj2 (proj2 (proj2 (hdr_cells HC)))) as C0.
-    pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL (MCell (LMem (am_mem am)) 8 (VP g)) C0 (Z.to_nat (a - zM)) ltac:(cbn [mc_w]; lia)) as OW. cbn [mc_loc] in OW.
-    replace (loc_addr L (LMem (am_mem am))) with zM in OW by (unfold zM, U.Mal_nt__G1.Mal_nt_I.zM, addr_of; reflexivity). replace a with (zM + Z.of_nat (Z.to_nat (a - zM))) by lia. exact OW.
-  -   exfalso. apply OWN. pose proof (proj2 (HdsF _ Hd)) as HC. cbn [U.Mal_nt__G1.Mal_nt_D.dcond] in HC.
-    pose proof (pbase_cell HC) as C0.
-    pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL (MCell (LMem (am_mem amPar)) 8 (VP gPar)) C0 (Z.to_nat (a - zQm)) ltac:(cbn [mc_w]; lia)) as OW. cbn [mc_loc] in OW.
-    replace (loc_addr L (LMem (am_mem amPar))) with zQm in OW by (unfold zQm, U.Mal_nt__G1.Mal_nt_I.zQm, addr_of; reflexivity). replace a with (zQm + Z.of_nat (Z.to_nat (a - zQm))) by lia. exact OW.
-  -   exfalso. apply OWN. pose proof (proj2 (HdsF _ Hd)) as HC. cbn [U.Mal_nt__G1.Mal_nt_D.dcond] in HC.
-    apply (KEYOWN gPar (gPar_key HC)). unfold zQ, U.Mal_nt__G1.Mal_nt_I.zQ in *. lia.
-  -   exfalso. apply OWN. pose proof (proj2 (HdsF _ Hd)) as HC. cbn [U.Mal_nt__G1.Mal_nt_D.dcond] in HC.
-    destruct (par_area HC) as (ar & Har & Ear & _ & _ & Ca).
-    pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL (MCell (LMem ar) 8 VSec) Ca (Z.to_nat (a - zQa)) ltac:(cbn [mc_w]; lia)) as OW. cbn [mc_loc] in OW.
-    unfold addr_of in Ear. rewrite Ear in OW. replace a with (zQa + Z.of_nat (Z.to_nat (a - zQa))) by lia. exact OW.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX. unfold CTX_SIZE. lia.
-  - exfalso. apply OWN. replace a with (ly_ctx L + (a - ly_ctx L)) by lia. apply ctx_owned. rewrite HCX. unfold CTX_SIZE. lia.
+Proof using EmW Erd Ewok HMI HP12 HXz HZ HagF Hdepth HdsB HdsC HdsF_DS HdsF_cond HdsF_ent HdsO Hgd Hm_sct Hsc48 Hscut HsmF Hsp Hu.
+  clear HP13 HP13w Hsp_high Hall Hml0.
+  intros a Ra NotOwnS NotOwnS' NotErr NotStatic NotStk.
+  assert (UnsA : bv_unsigned (Z_to_bv 64 a) = a) by exact (u64_of_sum a Ra).
+  rewrite (m'c_nstk (Z_to_bv 64 a)) by (rewrite UnsA; exact NotStk).
+  destruct (in_ranges_decD od dlo dhi dsF a) as [(d & InF & Rng) | NoRange].
+  2: { rewrite (m'_outW a Ra (fun d0 InF0 R0 => NoRange (ex_intro _ d0 (conj InF0 R0)))). rewrite EmW. reflexivity. }
+  rewrite (m'_inW d a InF Rng Ra).
+  destruct (drom d) as [l|] eqn:RomD.
+  { destruct (romD s L X g am rho gd Hgd mV Hm_sct mW HZ d l a (HdsF d InF) RomD Rng) as [RoA MwA].
+    rewrite (HroF segsU tr md msF rhoF SF HsmF (Z_to_bv 64 a) RoA). rewrite EmW in MwA. exact (eq_sym MwA). }
+  exfalso.
+  assert (CellOwn : forall c' x, In c' (image s) ->
+            loc_addr L (mc_loc c') <= x < loc_addr L (mc_loc c') + Z.of_nat (mc_w c') -> alloc_owned L s x).
+  { intros c' x InI Rx.
+    pose proof (image_cell_owned X (Some (g, i)) U s L HI HXr HL c' InI (Z.to_nat (x - loc_addr L (mc_loc c'))) ltac:(lia)) as Ow.
+    rewrite Z2Nat.id in Ow by lia. replace (loc_addr L (mc_loc c') + (x - loc_addr L (mc_loc c'))) with x in Ow by lia.
+    exact Ow. }
+  assert (SlotOwn : forall q x, In q (keys s) -> addr_of L q <= x < addr_of L q + 40 -> alloc_owned L s x).
+  { intros q x KeyQ Rx.
+    assert (Cover : exists c', In c' (meta_slot_cells q (MT s q)) /\
+                      loc_addr L (mc_loc c') <= x < loc_addr L (mc_loc c') + Z.of_nat (mc_w c')).
+    { assert (Off : x - addr_of L q < 8 \/ 8 <= x - addr_of L q < 16 \/ 16 <= x - addr_of L q < 24
+                    \/ 24 <= x - addr_of L q < 28 \/ 28 <= x - addr_of L q < 32 \/ 32 <= x - addr_of L q) by lia.
+      destruct (MT s q) as [[]|]; cbn [meta_slot_cells];
+        destruct Off as [Of|[Of|[Of|[Of|[Of|Of]]]]]; eexists;
+        first [ split; [left; reflexivity | cbn [mc_loc mc_w]; rewrite AGq; unfold META_prev; lia]
+              | split; [right; left; reflexivity | cbn [mc_loc mc_w]; rewrite AGq; unfold META_next; lia]
+              | split; [do 2 right; left; reflexivity | cbn [mc_loc mc_w]; rewrite AGq; unfold META_mem; lia]
+              | split; [do 3 right; left; reflexivity | cbn [mc_loc mc_w]; rewrite AGq; unfold META_avail; lia]
+              | split; [do 4 right; left; reflexivity | cbn [mc_loc mc_w]; rewrite AGq; unfold META_freed; lia]
+              | split; [do 5 right; left; reflexivity | cbn [mc_loc mc_w]; rewrite AGq; unfold META_bits; lia] ]. }
+    destruct Cover as (c' & InSlot & Rc').
+    exact (CellOwn c' x (meta_cells_in_imageI X (Some (g, i)) U s HI q c' KeyQ InSlot) Rc'). }
+  assert (CtxOwn : forall x, 369616 <= x < 369616 + 928 -> alloc_owned L s x).
+  { intros x Rx. pose proof (ctx_owned (x - 369616) ltac:(unfold CTX_SIZE; lia)) as Co.
+    rewrite Hctx in Co. replace (369616 + (x - 369616)) with x in Co by lia. exact Co. }
+  assert (Static : alloc_static C_U a -> False) by exact NotStatic.
+  assert (Owned : alloc_owned L s a -> False) by (intros Ow; apply NotOwnS; left; exact Ow).
+  clear NotOwnS NotOwnS' NotErr NotStatic NotStk.
+  unfold U.Mal_nt__G1.Mal_nt_D.dhi in Rng.
+  pose proof (HdsF_cond d InF) as CondD.
+  destruct (HdsF_ent d InF) as [[_ AtS] | InX].
+  - destruct d; simpl in RomD; try discriminate; simpl in Rng, CondD.
+    + apply Static. unfold alloc_static. cbn. lia.
+    + apply Static. unfold alloc_static. cbn. lia.
+    + destruct AtS as [Kk _]. apply Owned, (SlotOwn (kptr k) a (kptr_key k)).
+      rewrite <- (klo_ptr k Kk). lia.
+    + apply Owned, CtxOwn. lia.
+    + apply Owned, CtxOwn. lia.
+    + apply Owned, CtxOwn. lia.
+    + apply Owned, CtxOwn. lia.
+    + destruct AtS as [Fk _]. apply Owned, (SlotOwn (fptr k) a (fptr_key k Fk)).
+      rewrite <- (flo_ptr k Fk). lia.
+    + apply Owned, CtxOwn. lia.
+    + apply Owned, CtxOwn. lia.
+    + destruct grp_byte as (cg & InG & LocG & WG & _).
+      apply Owned, (CellOwn cg a InG). rewrite LocG. lia.
+    + destruct (hdr_cells CondD) as (C1 & C2 & C3 & _).
+      assert (ZM : addr_of L (am_mem am) = zM) by reflexivity.
+      apply Owned.
+      assert (Pick : a = zM - 4 \/ a = zM - 3 \/ zM - 2 <= a < zM) by lia.
+      destruct Pick as [Pk|[Pk|Pk]];
+        [ apply (CellOwn _ a C1) | apply (CellOwn _ a C2) | apply (CellOwn _ a C3) ];
+        cbn [mc_loc mc_w]; rewrite AGq, ZM; cbn [Z.of_nat Pos.of_succ_nat]; lia.
+    + destruct (hdr_cells CondD) as (_ & _ & _ & C4).
+      assert (ZM' : loc_addr L (LMem (am_mem am)) = zM) by reflexivity.
+      apply Owned, (CellOwn _ a C4). cbn [mc_loc mc_w]. rewrite ZM'. cbn [Z.of_nat Pos.of_succ_nat]. lia.
+    + assert (ZQm : loc_addr L (LMem (am_mem amPar)) = zQm) by reflexivity.
+      apply Owned, (CellOwn _ a (pbase_cell CondD)). cbn [mc_loc mc_w]. rewrite ZQm. cbn [Z.of_nat Pos.of_succ_nat]. lia.
+    + assert (ZQ : addr_of L gPar = zQ) by reflexivity.
+      apply Owned, (SlotOwn gPar a (gPar_key CondD)). rewrite ZQ. lia.
+    + destruct (par_area CondD) as (pa & _ & Epa & _ & _ & InPa).
+      apply Owned, (CellOwn _ a InPa). cbn [mc_loc mc_w].
+      change (loc_addr L (LMem pa)) with (addr_of L pa). rewrite Epa. cbn [Z.of_nat Pos.of_succ_nat]. lia.
+    + apply Owned, CtxOwn. lia.
+    + apply Owned, CtxOwn. lia.
+  - apply inX_cases in InX. destruct InX as [InC | [InO | InB]].
+    + destruct (HdsC d InC) as (_ & AtS' & Chg).
+      destruct d; simpl in Chg; try contradiction; simpl in Rng.
+      * destruct AtS' as [Kk _]. apply Owned, (SlotOwn (kptr k) a (kptr_key k)).
+        rewrite <- (klo_ptr k Kk). lia.
+      * apply Owned, CtxOwn. lia.
+      * apply Owned, CtxOwn. lia.
+      * apply Owned, CtxOwn. lia.
+      * apply Owned, CtxOwn. lia.
+      * destruct AtS' as [Fk _]. apply Owned, (SlotOwn (fptr k) a (fptr_key k Fk)).
+        rewrite <- (flo_ptr k Fk). lia.
+      * apply Owned, CtxOwn. lia.
+      * destruct AtS' as [Bsc _]. apply Owned, CtxOwn. lia.
+      * apply Owned, CtxOwn. lia.
+    + destruct (HdsO d InO) as (_ & _ & GLo & GHi).
+      change (U.Mal_nt__G1.Mal_nt_I.zG L g) with (addr_of L g) in GLo, GHi.
+      apply Owned, (SlotOwn g a g_key).
+      unfold U.Mal_nt__G1.Mal_nt_D.dhi in GHi. lia.
+    + destruct (HdsB d InB) as (_ & _ & _ & _ & _ & _ & OwnB).
+      apply Owned, OwnB. unfold U.Mal_nt__G1.Mal_nt_D.dhi. exact Rng.
 Qed.
 
 End ReabC.
@@ -1802,9 +1982,16 @@ Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
-Ltac od_pw := repeat (first [ match goal with |- _ /\ _ => split | |- Forall _ _ => constructor | |- True => exact I end
-                             | progress (cbv [U.Mal_nt__G2.Mal_nt_Z.od_pairwise U.Mal_nt__G2.Mal_nt_Z.od_disj U.Mal_nt__G2.Mal_nt_Z.needs_ring U.Mal_nt__G1.Mal_nt_D.kcond U.Mal_nt__G1.Mal_nt_D.fcond U.Mal_nt__G2.Mal_nt_Z.od_disj0 U.Mal_nt__G2.Mal_nt_Z.zkind U.Mal_nt__G2.Mal_nt_Z.ctx_lo U.Mal_nt__G1.Mal_nt_D.dsz U.Mal_nt__G1.Mal_nt_D.dlo U.Mal_nt__G1.Mal_nt_D.kptr U.Mal_nt__G1.Mal_nt_D.fptr]) ]);
-              try assumption; try lia; try congruence.
+Ltac od_pw :=
+  cbn [U.Mal_nt__G2.Mal_nt_Z.od_pairwise];
+  repeat lazymatch goal with
+         | |- True => exact I
+         | |- _ /\ _ => split
+         | |- Forall _ _ => constructor
+         | |- U.Mal_nt__G2.Mal_nt_Z.od_disj _ _ _ _ _ _ => unfold U.Mal_nt__G2.Mal_nt_Z.od_disj
+         end;
+  cbn;
+  try solve [ exact I | lia | congruence ].
 
 Lemma cell_holds_zero (L0 : layout) (bv : byteview) (c : mcell) : ltac2:(tb__ "0|2|
 S15S12S57S5cVc;A1M0S5aZ0M1A1A3S12S57G0S5dS21S30A1A1A3A2S25S106R1S59Vc;A1A2S12S1cS2dA1Vbv;S3dS4eVL0;S58Vc;A1A2S47R2A1A2A1S1dS2dG1A2A3F_;Fk;S55VL0;Vbv;Vc;A3F_;F_;").
@@ -2047,7 +2234,12 @@ S77SebS7aVrho;A1Se5Vrho;VmsF;VrhoF;Vscut;VdsF;A5A3").
 
 Lemma sp0_range : ltac2:(tb__ "0|1|
 S13S13S3cZ1000SafVrho;A1M0A2S3eG0S3fZ2Z40A2A2A2S12S2dS42G0Z10A2Z0A3A2").
-Proof using Hgd Hsc48 Hsp scut touched touchedB touchedC. unfold sp0, U.Mal_nt__G2.Mal_nt_Z.sp0. pose proof Hsp. pose proof (urange (rw rho 10%positive)). lia. Qed.
+Proof using Hgd Hsc48 Hsp scut touched touchedB touchedC.
+  unfold U.Mal_nt__G2.Mal_nt_Z.sp0.
+  destruct Hsp as [SpLo SpAl].
+  pose proof (urange (rw rho 10)) as SpBd.
+  split; [split; [exact SpLo | apply SpBd] | exact SpAl].
+Qed.
 Lemma D0_range : ltac2:(tb__ "0|1|
 S13S3cS40S3fZ2Z28A2A1SaeVrho;A1M0A2S3cG0N60A2A2"). Proof using Hdepth Hgd Hsc48 scut touched touchedB touchedC. unfold D0, U.Mal_nt__G2.Mal_nt_Z.D0. pose proof Hdepth. lia. Qed.
 Lemma rwC_10 : ltac2:(tb__ "0|0|
@@ -2084,9 +2276,13 @@ Lemma pre_reg_2 : pre_reg 2 = SVar 10. Proof using . reflexivity. Qed.
 Lemma reg_sv_Pre z : ltac2:(tb__ "0|0|
 S13S3cZ1Vz;A2S3cVz;Z1fA2A2S12S63S6cS94S92A1Vz;A2S2bS46Vz;A1A1A3F_;").
 Proof using Hgd Hsc48 rho scut touched touchedB touchedC.
-  intros Hz.
-  pose proof (forall_range_dec (fun z => sv_eqb (reg_sv (ContractNT.Pre_nt NTE_U) z) (pre_reg (Z.to_nat z))) 1 31 ltac:(vm_compute; reflexivity) z ltac:(lia)) as H.
-  apply sv_eqb_sound in H. exact H.
+  intros Rz. unfold reg_sv.
+  rewrite (proj2 (Z.eqb_neq z 0)) by (clear - Rz; lia).
+  assert (Small : (Z.to_nat z < 32)%nat) by (clear - Rz; lia).
+  generalize dependent (Z.to_nat z). clear Rz.
+  intros k Small.
+  do 32 (destruct k as [|k]; [reflexivity|]).
+  exfalso. clear - Small. lia.
 Qed.
 Lemma freg_sv_Pre z : ltac2:(tb__ "0|1|
 S13S3cZ0M0Vz;A2S3cVz;Z1fA2A2S12S63S76S94S92A1Vz;A2Sa6S63S46Vz;A1S28S65G0A1A4A3F_;").
@@ -2121,7 +2317,14 @@ Qed.
 Lemma HfrFC a : ltac2:(tb__ "0|0|
 S79VrhoF;S18S5fSe4Vstkc;A1Se1VdsF;A1A3Va;A3S12S1cS4aQ8A1A1S10eVmsF;Va;A2VmW;Va;A1A3F_;").
 Proof using HSF_match HSF_objs HagF HsmF.
-  exact (WalkReab.HfrF segsU rhoW od obj_of mW EmW' tr md msF rhoF HagF SF oStkF objsF dsF HSF_objs HSF_match HsmF a).
+  intros Hout.
+  destruct HsmF as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & _ & Frame) & _).
+  cbn [fst snd cfg_ms] in Frame. rewrite HSF_objs in Frame.
+  rewrite Frame.
+  - rewrite (proj2 (proj2 HagF)). reflexivity.
+  - apply Forall_cons_iff in Hout as [OutStk OutRel].
+    apply Forall_cons; [exact OutStk|].
+    exact (outside_all_match rhoF objsF NRELW a HSF_match OutRel).
 Qed.
 
 Lemma stkF_range : ltac2:(tb__ "0|1|

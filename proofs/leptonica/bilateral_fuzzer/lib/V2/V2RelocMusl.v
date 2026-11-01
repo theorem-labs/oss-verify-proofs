@@ -11,21 +11,18 @@ Ltac2 kr_t_V2RelocMusl () := "K47Corelib4Init5Logic2eq01C6ARocqVerifyHarness?Age
 Local Open Scope Z_scope.
 
 Lemma v2_dwin_bounds : @dwin_bounds_chk v2_reloc v2_data = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocMusl ()) [] "p;2p;3g0000j22Tg000Jj21Tg001Rj30Tg001lR0g002LR1'2g002lg003d'1=001do"). Qed.
-Definition v2_rw : RelocRW v2_reloc v2_data := {| rl_dwin_bounds := v2_dwin_bounds; rl_rw_hull := v2_hull_ok; rl_rw_spans := v2_spans_ok; rl_rw_orders := v2_orders_ok |}.
+Proof. lazy. reflexivity. Qed.
+Definition v2_rw : RelocRW v2_reloc v2_data :=
+  {| rl_rw_spans := v2_spans_ok; rl_rw_hull := v2_hull_ok;
+     rl_rw_orders := v2_orders_ok; rl_dwin_bounds := v2_dwin_bounds |}.
 
 Lemma v2_segs_lo : segs_lo (@rl_segs v2_reloc) = @rl_img_lo v2_reloc.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocMusl ()) [] "p;1p;2p;3g004^j14Tg0000j23Tg005_j10Tg006^j11Tg001Rj32Tg007aR0g002lR1#4R2'3%01#1=202do"). Qed.
+Proof. vm_compute. trivial. Qed.
 Lemma v2_segs_hi : segs_hi (@rl_segs v2_reloc) = @rl_img_hi v2_reloc.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocMusl ()) [] "p;1p;2p;3g008?j14Tg0000j23Tg005_j10Tg009@j11Tg001Rj32Tg007aR0g002lR1#4R2'3%01#1=202do"). Qed.
+Proof. apply Z.eqb_eq. vm_compute. constructor. Qed.
 Lemma v2_pf_bounds : @pf_bounds_chk v2_reloc = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocMusl ()) [] "p;2p;1p;3g0000j22Tg00:Cj11Tg001Rj30Tg001lR0g002LR1'2g002l#1=001do"). Qed.
+Proof. change (@pf_bounds_chk v2_reloc) with true. exact (eq_refl true). Qed.
 Lemma v2_pf_prefix : pf_prefix_ok (@rl_segs v2_reloc) (0x102e7 + @rl_delta v2_reloc B_S_102e7) = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2RelocMusl ()) [] "p;2p;1p;3g0000j29Tg005_j18Tg00;Ij10Tg00;nj12Tg00<Sj17Tg00=1j24Tg00>1j23Tg00>Nj25Tg001Rj36Tf0#2#2p=1g001lR0g002LR1'9g002lR2#8g00?SR3#1#1#1#0#2#0#0#0#1#0#0#0#7%03#0#0#0#2#0#2#1#1,42'3'5=601do"). Qed.
+Proof. vm_compute. easy. Qed.
 Definition v2_pf : RelocPF v2_reloc :=
-  {| rl_segs_lo_val := v2_segs_lo; rl_segs_hi_val := v2_segs_hi; rl_pf_bounds := v2_pf_bounds; rl_pf_prefix := v2_pf_prefix |}.
+  Build_RelocPF v2_reloc v2_segs_lo v2_segs_hi v2_pf_bounds v2_pf_prefix.

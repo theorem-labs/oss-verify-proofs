@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -31,7 +31,7 @@ Definition gdc_w0_post (sp gp tp t1 t2 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 
     ms = MS (mkR (Z_to_bv 64 ONCE_RET_INIT) (Z_to_bv 64 (bv_unsigned sp + -16 + -128)) gp tp t0' t1 t2 (Z_to_bv 64 0xb9f780) (Z_to_bv 64 e_dcdi)
                  a0' a1' a2' a3' a4' a5' a6' a7' (Z_to_bv 64 0) (Z_to_bv 64 ssp_guard) (Z_to_bv 64 1) (Z_to_bv 64 3) (Z_to_bv 64 2) s7 s8 s9 s10 s11 t3 t4 t5 t6)
             F (Z_to_bv 64 e_dcdi) fc None m' (seg_rom asegs)
-    /\ munch [(bv_unsigned sp - 304, bv_unsigned sp); (0xb9f740, 0xb9f740 + 4); (0xb9f780, 0xb9f780 + 4); (0xb9f720, 0xb9f720 + 4); (0xb9f760, 0xb9f760 + 4);
+    /\ munch [(bv_unsigned sp - 272, bv_unsigned sp); (0xb9f720, 0xb9f720 + 4); (0xb9f740, 0xb9f740 + 4); (0xb9f760, 0xb9f760 + 4); (0xb9f780, 0xb9f780 + 4);
               (NEXT_KEY, NEXT_KEY + 12); (KEYS + 8 * j, KEYS + 8 * j + 8); (TP_A + -96, TP_A + -88)] m m'
     /\ wmono asegs m m' /\ mem_inv asegs m'
     /\ rw_cells asegs m' (bv_unsigned sp + -16) [C8 s0e; C8 rae]
@@ -39,10 +39,15 @@ Definition gdc_w0_post (sp gp tp t1 t2 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 
     /\ rw_cells asegs m' (bv_unsigned sp + -16 + -32) [CB 8 junk; C8 (Z_to_bv 64 RUN_ONCE_RET)]
     /\ rw_cells asegs m' (bv_unsigned sp + -16 + -128) (once_full_cells 0xb9f780 oldcb canary s6 s5 s4 s3 s2 s1 (Z_to_bv 64 (bv_unsigned sp + -16)))
     /\ rw_cells asegs m' (TP_A + -96) [C8 (Z_to_bv 64 (bv_unsigned sp + -16 + -128))]
-    /\ rw_cells asegs m' 0xb9f780 [C4 (Z_to_bv 64 1)] /\ rw_cells asegs m' 0xb9f740 [C4 (Z_to_bv 64 2)]
-    /\ rw_cells asegs m' 0xb9f720 [C4 (Z_to_bv 64 j)] /\ rw_cells asegs m' 0xb9f760 [C4 (Z_to_bv 64 1)]
-    /\ rw_cells asegs m' NEXT_KEY [C4 (Z_to_bv 64 j)] /\ rw_cells asegs m' KEY_LOCK [C4 z64; C4 z64; C4 sh] /\ rw_cells asegs m' (KEYS + 8 * j) [C8 (Z_to_bv 64 NODTOR)]
-    /\ ssp_cells m' canary /\ stk asegs m' lo (bv_unsigned sp + -16 + -128).
+    /\ rw_cells asegs m' 0xb9f780 [C4 (Z_to_bv 64 1)]
+    /\ rw_cells asegs m' 0xb9f740 [C4 (Z_to_bv 64 2)]
+    /\ rw_cells asegs m' 0xb9f720 [C4 (Z_to_bv 64 j)]
+    /\ rw_cells asegs m' 0xb9f760 [C4 (Z_to_bv 64 1)]
+    /\ rw_cells asegs m' NEXT_KEY [C4 (Z_to_bv 64 j)]
+    /\ rw_cells asegs m' KEY_LOCK [C4 z64; C4 z64; C4 sh]
+    /\ rw_cells asegs m' (KEYS + 8 * j) [C8 (Z_to_bv 64 NODTOR)]
+    /\ ssp_cells m' canary
+    /\ stk asegs m' lo (bv_unsigned sp + -16 + -128).
 
 Lemma gdc_w0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
     (F : bvmap 5 word) fc (m : mem) (lo nk j : Z) (sh kold w r oldcb canary : word),
@@ -61,37 +66,37 @@ Lemma gdc_w0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 
   evt asegs (gdc_w0_post sp gp tp t1 t2 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ra s0 F fc lo j sh oldcb canary m)
     (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 e_gdc) fc None m (seg_rom asegs)).
 Proof.
-  intros until canary. intros -> ST HLOS HLO SPH UT O1 O2 KC RC TC NK HNK KL KJ PROBE CASE SSP CBC MI.
-  destruct SSP as [GOT GU]. unfold got_ssp, ssp_guard in GOT, GU. unfold e_gdc.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn [Z.of_N] in RSP.
-  remember (bv_unsigned sp) as SP eqn:ESP. rewrite <- (Z_to_bv_bv_unsigned sp). rewrite <- ESP.
-  assert (HJ : 0 <= j < 128) by (destruct CASE as [[-> _] | [-> _]]; [lia | apply Z.mod_pos_bound; lia]).
-  pose proof (munch_refl [(SP - 304, SP); (0xb9f740, 0xb9f740 + 4); (0xb9f780, 0xb9f780 + 4); (0xb9f720, 0xb9f720 + 4); (0xb9f760, 0xb9f760 + 4);
-                          (NEXT_KEY, NEXT_KEY + 12); (KEYS + 8 * j, KEYS + 8 * j + 8); (TP_A + -96, TP_A + -88)] m) as MU.
-  pose proof (wmono_refl asegs m) as WM.
-  assert (HWU : ut_fp [(SP - 304, SP); (0xb9f740, 0xb9f740 + 4); (0xb9f780, 0xb9f780 + 4); (0xb9f720, 0xb9f720 + 4); (0xb9f760, 0xb9f760 + 4);
-                      (NEXT_KEY, NEXT_KEY + 12); (KEYS + 8 * j, KEYS + 8 * j + 8); (TP_A + -96, TP_A + -88)]) by ut_fp_lia.
-  carve_frame 16%nat ST.
-  do 9 zstep.
-  tcall (T_run_once_enter_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo e_dctki oldcb canary).
-  all: try first [eassumption | reflexivity | split; assumption | unfold e_dctki, got_ssp, ssp_guard; lia | unfold got_ssp, ssp_guard; left; lia].
-  cbv beta delta [mkR]. rewrite (ret_pc_even e_dctki) by (unfold e_dctki; lia).
-  tcall (dctki_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo nk j sh kold w r).
-  all: try first [eassumption | reflexivity | rewrite unsigned_lit by lia; lia | lia].
-  cbv beta delta [mkR]. rewrite (ret_pc_even ONCE_RET_INIT) by (unfold ONCE_RET_INIT; lia).
-  replace (SP + -16 + -128) with (SP + -16 + -128) by lia.
-  tcall (T_run_once_leave_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo (SP + -16) 0xb9f740 _ oldcb canary _ _ _ _ _ _ _ _ _).
-  all: try first [eassumption | reflexivity | split; assumption | unfold got_ssp, ssp_guard; lia | unfold got_ssp, ssp_guard; left; lia].
-  cbv beta delta [mkR]. rewrite (ret_pc_even 0x1f76e4) by lia.
-  zstep. if_false. zstep. zstep. zstep. if_false.
+  intros until canary.
+  intros TpIs StackOk LoFloor LoRoom SpCap ImgClean KeyOnceZ CtxOnceZ KeyCell KeyRetCell TsdPtr NextKeyCell NkBound KeyLockCells KeySlotJ KeySlotNk SlotChoice Canary CbSlot MemOk.
+  subst tp. unfold e_gdc, ssp_cells in *. destruct Canary as [GotSspCell GuardCell].
+  unfold got_ssp in GotSspCell. unfold ssp_guard in GotSspCell, GuardCell.
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. unfold bv_modulus in SpRange. cbn [Z.of_N] in SpRange.
+  pose proof (munch_refl [(bv_unsigned sp - 272, bv_unsigned sp); (0xb9f720, 0xb9f720 + 4); (0xb9f740, 0xb9f740 + 4); (0xb9f760, 0xb9f760 + 4);
+              (0xb9f780, 0xb9f780 + 4); (NEXT_KEY, NEXT_KEY + 12); (KEYS + 8 * j, KEYS + 8 * j + 8); (TP_A + -96, TP_A + -88)] m) as Touched.
+  pose proof (wmono_refl asegs m) as Grown.
+  carve_frame 16%nat StackOk.
+  do 4 zstep. do 5 zstep.
+  tcall (T_run_once_enter_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo 0x1f7640 oldcb canary);
+    [ first [ eassumption | split; eassumption | reflexivity | unfold got_ssp, ssp_guard; lia ] .. | ].
+  rename PC into Stack1, PC1 into KeyOnceBusy, PC2 into CbFrame1, PC3 into OnceFrame1, PC4 into OnceRa1, POST into RunOnceFrame1.
+  clear PC0.
+  unfold ONCE_RET_INIT.
+  tcall (dctki_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo nk j sh kold w r);
+    [ first [ reflexivity | eassumption | lia ] .. | ].
+  rename PC into Stack2, PC0 into KeyIsJ, PC1 into KeyRetOne, PC2 into NextKeyJ, PC3 into KeyLockAfter, POST into KeySlotDtor.
+  tcall (T_run_once_leave_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo (bv_unsigned sp + -16) 0xb9f740
+           (Z_to_bv 64 (bv_unsigned sp + -16 + -128)) oldcb canary (Z_to_bv 64 0x1f76e4) sp s1 s2 s3 s4 s5 s6 _);
+    [ first [ eassumption | split; eassumption | reflexivity | unfold got_ssp, ssp_guard; lia ] .. | ].
+  rename PC into Stack3, PC1 into KeyOnceDone, POST into CbBack. clear PC0.
+  zstep.
+  th_if_lit.
+  do 2 zstep. zstep.
+  th_if_lit.
   do 5 zstep.
-  tcall (T_run_once_enter_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo e_dcdi oldcb canary).
-  all: try first [eassumption | reflexivity | split; assumption | unfold e_dcdi, got_ssp, ssp_guard; lia | unfold got_ssp, ssp_guard; left; lia].
-  cbv beta delta [mkR]. rewrite (ret_pc_even e_dcdi) by (unfold e_dcdi; lia).
-  subst SP. rewrite ?Z_to_bv_bv_unsigned. rewrite ?Z_to_bv_bv_unsigned in POST.
-  unfold gdc_w0_post, SITE_gdc_once2. apply evt_done. do 11 eexists. split; [reflexivity|].
-  split; [exact MU|]. split; [exact WM|]. split; [assumption|].
-  repeat (split; [first [eassumption | split; eassumption] |]). eassumption.
+  tcall (T_run_once_enter_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo 0x1f767c oldcb canary);
+    [ first [ eassumption | split; eassumption | reflexivity | unfold got_ssp, ssp_guard; lia ] .. | ].
+  finish.
+  eassumption.
 Qed.
 
 (* [comment removed for export] *)
@@ -100,10 +105,12 @@ Definition gdc_w1_post (sp gp tp t0 t2 a4 a5 a6 a7 s1 s2 s3 s4 s5 s6 s7 s8 s9 s1
   fun ms => exists (t1' a1' a2' a3' : word) (m' : mem),
     ms = MS (mkR rae sp gp tp t0 t1' t2 s0e s1 (Z_to_bv 64 0xb9f580) a1' a2' a3' a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
             F (ret_pc rae) fc None m' (seg_rom asegs)
-    /\ munch [(bv_unsigned sp - 304, bv_unsigned sp); (0xb9f780, 0xb9f780 + 4); (TP_A + -96, TP_A + -88)] m m'
+    /\ munch [(bv_unsigned sp - 176, bv_unsigned sp); (0xb9f780, 0xb9f780 + 4); (TP_A + -96, TP_A + -88)] m m'
     /\ wmono asegs m m' /\ mem_inv asegs m'
-    /\ rw_cells asegs m' 0xb9f780 [C4 (Z_to_bv 64 2)] /\ rw_cells asegs m' (TP_A + -96) [C8 oldcb]
-    /\ ssp_cells m' canary /\ stk asegs m' lo (bv_unsigned sp).
+    /\ rw_cells asegs m' 0xb9f780 [C4 (Z_to_bv 64 2)]
+    /\ rw_cells asegs m' (TP_A + -96) [C8 oldcb]
+    /\ ssp_cells m' canary
+    /\ stk asegs m' lo (bv_unsigned sp).
 
 Lemma gdc_w1 : forall (sp gp tp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (rae s0e : word)
     (F : bvmap 5 word) fc (m : mem) (lo j sb : Z) (sh oldcb canary : word) (junk : list byte),
@@ -126,29 +133,30 @@ Lemma gdc_w1 : forall (sp gp tp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s1 s2 s3 s4 s5 s6 
              (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 0) (Z_to_bv 64 ssp_guard) (Z_to_bv 64 1) (Z_to_bv 64 3) (Z_to_bv 64 2) s7 s8 s9 s10 s11 t3 t4 t5 t6)
         F (Z_to_bv 64 ONCE_RET_INIT) fc None m (seg_rom asegs)).
 Proof.
-  intros until junk. intros -> HJ HSB ST HLOS HLO SPH UT SHC FR REC RR OFC CBP O2 DRET KEYC KSH TC TSD INI SSP MI.
-  destruct SSP as [GOT GU]. unfold got_ssp, ssp_guard in GOT, GU. unfold g_shadow_memory_dynamic_address, SHB in SHC.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn [Z.of_N] in RSP.
-  remember (bv_unsigned sp) as SP eqn:ESP.
-  pose proof (munch_refl [(SP - 304, SP); (0xb9f780, 0xb9f780 + 4); (TP_A + -96, TP_A + -88)] m) as MU.
-  pose proof (wmono_refl asegs m) as WM.
-  assert (HWU : ut_fp [(SP - 304, SP); (0xb9f780, 0xb9f780 + 4); (TP_A + -96, TP_A + -88)]) by ut_fp_lia.
-  tcall (T_run_once_leave_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo (SP + -16) 0xb9f780 _ oldcb canary _ _ _ _ _ _ _ _ _).
-  all: try first [eassumption | reflexivity | split; assumption | unfold got_ssp, ssp_guard; lia | unfold got_ssp, ssp_guard; left; lia].
-  cbv beta delta [mkR]. unfold SITE_gdc_once2. rewrite (ret_pc_even 0x1f7708) by lia.
-  zstep. if_false. zstep. zstep. zstep. if_false.
+  intros until junk.
+  intros TpIs KeyBound ShadowChoice StackOk LoFloor LoRoom SpCap ImgClean ShadowBase GdcFrame RunOnceFrame OnceRa OnceFrame CbFrame
+    CtxOnceBusy CtxRetOne KeyIsJ KeyShadow TsdPtr TsdSlotEmpty InitedFlag Canary MemOk.
+  subst tp. unfold ssp_cells in Canary. destruct Canary as [GotSspCell GuardCell].
+  unfold got_ssp in GotSspCell. unfold ssp_guard in GotSspCell, GuardCell. unfold g_shadow_memory_dynamic_address in ShadowBase.
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. unfold bv_modulus in SpRange. cbn [Z.of_N] in SpRange.
+  pose proof (munch_refl [(bv_unsigned sp - 176, bv_unsigned sp); (0xb9f780, 0xb9f780 + 4); (TP_A + -96, TP_A + -88)] m) as Touched.
+  pose proof (wmono_refl asegs m) as Grown.
+  assert (OutsideImg : ut_fp [(bv_unsigned sp - 176, bv_unsigned sp); (0xb9f780, 0xb9f780 + 4); (TP_A + -96, TP_A + -88)]) by ut_fp_lia.
+  tcall (T_run_once_leave_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo (bv_unsigned sp + -16) 0xb9f780
+           (Z_to_bv 64 (bv_unsigned sp + -16 + -128)) oldcb canary (Z_to_bv 64 0x1f7708) sp s1 s2 s3 s4 s5 s6 junk);
+    [ first [ eassumption | split; eassumption | reflexivity | unfold got_ssp, ssp_guard; lia ] .. | ].
+  rename PC into Stack1, PC1 into CtxOnceDone, POST into CbBack. clear PC0.
+  zstep. th_if_lit.
+  do 2 zstep. zstep. th_if_lit.
   do 3 zstep.
-  tcall (T_get_local_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo TSD_MAIN j sb z64).
-  all: try first [eassumption | reflexivity | rewrite unsigned_lit by lia; first [eassumption | lia] | lia].
-  all: try exact (ut_munch _ m _ UT MU HWU).
-  cbv beta delta [mkR].
-  zstep. if_false.
-  do 5 zstep.
-  zstep. do 3 zstep.
-  lazymatch goal with H : stk asegs _ lo _ |- _ => release_frame FR H SP end.
-  zstep.
-  subst SP. rewrite ?Z_to_bv_bv_unsigned.
-  unfold gdc_w1_post. apply evt_done. do 5 eexists. split; [reflexivity|].
-  split; [exact MU|]. split; [exact WM|]. split; [assumption|].
-  repeat (split; [first [eassumption | split; eassumption] |]). eassumption.
+  tcall (T_get_local_proof _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo TSD_MAIN j sb z64);
+    [ first [ eassumption | reflexivity | lia | exact (ut_munch _ m _ ImgClean Touched OutsideImg) ] .. | ].
+  rename POST into Stack2.
+  zstep. th_if_lit.
+  do 6 zstep.
+  do 2 zstep.
+  release_frame GdcFrame Stack2 (bv_unsigned sp).
+  do 2 zstep.
+  finish.
+  split; assumption.
 Qed.

@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 
 
 From OssFuzzTheorems.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -133,8 +133,8 @@ Let sc : Z := bv_unsigned (rw rho 12%positive).
 Let req : Z := bv_unsigned (rw rho 13%positive).
 Let mW : word -> option byte := rm rho.
 Let vm : VmMaps := m_vmmaps md.
-Let rd0 := Glue.rd_of segsU mW.
-Let wok0 := Glue.wok_of segsU mW.
+Let rd0 := rd_of segsU mW.
+Let wok0 := wok_of segsU mW.
 
 Lemma S_MI : ltac2:(tb__ "0|0|
 Sa8S2bVX;S3fS3bSdS0A2A1VU;S67Vs;VL;A2Vrd0;Vwok0;Vvm;A8").
@@ -148,7 +148,10 @@ Lemma S_tier : ltac2:(tb__ "0|0|
 S30S76Z40S56Q40S57Vrho;S8dA2A2A2S33S4fS36S50Vsc;A1A1A1A1A2").
 Proof using HJ. pose proof (proj1 (proj2 (proj2 (proj2 HJ)))) as H. cbn zeta in H. unfold sc. tauto. Qed.
 
-Lemma S_tp : tp_ok C_U rho. Proof using HJ. exact (proj1 (proj2 (proj2 (proj2 (proj2 HJ))))). Qed.
+Lemma S_tp : tp_ok C_U rho.
+Proof using HJ.
+  destruct HJ as (_ & _ & _ & _ & tp_holds & _). exact tp_holds.
+Qed.
 Lemma S_init : ltac2:(tb__ "0|1|
 S1S41S28Vs;A1S45A3S2S52S8S2bVL;Vrho;A4S1S3cS3bSdS14A2M0A1S29Vs;A1S43G0A1A3A2F_;").
 Proof using HJ. exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 HJ)))))). Qed.
@@ -222,7 +225,9 @@ S2S30Z1000Vu10;A2S1S0S34Vu10;Z10A2Z0A3A2").
 Proof using Hsm req sc u15. pose proof S_sp_lo_lit. pose proof S_depth0. pose proof S_align. unfold AS_D in *. lia. Qed.
 
 Lemma S_rom : rom_ok segsU ms.
-Proof using Hsm. exact (proj1 (proj2 (proj2 (proj2 (proj2 Hsm))))). Qed.
+Proof using Hsm.
+  pose proof Hsm as (_ & _ & _ & _ & rom_same & _). exact rom_same.
+Qed.
 
 Lemma S_rom_clear : ltac2:(tb__ "0|1|
 S0S2S30Z0R1A2S32R1Z80A2A2S1S3dS54Q8A1M0A1VmW;S55Q40S31Z108ccR2A2A2A1S3fG0A1A3F_;Fkk;").
@@ -258,13 +263,13 @@ Qed.
 Lemma S_ctx : ly_ctx L = 0x5a3d0. Proof using HJ rd0 vm wok0. exact (mig_ctx S_MI). Qed.
 Lemma S_ctx_byte off : ltac2:(tb__ "0|1|
 S2S30Z0Voff;A2S32Voff;S6eA2A2S3S54Q8A1M0G0S1S3dG0A1Vrd0;S55Q40S31Z5a3d0Voff;A2A2A1S40G0R1A2A3Lb;A2F_;").
-Proof using HJ Hsm req sc u10 u15 vm wok0.
-  intros Ho.
-  pose proof (@U.Mal_aslot__G1.Mal_aslot_I.ctx_owned s L X U sc rho 0 0 S_inv S_xraw S_sc rd0 wok0 vm S_MI ltac:(lia) ltac:(lia) S_sp off Ho) as OW.
-  rewrite S_ctx in OW.
-  pose proof (proj2 (proj2 (proj1 (mig_reprO S_MI))) _ OW) as M.
-  destruct (byteview_of rd0 wok0 (0x5a3d0 + off)) as [vv|] eqn:E; [|exfalso; exact (M eq_refl)].
-  destruct (byteview_of_Some _ _ _ _ E) as (_ & _ & bb & Hb & _). exists bb. exact Hb.
+Proof using HJ Hsm.
+  intros off_rng.
+  pose proof (ctx_owned s L X U sc rho 0 0 S_inv S_xraw S_sc rd0 wok0 vm S_MI
+                ltac:(lia) ltac:(lia) S_sp off off_rng) as owned_at.
+  rewrite S_ctx in owned_at.
+  destruct (owned_rw s L X U rd0 wok0 vm S_MI mW eq_refl eq_refl _ owned_at) as [_ [byte_val byte_rd]].
+  exists byte_val. exact byte_rd.
 Qed.
 
 Lemma S_bnc : ltac2:(tb__ "0|3|
@@ -302,31 +307,44 @@ Lemma S_ring : ltac2:(tb__ "0|1|
 S3S3cSdA1M0G0S71S70VX;Vs;Vsc;A3S40SdVm0;A2S44SdVm0;R1A3A3Lrest;A2").
 Proof using HJ Hhd rd0 vm wok0. exact (ring_ex X None U s sc m0 S_inv S_sc Hhd). Qed.
 
-Local Notation mam := (U.Mal_aslot__G1.Mal_aslot_I.mam s m0).
-Local Notation mptr := (U.Mal_aslot__G1.Mal_aslot_I.mptr s m0).
+Local Notation mam := (mam s m0).
+Local Notation mptr := (mptr s m0).
 
 Lemma S_byte (x : member) : ltac2:(tb__ "0|5|
 S3S0S0S2S2S30Z0M0R1A2S32R1Z100A2A2S2S1S0S34R1Z20A2S11S7aVs;Vm0;Vx;A3M1A1M2A3S2S4S1S0S17G1A1G0A3A1S1S0R2G2A3F_;S1S3dS54Q8M3A1M4A1Vrd0;S55Q40S31S7bVL;S18G1A1A2Z8A2A2A1S40G4S55G3R1A2A2A3A2A2A2Lb;A2").
-Proof using HJ Hhd req u10 u15 vm wok0.
-  destruct (@U.Mal_aslot__G1.Mal_aslot_I.mam_used s X U sc S_inv S_sc m0 Hhd x) as (Hu & Hs & M).
-  pose proof (aidx_cell_In X None U s S_inv S_xraw (mptr x) (mam x) Hu) as CI.
-  pose proof (proj1 (Forall_forall _ _) (proj1 (proj2 (proj1 (mig_reprO S_MI)))) _ CI) as CH. cbn [ma_L ma_s] in CH.
-  pose proof (used_ranges X None U s S_inv (mptr x) (mam x) Hu) as (_ & _ & R3 & R4 & R5).
-  assert (AD : loc_addr L (LMem (padd (am_mem (mam x)) 8)) = U.Mal_aslot__G1.Mal_aslot_I.zA L (am_mem (mam x)) + 8).
-  { unfold zA, addr_of, loc_addr. destruct (am_mem (mam x)); cbn [padd]. lia. }
-  unfold aidx_cell in CH. destruct (am_maplen (mam x) =? 0) eqn:Em.
-  -
-    cbn [cell_holds mc_val mc_loc] in CH. rewrite AD in CH. destruct CH as (b & Hb & Hm).
-    destruct (byteview_of_Some _ _ _ _ Hb) as (_ & _ & bb & Hbb & ->).
-    pose proof (urange_n 8 bb) as R. change (2 ^ Z.of_N 8) with 256 in R.
-    exists (bv_unsigned bb). split; [lia|]. split; [exact Hm|]. split; [intros Hml; apply Z.eqb_eq in Em; lia|].
-    rewrite Hbb. f_equal. symmetry. apply Z_to_bv_bv_unsigned.
-  -
-    destruct (cell_bytes L _ _ _ (am_aidx (mam x)) CH eq_refl 0%nat ltac:(cbn; lia)) as (_ & _ & RB).
-    cbn [mc_loc mc_w Z.of_nat] in RB. rewrite AD, Z.add_0_r in RB.
-    exists (am_aidx (mam x)). split; [lia|]. split; [apply Z.mod_small; lia|]. split; [intros; reflexivity|].
-    rewrite RB. f_equal. f_equal. unfold le_byte. change (2 ^ (8 * Z.of_nat 4)) with (2 ^ 32). change (8 * Z.of_nat 0) with 0.
-    rewrite Z.shiftr_0_r. rewrite !Z.mod_small; lia.
+Proof using HJ Hhd.
+  pose proof (mam_used s X U sc S_inv S_sc m0 Hhd x) as (x_used & _ & _).
+  pose proof (used_ranges X None U s S_inv _ _ x_used) as (_ & _ & last_rng & aidx_rng & _).
+  assert (hdr_at : loc_addr L (LMem (padd (am_mem (mam x)) 8)) = zA L (am_mem (mam x)) + 8)
+    by (unfold zA, addr_of, loc_addr; destruct (am_mem (mam x)); cbn [padd]; lia).
+  pose proof (proj1 (Forall_forall _ _) (proj1 (proj2 (proj1 (mig_reprO S_MI))))
+                _ (aidx_cell_In X None U s S_inv S_xraw _ _ x_used)) as hdr_cell.
+  revert hdr_cell. unfold aidx_cell.
+  destruct (Z.eqb_spec (am_maplen (mam x)) 0) as [no_map | mapped]; intros hdr_cell;
+    cbn [cell_holds mc_loc mc_val mc_w sval_num ma_L] in hdr_cell; rewrite hdr_at in hdr_cell.
+  - destruct hdr_cell as (low_byte & view_at & low_bits).
+    unfold byteview_of in view_at.
+    destruct ((0 <=? zA L (am_mem (mam x)) + 8) && (zA L (am_mem (mam x)) + 8 <? 2 ^ 64)
+              && wok0 (Z_to_bv 64 (zA L (am_mem (mam x)) + 8))); [|discriminate].
+    destruct (rd0 (Z_to_bv 64 (zA L (am_mem (mam x)) + 8))) as [raw|] eqn:raw_at; [|discriminate].
+    injection view_at as <-.
+    pose proof (urange_n 8 raw) as raw_rng. change (2 ^ Z.of_N 8) with 256 in raw_rng.
+    exists (bv_unsigned raw).
+    split; [exact raw_rng|]. split; [exact low_bits|]. split; [intros map_nz; contradiction|].
+    now rewrite Z_to_bv_bv_unsigned.
+  - specialize (hdr_cell 0%nat ltac:(lia)). change (Z.of_nat 0) with 0 in hdr_cell.
+    rewrite Z.add_0_r in hdr_cell.
+    assert (byte_is : le_byte (am_aidx (mam x)) 4 0 = am_aidx (mam x)).
+    { unfold le_byte. change (8 * Z.of_nat 0) with 0. rewrite Z.shiftr_0_r.
+      rewrite (Z.mod_small _ (2 ^ (8 * Z.of_nat 4))) by (cbn; lia). apply Z.mod_small. lia. }
+    rewrite byte_is in hdr_cell. unfold byteview_of in hdr_cell.
+    destruct ((0 <=? zA L (am_mem (mam x)) + 8) && (zA L (am_mem (mam x)) + 8 <? 2 ^ 64)
+              && wok0 (Z_to_bv 64 (zA L (am_mem (mam x)) + 8))); [|discriminate].
+    destruct (rd0 (Z_to_bv 64 (zA L (am_mem (mam x)) + 8))) as [raw|] eqn:raw_at; [|discriminate].
+    injection hdr_cell as raw_val.
+    exists (am_aidx (mam x)).
+    split; [lia|]. split; [apply Z.mod_small; lia|]. split; [reflexivity|].
+    now rewrite <- raw_val, Z_to_bv_bv_unsigned.
 Qed.
 
 Lemma S_bytes : ltac2:(tb__ "0|5|
@@ -354,14 +372,18 @@ S1S41S98P4S4bS4aA1A2S45A3"). Proof using . vm_compute. reflexivity. Qed.
 
 Lemma rw1_below100 j : ltac2:(tb__ "0|0|
 S1S41Sa1Vj;A1S42A3S1S54Q40A1S57Vrho;Vj;A2S57VrhoW;Vj;A2A3F_;").
-Proof using L bnc byA byB byC byM0 byP gd m0 maskv s spanv.
-  intros Hj. unfold below100 in Hj. apply Pos.ltb_lt in Hj. unfold rhoW, U.Mal_aslot__G1.Mal_aslot_I.rho1. cbn [rw].
-  unfold U.Mal_aslot__G1.Mal_aslot_I.rw1, U.Mal_aslot__G1.Mal_aslot_I.rw1v. cbn zeta.
-  destruct (Z.pos j =? 12) eqn:E12.
-  { apply Z.eqb_eq in E12. assert (j = 12%positive) by lia. subst j. unfold sc. symmetry. apply Z_to_bv_bv_unsigned. }
-  destruct (Z.pos j =? 13) eqn:E13.
-  { apply Z.eqb_eq in E13. assert (j = 13%positive) by lia. subst j. unfold req. symmetry. apply Z_to_bv_bv_unsigned. }
-  repeat match goal with |- context [if ?c then _ else _] => let e := fresh in destruct c eqn:e; [exfalso; try apply Z.eqb_eq in e; try (apply andb_prop in e; destruct e as [e _]; apply Z.leb_le in e); lia|] end.
+Proof using.
+  unfold below100. intros j_low. apply Pos.ltb_lt in j_low.
+  assert (j_small : Z.pos j < 100) by lia.
+  unfold rhoW, rho1, rw1. cbn [rw]. unfold rw1v. cbv zeta.
+  destruct (Z.eqb_spec (Z.pos j) 12) as [is12 | _].
+  { injection is12 as ->. unfold sc. symmetry. apply Z_to_bv_bv_unsigned. }
+  destruct (Z.eqb_spec (Z.pos j) 13) as [is13 | _].
+  { injection is13 as ->. unfold req. symmetry. apply Z_to_bv_bv_unsigned. }
+  repeat match goal with
+         | |- context [?k <=? Z.pos j] => replace (k <=? Z.pos j) with false by (symmetry; apply Z.leb_gt; lia)
+         | |- context [Z.pos j =? ?k] => replace (Z.pos j =? k) with false by (symmetry; apply Z.eqb_neq; lia)
+         end.
   reflexivity.
 Qed.
 
@@ -375,23 +397,21 @@ Proof using . unfold S0. eexists. split; [|apply incl_filter]. unfold state_diff
 Lemma smatch_S0 F : ltac2:(tb__ "0|1|
 S1S41S61Sa0VF;A1M0A1S42A3S1S41SadS58S77VF;A3S42A3S95S58S78S7fVs;VL;Vsc;Vreq;Vrho;VbyM0;VbyA;VbyB;VbyC;VbyP;Vbnc;Vgd;Vmaskv;Vspanv;Vm0;AfS7eVs;VL;Vsc;Vreq;Vrho;VbyM0;VbyA;VbyB;VbyC;VbyP;Vbnc;Vgd;Vmaskv;Vspanv;Vm0;AfA2VF;A3S5cS8VrhoW;G0S3eS3cS73A1S96Vtr;S97Vms;Vmd;A2A4A4F_;F_;F_;").
 Proof using Hsm.
-  intros Hwf Hsup HF.
-  assert (Hsm1 : smatch segsU (mkVal (rw rhoW) (rl rho) (rm rho)) (Pre_as IEC_U) (tr, mkCfg ms md)).
-  { apply (smatch_agree_vars segsU below100 rho); [| intros; reflexivity | reflexivity | apply Pre_vars | exact Hsm].
-    intros v Hv. cbn [rw]. apply rw1_below100. exact Hv. }
-  assert (Hsm2 : smatch segsU rhoW (Pre_as IEC_U) (tr, mkCfg ms md)).
-  { replace rhoW with (rho_set_rl (rho_set_rl (mkVal (rw rhoW) (rl rho) (rm rho)) 4 (map (Z_to_bv 8) ctz_tab_bytes)) 1 (map (Z_to_bv 8) size_classes_bytes)).
-    - apply SymCall.smatch_set_rl; [apply Pre_nolist1|]. apply SymCall.smatch_set_rl; [apply Pre_nolist4|]. exact Hsm1.
-    - unfold rhoW, U.Mal_aslot__G1.Mal_aslot_I.rho1, rho_set_rl. cbn [rw rl rm]. f_equal. }
-  destruct (sd_Pre_S0 F) as (nf & Hsd & Hnf).
-  apply (smatch_restate segsU _ (Pre_as IEC_U) (S0 F) _ [] nf Hsm2 Hwf Hsd); [constructor|].
-  eapply incl_Forall; [exact Hnf|].
-  apply Forall_forall. intros p Hp. unfold rhoW. apply (proj2 (holds_zholds _ p (proj1 (forallb_forall _ _) Hsup p Hp))).
-  apply (proj1 (zholds_ext _ _ _ _ p (fun i => eq_refl) (fun l => eq_refl))).
-  rewrite (zholds_ext (zr_of _) (U.Mal_aslot__G1.Mal_aslot_I.zr1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0) (zl_of _) (U.Mal_aslot__G1.Mal_aslot_I.zl1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0) p).
-  - exact (proj1 (Forall_forall _ _) HF p Hp).
-  - intros i. reflexivity.
-  - intros l. unfold U.Mal_aslot__G1.Mal_aslot_I.zl1, zl_of. reflexivity.
+  intros wf_S0 sup_F zfacts.
+  set (rhoT := rho_set_rl (rho_set_rl rho 1 (map (Z_to_bv 8) size_classes_bytes)) 4 (map (Z_to_bv 8) ctz_tab_bytes)).
+  assert (pre_T : smatch segsU rhoT (Pre_as IEC_U) (tr, {| cfg_ms := ms; cfg_model := md |})).
+  { apply SymCall.smatch_set_rl; [exact Pre_nolist4|].
+    apply SymCall.smatch_set_rl; [exact Pre_nolist1|]. exact Hsm. }
+  assert (pre_W : smatch segsU rhoW (Pre_as IEC_U) (tr, {| cfg_ms := ms; cfg_model := md |})).
+  { refine (smatch_agree_vars segsU below100 rhoT rhoW _ _ _ _ eq_refl Pre_vars pre_T).
+    - intros v v_low. unfold rhoT. rewrite !rho_set_rl_rw. exact (rw1_below100 v v_low).
+    - intros l. unfold rhoT, rhoW, rho1. cbn [rl rho_set_rl]. unfold rl1.
+      destruct (Pos.eqb l 4) eqn:l_is4; destruct (Pos.eqb l 1) eqn:l_is1; try reflexivity.
+      apply Pos.eqb_eq in l_is4, l_is1. congruence. }
+  destruct (sd_Pre_S0 F) as (new_facts & diff_eq & new_in_F).
+  apply (smatch_restate segsU rhoW (Pre_as IEC_U) (S0 F) _ [] new_facts pre_W wf_S0 diff_eq (Forall_nil _)).
+  pose proof (facts_hold s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW F sup_F zfacts) as all_hold.
+  apply Forall_forall. intros p p_new. exact (proj1 (Forall_forall _ _) all_hold p (new_in_F p p_new)).
 Qed.
 End Walk.
 End SInst.
@@ -431,530 +451,502 @@ Section Top.
 Theorem try_avail_partK : ltac2:(tb__ "0|0|
 S3cSdA1S0S0F_;S66S3cS73A1S74OF_;F_;OOS0S81S81OF_;F_;F_;S9aS8R4R3R2R1A5S0S30Z0R1A2S9fS65R8A1A1S5aR6R4S75S8S4cS8S2bRcRbRaR9A6S4bS4aA1R1A4S80S5S92RdRcRbRaR2R1A6S9bRdRcRbRaR2R1A6A2Lw;A3Frho;F_;F_;FkB;F_;FTR;FGF;FRF;FKc;FA;FU;FX;").
 Proof.
-  intros X U [s L] Kc RF GF TR RR kB HkB Hpart rho.
-  apply (trr_inhP RR); [exact HkB|]. intros [tr [ms md]] [Hsm HJ].
-  cbn [w_tr w_cfg cfg_model cfg_ms fst snd ma_s] in HJ, Hpart.
-
-  set (sc := bv_unsigned (rw rho 12%positive)). set (req := bv_unsigned (rw rho 13%positive)).
-  set (mW := rm rho). set (vm := m_vmmaps md). set (rd0 := Glue.rd_of segsU mW). set (wok0 := Glue.wok_of segsU mW).
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_MI X U s L Kc rho tr md HJ) : MInvI C_U X None U (mkMA s L) rd0 wok0 vm) as HMI.
-  pose proof (mig_I HMI : Inv X None U s) as HI.
-  pose proof (@U.Mal_aslot__G11.Mal_aslot_SInst.S_xraw X U s L Kc rho tr md HJ) as HXr.
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_sc X U s L Kc rho tr md HJ) : 0 <= sc < 48) as Hsc.
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_req X U s L Kc rho tr md HJ) : 0 <= req /\ req + IB <= class_size sc) as Hreq.
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_tier X U s L Kc rho tr md HJ) : toS 64 (bv_unsigned (rw rho V_DEPTH)) <= - as_stack (Z.of_nat (tier sc))) as Htier.
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_tp X U s L Kc rho tr md HJ) : tp_ok C_U rho) as Htp.
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_init X U s L Kc rho tr md HJ) : st_init_done s = false -> auxv_init segsU C_U L rho /\ st_metas s = []) as HinitN.
-  pose proof (@U.Mal_aslot__G11.Mal_aslot_SInst.S_sp rho tr ms md Hsm) as Hsp. pose proof (@U.Mal_aslot__G11.Mal_aslot_SInst.S_depth rho tr ms md Hsm) as Hdepth. pose proof (@U.Mal_aslot__G11.Mal_aslot_SInst.S_sp_high X U s L Kc rho tr md HJ) as Hsp_high.
-  pose proof (@U.Mal_aslot__G11.Mal_aslot_SInst.S_rom rho tr ms md Hsm) as Hrom.
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_sct rho tr ms md Hsm) : forall kk, 0 <= kk < 96 -> mW (Z_to_bv 64 (0x108ec + kk)) = None) as Hm_sct.
-  pose proof ((@U.Mal_aslot__G11.Mal_aslot_SInst.S_ctz rho tr ms md Hsm) : forall kk, 0 <= kk < 32 -> mW (Z_to_bv 64 (0x108cc + kk)) = None) as Hm_ctz.
-  assert (Erd : rd0 = Glue.rd_of segsU mW) by reflexivity. assert (Ewok : wok0 = Glue.wok_of segsU mW) by reflexivity.
-  assert (EmW : mW = rm rho) by reflexivity. assert (Evm : vm = m_vmmaps md) by reflexivity.
-  assert (Hsc_rho : bv_unsigned (rw rho 12%positive) = sc) by reflexivity. assert (Hreq_rho : bv_unsigned (rw rho 13%positive) = req) by reflexivity.
-  destruct (@U.Mal_aslot__G11.Mal_aslot_SInst.S_gd X U s L Kc rho tr md HJ) as (gd & Hgd & Hgd_holds). fold mW rd0 in Hgd_holds.
-  destruct (@U.Mal_aslot__G11.Mal_aslot_SInst.S_bnc X U s L Kc rho tr ms md Hsm HJ) as (bnc & Hbnc & Hbnc_rd & Hbnc_val). fold sc mW rd0 in Hbnc_rd, Hbnc_val.
-  set (K := fun tr' md' => Kc tr' md' /\ tr' = tr /\ md' = md).
-  assert (HK : implK Kc K) by (intros tr0 md0 (HK0 & _ & _); exact HK0).
-  assert (HKc : forall tr' md', K tr' md' -> Kc tr' md' /\ tr' = tr /\ md' = md) by (intros tr' md' HK'; exact HK').
-  pose proof (@U.Mal_aslot__G11.Mal_aslot_SInst.S_Kc X U s L Kc rho tr md HJ) as HKc0.
-
-  assert (TAIL : forall (rhoW : valuation) (SA : sstate) (Q : assn),
-    smatch segsU rhoW (S0 (ss_facts SA)) (tr, mkCfg ms md) ->
-    (smatch segsU rhoW (S0 (ss_facts SA)) (tr, mkCfg ms md) -> smatch segsU rhoW SA (tr, mkCfg ms md)) ->
-    TR 0 (SymSoundR.SP segsU K SA rhoW) Q ->
-    (forall w, Q w -> HITP X U (mkMA s L) Kc rho w \/ GX X U (mkMA s L) Kc rho w) ->
-    exists P' : assn, P' (tr, mkCfg ms md) /\ TR kB P' (fun w => HITP X U (mkMA s L) Kc rho w \/ GX X U (mkMA s L) Kc rho w)).
-  { intros rhoW SA Q HS0 HC HT HQ. exists (SymSoundR.SP segsU K SA rhoW). split.
-    - split; [exact (HC HS0)|]. unfold liftK. cbn. unfold K. auto.
-    - apply (trr_mono RR 0 kB _ _ HkB). exact (trr_post RR _ _ _ HQ HT). }
-  destruct (active_hd s sc) as [m0|] eqn:Hhd.
-  2:{
-
-    apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW) SA_N (GX X U (mkMA s L) Kc rho)).
-    - apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm 0 0 0 0 0 0 gd 1 0 m0d (ss_facts SA_N)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G10.Mal_aslot_VN.ZF_N s L sc req rho gd Hsc Hgd Hsp Hdepth Hsp_high)].
-    - exact (@U.Mal_aslot__G10.Mal_aslot_VN.carve_N s L X U sc req rho gd Hsc rd0 wok0 vm HMI Hgd Hsp Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hgd_holds Hhd tr md).
-    - exact (@U.Mal_aslot__G10.Mal_aslot_VN.variant_N s L X U sc req rho gd HXr Hsc Hreq rd0 wok0 vm HMI Hgd Hsp Hdepth Hsp_high mW Erd Ewok ms Hm_sct Hm_ctz Hgd_holds Kc RF GF TR RR K HK Hhd tr md EmW Evm HKc Hsm Hsc_rho Hreq_rho Htier Htp HinitN).
-    - intros w' Hw'. right. exact Hw'. }
-  destruct (@U.Mal_aslot__G11.Mal_aslot_SInst.S_ring X U s L Kc rho tr md HJ m0 Hhd) as [rest Rg].
-  destruct (@U.Mal_aslot__G11.Mal_aslot_SInst.S_bytes X U s L Kc rho tr md HJ m0 Hhd) as (byM0 & byA & byB & byC & byP & Hbytes & Hbytes_rd). cbn zeta in Hbytes, Hbytes_rd.
-  change (forall x, 0 <= U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP x < 256 /\ U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP x mod 32 = am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 x) /\ (am_maplen (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 x) <> 0 -> U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP x = am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 x))) in Hbytes.
-  change (forall x, Glue.rd_of segsU (rm rho) (Z_to_bv 64 (U.Mal_aslot__G1.Mal_aslot_I.zA L (am_mem (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 x)) + 8)) = Some (Z_to_bv 8 (U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP x))) in Hbytes_rd. fold mW in Hbytes_rd.
-  pose proof Hsm as Hsm_pre.
-  destruct (Z.eq_dec (am_avail (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)) 0) as [HVa0|HVh].
-  - destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)) 0) as [HVf0|HVf0].
-    +
-      destruct rest as [|x1 [|x2 [|x3 [|x4 rest5]]]].
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [] = 1%nat) by reflexivity.
-        {
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := 1). assert (Hmaskv : 0 < maskv < 2 ^ 32) by (unfold maskv; lia).
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_E (GX X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_E)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G10.Mal_aslot_VE.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0)]. }
-          { exact (@U.Mal_aslot__G10.Mal_aslot_VE.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds tr md Hr). }
-          { exact (@U.Mal_aslot__G10.Mal_aslot_VE.variant_E s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Htier Htp Hr HVa0 HVf0). }
-          { intros w' Hw'. right. exact Hw'. } }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [x1] = 2%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          exfalso. unfold U.Mal_aslot__G3.Mal_aslot_T.maskA in HVact. rewrite HVskip in HVact.
-          pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) MA_) as (_ & _ & R3 & R4 & _).
-          refine (land_ones_nz _ _ _ _ HVact); lia.
-        ++
-          pose proof (@U.Mal_aslot__G3.Mal_aslot_VD2sh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D2sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D2sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G3.Mal_aslot_VD2sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD2sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD2sh.variant_D2sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G10.Mal_aslot_VD2ns.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          assert (ALT : am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_) < am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)).
-          { pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) MA_) as (_ & _ & R3 & R4 & _).
-            destruct (Z.eq_dec (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_))) as [EQ|NE]; [|lia]. exfalso. apply HM3.
-            rewrite (@U.Mal_aslot__G10.Mal_aslot_VD2ns.Emask s m0). rewrite (@U.Mal_aslot__G10.Mal_aslot_VD2ns.span_cnt_eq s X U sc HI Hsc m0 Hhd).
-            pose proof (@U.Mal_aslot__G10.Mal_aslot_VD2ns.cnt1_ge s sc m0) as CG. unfold U.Mal_aslot__G10.Mal_aslot_VD2ns.cnt1 in CG |- *.
-            destruct (Z.ltb_spec (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_) + 1) (span_loop 300 (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_) + 2) (span0_of sc (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_))) (class_size sc))); [|lia].
-            replace (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_) + 1 - 1) with (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) by lia. exact HVact. }
-          assert (HVpart : 4096 - UNIT < class_size sc * (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_) + 2)).
-          { destruct ((@U.Mal_aslot__G1.Mal_aslot_I.mam_used s X U sc HI Hsc m0 Hhd) MA_) as (_ & Hs3 & M3T). rewrite <- Hs3. exact (Hpart _ _ M3T ALT). }
-          pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) MA_) as (_ & _ & Q3 & Q4 & _).
-          destruct (span_facts sc (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) Hsc ltac:(lia) HVpart) as [_ LE300].
-          pose proof (span_loop_ge 300 (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_) + 2) (span0_of sc (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_))) (class_size sc)) as GE2.
-          set (spanv := (@U.Mal_aslot__G10.Mal_aslot_VD2ns.cnt1 s sc m0)). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv, U.Mal_aslot__G10.Mal_aslot_VD2ns.cnt1; lia).
-          assert (Hsv : spanv = (@U.Mal_aslot__G10.Mal_aslot_VD2ns.cnt1 s sc m0)) by reflexivity.
-          set (maskv := t_mask (@U.Mal_aslot__G10.Mal_aslot_VD2ns.AM3 s m0)).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof (@U.Mal_aslot__G10.Mal_aslot_VD2ns.maskS_range s L X U sc rho byM0 byA byB byC byP bnc gd HI Hsc m0 Hhd [x1] rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hr) as MR; unfold maskv; lia).
-          assert (Hmv : maskv = t_mask (@U.Mal_aslot__G10.Mal_aslot_VD2ns.AM3 s m0)) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D2ns (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D2ns)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G10.Mal_aslot_VD2ns.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G10.Mal_aslot_VD2ns.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G10.Mal_aslot_VD2ns.variant_D2ns s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G3.Mal_aslot_VD2nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D2nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D2nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G3.Mal_aslot_VD2nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD2nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD2nh.variant_D2nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2] = 3%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G4.Mal_aslot_VD3sr.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3sr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G4.Mal_aslot_VD3sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD3sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD3sr.variant_D3sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G4.Mal_aslot_VD3sh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G4.Mal_aslot_VD3sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD3sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD3sh.variant_D3sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G3.Mal_aslot_VD3nr.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3nr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G3.Mal_aslot_VD3nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD3nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD3nr.variant_D3nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G3.Mal_aslot_VD3nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D3nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D3nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G3.Mal_aslot_VD3nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD3nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G3.Mal_aslot_VD3nh.variant_D3nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2; x3] = 4%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G5.Mal_aslot_VD4sr.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MC) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4sr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G5.Mal_aslot_VD4sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VD4sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VD4sr.variant_D4sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G4.Mal_aslot_VD4sh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G4.Mal_aslot_VD4sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD4sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD4sh.variant_D4sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G4.Mal_aslot_VD4nr.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4nr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G4.Mal_aslot_VD4nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD4nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD4nr.variant_D4nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G4.Mal_aslot_VD4nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D4nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D4nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G4.Mal_aslot_VD4nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD4nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G4.Mal_aslot_VD4nh.variant_D4nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls (x1 :: x2 :: x3 :: x4 :: rest5) = 5%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G6.Mal_aslot_VD5sr.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MC) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5sr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G6.Mal_aslot_VD5sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VD5sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VD5sr.variant_D5sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G6.Mal_aslot_VD5sh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G6.Mal_aslot_VD5sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VD5sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VD5sh.variant_D5sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G5.Mal_aslot_VD5nr.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5nr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G5.Mal_aslot_VD5nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VD5nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VD5nr.variant_D5nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G5.Mal_aslot_VD5nh.HVmask3 s L X U sc rho bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hsp Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_D5nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_D5nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G5.Mal_aslot_VD5nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VD5nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VD5nh.variant_D5nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-    +
-      destruct rest as [|x1 [|x2 [|x3 [|x4 rest5]]]].
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [] = 1%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) 0) as [HVact|HVact].
-        ++
-          exfalso. unfold U.Mal_aslot__G3.Mal_aslot_T.maskA in HVact. rewrite HVskip in HVact.
-          pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) MM0) as (_ & _ & R3 & R4 & _).
-          refine (land_ones_nz _ _ _ _ HVact); lia.
-        ++
-          pose proof (@U.Mal_aslot__G6.Mal_aslot_VR1sh.HVmask3 s X U sc HI Hsc m0 Hhd [] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MM0) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R1sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R1sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G6.Mal_aslot_VR1sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VR1sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VR1sh.variant_R1sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G10.Mal_aslot_VR1ns.HVmask3 s X U sc HI Hsc m0 Hhd [] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
-          assert (ALT : am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0) < am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)).
-          { pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) MM0) as (_ & _ & R3 & R4 & _).
-            destruct (Z.eq_dec (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)) (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0))) as [EQ|NE]; [|lia]. exfalso. apply HM3.
-            rewrite (@U.Mal_aslot__G10.Mal_aslot_VR1ns.Emask s m0). rewrite (@U.Mal_aslot__G10.Mal_aslot_VR1ns.span_cnt_eq s X U sc HI Hsc m0 Hhd).
-            pose proof (@U.Mal_aslot__G10.Mal_aslot_VR1ns.cnt1_ge s sc m0) as CG. unfold U.Mal_aslot__G10.Mal_aslot_VR1ns.cnt1 in CG |- *.
-            destruct (Z.ltb_spec (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0) + 1) (span_loop 300 (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0) + 2) (span0_of sc (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0))) (class_size sc))); [|lia].
-            replace (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0) + 1 - 1) with (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)) by lia. exact HVact. }
-          assert (HVpart : 4096 - UNIT < class_size sc * (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0) + 2)).
-          { destruct ((@U.Mal_aslot__G1.Mal_aslot_I.mam_used s X U sc HI Hsc m0 Hhd) MM0) as (_ & Hs3 & M3T). rewrite <- Hs3. exact (Hpart _ _ M3T ALT). }
-          pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) MM0) as (_ & _ & Q3 & Q4 & _).
-          destruct (span_facts sc (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0)) Hsc ltac:(lia) HVpart) as [_ LE300].
-          pose proof (span_loop_ge 300 (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0) + 2) (span0_of sc (am_aidx (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MM0))) (class_size sc)) as GE2.
-          set (spanv := (@U.Mal_aslot__G10.Mal_aslot_VR1ns.cnt1 s sc m0)). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv, U.Mal_aslot__G10.Mal_aslot_VR1ns.cnt1; lia).
-          assert (Hsv : spanv = (@U.Mal_aslot__G10.Mal_aslot_VR1ns.cnt1 s sc m0)) by reflexivity.
-          set (maskv := t_mask (@U.Mal_aslot__G10.Mal_aslot_VR1ns.AM3 s m0)).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof (@U.Mal_aslot__G10.Mal_aslot_VR1ns.maskS_range s L X U sc rho byM0 byA byB byC byP bnc gd HI Hsc m0 Hhd [] rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hr HVf0) as MR; unfold maskv; lia).
-          assert (Hmv : maskv = t_mask (@U.Mal_aslot__G10.Mal_aslot_VR1ns.AM3 s m0)) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R1ns (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R1ns)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G10.Mal_aslot_VR1ns.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G10.Mal_aslot_VR1ns.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G10.Mal_aslot_VR1ns.variant_R1ns s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G5.Mal_aslot_VR1nh.HVmask3 s X U sc HI Hsc m0 Hhd [] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MM0) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R1nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R1nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G5.Mal_aslot_VR1nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VR1nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G5.Mal_aslot_VR1nh.variant_R1nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [x1] = 2%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G7.Mal_aslot_VR2sr.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2sr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G7.Mal_aslot_VR2sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR2sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR2sr.variant_R2sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G6.Mal_aslot_VR2sh.HVmask3 s X U sc HI Hsc m0 Hhd [x1] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MM0) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G6.Mal_aslot_VR2sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VR2sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VR2sh.variant_R2sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G6.Mal_aslot_VR2nr.HVmask3 s X U sc HI Hsc m0 Hhd [x1] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MM0) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2nr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G6.Mal_aslot_VR2nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VR2nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G6.Mal_aslot_VR2nr.variant_R2nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G7.Mal_aslot_VR2nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R2nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R2nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G7.Mal_aslot_VR2nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR2nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR2nh.variant_R2nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2] = 3%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G7.Mal_aslot_VR3sr.HVmask3 s X U sc HI Hsc m0 Hhd [x1; x2] Rg Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MM0) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MM0) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3sr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G7.Mal_aslot_VR3sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR3sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR3sr.variant_R3sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G8.Mal_aslot_VR3sh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G8.Mal_aslot_VR3sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR3sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR3sh.variant_R3sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G7.Mal_aslot_VR3nr.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3nr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G7.Mal_aslot_VR3nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR3nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR3nr.variant_R3nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G7.Mal_aslot_VR3nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R3nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R3nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G7.Mal_aslot_VR3nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR3nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G7.Mal_aslot_VR3nh.variant_R3nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls [x1; x2; x3] = 4%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G9.Mal_aslot_VR4sr.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MC) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4sr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G9.Mal_aslot_VR4sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR4sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR4sr.variant_R4sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G8.Mal_aslot_VR4sh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G8.Mal_aslot_VR4sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR4sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR4sh.variant_R4sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G8.Mal_aslot_VR4nr.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4nr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G8.Mal_aslot_VR4nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR4nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR4nr.variant_R4nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G8.Mal_aslot_VR4nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R4nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R4nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G8.Mal_aslot_VR4nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR4nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR4nh.variant_R4nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd [x1; x2; x3] Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-      * assert (Hr : U.Mal_aslot__G1.Mal_aslot_I.rcls (x1 :: x2 :: x3 :: x4 :: rest5) = 5%nat) by reflexivity.
-        destruct (Z.eq_dec (am_freed (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)) (ones (am_last (U.Mal_aslot__G1.Mal_aslot_I.mam s m0 MA_)))) as [HVskip|HVskip].
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G9.Mal_aslot_VR5sr.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MC) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MC) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5sr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5sr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G9.Mal_aslot_VR5sr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR5sr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR5sr.variant_R5sr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G9.Mal_aslot_VR5sh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5sh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5sh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G9.Mal_aslot_VR5sh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR5sh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR5sh.variant_R5sh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        -- destruct (Z.eq_dec (U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) 0) as [HVact|HVact].
-        ++
-          pose proof (@U.Mal_aslot__G9.Mal_aslot_VR5nr.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MB) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MB) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5nr (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5nr)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G9.Mal_aslot_VR5nr.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR5nr.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G9.Mal_aslot_VR5nr.variant_R5nr s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-        ++
-          pose proof (@U.Mal_aslot__G8.Mal_aslot_VR5nh.HVmask3 s L X U sc bnc gd HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbnc Hgd Hr HVa0 HVf0 HVskip HVact) as HM3.
-          set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-          set (maskv := U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_).
-          assert (Hmaskv : 0 < maskv < 2 ^ 32) by (pose proof ((@U.Mal_aslot__G1.Mal_aslot_I.land_fa_range s L X U sc rho bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd Hsp) MA_) as MR; unfold maskv, U.Mal_aslot__G3.Mal_aslot_T.maskA in *; lia).
-          assert (Hmv : maskv = U.Mal_aslot__G3.Mal_aslot_T.maskA s m0 MA_) by reflexivity.
-          apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_R5nh (HITP X U (mkMA s L) Kc rho)).
-          { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_R5nh)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G8.Mal_aslot_VR5nh.ZF_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high Hr HVa0 HVf0 HVskip HVact)]. }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR5nh.carve_R s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val tr md Hr). }
-          { exact (@U.Mal_aslot__G8.Mal_aslot_VR5nh.variant_R5nh s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd (x1 :: x2 :: x3 :: x4 :: rest5) Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact Hmv). }
-          { intros w' Hw'. left. exact Hw'. }
-  -
-    set (spanv := 0). assert (Hspanv : 0 <= spanv <= 300) by (unfold spanv; lia).
-    set (maskv := 1). assert (Hmaskv : 0 < maskv < 2 ^ 32) by (unfold maskv; lia).
-    apply (TAIL (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) SA_H (HITP X U (mkMA s L) Kc rho)).
-    { apply (@U.Mal_aslot__G11.Mal_aslot_SInst.smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd maskv spanv m0 (ss_facts SA_H)); [vm_compute; reflexivity | vm_compute; reflexivity | exact (@U.Mal_aslot__G5.Mal_aslot_VH.ZF_H s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp Hdepth Hsp_high HVh)]. }
-    { exact (@U.Mal_aslot__G5.Mal_aslot_VH.carve_H s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds tr md). }
-    { exact (@U.Mal_aslot__G5.Mal_aslot_VH.variant_H s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rest Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho HVh). }
-    { intros w' Hw'. left. exact Hw'. }
+  intros X U A Kc RF GF TR RR kB kB_nn part_ok rho.
+  destruct A as [s L]. cbn [ma_s] in part_ok.
+  apply (TRRulesK.trr_inhP RR); [exact kB_nn|].
+  intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg cfg_model fst snd] in HJ.
+  set (K := fun (tr' : list event) (md' : Model) => Kc tr' md' /\ tr' = tr /\ md' = md).
+  assert (K_impl : TRRulesK.implK Kc K) by (intros tr' md' k_now; exact (proj1 k_now)).
+  assert (K_pin : forall tr' md', K tr' md' -> Kc tr' md' /\ tr' = tr /\ md' = md)
+    by (intros tr' md' k_now; exact k_now).
+  assert (glue : forall (SA : sstate) (rhoS : valuation) (Q : assn),
+            smatch segsU rhoS SA (tr, {| cfg_ms := ms; cfg_model := md |}) ->
+            (forall w, Q w -> HITP X U {| ma_s := s; ma_L := L |} Kc rho w \/ GX X U {| ma_s := s; ma_L := L |} Kc rho w) ->
+            TR 0 (SymSoundR.SP segsU K SA rhoS) Q ->
+            exists P' : assn, P' (tr, {| cfg_ms := ms; cfg_model := md |}) /\
+              TR kB P' (fun w => HITP X U {| ma_s := s; ma_L := L |} Kc rho w \/ GX X U {| ma_s := s; ma_L := L |} Kc rho w)).
+  { intros SA rhoS Q sm_SA into run. exists (SymSoundR.SP segsU K SA rhoS). split.
+    - split; [exact sm_SA|]. split; [exact (S_Kc X U s L Kc rho tr md HJ) | split; reflexivity].
+    - apply (TRRulesK.trr_mono RR 0 kB); [exact kB_nn|]. exact (TRRulesK.trr_post RR _ _ _ into run). }
+  pose proof (S_inv X U s L Kc rho tr md HJ) as inv0.
+  pose proof (S_xraw X U s L Kc rho tr md HJ) as xr0.
+  pose proof (S_sc X U s L Kc rho tr md HJ) as sc_rng.
+  pose proof (S_req X U s L Kc rho tr md HJ) as req_rng.
+  pose proof (S_MI X U s L Kc rho tr md HJ) as mi0.
+  pose proof (S_sp rho tr ms md Hsm) as sp0.
+  pose proof (S_depth rho tr ms md Hsm) as dep0.
+  pose proof (S_sp_high X U s L Kc rho tr md HJ) as sph0.
+  pose proof (S_rom rho tr ms md Hsm) as rom0.
+  pose proof (S_sct rho tr ms md Hsm) as sct0.
+  pose proof (S_ctz rho tr ms md Hsm) as ctz0.
+  pose proof (S_tier X U s L Kc rho tr md HJ) as tier0.
+  pose proof (S_tp X U s L Kc rho tr md HJ) as tp0.
+  pose proof (S_init X U s L Kc rho tr md HJ) as init0.
+  destruct (S_gd X U s L Kc rho tr md HJ) as (gd & gd_rng & gd_holds).
+  assert (mask_one : 0 < 1 < 2 ^ 32) by lia.
+  assert (span_zero : 0 <= 0 <= 300) by lia.
+  destruct (active_hd s (bv_unsigned (rw rho 12))) as [m0|] eqn:hd0.
+  2: {
+    pose proof (smatch_S0 s L rho tr ms md Hsm 0 0 0 0 0 0 gd 1 0 m0d (ss_facts SA_N)
+                  ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                  ltac:(eapply Mal_aslot__G10.Mal_aslot_VN.ZF_N; first [reflexivity | eassumption])) as sm_pre.
+    apply (glue SA_N (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho 0 0 0 0 0 0 gd 1 0 m0d (rm rho))
+             (GX X U {| ma_s := s; ma_L := L |} Kc rho)).
+    { eapply Mal_aslot__G10.Mal_aslot_VN.carve_N; first [reflexivity | eassumption]. }
+    { intros w reached. right. exact reached. }
+    eapply variant_N; first [reflexivity | eassumption].
+  }
+  destruct (S_ring X U s L Kc rho tr md HJ m0 hd0) as (rest & ring0).
+  destruct (S_bytes X U s L Kc rho tr md HJ m0 hd0) as (byM0 & byA & byB & byC & byP & by_lo & by_rd).
+  assert (bytes_ok : forall x : member, 0 <= mbyte byM0 byA byB byC byP x < 256 /\
+            mbyte byM0 byA byB byC byP x mod 32 = am_aidx (mam s m0 x) /\
+            (am_maplen (mam s m0 x) <> 0 -> mbyte byM0 byA byB byC byP x = am_aidx (mam s m0 x))) by exact by_lo.
+  assert (bytes_rd : forall x : member, rd_of segsU (rm rho) (Z_to_bv 64 (zA L (am_mem (mam s m0 x)) + 8)) =
+            Some (Z_to_bv 8 (mbyte byM0 byA byB byC byP x))) by exact by_rd.
+  clear by_lo by_rd.
+  destruct (S_bnc X U s L Kc rho tr ms md Hsm HJ) as (bnc & bnc_rng & bnc_rd & bnc_val).
+  pose proof (fun x => mem_R s L X U _ bnc gd inv0 sc_rng m0 hd0 _ _ _ mi0 bnc_rng gd_rng x) as mrng.
+  assert (mask_rng : forall x, maskA s m0 x <> 0 -> 0 < maskA s m0 x < 2 ^ 32).
+  { intros x mask_x. unfold maskA in *.
+    pose proof (land_fa_range s L X U _ rho bnc gd inv0 sc_rng m0 hd0 _ _ _ mi0 bnc_rng gd_rng sp0 x). lia. }
+  destruct (Z.eq_dec (am_avail (mam s m0 MM0)) 0) as [head_av | head_av].
+  2: {
+    pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd 1 0 m0 (ss_facts SA_H)
+                  ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                  ltac:(eapply Mal_aslot__G5.Mal_aslot_VH.ZF_H; first [reflexivity | eassumption])) as sm_pre.
+    apply (glue SA_H (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd 1 0 m0 (rm rho))
+             (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+    { eapply Mal_aslot__G5.Mal_aslot_VH.carve_H; first [reflexivity | eassumption]. }
+    { intros w reached. left. exact reached. }
+    eapply variant_H; first [reflexivity | eassumption].
+  }
+  destruct (rcls rest) as [|[|[|[|[|[|n6]]]]]] eqn:cls;
+    [exfalso; unfold rcls in cls; lia| | | | | | exfalso; unfold rcls in cls; lia].
+  all: destruct (Z.eq_dec (am_freed (mam s m0 MM0)) 0) as [head_fr | head_fr].
+  - pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd 1 0 m0 (ss_facts SA_E)
+                  ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                  ltac:(eapply Mal_aslot__G10.Mal_aslot_VE.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+    apply (glue SA_E (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd 1 0 m0 (rm rho))
+             (GX X U {| ma_s := s; ma_L := L |} Kc rho)).
+    { eapply Mal_aslot__G10.Mal_aslot_VE.carve_R; first [reflexivity | eassumption]. }
+    { intros w reached. right. exact reached. }
+    eapply variant_E; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MM0)) (ones (am_last (mam s m0 MM0)))) as [all_free | not_all].
+    + assert (mask_nz : maskA s m0 MM0 <> 0).
+      { unfold maskA. rewrite all_free. destruct (mrng MM0) as (_ & _ & last_x & aidx_x & _).
+        apply land_ones_nz; lia. }
+      pose proof (mask_rng MM0 mask_nz) as mv_rng.
+      pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (ss_facts SA_R1sh)
+                    ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                    ltac:(eapply Mal_aslot__G6.Mal_aslot_VR1sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+      apply (glue SA_R1sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (rm rho))
+               (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+      { eapply Mal_aslot__G6.Mal_aslot_VR1sh.carve_R; first [reflexivity | eassumption]. }
+      { intros w reached. left. exact reached. }
+      eapply variant_R1sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MM0) 0) as [mask_z | mask_nzn].
+      * pose proof (mam_used s X U _ inv0 sc_rng m0 hd0 MM0) as (used_x & sc_x & MT_x).
+        pose proof (proj1 (inv_groups inv0 _ _ used_x)) as (_ & _ & _ & _ & _ & _ & past_last & _).
+        destruct (mrng MM0) as (_ & _ & last_x & aidx_x & _).
+        assert (aidx_lt : am_aidx (mam s m0 MM0) < am_last (mam s m0 MM0)).
+        { destruct (Z.lt_ge_cases (am_aidx (mam s m0 MM0)) (am_last (mam s m0 MM0))) as [lt_last | ge_last]; [exact lt_last|].
+          exfalso. apply head_fr. apply Z.bits_inj_0. intros i.
+          destruct (Z.ltb_spec i 0) as [i_neg | i_nn]; [apply Z.testbit_neg_r; exact i_neg|].
+          destruct (Z.leb_spec i (am_aidx (mam s m0 MM0))) as [i_act | i_past].
+          - pose proof (f_equal (fun z => Z.testbit z i) mask_z) as bit_i. cbn beta in bit_i.
+            unfold maskA, ones in bit_i. rewrite Z.land_spec, Z.bits_0 in bit_i.
+            replace (2 ^ (am_aidx (mam s m0 MM0) + 1) - 1) with (Z.ones (am_aidx (mam s m0 MM0) + 1)) in bit_i
+              by (unfold Z.ones; rewrite Z.shiftl_1_l; lia).
+            rewrite Z.ones_spec_low, andb_true_r in bit_i by lia. exact bit_i.
+          - exact (proj2 (past_last i ltac:(lia))). }
+        pose proof (part_ok _ _ MT_x aidx_lt) as span_part. rewrite sc_x in span_part.
+        assert (sv_rng : 0 <= Mal_aslot__G10.Mal_aslot_VR1ns.cnt1 s (bv_unsigned (rw rho 12)) m0 <= 300).
+        { unfold Mal_aslot__G10.Mal_aslot_VR1ns.cnt1.
+          pose proof (span_facts (bv_unsigned (rw rho 12)) (am_aidx (mam s m0 MM0)) sc_rng ltac:(lia) span_part) as (_ & span_le).
+          pose proof (span_loop_ge 300 (am_aidx (mam s m0 MM0) + 2) (span0_of (bv_unsigned (rw rho 12)) (am_aidx (mam s m0 MM0))) (class_size (bv_unsigned (rw rho 12)))) as span_ge.
+          lia. }
+        assert (mv_rng : 0 < t_mask (Mal_aslot__G10.Mal_aslot_VR1ns.AM3 s m0) < 2 ^ 32).
+        { assert (mv_nz : t_mask (Mal_aslot__G10.Mal_aslot_VR1ns.AM3 s m0) <> 0) by (eapply Mal_aslot__G10.Mal_aslot_VR1ns.HVmask3; first [reflexivity | eassumption]).
+          assert (mv_le : 0 <= t_mask (Mal_aslot__G10.Mal_aslot_VR1ns.AM3 s m0) < 2 ^ 32) by (eapply Mal_aslot__G10.Mal_aslot_VR1ns.maskS_range; first [reflexivity | eassumption]).
+          lia. }
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (t_mask (Mal_aslot__G10.Mal_aslot_VR1ns.AM3 s m0)) (Mal_aslot__G10.Mal_aslot_VR1ns.cnt1 s (bv_unsigned (rw rho 12)) m0) m0 (ss_facts SA_R1ns)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G10.Mal_aslot_VR1ns.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R1ns (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (t_mask (Mal_aslot__G10.Mal_aslot_VR1ns.AM3 s m0)) (Mal_aslot__G10.Mal_aslot_VR1ns.cnt1 s (bv_unsigned (rw rho 12)) m0) m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G10.Mal_aslot_VR1ns.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R1ns; first [reflexivity | eassumption].
+      * pose proof (mask_rng MM0 mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (ss_facts SA_R1nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G5.Mal_aslot_VR1nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R1nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G5.Mal_aslot_VR1nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R1nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + assert (mask_nz : maskA s m0 MA_ <> 0).
+      { unfold maskA. rewrite all_free. destruct (mrng MA_) as (_ & _ & last_x & aidx_x & _).
+        apply land_ones_nz; lia. }
+      pose proof (mask_rng MA_ mask_nz) as mv_rng.
+      pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_D2sh)
+                    ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                    ltac:(eapply Mal_aslot__G3.Mal_aslot_VD2sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+      apply (glue SA_D2sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+               (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+      { eapply Mal_aslot__G3.Mal_aslot_VD2sh.carve_R; first [reflexivity | eassumption]. }
+      { intros w reached. left. exact reached. }
+      eapply variant_D2sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (frA_nz : am_freed (mam s m0 MA_) <> 0).
+        { pose proof (mam_used s X U _ inv0 sc_rng m0 hd0 MM0) as (used_h & sc_h & _).
+          destruct (head_links X U s _ m0 (mam s m0 MM0) inv0 sc_rng hd0 used_h sc_h)
+            as (pr & nx & _ & next_h & amn & used_n & _ & next_free).
+          pose proof (cls2 s X _ sc_rng m0 rest ring0 cls) as (_ & _ & _ & _ & pA_ne).
+          assert (pA_is : pA s m0 = nx).
+          { unfold pA, mnext. change (mrec s (pM0 m0)) with (mam s m0 MM0). rewrite next_h. reflexivity. }
+          destruct (usedX_MT _ _ _ _ used_n) as [MT_n _].
+          assert (mam_A : mam s m0 MA_ = amn).
+          { unfold mam, mrec. cbn [mptr]. rewrite pA_is, MT_n. reflexivity. }
+          rewrite mam_A. apply next_free. rewrite <- pA_is. exact pA_ne. }
+        pose proof (mam_used s X U _ inv0 sc_rng m0 hd0 MA_) as (used_x & sc_x & MT_x).
+        pose proof (proj1 (inv_groups inv0 _ _ used_x)) as (_ & _ & _ & _ & _ & _ & past_last & _).
+        destruct (mrng MA_) as (_ & _ & last_x & aidx_x & _).
+        assert (aidx_lt : am_aidx (mam s m0 MA_) < am_last (mam s m0 MA_)).
+        { destruct (Z.lt_ge_cases (am_aidx (mam s m0 MA_)) (am_last (mam s m0 MA_))) as [lt_last | ge_last]; [exact lt_last|].
+          exfalso. apply frA_nz. apply Z.bits_inj_0. intros i.
+          destruct (Z.ltb_spec i 0) as [i_neg | i_nn]; [apply Z.testbit_neg_r; exact i_neg|].
+          destruct (Z.leb_spec i (am_aidx (mam s m0 MA_))) as [i_act | i_past].
+          - pose proof (f_equal (fun z => Z.testbit z i) mask_z) as bit_i. cbn beta in bit_i.
+            unfold maskA, ones in bit_i. rewrite Z.land_spec, Z.bits_0 in bit_i.
+            replace (2 ^ (am_aidx (mam s m0 MA_) + 1) - 1) with (Z.ones (am_aidx (mam s m0 MA_) + 1)) in bit_i
+              by (unfold Z.ones; rewrite Z.shiftl_1_l; lia).
+            rewrite Z.ones_spec_low, andb_true_r in bit_i by lia. exact bit_i.
+          - exact (proj2 (past_last i ltac:(lia))). }
+        pose proof (part_ok _ _ MT_x aidx_lt) as span_part. rewrite sc_x in span_part.
+        assert (sv_rng : 0 <= Mal_aslot__G10.Mal_aslot_VD2ns.cnt1 s (bv_unsigned (rw rho 12)) m0 <= 300).
+        { unfold Mal_aslot__G10.Mal_aslot_VD2ns.cnt1.
+          pose proof (span_facts (bv_unsigned (rw rho 12)) (am_aidx (mam s m0 MA_)) sc_rng ltac:(lia) span_part) as (_ & span_le).
+          pose proof (span_loop_ge 300 (am_aidx (mam s m0 MA_) + 2) (span0_of (bv_unsigned (rw rho 12)) (am_aidx (mam s m0 MA_))) (class_size (bv_unsigned (rw rho 12)))) as span_ge.
+          lia. }
+        assert (mv_rng : 0 < t_mask (Mal_aslot__G10.Mal_aslot_VD2ns.AM3 s m0) < 2 ^ 32).
+        { assert (mv_nz : t_mask (Mal_aslot__G10.Mal_aslot_VD2ns.AM3 s m0) <> 0) by (eapply Mal_aslot__G10.Mal_aslot_VD2ns.HVmask3; first [reflexivity | eassumption]).
+          assert (mv_le : 0 <= t_mask (Mal_aslot__G10.Mal_aslot_VD2ns.AM3 s m0) < 2 ^ 32) by (eapply Mal_aslot__G10.Mal_aslot_VD2ns.maskS_range; first [reflexivity | eassumption]).
+          lia. }
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (t_mask (Mal_aslot__G10.Mal_aslot_VD2ns.AM3 s m0)) (Mal_aslot__G10.Mal_aslot_VD2ns.cnt1 s (bv_unsigned (rw rho 12)) m0) m0 (ss_facts SA_D2ns)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G10.Mal_aslot_VD2ns.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D2ns (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (t_mask (Mal_aslot__G10.Mal_aslot_VD2ns.AM3 s m0)) (Mal_aslot__G10.Mal_aslot_VD2ns.cnt1 s (bv_unsigned (rw rho 12)) m0) m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G10.Mal_aslot_VD2ns.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D2ns; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_D2nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G3.Mal_aslot_VD2nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D2nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G3.Mal_aslot_VD2nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D2nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + destruct (Z.eq_dec (maskA s m0 MM0) 0) as [mask_z | mask_nzs].
+      * assert (mask_nz : maskA s m0 MA_ <> 0) by (eapply Mal_aslot__G7.Mal_aslot_VR2sr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MA_ mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_R2sr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G7.Mal_aslot_VR2sr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R2sr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G7.Mal_aslot_VR2sr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R2sr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MM0 mask_nzs) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (ss_facts SA_R2sh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G6.Mal_aslot_VR2sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R2sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G6.Mal_aslot_VR2sh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R2sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (mask_nz : maskA s m0 MM0 <> 0) by (eapply Mal_aslot__G6.Mal_aslot_VR2nr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MM0 mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (ss_facts SA_R2nr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G6.Mal_aslot_VR2nr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R2nr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G6.Mal_aslot_VR2nr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R2nr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_R2nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G7.Mal_aslot_VR2nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R2nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G7.Mal_aslot_VR2nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R2nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + destruct (Z.eq_dec (maskA s m0 MB) 0) as [mask_z | mask_nzs].
+      * assert (mask_nz : maskA s m0 MA_ <> 0) by (eapply Mal_aslot__G4.Mal_aslot_VD3sr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MA_ mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_D3sr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G4.Mal_aslot_VD3sr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D3sr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G4.Mal_aslot_VD3sr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D3sr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MB mask_nzs) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_D3sh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G4.Mal_aslot_VD3sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D3sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G4.Mal_aslot_VD3sh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D3sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (mask_nz : maskA s m0 MB <> 0) by (eapply Mal_aslot__G3.Mal_aslot_VD3nr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MB mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_D3nr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G3.Mal_aslot_VD3nr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D3nr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G3.Mal_aslot_VD3nr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D3nr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_D3nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G3.Mal_aslot_VD3nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D3nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G3.Mal_aslot_VD3nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D3nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + destruct (Z.eq_dec (maskA s m0 MB) 0) as [mask_z | mask_nzs].
+      * assert (mask_nz : maskA s m0 MM0 <> 0) by (eapply Mal_aslot__G7.Mal_aslot_VR3sr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MM0 mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (ss_facts SA_R3sr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G7.Mal_aslot_VR3sr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R3sr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MM0) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G7.Mal_aslot_VR3sr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R3sr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MB mask_nzs) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_R3sh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G8.Mal_aslot_VR3sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R3sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G8.Mal_aslot_VR3sh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R3sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (mask_nz : maskA s m0 MB <> 0) by (eapply Mal_aslot__G7.Mal_aslot_VR3nr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MB mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_R3nr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G7.Mal_aslot_VR3nr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R3nr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G7.Mal_aslot_VR3nr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R3nr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_R3nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G7.Mal_aslot_VR3nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R3nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G7.Mal_aslot_VR3nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R3nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + destruct (Z.eq_dec (maskA s m0 MB) 0) as [mask_z | mask_nzs].
+      * assert (mask_nz : maskA s m0 MC <> 0) by (eapply Mal_aslot__G5.Mal_aslot_VD4sr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MC mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (ss_facts SA_D4sr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G5.Mal_aslot_VD4sr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D4sr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G5.Mal_aslot_VD4sr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D4sr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MB mask_nzs) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_D4sh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G4.Mal_aslot_VD4sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D4sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G4.Mal_aslot_VD4sh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D4sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (mask_nz : maskA s m0 MB <> 0) by (eapply Mal_aslot__G4.Mal_aslot_VD4nr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MB mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_D4nr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G4.Mal_aslot_VD4nr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D4nr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G4.Mal_aslot_VD4nr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D4nr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_D4nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G4.Mal_aslot_VD4nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D4nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G4.Mal_aslot_VD4nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D4nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + destruct (Z.eq_dec (maskA s m0 MB) 0) as [mask_z | mask_nzs].
+      * assert (mask_nz : maskA s m0 MC <> 0) by (eapply Mal_aslot__G9.Mal_aslot_VR4sr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MC mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (ss_facts SA_R4sr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G9.Mal_aslot_VR4sr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R4sr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G9.Mal_aslot_VR4sr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R4sr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MB mask_nzs) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_R4sh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G8.Mal_aslot_VR4sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R4sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G8.Mal_aslot_VR4sh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R4sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (mask_nz : maskA s m0 MB <> 0) by (eapply Mal_aslot__G8.Mal_aslot_VR4nr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MB mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_R4nr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G8.Mal_aslot_VR4nr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R4nr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G8.Mal_aslot_VR4nr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R4nr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_R4nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G8.Mal_aslot_VR4nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R4nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G8.Mal_aslot_VR4nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R4nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + destruct (Z.eq_dec (maskA s m0 MB) 0) as [mask_z | mask_nzs].
+      * assert (mask_nz : maskA s m0 MC <> 0) by (eapply Mal_aslot__G6.Mal_aslot_VD5sr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MC mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (ss_facts SA_D5sr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G6.Mal_aslot_VD5sr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D5sr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G6.Mal_aslot_VD5sr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D5sr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MB mask_nzs) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_D5sh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G6.Mal_aslot_VD5sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D5sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G6.Mal_aslot_VD5sh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D5sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (mask_nz : maskA s m0 MB <> 0) by (eapply Mal_aslot__G5.Mal_aslot_VD5nr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MB mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_D5nr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G5.Mal_aslot_VD5nr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D5nr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G5.Mal_aslot_VD5nr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D5nr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_D5nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G5.Mal_aslot_VD5nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_D5nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G5.Mal_aslot_VD5nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_D5nh; first [reflexivity | eassumption].
+  - destruct (Z.eq_dec (am_freed (mam s m0 MA_)) (ones (am_last (mam s m0 MA_)))) as [all_free | not_all].
+    + destruct (Z.eq_dec (maskA s m0 MB) 0) as [mask_z | mask_nzs].
+      * assert (mask_nz : maskA s m0 MC <> 0) by (eapply Mal_aslot__G9.Mal_aslot_VR5sr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MC mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (ss_facts SA_R5sr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G9.Mal_aslot_VR5sr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R5sr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MC) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G9.Mal_aslot_VR5sr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R5sr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MB mask_nzs) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_R5sh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G9.Mal_aslot_VR5sh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R5sh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G9.Mal_aslot_VR5sh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R5sh; first [reflexivity | eassumption].
+    + destruct (Z.eq_dec (maskA s m0 MA_) 0) as [mask_z | mask_nzn].
+      * assert (mask_nz : maskA s m0 MB <> 0) by (eapply Mal_aslot__G9.Mal_aslot_VR5nr.HVmask3; first [reflexivity | eassumption]).
+        pose proof (mask_rng MB mask_nz) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (ss_facts SA_R5nr)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G9.Mal_aslot_VR5nr.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R5nr (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MB) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G9.Mal_aslot_VR5nr.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R5nr; first [reflexivity | eassumption].
+      * pose proof (mask_rng MA_ mask_nzn) as mv_rng.
+        pose proof (smatch_S0 s L rho tr ms md Hsm byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (ss_facts SA_R5nh)
+                      ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+                      ltac:(eapply Mal_aslot__G8.Mal_aslot_VR5nh.ZF_R; first [reflexivity | eassumption])) as sm_pre.
+        apply (glue SA_R5nh (rho1 s L (bv_unsigned (rw rho 12)) (bv_unsigned (rw rho 13)) rho byM0 byA byB byC byP bnc gd (maskA s m0 MA_) 0 m0 (rm rho))
+                 (HITP X U {| ma_s := s; ma_L := L |} Kc rho)).
+        { eapply Mal_aslot__G8.Mal_aslot_VR5nh.carve_R; first [reflexivity | eassumption]. }
+        { intros w reached. left. exact reached. }
+        eapply variant_R5nh; first [reflexivity | eassumption].
 Qed.
 
 Theorem try_avail_part : ltac2:(tb__ "0|0|
 S80OF_;S3cSdA1S0S0F_;S66S3cS73A1S74OF_;F_;S5aS89S8R6R2A3S9fS65R4A1A1S82S8R8S75S8S4cS8S2bR7R6R5R4A6S4bS4aA1R3A4S80S5S92R8R7R6R5R4R1A6S9bR8R7R6R5R4R1A6A2Lw;A4F_;F_;Frho;FKc;FA;FU;FX;Fok;").
 Proof.
-  intros ok X U A Kc rho HS Hpart.
-  exact (try_avail_partK X U A Kc True True (fun _ => triple segsU ok) (tr_rules_triple segsU Kc ok HS) 0 (Z.le_refl 0) Hpart rho).
+  intros ok X U A Kc rho side_ok part_ok.
+  exact (try_avail_partK X U A Kc True True (fun _ => triple segsU ok) (tr_rules_triple segsU Kc ok side_ok)
+           0 (Z.le_refl 0) part_ok rho).
 Qed.
 
 End Top.
@@ -1055,14 +1047,17 @@ S0ScS1SfScS3bS0ScA2M0A2S10Vsc;Vs;A2SeScG0S3eS0ScR2R1A4A3A3S4S1S0R3Z0A3A1VOg;F_;F
 Lemma hit_conv w : ltac2:(tb__ "0|0|
 S92VX;VU;VA;VKc;Vrho;Vw;A6S62S8S9Vrho;S84S8S2bS4aVNf;VOg;VX;VU;VA;VKc;A9Vw;A5F_;").
 Proof using HJ0 HOg.
-  intros [(first & s1 & Hta & Hnz) (Lf & JL & rho' & Hin & Hag & Hsm & HJ)]. cbn [ma_s] in Hta.
-  destruct Hin as [EQ | [EQ | []]]; injection EQ as <- <-.
-  -
-    exfalso. cbn zeta in HJ. destruct HJ as (A' & _ & _ & _ & _ & _ & _ & _ & Hy & _).
-    destruct (Hy (need sc) (Nat.le_refl _)) as [ktr Hk].
-    exact (alloc_slot_hit_not_fail X U sc req s first s1 (need sc) ktr (ma_s A') HI0 Hsc0 Hta Hnz Hk).
-  - exists (L_as_ok IEC_U), (JL_as_okG segsU C_U Og X U A Kc), rho'. split; [right; left; reflexivity|].
-    split; [exact Hag|]. split; [exact Hsm|]. split; [exact (HOg first s1 Hta Hnz) | exact HJ].
+  intros [(first & s1 & ta_hit & first_nz) (Lx & JLx & rhoX & post_in & agreeX & matched & jl_holds)].
+  cbn [Posts_as In] in post_in.
+  destruct post_in as [fail_eq | [ok_eq | []]].
+  - exfalso. injection fail_eq as Lx_is JLx_is. subst Lx JLx.
+    destruct jl_holds as (A' & _ & _ & _ & _ & _ & _ & _ & fail_runs & _).
+    destruct (fail_runs (need sc) (Nat.le_refl _)) as (ktr & fail_run).
+    exact (alloc_slot_hit_not_fail X U sc req s first s1 (need sc) ktr (ma_s A') HI0 Hsc0 ta_hit first_nz fail_run).
+  - injection ok_eq as Lx_is JLx_is. subst Lx JLx.
+    exists (L_as_ok IEC_U), (JL_as_okG segsU C_U Og X U A Kc), rhoX.
+    split; [now right; left|]. split; [exact agreeX|]. split; [exact matched|].
+    split; [exact (HOg first s1 ta_hit first_nz) | exact jl_holds].
 Qed.
 
 Variables (sG : astate) (rhoG : valuation) (trG : list event) (mdG : Model).
@@ -1091,8 +1086,11 @@ S1S54Q40A1S57VrhoG;PdM0A2S57Vrho;G0A2A3"). Proof using Hag. symmetry. apply (pro
 Lemma kept0G : ltac2:(tb__ "0|0|
 S87S8S2bVA;VA_G;S59Vrho;A1S59VrhoG;A1A6").
 Proof using HJ0 HJG Hkept.
-  exact (mem_kept_of_ownedG_U X None U X None U A A_G _ _ _ _ _ _ (rm rho) (rm rhoG)
-           HMI0 HXr0 (proj1 HJG) (proj1 (proj2 HJG)) Hkept).
+  destruct HJG as (MI_G & xraw_G & _).
+  exact (mem_kept_of_ownedG_U X None U X None U A A_G
+           (Contract.rd_of segsU (rm rho)) (Contract.wok_of segsU (rm rho)) (m_vmmaps md0)
+           (Contract.rd_of segsU (rm rhoG)) (Contract.wok_of segsU (rm rhoG)) (m_vmmaps mdG)
+           (rm rho) (rm rhoG) HMI0 HXr0 MI_G xraw_G Hkept).
 Qed.
 
 Lemma client_addr_G a : ltac2:(tb__ "0|0|
@@ -1103,7 +1101,11 @@ Qed.
 
 Lemma kept_G A' m' : ltac2:(tb__ "0|0|
 S87S8S2bVA_G;VA';S59VrhoG;A1Vm';A6S87S8S2bVA;VA';S59Vrho;A1Vm';A6F_;").
-Proof using HJ0 HJG Hkept Hub. intros HK. exact (mem_kept_trans segsU C_U A A_G A' _ _ _ (fun a Ha _ => client_addr_G a Ha) kept0G HK). Qed.
+Proof using HJ0 HJG Hkept Hub.
+  intros later_kept.
+  refine (mem_kept_trans segsU C_U A A_G A' (rm rho) (rm rhoG) m' _ kept0G later_kept).
+  intros a addr_in_A _. exact (client_addr_G a addr_in_A).
+Qed.
 
 Lemma heads_G s' : ltac2:(tb__ "0|0|
 S99VsG;Vs';Vsc;A3S99Vs;Vs';Vsc;A3F_;").
@@ -1112,48 +1114,68 @@ Proof using Hheads req. intros HB c Hc. rewrite (HB c Hc). apply Hheads; lia. Qe
 Lemma canary_G m' : ltac2:(tb__ "0|0|
 Sa7S8S2bS56Q40S57VrhoG;PaeA2A2Vm';A4S53S8S2bS59Vrho;A1Vm';A4F_;").
 Proof using HJ0 Hgd.
-  intros [CG CD] a Ha.
-  pose proof (mig_statics HMI0) as ST. destruct ST as (_ & _ & _ & _ & _ & _ & _ & _ & g0 & HGOT & _).
-  destruct Ha as [Ha|Ha].
-  - set (k := Z.to_nat (a - mc_chk_guard_got C_U)).
-    replace a with (mc_chk_guard_got C_U + Z.of_nat k) by (unfold k; lia).
-    rewrite (CG k ltac:(unfold k; lia)). symmetry. exact (holds_rd_bytes _ _ _ k HGOT ltac:(unfold k; lia)).
-  - set (k := Z.to_nat (a - mc_chk_guard C_U)).
-    replace a with (mc_chk_guard C_U + Z.of_nat k) by (unfold k; lia).
-    rewrite (CD k ltac:(unfold k; lia)). symmetry. exact (holds_rd_bytes _ _ _ k Hgd ltac:(unfold k; lia)).
+  (* The image invariant at entry fixes the eight GOT bytes that hold the guard's address. *)
+  destruct (mig_statics HMI0) as (_ & _ & _ & _ & _ & _ & _ & _ & g_entry & got_at_entry & _).
+  (* Two eight-byte windows: where the final memory and the entry memory hold the same value, they read alike. *)
+  assert (window_same : forall (base v : Z),
+            holds (byteview_of (Contract.rd_of segsU (rm rho)) (fun _ => true)) base 8 v ->
+            (forall k : nat, (k < 8)%nat ->
+               Contract.rd_of segsU m' (Z_to_bv 64 (base + Z.of_nat k)) = Some (Z_to_bv 8 (le_byte v 8 k))) ->
+            forall a, base <= a < base + 8 ->
+            Contract.rd_of segsU m' (Z_to_bv 64 a) = Contract.rd_of segsU (rm rho) (Z_to_bv 64 a)).
+  { intros base v entry_holds final_reads a a_in_window.
+    destruct (Z_of_nat_complete (a - base)) as [off off_is]; [lia|].
+    assert (off_small : (off < 8)%nat) by lia.
+    replace a with (base + Z.of_nat off) by lia.
+    rewrite (holds_rd_bytes _ base v off entry_holds off_small).
+    exact (final_reads off off_small). }
+  intros [final_got final_guard] a a_in_canary.
+  destruct a_in_canary as [a_in_got | a_in_guard].
+  - exact (window_same _ _ got_at_entry final_got a a_in_got).
+  - exact (window_same _ _ Hgd final_guard a a_in_guard).
 Qed.
 
 Lemma gx_conv w : ltac2:(tb__ "0|0|
 Sa6S8S2bS4aVNf;VOg;VX;VU;VA_G;VKc;VrhoG;Vw;AbS62S8S9Vrho;S84S8S2bS4aVNf;VOg;VX;VU;VA;VKc;A9Vw;A5F_;").
 Proof using HJ0 HJG Hag Hgd Hheads Hkept Hregs Hta0 Hub.
-  intros (Lf & JL & rho' & Hin & HagG & Hsm & HJ).
-  assert (Hag' : agree_vals NF rho rho') by (exact (agree_vals_trans NF rho rhoG rho' Hag HagG)).
-  destruct Hin as [EQ | [EQ | []]]; injection EQ as <- <-.
-  - exists (L_as_fail IEC_U), (JL_as_failG segsU C_U Nf X U A Kc), rho'. split; [left; reflexivity|].
-    split; [exact Hag'|]. split; [exact Hsm|].
-    destruct HJ as [HNf HJ]. split; [exact HNf|].
-    unfold JLg_fail in HJ. cbn zeta in HJ. rewrite rw12G, rw13G in HJ. unfold A_G in HJ. cbn [ma_s ma_L] in HJ. unfold JL_as_fail, A. cbn zeta. cbn [ma_s ma_L].
-    destruct HJ as (A' & HMI & HXr & Hext & Hhb & Hub' & Hk & Hcan & Hy & HKc).
-    exists A'. cbn [ma_s ma_L].
-    split; [exact HMI|]. split; [exact HXr|]. split; [rewrite <- Hregs; exact Hext|].
-    split; [exact (heads_G _ Hhb)|]. split; [exact (ub_same_trans s sG (ma_s A') Hub Hub')|].
-    split; [exact (kept_G A' (rm rho') Hk)|]. split; [exact (canary_G (rm rho') Hcan)|].
-    split; [|exact HKc].
-    intros fuel Hf. destruct fuel as [|f]; [pose proof (need_ge2 (bv_unsigned (rw rho 12%positive))); lia|].
-    destruct (Hy f Hf) as [ktr Hg]. exists ktr. exact (alloc_slot_of_group sc req s sG f ktr None (ma_s A') Hta0 Hg).
-  - exists (L_as_ok IEC_U), (JL_as_okG segsU C_U Og X U A Kc), rho'. split; [right; left; reflexivity|].
-    split; [exact Hag'|]. split; [exact Hsm|].
-    destruct HJ as [HOgx HJ]. split; [exact HOgx|].
-    unfold JLg_ok in HJ. cbn zeta in HJ. rewrite rw12G, rw13G in HJ. unfold A_G in HJ. cbn [ma_s ma_L] in HJ. unfold JL_as_ok, A. cbn zeta. cbn [ma_s ma_L].
-    destruct HJ as (Hres & A' & g & am & HMI & HXr & Hext & Hhd & Hused & Hsc' & Hreq & Hlast & Hhb & Hub' & Hk & Hcan & Hy & HKc).
-    exists A', g, am. cbn [ma_s ma_L]. rewrite Hres.
-    split; [exact HMI|]. split; [exact HXr|]. split; [rewrite <- Hregs; exact Hext|].
-    split; [exact Hhd|]. split; [exact Hused|]. split; [exact Hsc'|]. split; [exact Hreq|]. split; [lia|].
-    split; [exact (heads_G _ Hhb)|]. split; [exact (ub_same_trans s sG (ma_s A') Hub Hub')|].
-    split; [exact (kept_G A' (rm rho') Hk)|]. split; [exact (canary_G (rm rho') Hcan)|].
-    split; [|exact HKc].
-    intros fuel Hf. destruct fuel as [|f]; [pose proof (need_ge2 (bv_unsigned (rw rho 12%positive))); lia|].
-    destruct (Hy f Hf) as [ktr Hg]. exists ktr. exact (alloc_slot_of_group sc req s sG f ktr (Some g) (ma_s A') Hta0 Hg).
+  intros (Lx & JLx & rhoX & post_in & agreeX & matched & jl_holds).
+  pose proof rw12G as same12. pose proof rw13G as same13.
+  assert (need2 : (2 <= need (bv_unsigned (rw rho 12)))%nat)
+    by (unfold need; destruct (Z.ltb_spec (bv_unsigned (rw rho 12)) 24); lia).
+  cbn [Posts_ag In] in post_in.
+  destruct post_in as [fail_eq | [ok_eq | []]].
+  - injection fail_eq as Lx_is JLx_is. subst Lx JLx.
+    destruct jl_holds as (nf_holds & A' & MI' & xraw' & ext' & heads' & ub' & kept' & canary' & runs' & kc').
+    rewrite same12 in heads', runs'. rewrite same13 in runs'.
+    change (layout_extends L (ma_L A') (length (st_regions sG))) in ext'. rewrite Hregs in ext'.
+    exists (L_as_fail IEC_U), (JL_as_failG segsU C_U Nf X U A Kc), rhoX.
+    split; [now left|]. split; [exact (agree_vals_trans NF rho rhoG rhoX Hag agreeX)|].
+    split; [exact matched|]. split; [exact nf_holds|].
+    unfold JL_as_fail. cbv zeta. exists A'.
+    split; [exact MI'|]. split; [exact xraw'|]. split; [exact ext'|].
+    split; [exact (heads_G _ heads')|]. split; [exact (ub_same_trans s sG (ma_s A') Hub ub')|].
+    split; [exact (kept_G A' (rm rhoX) kept')|]. split; [exact (canary_G (rm rhoX) canary')|].
+    split; [|exact kc'].
+    intros [|f] need_le; [lia|].
+    destruct (runs' f need_le) as (ktr & grp_run).
+    exists ktr. exact (alloc_slot_of_group sc req s sG f ktr None (ma_s A') Hta0 grp_run).
+  - injection ok_eq as Lx_is JLx_is. subst Lx JLx.
+    destruct jl_holds as (og_holds & res0 & A' & g & am & MI' & xraw' & ext' & hd' & used' & am_sc' & stride'
+                          & last' & heads' & ub' & kept' & canary' & runs' & kc').
+    rewrite same12 in hd', am_sc', heads', runs'. rewrite same13 in stride', runs'.
+    change (layout_extends L (ma_L A') (length (st_regions sG))) in ext'. rewrite Hregs in ext'.
+    exists (L_as_ok IEC_U), (JL_as_okG segsU C_U Og X U A Kc), rhoX.
+    split; [now right; left|]. split; [exact (agree_vals_trans NF rho rhoG rhoX Hag agreeX)|].
+    split; [exact matched|]. split; [exact og_holds|].
+    unfold JL_as_ok. cbv zeta. rewrite res0. exists A', g, am.
+    split; [exact MI'|]. split; [exact xraw'|]. split; [exact ext'|]. split; [exact hd'|].
+    split; [exact used'|]. split; [exact am_sc'|]. split; [exact stride'|]. split; [lia|].
+    split; [exact (heads_G _ heads')|]. split; [exact (ub_same_trans s sG (ma_s A') Hub ub')|].
+    split; [exact (kept_G A' (rm rhoX) kept')|]. split; [exact (canary_G (rm rhoX) canary')|].
+    split; [|exact kc'].
+    intros [|f] need_le; [lia|].
+    destruct (runs' f need_le) as (ktr & grp_run).
+    exists ktr. exact (alloc_slot_of_group sc req s sG f ktr (Some g) (ma_s A') Hta0 grp_run).
 Qed.
 End Conv.
 
@@ -1180,62 +1202,62 @@ S3cSdA1S0S0Fx;S66S5aS72S65R2A1A1S0S1S0R5R1A1Z0A3Fc;VPhi;Vt;S65R4A1A2S94S50S56Q40
 Lemma junction (t : nat) : ltac2:(tb__ "0|0|
 S47S93R1Vt;A2S9cR2A1F_;Ft';S9cVt;A1F_;").
 Proof using AM AM_REACH HVI Hkam Pam Phit Pta0 RR TA_REACH.
-  intros IH X U [s L] rho Hreach HU HPhi Ht. cbn [ma_s] in Hreach, HPhi.
-  set (sc := bv_unsigned (rw rho 12%positive)) in Ht.
-
-  apply (trr_inhP RR); [apply B_as_nonneg; exact Hkam|]. intros [tr0 [ms0 md0]] [Hsm0 HJ0]. cbn [w_tr w_cfg cfg_model] in HJ0.
-  exists (SPJ segsU (J_as_pre segsU C_U X U (mkMA s L) Kc) (Pre_as IEC_U) rho). split; [split; [exact Hsm0 | exact HJ0]|].
-  pose proof (HI0 X U s L Kc rho tr0 md0 HJ0) as HI. pose proof (Hsc0 X U s L Kc rho tr0 md0 HJ0) as Hsc. fold sc in Hsc.
-
-  replace (B_as t kam) with (0 + B_as t kam) by lia.
-  apply (trr_seq RR 0 (B_as t kam) _ (fun w => HITP X U (mkMA s L) Kc rho w \/ GX X U (mkMA s L) Kc rho w)).
-  { exact (try_avail_partK X U (mkMA s L) Kc RF GF TR RR 0 (Z.le_refl 0) (proj2 Hreach) rho). }
-  apply (trr_disj RR); [apply B_as_nonneg; exact Hkam| |].
-  {
-    apply (trr_skip RR); [apply B_as_nonneg; exact Hkam|]. intros w Hw.
-    apply (hit_conv X U s L Kc rho tr0 md0 HJ0 Nf Og); [|exact Hw].
-    intros first s1 Hta Hnz. right. exact (Phit t sc s first s1 HPhi Hta Hnz). }
-
-  unfold GX. apply (trr_ex RR); [apply B_as_nonneg; exact Hkam|]. intros [sG LG].
-  apply (trr_ex RR); [apply B_as_nonneg; exact Hkam|]. intros rhoG.
-  apply (trr_inhP RR); [apply B_as_nonneg; exact Hkam|].
-  intros w (Hag & HL & Hheads & Hub & Hkept & HhdG & E173 & Hta0 & Hregs & Hgd & HSPJ). cbn [ma_s ma_L] in HL, Hheads, Hub, HhdG, Hta0, Hregs, Hkept. subst LG.
-  fold sc in Hheads, HhdG, Hta0.
-  exists (SPJ segsU (J_as_pre segsU C_U X U (mkMA sG L) Kc) SG rhoG). split; [exact HSPJ|].
-  destruct w as [trG [msG mdG]]. destruct HSPJ as [HsmG HJG]. cbn [w_tr w_cfg cfg_model] in HJG.
-  pose proof (mig_I (proj1 HJG) : Inv X None U sG) as HIG.
-  assert (HreachG : reach_ok sG) by (exact (TA_REACH X U s sc 0 sG HI Hsc Hreach Hta0)).
-  assert (HPhiG : Phi t sG) by (exact (Pta0 t sc s sG HPhi Hta0)).
-  assert (EscG : bv_unsigned (rw rhoG 12%positive) = sc). { unfold sc. f_equal. symmetry. apply (proj1 Hag). reflexivity. }
-
-  apply (trr_post RR _ (QG segsU C_U IEC_U Nf Og X U (mkMA sG L) Kc rhoG) _
-           (fun w => gx_conv X U s L Kc rho tr0 md0 HJ0 Nf Og sG rhoG trG mdG Hag Hheads Hub Hkept Hta0 Hregs Hgd HJG w)).
-  replace (B_as t kam) with (kam + (B_as t kam - kam)) by lia.
-  apply (alloc_group_part Kc RF GF TR RR (B_as t kam - kam) ltac:(unfold B_as; nia) Nf Og HVI X U sG L rhoG HU
-           ltac:(unfold B_as; nia) (Z.of_nat t * (kam + 2 ^ 23)) ltac:(unfold B_as; nia) kam Hkam NGm True
-           (fun H => or_intror H) (fun H => or_introl H) (fun H => or_introl H)).
-  -
-    intros rho1. exact (AM t X None U (mkMA sG L) rho1 HPhiG).
-  - rewrite EscG. exact HhdG.
-  - exact E173.
-  -
-    intros ia Hi PV Htier rho1.
-    pose proof (pv_sc ia X U (mkMA sG L) rhoG PV) as Esc. rewrite EscG in Esc.
-    rewrite Esc in Htier.
-    destruct t as [|n]; [exfalso; lia|].
-    replace (Z.of_nat (S n) * (kam + 2 ^ 23)) with (B_as n kam) by (unfold B_as; lia).
-
-    apply (trr_inhP RR); [apply B_as_nonneg; exact Hkam|]. intros w1 [Hsm1 [HJ1 Hcls]]. cbn [w_tr w_cfg cfg_model] in HJ1, Hcls.
-    exists (SPJ segsU (J_as_pre segsU C_U (ia_m ia :: ia_X ia) (ia_U ia) (mkMA (ia_s ia) (ia_L ia)) Kc) (Pre_as IEC_U) rho1).
-    split; [split; [exact Hsm1 | exact HJ1]|].
-    apply (IH n ltac:(lia) (ia_m ia :: ia_X ia) (ia_U ia) (mkMA (ia_s ia) (ia_L ia)) rho1).
-    +
-      cbn [ma_s]. destruct (pv_am ia X U (mkMA sG L) rhoG PV) as [ktr Hy]. cbn [ma_s] in Hy.
-      exact (AM_REACH X None U sG ktr (ia_m ia) (ia_s ia) HIG HreachG Hy).
-    + rewrite (pv_U ia X U (mkMA sG L) rhoG PV). exact HU.
-    + cbn [ma_s]. destruct (pv_am ia X U (mkMA sG L) rhoG PV) as [ktr Hy]. cbn [ma_s] in Hy.
-      exact (Pam n sG ktr (ia_m ia) (ia_s ia) HPhiG Hy).
-    + rewrite Hcls. lia.
+  intros IH X U A rho reach0 U_zero phi0 tier_le.
+  destruct A as [s L]. cbn [ma_s] in reach0, phi0.
+  set (kas := Z.of_nat t * (kam + 2 ^ 23)).
+  set (kB := kas + 2 ^ 23).
+  assert (kas_nn : 0 <= kas) by (apply Z.mul_nonneg_nonneg; lia).
+  assert (kB_is : kB = kas + 2 ^ 23) by reflexivity.
+  replace (B_as t kam) with (0 + (kam + kB)) by (unfold B_as; rewrite kB_is; unfold kas; ring).
+  apply (TRRulesK.trr_inhP RR); [lia|].
+  intros w0 [sm0 J0].
+  exists (SPJ segsU (J_as_pre segsU C_U X U {| ma_s := s; ma_L := L |} Kc) (Pre_as IEC_U) rho).
+  split; [split; assumption|].
+  pose proof (Hsc0 X U s L Kc rho _ _ J0) as sc_rng.
+  pose proof (mig_I (proj1 J0)) as inv0.
+  apply (TRRulesK.trr_seq RR 0 (kam + kB) _
+           (fun w => HITP X U {| ma_s := s; ma_L := L |} Kc rho w \/ GX X U {| ma_s := s; ma_L := L |} Kc rho w)).
+  { exact (try_avail_partK X U {| ma_s := s; ma_L := L |} Kc RF GF TR RR 0 (Z.le_refl 0) (proj2 reach0) rho). }
+  apply (TRRulesK.trr_inhP RR); [lia|].
+  intros w1 [hit_w1 | gx_w1].
+  - exists (HITP X U {| ma_s := s; ma_L := L |} Kc rho). split; [exact hit_w1|].
+    apply (TRRulesK.trr_skip RR); [lia|].
+    intros w hit_w.
+    refine (hit_conv X U s L Kc rho _ _ J0 Nf Og _ w hit_w).
+    intros first s1 ta_hit first_nz. right. exact (Phit t _ s first s1 phi0 ta_hit first_nz).
+  - destruct gx_w1 as (AG & rhoG & agreeG & L_same & heads_same & ub_G & kept_own & hdG & g173 & taG & regsG & gdG & spjG).
+    destruct AG as [sG LG]. cbn [ma_L ma_s] in L_same, heads_same, ub_G, hdG, taG, regsG, spjG. subst LG.
+    exists (SPJ segsU (J_as_pre segsU C_U X U {| ma_s := sG; ma_L := L |} Kc) SG rhoG).
+    split; [exact spjG|].
+    destruct spjG as [_ JG].
+    pose proof (Pta0 t _ s sG phi0 taG) as phiG.
+    pose proof (TA_REACH X U s _ 0 sG inv0 sc_rng reach0 taG) as reachG.
+    pose proof (rw12G rho rhoG agreeG) as same12.
+    refine (TRRulesK.trr_post RR _ (QG segsU C_U IEC_U Nf Og X U {| ma_s := sG; ma_L := L |} Kc rhoG) _
+              (gx_conv X U s L Kc rho _ _ J0 Nf Og sG rhoG _ _ agreeG heads_same ub_G kept_own taG regsG gdG JG) _).
+    refine (alloc_group_part Kc RF GF TR RR kB ltac:(lia) Nf Og HVI X U sG L rhoG U_zero ltac:(lia) kas ltac:(lia)
+              kam Hkam NGm True (fun ng => or_intror ng) (fun rf => or_introl rf) (fun gf => or_introl gf)
+              (fun rho1 => AM t X None U {| ma_s := sG; ma_L := L |} rho1 phiG) _ g173 _).
+    + rewrite same12. exact hdG.
+    + intros ia ia_ok ia_prov tier_lt rho1.
+      pose proof (pv_sc _ _ _ _ _ ia_prov) as ia_sc_eq. rewrite same12 in ia_sc_eq.
+      rewrite ia_sc_eq in tier_lt.
+      destruct (pv_am _ _ _ _ _ ia_prov) as (ktr & am_run).
+      assert (t_succ : t = S (Nat.pred t)) by lia.
+      assert (phi_prev : Phi (Nat.pred t) (ia_s ia)).
+      { apply (Pam (Nat.pred t) sG ktr (ia_m ia) (ia_s ia)); [|exact am_run].
+        rewrite <- t_succ. exact phiG. }
+      pose proof (AM_REACH X None U sG ktr (ia_m ia) (ia_s ia) (pv_I0 _ _ _ _ _ ia_prov) reachG am_run) as reachN.
+      apply (TRRulesK.trr_inhP RR); [exact kas_nn|].
+      intros wN [smN [jN ijN]].
+      exists (SPJ segsU (J_as_pre segsU C_U (ia_m ia :: ia_X ia) (ia_U ia) {| ma_s := ia_s ia; ma_L := ia_L ia |} Kc)
+                (Pre_as IEC_U) rho1).
+      split; [split; assumption|].
+      replace kas with (B_as (Nat.pred t) kam)
+        by (unfold B_as, kas; replace (Z.of_nat (Nat.pred t) + 1) with (Z.of_nat t) by lia; reflexivity).
+      apply (IH (Nat.pred t) ltac:(lia) (ia_m ia :: ia_X ia) (ia_U ia) {| ma_s := ia_s ia; ma_L := ia_L ia |} rho1
+               reachN (iok_U0 _ ia_ok) phi_prev).
+      rewrite ijN. lia.
 Qed.
 
 Theorem junction_all (t : nat) : GOAL t.
@@ -1298,12 +1320,14 @@ Hypothesis AM_REACH : am_reach_stmt.
 Theorem alloc_slot_sumI0_P_of : ltac2:(tb__ "0|0|
 S9dS8S2bS4aA3").
 Proof using AM_REACH TA_REACH.
-  intros ok X A Kc rho HS Hreach. pose proof HS as (_ & _ & HVI).
-  eapply triple_post; [intros w Hw; exact (LQP_asG_strip segsU C_U IEC_U (True \/ True) (True \/ True) X U0 A Kc rho w Hw)|].
-  exact (alloc_slot_TRK_P_of TA_REACH AM_REACH Kc True True (fun _ => triple segsU ok) (tr_rules_triple segsU Kc ok HS) HVI
-           PhiT True True 0 (Z.le_refl 0) PhiT_ta0 PhiT_am PhiT_step PhiT_hit
-           (fun n X' R U A' rho1 _ => AM_of_sumI segsU C_U IEC_U alloc_meta_sumI_P_closed ok X' R U A' Kc 0 rho1 HS)
-           3%nat X U0 A rho Hreach (fun _ => eq_refl) I (ctier_le3 _)).
+  intros ok X A Kc rho side_ok reach0.
+  pose proof (tr_rules_triple segsU Kc ok side_ok) as rules_t.
+  refine (TRRulesK.trr_post rules_t (k := B_as 3 0) _ (LQP segsU NF rho (Posts_asG segsU C_U IEC_U (True \/ True) (True \/ True) X U0 A Kc)) _
+            (fun w posted => LQP_asG_strip segsU C_U IEC_U _ _ X U0 A Kc rho w posted) _).
+  refine (alloc_slot_TRK_P_of TA_REACH AM_REACH Kc True True (fun _ => triple segsU ok) rules_t (proj2 (proj2 side_ok))
+            PhiT True True 0 (Z.le_refl 0) PhiT_ta0 PhiT_am PhiT_step PhiT_hit _ 3%nat X U0 A rho reach0 (fun _ => eq_refl) I (ctier_le3 _)).
+  intros n X1 R U1 A1 rho1 _.
+  exact (AM_of_sumI segsU C_U IEC_U alloc_meta_sumI_P_closed ok X1 R U1 A1 Kc 0 rho1 side_ok).
 Qed.
 
 Theorem alloc_slot_sumI0_ex_P_of : ltac2:(tb__ "0|0|

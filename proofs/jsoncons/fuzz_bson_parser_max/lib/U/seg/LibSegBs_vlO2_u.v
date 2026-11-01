@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From OssFuzzTheorems.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -19,37 +19,21 @@ Definition STOPS1 : list Z := [364544] ++ ENDS.
 Definition NX0 : nat := 72.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
-Definition regs0 : list expr := [ELit 0; EVar 1; (EAlu Instr.ALU_ADD (EVar 2) (ELit (-96))); EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; (EVar 33); (EVar 36); EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; (EVar 34); EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := [KRange (EVar 2) 140735332483248 140737488355328;
-   KAlign (EVar 2) 16;
-   KWr (SA (EVar 2) (-176)) (ELit 176);
-   KWord (SA (EVar 2) (-80)) 1 (EVar 60);
-   KWord (SA (EVar 2) (-79)) 1 (EVar 61);
-   KWord (SA (EVar 2) (-78)) 1 (EVar 62);
-   KWord (SA (EVar 2) (-77)) 1 (EVar 63);
-   KWord (SA (EVar 2) (-76)) 1 (EVar 64);
-   KWord (SA (EVar 2) (-75)) 1 (EVar 65);
-   KWord (SA (EVar 2) (-74)) 1 (EVar 66);
-   KWord (SA (EVar 2) (-73)) 1 (EVar 67);
-   KWord (SA (EVar 2) (-72)) 1 (EVar 68);
-   KWord (SA (EVar 2) (-71)) 1 (EVar 69);
-   KWord (SA (EVar 2) (-70)) 1 (EVar 70);
-   KWord (SA (EVar 2) (-69)) 1 (EVar 71);
-   KRange (EVar 60) 0 255;
-   KRange (EVar 61) 0 255;
-   KRange (EVar 62) 0 255;
-   KRange (EVar 63) 0 255;
-   KRange (EVar 64) 0 255;
-   KRange (EVar 65) 0 255;
-   KRange (EVar 66) 0 255;
-   KRange (EVar 67) 0 255;
-   KRange (EVar 68) 0 255;
-   KRange (EVar 69) 0 255;
-   KRange (EVar 70) 0 255;
-   KRange (EVar 71) 0 255].
+Definition regs0 : list expr :=
+  [EVar 0; EVar 1; EAlu Instr.ALU_ADD (EVar 2) (ELit (-96)); EVar 3; EVar 4; EVar 5; EVar 6; EVar 7;
+   EVar 33; EVar 36; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15;
+   EVar 16; EVar 17; EVar 34; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23;
+   EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry :=
+  [KRange (EVar 2) 140735332483248 140737488355328; KAlign (EVar 2) 16; KWr (SA (EVar 2) (-176)) (ELit 176);
+   KWord (SA (EVar 2) (-80)) 1 (EVar 60); KWord (SA (EVar 2) (-79)) 1 (EVar 61); KWord (SA (EVar 2) (-78)) 1 (EVar 62); KWord (SA (EVar 2) (-77)) 1 (EVar 63);
+   KWord (SA (EVar 2) (-76)) 1 (EVar 64); KWord (SA (EVar 2) (-75)) 1 (EVar 65); KWord (SA (EVar 2) (-74)) 1 (EVar 66); KWord (SA (EVar 2) (-73)) 1 (EVar 67);
+   KWord (SA (EVar 2) (-72)) 1 (EVar 68); KWord (SA (EVar 2) (-71)) 1 (EVar 69); KWord (SA (EVar 2) (-70)) 1 (EVar 70); KWord (SA (EVar 2) (-69)) 1 (EVar 71);
+   KRange (EVar 60) 0 255; KRange (EVar 61) 0 255; KRange (EVar 62) 0 255; KRange (EVar 63) 0 255; KRange (EVar 64) 0 255; KRange (EVar 65) 0 255;
+   KRange (EVar 66) 0 255; KRange (EVar 67) 0 255; KRange (EVar 68) 0 255; KRange (EVar 69) 0 255; KRange (EVar 70) 0 255; KRange (EVar 71) 0 255].
 Definition ss0 : sym_state := SS 227812 regs0 [] kn0 NX0.
-Definition F0 : list SGP.region := [((EVar 2), (-96), ELit 12)].
-Definition F0L : list SR.region := [((EVar 2), (-96), 12)].
+Definition F0 : list SGP.region := [(EVar 2, -96, ELit 12)].
+Definition F0L : list SR.region := [(EVar 2, -96, 12)].
 Definition BF : nat := 1000.
 (* [comment removed for export] *)
 Definition BR : list SGP.bfact := [].

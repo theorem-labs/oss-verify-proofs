@@ -175,7 +175,8 @@ Sf9VX;S6aS71S1bS0A2S6dS1bS0Vg;Vi;A4A2VU;Vs;A4"). Proof using HMI. exact (mig_I H
 Lemma HL : layout_ok L s. Proof using HMI. exact (mig_layout HMI). Qed.
 Lemma HV : ltac2:(tb__ "0|0|
 Sd9VL;Vs;Vvm;A3"). Proof using HMI. exact (mig_vm HMI). Qed.
-Lemma HLG : ledger_ok C_U vm. Proof using HMI. exact (mig_ledger HMI). Qed.
+Lemma HLG : ledger_ok C_U vm.
+Proof using HMI. apply (mig_ledger HMI). Qed.
 Lemma Hctx : ly_ctx L = 0x5a3d0. Proof using HMI. exact (mig_ctx HMI). Qed.
 Hypothesis HP12 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PcA2A2Sd2VL;Vg;A2A3").
@@ -212,14 +213,19 @@ Qed.
 Lemma R_all : ltac2:(tb__ "0|d|
 S5S5SaZ0M0Vi;A2SaVi;S24Vam;A1M1A2A2S5S5SaG0G1A2SaG1Z1fA2A2S5S5SaG0S38Vam;A1M2A2SaG2G1A2A2S5SaG0S1cVam;A1A2S5S5SaG0S1dVam;A1M3A2ScG3SdZ2M4Z20M5A2M6A2A2S5S5SaG0S1eVam;A1M7A2ScG7G6A2A2S5SaZ1000M8Sa1A2S5SaSbSa1Z28A2Sd1VL;A1M9A2S5S4S0SfSa1Z8A2G0A3S5SaG8S8eA2S5SaSbSbS8eZ10MaA2S10S2bVam;A1MbSbG1Z1A2A2A2G9A2S5S4S0SfS8eGaA2G0A3S5ScG9SdG4Z2fA2A2S5S9S4S0S25Vam;A1McZ3fA3S5SaG0GcA2ScGcZ30A2A2A2S5SaGaGbA2SaSbS8eG5A2G9A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2").
 Proof using HMI Hgd Hu.
-  pose proof Hres as (Ri & _ & _).
-  pose proof (used_ranges X (Some (g, i)) U s HI g am Hu) as (A1 & A2 & A3 & A4 & A5).
-  pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG g am Hu) as (B1 & B2 & B3 & _ & B5 & B6 & B7 & _).
-  pose proof (ceiling_small L). pose proof (stride_pos _ _ _ _ _ G) as SP.
-  assert (SC : am_sc am = 63 \/ 0 <= am_sc am < 48).
-  { pose proof G as (_ & _ & _ & Gcl & _). destruct Gcl as [(C & _) | (C & _)]; [left | right]; exact C. }
-  assert (PR : 16 <= stride_of am * (am_last am + 1)) by nia.
-  unfold zG, zM, PGSZ, META_SIZE, UNIT in *. repeat match goal with |- _ /\ _ => split end; try lia.
+  pose proof (ceiling_small L) as topBelow.
+  pose proof G as grpFacts.
+  pose proof (stride_pos _ _ _ _ _ grpFacts) as strideAtLeast.
+  destruct grpFacts as (_ & _ & _ & classFacts & _).
+  destruct Hres as (slotIdx & _ & _).
+  destruct (used_ranges X (Some (g, i)) U s HI g am Hu) as (availIn & freedIn & lastIn & aidxIn & mapNonneg).
+  destruct (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG g am Hu)
+    as (metaLow & metaHigh & metaAlign & _ & memLow & memHigh & memAlign & _).
+  assert (classCase : am_sc am = 63 \/ 0 <= am_sc am < 48).
+  { destruct classFacts as [(big & _) | (small & _)]; [left | right]; assumption. }
+  assert (spanAtLeast : 16 <= stride_of am * (am_last am + 1)) by nia.
+  unfold zG, zM. unfold PGSZ, META_SIZE, UNIT in *.
+  lia.
 Qed.
 
 Lemma Hbits : ltac2:(tb__ "0|0|
@@ -241,11 +247,12 @@ Qed.
 Lemma maplen_range : ltac2:(tb__ "0|1|
 S5SaZ0S1cVam;A1M0A2ScG0SdZ2Z23A2A2A2").
 Proof using HMI Hgd Hu.
-  pose proof R_all as R. pose proof G as (_ & _ & _ & _ & Gmp & _).
-  destruct (Z_lt_dec 0 (am_maplen am)) as [Hpos|]; [|lia].
-  destruct (Gmp Hpos) as (r & rg & Em & Hr & Hk & Hl & Hlen & Hfit & _).
-  pose proof (footprint_region_In s _ _ Hr Hk Hl) as InR.
-  pose proof (fp_mem_range C_U L s vm _ _ HV HLG InR ltac:(unfold PGSZ in *; lia)) as (M1 & M2 & _).
+  pose proof G as (_ & mapNonneg & _ & _ & mappedFacts & _).
+  pose proof HV as (_ & _ & _ & _ & _ & _ & _ & regionFits & _).
+  pose proof (ceiling_small L) as topBelow.
+  destruct (Z.eq_dec (am_maplen am) 0) as [mapZero | mapNonzero]; [lia|].
+  destruct (mappedFacts ltac:(lia)) as (r & rg & _ & regionAt & _ & regionLive & regionLen & _).
+  destruct (regionFits r rg regionAt regionLive) as [baseLow baseTop].
   unfold PGSZ in *. lia.
 Qed.
 
@@ -255,9 +262,12 @@ Proof using HMI Hgd Hu. rewrite Hbits. pose proof R_all. pose proof maplen_range
 Lemma optr_range : ltac2:(tb__ "0|2|
 S6cS1bA1M0S1bS4G0R2S6aS1bR1A2A3S6S22S22SdbVX;Vs;R3R1A4La';A2F_;Fq;S5SaZ0S10bVL;R2A2M1A2SaSbG1Z28A2Sd1VL;A1A2A2F_;Fo;").
 Proof using HMI Hgd.
-  intros [q|] Hq; cbn [optrA]; [|pose proof (ceiling_small L); top_ranges; lia].
-  destruct (Hq q eq_refl) as (a' & Hu'). pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG q a' Hu') as (B1 & B2 & _).
-  unfold PGSZ, META_SIZE in *. lia.
+  intros o someUsed. destruct o as [q|]; cbn [optrA].
+  - destruct (someUsed q eq_refl) as (aq & usedQ).
+    pose proof (MT_Some_In_keys _ _ _ (proj1 (usedX_MT _ _ _ _ usedQ))) as keyQ.
+    destruct (key_range X (Some (g, i)) U s L HI HL C_U vm q keyQ HV HLG) as (keyLow & keyTop & _).
+    unfold PGSZ, META_SIZE in *. lia.
+  - pose proof (topL_range L) as topWindow. lia.
 Qed.
 
 Lemma linked_ring : ltac2:(tb__ "0|5|
@@ -366,11 +376,13 @@ End QueueRing.
 Lemma zH_range : ltac2:(tb__ "0|0|
 S5SaZ0S97A2SaSbS97Z28A2Sd1VL;A1A2A2").
 Proof using HMI Hgd Hu.
-  unfold zH. destruct (active_hd s sc) as [h|] eqn:E; cbn [optrA]; [|pose proof (ceiling_small L); top_ranges; lia].
-  pose proof R_all as R. destruct R as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
-  destruct (Z_lt_dec sc 48).
-  - destruct (h_used ltac:(unfold sc in *; lia) h E) as (Hu' & _). pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG h _ Hu') as (B1 & B2 & _). unfold PGSZ, META_SIZE in *. lia.
-  - exfalso. pose proof (proj1 (inv_ctx HI)) as Hlen. unfold active_hd in E. rewrite nth_overflow in E; [discriminate|]. rewrite Hlen. unfold sc in *. lia.
+  unfold zH. apply optr_range. intros h headIs.
+  pose proof R_all as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & classCase & _).
+  destruct classCase as [big | small].
+  - exfalso. pose proof (inv_ctx HI) as (activeLen & _).
+    unfold active_hd, sc in headIs. rewrite big in headIs.
+    rewrite nth_overflow in headIs; [discriminate|]. rewrite activeLen. cbn. lia.
+  - exists ahQ. exact (proj1 (h_used small h headIs)).
 Qed.
 Lemma optr_used_range o : ltac2:(tb__ "0|1|
 S1bS4S6cS1bA1Vo;S6aS1bR1A2A3S6S22S22SdbVX;Vs;R3R1A4La';A2F_;Fq;S5SaZ0S10bVL;Vo;A2M0A2SaSbG0Z28A2Sd1VL;A1A2A2F_;").
@@ -469,7 +481,9 @@ Qed.
 Lemma key_range40 q : ltac2:(tb__ "0|1|
 Sc9S1bVq;Se3Vs;A1A3S5SaZ1000Sd2VL;Vq;A2M0A2SaSbG0Z28A2Sd1VL;A1A2A2F_;").
 Proof using HMI Hgd.
-  intros Hq. pose proof (key_range X (Some (g, i)) U s L HI HL C_U vm q Hq HV HLG) as (K1 & K2 & _). unfold META_SIZE, PGSZ in *. lia.
+  intros keyQ.
+  destruct (key_range X (Some (g, i)) U s L HI HL C_U vm q keyQ HV HLG) as (keyLow & keyTop & _).
+  unfold PGSZ, META_SIZE in *. split; lia.
 Qed.
 Lemma fmem_range q : ltac2:(tb__ "0|1|
 S8fVq;A1S5SaZ1000Sd2VL;Vq;A2M0A2SaSbG0Z28A2Sd1VL;A1A2A2F_;").
@@ -704,17 +718,24 @@ Qed.
 Lemma rec_ranges q a : ltac2:(tb__ "0|7|
 SdbVX;Vs;Vq;Va;A4S5S5SaZ0M0S1dVa;A1M1A2ScG1SdZ2M2Z20A2M3A2A2S5S5SaG0S1eVa;A1M4A2ScG4G3A2A2S5S5SaG0SdcVa;A1M5A2ScG5SdG2Z30A2A2A2S5SaZ1000Sd2VL;S23Va;A1A2M6A2SaSbG6Z10A2Sd1VL;A1A2A2A2A2A2F_;").
 Proof using HMI Hgd.
-  intros Hq. pose proof (used_ranges X (Some (g, i)) U s HI q a Hq) as (A1 & A2 & A3 & A4 & A5). pose proof (ceiling_small L) as CS.
-  pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG q a Hq) as (B1 & B2 & B3 & _ & B5 & B6 & _).
-  pose proof (inv_groups HI q a Hq) as Gq. pose proof (stride_pos _ _ _ _ _ Gq) as SP.
-  assert (SC : am_sc a = 63 \/ 0 <= am_sc a < 48) by (pose proof Gq as (_ & _ & _ & Gcl & _); destruct Gcl as [(C0 & _) | (C0 & _)]; [left | right]; exact C0).
-  assert (ML : 0 <= am_maplen a < 2 ^ 35).
-  { pose proof Gq as (_ & _ & _ & _ & Gmp & _). destruct (Z_lt_dec 0 (am_maplen a)) as [Hpos|]; [|lia].
-    destruct (Gmp Hpos) as (r & rg & Em & Hr & Hk & Hl & Hlen & Hfit & _).
-    pose proof (footprint_region_In s _ _ Hr Hk Hl) as InR.
-    pose proof (fp_mem_range C_U L s vm _ _ HV HLG InR ltac:(unfold PGSZ in *; lia)) as (M1 & M2 & _). unfold PGSZ in *. lia. }
-  assert (PR : 0 <= stride_of a * (am_last a + 1)) by nia.
-  unfold meta_bits, PGSZ, UNIT in *. repeat split; try lia.
+  intros usedQ.
+  pose proof (inv_groups HI q a usedQ) as grpQ.
+  pose proof (stride_pos _ _ _ _ _ grpQ) as strideAtLeast.
+  destruct grpQ as (_ & _ & _ & classQ & mappedQ & _).
+  destruct (used_ranges X (Some (g, i)) U s HI q a usedQ) as (availIn & freedIn & lastIn & _ & mapNonneg).
+  destruct (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG q a usedQ) as (_ & _ & _ & _ & memLow & memHigh & _).
+  pose proof (ceiling_small L) as topBelow.
+  assert (mapBelow : am_maplen a < 2 ^ 35).
+  { destruct (Z.eq_dec (am_maplen a) 0) as [mapZero | mapNonzero]; [lia|].
+    pose proof HV as (_ & _ & _ & _ & _ & _ & _ & regionFits & _).
+    destruct (mappedQ ltac:(lia)) as (r & rg & _ & regionAt & _ & regionLive & regionLen & _).
+    destruct (regionFits r rg regionAt regionLive) as [baseLow baseTop].
+    unfold PGSZ in *. lia. }
+  assert (classIn : 0 <= am_sc a <= 63).
+  { destruct classQ as [(big & _) | (small & _)]; lia. }
+  assert (spanNonneg : 0 <= stride_of a * (am_last a + 1)) by nia.
+  unfold meta_bits. unfold PGSZ, UNIT in *.
+  lia.
 Qed.
 Lemma zHp_range : ltac2:(tb__ "0|0|
 S5SaZ0S98A2SaSbS98Z28A2Sd1VL;A1A2A2"). Proof using HMI HXz Hgd. exact (proj1 (mrec_range hQ)). Qed.
@@ -755,8 +776,10 @@ Proof using HMI Hgd Hu. intros H. exact (rec_ranges gPar amPar (gPar_used H)). Q
 Lemma zQ_range : ltac2:(tb__ "0|1|
 S4S0S1cVam;A1Z0M0A3S5SaZ1000S95A2S5SaSbS95Z28A2Sd1VL;A1A2S4S0SfS95Z8A2G0A3A2A2F_;").
 Proof using HMI Hgd Hu.
-  intros H. pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG gPar amPar (gPar_used H)) as (B1 & B2 & B3 & _).
-  unfold zQ, PGSZ, META_SIZE in *. lia.
+  intros mapZero.
+  destruct (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG _ _ (gPar_used mapZero))
+    as (parLow & parTop & parAlign & _).
+  unfold zQ. unfold PGSZ, META_SIZE in *. lia.
 Qed.
 Lemma par_last : ltac2:(tb__ "0|3|
 S4S0S1cVam;A1Z0M0A3S5S5SaG0S86A2SaS86S24S84A1M1A2A2S5SaG1Z1fA2S5S5SaG0S25S84A1M2A2ScG2Z30A2A2SaZ10S2bS84A1A2A2A2A2F_;").
@@ -804,32 +827,43 @@ Qed.
 Lemma par_map_chk : ltac2:(tb__ "0|2|
 S4S0S1cVam;A1Z0M0A3S7S4S0S1cS84A1M1G0A3A1S5SaS8cS12S10G1Z100A2Z1A2A2S5ScG0G1A2ScG1SdZ2Z23A2A2A2A2F_;F_;").
 Proof using HMI Hgd Hu.
-  intros H Hml. pose proof (zOff_eq H) as [E R]. pose proof (par_last H) as (Hi & Hl & Hsc & SP). pose proof (gPar_used H) as U'.
-  pose proof (used_ranges X (Some (g, i)) U s HI gPar amPar U') as (_ & _ & _ & _ & ML0).
-  pose proof (inv_groups HI gPar amPar U') as (_ & _ & _ & _ & Gmp & _).
-  destruct (Gmp ltac:(lia)) as (r & rg & Em & Hr & Hk & Hlv & Hlen & Hfit & _).
-  pose proof (footprint_region_In s _ _ Hr Hk Hlv) as InR.
-  pose proof (fp_mem_range C_U L s vm _ _ HV HLG InR ltac:(unfold PGSZ in *; lia)) as (M1 & M2 & _).
-  assert (stride_of amPar * iPar <= stride_of amPar * am_last amPar) by nia.
-  unfold UNIT, PGSZ in *. pose proof (ceiling_small L). split; [|lia]. nia.
+  intros mapZero parMapNonzero.
+  pose proof (gPar_used mapZero) as usedPar.
+  pose proof (inv_groups HI _ _ usedPar) as (_ & parMapNonneg & _ & _ & parMapped & _).
+  destruct (zOff_eq mapZero) as [offTimes16 offIn].
+  destruct (par_last mapZero) as (idxIn & _ & _ & strideAtLeast).
+  destruct (parMapped ltac:(lia)) as (r & rg & _ & regionAt & _ & regionLive & regionLen & spanFits & _).
+  pose proof HV as (_ & _ & _ & _ & _ & _ & _ & regionFits & _).
+  destruct (regionFits r rg regionAt regionLive) as [baseLow baseTop].
+  pose proof (ceiling_small L) as topBelow.
+  assert (idxSpan : stride_of amPar * iPar <= stride_of amPar * am_last amPar) by nia.
+  unfold PGSZ, UNIT in *.
+  split; lia.
 Qed.
 Lemma par_area : ltac2:(tb__ "0|1|
 S4S0S1cVam;A1Z0A3S6S1bS1bS5Sc9S1bR1S43Vs;A1A3S5S4S0Sd2VL;R1A2Sa9A3S5SaZ1000M0Sa9A2S5SaSbSa9G0A2Sd1VL;A1A2Sc9SdaSdeSe0R1A1U8SedA3SddVs;A1A3A2A2A2A2La;A2F_;").
 Proof using HMI Hgd Hu.
-  intros H. pose proof (gPar_key H) as K. destruct (key_area X (Some (g, i)) U s HI gPar K) as (a & k & Ha & Hk & Eq).
-  pose proof (inv_areas HI) as (_ & AOK & _). destruct (AOK a Ha) as (r & o & rg & Ea & Ho & Ho0 & Hr & Hl & Hfit & _).
-  pose proof HL as (_ & ALG & _ & _). pose proof (ALG r rg Hr Hl) as RA.
-  pose proof (e_area_In s a Ha) as FP. pose proof (fp_mem_range C_U L s vm _ _ HV HLG FP ltac:(unfold PGSZ; lia)) as (M1 & M2 & _).
-  assert (EA : addr_of L a = ly_reg L r + o) by (rewrite Ea; reflexivity).
-  assert (EQ : zQ = addr_of L a + (AREA_HDR + META_SIZE * k)) by (unfold zQ; rewrite Eq, AGp; reflexivity).
-  assert (AM : addr_of L a mod 4096 = 0) by (rewrite EA; unfold PGSZ in *; rewrite Z.add_mod, RA, Ho by lia; reflexivity).
-  exists a. split; [exact Ha|]. split.
-  { unfold zQa. rewrite EQ. unfold AREA_HDR, META_SIZE, METAS_PER_AREA in *.
-    rewrite Z.add_mod, AM, Z.add_0_l, Z.mod_mod, (Z.mod_small (24 + 40 * k)) by lia. lia. }
-  unfold zQa. rewrite EQ. unfold AREA_HDR, META_SIZE, METAS_PER_AREA, PGSZ in *.
-  rewrite Z.add_mod, AM, Z.add_0_l, Z.mod_mod, (Z.mod_small (24 + 40 * k)) by lia.
-  split; [lia|]. split; [lia|].
-  unfold image. apply in_app_iff. right. apply in_app_iff. left. apply (In_areas_cells_intro s _ a); [exact Ha|]. intros next. left. reflexivity.
+  intros mapZero.
+  pose proof (gPar_key mapZero) as keyPar.
+  pose proof HI as (_ & (_ & placedAll & _ & _ & countIn) & (_ & areasGood & _) & _).
+  destruct (placedAll _ keyPar) as (a & k & areaIn & kIn & parAt).
+  destruct (areasGood a areaIn) as (r & o & rg & aShape & oAlign & oLow & regionAt & regionLive & _).
+  pose proof HL as (_ & regionAlign & _).
+  pose proof (regionAlign r rg regionAt regionLive) as baseAlign.
+  destruct (fp_mem_range C_U L s vm a PGSZ HV HLG (e_area_In s a areaIn) ltac:(unfold PGSZ; lia))
+    as (areaLow & areaTop & _).
+  assert (handedMax : handed s a <= METAS_PER_AREA) by (unfold handed; destruct (sptr_eqb _ _); lia).
+  assert (areaAddr : addr_of L a = ly_reg L r + o) by (rewrite aShape; reflexivity).
+  assert (parAddr : zQ = addr_of L a + (AREA_HDR + META_SIZE * k)).
+  { unfold zQ. rewrite parAt. apply AGp. }
+  assert (pageBase : zQa = addr_of L a).
+  { unfold zQa. rewrite parAddr. unfold AREA_HDR, META_SIZE, METAS_PER_AREA, PGSZ in *. lia. }
+  exists a. rewrite pageBase.
+  split; [exact areaIn|]. split; [reflexivity|].
+  unfold PGSZ in areaLow, areaTop. split; [lia|]. split; [lia|].
+  unfold image. apply in_or_app. right. apply in_or_app. left.
+  apply (In_areas_cells_intro s (st_areas s) a); [exact areaIn|].
+  intros nxt. unfold area_cells. apply in_or_app. left. left. reflexivity.
 Qed.
 Lemma init_trueI : st_init_done s = true.
 Proof using HMI Hu.
@@ -1365,13 +1399,17 @@ Qed.
 Lemma ZF_h_facts h : ltac2:(tb__ "0|4|
 S5SaZ0M0S85A2ScS85Z30A2A2S4S6cS1bA1M1Se1Vs;S85A2S6aS1bVh;A2A3S4G1S21Vam;A1S73S1bA1M2A3S4G1S20Vam;A1G2A3S156S50S7bS82S83A2S6fS50S51S4fS159Sc7P96A1M3Sc7PcA1A3A1S6fS50S51S4fS159G3S47G0A1A3A1S72S50A1A3A3A3F_;F_;F_;F_;").
 Proof using HMI HP12 Hgd Hsp Hu.
-  intros Hsc' Hhd Hp Hn. pose proof (zH_eq h Hhd) as EH. destruct (h_used Hsc' h Hhd) as (Huh & _).
-  pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG h _ Huh) as (B1 & _).
-  pose proof (h_ne_g Hsc' h Hhd Hp Hn) as NE.
-  constructor; [|constructor; [|constructor]]; zfact.
-  - rewrite ze150, ze12, EH. unfold zG. intros E. apply Z.eqb_eq in E.
-    pose proof (meta_ranges_disjoint X (Some (g, i)) U s L HI HL h g (MT_Some_In_keys _ _ _ (proj1 (usedX_MT _ _ _ _ Huh))) g_key NE). unfold META_SIZE in *. lia.
-  - rewrite ze150, ze_lit, EH. change (0 mod 2 ^ 64) with 0. unfold PGSZ in B1. intros E. apply Z.eqb_eq in E. lia.
+  intros classSmall headIs noPrev noNext.
+  pose proof (h_ne_g classSmall h headIs noPrev noNext) as headNotG.
+  destruct (h_used classSmall h headIs) as (usedHead & _).
+  pose proof (MT_Some_In_keys _ _ _ (proj1 (usedX_MT _ _ _ _ usedHead))) as keyHead.
+  pose proof (meta_ranges_disjoint X (Some (g, i)) U s L HI HL h g keyHead g_key headNotG) as apart.
+  destruct (key_range40 h keyHead) as [headLow _].
+  pose proof (zH_eq h headIs) as zHAt.
+  unfold META_SIZE in apart.
+  apply Forall_cons; [|apply Forall_cons; [|apply Forall_nil]]; zfact; rewrite ze150, zHAt.
+  - rewrite ze12. unfold zG. intros same. apply Z.eqb_eq in same. lia.
+  - rewrite ze_lit. change (0 mod 2 ^ 64) with 0. intros same. apply Z.eqb_eq in same. lia.
 Qed.
 
 Lemma ZF_all : ltac2:(tb__ "0|0|
@@ -1476,30 +1514,41 @@ Qed.
 Lemma ZF_n_nz n : ltac2:(tb__ "0|0|
 S4S6cS1bA1S20Vam;A1S6aS1bVn;A2A3S7bS82S83S51S4fS159Sc7P8dA1S47Z0A1A3A1A3F_;").
 Proof using HMI Hgd Hu.
-  intros En. zfact. rewrite ze141, ze_lit, (zNx_eq n En). change (0 mod 2 ^ 64) with 0.
-  pose proof nQ_used as Un. rewrite (nQ_eq n En) in Un. pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG n _ Un) as (B1 & _). unfold PGSZ in B1.
-  rewrite (proj2 (Z.eqb_neq _ _)) by lia. discriminate.
+  intros nextIs.
+  destruct (next_used n nextIs) as (an & usedNext).
+  destruct (key_range40 n (MT_Some_In_keys _ _ _ (proj1 (usedX_MT _ _ _ _ usedNext)))) as [nextLow _].
+  zfact. rewrite ze141, ze_lit. unfold zNx. rewrite nextIs. cbn [optrA].
+  change (0 mod 2 ^ 64) with 0. intros same. apply Z.eqb_eq in same. lia.
 Qed.
 Lemma ZF_align141 n : ltac2:(tb__ "0|0|
 S4S6cS1bA1S20Vam;A1S6aS1bVn;A2A3S7bS82S83S55P8dZ3A2A3F_;").
 Proof using HMI Hgd Hsp Hu.
-  intros En. zfact. rewrite zr1_141, (zNx_eq n En). pose proof nQ_used as Un. rewrite (nQ_eq n En) in Un.
-  pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG n _ Un) as (B1 & B2 & B3 & _). pose proof (ceiling_small L).
-  split; [lia|]. change (2 ^ 3) with 8. rewrite (Z.mod_small _ (2 ^ 64)) by (unfold PGSZ, META_SIZE in *; lia). exact B3.
+  intros nextIs.
+  destruct (next_used n nextIs) as (an & usedNext).
+  destruct (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG n an usedNext) as (nextLow & nextTop & nextAlign & _).
+  pose proof (ceiling_small L) as topBelow.
+  zfact. rewrite zr1_141. unfold zNx. rewrite nextIs. cbn [optrA].
+  unfold PGSZ, META_SIZE in *.
+  split; [lia|]. rewrite (Z.mod_small (addr_of L n) (2 ^ 64)) by lia. exact nextAlign.
 Qed.
 Lemma ZF_align140 p : ltac2:(tb__ "0|0|
 S4S6cS1bA1S21Vam;A1S6aS1bVp;A2A3S7bS82S83S55P8cZ3A2A3F_;").
 Proof using HMI Hgd Hsp Hu.
-  intros Ep. zfact. rewrite zr1_140, (zPv_eq p Ep). pose proof pQ_used as Upp. rewrite (pQ_eq p Ep) in Upp.
-  pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG p _ Upp) as (B1 & B2 & B3 & _). pose proof (ceiling_small L).
-  split; [lia|]. change (2 ^ 3) with 8. rewrite (Z.mod_small _ (2 ^ 64)) by (unfold PGSZ, META_SIZE in *; lia). exact B3.
+  intros prevIs. zfact. rewrite zr1_140. unfold zPv. rewrite prevIs. cbn [optrA].
+  destruct (prev_used p prevIs) as (ap & usedPrev).
+  destruct (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG p ap usedPrev) as (prevLow & prevTop & prevAlign & _).
+  pose proof (ceiling_small L) as topBelow.
+  unfold PGSZ, META_SIZE in *.
+  split; [lia|]. rewrite (Z.mod_small (addr_of L p) (2 ^ 64)) by lia. exact prevAlign.
 Qed.
 Lemma ZF_align156 : ltac2:(tb__ "0|0|
 S7bS82S83S55P9cZ4A2A3").
 Proof using HMI Hgd Hsp Hu.
-  zfact. rewrite zr1_156. unfold zNm. pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG nQ _ nQ_used) as (_ & _ & _ & _ & B5 & B6 & B7 & _). pose proof (ceiling_small L).
-  pose proof RN as R'. unfold zNm in R'.
-  split; [lia|]. change (2 ^ 4) with 16. rewrite (Z.mod_small _ (2 ^ 64)) by lia. exact B7.
+  pose proof RN as (_ & _ & _ & memLow & memTop).
+  destruct (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG _ _ nQ_used) as (_ & _ & _ & _ & _ & _ & memAlign & _).
+  pose proof (ceiling_small L) as topBelow.
+  zfact. rewrite zr1_156. unfold zNm in *.
+  split; [lia|]. rewrite (Z.mod_small (addr_of L (am_mem anQ)) (2 ^ 64)) by lia. exact memAlign.
 Qed.
 Lemma ZF_p_ne_n p n : ltac2:(tb__ "0|1|
 S4S6cS1bA1M0S21Vam;A1S6aS1bVp;A2A3S4G0S20Vam;A1S6aS1bVn;A2A3S7S4S1bVp;Vn;A3A1S7bS82S83S51S4fS159Sc7P8cA1Sc7P8dA1A3A1A3F_;F_;F_;").
@@ -1559,7 +1608,7 @@ Variables (rd0 : word -> option byte) (wok0 : word -> bool).
 Hypothesis HMI : ltac2:(tb__ "0|0|
 S186Sd3VX;S6aS71S1bS0A2S6dS1bS0Vg;Vi;A4A2VU;S185Vs;VL;A2Vrd0;Vwok0;Vvm;A8").
 Hypothesis HXz : xzomb X s.
-Local Abbreviation HXr := (@U.Mal_nt__G1.Mal_nt_I.HXr s X HXz).
+Local Abbreviation HXr := (U.Mal_nt__G1.Mal_nt_I.HXr s X HXz).
 Hypothesis Hu : ltac2:(tb__ "0|0|
 SdbVX;Vs;Vg;Vam;A4").
 Hypothesis Hgd : 0 <= gd < 2 ^ 64.
@@ -1573,20 +1622,20 @@ Hypothesis HP12 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PcA2A2Sd2VL;Vg;A2A3").
 Hypothesis HP13 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PdA2A2Vi;A3").
-Local Abbreviation g_key := (@U.Mal_nt__G1.Mal_nt_I.g_key s X g am Hu).
+Local Abbreviation g_key := (U.Mal_nt__G1.Mal_nt_I.g_key s X g am Hu).
 Local Notation "§2§ h__" := (h__ s L X U g am i gd vm rd0 wok0 HMI Hu Hgd) (at level 10, h__ global).
 Local Abbreviation R_all := (§2§ U.Mal_nt__G1.Mal_nt_I.R_all).
-Local Abbreviation sc := (@U.Mal_nt__G1.Mal_nt_I.sc am).
-Local Abbreviation zH := (@U.Mal_nt__G1.Mal_nt_I.zH s L am).
+Local Abbreviation sc := (U.Mal_nt__G1.Mal_nt_I.sc am).
+Local Abbreviation zH := (U.Mal_nt__G1.Mal_nt_I.zH s L am).
 Local Abbreviation zH_range := (§2§ U.Mal_nt__G1.Mal_nt_I.zH_range).
-Local Abbreviation zF := (@U.Mal_nt__G1.Mal_nt_I.zF s L).
-Local Abbreviation zSeq := (@U.Mal_nt__G1.Mal_nt_I.zSeq s).
+Local Abbreviation zF := (U.Mal_nt__G1.Mal_nt_I.zF s L).
+Local Abbreviation zSeq := (U.Mal_nt__G1.Mal_nt_I.zSeq s).
 Local Notation "§3§ h__" := (h__ s L X U g i gd vm rd0 wok0 HMI Hgd) (at level 10, h__ global).
 Local Abbreviation useq_byte := (§3§ U.Mal_nt__G1.Mal_nt_I.useq_byte).
-Local Abbreviation useq_bytes := (@U.Mal_nt__G1.Mal_nt_I.useq_bytes s).
-Local Abbreviation useq_dw := (@U.Mal_nt__G1.Mal_nt_I.useq_dw s).
-Local Abbreviation useq_dw_enc := (@U.Mal_nt__G1.Mal_nt_I.useq_dw_enc s).
-Local Abbreviation rl1 := (@U.Mal_nt__G1.Mal_nt_I.rl1 rho).
+Local Abbreviation useq_bytes := (U.Mal_nt__G1.Mal_nt_I.useq_bytes s).
+Local Abbreviation useq_dw := (U.Mal_nt__G1.Mal_nt_I.useq_dw s).
+Local Abbreviation useq_dw_enc := (U.Mal_nt__G1.Mal_nt_I.useq_dw_enc s).
+Local Abbreviation rl1 := (U.Mal_nt__G1.Mal_nt_I.rl1 rho).
 Local Notation "§4§ h__" := (h__ s L g am i rho gd rd0) (at level 10, h__ global).
 Local Abbreviation rho1 := (§4§ U.Mal_nt__G1.Mal_nt_I.rho1).
 Local Abbreviation zr1 := (§4§ U.Mal_nt__G1.Mal_nt_I.zr1).
@@ -1596,8 +1645,8 @@ Local Abbreviation links_used_range' := (§3§ U.Mal_nt__G1.Mal_nt_I.links_used_
 Local Abbreviation rec_ranges := (§3§ U.Mal_nt__G1.Mal_nt_I.rec_ranges).
 Local Abbreviation ze_lit := (§4§ U.Mal_nt__G1.Mal_nt_I.ze_lit).
 Local Abbreviation ze_alu := (§4§ U.Mal_nt__G1.Mal_nt_I.ze_alu).
-Local Abbreviation ze143 := (@U.Mal_nt__G1.Mal_nt_I.ze143 s L g am i rho gd rd0 Hgd).
-Local Abbreviation ze_sc := (@U.Mal_nt__G1.Mal_nt_I.ze_sc s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd).
+Local Abbreviation ze143 := (U.Mal_nt__G1.Mal_nt_I.ze143 s L g am i rho gd rd0 Hgd).
+Local Abbreviation ze_sc := (U.Mal_nt__G1.Mal_nt_I.ze_sc s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd).
 Hypothesis Hsp : ltac2:(tb__ "0|1|
 S5SaZ1000Sd0Q40S4aVrho;PaA2A2M0A2S4S0SfG0Z10A2Z0A3A2").
 Hypothesis Hdepth : ltac2:(tb__ "0|1|
@@ -1669,9 +1718,13 @@ Qed.
 Lemma owned_rw : ltac2:(tb__ "0|2|
 S0SefVL;Vs;R1A3S5S4S6bS136Sc8VmV;ScfQ40M0R2A2A3S70A3S6SceQ8A1M1G1S4S6cG1A1S135Sc8VmV;ScfG0R3A2A3S6aG1R1A2A3Lbb;A2A2F_;Fx;").
 Proof using Erd Ewok HMI.
-  intros x OW. pose proof (proj2 (proj2 (proj1 HreprO)) x OW) as M. unfold bv0 in M.
-  destruct (byteview_of (Glue.rd_of segsU mV) (Glue.wok_of segsU mV) x) as [vv|] eqn:E; [|exfalso; exact (M eq_refl)].
-  destruct (byteview_of_Some _ _ _ _ E) as (_ & W & bb & Hb & _). split; [exact W | exists bb; exact Hb].
+  intros x owned.
+  pose proof HreprO as ((_ & _ & ownedMapped) & _).
+  pose proof (ownedMapped x owned) as viewSome.
+  destruct (bv0 x) as [byteVal|] eqn:viewAt; [|exfalso; exact (viewSome eq_refl)].
+  unfold bv0 in viewAt.
+  destruct (byteview_of_Some _ _ _ _ viewAt) as (_ & wokSet & bb & rdAt & _).
+  split; [exact wokSet|]. exists bb. exact rdAt.
 Qed.
 Lemma soff_of_ev : ltac2:(tb__ "0|0|
 S46S0S4S6bS7cR2A1S70A3S4S0S7aS10dVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8S10cVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8R3A3R2A3S5SaZ0R3A2ScR3SdZ2Z3fA2A2A2S4S0S5bS10eVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;VmV;A9R5A2R4A3F_;F_;F_;Fz;Fe;").
@@ -1720,32 +1773,46 @@ Qed.
 Lemma hold_got : ltac2:(tb__ "0|0|
 S4dSc8S10eVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;VmV;A9S134Vms;VmV;A2S196A4").
 Proof using Erd Ewok HMI Hgd Hrom Hsp.
-  change O_got with (carved (SLit 0x28d50) 0 8 [(0, 8%nat, SLit 0x5a338)]).
-  assert (B : bv_unsigned (eval (rho1 mV) (SLit 0x28d50)) = 0x28d50) by (cbn [eval]; apply u64; lia).
-  destruct Hstat as (_ & _ & _ & _ & _ & _ & _ & _ & (gd' & T9 & T10)).
-  apply obj_holds_frame_lit; rewrite ?B; try exact Hrom; try lia.
+  pose proof Hstat as (_ & _ & _ & _ & _ & _ & _ & _ & (guardVal & gotBytes & _)).
+  change (mc_chk_guard_got C_U) with 167248 in gotBytes.
+  change (mc_chk_guard C_U) with 369464 in gotBytes.
+  assert (gotRd : forall j : nat, (j < 8)%nat ->
+            rd_of segsU mV (Z_to_bv 64 (167248 + Z.of_nat j)) = Some (Z_to_bv 8 (le_byte 369464 8 j))).
+  { intros j jBelow. apply rv_byte. exact (gotBytes j jBelow). }
+  change O_got with (carved (SLit 167248) 0 8 [(0, 8%nat, SLit 369464)]).
+  assert (baseVal : bv_unsigned (eval (rho1 mV) (SLit 167248)) = 167248) by (cbn [eval]; apply u64; lia).
+  apply obj_holds_frame_lit; rewrite ?baseVal; try exact Hrom; try lia.
   - cells_inside_tac.
-  - intros o Ho. split; [apply (wseg_range 0x28d50 8); [apply got_wseg | cbn; lia]|].
-    pose proof (T9 (Z.to_nat o) ltac:(lia)) as E. rewrite Z2Nat.id in E by lia. cbn [mc_chk_guard_got C_U] in E.
-    eexists. exact (rv_byte _ _ E).
-  - unfold cells_in_view. constructor; [|constructor]. intros j Hj. rewrite Z.add_0_r.
-    pose proof (T9 j Hj) as E. cbn [mc_chk_guard_got C_U] in E. rewrite (rv_byte _ _ E).
-    cbn [eval]. rewrite nth_enc_bytes by lia. reflexivity.
+  - intros off offIn. split.
+    + exact (wseg_range 167248 8 (167248 + off) got_wseg ltac:(cbn; lia)).
+    + pose proof (gotRd (Z.to_nat off) ltac:(lia)) as byteAt.
+      rewrite Z2Nat.id in byteAt by lia. eexists. exact byteAt.
+  - unfold cells_in_view. apply Forall_cons; [|apply Forall_nil].
+    intros j jBelow. rewrite Z.add_0_r, (gotRd j jBelow). cbn [eval].
+    rewrite nth_enc_bytes by lia. reflexivity.
 Qed.
 
 Lemma hold_guard : ltac2:(tb__ "0|0|
 S4dSc8S10eVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;VmV;A9S134Vms;VmV;A2S197A4").
 Proof using Erd Hgd Hgd_holds Hrom Hsp.
-  change O_guard with (carved (SLit 0x5a338) 0 8 [(0, 8%nat, v 143)]).
-  assert (B : bv_unsigned (eval (rho1 mV) (SLit 0x5a338)) = 0x5a338) by (cbn [eval]; apply u64; lia).
-  apply obj_holds_frame_lit; rewrite ?B; try exact Hrom; try lia.
+  pose proof Hgd_holds as guardBytes.
+  change (mc_chk_guard C_U) with 369464 in guardBytes. rewrite Erd in guardBytes.
+  assert (guardRd : forall j : nat, (j < 8)%nat ->
+            rd_of segsU mV (Z_to_bv 64 (369464 + Z.of_nat j)) = Some (Z_to_bv 8 (le_byte gd 8 j))).
+  { intros j jBelow. apply rv_byte. exact (guardBytes j jBelow). }
+  assert (guardEval : eval (rho1 mV) (v 143) = Z_to_bv 64 gd).
+  { rewrite (ev1 mV (v 143) eq_refl). rewrite ze143. reflexivity. }
+  change O_guard with (carved (SLit 369464) 0 8 [(0, 8%nat, v 143)]).
+  assert (baseVal : bv_unsigned (eval (rho1 mV) (SLit 369464)) = 369464) by (cbn [eval]; apply u64; lia).
+  apply obj_holds_frame_lit; rewrite ?baseVal; try exact Hrom; try lia.
   - cells_inside_tac.
-  - intros o Ho. split; [apply (wseg_range 0x5a338 8); [apply guard_wseg | cbn; lia]|].
-    pose proof (Hgd_holds (Z.to_nat o) ltac:(lia)) as E. rewrite Z2Nat.id in E by lia. rewrite Erd in E. cbn [mc_chk_guard C_U] in E.
-    eexists. exact (rv_byte _ _ E).
-  - unfold cells_in_view. constructor; [|constructor]. intros j Hj. rewrite Z.add_0_r.
-    pose proof (Hgd_holds j Hj) as E. rewrite Erd in E. cbn [mc_chk_guard C_U] in E. rewrite (rv_byte _ _ E).
-    rewrite (ev1 mV (v 143) eq_refl), ze143, nth_enc_bytes by lia. reflexivity.
+  - intros off offIn. split.
+    + exact (wseg_range 369464 8 (369464 + off) guard_wseg ltac:(cbn; lia)).
+    + pose proof (guardRd (Z.to_nat off) ltac:(lia)) as byteAt.
+      rewrite Z2Nat.id in byteAt by lia. eexists. exact byteAt.
+  - unfold cells_in_view. apply Forall_cons; [|apply Forall_nil].
+    intros j jBelow. rewrite Z.add_0_r, (guardRd j jBelow), guardEval.
+    rewrite nth_enc_bytes by lia. reflexivity.
 Qed.
 
 Lemma sctab_image : ltac2:(tb__ "0|3|
@@ -1770,13 +1837,17 @@ Qed.
 Lemma ctx_owned off : ltac2:(tb__ "0|0|
 S5SaZ0Voff;A2ScVoff;Sf2A2A2SefVL;Vs;SbS107VL;A1Voff;A2A3F_;").
 Proof using HMI HXz Hgd Hsp.
-  intros Ho. split.
-  - exists (LCtx 0, CTX_SIZE). split; [left; reflexivity|]. cbn [fst snd loc_addr]. lia.
-  - intros (b & Hb & Hx). cbn [fst snd] in Hx.
-    destruct (user_block_in_group X (Some (g, i)) U s L HI HXr b Hb) as (g' & am' & i' & fr & Hg & Hi & Hfr & Hk & Eb & B1 & B2 & B3 & B4).
-    destruct (group_range X (Some (g, i)) U s L HI HL C_U vm g' am' Hg HV HLG) as (_ & _ & _ & D).
-    pose proof (stride_pos _ _ _ _ _ (inv_groups HI g' am' Hg)) as Sp. assert (0 <= stride_of am' * i') by nia.
-    rewrite Eb in Hx, B1, B2. cbn [fst snd] in Hx, B1, B2. unfold addr_of in *. unfold UNIT, IB, CTX_SIZE in *. lia.
+  intros offIn. split.
+  - exists (LCtx 0, CTX_SIZE). split; [unfold footprint; left; reflexivity|].
+    cbn [fst snd loc_addr]. lia.
+  - intros (blk & blkIn & blkSpan).
+    destruct (user_block_in_group X (Some (g, i)) U s L HI HXr blk blkIn)
+      as (owner & ownerMeta & slot & fr & usedOwner & slotIn & _ & _ & _ & blkLow & blkHigh & blkSize & blkExtent).
+    pose proof (stride_pos _ _ _ _ _ (inv_groups HI owner ownerMeta usedOwner)) as strideAtLeast.
+    destruct (group_range X (Some (g, i)) U s L HI HL C_U vm owner ownerMeta usedOwner HV HLG)
+      as (_ & _ & _ & ctxApart).
+    assert (slotNonneg : 0 <= stride_of ownerMeta * slot) by nia.
+    unfold addr_of, UNIT, IB in *. lia.
 Qed.
 
 Lemma meta_cell_In c : ltac2:(tb__ "0|0|
@@ -1790,65 +1861,103 @@ Proof using . destruct o; reflexivity. Qed.
 Lemma hold_metaK (q : sptr) (a : ameta) (bv pv nv mv av fv bvv : sv) : ltac2:(tb__ "0|3|
 SdbVX;Vs;Vq;Va;A4S4S6bS7cVbv;A1S70A3S4S6bS7cVpv;A1S70A3S4S6bS7cVnv;A1S70A3S4S6bS7cVmv;A1S70A3S4S6bS7cVav;A1S70A3S4S6bS7cVfv;A1S70A3S4S6bS7cVbvv;A1S70A3S4S0S7aS10dVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8M0S10cVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8M1Vbv;A3Sd2VL;Vq;A2A3S4S0S7aG0G1Vpv;A3S10bVL;S21Va;A1A2A3S4S0S7aG0G1Vnv;A3S10bVL;S20Va;A1A2A3S4S0S7aG0G1Vmv;A3Sd2VL;S23Va;A1A2A3S4S0SfS7aG0G1Vav;A3SdZ2Z20A2M2A2S1dVa;A1A3S4S0SfS7aG0G1Vfv;A3G2A2S1eVa;A1A3S4S0S7aG0G1Vbvv;A3SdcVa;A1A3S4dSc8S10eVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;VmV;A9S134Vms;VmV;A2S192Vbv;Vpv;Vnv;Vmv;Vav;Vfv;Vbvv;A7A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;").
 Proof using Erd Ewok HMI Hdepth Hgd Hrom Hsp.
-  intros Hq Sb Sp Sn Sm Sa Sf Sbb Eb Ep En Em Ea Ef Ebb. pose proof (rec_ranges q a Hq) as (R1 & R2 & R3 & R4 & R5). pose proof (ceiling_small L) as CS.
-  pose proof (used_addrs X (Some (g, i)) U s HI C_U L vm HL HV HLG q a Hq) as (B1 & B2 & _).
-  destruct (links_used_range' q a Hq) as [[P1 P2] [N1 N2]].
-  change (O_metaK bv pv nv mv av fv bvv) with (carved bv 0 40 [(0, 8%nat, pv); (8, 8%nat, nv); (16, 8%nat, mv); (24, 4%nat, av); (28, 4%nat, fv); (32, 8%nat, bvv)]).
-  assert (B : bv_unsigned (eval (rho1 mV) bv) = addr_of L q) by (rewrite ev1u by exact Sb; exact Eb).
-  assert (AG : forall d, loc_addr L (LMem (padd q d)) = addr_of L q + d) by (intros d; unfold addr_of, loc_addr; destruct q; cbn [padd]; lia).
-  pose proof (proj1 (usedX_MT _ _ _ _ Hq)) as Mq. pose proof (MT_Some_In_keys _ _ _ Mq) as Kq.
-  pose proof (fun c Hc => meta_cells_in_imageI X (Some (g, i)) U s HI q c Kq Hc) as MI. rewrite Mq in MI. cbn [meta_slot_cells] in MI.
-  assert (C0 : In (MCell (LMem (padd q META_prev)) 8 (MallocInv.optr (am_prev a))) (image s)) by (apply MI; cbn; tauto).
-  assert (C1 : In (MCell (LMem (padd q META_next)) 8 (MallocInv.optr (am_next a))) (image s)) by (apply MI; cbn; tauto).
-  assert (C2 : In (MCell (LMem (padd q META_mem)) 8 (VP (am_mem a))) (image s)) by (apply MI; cbn; tauto).
-  assert (C3 : In (MCell (LMem (padd q META_avail)) 4 (VZ (am_avail a))) (image s)) by (apply MI; cbn; tauto).
-  assert (C4 : In (MCell (LMem (padd q META_freed)) 4 (VZ (am_freed a))) (image s)) by (apply MI; cbn; tauto).
-  assert (C5 : In (MCell (LMem (padd q META_bits)) 8 (VZ (meta_bits a))) (image s)) by (apply MI; cbn; tauto).
-  apply obj_holds_frame_lit; rewrite ?B; try exact Hrom; try (unfold META_SIZE, PGSZ in *; lia).
+  intros usedQ bvSup pvSup nvSup mvSup avSup fvSup bvvSup baseIs prevIs nextIs memIs availIs freedIs bitsIs.
+  pose proof (proj1 (usedX_MT _ _ _ _ usedQ)) as slotQ.
+  pose proof (MT_Some_In_keys _ _ _ slotQ) as keyQ.
+  destruct (key_range X (Some (g, i)) U s L HI HL C_U vm q keyQ HV HLG) as (keyLow & keyTop & _).
+  destruct (rec_ranges q a usedQ) as (availIn & freedIn & _).
+  pose proof (ceiling_small L) as topBelow.
+  assert (inImage : forall c, In c (meta_slot_cells q (Some (MUsed a))) -> In c (image s)).
+  { intros c cIn. rewrite <- slotQ in cIn. exact (meta_cells_in_imageI X (Some (g, i)) U s HI q c keyQ cIn). }
+  assert (fieldAt : forall d, loc_addr L (LMem (padd q d)) = addr_of L q + d).
+  { intros d. exact (AGp L gd Hgd q d). }
+  assert (cellRw : forall c d (w : nat), In c (meta_slot_cells q (Some (MUsed a))) ->
+            mc_loc c = LMem (padd q d) -> mc_w c = w -> (exists z, cellZ L c = Some z) ->
+            forall off, d <= off < d + Z.of_nat w ->
+            wok_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = true /\
+            exists bb, rd_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = Some bb).
+  { intros c d w cIn locIs widthIs (z & zIs) off offIn.
+    apply (cell_rw0 c z (addr_of L q) d w (inImage c cIn) zIs widthIs); [rewrite locIs; apply fieldAt | lia]. }
+  assert (cellView : forall c d (w : nat) e z, In c (meta_slot_cells q (Some (MUsed a))) ->
+            mc_loc c = LMem (padd q d) -> mc_w c = w -> (w <= 8)%nat -> cellZ L c = Some z ->
+            zsupported e = true -> zeval zr1 zl1 e mod 2 ^ (8 * Z.of_nat w) = z mod 2 ^ (8 * Z.of_nat w) ->
+            forall j, (j < w)%nat ->
+            rd_of segsU mV (Z_to_bv 64 (addr_of L q + d + Z.of_nat j)) =
+            Some (nth j (enc_bytes w (eval (rho1 mV) e)) (Z_to_bv 8 0))).
+  { intros c d w e z cIn locIs widthIs widthMax zIs eSup modMatch.
+    apply (cell_view0m c z (addr_of L q) d w e (inImage c cIn) zIs widthIs widthMax); [rewrite locIs; apply fieldAt | exact eSup | exact modMatch]. }
+  assert (baseVal : bv_unsigned (eval (rho1 mV) bv) = addr_of L q).
+  { rewrite (ev1u mV bv bvSup). exact baseIs. }
+  change (O_metaK bv pv nv mv av fv bvv)
+    with (carved bv 0 40 [(0, 8%nat, pv); (8, 8%nat, nv); (16, 8%nat, mv); (24, 4%nat, av); (28, 4%nat, fv); (32, 8%nat, bvv)]).
+  apply obj_holds_frame_lit; rewrite ?baseVal; try exact Hrom; unfold PGSZ, META_SIZE in *; try lia.
   - cells_inside_tac.
-  - intros o Ho.
-    destruct (Z_lt_dec o 8) as [O0|O0]; [|destruct (Z_lt_dec o 16) as [O1|O1]; [|destruct (Z_lt_dec o 24) as [O2|O2]; [|destruct (Z_lt_dec o 28) as [O3|O3]; [|destruct (Z_lt_dec o 32) as [O4|O4]]]]].
-    + apply (cell_rw0 _ _ (addr_of L q) 0 8 C0 (cellZ_optr _ _ _) eq_refl); [apply AG|lia].
-    + apply (cell_rw0 _ _ (addr_of L q) 8 8 C1 (cellZ_optr _ _ _) eq_refl); [apply AG|lia].
-    + apply (cell_rw0 _ (addr_of L (am_mem a)) (addr_of L q) 16 8 C2 eq_refl eq_refl); [apply AG|lia].
-    + apply (cell_rw0 _ (am_avail a) (addr_of L q) 24 4 C3 eq_refl eq_refl); [apply AG|lia].
-    + apply (cell_rw0 _ (am_freed a) (addr_of L q) 28 4 C4 eq_refl eq_refl); [apply AG|lia].
-    + apply (cell_rw0 _ (meta_bits a) (addr_of L q) 32 8 C5 eq_refl eq_refl); [apply AG|lia].
-  - unfold cells_in_view. constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]]]].
-    + apply (cell_view0 _ _ (addr_of L q) 0 8 _ C0 (cellZ_optr _ _ _) eq_refl ltac:(lia)); [apply AG|]. rewrite ev1 by exact Sp. rewrite Ep. reflexivity.
-    + apply (cell_view0 _ _ (addr_of L q) 8 8 _ C1 (cellZ_optr _ _ _) eq_refl ltac:(lia)); [apply AG|]. rewrite ev1 by exact Sn. rewrite En. reflexivity.
-    + apply (cell_view0 _ _ (addr_of L q) 16 8 _ C2 eq_refl eq_refl ltac:(lia)); [apply AG|]. rewrite ev1 by exact Sm. rewrite Em. reflexivity.
-    + apply (cell_view0m _ (am_avail a) (addr_of L q) 24 4 _ C3 eq_refl eq_refl ltac:(lia)); [apply AG | exact Sa |]. change (2 ^ (8 * Z.of_nat 4)) with (2 ^ 32). rewrite Ea. rewrite Z.mod_small; lia.
-    + apply (cell_view0m _ (am_freed a) (addr_of L q) 28 4 _ C4 eq_refl eq_refl ltac:(lia)); [apply AG | exact Sf |]. change (2 ^ (8 * Z.of_nat 4)) with (2 ^ 32). rewrite Ef. rewrite Z.mod_small; lia.
-    + apply (cell_view0 _ _ (addr_of L q) 32 8 _ C5 eq_refl eq_refl ltac:(lia)); [apply AG|]. rewrite ev1 by exact Sbb. rewrite Ebb. reflexivity.
+  - intros off offIn.
+    destruct (Z_lt_dec off 16) as [lowHalf | highHalf].
+    + destruct (Z_lt_dec off 8) as [inPrev | inNext].
+      * eapply (cellRw _ 0 8%nat); [left; reflexivity | reflexivity | reflexivity | eexists; apply cellZ_optr | lia].
+      * eapply (cellRw _ 8 8%nat); [right; left; reflexivity | reflexivity | reflexivity | eexists; apply cellZ_optr | lia].
+    + destruct (Z_lt_dec off 24) as [inMem | pastMem]; [|destruct (Z_lt_dec off 28) as [inAvail | pastAvail]; [|destruct (Z_lt_dec off 32) as [inFreed | inBits]]].
+      * eapply (cellRw _ 16 8%nat); [do 2 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia].
+      * eapply (cellRw _ 24 4%nat); [do 3 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia].
+      * eapply (cellRw _ 28 4%nat); [do 4 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia].
+      * eapply (cellRw _ 32 8%nat); [do 5 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia].
+  - unfold cells_in_view.
+    apply Forall_cons; [intros j jBelow; eapply (cellView _ 0 8%nat pv (optrA L (am_prev a)));
+      [left; reflexivity | reflexivity | reflexivity | lia | apply cellZ_optr | exact pvSup | rewrite prevIs; reflexivity | exact jBelow]|].
+    apply Forall_cons; [intros j jBelow; eapply (cellView _ 8 8%nat nv (optrA L (am_next a)));
+      [right; left; reflexivity | reflexivity | reflexivity | lia | apply cellZ_optr | exact nvSup | rewrite nextIs; reflexivity | exact jBelow]|].
+    apply Forall_cons; [intros j jBelow; eapply (cellView _ 16 8%nat mv (addr_of L (am_mem a)));
+      [do 2 right; left; reflexivity | reflexivity | reflexivity | lia | reflexivity | exact mvSup | rewrite memIs; reflexivity | exact jBelow]|].
+    apply Forall_cons; [intros j jBelow; eapply (cellView _ 24 4%nat av (am_avail a));
+      [do 3 right; left; reflexivity | reflexivity | reflexivity | lia | reflexivity | exact avSup
+      | change (2 ^ (8 * Z.of_nat 4)) with (2 ^ 32); rewrite availIs; symmetry; apply Z.mod_small; lia | exact jBelow]|].
+    apply Forall_cons; [intros j jBelow; eapply (cellView _ 28 4%nat fv (am_freed a));
+      [do 4 right; left; reflexivity | reflexivity | reflexivity | lia | reflexivity | exact fvSup
+      | change (2 ^ (8 * Z.of_nat 4)) with (2 ^ 32); rewrite freedIs; symmetry; apply Z.mod_small; lia | exact jBelow]|].
+    apply Forall_cons; [intros j jBelow; eapply (cellView _ 32 8%nat bvv (meta_bits a));
+      [do 5 right; left; reflexivity | reflexivity | reflexivity | lia | reflexivity | exact bvvSup | rewrite bitsIs; reflexivity | exact jBelow]|].
+    apply Forall_nil.
 Qed.
 
 Lemma hold_links (q : sptr) (x : mslot) (bv pv nv : sv) : ltac2:(tb__ "0|6|
 Sc9S1bVq;Se3Vs;A1A3S4S6cS1fA1SdfVs;Vq;A2S6aS1fVx;A2A3S4S6bS7cVbv;A1S70A3S4S6bS7cVpv;A1S70A3S4S6bS7cVnv;A1S70A3S4S0S7aS10dVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8M0S10cVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8M1Vbv;A3Sd2VL;Vq;A2A3S4S0S7aG0G1Vpv;A3S10bVL;S79S6cS1bA1M2G2S3fVx;A1M3A3A2A3S4S0S7aG0G1Vnv;A3S10bVL;S78G2G2G3A3A2A3S4dSc8S10eVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;VmV;A9S134Vms;VmV;A2S4cVbv;S47Z0A1M4S47Z10A1S6fS48S49G4Z8M5Vpv;A3S6fS48S49S47G5A1G5Vnv;A3S72S48A1A3A3S4bA5A4F_;F_;F_;F_;F_;F_;F_;F_;").
 Proof using Erd Ewok HMI Hdepth Hgd Hrom Hsp.
-  intros Hq Mq Sb Sp Sn Eb Ep En.
-  pose proof (key_range X (Some (g, i)) U s L HI HL C_U vm q Hq HV HLG) as (K1 & K2 & K3 & K4). pose proof (ceiling_small L) as CS.
-  change (mkObj bv (SLit 0) (SLit 16) [mkCell (SLit 0) 8 pv; mkCell (SLit 8) 8 nv] DUnknown) with (carved bv 0 16 [(0, 8%nat, pv); (8, 8%nat, nv)]).
-  assert (B : bv_unsigned (eval (rho1 mV) bv) = addr_of L q) by (rewrite ev1u by exact Sb; exact Eb).
-  assert (AG : forall d, loc_addr L (LMem (padd q d)) = addr_of L q + d) by (intros d; unfold addr_of, loc_addr; destruct q; cbn [padd]; lia).
-
-  assert (CC : exists vp vn, In (MCell (LMem (padd q META_prev)) 8 vp) (image s) /\ In (MCell (LMem (padd q META_next)) 8 vn) (image s)
-               /\ cellZ L (MCell (LMem (padd q META_prev)) 8 vp) = Some (optrA L (fst (links_of x)))
-               /\ cellZ L (MCell (LMem (padd q META_next)) 8 vn) = Some (optrA L (snd (links_of x)))).
-  { pose proof (fun c Hc => meta_cells_in_imageI X (Some (g, i)) U s HI q c Hq Hc) as MI. rewrite Mq in MI.
-    destruct x as [pr nx| |a]; cbn [meta_slot_cells links_of fst snd] in MI |- *.
-    - exists (MallocInv.optr pr), (MallocInv.optr nx). split; [apply MI; cbn; tauto|]. split; [apply MI; cbn; tauto|]. split; apply cellZ_optr.
-    - exists (VZ 0), (VZ 0). split; [apply MI; cbn; tauto|]. split; [apply MI; cbn; tauto|]. split; reflexivity.
-    - exists (MallocInv.optr (am_prev a)), (MallocInv.optr (am_next a)). split; [apply MI; cbn; tauto|]. split; [apply MI; cbn; tauto|]. split; apply cellZ_optr. }
-  destruct CC as (vp & vn & C0 & C1 & Z0 & Z1).
-  apply obj_holds_frame_lit; rewrite ?B; try exact Hrom; try (unfold META_SIZE, PGSZ in *; lia).
+  intros keyQ slotQ bvSup pvSup nvSup baseIs prevIs nextIs.
+  destruct (key_range X (Some (g, i)) U s L HI HL C_U vm q keyQ HV HLG) as (keyLow & keyTop & _).
+  pose proof (ceiling_small L) as topBelow.
+  assert (inImage : forall c, In c (meta_slot_cells q (Some x)) -> In c (image s)).
+  { intros c cIn. rewrite <- slotQ in cIn. exact (meta_cells_in_imageI X (Some (g, i)) U s HI q c keyQ cIn). }
+  assert (linkCells : exists cPrev cNext,
+            In cPrev (meta_slot_cells q (Some x)) /\ In cNext (meta_slot_cells q (Some x)) /\
+            mc_loc cPrev = LMem (padd q 0) /\ mc_loc cNext = LMem (padd q 8) /\
+            mc_w cPrev = 8%nat /\ mc_w cNext = 8%nat /\
+            cellZ L cPrev = Some (optrA L (links_of x).1) /\ cellZ L cNext = Some (optrA L (links_of x).2)).
+  { destruct x as [pr nx | | am']; do 2 eexists;
+      (split; [left; reflexivity|]); (split; [right; left; reflexivity|]);
+      (split; [reflexivity|]); (split; [reflexivity|]); (split; [reflexivity|]); (split; [reflexivity|]);
+      cbn [links_of fst snd]; first [split; apply cellZ_optr | split; reflexivity]. }
+  destruct linkCells as (cPrev & cNext & prevIn & nextIn & prevLoc & nextLoc & prevW & nextW & prevZ & nextZ).
+  assert (prevAddr : loc_addr L (mc_loc cPrev) = addr_of L q + 0) by (rewrite prevLoc; exact (AGp L gd Hgd q 0)).
+  assert (nextAddr : loc_addr L (mc_loc cNext) = addr_of L q + 8) by (rewrite nextLoc; exact (AGp L gd Hgd q 8)).
+  assert (baseVal : bv_unsigned (eval (rho1 mV) bv) = addr_of L q).
+  { rewrite (ev1u mV bv bvSup). exact baseIs. }
+  change {| ob_base := bv; ob_lo := SLit 0; ob_hi := SLit 16;
+            ob_cells := [{| c_off := SLit 0; c_width := 8; c_val := pv |};
+                         {| c_off := SLit 8; c_width := 8; c_val := nv |}];
+            ob_dflt := DUnknown |}
+    with (carved bv 0 16 [(0, 8%nat, pv); (8, 8%nat, nv)]).
+  apply obj_holds_frame_lit; rewrite ?baseVal; try exact Hrom; unfold PGSZ, META_SIZE in *; try lia.
   - cells_inside_tac.
-  - intros o Ho. destruct (Z_lt_dec o 8).
-    + apply (cell_rw0 _ _ (addr_of L q) 0 8 C0 Z0 eq_refl); [apply AG | lia].
-    + apply (cell_rw0 _ _ (addr_of L q) 8 8 C1 Z1 eq_refl); [apply AG | lia].
-  - unfold cells_in_view. constructor; [|constructor; [|constructor]].
-    + apply (cell_view0 _ _ (addr_of L q) 0 8 _ C0 Z0 eq_refl ltac:(lia)); [apply AG|]. rewrite ev1 by exact Sp. rewrite Ep. reflexivity.
-    + apply (cell_view0 _ _ (addr_of L q) 8 8 _ C1 Z1 eq_refl ltac:(lia)); [apply AG|]. rewrite ev1 by exact Sn. rewrite En. reflexivity.
+  - intros off offIn. destruct (Z_lt_dec off 8) as [inPrev | inNext].
+    + apply (cell_rw0 cPrev _ (addr_of L q) 0 8 (inImage _ prevIn) prevZ prevW prevAddr). lia.
+    + apply (cell_rw0 cNext _ (addr_of L q) 8 8 (inImage _ nextIn) nextZ nextW nextAddr). lia.
+  - unfold cells_in_view.
+    apply Forall_cons; [|apply Forall_cons; [|apply Forall_nil]]; intros j jBelow.
+    + apply (cell_view0m cPrev _ (addr_of L q) 0 8 pv (inImage _ prevIn) prevZ prevW ltac:(lia) prevAddr pvSup);
+        [rewrite prevIs; reflexivity | exact jBelow].
+    + apply (cell_view0m cNext _ (addr_of L q) 8 8 nv (inImage _ nextIn) nextZ nextW ltac:(lia) nextAddr nvSup);
+        [rewrite nextIs; reflexivity | exact jBelow].
 Qed.
 
 Definition e_actlo : sv := SAlu ALU_ADD nt_sc8 (SLit 80).
@@ -2016,7 +2125,7 @@ Variables (rd0 : word -> option byte) (wok0 : word -> bool).
 Hypothesis HMI : ltac2:(tb__ "0|0|
 S186Sd3VX;S6aS71S1bS0A2S6dS1bS0Vg;Vi;A4A2VU;S185Vs;VL;A2Vrd0;Vwok0;Vvm;A8").
 Hypothesis HXz : xzomb X s.
-Local Abbreviation HXr := (@U.Mal_nt__G1.Mal_nt_I.HXr s X HXz).
+Local Abbreviation HXr := (U.Mal_nt__G1.Mal_nt_I.HXr s X HXz).
 Hypothesis Hu : ltac2:(tb__ "0|0|
 SdbVX;Vs;Vg;Vam;A4").
 Hypothesis Hgd : 0 <= gd < 2 ^ 64.
@@ -2027,20 +2136,20 @@ Hypothesis HP12 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PcA2A2Sd2VL;Vg;A2A3").
 Hypothesis HP13 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PdA2A2Vi;A3").
-Local Abbreviation zG := (@U.Mal_nt__G1.Mal_nt_I.zG L g).
-Local Abbreviation zM := (@U.Mal_nt__G1.Mal_nt_I.zM L am).
+Local Abbreviation zG := (U.Mal_nt__G1.Mal_nt_I.zG L g).
+Local Abbreviation zM := (U.Mal_nt__G1.Mal_nt_I.zM L am).
 Local Notation "§6§ h__" := (h__ s L X U g am i gd vm rd0 wok0 HMI Hu Hgd) (at level 10, h__ global).
 Local Abbreviation R_all := (§6§ U.Mal_nt__G1.Mal_nt_I.R_all).
-Local Abbreviation sc := (@U.Mal_nt__G1.Mal_nt_I.sc am).
-Local Abbreviation key_range40 := (@U.Mal_nt__G1.Mal_nt_I.key_range40 s L X U g i gd vm rd0 wok0 HMI Hgd).
-Local Abbreviation nQ := (@U.Mal_nt__G1.Mal_nt_I.nQ g am).
+Local Abbreviation sc := (U.Mal_nt__G1.Mal_nt_I.sc am).
+Local Abbreviation key_range40 := (U.Mal_nt__G1.Mal_nt_I.key_range40 s L X U g i gd vm rd0 wok0 HMI Hgd).
+Local Abbreviation nQ := (U.Mal_nt__G1.Mal_nt_I.nQ g am).
 Local Notation "§7§ h__" := (h__ s g am) (at level 10, h__ global).
 Local Abbreviation anQ := (§7§ U.Mal_nt__G1.Mal_nt_I.anQ).
 Local Notation "§8§ h__" := (h__ s L g am) (at level 10, h__ global).
 Local Abbreviation zNm := (§8§ U.Mal_nt__G1.Mal_nt_I.zNm).
-Local Abbreviation zU := (@U.Mal_nt__G1.Mal_nt_I.zU s am).
-Local Abbreviation zB := (@U.Mal_nt__G1.Mal_nt_I.zB s am).
-Local Abbreviation zA8 := (@U.Mal_nt__G1.Mal_nt_I.zA8 s L g am rd0).
+Local Abbreviation zU := (U.Mal_nt__G1.Mal_nt_I.zU s am).
+Local Abbreviation zB := (U.Mal_nt__G1.Mal_nt_I.zB s am).
+Local Abbreviation zA8 := (U.Mal_nt__G1.Mal_nt_I.zA8 s L g am rd0).
 Local Abbreviation gPar := (§7§ U.Mal_nt__G1.Mal_nt_I.gPar).
 Local Abbreviation amPar := (§7§ U.Mal_nt__G1.Mal_nt_I.amPar).
 Local Abbreviation zQ := (§8§ U.Mal_nt__G1.Mal_nt_I.zQ).
@@ -2048,7 +2157,7 @@ Local Abbreviation zQm := (§8§ U.Mal_nt__G1.Mal_nt_I.zQm).
 Local Abbreviation zQa := (§8§ U.Mal_nt__G1.Mal_nt_I.zQa).
 Local Abbreviation zHb := (§7§ U.Mal_nt__G1.Mal_nt_I.zHb).
 Local Abbreviation zOff := (§7§ U.Mal_nt__G1.Mal_nt_I.zOff).
-Local Abbreviation zSec := (@U.Mal_nt__G1.Mal_nt_I.zSec L).
+Local Abbreviation zSec := (U.Mal_nt__G1.Mal_nt_I.zSec L).
 Local Notation "§9§ h__" := (h__ s L g am i rho gd rd0) (at level 10, h__ global).
 Local Abbreviation rho1 := (§9§ U.Mal_nt__G1.Mal_nt_I.rho1).
 Local Abbreviation zr1 := (§9§ U.Mal_nt__G1.Mal_nt_I.zr1).
@@ -2059,31 +2168,31 @@ Local Abbreviation RQ := (§6§ U.Mal_nt__G1.Mal_nt_I.RQ).
 Local Abbreviation zQ_range := (§6§ U.Mal_nt__G1.Mal_nt_I.zQ_range).
 Local Abbreviation zOff_eq := (§6§ U.Mal_nt__G1.Mal_nt_I.zOff_eq).
 Local Abbreviation par_area := (§6§ U.Mal_nt__G1.Mal_nt_I.par_area).
-Local Abbreviation secret_cell := (@U.Mal_nt__G1.Mal_nt_I.secret_cell s L X U g am i vm rd0 wok0 HMI Hu).
+Local Abbreviation secret_cell := (U.Mal_nt__G1.Mal_nt_I.secret_cell s L X U g am i vm rd0 wok0 HMI Hu).
 Local Notation "§10§ h__" := (h__ s L X U g am i gd vm rd0 wok0 HMI HXz Hu Hgd) (at level 10, h__ global).
 Local Abbreviation hdr_cells := (§10§ U.Mal_nt__G1.Mal_nt_I.hdr_cells).
 Local Abbreviation pbase_cell := (§10§ U.Mal_nt__G1.Mal_nt_I.pbase_cell).
 Local Abbreviation pmeta_cells := (§6§ U.Mal_nt__G1.Mal_nt_I.pmeta_cells).
-Local Abbreviation zU_range := (@U.Mal_nt__G1.Mal_nt_I.zU_range s L X U g am i vm rd0 wok0 HMI).
-Local Abbreviation zB_range := (@U.Mal_nt__G1.Mal_nt_I.zB_range s L X U g am i gd vm rd0 wok0 HMI Hgd).
-Local Abbreviation zA8_range := (@U.Mal_nt__G1.Mal_nt_I.zA8_range s L g am gd rd0 Hgd).
-Local Abbreviation zSec_range := (@U.Mal_nt__G1.Mal_nt_I.zSec_range L gd Hgd).
+Local Abbreviation zU_range := (U.Mal_nt__G1.Mal_nt_I.zU_range s L X U g am i vm rd0 wok0 HMI).
+Local Abbreviation zB_range := (U.Mal_nt__G1.Mal_nt_I.zB_range s L X U g am i gd vm rd0 wok0 HMI Hgd).
+Local Abbreviation zA8_range := (U.Mal_nt__G1.Mal_nt_I.zA8_range s L g am gd rd0 Hgd).
+Local Abbreviation zSec_range := (U.Mal_nt__G1.Mal_nt_I.zSec_range L gd Hgd).
 Local Abbreviation zHb_range := (§6§ U.Mal_nt__G1.Mal_nt_I.zHb_range).
 Local Abbreviation ze_lit := (§9§ U.Mal_nt__G1.Mal_nt_I.ze_lit).
 Local Abbreviation ze_alu := (§9§ U.Mal_nt__G1.Mal_nt_I.ze_alu).
 Local Notation "§11§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd) (at level 10, h__ global).
 Local Abbreviation ze142 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze142).
 Local Abbreviation ze156 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze156).
-Local Abbreviation ze136 := (@U.Mal_nt__G1.Mal_nt_I.ze136 s L g am i rho gd rd0 Hgd).
+Local Abbreviation ze136 := (U.Mal_nt__G1.Mal_nt_I.ze136 s L g am i rho gd rd0 Hgd).
 Local Abbreviation ze170 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze170).
 Local Abbreviation ze171 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze171).
 Local Abbreviation ze172 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze172).
 Local Abbreviation ze173 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze173).
 Local Abbreviation ze174 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze174).
 Local Abbreviation ze169 := (§11§ U.Mal_nt__G1.Mal_nt_I.ze169).
-Local Abbreviation e_parbase := (@U.Mal_nt__G1.Mal_nt_I.e_parbase).
-Local Abbreviation e_pmem := (@U.Mal_nt__G1.Mal_nt_I.e_pmem).
-Local Abbreviation e_parea := (@U.Mal_nt__G1.Mal_nt_I.e_parea).
+Local Abbreviation e_parbase := U.Mal_nt__G1.Mal_nt_I.e_parbase.
+Local Abbreviation e_pmem := U.Mal_nt__G1.Mal_nt_I.e_pmem.
+Local Abbreviation e_parea := U.Mal_nt__G1.Mal_nt_I.e_parea.
 Local Abbreviation ze_parbase := (§11§ U.Mal_nt__G1.Mal_nt_I.ze_parbase).
 Local Abbreviation ze_pmem := (§11§ U.Mal_nt__G1.Mal_nt_I.ze_pmem).
 Local Abbreviation ze_parea := (§11§ U.Mal_nt__G1.Mal_nt_I.ze_parea).
@@ -2108,18 +2217,18 @@ Sd4S135Sc8VmV;A2S136Sc8VmV;A2A2").
 Local Notation "§12§ h__" := (h__ s L X U g i vm rd0 wok0 HMI mV Erd Ewok) (at level 10, h__ global).
 Local Abbreviation HreprO := (§12§ U.Mal_nt__G1.Mal_nt_Ib.HreprO).
 Local Abbreviation cell_bytes0 := (§12§ U.Mal_nt__G1.Mal_nt_Ib.cell_bytes0).
-Local Abbreviation cell_rw0 := (@U.Mal_nt__G1.Mal_nt_Ib.cell_rw0 s L X U g i rho gd vm rd0 wok0 HMI Hgd Hsp mV Erd Ewok).
+Local Abbreviation cell_rw0 := (U.Mal_nt__G1.Mal_nt_Ib.cell_rw0 s L X U g i rho gd vm rd0 wok0 HMI Hgd Hsp mV Erd Ewok).
 Local Abbreviation ev1 := (§9§ U.Mal_nt__G1.Mal_nt_Ib.ev1).
 Local Abbreviation ev1u := (§9§ U.Mal_nt__G1.Mal_nt_Ib.ev1u).
 Local Notation "§13§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI mV Erd Ewok) (at level 10, h__ global).
 Local Abbreviation cell_view0 := (§13§ U.Mal_nt__G1.Mal_nt_Ib.cell_view0).
 Local Abbreviation cell_view0m := (§13§ U.Mal_nt__G1.Mal_nt_Ib.cell_view0m).
-Local Abbreviation soff_of_ev := (@U.Mal_nt__G1.Mal_nt_Ib.soff_of_ev s L g am i rho gd rd0 Hgd mV).
-Local Abbreviation cellZ_optr := (@U.Mal_nt__G1.Mal_nt_Ib.cellZ_optr L).
-Local Abbreviation ze_sc8 := (@U.Mal_nt__G1.Mal_nt_Ib.ze_sc8 s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd Hsp).
-Local Abbreviation ctx_cell_In := (@U.Mal_nt__G1.Mal_nt_Ib.ctx_cell_In s).
-Local Abbreviation free_cells := (@U.Mal_nt__G1.Mal_nt_Ib.free_cells).
-Local Abbreviation O_freeK := (@U.Mal_nt__G1.Mal_nt_Ib.O_freeK).
+Local Abbreviation soff_of_ev := (U.Mal_nt__G1.Mal_nt_Ib.soff_of_ev s L g am i rho gd rd0 Hgd mV).
+Local Abbreviation cellZ_optr := (U.Mal_nt__G1.Mal_nt_Ib.cellZ_optr L).
+Local Abbreviation ze_sc8 := (U.Mal_nt__G1.Mal_nt_Ib.ze_sc8 s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd Hsp).
+Local Abbreviation ctx_cell_In := (U.Mal_nt__G1.Mal_nt_Ib.ctx_cell_In s).
+Local Abbreviation free_cells := U.Mal_nt__G1.Mal_nt_Ib.free_cells.
+Local Abbreviation O_freeK := U.Mal_nt__G1.Mal_nt_Ib.O_freeK.
 
 Ltac zfact := cbn [zholds zcond].
 Ltac cells_inside_tac := unfold cells_inside; repeat constructor; cbn; lia.
@@ -2127,57 +2236,77 @@ Ltac cells_inside_tac := unfold cells_inside; repeat constructor; cbn; lia.
 Lemma hold_freeK (q : sptr) pr nx (bv : sv) five (pv nv : sv) : ltac2:(tb__ "0|6|
 S4S6cS1fA1SdfVs;Vq;A2S6aS1fS28Vpr;Vnx;A2A2A3Sc9S1bVq;Se3Vs;A1M0A3S1bS4S6cS1bA1M1Vpr;S6aS1bR1A2M2A3Sc9S1bR2G0A3M3F_;Fp;S1bS4G1Vnx;G2A3G3F_;Fp;S4S6bS7cVbv;A1S70A3S4S6bS7cVpv;A1S70A3S4S6bS7cVnv;A1S70A3S4S0S7aS10dVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8M4S10cVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;A8M5Vbv;A3Sd2VL;Vq;A2A3S4S0S7aG4G5Vpv;A3S10bVL;Vpr;A2A3S4S0S7aG4G5Vnv;A3S10bVL;Vnx;A2A3S4dSc8S10eVs;VL;Vg;Vam;Vi;Vrho;Vgd;Vrd0;VmV;A9S134Vms;VmV;A2S1aaVbv;Vfive;Vpv;Vnv;A4A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;").
 Proof using Erd Ewok HMI Hdepth Hgd Hrom Hsp.
-  intros Mq Kq Kpr Knx Sb Sp Sn Eb Ep En. pose proof (ceiling_small L) as CS. pose proof (key_range40 q Kq) as (B1 & B2).
-  assert (P12 : 0 <= optrA L pr /\ optrA L pr + 40 <= topL L).
-  { destruct pr as [p|]; cbn [optrA]; [pose proof (key_range40 p (Kpr p eq_refl)); lia | top_ranges; lia]. }
-  assert (N12 : 0 <= optrA L nx /\ optrA L nx + 40 <= topL L).
-  { destruct nx as [p|]; cbn [optrA]; [pose proof (key_range40 p (Knx p eq_refl)); lia | top_ranges; lia]. }
-  assert (B : bv_unsigned (eval (rho1 mV) bv) = addr_of L q) by (rewrite ev1u by exact Sb; exact Eb).
-  assert (AG : forall d, loc_addr L (LMem (padd q d)) = addr_of L q + d) by (intros d; unfold addr_of, loc_addr; destruct q; cbn [padd]; lia).
-  pose proof (fun c Hc => meta_cells_in_imageI X (Some (g, i)) U s HI q c Kq Hc) as MI. rewrite Mq in MI. cbn [meta_slot_cells] in MI.
-  unfold META_prev, META_next, META_mem, META_avail, META_freed, META_bits in MI.
-  assert (C0 : In (MCell (LMem (padd q 0)) 8 (MallocInv.optr pr)) (image s)) by (apply MI; cbn; tauto).
-  assert (C1 : In (MCell (LMem (padd q 8)) 8 (MallocInv.optr nx)) (image s)) by (apply MI; cbn; tauto).
-  assert (C2 : In (MCell (LMem (padd q 16)) 8 (VZ 0)) (image s)) by (apply MI; cbn; tauto).
-  assert (C3 : In (MCell (LMem (padd q 24)) 4 (VZ 0)) (image s)) by (apply MI; cbn; tauto).
-  assert (C4 : In (MCell (LMem (padd q 28)) 4 (VZ 0)) (image s)) by (apply MI; cbn; tauto).
-  assert (C5 : In (MCell (LMem (padd q 32)) 8 (VZ 0)) (image s)) by (apply MI; cbn; tauto).
-  assert (RW : forall o, 0 <= o < 40 -> Glue.wok_of segsU mV (Z_to_bv 64 (addr_of L q + o)) = true /\ exists x, Glue.rd_of segsU mV (Z_to_bv 64 (addr_of L q + o)) = Some x).
-  { intros o Ho.
-    destruct (Z_lt_dec o 8); [apply (cell_rw0 _ _ (addr_of L q) 0 8 C0 (cellZ_optr _ _ _) eq_refl); [apply AG | lia]|].
-    destruct (Z_lt_dec o 16); [apply (cell_rw0 _ _ (addr_of L q) 8 8 C1 (cellZ_optr _ _ _) eq_refl); [apply AG | lia]|].
-    destruct (Z_lt_dec o 24); [apply (cell_rw0 _ 0 (addr_of L q) 16 8 C2 eq_refl eq_refl); [apply AG | lia]|].
-    destruct (Z_lt_dec o 28); [apply (cell_rw0 _ 0 (addr_of L q) 24 4 C3 eq_refl eq_refl); [apply AG | lia]|].
-    destruct (Z_lt_dec o 32); [apply (cell_rw0 _ 0 (addr_of L q) 28 4 C4 eq_refl eq_refl); [apply AG | lia]|].
-    apply (cell_rw0 _ 0 (addr_of L q) 32 8 C5 eq_refl eq_refl); [apply AG | lia]. }
-
-  assert (ZB : forall off (w : nat) c, In c (image s) -> cellZ L c = Some 0 -> mc_w c = w -> loc_addr L (mc_loc c) = addr_of L q + off ->
-               forall t, (t < w)%nat -> Glue.rd_of segsU mV (Z_to_bv 64 (addr_of L q + off + Z.of_nat t)) = Some (Z_to_bv 8 0)).
-  { intros off w c Hc Hz Hw Ha t Ht. destruct (cell_bytes0 c 0 Hc Hz t ltac:(rewrite Hw; exact Ht)) as (_ & _ & R). rewrite Ha in R. rewrite R.
-    f_equal. f_equal. unfold le_byte. rewrite Z.mod_0_l by (apply Z.pow_nonzero; lia). rewrite Z.shiftr_0_l. reflexivity. }
-  pose proof (ZB 16 8%nat _ C2 eq_refl eq_refl (AG 16)) as Z16.
-  pose proof (ZB 24 4%nat _ C3 eq_refl eq_refl (AG 24)) as Z24.
-  pose proof (ZB 28 4%nat _ C4 eq_refl eq_refl (AG 28)) as Z28.
-  pose proof (ZB 32 8%nat _ C5 eq_refl eq_refl (AG 32)) as Z32.
-  assert (ZERO : forall (k t : nat), (t < k)%nat -> (k <= 8)%nat -> nth t (enc_bytes k (eval (rho1 mV) (SLit 0))) (Z_to_bv 8 0) = Z_to_bv 8 0).
-  { intros k t Ht Hk. cbn [eval]. rewrite nth_enc_bytes by lia. unfold le_byte. rewrite Z.mod_0_l, Z.shiftr_0_l by (apply Z.pow_nonzero; lia). reflexivity. }
-  unfold O_freeK. destruct five; cbn [free_cells];
-    (apply obj_holds_frame_lit; rewrite ?B; try exact Hrom; try (unfold PGSZ in *; lia); [cells_inside_tac | intros o Ho; apply RW; lia |]);
-    unfold cells_in_view.
-  - constructor; [intros t Ht; apply (cell_view0 _ _ (addr_of L q) 0 8 _ C0 (cellZ_optr _ _ _) eq_refl ltac:(lia) (AG 0)); [rewrite ev1 by exact Sp; rewrite Ep; reflexivity | exact Ht]|].
-    constructor; [intros t Ht; apply (cell_view0 _ _ (addr_of L q) 8 8 _ C1 (cellZ_optr _ _ _) eq_refl ltac:(lia) (AG 8)); [rewrite ev1 by exact Sn; rewrite En; reflexivity | exact Ht]|].
-    constructor; [intros t Ht; rewrite (ZERO 8%nat t Ht ltac:(lia)); apply Z16; exact Ht|].
-    constructor.
-    { intros t Ht. rewrite (ZERO 8%nat t Ht ltac:(lia)). destruct (Nat.lt_ge_cases t 4) as [T|T].
-      - apply Z24. exact T.
-      - replace (addr_of L q + 24 + Z.of_nat t) with (addr_of L q + 28 + Z.of_nat (t - 4)) by lia. apply Z28. lia. }
-    constructor; [intros t Ht; rewrite (ZERO 8%nat t Ht ltac:(lia)); apply Z32; exact Ht|]. constructor.
-  - constructor; [intros t Ht; apply (cell_view0 _ _ (addr_of L q) 0 8 _ C0 (cellZ_optr _ _ _) eq_refl ltac:(lia) (AG 0)); [rewrite ev1 by exact Sp; rewrite Ep; reflexivity | exact Ht]|].
-    constructor; [intros t Ht; apply (cell_view0 _ _ (addr_of L q) 8 8 _ C1 (cellZ_optr _ _ _) eq_refl ltac:(lia) (AG 8)); [rewrite ev1 by exact Sn; rewrite En; reflexivity | exact Ht]|].
-    constructor; [intros t Ht; rewrite (ZERO 8%nat t Ht ltac:(lia)); apply Z16; exact Ht|].
-    constructor; [intros t Ht; rewrite (ZERO 4%nat t Ht ltac:(lia)); apply Z24; exact Ht|].
-    constructor; [intros t Ht; rewrite (ZERO 4%nat t Ht ltac:(lia)); apply Z28; exact Ht|].
-    constructor; [intros t Ht; rewrite (ZERO 8%nat t Ht ltac:(lia)); apply Z32; exact Ht|]. constructor.
+  intros slotQ keyQ _ _ bvSup pvSup nvSup baseIs prevIs nextIs.
+  destruct (key_range40 q keyQ) as [keyLow keyTop].
+  pose proof (ceiling_small L) as topBelow.
+  set (freeSlots := meta_slot_cells q (Some (MFree pr nx))).
+  assert (slotsImaged : forall c, In c freeSlots -> In c (image s)).
+  { intros c cIn. apply (meta_cells_in_imageI X (Some (g, i)) U s HI q c keyQ). rewrite slotQ. exact cIn. }
+  assert (offsetAddr : forall d, loc_addr L (LMem (padd q d)) = addr_of L q + d).
+  { intros d. exact (AGp L gd Hgd q d). }
+  assert (byteRw : forall off, 0 <= off < 40 ->
+            wok_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = true /\
+            exists bb, rd_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = Some bb).
+  { intros off offIn.
+    assert (viaCell : forall c d (w : nat), In c freeSlots -> mc_loc c = LMem (padd q d) -> mc_w c = w ->
+              (exists z, cellZ L c = Some z) -> d <= off < d + Z.of_nat w ->
+              wok_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = true /\
+              exists bb, rd_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = Some bb).
+    { intros c d w cIn locIs widthIs (z & zIs) inCell.
+      apply (cell_rw0 c z (addr_of L q) d w (slotsImaged c cIn) zIs widthIs); [rewrite locIs; apply offsetAddr | lia]. }
+    destruct (Z_lt_dec off 16) as [linkPart | dataPart].
+    - destruct (Z_lt_dec off 8) as [inPrev | inNext].
+      + eapply (viaCell _ 0 8%nat); [left; reflexivity | reflexivity | reflexivity | eexists; apply cellZ_optr | lia].
+      + eapply (viaCell _ 8 8%nat); [right; left; reflexivity | reflexivity | reflexivity | eexists; apply cellZ_optr | lia].
+    - destruct (Z_lt_dec off 28) as [lowData | highData].
+      + destruct (Z_lt_dec off 24) as [inMem | inAvail].
+        * eapply (viaCell _ 16 8%nat); [do 2 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia].
+        * eapply (viaCell _ 24 4%nat); [do 3 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia].
+      + destruct (Z_lt_dec off 32) as [inFreed | inBits].
+        * eapply (viaCell _ 28 4%nat); [do 4 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia].
+        * eapply (viaCell _ 32 8%nat); [do 5 right; left; reflexivity | reflexivity | reflexivity | eexists; reflexivity | lia]. }
+  assert (zeroAt : forall off, 16 <= off < 40 -> rd_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = Some (Z_to_bv 8 0)).
+  { intros off offIn.
+    assert (fromCell : forall c d, In c freeSlots -> mc_loc c = LMem (padd q d) -> cellZ L c = Some 0 ->
+              d <= off < d + Z.of_nat (mc_w c) -> rd_of segsU mV (Z_to_bv 64 (addr_of L q + off)) = Some (Z_to_bv 8 0)).
+    { intros c d cIn locIs zIs inCell.
+      destruct (cell_bytes0 c 0 (slotsImaged c cIn) zIs (Z.to_nat (off - d)) ltac:(lia)) as (_ & _ & rdAt).
+      rewrite locIs, offsetAddr, Z2Nat.id in rdAt by lia.
+      replace (addr_of L q + d + (off - d)) with (addr_of L q + off) in rdAt by lia.
+      rewrite rdAt. unfold le_byte. rewrite Zmod_0_l, Z.shiftr_0_l. reflexivity. }
+    destruct (Z_lt_dec off 28) as [lowData | highData].
+    - destruct (Z_lt_dec off 24) as [inMem | inAvail].
+      + eapply (fromCell _ 16); [do 2 right; left; reflexivity | reflexivity | reflexivity | cbn [mc_w]; lia].
+      + eapply (fromCell _ 24); [do 3 right; left; reflexivity | reflexivity | reflexivity | cbn [mc_w]; lia].
+    - destruct (Z_lt_dec off 32) as [inFreed | inBits].
+      + eapply (fromCell _ 28); [do 4 right; left; reflexivity | reflexivity | reflexivity | cbn [mc_w]; lia].
+      + eapply (fromCell _ 32); [do 5 right; left; reflexivity | reflexivity | reflexivity | cbn [mc_w]; lia]. }
+  assert (zeroEnc : forall (w j : nat), (j < w)%nat -> (w <= 8)%nat ->
+            nth j (enc_bytes w (eval (rho1 mV) (SLit 0))) (Z_to_bv 8 0) = Z_to_bv 8 0).
+  { intros w j jBelow wMax. cbn [eval]. rewrite nth_enc_bytes by lia.
+    unfold le_byte. rewrite Zmod_0_l, Z.shiftr_0_l. reflexivity. }
+  assert (prevView : forall j, (j < 8)%nat ->
+            rd_of segsU mV (Z_to_bv 64 (addr_of L q + 0 + Z.of_nat j)) =
+            Some (nth j (enc_bytes 8 (eval (rho1 mV) pv)) (Z_to_bv 8 0))).
+  { intros j jBelow. eapply (cell_view0m _ (optrA L pr) (addr_of L q) 0 8%nat pv);
+      [apply slotsImaged; left; reflexivity | apply cellZ_optr | reflexivity | lia
+      | exact (offsetAddr 0) | exact pvSup | rewrite prevIs; reflexivity | exact jBelow]. }
+  assert (nextView : forall j, (j < 8)%nat ->
+            rd_of segsU mV (Z_to_bv 64 (addr_of L q + 8 + Z.of_nat j)) =
+            Some (nth j (enc_bytes 8 (eval (rho1 mV) nv)) (Z_to_bv 8 0))).
+  { intros j jBelow. eapply (cell_view0m _ (optrA L nx) (addr_of L q) 8 8%nat nv);
+      [apply slotsImaged; right; left; reflexivity | apply cellZ_optr | reflexivity | lia
+      | exact (offsetAddr 8) | exact nvSup | rewrite nextIs; reflexivity | exact jBelow]. }
+  assert (baseVal : bv_unsigned (eval (rho1 mV) bv) = addr_of L q).
+  { rewrite (ev1u mV bv bvSup). exact baseIs. }
+  change (O_freeK bv five pv nv) with (carved bv 0 40 (free_cells five pv nv)).
+  apply obj_holds_frame_lit; rewrite ?baseVal; try exact Hrom; unfold PGSZ, META_SIZE in *; try lia.
+  - destruct five; cells_inside_tac.
+  - exact byteRw.
+  - unfold cells_in_view. destruct five; cbn [U.Mal_nt__G1.Mal_nt_Ib.free_cells];
+      (apply Forall_cons; [exact prevView|]); (apply Forall_cons; [exact nextView|]);
+      repeat (apply Forall_cons; [intros j jBelow; rewrite zeroEnc by lia; rewrite <- Z.add_assoc; apply zeroAt; lia|]);
+      apply Forall_nil.
 Qed.
 
 Definition e_uslo : sv := SAlu ALU_ADD nt_sc8 (SLit 464).
@@ -2454,38 +2583,38 @@ Hypothesis HP12 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PcA2A2Sd2VL;Vg;A2A3").
 Hypothesis HP13 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PdA2A2Vi;A3").
-Local Abbreviation zG := (@U.Mal_nt__G1.Mal_nt_I.zG L g).
-Local Abbreviation zM := (@U.Mal_nt__G1.Mal_nt_I.zM L am).
-Local Abbreviation zPv := (@U.Mal_nt__G1.Mal_nt_I.zPv L am).
-Local Abbreviation zNx := (@U.Mal_nt__G1.Mal_nt_I.zNx L am).
+Local Abbreviation zG := (U.Mal_nt__G1.Mal_nt_I.zG L g).
+Local Abbreviation zM := (U.Mal_nt__G1.Mal_nt_I.zM L am).
+Local Abbreviation zPv := (U.Mal_nt__G1.Mal_nt_I.zPv L am).
+Local Abbreviation zNx := (U.Mal_nt__G1.Mal_nt_I.zNx L am).
 Local Notation "§15§ h__" := (h__ s X g am Hu) (at level 10, h__ global).
 Local Abbreviation g_key := (§15§ U.Mal_nt__G1.Mal_nt_I.g_key).
 Local Notation "§16§ h__" := (h__ s L X U g am i gd vm rd0 wok0 HMI Hu Hgd) (at level 10, h__ global).
 Local Abbreviation R_all := (§16§ U.Mal_nt__G1.Mal_nt_I.R_all).
 Local Abbreviation zPv_range := (§16§ U.Mal_nt__G1.Mal_nt_I.zPv_range).
 Local Abbreviation zNx_range := (§16§ U.Mal_nt__G1.Mal_nt_I.zNx_range).
-Local Abbreviation sc := (@U.Mal_nt__G1.Mal_nt_I.sc am).
+Local Abbreviation sc := (U.Mal_nt__G1.Mal_nt_I.sc am).
 Local Notation "§17§ h__" := (h__ s g am) (at level 10, h__ global).
 Local Abbreviation hQ := (§17§ U.Mal_nt__G1.Mal_nt_I.hQ).
 Local Abbreviation ahQ := (§17§ U.Mal_nt__G1.Mal_nt_I.ahQ).
 Local Abbreviation tQ := (§17§ U.Mal_nt__G1.Mal_nt_I.tQ).
 Local Abbreviation atQ := (§17§ U.Mal_nt__G1.Mal_nt_I.atQ).
-Local Abbreviation zH := (@U.Mal_nt__G1.Mal_nt_I.zH s L am).
+Local Abbreviation zH := (U.Mal_nt__G1.Mal_nt_I.zH s L am).
 Local Notation "§18§ h__" := (h__ s L g am) (at level 10, h__ global).
 Local Abbreviation zHp := (§18§ U.Mal_nt__G1.Mal_nt_I.zHp).
-Local Abbreviation zHp_eq := (@U.Mal_nt__G1.Mal_nt_I.zHp_eq s L X U g am i vm rd0 wok0 HMI).
+Local Abbreviation zHp_eq := (U.Mal_nt__G1.Mal_nt_I.zHp_eq s L X U g am i vm rd0 wok0 HMI).
 Local Abbreviation zH_range := (§16§ U.Mal_nt__G1.Mal_nt_I.zH_range).
-Local Abbreviation fmQ := (@U.Mal_nt__G1.Mal_nt_I.fmQ s g).
-Local Abbreviation ftQ := (@U.Mal_nt__G1.Mal_nt_I.ftQ s g).
-Local Abbreviation zF := (@U.Mal_nt__G1.Mal_nt_I.zF s L).
-Local Abbreviation zFp := (@U.Mal_nt__G1.Mal_nt_I.zFp s L g).
-Local Abbreviation fmem := (@U.Mal_nt__G1.Mal_nt_I.fmem s X).
+Local Abbreviation fmQ := (U.Mal_nt__G1.Mal_nt_I.fmQ s g).
+Local Abbreviation ftQ := (U.Mal_nt__G1.Mal_nt_I.ftQ s g).
+Local Abbreviation zF := (U.Mal_nt__G1.Mal_nt_I.zF s L).
+Local Abbreviation zFp := (U.Mal_nt__G1.Mal_nt_I.zFp s L g).
+Local Abbreviation fmem := (U.Mal_nt__G1.Mal_nt_I.fmem s X).
 Local Abbreviation fmem_facts := (§15§ U.Mal_nt__G1.Mal_nt_I.fmem_facts).
-Local Abbreviation fmL_cases := (@U.Mal_nt__G1.Mal_nt_I.fmL_cases s L X U g am i vm rd0 wok0 HMI Hu).
+Local Abbreviation fmL_cases := (U.Mal_nt__G1.Mal_nt_I.fmL_cases s L X U g am i vm rd0 wok0 HMI Hu).
 Local Abbreviation zF_range := (§16§ U.Mal_nt__G1.Mal_nt_I.zF_range).
 Local Abbreviation zFp_range := (§16§ U.Mal_nt__G1.Mal_nt_I.zFp_range).
-Local Abbreviation nQ := (@U.Mal_nt__G1.Mal_nt_I.nQ g am).
-Local Abbreviation pQ := (@U.Mal_nt__G1.Mal_nt_I.pQ g am).
+Local Abbreviation nQ := (U.Mal_nt__G1.Mal_nt_I.nQ g am).
+Local Abbreviation pQ := (U.Mal_nt__G1.Mal_nt_I.pQ g am).
 Local Abbreviation anQ := (§17§ U.Mal_nt__G1.Mal_nt_I.anQ).
 Local Abbreviation apQ := (§17§ U.Mal_nt__G1.Mal_nt_I.apQ).
 Local Abbreviation zNm := (§18§ U.Mal_nt__G1.Mal_nt_I.zNm).
@@ -2503,7 +2632,7 @@ Local Abbreviation zr1_any := (§19§ U.Mal_nt__G1.Mal_nt_I.zr1_any).
 Local Abbreviation zl1_any := (§19§ U.Mal_nt__G1.Mal_nt_I.zl1_any).
 Local Abbreviation hQ_used := (§16§ U.Mal_nt__G1.Mal_nt_I.hQ_used).
 Local Abbreviation tQ_used := (§16§ U.Mal_nt__G1.Mal_nt_I.tQ_used).
-Local Abbreviation zHp_range := (@U.Mal_nt__G1.Mal_nt_I.zHp_range s L X U g am i gd vm rd0 wok0 HMI HXz Hgd).
+Local Abbreviation zHp_range := (U.Mal_nt__G1.Mal_nt_I.zHp_range s L X U g am i gd vm rd0 wok0 HMI HXz Hgd).
 Local Abbreviation nQ_used := (§16§ U.Mal_nt__G1.Mal_nt_I.nQ_used).
 Local Abbreviation pQ_used := (§16§ U.Mal_nt__G1.Mal_nt_I.pQ_used).
 Local Abbreviation RN := (§16§ U.Mal_nt__G1.Mal_nt_I.RN).
@@ -2513,14 +2642,14 @@ Local Abbreviation zQ_range := (§16§ U.Mal_nt__G1.Mal_nt_I.zQ_range).
 Local Abbreviation par_last := (§16§ U.Mal_nt__G1.Mal_nt_I.par_last).
 Local Abbreviation zM_eq := (§16§ U.Mal_nt__G1.Mal_nt_I.zM_eq).
 Local Abbreviation par_area := (§16§ U.Mal_nt__G1.Mal_nt_I.par_area).
-Local Abbreviation ze12 := (@U.Mal_nt__G1.Mal_nt_I.ze12 s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd HP12).
+Local Abbreviation ze12 := (U.Mal_nt__G1.Mal_nt_I.ze12 s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd HP12).
 Local Notation "§20§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd) (at level 10, h__ global).
 Local Abbreviation ze135 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze135).
 Local Abbreviation ze140 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze140).
 Local Abbreviation ze141 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze141).
 Local Abbreviation ze142 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze142).
 Local Abbreviation ze150 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze150).
-Local Abbreviation ze165 := (@U.Mal_nt__G1.Mal_nt_I.ze165 s L X U g am i rho gd vm rd0 wok0 HMI HXz Hgd).
+Local Abbreviation ze165 := (U.Mal_nt__G1.Mal_nt_I.ze165 s L X U g am i rho gd vm rd0 wok0 HMI HXz Hgd).
 Local Abbreviation ze175 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze175).
 Local Abbreviation ze178 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze178).
 Local Abbreviation ze179 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze179).
@@ -2532,9 +2661,9 @@ Local Abbreviation ze156 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze156).
 Local Abbreviation ze111 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze111).
 Local Abbreviation ze114 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze114).
 Local Abbreviation ze172 := (§20§ U.Mal_nt__G1.Mal_nt_I.ze172).
-Local Abbreviation e_parbase := (@U.Mal_nt__G1.Mal_nt_I.e_parbase).
-Local Abbreviation e_pmem := (@U.Mal_nt__G1.Mal_nt_I.e_pmem).
-Local Abbreviation e_parea := (@U.Mal_nt__G1.Mal_nt_I.e_parea).
+Local Abbreviation e_parbase := U.Mal_nt__G1.Mal_nt_I.e_parbase.
+Local Abbreviation e_pmem := U.Mal_nt__G1.Mal_nt_I.e_pmem.
+Local Abbreviation e_parea := U.Mal_nt__G1.Mal_nt_I.e_parea.
 Local Abbreviation ze_parbase := (§20§ U.Mal_nt__G1.Mal_nt_I.ze_parbase).
 Local Abbreviation ze_parea := (§20§ U.Mal_nt__G1.Mal_nt_I.ze_parea).
 Hypothesis Hsp : ltac2:(tb__ "0|1|
@@ -2554,38 +2683,38 @@ Hypothesis Hgd_holds : ltac2:(tb__ "0|0|
 Sd5Sd4Vrd0;SceQ40A1S70L_;A2Sd6Sd3A1U8Vgd;A4").
 Let bv0 : byteview := ltac2:(tb__ "0|0|
 Sd4S135Sc8VmV;A2S136Sc8VmV;A2A2").
-Local Abbreviation O_got := (@U.Mal_nt__G1.Mal_nt_Ib.O_got).
-Local Abbreviation O_guard := (@U.Mal_nt__G1.Mal_nt_Ib.O_guard).
-Local Abbreviation O_sct := (@U.Mal_nt__G1.Mal_nt_Ib.O_sct).
-Local Abbreviation O_metaK := (@U.Mal_nt__G1.Mal_nt_Ib.O_metaK).
-Local Abbreviation e_actlo := (@U.Mal_nt__G1.Mal_nt_Ib.e_actlo).
-Local Abbreviation e_acthi := (@U.Mal_nt__G1.Mal_nt_Ib.e_acthi).
+Local Abbreviation O_got := U.Mal_nt__G1.Mal_nt_Ib.O_got.
+Local Abbreviation O_guard := U.Mal_nt__G1.Mal_nt_Ib.O_guard.
+Local Abbreviation O_sct := U.Mal_nt__G1.Mal_nt_Ib.O_sct.
+Local Abbreviation O_metaK := U.Mal_nt__G1.Mal_nt_Ib.O_metaK.
+Local Abbreviation e_actlo := U.Mal_nt__G1.Mal_nt_Ib.e_actlo.
+Local Abbreviation e_acthi := U.Mal_nt__G1.Mal_nt_Ib.e_acthi.
 Local Notation "§21§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd Hsp) (at level 10, h__ global).
 Local Abbreviation ze_actlo := (§21§ U.Mal_nt__G1.Mal_nt_Ib.ze_actlo).
 Local Abbreviation ze_acthi := (§21§ U.Mal_nt__G1.Mal_nt_Ib.ze_acthi).
-Local Abbreviation O_act := (@U.Mal_nt__G1.Mal_nt_Ib.O_act).
-Local Abbreviation O_seq := (@U.Mal_nt__G1.Mal_nt_Ib.O_seq).
-Local Abbreviation O_fmh := (@U.Mal_nt__G1.Mal_nt_Ib.O_fmh).
-Local Abbreviation O_useq := (@U.Mal_nt__G1.Mal_nt_Ib.O_useq).
-Local Abbreviation free_cells := (@U.Mal_nt__G1.Mal_nt_Ib.free_cells).
-Local Abbreviation O_freeK := (@U.Mal_nt__G1.Mal_nt_Ib.O_freeK).
-Local Abbreviation e_uslo := (@U.Mal_nt__G1.Mal_nt_Ic.e_uslo).
-Local Abbreviation e_ushi := (@U.Mal_nt__G1.Mal_nt_Ic.e_ushi).
+Local Abbreviation O_act := U.Mal_nt__G1.Mal_nt_Ib.O_act.
+Local Abbreviation O_seq := U.Mal_nt__G1.Mal_nt_Ib.O_seq.
+Local Abbreviation O_fmh := U.Mal_nt__G1.Mal_nt_Ib.O_fmh.
+Local Abbreviation O_useq := U.Mal_nt__G1.Mal_nt_Ib.O_useq.
+Local Abbreviation free_cells := U.Mal_nt__G1.Mal_nt_Ib.free_cells.
+Local Abbreviation O_freeK := U.Mal_nt__G1.Mal_nt_Ib.O_freeK.
+Local Abbreviation e_uslo := U.Mal_nt__G1.Mal_nt_Ic.e_uslo.
+Local Abbreviation e_ushi := U.Mal_nt__G1.Mal_nt_Ic.e_ushi.
 Local Abbreviation ze_uslo := (§21§ U.Mal_nt__G1.Mal_nt_Ic.ze_uslo).
 Local Abbreviation ze_ushi := (§21§ U.Mal_nt__G1.Mal_nt_Ic.ze_ushi).
-Local Abbreviation O_usage := (@U.Mal_nt__G1.Mal_nt_Ic.O_usage).
-Local Abbreviation e_bnlo := (@U.Mal_nt__G1.Mal_nt_Ic.e_bnlo).
-Local Abbreviation e_bnhi := (@U.Mal_nt__G1.Mal_nt_Ic.e_bnhi).
+Local Abbreviation O_usage := U.Mal_nt__G1.Mal_nt_Ic.O_usage.
+Local Abbreviation e_bnlo := U.Mal_nt__G1.Mal_nt_Ic.e_bnlo.
+Local Abbreviation e_bnhi := U.Mal_nt__G1.Mal_nt_Ic.e_bnhi.
 Local Abbreviation ze_bnlo := (§20§ U.Mal_nt__G1.Mal_nt_Ic.ze_bnlo).
 Local Abbreviation ze_bnhi := (§20§ U.Mal_nt__G1.Mal_nt_Ic.ze_bnhi).
-Local Abbreviation O_bnc := (@U.Mal_nt__G1.Mal_nt_Ic.O_bnc).
-Local Abbreviation O_grp := (@U.Mal_nt__G1.Mal_nt_Ic.O_grp).
-Local Abbreviation O_shdr := (@U.Mal_nt__G1.Mal_nt_Ic.O_shdr).
-Local Abbreviation O_bptr := (@U.Mal_nt__G1.Mal_nt_Ic.O_bptr).
-Local Abbreviation O_pbase := (@U.Mal_nt__G1.Mal_nt_Ic.O_pbase).
-Local Abbreviation O_pmeta := (@U.Mal_nt__G1.Mal_nt_Ic.O_pmeta).
-Local Abbreviation O_parea := (@U.Mal_nt__G1.Mal_nt_Ic.O_parea).
-Local Abbreviation O_secret := (@U.Mal_nt__G1.Mal_nt_Ic.O_secret).
+Local Abbreviation O_bnc := U.Mal_nt__G1.Mal_nt_Ic.O_bnc.
+Local Abbreviation O_grp := U.Mal_nt__G1.Mal_nt_Ic.O_grp.
+Local Abbreviation O_shdr := U.Mal_nt__G1.Mal_nt_Ic.O_shdr.
+Local Abbreviation O_bptr := U.Mal_nt__G1.Mal_nt_Ic.O_bptr.
+Local Abbreviation O_pbase := U.Mal_nt__G1.Mal_nt_Ic.O_pbase.
+Local Abbreviation O_pmeta := U.Mal_nt__G1.Mal_nt_Ic.O_pmeta.
+Local Abbreviation O_parea := U.Mal_nt__G1.Mal_nt_Ic.O_parea.
+Local Abbreviation O_secret := U.Mal_nt__G1.Mal_nt_Ic.O_secret.
 
 Inductive mkey := KG | KH | KT | KN | KP.
 Definition kbase (k : mkey) : sv := ltac2:(tb__ "0|0|
@@ -2680,11 +2809,15 @@ Ltac in_list := cbn; repeat (first [left; reflexivity | right]).
 Lemma par_ranges : ltac2:(tb__ "0|7|
 S4S0S1cVam;A1Z0A3S5SaSbZ1000M0Z10M1A2S119VL;Vam;A2M2A2S5SaSbG2Z8A2Sd1VL;A1M3A2S5SaG0S11cVs;VL;Vg;Vam;A4M4A2S5SaSbG4G1A2G2A2S5SaG0S11aVs;VL;Vg;Vam;A4M5A2S5SaSbG5Z28A2G3A2S5SaG0S11bVs;VL;Vg;Vam;A4M6A2SaSbG6G0A2G3A2A2A2A2A2A2A2A2F_;").
 Proof using HMI Hgd Hsp Hu.
-  intros H. pose proof (zQ_range H). destruct (par_area H) as (a & _ & _ & A1 & A2 & _). pose proof (RQ H) as (_ & _ & _ & Q1 & Q2).
-  pose proof (zM_eq H) as EM. pose proof (par_last H) as (Hi & Hl & Hsc & SP).
-  destruct (group_range X (Some (g, i)) U s L HI HL C_U vm gPar amPar (gPar_used H) HV HLG) as (G1 & G2 & _).
-  assert (0 <= stride_of amPar * iPar) by nia. assert (stride_of amPar * (iPar + 1) <= stride_of amPar * (am_last amPar + 1)) by nia.
-  unfold group_extent, zQm, UNIT, IB, PGSZ in *. lia.
+  intros mapZero.
+  pose proof (zM_eq mapZero) as memAt.
+  pose proof (RQ mapZero) as (_ & _ & _ & parMemLow & parMemTop).
+  pose proof (par_last mapZero) as (idxIn & _ & _ & strideAtLeast).
+  pose proof (zQ_range mapZero) as (parLow & parTop & _).
+  destruct (par_area mapZero) as (a & _ & _ & areaLow & areaTop & _).
+  pose proof R_all as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & memTop).
+  assert (slotNonneg : 0 <= stride_of amPar * iPar) by nia.
+  lia.
 Qed.
 Lemma sv_sem_of d off w e : ltac2:(tb__ "0|1|
 S13cVd;A1Sc9S71S71S0S6eA2M0S46A2S6dG0S46S6dS0S6eVoff;Vw;A4Ve;A4S149Vd;A1A3S5S4S6bS18aS18fVe;A2S70A3S4S6bS7cVe;A1S70A3A2F_;F_;").
@@ -2845,14 +2978,14 @@ Hypothesis HP12 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PcA2A2Sd2VL;Vg;A2A3").
 Hypothesis HP13 : ltac2:(tb__ "0|0|
 S4S0Sd0Q40S4aVrho;PdA2A2Vi;A3").
-Local Abbreviation zG := (@U.Mal_nt__G1.Mal_nt_I.zG L g).
-Local Abbreviation zM := (@U.Mal_nt__G1.Mal_nt_I.zM L am).
+Local Abbreviation zG := (U.Mal_nt__G1.Mal_nt_I.zG L g).
+Local Abbreviation zM := (U.Mal_nt__G1.Mal_nt_I.zM L am).
 Local Notation "§22§ h__" := (h__ s L X U g am i gd vm rd0 wok0 HMI Hu Hgd) (at level 10, h__ global).
 Local Abbreviation R_all := (§22§ U.Mal_nt__G1.Mal_nt_I.R_all).
-Local Abbreviation sc := (@U.Mal_nt__G1.Mal_nt_I.sc am).
+Local Abbreviation sc := (U.Mal_nt__G1.Mal_nt_I.sc am).
 Local Notation "§23§ h__" := (h__ s L g am) (at level 10, h__ global).
 Local Abbreviation zNm := (§23§ U.Mal_nt__G1.Mal_nt_I.zNm).
-Local Abbreviation zA8 := (@U.Mal_nt__G1.Mal_nt_I.zA8 s L g am rd0).
+Local Abbreviation zA8 := (U.Mal_nt__G1.Mal_nt_I.zA8 s L g am rd0).
 Local Notation "§24§ h__" := (h__ s g am) (at level 10, h__ global).
 Local Abbreviation gPar := (§24§ U.Mal_nt__G1.Mal_nt_I.gPar).
 Local Abbreviation amPar := (§24§ U.Mal_nt__G1.Mal_nt_I.amPar).
@@ -2870,9 +3003,9 @@ Local Notation "§26§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd
 Local Abbreviation ze142 := (§26§ U.Mal_nt__G1.Mal_nt_I.ze142).
 Local Abbreviation ze156 := (§26§ U.Mal_nt__G1.Mal_nt_I.ze156).
 Local Abbreviation ze172 := (§26§ U.Mal_nt__G1.Mal_nt_I.ze172).
-Local Abbreviation e_parbase := (@U.Mal_nt__G1.Mal_nt_I.e_parbase).
-Local Abbreviation e_pmem := (@U.Mal_nt__G1.Mal_nt_I.e_pmem).
-Local Abbreviation e_parea := (@U.Mal_nt__G1.Mal_nt_I.e_parea).
+Local Abbreviation e_parbase := U.Mal_nt__G1.Mal_nt_I.e_parbase.
+Local Abbreviation e_pmem := U.Mal_nt__G1.Mal_nt_I.e_pmem.
+Local Abbreviation e_parea := U.Mal_nt__G1.Mal_nt_I.e_parea.
 Local Abbreviation ze_parbase := (§26§ U.Mal_nt__G1.Mal_nt_I.ze_parbase).
 Local Abbreviation ze_parea := (§26§ U.Mal_nt__G1.Mal_nt_I.ze_parea).
 Hypothesis Hsp : ltac2:(tb__ "0|1|
@@ -2893,99 +3026,99 @@ Sd5Sd4Vrd0;SceQ40A1S70L_;A2Sd6Sd3A1U8Vgd;A4").
 Let bv0 : byteview := ltac2:(tb__ "0|0|
 Sd4S135Sc8VmV;A2S136Sc8VmV;A2A2").
 Local Abbreviation ev1 := (§25§ U.Mal_nt__G1.Mal_nt_Ib.ev1).
-Local Abbreviation O_got := (@U.Mal_nt__G1.Mal_nt_Ib.O_got).
-Local Abbreviation O_guard := (@U.Mal_nt__G1.Mal_nt_Ib.O_guard).
-Local Abbreviation O_metaK := (@U.Mal_nt__G1.Mal_nt_Ib.O_metaK).
+Local Abbreviation O_got := U.Mal_nt__G1.Mal_nt_Ib.O_got.
+Local Abbreviation O_guard := U.Mal_nt__G1.Mal_nt_Ib.O_guard.
+Local Abbreviation O_metaK := U.Mal_nt__G1.Mal_nt_Ib.O_metaK.
 Local Notation "§27§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hgd Hsp mV Erd Ewok ms Hrom) (at level 10, h__ global).
 Local Abbreviation hold_got := (§27§ U.Mal_nt__G1.Mal_nt_Ib.hold_got).
-Local Abbreviation hold_guard := (@U.Mal_nt__G1.Mal_nt_Ib.hold_guard s L g am i rho gd rd0 Hgd Hsp mV Erd ms Hrom Hgd_holds).
-Local Abbreviation hold_sct := (@U.Mal_nt__G1.Mal_nt_Ib.hold_sct s L g am i rho gd rd0 Hgd mV ms Hrom Hm_sct).
+Local Abbreviation hold_guard := (U.Mal_nt__G1.Mal_nt_Ib.hold_guard s L g am i rho gd rd0 Hgd Hsp mV Erd ms Hrom Hgd_holds).
+Local Abbreviation hold_sct := (U.Mal_nt__G1.Mal_nt_Ib.hold_sct s L g am i rho gd rd0 Hgd mV ms Hrom Hm_sct).
 Local Notation "§28§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hgd Hsp Hdepth mV Erd Ewok ms Hrom) (at level 10, h__ global).
 Local Abbreviation hold_metaK := (§28§ U.Mal_nt__G1.Mal_nt_Ib.hold_metaK).
-Local Abbreviation e_actlo := (@U.Mal_nt__G1.Mal_nt_Ib.e_actlo).
+Local Abbreviation e_actlo := U.Mal_nt__G1.Mal_nt_Ib.e_actlo.
 Local Notation "§29§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd Hsp) (at level 10, h__ global).
 Local Abbreviation ze_actlo := (§29§ U.Mal_nt__G1.Mal_nt_Ib.ze_actlo).
-Local Abbreviation O_act := (@U.Mal_nt__G1.Mal_nt_Ib.O_act).
+Local Abbreviation O_act := U.Mal_nt__G1.Mal_nt_Ib.O_act.
 Local Notation "§30§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd Hsp mV Erd Ewok ms Hrom) (at level 10, h__ global).
 Local Abbreviation hold_act := (§30§ U.Mal_nt__G1.Mal_nt_Ib.hold_act).
-Local Abbreviation O_seq := (@U.Mal_nt__G1.Mal_nt_Ib.O_seq).
+Local Abbreviation O_seq := U.Mal_nt__G1.Mal_nt_Ib.O_seq.
 Local Abbreviation hold_seq := (§28§ U.Mal_nt__G1.Mal_nt_Ib.hold_seq).
-Local Abbreviation O_fmh := (@U.Mal_nt__G1.Mal_nt_Ib.O_fmh).
+Local Abbreviation O_fmh := U.Mal_nt__G1.Mal_nt_Ib.O_fmh.
 Local Abbreviation hold_fmh := (§28§ U.Mal_nt__G1.Mal_nt_Ib.hold_fmh).
-Local Abbreviation O_useq := (@U.Mal_nt__G1.Mal_nt_Ib.O_useq).
-Local Abbreviation useq_byte_rd := (@U.Mal_nt__G1.Mal_nt_Ib.useq_byte_rd s L X U g i rho gd vm rd0 wok0 HMI Hgd mV Erd Ewok).
+Local Abbreviation O_useq := U.Mal_nt__G1.Mal_nt_Ib.O_useq.
+Local Abbreviation useq_byte_rd := (U.Mal_nt__G1.Mal_nt_Ib.useq_byte_rd s L X U g i rho gd vm rd0 wok0 HMI Hgd mV Erd Ewok).
 Local Abbreviation hold_useq := (§27§ U.Mal_nt__G1.Mal_nt_Ib.hold_useq).
-Local Abbreviation free_cells := (@U.Mal_nt__G1.Mal_nt_Ib.free_cells).
-Local Abbreviation O_freeK := (@U.Mal_nt__G1.Mal_nt_Ib.O_freeK).
+Local Abbreviation free_cells := U.Mal_nt__G1.Mal_nt_Ib.free_cells.
+Local Abbreviation O_freeK := U.Mal_nt__G1.Mal_nt_Ib.O_freeK.
 Local Abbreviation hold_freeK := (§28§ U.Mal_nt__G1.Mal_nt_Ic.hold_freeK).
-Local Abbreviation e_uslo := (@U.Mal_nt__G1.Mal_nt_Ic.e_uslo).
+Local Abbreviation e_uslo := U.Mal_nt__G1.Mal_nt_Ic.e_uslo.
 Local Abbreviation ze_uslo := (§29§ U.Mal_nt__G1.Mal_nt_Ic.ze_uslo).
-Local Abbreviation O_usage := (@U.Mal_nt__G1.Mal_nt_Ic.O_usage).
+Local Abbreviation O_usage := U.Mal_nt__G1.Mal_nt_Ic.O_usage.
 Local Abbreviation hold_usage := (§30§ U.Mal_nt__G1.Mal_nt_Ic.hold_usage).
-Local Abbreviation e_bnlo := (@U.Mal_nt__G1.Mal_nt_Ic.e_bnlo).
+Local Abbreviation e_bnlo := U.Mal_nt__G1.Mal_nt_Ic.e_bnlo.
 Local Abbreviation ze_bnlo := (§26§ U.Mal_nt__G1.Mal_nt_Ic.ze_bnlo).
-Local Abbreviation O_bnc := (@U.Mal_nt__G1.Mal_nt_Ic.O_bnc).
+Local Abbreviation O_bnc := U.Mal_nt__G1.Mal_nt_Ic.O_bnc.
 Local Abbreviation hold_bnc := (§30§ U.Mal_nt__G1.Mal_nt_Ic.hold_bnc).
-Local Abbreviation O_grp := (@U.Mal_nt__G1.Mal_nt_Ic.O_grp).
+Local Abbreviation O_grp := U.Mal_nt__G1.Mal_nt_Ic.O_grp.
 Local Notation "§31§ h__" := (h__ s L X U g am i rho gd vm rd0 wok0 HMI HXz Hu Hgd Hsp mV Erd Ewok ms Hrom) (at level 10, h__ global).
 Local Abbreviation hold_grp := (§31§ U.Mal_nt__G1.Mal_nt_Ic.hold_grp).
-Local Abbreviation O_shdr := (@U.Mal_nt__G1.Mal_nt_Ic.O_shdr).
-Local Abbreviation O_bptr := (@U.Mal_nt__G1.Mal_nt_Ic.O_bptr).
-Local Abbreviation O_pbase := (@U.Mal_nt__G1.Mal_nt_Ic.O_pbase).
-Local Abbreviation O_pmeta := (@U.Mal_nt__G1.Mal_nt_Ic.O_pmeta).
-Local Abbreviation O_parea := (@U.Mal_nt__G1.Mal_nt_Ic.O_parea).
-Local Abbreviation O_secret := (@U.Mal_nt__G1.Mal_nt_Ic.O_secret).
+Local Abbreviation O_shdr := U.Mal_nt__G1.Mal_nt_Ic.O_shdr.
+Local Abbreviation O_bptr := U.Mal_nt__G1.Mal_nt_Ic.O_bptr.
+Local Abbreviation O_pbase := U.Mal_nt__G1.Mal_nt_Ic.O_pbase.
+Local Abbreviation O_pmeta := U.Mal_nt__G1.Mal_nt_Ic.O_pmeta.
+Local Abbreviation O_parea := U.Mal_nt__G1.Mal_nt_Ic.O_parea.
+Local Abbreviation O_secret := U.Mal_nt__G1.Mal_nt_Ic.O_secret.
 Local Abbreviation hold_shdr := (§31§ U.Mal_nt__G1.Mal_nt_Ic.hold_shdr).
 Local Abbreviation hold_bptr := (§31§ U.Mal_nt__G1.Mal_nt_Ic.hold_bptr).
 Local Abbreviation hold_pbase := (§31§ U.Mal_nt__G1.Mal_nt_Ic.hold_pbase).
 Local Abbreviation hold_pmeta := (§30§ U.Mal_nt__G1.Mal_nt_Ic.hold_pmeta).
 Local Abbreviation hold_parea := (§30§ U.Mal_nt__G1.Mal_nt_Ic.hold_parea).
 Local Abbreviation hold_secret := (§30§ U.Mal_nt__G1.Mal_nt_Ic.hold_secret).
-Local Abbreviation kbase := (@U.Mal_nt__G1.Mal_nt_D.kbase).
-Local Abbreviation kmemv := (@U.Mal_nt__G1.Mal_nt_D.kmemv).
-Local Abbreviation kbitsv := (@U.Mal_nt__G1.Mal_nt_D.kbitsv).
+Local Abbreviation kbase := U.Mal_nt__G1.Mal_nt_D.kbase.
+Local Abbreviation kmemv := U.Mal_nt__G1.Mal_nt_D.kmemv.
+Local Abbreviation kbitsv := U.Mal_nt__G1.Mal_nt_D.kbitsv.
 Local Abbreviation kptr := (§24§ U.Mal_nt__G1.Mal_nt_D.kptr).
 Local Abbreviation krec := (§24§ U.Mal_nt__G1.Mal_nt_D.krec).
 Local Abbreviation klo := (§23§ U.Mal_nt__G1.Mal_nt_D.klo).
-Local Abbreviation kcond := (@U.Mal_nt__G1.Mal_nt_D.kcond s am).
-Local Abbreviation fbase := (@U.Mal_nt__G1.Mal_nt_D.fbase).
-Local Abbreviation fptr := (@U.Mal_nt__G1.Mal_nt_D.fptr s g).
-Local Abbreviation flo := (@U.Mal_nt__G1.Mal_nt_D.flo s L g).
-Local Abbreviation fcond := (@U.Mal_nt__G1.Mal_nt_D.fcond s).
-Local Abbreviation od := (@U.Mal_nt__G1.Mal_nt_D.od).
-Local Abbreviation obj_of := (@U.Mal_nt__G1.Mal_nt_D.obj_of).
+Local Abbreviation kcond := (U.Mal_nt__G1.Mal_nt_D.kcond s am).
+Local Abbreviation fbase := U.Mal_nt__G1.Mal_nt_D.fbase.
+Local Abbreviation fptr := (U.Mal_nt__G1.Mal_nt_D.fptr s g).
+Local Abbreviation flo := (U.Mal_nt__G1.Mal_nt_D.flo s L g).
+Local Abbreviation fcond := (U.Mal_nt__G1.Mal_nt_D.fcond s).
+Local Abbreviation od := U.Mal_nt__G1.Mal_nt_D.od.
+Local Abbreviation obj_of := U.Mal_nt__G1.Mal_nt_D.obj_of.
 Local Abbreviation dlo := (§23§ U.Mal_nt__G1.Mal_nt_D.dlo).
-Local Abbreviation dsz := (@U.Mal_nt__G1.Mal_nt_D.dsz).
+Local Abbreviation dsz := U.Mal_nt__G1.Mal_nt_D.dsz.
 Local Abbreviation dhi := (§23§ U.Mal_nt__G1.Mal_nt_D.dhi).
-Local Abbreviation dcells := (@U.Mal_nt__G1.Mal_nt_D.dcells).
-Local Abbreviation drom := (@U.Mal_nt__G1.Mal_nt_D.drom).
-Local Abbreviation od_svs := (@U.Mal_nt__G1.Mal_nt_D.od_svs).
-Local Abbreviation sv_sem := (@U.Mal_nt__G1.Mal_nt_D.sv_sem).
-Local Abbreviation useq_okb := (@U.Mal_nt__G1.Mal_nt_D.useq_okb).
-Local Abbreviation dsxb := (@U.Mal_nt__G1.Mal_nt_D.dsxb).
-Local Abbreviation dcond := (@U.Mal_nt__G1.Mal_nt_D.dcond am).
-Local Abbreviation DS := (@U.Mal_nt__G1.Mal_nt_D.DS am).
-Local Abbreviation DS_svs := (@U.Mal_nt__G1.Mal_nt_D.DS_svs am).
-Local Abbreviation DS_x := (@U.Mal_nt__G1.Mal_nt_D.DS_x am).
+Local Abbreviation dcells := U.Mal_nt__G1.Mal_nt_D.dcells.
+Local Abbreviation drom := U.Mal_nt__G1.Mal_nt_D.drom.
+Local Abbreviation od_svs := U.Mal_nt__G1.Mal_nt_D.od_svs.
+Local Abbreviation sv_sem := U.Mal_nt__G1.Mal_nt_D.sv_sem.
+Local Abbreviation useq_okb := U.Mal_nt__G1.Mal_nt_D.useq_okb.
+Local Abbreviation dsxb := U.Mal_nt__G1.Mal_nt_D.dsxb.
+Local Abbreviation dcond := (U.Mal_nt__G1.Mal_nt_D.dcond am).
+Local Abbreviation DS := (U.Mal_nt__G1.Mal_nt_D.DS am).
+Local Abbreviation DS_svs := (U.Mal_nt__G1.Mal_nt_D.DS_svs am).
+Local Abbreviation DS_x := (U.Mal_nt__G1.Mal_nt_D.DS_x am).
 Variable mW : word -> option byte.
 Hypothesis HZ : ltac2:(tb__ "0|0|
 S1a9VL;VX;VmV;VmW;A4").
 Let rhoW : valuation := rho1 mW.
 Local Abbreviation par_ranges := (§29§ U.Mal_nt__G1.Mal_nt_D.par_ranges).
-Local Abbreviation sv_sem_of := (@U.Mal_nt__G1.Mal_nt_D.sv_sem_of am).
-Local Abbreviation ze_kbase := (@U.Mal_nt__G1.Mal_nt_D.ze_kbase s L X U g am i rho gd vm rd0 wok0 HMI HXz Hu Hgd HP12).
-Local Abbreviation klo_ptr := (@U.Mal_nt__G1.Mal_nt_D.klo_ptr s L X U g am i vm rd0 wok0 HMI).
+Local Abbreviation sv_sem_of := (U.Mal_nt__G1.Mal_nt_D.sv_sem_of am).
+Local Abbreviation ze_kbase := (U.Mal_nt__G1.Mal_nt_D.ze_kbase s L X U g am i rho gd vm rd0 wok0 HMI HXz Hu Hgd HP12).
+Local Abbreviation klo_ptr := (U.Mal_nt__G1.Mal_nt_D.klo_ptr s L X U g am i vm rd0 wok0 HMI).
 Local Abbreviation kptr_used := (§22§ U.Mal_nt__G1.Mal_nt_D.kptr_used).
 Local Abbreviation ze_kmemv := (§26§ U.Mal_nt__G1.Mal_nt_D.ze_kmemv).
 Local Abbreviation ze_kbitsv := (§26§ U.Mal_nt__G1.Mal_nt_D.ze_kbitsv).
-Local Abbreviation ze_fbase := (@U.Mal_nt__G1.Mal_nt_D.ze_fbase s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd HP12).
+Local Abbreviation ze_fbase := (U.Mal_nt__G1.Mal_nt_D.ze_fbase s L X U g am i rho gd vm rd0 wok0 HMI Hu Hgd HP12).
 Local Abbreviation flo_range := (§26§ U.Mal_nt__G1.Mal_nt_D.flo_range).
 Local Notation "§32§ h__" := (h__ s L X U g am i vm rd0 wok0 HMI Hu) (at level 10, h__ global).
 Local Abbreviation flo_ptr := (§32§ U.Mal_nt__G1.Mal_nt_D.flo_ptr).
 Local Abbreviation fptr_key := (§32§ U.Mal_nt__G1.Mal_nt_D.fptr_key).
-Local Abbreviation klo_range' := (@U.Mal_nt__G1.Mal_nt_D.klo_range' s L X U g am i rho gd vm rd0 wok0 HMI HXz Hu Hgd).
-Local Abbreviation useq_okb_cell := (@U.Mal_nt__G1.Mal_nt_D.useq_okb_cell rho gd Hgd).
-Local Abbreviation useq_okb_cover := (@U.Mal_nt__G1.Mal_nt_D.useq_okb_cover rho gd Hgd).
+Local Abbreviation klo_range' := (U.Mal_nt__G1.Mal_nt_D.klo_range' s L X U g am i rho gd vm rd0 wok0 HMI HXz Hu Hgd).
+Local Abbreviation useq_okb_cell := (U.Mal_nt__G1.Mal_nt_D.useq_okb_cell rho gd Hgd).
+Local Abbreviation useq_okb_cover := (U.Mal_nt__G1.Mal_nt_D.useq_okb_cover rho gd Hgd).
 
 Ltac in_list := cbn; repeat (first [left; reflexivity | right]).
 

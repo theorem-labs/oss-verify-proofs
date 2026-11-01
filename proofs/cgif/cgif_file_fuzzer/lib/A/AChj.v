@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 From OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -258,516 +258,475 @@ pose proof (st_ok_pin_rege Ev ssx msv r e HS ltac:(intros X; discriminate X)
 ltac:(cbn [ms_regs restrict mkst]; rewrite Hr; cbn [sv_denot]; dtac)) as HS3;
 clear HS; rename HS3 into HS; norm_ss HS  end.
 Lemma fl_D1X_aux : fl_fromX0 KS MT XN B CTX wfn ss_T0 (INV_T0X MT B) -> fl_fromX0 KS MT XN B CTX wfn ss_D1 (INV_D1X MT B).
-Proof.
-intros RT0. fl_preludeX.
-pose proof HINV as (Hk3 & Eab3 & (gen & E621 & Rgen) & E625 & (fb & Hfb & EB) & (w & h & top & left & E887 & E888 & E889 & E890 & Hw1 & Hl0 & Hlw & Hh1 & Ht0 & Hth & XD) & E621X & XF2 & MLE0).
-pose proof HCUR as (_ & XCg & _ & _ & _ & _ & _ & XCimg & XClen & _). cbn in XCg.
-unfold xgen3, xG in XF2. unfold xdims, xG in XD. cbn [c_s x_GPAL x_cur x_bef] in XF2, XD.
-destruct (fl_diff_some _ cur bef ltac:(rewrite <- XCg; clear - Q3; lia) XF2) as (xb & ->).
-pose proof (fl_tmp_diff _ cur xb w h top left XF2 XD) as XTMP.
-cbn [c_i c_s] in Hfb. cbn [c_s] in Hlw, Hth.
-pose proof (EB 0%nat _ eq_refl) as E651. pose proof (EB 1%nat _ eq_refl) as E652. pose proof (EB 2%nat _ eq_refl) as E653.
-pose proof (EB 3%nat _ eq_refl) as E654. pose proof (EB 4%nat _ eq_refl) as E655. pose proof (EB 5%nat _ eq_refl) as E656.
-pose proof (EB 6%nat _ eq_refl) as E657. pose proof (EB 7%nat _ eq_refl) as E658. pose proof (EB 8%nat _ eq_refl) as E659.
-cbn [Nat.add] in E651, E652, E653, E654, E655, E656, E657, E658, E659.
-rewrite Hfb in E12. cbn [frame_ptr] in E12.
-assert (HW65 : cg_W s <= 65535) by (clear - R7 Hob241 Hob242 Hob253 Huar; lia).
-assert (HH65 : cg_H s <= 65535) by (clear - R8 Hob241 Hob242 Hob253 Huar; lia).
-assert (Hw65 : w <= 65535) by (clear - Hw1 Hl0 Hlw HW65 Hob241 Hob242 Hob253 Huar; lia). assert (Hh65 : h <= 65535) by (clear - Hh1 Ht0 Hth HH65 Hob241 Hob242 Hob253 Huar; lia).
-assert (Hwh1 : 1 <= w * h) by (clear - Hw1 Hh1 Hob241 Hob242 Hob253 Huar; nia).
-assert (HwhN : w * h <= N) by (rewrite HN; clear - Hw1 Hh1 Hl0 Hlw Ht0 Hth Hob241 Hob242 Hob253 Huar; nia).
-assert (HWH : 1 <= w * h <= 100000000) by (clear - Hwh1 HwhN HNle Hob241 Hob242 Hob253 Huar; lia).
-destruct (fl_bef_in s i fb Hi Hlen3 Hfb) as [Hfbe Hfbi].
-destruct (fl_bef_blocks B ly S g s N rest fb HPerm Hfbi) as (Hbef_in & Hbimg_in & Hblpal).
-destruct (al_blocks _ _ LAWS ly S W mem md (fr_ptr fb) FRAME_SIZE HAR Hbef_in) as (Hb16 & Hb4096 & Hbceil & [Hbh1 Hbh2] & _ & _). change (req_size FRAME_SIZE) with 40 in Hbceil, Hbh2.
-assert (Hing3 : In (g, CGIF_SIZE) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hing).
-assert (Hcur3 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hcur_in).
-assert (Himg3 : In (fr_img f, N) (ablocks B ly3 S3)) by (rewrite Eab3; exact Himg_in).
-assert (Hbef3 : In (fr_ptr fb, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hbef_in).
-assert (Hpf3 : In (pf, FILE_BLOCK) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hpf_in).
-fl_blocks3X Hing3 Hcur3 Hpf3. fold F in HdFG, HdFC.
+Proof using TL LAWS AMEMCPY TLF MLAW AMALLOC4 HXM HXMN HTR.
+intros NextT0. clear ML AMALLOC AIL MLAWF HDEEP RO. fl_preludeX.
+destruct HINV as (Kle0 & Blk3 & (gv & G621 & Grng) & Np625 & (fb & Bef) & (wv & hv & tv & lv & Aw887 & Ah888 & At889 & Al890 & Wlo & Llo & LWhi & Hlo & Tlo & THhi & Dims) & G621x & Gflag & Meter).
+assert (InG3 : In (g, CGIF_SIZE) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hing).
+assert (InC3 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hcur_in).
+assert (InP3 : In (pf, FILE_BLOCK) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hpf_in).
+fl_blocks3X InG3 InC3 InP3. fold F in HdFG, HdFC.
+assert (WHn : 1 <= wv * hv <= N) by (clear - Wlo Llo LWhi Hlo Tlo THhi HN R7 R8; nia).
+assert (Wsp1 : 0 <= sp1 < 2 ^ 64) by (clear - Hsp1 Hslo Hceil Hshi H47 C1 FFS; lia).
 relowF HS AG E10 E11 E32 E10n E11n E32n. reshok HS.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJ3 SHOK FLBspan 0x1fcc.
-all: match goal with |- range_addressable _ _ _ _ => match goal with |- ?g => idtac "OBL-LEFT" g end | _ => idtac end.
+hei_havoc HS; paj_run_tok RUN HS HJ3 SHOK FLBspan.
 1: awrFL AG fpos F EFA3.
-upd_aboveF HUP HFr AG ltac:(fun Hb Hrg => clear - Hb Hrg Hsp1 HFceil Hceil Hslo Hstk0 FFS C1 Hgceil Hcceil HF8hi Hob241 Hob242 Hob253 Huar; lia). clear_frames.
-lazymatch type of HS with st_ok_pi _ _ ?Ev _ _ =>
-rreg_by HS (@BV 5 23 I) (Z_to_bv 64 w) (denot_and_ffff Ev 887 w ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E887) ltac:(clear - Hw1 Hw65 Hob241 Hob242 Hob253 Huar; lia)) R23;
-rreg_by HS (@BV 5 10 I) (Z_to_bv 64 h) (denot_and_ffff Ev 888 h ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E888) ltac:(clear - Hh1 Hh65 Hob241 Hob242 Hob253 Huar; lia)) R18 | st_ok _ ?Ev _ _ =>
-rreg_by HS (@BV 5 23 I) (Z_to_bv 64 w) (denot_and_ffff Ev 887 w ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E887) ltac:(clear - Hw1 Hw65 Hob241 Hob242 Hob253 Huar; lia)) R23;
-rreg_by HS (@BV 5 10 I) (Z_to_bv 64 h) (denot_and_ffff Ev 888 h ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E888) ltac:(clear - Hh1 Hh65 Hob241 Hob242 Hob253 Huar; lia)) R18  end.
-ws_pin HS (@BV 5 23 I) (SOff 887 0) R23 ltac:(rewrite Z.add_0_r, Z_to_bv_bv_unsigned; rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E887).
-ws_pin HS (@BV 5 10 I) (SOff 888 0) R18 ltac:(rewrite Z.add_0_r, Z_to_bv_bv_unsigned; rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E888).
-clear R23 R18. reshok HS.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJ3 SHOK FLBspan 0x528cc.
-all: match goal with |- range_addressable _ _ _ _ => match goal with |- ?g => idtac "OBL-LEFT" g end | _ => idtac end.
-1: awrFL AG fpos F EFA3.
-upd_aboveF HUP HFr AG ltac:(fun Hb Hrg => clear - Hb Hrg Hsp1 HFceil Hceil Hslo Hstk0 FFS C1 Hgceil Hcceil HF8hi Hob241 Hob242 Hob253 Huar; lia). clear_frames.
-prreg HS (@BV 5 1 I) Rra. prreg HS (@BV 5 2 I) Rsp. prreg HS (@BV 5 3 I) Rgp. prreg HS (@BV 5 4 I) Rtp. prreg HS (@BV 5 8 I) Rs0.
-lazymatch type of AG with forall n, _ -> ew ?Ebase n = _ => assert (Usp3 : bv_unsigned (ew Ebase 2) = spZ regs) by (rewrite (AG 2%nat) by lia; exact Usp) end.
-assert (Ugp : ew E 3 = getr regs 3) by (rewrite (AG 3%nat) by lia; exact (EE 3%nat (@BV 5 3 I) eq_refl)).
-assert (Utp : ew E 4 = getr regs 4) by (rewrite (AG 4%nat) by lia; exact (EE 4%nat (@BV 5 4 I) eq_refl)).
-lazymatch type of Rsp with getr ?rg 2 = _ =>
-assert (EspX : spZ rg = sp1) by (unfold spZ; rewrite Rsp, ?ew_ewset_other, ?ew_havoc_old by nat_side; rewrite E60; apply unsigned_lit_small; clear - Hsp1 Hceil Hslo Hstk0 FFS C1 Hshi H47 Hob241 Hob242 Hob253 Huar; lia);
-assert (EraX : raZ rg = (BASE + 0x1fd4)) by (unfold raZ; rewrite Rra; apply unsigned_lit_small; clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia);
-assert (Es0X : s0Z rg = spZ regs) by (unfold s0Z; rewrite Rs0, ?ew_ewset_other, ?ew_havoc_old by nat_side; exact Usp3) end.
-lazymatch type of HS with st_ok_pi _ _ ?Ev _ _ =>
-rreg_by HS (@BV 5 10 I) (Z_to_bv 64 (h * w))
-(denot_mul_hw Ev 888 887 h w ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E888) ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E887)
-ltac:(clear - Hh1 Hh65 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - Hw1 Hw65 Hob241 Hob242 Hob253 Huar; lia)) Ra0 | st_ok _ ?Ev _ _ =>
-rreg_by HS (@BV 5 10 I) (Z_to_bv 64 (h * w))
-(denot_mul_hw Ev 888 887 h w ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E888) ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; exact E887)
-ltac:(clear - Hh1 Hh65 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - Hw1 Hw65 Hob241 Hob242 Hob253 Huar; lia)) Ra0  end.
-replace (h * w) with (w * h) in Ra0 by (apply Z.mul_comm).
-assert (Qtop64 : ly_top ly <= 2 ^ 64) by (clear - Htop2 H47 Htop Hshi Hob241 Hob242 Hob253 Huar; lia).
-assert (Qra : 0 <= raZ regs < 2 ^ 64) by (unfold raZ; pose proof (bv_unsigned_in_range 64 (getr regs 1)) as Hq; change (bv_modulus 64) with (2 ^ 64) in Hq; exact Hq).
-assert (Qs0 : 0 <= s0Z regs < 2 ^ 64) by (unfold s0Z; pose proof (bv_unsigned_in_range 64 (getr regs 8)) as Hq; change (bv_modulus 64) with (2 ^ 64) in Hq; exact Hq).
-assert (Qal8 : spZ regs mod 8 = 0) by (pose proof (Z.div_mod (spZ regs) 16 ltac:(lia)) as D; rewrite Hal16, Z.add_0_r in D; rewrite D; replace (16 * (spZ regs / 16)) with ((2 * (spZ regs / 16)) * 8) by lia; apply Z_mod_mult).
-lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx (restrict _ ?msX) =>
-let rs := eval vm_compute in (ss_mem ssx) in
-let ih := idx_of_base rs 2%nat in let ih := eval vm_compute in ih in
-let rh := eval vm_compute in (nth ih rs got_regionP) in
-pose proof (st_ok_pi_region_nth Ex ssx (restrict (w_H W3) msX) ih rh HS ltac:(vm_compute; reflexivity)) as HRstk; cbn [ms_mem restrict] in HRstk;
-lazymatch type of HRstk with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-pose proof (field_of_region Ex _ 2 (spZ regs) cs lo hi wlo whi (-8) 8%N (SOff 1 0) (raZ regs) HRstk
-Usp3 ltac:(cbn; tauto) ltac:(cbn [sv_denot ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite (AG 1%nat) by lia; rewrite (EE 1%nat (@BV 5 1 I) eq_refl), Z.add_0_r; reflexivity)
-ltac:(unfold raZ; pose proof (bv_unsigned_in_range 64 (getr regs 1)) as Hq; change (bv_modulus 64) with (2 ^ (8 * Z.of_N 8)) in Hq; exact Hq) ltac:(cbn; lia)) as Vra;
-pose proof (field_of_region Ex _ 2 (spZ regs) cs lo hi wlo whi (-16) 8%N (SOff 8 0) (s0Z regs) HRstk
-Usp3 ltac:(cbn; tauto) ltac:(cbn [sv_denot ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite (AG 8%nat) by lia; rewrite (EE 8%nat (@BV 5 8 I) eq_refl), Z.add_0_r; reflexivity)
-ltac:(unfold s0Z; pose proof (bv_unsigned_in_range 64 (getr regs 8)) as Hq; change (bv_modulus 64) with (2 ^ (8 * Z.of_N 8)) in Hq; exact Hq) ltac:(cbn; lia)) as Vs0 end;
-clear HRstk;
-assert (Hch1 : achain ly3 (aview SEGS (w_H W3) (ms_mem msX)) sp1 (spZ regs) ((spZ regs, raZ regs, s0Z regs) :: ch));
-[ apply (achain_ly_top ly); [pose proof (proj1 (proj2 HJ3)) as LY; destruct LY as (_ & _ & _ & _ & _ & _ & _ & _ & LT & _); exact LT|];
-replace (spZ regs - 8) with (spZ regs + -8) in Vra by lia; replace (spZ regs - 16) with (spZ regs + -16) in Vs0 by lia;
-exact (achain_push ly _ _ (spZ regs) (s0Z regs) (raZ regs) _ sp1 Hch Qtop64 HUP
-(rdword_of_val_mem SEGS _ _ _ _ Vra Qra) (rdword_of_val_mem SEGS _ _ _ _ Vs0 Qs0) Hra4 ltac:(clear - Hceil Hslo Hstk0 FFS Hob241 Hob242 Hob253 Huar; lia) Qal8
-ltac:(clear - Htop32 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - Hsp1 Hob241 Hob242 Hob253 Huar; lia))
-| ] | st_ok _ ?Ex ?ssx (restrict _ ?msX) =>
-let rs := eval vm_compute in (ss_mem ssx) in
-let ih := idx_of_base rs 2%nat in let ih := eval vm_compute in ih in
-let rh := eval vm_compute in (nth ih rs got_regionP) in
-pose proof (st_ok_region_nth Ex ssx (restrict (w_H W3) msX) ih rh HS ltac:(vm_compute; reflexivity)) as HRstk; cbn [ms_mem restrict] in HRstk;
-lazymatch type of HRstk with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-pose proof (field_of_region Ex _ 2 (spZ regs) cs lo hi wlo whi (-8) 8%N (SOff 1 0) (raZ regs) HRstk
-Usp3 ltac:(cbn; tauto) ltac:(cbn [sv_denot ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite (AG 1%nat) by lia; rewrite (EE 1%nat (@BV 5 1 I) eq_refl), Z.add_0_r; reflexivity)
-ltac:(unfold raZ; pose proof (bv_unsigned_in_range 64 (getr regs 1)) as Hq; change (bv_modulus 64) with (2 ^ (8 * Z.of_N 8)) in Hq; exact Hq) ltac:(cbn; lia)) as Vra;
-pose proof (field_of_region Ex _ 2 (spZ regs) cs lo hi wlo whi (-16) 8%N (SOff 8 0) (s0Z regs) HRstk
-Usp3 ltac:(cbn; tauto) ltac:(cbn [sv_denot ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia; rewrite (AG 8%nat) by lia; rewrite (EE 8%nat (@BV 5 8 I) eq_refl), Z.add_0_r; reflexivity)
-ltac:(unfold s0Z; pose proof (bv_unsigned_in_range 64 (getr regs 8)) as Hq; change (bv_modulus 64) with (2 ^ (8 * Z.of_N 8)) in Hq; exact Hq) ltac:(cbn; lia)) as Vs0 end;
-clear HRstk;
-assert (Hch1 : achain ly3 (aview SEGS (w_H W3) (ms_mem msX)) sp1 (spZ regs) ((spZ regs, raZ regs, s0Z regs) :: ch));
-[ apply (achain_ly_top ly); [pose proof (proj1 (proj2 HJ3)) as LY; destruct LY as (_ & _ & _ & _ & _ & _ & _ & _ & LT & _); exact LT|];
-replace (spZ regs - 8) with (spZ regs + -8) in Vra by lia; replace (spZ regs - 16) with (spZ regs + -16) in Vs0 by lia;
-exact (achain_push ly _ _ (spZ regs) (s0Z regs) (raZ regs) _ sp1 Hch Qtop64 HUP
-(rdword_of_val_mem SEGS _ _ _ _ Vra Qra) (rdword_of_val_mem SEGS _ _ _ _ Vs0 Qs0) Hra4 ltac:(clear - Hceil Hslo Hstk0 FFS Hob241 Hob242 Hob253 Huar; lia) Qal8
-ltac:(clear - Htop32 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - Hsp1 Hob241 Hob242 Hob253 Huar; lia))
-| ]  end.
-pose proof HJ3 as (_ & HLY3 & _ & _ & _ & _ & Hnev3 & _ & _ & _ & _ & _ & _ & Hpres3' & _).
-assert (HEVc : st_nev S3 < EV_MAX) by (rewrite HEV in Hev; clear - Hnev3 Hev Hk3 Hob241 Hob242 Hob253 Huar; lia).
-pmkst HS.
-ppcs.
-clear Kgot3 Kcell3 Kguar3 Kuar3. aconstsF HJ3 Kgot3 Kcell3 Kguar3 Kuar3.
-eapply SRr_bind.
-{ lazymatch goal with |- SRr _ _ (mkCfg (mkst (ms_regs ?msX) _ _ _) ?mdX) _ =>
-eapply (AMALLOC4 W3 (ms_regs msX) (ms_mem msX) TFLUSH_STK (spZ regs) _ ly S W mem md [(2, fpos)]
-ly3 S3 mdX k (w * h) (sp1 - spZ regs) (Z_to_bv 64 (BASE + 0x1fd4)) ((spZ regs, raZ regs, s0Z regs) :: ch) HJ3) end.
-- exact Ra0.
-- unfold MALLOC_MAX. clear - HWH. lia.
-- rewrite (blocks_bytes_bsum B ly3 S3), Eab3, <- (blocks_bytes_bsum B ly S). unfold LIVE_FLUSH in Hlive. clear - Hlive HWH. lia.
-- rewrite EspX. clear; lia.
-- rewrite Zminus_mod, Hsp1al16, Hal16. reflexivity.
-- clear - Hsp1 Hob241 Hob242 Hob253 Huar; lia.
-- rewrite FFS. unfold ASTACK. clear - Hsp1 Hob241 Hob242 Hob253 Huar; lia.
-- rewrite Rgp, ?ew_ewset_other, ?ew_havoc_old by nat_side. rewrite Ugp. exact Hgp.
-- rewrite Rtp, ?ew_ewset_other, ?ew_havoc_old by nat_side. rewrite Utp. exact Htp.
-- exact Rra.
-- apply ret_ok_codeptr_v; [lazymatch goal with |- _ <= ?k < _ => try unfold k end; lia | reflexivity].
-- exact HEVc.
-- apply (achain_chain_pre ly3 _ sp1 (spZ regs) _ _ Hch1); [rewrite EspX; clear - Hsp1 Hceil Hslo Hstk0 FFS C1 Hob241 Hob242 Hob253 Huar; lia | exact Es0X | rewrite EraX; clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia].
-- apply (HTR (pc_malloc_ra0 (as_code B)) (BASE + 0x1fd4)); [exact Hctx | exact EraX | right; left; split; reflexivity].
--
-eapply (mok_station MT S S3 (xm_flush XN N) 0 _ MLAW HMOK MLE0); [apply (mo_malloc_nonneg MT MLAW); clear - HWH; lia|].
-pose proof (HXM N (w * h) ltac:(clear - HWH HwhN; lia) HNle) as BM. pose proof (HXMN (w * h) HWH) as BMN. pose proof (mo_free_nonneg MT MLAW) as F0.
-clear - BM BMN F0. lia. }
-cbv beta. intros W4 c4 Hwle4 (ly4 & S4 & regs4 & mem4 & md4 & res & -> & HJ4 & HP4 & Ha04 & Hfrs4 & Hnz4 & Eab4x & HK4x & MLE4).
-mresX Hnz4 Eab4x HK4x Hres. clear Eab4x HK4x.
-clear Rra Rsp Rgp Rtp Rs0 Ra0 Vra Vs0 Hch1.
-replace (spZ regs + (sp1 - spZ regs)) with sp1 in Hres by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia).
-pose proof (proj1 HJ4) as HAR4.
-clear HUP. assert (HUP : forall a, spZ regs <= a < 2 ^ 64 -> aview SEGS (w_H W4) mem4 a = aview SEGS (w_H W) mem a)
-by (intros a Ha; pose proof HJ4 as (_ & _ & _ & _ & _ & _ & _ & _ & F1 & _); apply F1; clear - Ha Hceil Hslo Hstk0 FFS C1 Hob241 Hob242 Hob253 Huar; lia).
-destruct (al_layout _ _ LAWS _ _ _ _ _ ly4 HAR (proj1 (proj2 HJ4))) as (_ & EFA4 & _).
-assert (Hfin4 : In (2, fpos) (frames S4)) by (rewrite Hfrs4; exact Hfin3).
-assert (Hfrs4' : frames S4 = (2, fpos) :: frames S) by (rewrite Hfrs4; exact Hfrs3).
-destruct (al_frames _ _ LAWS _ _ _ _ _ 2 fpos HAR4 Hfin4) as (_ & _ & HFpres4 & HFSpres4).
-change (fs_frame_bytes 2) with 256 in HFpres4, HFSpres4. change (256 / 8) with 32 in HFSpres4. rewrite !EFA4 in HFpres4, HFSpres4. fold F in HFpres4, HFSpres4.
-aconstsF HJ4 Kgot4 Kcell4 Kguar4 Kuar4.
-assert (HF8c : 8 * (F / 8) <= F) by (apply Z.mul_div_le; clear; lia).
-destruct Hres as [(Hres0 & Eab4 & HK) | (Hres4096 & Eab4 & HK)].
-+   exfalso. clear - Hres0 Hnz4. lia.
-+
-assert (Hrq : req_size (w * h) = w * h) by (unfold req_size; destruct (Z.eqb_spec (w * h) 0); [exfalso; clear - HWH e Hob241 Hob242 Hob253 Huar; lia | reflexivity]).
-assert (HrqN : req_size N = N) by (unfold req_size; destruct (Z.eqb_spec N 0); [exfalso; clear - HWH HwhN e Hob241 Hob242 Hob253 Huar; lia | reflexivity]).
-assert (Hres_in : In (res, w * h) (ablocks B ly4 S4)) by (rewrite Eab4; apply in_app_iff; right; left; reflexivity).
-assert (Hing4 : In (g, CGIF_SIZE) (ablocks B ly4 S4)) by (rewrite Eab4; apply in_app_iff; left; exact Hing3).
-assert (Hcur4 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly4 S4)) by (rewrite Eab4; apply in_app_iff; left; exact Hcur3).
-assert (Hbef4 : In (fr_ptr fb, FRAME_SIZE) (ablocks B ly4 S4)) by (rewrite Eab4; apply in_app_iff; left; exact Hbef3).
-assert (Himg4 : In (fr_img f, N) (ablocks B ly4 S4)) by (rewrite Eab4; apply in_app_iff; left; exact Himg3).
-destruct (al_blocks _ _ LAWS _ _ _ _ _ res (w * h) HAR4 Hres_in) as (Hn16 & Hn4096 & Hnceil & Hnh_ia & Hnpres & _). pose proof (proj1 Hnh_ia) as Hnh. rewrite Hrq in Hnceil, Hnpres.
-pose proof (blk_off_imgP _ _ _ _ _ _ _ _ HAR4 Hres_in) as Hnh_img.
-destruct (al_blocks _ _ LAWS _ _ _ _ _ (fr_img f) N HAR4 Himg4) as (_ & _ & _ & _ & Hipres4 & _). rewrite HrqN in Hipres4.
-pose proof (aftok_new_block SEGS B LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ res (w * h) HJ3 HAR4 Eab4 ltac:(clear - HWH Hob241 Hob242 Hob253 Huar; lia)) as Tres.
-assert (Ares : forall blc lyq ownq i, In (res, w * h) blc -> 0 <= i < w * h ->
-awr_byte TFLUSH_STK (spZ regs) [(fr_ptr f + 20, fr_ptr f + 24)] (ablocks B ly S) blc lyq ownq (res + i)).
-{ intros blc lyq ownq ii Hbl Hiq. exact (awr_new_block_any SEGS B LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ res (w * h) blc ii lyq ownq HJ3 HAR4 Eab4 ltac:(clear - HWH Hob241 Hob242 Hob253 Huar; lia) Hbl ltac:(rewrite Hrq; exact Hiq)). }
-assert (HPerm4 : Permutation (ablocks B ly4 S4) (ablocks B ly S ++ [(res, w * h)])) by (rewrite Eab4, Eab3; apply Permutation_refl).
-pose proof (sep_block_frame SEGS B LAWS ly4 S4 _ _ _ res (w * h) 2 fpos HAR4 Hres_in Hfin4) as HdPF.
-unfold zdisjoint in HdPF. cbn [fst snd] in HdPF. rewrite Hrq in HdPF. change (fs_frame_bytes 2) with 256 in HdPF. rewrite EFA4 in HdPF. fold F in HdPF.
-pose proof (sep_tmp_entry B LAWS _ _ _ _ _ _ res (w * h) g CGIF_SIZE HAR4 HPerm4 Hing) as HdPG. change (req_size CGIF_SIZE) with 96 in HdPG. rewrite Hrq in HdPG.
-pose proof (sep_tmp_entry B LAWS _ _ _ _ _ _ res (w * h) (fr_ptr f) FRAME_SIZE HAR4 HPerm4 Hcur_in) as HdPC. change (req_size FRAME_SIZE) with 40 in HdPC. rewrite Hrq in HdPC.
-pose proof (sep_tmp_entry B LAWS _ _ _ _ _ _ res (w * h) (fr_ptr fb) FRAME_SIZE HAR4 HPerm4 Hbef_in) as HdPB. change (req_size FRAME_SIZE) with 40 in HdPB. rewrite Hrq in HdPB.
-pose proof (sep_tmp_entry B LAWS _ _ _ _ _ _ res (w * h) (fr_img f) N HAR4 HPerm4 Himg_in) as HdPI. rewrite Hrq, HrqN in HdPI.
-reseat HS HJ4 HP4 [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10]%nat AG
-ltac:(idtac; first
-[ lazymatch goal with |- region_kept _ _ _ _ (YP09.mkRegion (Some 12%nat) _ _ _ _ _) =>
-eapply (region_kept_block_aj SEGS _); [exact HK | rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; rewrite (AG 12%nat) by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia); rewrite E12; apply unsigned_lit_small; clear - Hbh1 Hbh2 C3 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia
-| exact Hbef3 | clear; lia | change (req_size FRAME_SIZE) with 40; clear; lia | clear; lia
-| intros a Ha Hn; clear - Ha Hn HdPB Hrq Hob241 Hob242 Hob253 Huar; lia ] end
-| lazymatch goal with |- region_kept _ _ _ _ (YP09.mkRegion (Some 529%nat) _ _ _ _ _) =>
-eapply (region_kept_ownframe_aj SEGS _); [exact HK | evalE AG | exact Hfin3
-| right; unfold shadow_addr; rewrite EFA3, <- SB_SHADOW_OFF; fold F; change (fs_frame_bytes 2 / 8) with 32; unfold SB; clear; lia
-| intros a Ha Hn; clear - Ha Hn Hnh Hnh_ia Hrq HF8lo HF8c HFceil C1 C3 Hob241 Hob242 Hob253 Huar; ceil; unfold SB in *; zone_lia
-| intros a Ha; exfalso; clear - Ha Hob241 Hob242 Hob253 Huar; unfold SB in *; lia ] end
-| lazymatch goal with |- region_kept _ _ _ _ (YP09.mkRegion (Some 516%nat) _ _ _ _ _) =>
-eapply (region_kept_ownframe_aj SEGS _); [exact HK | evalE AG | exact Hfin3
-| left; rewrite EFA3; fold F; change (fs_frame_bytes 2) with 256; clear; lia
-| intros a Ha Hn; clear - Ha Hn HdPF Hrq Hob241 Hob242 Hob253 Huar; lia
-| intros a Ha; apply (proj1 (HFpres4 a ltac:(clear - Ha Hob241 Hob242 Hob253 Huar; lia))) ] end
-| lazymatch goal with |- region_kept _ _ _ _ (YP09.mkRegion (Some 60%nat) _ _ _ _ _) =>
-eapply (region_kept_stack_aj SEGS _); [exact HK | exact HJ4 | evalE AG | clear; lia | rewrite FFS; clear - Hsp1 Hob241 Hob242 Hob253 Huar; lia | clear - Hsp1 Hob241 Hob242 Hob253 Huar; lia | clear; lia | clear; lia] end
-| lazymatch goal with |- region_kept _ _ _ _ (YP09.mkRegion (Some 2%nat) _ _ _ _ _) =>
-eapply (region_kept_stack_aj SEGS _); [exact HK | exact HJ4 | evalE AG | clear - Hsp1 Hob241 Hob242 Hob253 Huar; lia | rewrite FFS; clear; lia | clear; lia | clear; lia | clear; lia] end
-| lazymatch goal with |- region_kept _ ?Ex _ _ (YP09.mkRegion (Some 241%nat) _ _ _ _ _) =>
-let H := rnHEI Ex in apply (region_kept_val_at Ex _ _ (A_OBJ 0) (pa_val (A_OBJ 0)) 8 (pa_val (A_OBJ 12)));
-[exact (H (A_OBJ 0) ltac:(unfold A_OBJ, A_TEXT, A_LIM; lia)) | exact Kgot3 | exact Kgot4 | lia] end
-| lazymatch goal with |- region_kept _ ?Ex _ _ (YP09.mkRegion (Some 253%nat) _ _ _ _ _) =>
-let H := rnHEI Ex in apply (region_kept_val_at Ex _ _ (A_OBJ 12) (pa_val (A_OBJ 12)) 8 SHADOW_OFF);
-[exact (H (A_OBJ 12) ltac:(unfold A_OBJ, A_TEXT, A_LIM; lia)) | exact Kcell3 | exact Kcell4 | lia] end
-| lazymatch goal with |- region_kept _ ?Ex _ _ (YP09.mkRegion (Some 242%nat) _ _ _ _ _) =>
-let H := rnHEI Ex in let Bv := rnB in apply (region_kept_val_at Ex _ _ (A_OBJ 1) (pa_val (A_OBJ 1)) 8 (as_uar_cell Bv));
-[exact (H (A_OBJ 1) ltac:(unfold A_OBJ, A_TEXT, A_LIM; lia)) | exact Kguar3 | exact Kguar4 | lia] end
-| lazymatch goal with |- region_kept _ ?Ex _ _ (YP09.mkRegion (Some 59%nat) _ _ _ _ _) =>
-let AGx := lazymatch goal with A : forall n, (n < 33)%nat -> ew _ n = ew _ n |- _ => A end in
-let Bv := rnB in apply (region_kept_val_at Ex _ _ 59%nat (as_uar_cell Bv) 4 1); [evalE AGx | exact Kuar3 | exact Kuar4 | lia] end
-| lazymatch goal with |- region_kept _ _ _ _ (YP09.mkRegion (Some 10%nat) _ _ _ _ _) =>
-eapply (region_kept_block_aj SEGS _); [exact HK | evalE AG | exact Hing3 | clear; lia | change (req_size CGIF_SIZE) with 96; clear; lia | clear; lia
-| intros a Ha Hn; clear - Ha Hn HdPG Hrq Hob241 Hob242 Hob253 Huar; lia ] end
-| lazymatch goal with |- region_kept _ _ _ _ (YP09.mkRegion (Some 11%nat) _ _ _ _ _) =>
-eapply (region_kept_block_ajw2 SEGS B LAWS); [exact HK | exact HAR4 | exact Hcur4 | evalE AG | exact Hcur3 | clear; lia | change (req_size FRAME_SIZE) with 40; clear; lia | clear; lia | clear; lia
-| intros a Ha Hn; clear - Ha Hn HdPC Hrq Hob241 Hob242 Hob253 Huar; lia ] end
-| match goal with |- ?g => idtac "KEPTFAIL" g end ]).
-relowF HS AG E10 E11 E32 E10n E11n E32n. norm_ss HS.
-prreg HS (@BV 5 10 I) Rres. rewrite Ha04 in Rres. symmetry in Rres.
-lazymatch type of Rres with ew ?Ex ?nx = _ =>
-pose proof (st_ok_pi_add_fact Ex _ _ nx (HPTR 4) HS
-ltac:(clear HS; unfold afact_ok, HPTR; cbn [af_lo af_hi af_al2]; rewrite Rres; unfold w64; rewrite unsigned_lit_small by (clear - Hnh Hnceil HWH C1 C3 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia);
-change (2 ^ 4) with 16; clear - Hnh Hnceil Hn16 HWH C1 C3 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia)) as HS3;
-clear HS; rename HS3 into HS end.
-norm_ss HS. reshok HS.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJ4 SHOK FLBspan 0x2038.
-all: match goal with |- range_addressable _ _ _ _ => match goal with |- ?g => idtac "OBL-LEFT" g end | _ => idtac end.
-1: awrFL AG fpos F EFA4.
-upd_aboveF HUP HFr AG ltac:(fun Hb Hrg => clear - Hb Hrg Hsp1 HFceil Hceil Hslo Hstk0 FFS C1 Hgceil Hcceil HF8hi Hob241 Hob242 Hob253 Huar; lia). clear_frames.
-lazymatch goal with HS0 : st_ok_pi _ _ _ _ _, AG0 : forall n, (n < 33)%nat -> _ |- _ => let HEv0 := fresh "HEv" in rebaseE HS0 AG0 HEv0; clear HEv0 end.
-lazymatch goal with HSx : st_ok_pi _ _ _ _ _ |- _ => rename HSx into HS end.
-prreg HS (@BV 5 2 I) Rsp. prreg HS (@BV 5 3 I) Rgp. prreg HS (@BV 5 4 I) Rtp.
-prreg HS (@BV 5 18 I) R19. prreg HS (@BV 5 23 I) R23. prreg HS (@BV 5 24 I) R26. prreg HS (@BV 5 27 I) R27.
-rewrite E887 in R23. rewrite E40 in R26. rewrite Rres in R27.
-lazymatch type of HS with st_ok_pi _ _ ?Ev _ _ =>
-rreg_by HS (@BV 5 20 I) (Z_to_bv 64 h) (denot_and_ffff Ev 888 h E888 ltac:(clear - Hh1 Hh65 Hob241 Hob242 Hob253 Huar; lia)) R18;
-rreg_by HS (@BV 5 19 I) (Z_to_bv 64 w) (denot_and_ffff Ev 887 w E887 ltac:(clear - Hw1 Hw65 Hob241 Hob242 Hob253 Huar; lia)) R19s;
-rreg_by HS (@BV 5 21 I) (Z_to_bv 64 (fr_img f + left)) (denot_add_atoms Ev 51 890 (fr_img f) left E51 E890 ltac:(clear - Hi4096 Hob241 Hob242 Hob253 Huar; lia) Hl0 ltac:(rewrite HrqN in Hiceil; clear - Hiceil Hl0 Hlw Hw1 HW65 C1 HWH HwhN Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia)) R20;
-rreg_by HS (@BV 5 22 I) (Z_to_bv 64 (top * cg_W s)) (denot_mul_hw Ev 889 40 top (cg_W s) E889 E40 ltac:(clear - Ht0 Hth Hh1 HH65 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - HW1 HW65 Hob241 Hob242 Hob253 Huar; lia)) R21 | st_ok _ ?Ex ?ssx (restrict _ ?msX) =>
-let rs := eval vm_compute in (ss_mem ssx) in
-let il := idx_of_base rs 60%nat in let il := eval vm_compute in il in
-let rl := eval vm_compute in (nth il rs got_regionP) in
-pose proof (st_ok_region_nth Ex ssx (restrict (w_H W4) msX) il rl HS ltac:(vm_compute; reflexivity)) as HRloc; cbn [ms_mem restrict] in HRloc;
-lazymatch type of HRloc with region_ok _ _ _ (YP09.mkRegion _ ?lo ?hi ?wlo ?whi ?cs) =>
-lazymatch type of Rres with ew _ ?nx = _ =>
-let slot off e v dtac rtac Hn :=
-pose proof (field_of_region Ex _ 60 sp1 cs lo hi wlo whi off 8%N e v HRloc
-ltac:(rewrite ?ew_ewset_other, ?ew_havoc_old by nat_side; rewrite E60; apply unsigned_lit_small; clear - Hsp1 Hceil Hslo Hstk0 FFS C1 Hshi H47 Hob241 Hob242 Hob253 Huar; lia)
-ltac:(cbn; tauto) ltac:(dtac) ltac:(rtac) ltac:(cbn; lia)) as Hn in
-slot 160 (SOff nx 0) res ltac:(cbn [sv_denot]; rewrite Rres, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity)
-ltac:(cbn [Z.of_N Z.mul]; clear - Hnh Hnceil HWH C1 C3 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia) V160;
-slot 168 (SOff 51 0) (fr_img f) ltac:(cbn [sv_denot]; rewrite E51, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity)
-ltac:(cbn [Z.of_N Z.mul]; rewrite HrqN in Hiceil; clear - Hi4096 Hiceil C1 HWH HwhN Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia) V168 end end;
-clear HRloc  end.
-lazymatch type of Rsp with getr ?rg 2 = _ =>
-assert (EspL : spZ rg = sp1) by (unfold spZ; rewrite Rsp; rewrite E60; apply unsigned_lit_small; clear - Hsp1 Hceil Hslo Hstk0 FFS C1 Hshi H47 Hob241 Hob242 Hob253 Huar; lia) end.
-pmkst HS.
-eapply SRr_bind.
-{ lazymatch goal with |- SRr _ _ (mkCfg (mkst (ms_regs ?msX) _ (ms_mem _) _) ?mdX) _ =>
-eapply (fl_cpyX B LAWS AMEMCPY (Z.to_nat h) 0 W4 (ms_regs msX) (ms_mem msX) mdX (spZ regs) sp1 _ ly S W mem md ly4 S4 _ fpos
-res (fr_img f) N w h top left (cg_W s) (cg_H s)) end.
-- rewrite Z2Nat.id by (clear - Hh1 Hob241 Hob242 Hob253 Huar; lia). clear; lia.
-- clear - Hh1 Hob241 Hob242 Hob253 Huar; lia.
-- exact Hw1. - exact Hl0. - exact Hlw. - exact Hh1. - exact Ht0. - exact Hth.
-- clear - HW1 HW65 Hob241 Hob242 Hob253 Huar; lia. - exact HH65. - symmetry; exact HN. - exact HNle.
-- exact HJ4.
-- exact Hres_in. - exact Himg4.
-- intros blc lyq ownq a Hbl Ha. replace a with (res + (a - res)) by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia). apply (Ares blc lyq ownq (a - res) Hbl). clear - Ha Hob241 Hob242 Hob253 Huar; lia.
-- rewrite Hrq, HrqN. clear - HdPI Hob241 Hob242 Hob253 Huar; lia.
-- exact EspL. - exact Hsp1. - exact Hsp1al16.
-- rewrite Rgp. rewrite (AG 3%nat) by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia). rewrite (EE 3%nat (@BV 5 3 I) eq_refl). exact Hgp.
-- rewrite Rtp. rewrite (AG 4%nat) by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia). rewrite (EE 4%nat (@BV 5 4 I) eq_refl). exact Htp.
-- rewrite R18. f_equal. clear; lia.
-- exact R19.
-- exact R20.
-- rewrite R21. f_equal. clear; lia.
-- exact R23. - exact R26.
-- rewrite R27. unfold w64. f_equal. clear; lia.
-- exact R19s. }
-cbv beta. intros W5 c5 Hwle5 (-> & regs5 & mem5 & md5 & -> & HJ5 & HK5 & Hout5 & Hpres5 & XO5 & XC5).
-assert (HdCI : fr_ptr f + 40 <= fr_img f \/ fr_img f + req_size N <= fr_ptr f).
-{ destruct (frame_blocks_front g s N rest i f Hf) as (rci & HPci).
-pose proof (sep_blocks_perm SEGS B LAWS ly S W mem md _ _ _ HAR (Permutation_trans HPerm HPci)) as Hd.
-unfold zdisjoint, block_rng in Hd; cbn [fst snd] in Hd. change (req_size FRAME_SIZE) with 40 in Hd. exact Hd. }
-assert (XG5 : garr8 SEGS (mrestrict (w_H W4) mem5) res (YO07.window (cg_W s) (YO07.f_img cur) w h top left)).
-{ lazymatch type of XC5 with forall j kk, _ -> _ -> _ = aview _ _ ?m1 _ =>
-apply (cpy_garr8 SEGS (w_H W4) m1 mem5 res (fr_img f) w h top left (cg_W s) (cg_H s) (YO07.f_img cur)); [| rewrite XClen; exact HN | clear - HW1; lia | clear - HH1; lia
-| exact Hw1 | exact Hl0 | exact Hlw | exact Hh1 | exact Ht0 | exact Hth | intros j kk Hj Hkk; apply XC5; [clear - Hj; lia | exact Hkk]] end.
-eapply (garr8_journal_block_x SEGS B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (fr_img f) N (fr_img f) (YO07.f_img cur) HJ4);
-[ exact Himg_in | exact Himg4 | clear; lia | rewrite XClen, HrqN; clear; lia
-| intros a Ha (r & Hr0 & Hr); cbn [In] in Hr0; destruct Hr0 as [<- | []]; cbn [fst snd] in Hr; rewrite XClen in Ha; rewrite HrqN in HdCI; clear - Ha Hr HdCI; lia
-| exact XCimg ]. }
-clear HdCI XO5 XC5. xnew_facts F (fr_ptr f) res (w * h) Hnh_ia Hnh_img Hrq Hn4096 Hnceil HdPF HdPC HWH XBBr.
-assert (XLW : Z.of_nat (length (YO07.window (cg_W s) (YO07.f_img cur) w h top left)) = w * h).
-{ destruct (window_specZ (cg_W s) (cg_H s) (YO07.f_img cur) w h top left ltac:(clear - HW1; lia) ltac:(clear - HH1; lia) ltac:(rewrite XClen; exact HN) Hw1 Hl0 Hlw Hh1 Ht0 Hth) as [WL _].
-rewrite WL. clear - HWH. lia. }
-clear Rsp Rgp Rtp R18 R19 R19s R20 R21 R23 R26 R27 EspL.
-lazymatch type of HS with st_ok_pi _ _ ?Ev ?ssx (restrict _ ?msX) =>
-let kk := eval vm_compute in (run_K A_LIM (SOff 32 0) [] ssx) in
-jafter_stretch_keep_hi HS kk regs5 (mrestrict (w_H W4) mem5) CPY_CLOB 0x205c [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10]%nat HS2;
-lazymatch type of HS2 with _ -> Forall _ ?rs -> _ =>
-assert (HRK : Forall (fun r => 0 <= base_val Ev (YP09.r_base r) + YP09.r_lo r /\ base_val Ev (YP09.r_base r) + YP09.r_hi r <= 2 ^ 64 /\
-(base_val Ev (YP09.r_base r) + YP09.r_hi r <= res \/ res + w * h <= base_val Ev (YP09.r_base r) + YP09.r_lo r) /\
-(base_val Ev (YP09.r_base r) + YP09.r_hi r <= sp1 - ESTACK \/ sp1 <= base_val Ev (YP09.r_base r) + YP09.r_lo r)) rs);
-[ repeat apply Forall_cons; try apply Forall_nil; cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val];
-cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia;
-repeat match goal with Himg : ew ?Ex ?n = Z_to_bv 64 _ |- context [ew ?Ex ?n] => rewrite Himg end; rewrite ?RF, ?E60, ?E529; rewrite ?(AG 2%nat), ?(AG 10%nat), ?(AG 11%nat), ?(AG 12%nat), ?(AG 32%nat) by lia; rewrite ?Usp, ?E10, ?E11, ?E12, ?E32;
-rewrite ?unsigned_lit_small by (unfold SB; clear - Hsp1 Hceil Hslo Hstk0 Hshi H47 C1 C3 HFceil HFhigh HF8lo HF8hi Hgh Hgceil Hcrh Hcceil Hbh1 Hbh2 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; zone_lia);
-unfold CGIF_SIZE, FRAME_SIZE, SB, ESTACK;
-clear - HFceil HFhigh HF8lo HF8hi HF8c Hceil Hslo Hstk0 Hshi H47 Hsp1 Hgh Hgceil Hcrh Hcceil Hbh1 Hbh2 Hbceil C1 C2 C3 C4 C5 FFS Hn4096 Hnh Hnh_img Hnh_ia Hrq Hnceil HWH HdPG HdPC HdPB HdPF Hob241 Hob242 Hob253 Huar;
-unbox; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; first [zone_lia | match goal with |- ?g => idtac "HRK-FAIL" g; fail end]
-| specialize (HS2 HK5 (regions_kept_out2 Ev (w_H W4) (ms_mem msX) mem5 res (res + w * h) (sp1 - ESTACK) sp1 _ Hout5 Hpres5 HRK)) ] end | st_ok _ ?Ev ?ssx (restrict _ ?msX) =>
-let kk := eval vm_compute in (run_K A_LIM (SOff 32 0) [] ssx) in
-jafter_stretch_keep_hi HS kk regs5 (mrestrict (w_H W4) mem5) CPY_CLOB 0x205c [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10]%nat HS2;
-lazymatch type of HS2 with _ -> Forall _ ?rs -> _ =>
-assert (HRK : Forall (fun r => 0 <= base_val Ev (YP09.r_base r) + YP09.r_lo r /\ base_val Ev (YP09.r_base r) + YP09.r_hi r <= 2 ^ 64 /\
-(base_val Ev (YP09.r_base r) + YP09.r_hi r <= res \/ res + w * h <= base_val Ev (YP09.r_base r) + YP09.r_lo r) /\
-(base_val Ev (YP09.r_base r) + YP09.r_hi r <= sp1 - ESTACK \/ sp1 <= base_val Ev (YP09.r_base r) + YP09.r_lo r)) rs);
-[ repeat apply Forall_cons; try apply Forall_nil; cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val];
-cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia;
-repeat match goal with Himg : ew ?Ex ?n = Z_to_bv 64 _ |- context [ew ?Ex ?n] => rewrite Himg end; rewrite ?RF, ?E60, ?E529; rewrite ?(AG 2%nat), ?(AG 10%nat), ?(AG 11%nat), ?(AG 12%nat), ?(AG 32%nat) by lia; rewrite ?Usp, ?E10, ?E11, ?E12, ?E32;
-rewrite ?unsigned_lit_small by (unfold SB; clear - Hsp1 Hceil Hslo Hstk0 Hshi H47 C1 C3 HFceil HFhigh HF8lo HF8hi Hgh Hgceil Hcrh Hcceil Hbh1 Hbh2 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; zone_lia);
-unfold CGIF_SIZE, FRAME_SIZE, SB, ESTACK;
-clear - HFceil HFhigh HF8lo HF8hi HF8c Hceil Hslo Hstk0 Hshi H47 Hsp1 Hgh Hgceil Hcrh Hcceil Hbh1 Hbh2 Hbceil C1 C2 C3 C4 C5 FFS Hn4096 Hnh Hnh_img Hnh_ia Hrq Hnceil HWH HdPG HdPC HdPB HdPF Hob241 Hob242 Hob253 Huar;
-unbox; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; first [zone_lia | match goal with |- ?g => idtac "HRK-FAIL" g; fail end]
-| specialize (HS2 HK5 (regions_kept_out2 Ev (w_H W4) (ms_mem msX) mem5 res (res + w * h) (sp1 - ESTACK) sp1 _ Hout5 Hpres5 HRK)) ] end  end.
-clear HS. rewrite <- restrict_mkst_fx in HS2. rename HS2 into HS. rebaseE HS AG HEv. clear HEv.
-lazymatch type of HUP with forall a, _ -> aview _ _ ?m4 a = _ =>
-assert (HUP5 : forall a, spZ regs <= a < 2 ^ 64 -> aview SEGS (w_H W4) mem5 a = aview SEGS (w_H W) mem a)
-by (intros a Ha; rewrite (Hout5 a); [apply HUP; exact Ha | clear - Ha Hbot Hslo Hceil Hstk0 C1 FFS Hob241 Hob242 Hob253 Huar; lia | clear - Ha Hnceil HWH C1 Hceil Hslo Hstk0 FFS Hob241 Hob242 Hob253 Huar; lia | clear - Ha Hsp1 Hob241 Hob242 Hob253 Huar; unfold ESTACK; lia]) end.
-clear HUP. rename HUP5 into HUP.
-relowF HS AG E10 E11 E32 E10n E11n E32n. reshok HS.
-clear Kgot4 Kcell4 Kguar4 Kuar4. aconstsF HJ5 Kgot4 Kcell4 Kguar4 Kuar4.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJ5 SHOK FLBspan 0x20a4.
-all: match goal with |- range_addressable _ _ _ _ => match goal with |- ?g => idtac "OBL-LEFT" g end | _ => idtac end.
-1: awrFL AG fpos F EFA4.
-lazymatch goal with HFr : frame_of _ _ _ _ |- SRr _ _ (mkCfg ?msn _) _ => xblk_move HFr XG5 msn end.
 clear_frames.
-lazymatch goal with HS0 : st_ok_pi _ _ _ _ _, AG0 : forall n, (n < 33)%nat -> _ |- _ => let HEv0 := fresh "HEv" in rebaseE HS0 AG0 HEv0; clear HEv0 end.
-lazymatch goal with HS : st_ok_pi _ _ ?Ev _ _ |- _ =>
-prreg HS (23%bv : bv 5) Q23; prreg HS (27%bv : bv 5) Q27;
-rewrite Rres in Q23; rewrite E888 in Q27;
-add_atom_win HS 679%nat (Z_to_bv 64 w) E679;
-rechunk_off HS 60%nat 168 (SOff 679 0) ltac:(rewrite !sv_denot_SOff0; rewrite E679; rewrite ?ew_havoc_above by nat_side; first [rewrite E887; reflexivity | match goal with |- ?g => idtac "RC168" g; fail end]) end.
-lazymatch goal with HS : st_ok_pi _ _ ?Ev _ _ |- _ =>
-add_atom_win HS 680%nat (Z_to_bv 64 left) E680;
-rechunk_off HS 60%nat 144 (SOff 680 0) ltac:(rewrite !sv_denot_SOff0; rewrite E680; rewrite ?ew_havoc_above by nat_side; first [rewrite E890; reflexivity | match goal with |- ?g => idtac "RC144" g; fail end]) end.
-lazymatch goal with HS : st_ok_pi _ _ ?Ev _ _ |- _ =>
-add_atom_win HS 681%nat (Z_to_bv 64 top) E681;
-rechunk_off HS 60%nat 152 (SOff 681 0) ltac:(rewrite !sv_denot_SOff0; rewrite E681; rewrite ?ew_havoc_above by nat_side; first [rewrite E889; reflexivity | match goal with |- ?g => idtac "RC152" g; fail end]) end.
-lazymatch goal with HS : st_ok_pi _ _ _ _ _ |- _ =>
-ra_join_win HS ss_T0 682%nat fl_T0_deads_bv ltac:(idtac;
-ra_join_val HS 682%nat 0%nat Q23 E682; ra_join_val HS 682%nat 2%nat Q27 E684;
-ra_join_fact HS 679%nat (mkAF 1 65535 0) ltac:(rewrite !ew_havoc_old by (clear; lia); rewrite E679; rewrite Z.pow_0_r, Z.mod_1_r, unsigned_lit_small by (clear - Hw1 Hw65 Hob241 Hob242 Hob253 Huar; lia); clear - Hw1 Hw65 Hob241 Hob242 Hob253 Huar; lia);
-ra_join_fact HS 680%nat (mkAF 0 65535 0) ltac:(rewrite !ew_havoc_old by (clear; lia); rewrite E680; rewrite Z.pow_0_r, Z.mod_1_r, unsigned_lit_small by (clear - Hl0 Hlw Hw1 HW65 Hob241 Hob242 Hob253 Huar; lia); clear - Hl0 Hlw Hw1 HW65 Hob241 Hob242 Hob253 Huar; lia);
-ra_join_fact HS 681%nat (mkAF 0 65535 0) ltac:(rewrite !ew_havoc_old by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia); rewrite E681; rewrite Z.pow_0_r, Z.mod_1_r, unsigned_lit_small by (clear - Ht0 Hth Hh1 HH65 Hob241 Hob242 Hob253 Huar; lia); clear - Ht0 Hth Hh1 HH65 Hob241 Hob242 Hob253 Huar; lia);
-ra_join_fact HS 684%nat (mkAF 1 65535 0) ltac:(rewrite E684; rewrite Z.pow_0_r, Z.mod_1_r, unsigned_lit_small by (clear - Hh1 Hh65 Hob241 Hob242 Hob253 Huar; lia); clear - Hh1 Hh65 Hob241 Hob242 Hob253 Huar; lia));
-fl_handX RT0 HS end.
-split; [exists gen; split; [rewrite !ew_havoc_old by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia); assumption | exact Rgen]|].
-split; [rewrite !ew_havoc_old by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia); assumption|].
-split; [exists fb; repeat (apply fl_bef_havoc; [clear; lia|]); split; [exact Hfb|]; cbn [c_i c_s]; bef_EB|].
-split; [| rewrite !ew_havoc_old by (clear - PBASE PBLO; lia); exact E621X].
-exists res, w, h, top, left. cbn [c_s c_ly c_S c_regs c_f].
-split; [rewrite E682; reflexivity|].
-split; [rewrite !ew_havoc_old by (clear; lia); rewrite E679; reflexivity|].
-split; [rewrite E684; reflexivity|].
-split; [rewrite !ew_havoc_old by (clear - PBASE PBLO Hob241 Hob242 Hob253 Huar; lia); rewrite E681; reflexivity|].
-split; [rewrite !ew_havoc_old by (clear; lia); rewrite E680; reflexivity|].
-split; [clear - Hnh Hnceil HWH C1 C3 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia|].
-split; [exact Hw1|]. split; [exact Hl0|]. split; [exact Hlw|]. split; [exact Hh1|]. split; [exact Ht0|]. split; [exact Hth|].
-assert (Hnz : res <> 0) by (clear - Hnh; lia).
+prreg HS (2%bv : bv 5) Rsp. prreg HS (1%bv : bv 5) Rra. prreg HS (3%bv : bv 5) Rgp. prreg HS (4%bv : bv 5) Rtp. prreg HS (8%bv : bv 5) Rs0.
+rregU HS (10%bv : bv 5) (wv * hv) ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+rewrite Z.mul_comm; apply (U_mul_small1 Ex _ _ hv wv);
+[ apply (U_and16 Ex _ hv); [apply (U_atom Ex 888 hv Ah888) | ]
+| apply (U_and16 Ex _ wv); [apply (U_atom Ex 887 wv Aw887) | ] | | | ];
+clear - Wlo Llo LWhi Hlo Tlo THhi HN HNle R7 R8; nia end) Ra0.
+pmkst HS. ppcs.
+assert (Bsp : bv_unsigned (getr (ms_regs ms) 2) = sp1) by (rewrite Rsp, E60; exact (unsigned_lit_small sp1 Wsp1)).
+assert (Bra : raZ (ms_regs ms) = BASE + 8148) by (unfold raZ; rewrite Rra; apply unsigned_lit_small; clear - PBASE; lia).
+assert (Bgp : getr (ms_regs ms) 3 = w64 (as_gp B)) by (rewrite Rgp, (AG 3%nat), (EE 3%nat 3%bv eq_refl) by nat_side; exact Hgp).
+assert (Btp : getr (ms_regs ms) 4 = w64 (as_tp B)) by (rewrite Rtp, (AG 4%nat), (EE 4%nat 4%bv eq_refl) by nat_side; exact Htp).
+assert (Sp0E : bv_unsigned (ew E 2) = spZ regs) by (rewrite (AG 2%nat) by nat_side; exact Usp).
+assert (Bs0 : s0Z (ms_regs ms) = spZ regs) by (unfold s0Z; rewrite Rs0; exact Sp0E).
+pose proof (proj1 (proj2 HJ3)) as Lay3. destruct Lay3 as (_ & _ & _ & _ & _ & _ & _ & _ & Top3 & _).
+pose proof HJ3 as (_ & _ & _ & _ & _ & _ & Nev3 & _ & Above3 & _).
+lazymatch type of HS with st_ok _ _ ?ssm _ =>
+let r2 := eval vm_compute in (nth 4 (ss_mem ssm) got_regionP) in
+pose proof (st_ok_region_nth E ssm _ 4 r2 HS ltac:(vm_compute; reflexivity)) as Reg2 end.
+pose proof (slot_of_region E _ (spZ regs) _ (-104) 0 (-104) 0 (-8) (SOff 1 0) (raZ regs) Reg2 Sp0E
+ltac:(cbn [In]; repeat (first [left; reflexivity | right]))
+ltac:(rewrite sv_denot_SOff0, (AG 1%nat), (EE 1%nat 1%bv eq_refl) by nat_side; unfold raZ; rewrite Z_to_bv_bv_unsigned; reflexivity)
+(u64_range (getr regs 1))) as SlotRa.
+pose proof (slot_of_region E _ (spZ regs) _ (-104) 0 (-104) 0 (-16) (SOff 8 0) (s0Z regs) Reg2 Sp0E
+ltac:(cbn [In]; repeat (first [left; reflexivity | right]))
+ltac:(rewrite sv_denot_SOff0, (AG 8%nat), (EE 8%nat 8%bv eq_refl) by nat_side; unfold s0Z; rewrite Z_to_bv_bv_unsigned; reflexivity)
+(u64_range (getr regs 8))) as SlotS0.
+cbn [ms_mem restrict mkst] in SlotRa, SlotS0.
+assert (Chain1 : achain ly3 (aview SEGS (w_H W3) (ms_mem ms)) sp1 (spZ regs) ((spZ regs, raZ regs, s0Z regs) :: ch)).
+{ apply (achain_push ly3 (aview SEGS (w_H W) mem)).
+- exact (achain_ly_top ly ly3 _ _ _ _ Top3 Hch).
+- rewrite Top3. clear - Htop2 H47. lia.
+- intros a Ha. apply Above3; clear - Ha Hceil Hslo FFS C1; lia.
+- replace (spZ regs - 8) with (spZ regs + -8) by ring. exact (rdword_of_val_mem _ _ _ _ _ SlotRa (u64_range (getr regs 1))).
+- replace (spZ regs - 16) with (spZ regs + -16) by ring. exact (rdword_of_val_mem _ _ _ _ _ SlotS0 (u64_range (getr regs 8))).
+- exact Hra4.
+- clear - Hceil Hslo FFS; lia.
+- clear - Hal16. apply Z.mod_divide in Hal16; [|lia]. apply Z.mod_divide; [lia|]. destruct Hal16 as [q Hq]. exists (2 * q). lia.
+- rewrite Top3. clear - Htop32. lia.
+- clear - Hsp1. lia. }
+assert (Pre1 : chain_pre ly3 (aview SEGS (w_H W3) (ms_mem ms)) (ms_regs ms) ((spZ regs, raZ regs, s0Z regs) :: ch)).
+{ apply (achain_chain_pre ly3 _ sp1 (spZ regs) _ (ms_regs ms) Chain1); [unfold spZ; rewrite Bsp; clear - Hsp1 Hceil Hslo FFS; lia | exact Bs0 | rewrite Bra; clear - PBLO; lia]. }
+assert (Trace1 : In (call_trace0 (pc_malloc_ra0 (as_code B)) (ms_regs ms) ((spZ regs, raZ regs, s0Z regs) :: ch)) (as_universe B))
+by exact (HTR (pc_malloc_ra0 (as_code B)) (BASE + 8148) (ms_regs ms) regs ch Hctx Bra (or_intror (or_introl (conj eq_refl eq_refl)))).
+assert (Budget1 : mo_ok MT S3 (mo_malloc MT (wv * hv))).
+{ pose proof (HXM N (wv * hv) WHn HNle) as Xm. pose proof (HXMN (wv * hv) ltac:(clear - WHn HNle; lia)) as Xn.
+pose proof (mo_free_nonneg MT MLAW) as Fr0. pose proof (mo_malloc_nonneg MT MLAW (wv * hv) ltac:(clear - WHn; lia)) as Ml0.
+apply (mok_station MT S S3 (xm_flush XN N) 0 (mo_malloc MT (wv * hv)) MLAW HMOK Meter Ml0). clear - Xm Xn Fr0. lia. }
+assert (Live1 : blocks_bytes S3 + wv * hv <= LIVE_MAX).
+{ rewrite (blocks_bytes_bsum B ly3 S3), Blk3, <- (blocks_bytes_bsum B ly S). clear - Hlive WHn HNle. unfold LIVE_FLUSH in Hlive. lia. }
+eapply SRr_bind.
+{ apply (amalloc04_sub SEGS B LAWS Hsegs MT AMALLOC4 W3 (ms_regs ms) (ms_mem ms) TFLUSH_STK (spZ regs) [(fr_ptr f + 20, fr_ptr f + 24)]
+ly S W mem md [(2, fpos)] ly3 S3 _ k (wv * hv) (sp1 - spZ regs) (Z_to_bv 64 (BASE + 8148)) ((spZ regs, raZ regs, s0Z regs) :: ch) HJ3 Ra0).
+- unfold MALLOC_MAX. clear - WHn HNle. lia.
+- exact Live1.
+- unfold spZ at 1. rewrite Bsp. ring.
+- rewrite Zminus_mod, Hsp1al16, Hal16. reflexivity.
+- clear - Hsp1. lia.
+- unfold ASTACK. rewrite FFS. clear - Hsp1. lia.
+- exact Bgp.
+- exact Btp.
+- exact Rra.
+- apply ret_ok_codeptr_v; [lia | reflexivity].
+- rewrite HEV in Hev. clear - Nev3 Kle0 Hev. unfold EV_MAX in *. lia.
+- exact Pre1.
+- exact Trace1.
+- exact Budget1. }
+cbv beta. intros W4 c4 Wle4 (ly4 & S4 & regs4 & mem4 & md4 & res & -> & HJ4 & HP4 & Ra4 & Frs4 & Res4 & Ebl4 & HK4 & MLE4 & HJc4).
+pose proof (proj1 HJ4) as HAR4.
+destruct (al_layout _ _ LAWS _ _ _ _ _ ly4 HAR (proj1 (proj2 HJ4))) as (_ & EFA4 & _).
+assert (Fin4 : In (2, fpos) (frames S4)) by (rewrite Frs4; exact Hfin3).
+assert (Old4 : forall x, In x (ablocks B ly3 S3) -> In x (ablocks B ly4 S4)) by (intros x Hx; rewrite Ebl4; apply in_app_iff; left; exact Hx).
+pose proof Bef as (BefNth & _). cbn [c_i c_s] in BefNth.
+destruct (fl_bef_in s i fb Hi Hlen3 BefNth) as (_ & BefIn).
+destruct (fl_bef_blocks B ly S g s N rest fb HPerm BefIn) as (InB0 & _ & _).
+assert (InB3 : In (fr_ptr fb, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Blk3; exact InB0).
+destruct (al_blocks _ _ LAWS ly S W mem md (fr_ptr fb) FRAME_SIZE HAR InB0) as (_ & Hb4096 & Hbceil & _).
+change (req_size FRAME_SIZE) with 40 in Hbceil.
+assert (B12 : bv_unsigned (ew E 12) = fr_ptr fb)
+by (rewrite (AG 12%nat), E12, BefNth by nat_side; cbn [frame_ptr]; apply unsigned_lit_small; clear - Hb4096 Hbceil C1; lia).
+assert (B10 : bv_unsigned (ew E 10) = g) by (rewrite E10n; apply unsigned_lit_small; clear - Hg4096 Hgceil C1; lia).
+assert (B11 : bv_unsigned (ew E 11) = fr_ptr f) by (rewrite E11n; apply unsigned_lit_small; clear - Hc4096 Hcceil C1; lia).
+assert (B516 : bv_unsigned (ew E 516) = F) by (rewrite RF; apply unsigned_lit_small; clear - HF4096 HFceil C1; lia).
+assert (B529 : bv_unsigned (ew E 529) = SB + F / 8) by (rewrite E529; apply unsigned_lit_small; unfold SB; clear - HF8lo HF8hi; lia).
+assert (B60 : bv_unsigned (ew E 60) = sp1) by (rewrite E60; exact (unsigned_lit_small sp1 Wsp1)).
+aconstsF HJ4 Kgot4 Kcell4 Kguar4 Kuar4.
+lazymatch type of HS with st_ok _ _ ?ssm _ =>
+let r5 := eval vm_compute in (nth 5 (ss_mem ssm) got_regionP) in
+let r6 := eval vm_compute in (nth 6 (ss_mem ssm) got_regionP) in
+let r7 := eval vm_compute in (nth 7 (ss_mem ssm) got_regionP) in
+let r8 := eval vm_compute in (nth 8 (ss_mem ssm) got_regionP) in
+pose proof (st_ok_region_nth E ssm _ 5 r5 HS ltac:(vm_compute; reflexivity)) as Reg5;
+pose proof (st_ok_region_nth E ssm _ 6 r6 HS ltac:(vm_compute; reflexivity)) as Reg6;
+pose proof (st_ok_region_nth E ssm _ 7 r7 HS ltac:(vm_compute; reflexivity)) as Reg7;
+pose proof (st_ok_region_nth E ssm _ 8 r8 HS ltac:(vm_compute; reflexivity)) as Reg8 end.
+assert (B241 : bv_unsigned (ew E 241) = VAL 241) by (rewrite E241; apply unsigned_lit_small; clear - Hob241; lia).
+assert (B253 : bv_unsigned (ew E 253) = VAL 253) by (rewrite E253; apply unsigned_lit_small; clear - Hob253; lia).
+assert (B242 : bv_unsigned (ew E 242) = VAL 242) by (rewrite E242; apply unsigned_lit_small; clear - Hob242; lia).
+assert (B59 : bv_unsigned (ew E 59) = as_uar_cell B) by (rewrite E59; apply unsigned_lit_small; clear - Huar; lia).
+pose proof (field_of_region E _ 241 (VAL 241) _ 0 8 0 0 0 8 (SOff 253 0) (VAL 253) Reg5 B241 ltac:(cbn [In]; left; reflexivity)
+ltac:(rewrite sv_denot_SOff0; exact E253) ltac:(cbn [Z.of_N Z.mul]; clear - Hob253; lia) ltac:(clear; cbn; lia)) as V241.
+pose proof (field_of_region E _ 253 (VAL 253) _ 0 8 0 0 0 8 (SOff 32 0) SB Reg6 B253 ltac:(cbn [In]; left; reflexivity)
+ltac:(rewrite sv_denot_SOff0; exact E32n) ltac:(cbn [Z.of_N Z.mul]; unfold SB; clear; lia) ltac:(clear; cbn; lia)) as V253.
+pose proof (field_of_region E _ 242 (VAL 242) _ 0 8 0 0 0 8 (SOff 59 0) (as_uar_cell B) Reg7 B242 ltac:(cbn [In]; left; reflexivity)
+ltac:(rewrite sv_denot_SOff0; exact E59) ltac:(cbn [Z.of_N Z.mul]; clear - Huar; lia) ltac:(clear; cbn; lia)) as V242.
+pose proof (field_of_region E _ 59 (as_uar_cell B) _ 0 4 0 0 0 4 (SLit 1) 1 Reg8 B59 ltac:(cbn [In]; left; reflexivity)
+ltac:(reflexivity) ltac:(cbn [Z.of_N Z.mul]; clear; lia) ltac:(clear; cbn; lia)) as V59.
+rewrite Z.add_0_r in V241, V253, V242, V59. cbn [ms_mem restrict mkst N.to_nat] in V241, V253, V242, V59.
+jafter_call_keep_hi HS 908%nat regs4 (mrestrict (w_H W4) mem4) HP4 [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10]%nat HS4.
+match type of HS4 with ?Q -> _ => assert (Kept4 : Q) end.
+{ cbn [ms_mem restrict mkst]. repeat apply Forall_cons; try apply Forall_nil.
+- apply (region_kept_block_subw B E ASTACK _ [] ly3 S3 W3 (ms_mem ms) _ ly4 S4 W4 mem4 md4 1 12 0 40 0 0 _ (fr_ptr fb) FRAME_SIZE HJc4 B12 InB3 (Old4 _ InB3));
+[ apply Z.le_refl | change (req_size FRAME_SIZE) with 40; apply Z.le_refl | intros a _ (rr & [] & _) | intros a Ha; clear - Ha; lia ].
+- apply (region_kept_fshadow_sub B E ASTACK _ [] ly3 S3 W3 (ms_mem ms) _ ly4 S4 W4 mem4 md4 1 529 (SB + F / 8) 0 32 0 0 _ 2 fpos HJc4 B529 Hfin3);
+[ unfold shadow_addr; rewrite EFA3; fold F; rewrite <- SB_SHADOW_OFF; clear; lia
+| unfold shadow_addr; rewrite EFA3; fold F; rewrite <- SB_SHADOW_OFF; change (fs_frame_bytes 2 / 8) with 32; clear; lia
+| intros a _ (rr & [] & _) | intros a Ha; clear - Ha; lia ].
+- apply (region_kept_frame_sub B E ASTACK _ [] ly3 S3 W3 (ms_mem ms) _ ly4 S4 W4 mem4 md4 1 516 F 0 256 0 256 _ 2 fpos HJc4 B516 Hfin3);
+[ rewrite EFA3; fold F; clear; lia | rewrite EFA3; fold F; change (fs_frame_bytes 2) with 256; clear; lia | intros a _ (rr & [] & _) | ].
+intros a Ha. destruct (al_frames _ _ LAWS _ _ _ _ _ 2 fpos HAR4 Fin4) as (_ & _ & Fp4 & _).
+rewrite EFA4 in Fp4. fold F in Fp4. change (fs_frame_bytes 2) with 256 in Fp4. exact (proj1 (Fp4 a ltac:(clear - Ha; lia))).
+- apply (region_kept_stack_aj SEGS B E ly3 S3 W3 (ms_mem ms) W4 mem4 _ _ _ 60 0 280 0 280 _ (spZ regs) sp1 TFLUSH_STK _ ly S W mem md _ ly4 S4 md4 (k + 1) HK4 HJ4 B60);
+clear - Hsp1 FFS; lia.
+- apply (region_kept_stack_aj SEGS B E ly3 S3 W3 (ms_mem ms) W4 mem4 _ _ _ 2 (-104) 0 (-104) 0 _ (spZ regs) (spZ regs) TFLUSH_STK _ ly S W mem md _ ly4 S4 md4 (k + 1) HK4 HJ4 Sp0E);
+clear - Hsp1 FFS; lia.
+- apply (region_kept_val_at E _ _ 241 (VAL 241) 8 (VAL 253) 0 0 _ B241 V241); [exact Kgot4 | apply Z.le_refl].
+- apply (region_kept_val_at E _ _ 253 (VAL 253) 8 SB 0 0 _ B253 V253); [rewrite SB_SHADOW_OFF; exact Kcell4 | apply Z.le_refl].
+- apply (region_kept_val_at E _ _ 242 (VAL 242) 8 (as_uar_cell B) 0 0 _ B242 V242); [exact Kguar4 | apply Z.le_refl].
+- apply (region_kept_val_at E _ _ 59 (as_uar_cell B) 4 1 0 0 _ B59 V59); [exact Kuar4 | apply Z.le_refl].
+- apply (region_kept_block_subw B E ASTACK _ [] ly3 S3 W3 (ms_mem ms) _ ly4 S4 W4 mem4 md4 1 10 0 96 0 0 _ g CGIF_SIZE HJc4 B10 InG3 (Old4 _ InG3));
+[ apply Z.le_refl | change (req_size CGIF_SIZE) with 96; apply Z.le_refl | intros a _ (rr & [] & _) | intros a Ha; clear - Ha; lia ].
+- apply (region_kept_block_subw B E ASTACK _ [] ly3 S3 W3 (ms_mem ms) _ ly4 S4 W4 mem4 md4 1 11 0 40 20 24 _ (fr_ptr f) FRAME_SIZE HJc4 B11 InC3 (Old4 _ InC3));
+[ apply Z.le_refl | change (req_size FRAME_SIZE) with 40; apply Z.le_refl | intros a _ (rr & [] & _) | ].
+intros a Ha. destruct (al_blocks _ _ LAWS _ _ _ _ _ (fr_ptr f) FRAME_SIZE HAR4 (Old4 _ InC3)) as (_ & _ & _ & _ & Cp4 & _).
+change (req_size FRAME_SIZE) with 40 in Cp4. exact (proj1 (Cp4 a ltac:(clear - Ha; lia))). }
+specialize (HS4 Kept4). rewrite <- restrict_mkst_fx in HS4. clear HS. rename HS4 into HS.
+assert (A912 : ew (havoc E 908 (map (getr regs4) CLOB)) 912 = w64 res)
+by exact (eq_trans (ew_havoc_new E 908 (map (getr regs4) CLOB) 4 (Z_to_bv 64 0) ltac:(nat_side)) Ra4).
+pose proof (fl_bef_havoc _ fb E 908 (map (getr regs4) CLOB) ltac:(nat_side) Bef) as BefC.
+rebaseF HS AG EnvC.
+relowF HS AG E10 E11 E32 E10n E11n E32n. reshok HS.
+assert (InC4 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly4 S4)) by exact (Old4 _ InC3).
+assert (InR4 : In (res, wv * hv) (ablocks B ly4 S4)) by (rewrite Ebl4; apply in_app_iff; right; left; reflexivity).
+destruct (al_blocks _ _ LAWS _ _ _ _ _ res (wv * hv) HAR4 InR4) as (Rs16 & Rs4096 & Rsceil & Rs_ia & Rspres & _).
+assert (Rq : req_size (wv * hv) = wv * hv) by (unfold req_size; destruct (Z.eqb_spec (wv * hv) 0) as [Z0|NZ]; [clear - WHn Z0; lia | reflexivity]).
+rewrite Rq in Rsceil, Rspres, Rs_ia.
+hei_havoc HS; paj_run_tok RUN HS HJ4 SHOK FLBspan.
+1: awrFL AG fpos F EFA4.
+clear_frames.
+hei_havoc HS; psrr_branch_tok RUN BR HS SHOK FLBspan.
+-
+exfalso. rewrite branch_eq_U in Hc. rewrite (U_atom E1 912 res A912) in Hc by (clear - Rs4096 Rsceil C1 WHn; lia).
+rewrite U_lit in Hc by (clear; lia). apply Z.eqb_eq in Hc. clear - Hc Rs4096. lia.
+-
+rename Hc into NotNull.
+assert (InImg4 : In (fr_img f, N) (ablocks B ly4 S4)) by (apply Old4; rewrite Blk3; exact Himg_in).
+assert (NotOld : ~ In (res, wv * hv) (ablocks B ly S)).
+{ intros InOld.
+destruct (aftok_new_block SEGS B LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ res (wv * hv) HJ3 HAR4 Ebl4 ltac:(clear - WHn; lia) InOld 0
+ltac:(cbn [snd]; rewrite Rq; clear - WHn; lia)) as (rr & [<- | []] & Inr).
+cbn [fst snd] in Inr. pose proof (Z.div_mod res 16 ltac:(clear; lia)) as Dr. pose proof (Z.div_mod (fr_ptr f) 16 ltac:(clear; lia)) as Dc.
+rewrite Rs16 in Dr. rewrite Hc16 in Dc. clear - Inr Dr Dc. lia. }
+pose proof (sep_blocks _ _ LAWS _ _ _ _ _ res (wv * hv) (fr_img f) N HAR4 InR4 InImg4
+ltac:(intros Same; apply NotOld; rewrite Same; exact Himg_in)) as SepI.
+unfold zdisjoint in SepI. cbn [fst snd] in SepI.
+reshok HS; hei_havoc HS; paj_run_to_tok RUNTO HS HJ4 SHOK FLBspan 8248.
+1: awrFL AG fpos F EFA4.
+clear_frames.
+prreg HS (2%bv : bv 5) Lr2. prreg HS (3%bv : bv 5) Lr3. prreg HS (4%bv : bv 5) Lr4.
+pose proof (req_size_pos' N ltac:(clear - HN HW1 HH1; nia)) as (_ & ReqN).
+rregU HS (20%bv : bv 5) (hv - 0) ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+rewrite Z.sub_0_r; apply (U_and16 Ex _ hv); [apply (U_atom Ex 888 hv Ah888) |]; clear - Hlo Tlo THhi R8; lia end) Lr20.
+rregU HS (18%bv : bv 5) 4294967295 ltac:(idtac; apply U_lit; clear; lia) Lr18.
+assert (RgImg : 0 <= fr_img f /\ fr_img f + N <= 140737479966720) by (clear - ReqN WHn Hi4096 Hiceil C1; lia).
+assert (RgLv : 0 <= lv <= 65535) by (clear - Llo LWhi Wlo R7; lia).
+rregU HS (21%bv : bv 5) (fr_img f + lv) ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+apply (U_add_small2 Ex _ _ (fr_img f) lv); [apply (U_atom Ex 51 (fr_img f) E51) | apply (U_atom Ex 890 lv Al890) | | |];
+clear - RgImg RgLv WHn LWhi; lia end) Lr21.
+rregU HS (22%bv : bv 5) ((tv + 0) * cg_W s) ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+rewrite Z.add_0_r; apply (U_mul_atoms Ex 889 40 tv (cg_W s) At889 E40); clear - Tlo THhi Hlo R7 R8; lia end) Lr22.
+rregU HS (23%bv : bv 5) wv ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+apply (U_and16 Ex _ wv); [apply (U_atom Ex 887 wv Aw887) |]; clear - Wlo Llo LWhi R7; lia end) Lr23.
+rregU HS (24%bv : bv 5) (cg_W s) ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+apply (U_atom Ex 40 (cg_W s) E40); clear - R7; lia end) Lr24.
+rregU HS (27%bv : bv 5) (res + 0 * wv) ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+rewrite Z.mul_0_l, Z.add_0_r; apply (U_atom Ex 912 res A912); clear - Rs4096 Rsceil C1 WHn; lia end) Lr27.
+rregU HS (19%bv : bv 5) wv ltac:(idtac; lazymatch goal with |- U ?Ex _ = _ =>
+apply (U_and16 Ex _ wv); [apply (U_atom Ex 887 wv Aw887) |]; clear - Wlo Llo LWhi R7; lia end) Lr19.
+pmkst HS.
+eapply SRr_bind.
+{ apply (fl_cpyX B LAWS AMEMCPY (Z.to_nat hv) 0 W4 (ms_regs ms1) (ms_mem ms1) _ (spZ regs) sp1 [(fr_ptr f + 20, fr_ptr f + 24)]
+ly S W mem md ly4 S4 (k + 1) fpos res (fr_img f) N wv hv tv lv (cg_W s) (cg_H s)).
+- rewrite Z2Nat.id by (clear - Hlo; lia). clear; lia.
+- clear - Hlo; lia.
+- exact Wlo.
+- exact Llo.
+- exact LWhi.
+- exact Hlo.
+- exact Tlo.
+- exact THhi.
+- clear - HW1 R7; lia.
+- clear - R8; lia.
+- symmetry; exact HN.
+- exact HNle.
+- exact HJ4.
+- exact InR4.
+- exact InImg4.
+- intros blc lyq ownq a InBlc Ina. right; right; left. exists res, (wv * hv).
+split; [exact InBlc|]. split; [exact NotOld|]. rewrite Rq. exact Ina.
+- exact SepI.
+- unfold spZ. rewrite Lr2, E60. exact (unsigned_lit_small sp1 Wsp1).
+- exact Hsp1.
+- exact Hsp1al16.
+- rewrite Lr3, (AG 3%nat), (EE 3%nat 3%bv eq_refl) by nat_side. exact Hgp.
+- rewrite Lr4, (AG 4%nat), (EE 4%nat 4%bv eq_refl) by nat_side. exact Htp.
+- exact Lr20.
+- exact Lr18.
+- exact Lr21.
+- exact Lr22.
+- exact Lr23.
+- exact Lr24.
+- exact Lr27.
+- exact Lr19. }
+cbv beta. intros W5 c5 Wle5 (-> & regs5 & mem5 & md5 & -> & HJ5 & Keep5 & Out5 & Pres5 & Rows5 & Copy5).
+pose proof (blk_off_imgP _ _ _ _ _ _ res (wv * hv) HAR4 InR4) as ResImg. rewrite Rq in ResImg. unfold off_img in ResImg.
+unfold in_app, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in Rs_ia.
+pose proof (sep_block_frame _ _ LAWS _ _ _ _ _ res (wv * hv) 2 fpos HAR4 InR4 Fin4) as ResF.
+unfold zdisjoint in ResF. cbn [fst snd] in ResF. rewrite Rq, EFA4 in ResF. fold F in ResF. change (fs_frame_bytes 2) with 256 in ResF.
+pose proof (sep_blocks _ _ LAWS _ _ _ _ _ res (wv * hv) g CGIF_SIZE HAR4 InR4 (Old4 _ InG3) ltac:(intros Same; apply NotOld; rewrite Same; exact Hing)) as ResG.
+pose proof (sep_blocks _ _ LAWS _ _ _ _ _ res (wv * hv) (fr_ptr f) FRAME_SIZE HAR4 InR4 InC4 ltac:(intros Same; apply NotOld; rewrite Same; exact Hcur_in)) as ResC.
+pose proof (sep_blocks _ _ LAWS _ _ _ _ _ res (wv * hv) (fr_ptr fb) FRAME_SIZE HAR4 InR4 (Old4 _ InB3) ltac:(intros Same; apply NotOld; rewrite Same; exact InB0)) as ResB.
+unfold zdisjoint in ResG, ResC, ResB. cbn [fst snd] in ResG, ResC, ResB. rewrite Rq in ResG, ResC, ResB.
+change (req_size CGIF_SIZE) with 96 in ResG. change (req_size FRAME_SIZE) with 40 in ResC, ResB.
+assert (Ub12 : bv_unsigned (ew E1 12) = fr_ptr fb)
+by (rewrite (AG 12%nat), E12, BefNth by nat_side; cbn [frame_ptr]; apply unsigned_lit_small; clear - Hb4096 Hbceil C1; lia).
+assert (Ub2 : bv_unsigned (ew E1 2) = spZ regs) by (rewrite (AG 2%nat) by nat_side; exact Usp).
+assert (Ub10 : bv_unsigned (ew E1 10) = g) by (rewrite (AG 10%nat), E10 by nat_side; apply unsigned_lit_small; clear - Hg4096 Hgceil C1; lia).
+assert (Ub11 : bv_unsigned (ew E1 11) = fr_ptr f) by (rewrite (AG 11%nat), E11 by nat_side; apply unsigned_lit_small; clear - Hc4096 Hcceil C1; lia).
+assert (Ub516 : bv_unsigned (ew E1 516) = F) by (rewrite RF; apply unsigned_lit_small; clear - HF4096 HFceil C1; lia).
+assert (Ub529 : bv_unsigned (ew E1 529) = SB + F / 8) by (rewrite E529; apply unsigned_lit_small; unfold SB; clear - HF8lo HF8hi; lia).
+assert (Ub60 : bv_unsigned (ew E1 60) = sp1) by (rewrite E60; exact (unsigned_lit_small sp1 Wsp1)).
+assert (Ub241 : bv_unsigned (ew E1 241) = VAL 241) by (rewrite E241; apply unsigned_lit_small; clear - Hob241; lia).
+assert (Ub253 : bv_unsigned (ew E1 253) = VAL 253) by (rewrite E253; apply unsigned_lit_small; clear - Hob253; lia).
+assert (Ub242 : bv_unsigned (ew E1 242) = VAL 242) by (rewrite E242; apply unsigned_lit_small; clear - Hob242; lia).
+assert (Ub59 : bv_unsigned (ew E1 59) = as_uar_cell B) by (rewrite E59; apply unsigned_lit_small; clear - Huar; lia).
+assert (StkGap : alloc_ceiling + ESTACK <= sp1) by (unfold ESTACK; clear - Hsp1 Hceil Hslo FFS; lia).
+jafter_stretch_hi HS 930%nat regs5 (mrestrict (w_H W4) mem5) CPY_CLOB 8284 HS5.
+match type of HS5 with ?P1 -> ?P2 -> _ => assert (Kept5 : P2) end.
+{ cbn [ms_mem restrict mkst]. repeat apply Forall_cons; try apply Forall_nil.
+all: lazymatch goal with |- region_kept _ _ _ _ {| r_base := Some ?n; r_lo := ?lo; r_hi := ?hi; r_wlo := ?wl; r_whi := ?wh; r_chunks := ?cs |} =>
+eapply (region_kept_aview E1 _ _ _ n _ lo hi wl wh cs); [ eassumption | | exact Pres5 ] end.
+- intros a Ha; apply Out5; clear - Ha ResB Hb4096 Hbceil StkGap C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha Rs_ia HFq HF8 HF8lo HFceil StkGap C1 WHn; unfold SB, ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha ResF HF4096 HFceil StkGap C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha Rsceil StkGap Hsp1 Hshi H47 C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha Rsceil StkGap Hsp1 Hshi H47 C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha ResImg Hob241 StkGap C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha ResImg Hob253 StkGap C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha ResImg Hob242 StkGap C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha ResImg Huar StkGap C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha ResG Hg4096 Hgceil StkGap C1 WHn; unfold ESTACK in *; lia.
+- intros a Ha; apply Out5; clear - Ha ResC Hc4096 Hcceil StkGap C1 WHn; unfold ESTACK in *; lia. }
+specialize (HS5 Keep5 Kept5). rewrite <- restrict_mkst_fx in HS5. clear HS. rename HS5 into HS.
+rebaseF HS AG EnvS.
+relowF HS AG E10 E11 E32 E10n E11n E32n. reshok HS.
+hei_havoc HS; paj_run_to_tok RUNTO HS HJ5 SHOK FLBspan 8356.
+1: awrFL AG fpos F EFA4.
+rename HFr into FrLast. clear HF HG.
+lazymatch type of HS with st_ok_pi _ _ ?Ev ?ssv ?msv =>
+pose proof (st_ok_pi_havoc_hi 679 Ev ssv msv [Z_to_bv 64 wv; Z_to_bv 64 lv; Z_to_bv 64 tv] HS ltac:(vm_compute; reflexivity)) as HS7;
+assert (A679 : ew (havoc Ev 679 [Z_to_bv 64 wv; Z_to_bv 64 lv; Z_to_bv 64 tv]) 679 = Z_to_bv 64 wv)
+by exact (ew_havoc_new Ev 679 [Z_to_bv 64 wv; Z_to_bv 64 lv; Z_to_bv 64 tv] 0 (Z_to_bv 64 0) ltac:(nat_side));
+assert (A680 : ew (havoc Ev 679 [Z_to_bv 64 wv; Z_to_bv 64 lv; Z_to_bv 64 tv]) 680 = Z_to_bv 64 lv)
+by exact (ew_havoc_new Ev 679 [Z_to_bv 64 wv; Z_to_bv 64 lv; Z_to_bv 64 tv] 1 (Z_to_bv 64 0) ltac:(nat_side));
+assert (A681 : ew (havoc Ev 679 [Z_to_bv 64 wv; Z_to_bv 64 lv; Z_to_bv 64 tv]) 681 = Z_to_bv 64 tv)
+by exact (ew_havoc_new Ev 679 [Z_to_bv 64 wv; Z_to_bv 64 lv; Z_to_bv 64 tv] 2 (Z_to_bv 64 0) ltac:(nat_side)) end.
+clear HS; rename HS7 into HS.
+rebaseF HS AG EnvA.
+rechunk_off HS 60%nat 168 (SOff 679 0) ltac:(idtac; rewrite !sv_denot_SOff0, A679, Aw887; reflexivity).
+rechunk_off HS 60%nat 144 (SOff 680 0) ltac:(idtac; rewrite !sv_denot_SOff0, A680, Al890; reflexivity).
+rechunk_off HS 60%nat 152 (SOff 681 0) ltac:(idtac; rewrite !sv_denot_SOff0, A681, At889; reflexivity).
+add_fact HS 679%nat 1 65535 A679 ltac:(idtac; clear - Wlo Llo LWhi R7; lia).
+add_fact HS 680%nat 0 65535 A680 ltac:(idtac; clear - Wlo Llo LWhi R7; lia).
+add_fact HS 681%nat 0 65535 A681 ltac:(idtac; clear - Hlo Tlo THhi R8; lia).
+prreg HS (27%bv : bv 5) P27. rewrite Ah888 in P27.
+prreg HS (23%bv : bv 5) P23. rewrite A912 in P23.
+ra_join_win HS ss_T0 682%nat fl_T0_deads_bv ltac:(idtac; ra_join_val HS 682%nat 2%nat P27 A684; ra_join_val HS 682%nat 0%nat P23 A682;
+add_fact HS 684%nat 1 65535 A684 ltac:(idtac; clear - Hlo Tlo THhi R8; lia)).
+fl_handX NextT0 HS.
+1: cbn [c_fpos c_S]; rewrite Frs4; exact Hfrs3.
+rewrite A682, A684. rewrite !ew_havoc_old by nat_side.
+split; [exists gv; exact (conj G621 Grng)|].
+split; [exact Np625|].
+split; [exists fb; apply fl_bef_havoc; [nat_side|]; rewrite EnvA; apply fl_bef_havoc; [nat_side|];
+rewrite EnvS; apply fl_bef_havoc; [nat_side|]; rewrite EnvC; exact BefC|].
+split; [|exact G621x].
+exists res, wv, hv, tv, lv.
+split; [reflexivity|]. split; [exact A679|]. split; [reflexivity|]. split; [exact A681|]. split; [exact A680|].
+split; [clear - Rs4096 Rsceil C1 WHn; lia|].
+do 6 (split; [assumption|]).
+pose proof HCUR as (_ & GenEq & _ & _ & _ & _ & _ & GImg & LenImg & _). cbn in GenEq.
+assert (GenNN : 0 <= YO07.f_gen cur) by (rewrite <- GenEq; clear - Q3; lia).
+lazymatch goal with |- context [xtmp ?cxv ?xxv] => assert (TmpW : xtmp cxv xxv = YO07.window (cg_W s) (YO07.f_img cur) wv hv tv lv) end.
+{ pose proof Gflag as Gf. pose proof Dims as Dm. unfold xgen3 in Gf. unfold xdims in Dm. cbn [x_cur x_bef] in Gf, Dm.
+unfold xtmp. cbn [x_cur x_bef]. destruct bef as [bfr|].
+- rewrite (fl_tmp_diff _ cur bfr wv hv tv lv Gf Dm). reflexivity.
+- exfalso. lazymatch type of Gf with context [YI0f.fl_gen3 ?gg cur None] => pose proof (fl_gen3_first gg cur GenNN) as L3 end.
+unfold YO07.flag in Gf.
+lazymatch type of Gf with context [Z.land ?x 2] => assert (Lx : Z.land x 2 = Z.land (Z.land x 3) 2) by (rewrite <- Z.land_assoc; reflexivity) end.
+rewrite Lx, L3 in Gf. vm_compute in Gf. discriminate Gf. }
+pose proof (window_specZ (cg_W s) (cg_H s) (YO07.f_img cur) wv hv tv lv ltac:(clear - HW1; lia) ltac:(clear - HH1; lia)
+ltac:(rewrite LenImg; exact HN) Wlo Llo LWhi Hlo Tlo THhi) as (WinLen & _).
+destruct (frame_blocks_front g s N rest i f Hf) as (rr0 & PermF).
+pose proof (fasep_head B LAWS ly S W mem md (fr_ptr f, FRAME_SIZE) (fr_img f, N) _ HAR (Permutation_trans HPerm PermF) (or_introl eq_refl)) as SepCI.
+unfold zdisjoint, block_rng in SepCI. cbn [fst snd] in SepCI. change (req_size FRAME_SIZE) with 40 in SepCI.
+assert (ImgL : garr8 SEGS (mrestrict (w_H W4) (ms_mem ms1)) (fr_img f) (YO07.f_img cur)).
+{ apply (garr8_aview_kept SEGS (w_H W) (w_H W4) mem (ms_mem ms1) (fr_img f) (YO07.f_img cur)); [|exact GImg].
+intros a Ha. rewrite LenImg in Ha.
+pose proof HJ4 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & KeepB & _).
+replace a with (fr_img f + (a - fr_img f)) by ring.
+apply (KeepB (fr_img f) N (a - fr_img f) Himg_in InImg4); [clear - Ha ReqN; lia |].
+intros (rr & [<- | []] & Inr). cbn [fst snd] in Inr. clear - Inr Ha SepCI ReqN. lia. }
+pose proof (cpy_garr8 SEGS (w_H W4) (ms_mem ms1) mem5 res (fr_img f) wv hv tv lv (cg_W s) (cg_H s) (YO07.f_img cur) ImgL
+ltac:(rewrite LenImg; exact HN) ltac:(clear - HW1; lia) ltac:(clear - HH1; lia) Wlo Llo LWhi Hlo Tlo THhi Copy5) as GT5.
+assert (GT2 : garr8 SEGS (mrestrict (w_H W4) (ms_mem ms2)) res (YO07.window (cg_W s) (YO07.f_img cur) wv hv tv lv)).
+{ apply (garr8_aview_kept SEGS (w_H W4) (w_H W4) mem5 (ms_mem ms2) res _); [|exact GT5].
+intros a Ha. rewrite WinLen, Z2Nat.id in Ha by (clear - WHn; lia).
+apply (aview_kept_out E3 _ (w_H W4) mem5 (ms_mem ms2) FrLast a); [clear - Ha Rs4096 Rsceil C1 WHn; lia|].
+intros (rg & Hin & Hw).
+lazymatch type of Hin with In _ ?l => let l' := eval vm_compute in l in change (In rg l') in Hin end; cbn [In] in Hin.
+repeat (destruct Hin as [<- | Hin]; [cbn [YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hw;
+rewrite ?EnvS, ?ew_havoc_old, ?Ub516, ?Ub60, ?Ub2, ?Ub11 in Hw by nat_side;
+clear - Hw Ha ResF ResC Rsceil StkGap Hsp1 FFS WHn Wsp1; unfold ESTACK in *; lia |]); destruct Hin. }
 split.
-{ right. split; [clear - Hnh C3 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia|]. split; [first [clear - Hk3 Hob241 Hob242 Hob253 Huar; lia | match goal with |- ?g => idtac "KGOAL" g end]|].
-unfold fl_tmpblkX, fl_FP0. cbn [c_ly c_S c_regs c_f c_s].
-split; [split; [exact Hnh | rewrite <- Hrq; exact (zone2_of_app _ _ Hnh_ia Hnh_img)]|]. split; [clear - Hnceil HWH C1 Hob241 Hob242 Hob253 Huar; ceil; unfold ASAN_CEIL, kLowShadowBeg, kHighMemBeg in *; lia|]. split; [exact Hn16|].
-split; [first [rewrite Eab4, Eab3; reflexivity | match goal with |- ?g => idtac "D-ABL" g end]|].
-split; [exact Ares | exact Tres]. }
-unfold xdims, xtmp, xG. cbn [c_s c_S x_GPAL x_cur x_bef]. rewrite XTMP.
-split; [exact XD|]. split; [intros _; exact XG5|]. split; [intros Hp0; exfalso; exact (Hnz Hp0)|]. split; [exact XLW|].
-unfold xmacc. rewrite (proj2 (Z.eqb_neq res 0) Hnz).
-exact (mle_station MT S S3 S4 0 _ MLAW MLE0 MLE4).
+{ right. split; [clear - Rs4096; lia|]. split; [clear - Kle0; lia|].
+unfold fl_tmpblkX, fl_FP0. cbn [c_ly c_S c_regs c_f].
+split; [split; [exact Rs4096 | unfold zone2, off_img; split; [exact ResImg | destruct Rs_ia as (_ & [ZLo | (ZHi & _)]); [left; exact ZLo | right; exact ZHi]]]|].
+split; [exact Rsceil|]. split; [exact Rs16|]. split; [rewrite Ebl4, Blk3; reflexivity|].
+split; [intros blc lyq ownq ii InBlc Hii; right; right; left; exists res, (wv * hv); split; [exact InBlc|]; split; [exact NotOld|]; rewrite Rq; clear - Hii; lia|].
+exact (aftok_new_block SEGS B LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ res (wv * hv) HJ3 HAR4 Ebl4 ltac:(clear - WHn; lia)). }
+split; [exact Dims|].
+split; [intros _; rewrite TmpW; exact GT2|].
+split; [intros ResZ; exfalso; clear - ResZ Rs4096; lia|].
+split; [rewrite TmpW, WinLen; apply Z2Nat.id; clear - WHn; lia|].
+unfold xmacc. destruct (Z.eqb_spec res 0) as [ResZ|_]; [exfalso; clear - ResZ Rs4096; lia|].
+pose proof (mle_station MT S S3 S4 0 _ MLAW Meter MLE4) as M4. rewrite Z.add_0_l in M4. exact M4.
 Qed.
 Lemma fl_D1X : fl_fromX0 KS MT XN B CTX wfn ss_T0 (INV_T0X MT B) -> fl_fromX0 KS MT XN B CTX wfn ss_D1 (INV_D1X MT B).
 Proof. exact fl_D1X_aux. Qed.
-Ltac seat160 HS na top E60 Ena V160 sptac ttac :=
-lazymatch type of HS with st_ok_pi _ _ ?Ev ?ssx ?msv =>
-let rs := eval vm_compute in (ss_mem ssx) in
-let il := idx_of_base rs 60%nat in let il := eval vm_compute in il in
-let l1 := eval vm_compute in (firstn il rs) in
-let rt := eval vm_compute in (nth il rs got_regionP) in
-let l2 := eval vm_compute in (skipn (S il) rs) in
-lazymatch rt with YP09.mkRegion ?nb ?lo ?hi ?wlo ?whi ?cs =>
-let HS3 := fresh "HS3" in
-pose proof (w_st_ok_add_chunk Ev ssx msv l1 nb lo hi wlo whi cs l2 (YP09.mkChunk 160 (CVal 8 (SOff na 0))) HS
-ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
-ltac:(cbn [base_val]; rewrite ?ew_havoc_old by nat_side; rewrite E60, unsigned_lit_small by sptac;
-apply (chunk_ok_val SEGS Ev _ _ 160 8 _ top);
-[ cbn [sv_denot]; rewrite Ena, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | cbn [Z.of_N Z.mul]; ttac | cbn; lia | exact V160 ])) as HS3;
-clear HS; rename HS3 into HS; norm_ss HS end | st_ok _ ?Ev ?ssx ?msv =>
-let rs := eval vm_compute in (ss_mem ssx) in
-let il := idx_of_base rs 60%nat in let il := eval vm_compute in il in
-let l1 := eval vm_compute in (firstn il rs) in
-let rt := eval vm_compute in (nth il rs got_regionP) in
-let l2 := eval vm_compute in (skipn (S il) rs) in
-lazymatch rt with YP09.mkRegion ?nb ?lo ?hi ?wlo ?whi ?cs =>
-let HS3 := fresh "HS3" in
-pose proof (w_st_ok_add_chunk Ev ssx msv l1 nb lo hi wlo whi cs l2 (YP09.mkChunk 160 (CVal 8 (SOff na 0))) HS
-ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
-ltac:(cbn [base_val]; rewrite ?ew_havoc_old by nat_side; rewrite E60, unsigned_lit_small by sptac;
-apply (chunk_ok_val SEGS Ev _ _ 160 8 _ top);
-[ cbn [sv_denot]; rewrite Ena, Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity | cbn [Z.of_N Z.mul]; ttac | cbn; lia | exact V160 ])) as HS3;
-clear HS; rename HS3 into HS; norm_ss HS end  end.
-Ltac d1_joinX RD1 w h top left Qw Qt Ql wtac htac ttac ltac_ :=
-let E887 := fresh "E887" in let E888 := fresh "E888" in let E889 := fresh "E889" in let E890 := fresh "E890" in
-lazymatch goal with HS : st_ok_pi _ _ _ _ _ |- _ =>
-add_atom HS 887%nat (Z_to_bv 64 w) E887; add_fact HS 887%nat 1 65535 E887 wtac;
-add_atom HS 888%nat (Z_to_bv 64 h) E888; add_fact HS 888%nat 1 65535 E888 htac;
-add_atom HS 889%nat (Z_to_bv 64 top) E889; add_fact HS 889%nat 0 65535 E889 ttac;
-add_atom HS 890%nat (Z_to_bv 64 left) E890; add_fact HS 890%nat 0 65535 E890 ltac_;
-norm_ss HS;
-rechunk_off HS 516%nat 112 (SOff 889 0) ltac:(rewrite !sv_denot_SOff0; rewrite ?ew_havoc_old by nat_side; rewrite E889; cbn [sv_denot]; rewrite ?ew_havoc_old by nat_side;
-first [reflexivity | lazymatch goal with E : ew _ 862 = _ |- _ => rewrite E; reflexivity end | match goal with |- ?g => idtac "RECHUNK112" g end]);
-rechunk_off HS 516%nat 128 (SOff 890 0) ltac:(rewrite !sv_denot_SOff0; rewrite ?ew_havoc_old by nat_side; rewrite E890; cbn [sv_denot]; rewrite ?ew_havoc_old by nat_side;
-first [reflexivity | lazymatch goal with E : ew _ 863 = _ |- _ => rewrite E; reflexivity end | match goal with |- ?g => idtac "RECHUNK128" g end]);
-rechunk_off HS 60%nat 160 (SOff 888 0) ltac:(rewrite !sv_denot_SOff0; rewrite ?ew_havoc_old by nat_side; rewrite E888; rewrite ?ew_havoc_old by nat_side;
-first [lazymatch goal with E : ew _ 880 = _ |- _ => rewrite E; reflexivity end | match goal with |- ?g => idtac "RECHUNK160" g end]);
-ws_pin HS (@BV 5 26 I) (SOff 887 0) Qw ltac:(rewrite Z.add_0_r, Z_to_bv_bv_unsigned; rewrite ?ew_havoc_old by nat_side; exact E887);
-ws_pin HS (@BV 5 27 I) (SOff 889 0) Qt ltac:(rewrite Z.add_0_r, Z_to_bv_bv_unsigned; rewrite ?ew_havoc_old by nat_side; exact E889);
-ws_pin HS (@BV 5 23 I) (SOff 890 0) Ql ltac:(rewrite Z.add_0_r, Z_to_bv_bv_unsigned; rewrite ?ew_havoc_old by nat_side; exact E890);
-ra_join HS ss_D1 891%nat fl_D1_deads_bv ltac:(idtac);
-fl_handX RD1 HS end.
-Lemma fl_DdX_aux : fl_fromX0 KS MT XN B CTX wfn ss_D1 (INV_D1X MT B) -> fl_fromX0 KS MT XN B CTX wfn ss_DIMS (INV_DIMSX MT B).
-Proof.
-intros RD1. fl_preludeX.
-pose proof HINV as (Hk3 & Eab3 & (gen & E621 & Rgen) & E625 & (fb & Hfb & EB) & (w & h & top & left & E861 & V160 & E862 & E863 & Hw1 & Hl0 & Hlw & Hh1 & Ht0 & Hth & XD) & E621X & XF2 & MLE0).
-cbn [c_i c_s] in Hfb. cbn [c_s] in Hlw, Hth. cbn [c_sp1] in V160.
-pose proof (EB 0%nat _ eq_refl) as E651. pose proof (EB 1%nat _ eq_refl) as E652. pose proof (EB 2%nat _ eq_refl) as E653.
-pose proof (EB 3%nat _ eq_refl) as E654. pose proof (EB 4%nat _ eq_refl) as E655. pose proof (EB 5%nat _ eq_refl) as E656.
-pose proof (EB 6%nat _ eq_refl) as E657. pose proof (EB 7%nat _ eq_refl) as E658. pose proof (EB 8%nat _ eq_refl) as E659.
-cbn [Nat.add] in E651, E652, E653, E654, E655, E656, E657, E658, E659.
-assert (HW65 : cg_W s <= 65535) by (clear - R7 Hob241 Hob242 Hob253 Huar; lia).
-assert (HH65 : cg_H s <= 65535) by (clear - R8 Hob241 Hob242 Hob253 Huar; lia).
-add_fact HS 861%nat 1 65535 E861 ltac:(clear - Hw1 Hl0 Hlw HW65 Hob241 Hob242 Hob253 Huar; lia).
-add_fact HS 862%nat 0 65535 E862 ltac:(clear - Hh1 Ht0 Hth HH65 Hob241 Hob242 Hob253 Huar; lia).
-add_fact HS 863%nat 0 65535 E863 ltac:(clear - Hw1 Hl0 Hlw HW65 Hob241 Hob242 Hob253 Huar; lia).
+Ltac seat160 HS na v Ana Vslot rt :=
+lazymatch type of HS with st_ok_pi _ _ ?Ev ?ssx ?msx =>
+let regs0 := eval vm_compute in (ss_mem ssx) in
+let k60 := idx_of_base regs0 60%nat in let k60 := eval vm_compute in k60 in
+let pre := eval vm_compute in (firstn k60 regs0) in
+let post := eval vm_compute in (skipn (S k60) regs0) in
+lazymatch eval vm_compute in (nth k60 regs0 got_regionP) with YP09.mkRegion ?nb ?lo ?hi ?wlo ?whi ?cs =>
+let Slot := fresh "Slot" in
+assert (Slot : YP09.chunk_ok SEGS Ev (ms_mem msx) (base_val Ev nb) (YP09.mkChunk 160 (CVal 8 (SOff na 0))));
+[ lazymatch goal with Sp : ew Ev 60%nat = Z_to_bv 64 ?sp |- _ =>
+cbn [base_val]; rewrite Sp, unsigned_lit_small by rt;
+eapply (chunk_ok_val SEGS Ev _ _ 160 8 _ v);
+[ rewrite sv_denot_SOff0; exact Ana | change (2 ^ (8 * Z.of_N 8)) with (2 ^ 64); rt | cbn [Z.of_N]; apply Z.le_refl
+| cbn [ms_mem restrict mkst N.to_nat]; exact Vslot ] end
+| pose proof (w_st_ok_add_chunk Ev ssx msx pre nb lo hi wlo whi cs post (YP09.mkChunk 160 (CVal 8 (SOff na 0))) HS
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) Slot) as Seated;
+clear HS Slot; rename Seated into HS; norm_ss HS ] end end.
+Ltac d1_joinX HS vt ft :=
+let P26 := fresh "P26" in let P27 := fresh "P27" in let P23 := fresh "P23" in
+prreg HS (26%bv : bv 5) P26; prreg HS (27%bv : bv 5) P27; prreg HS (23%bv : bv 5) P23;
+ws_pin HS (26%bv : bv 5) (SOff 887 0) P26 vt;
+ws_pin HS (27%bv : bv 5) (SOff 889 0) P27 vt;
+ws_pin HS (23%bv : bv 5) (SOff 890 0) P23 vt;
+clear P26 P27 P23;
+rechunk_off HS 516%nat 112 (SOff 889 0) vt;
+rechunk_off HS 516%nat 128 (SOff 890 0) vt;
+lazymatch type of HS with st_ok_pi _ _ ?Ev _ _ =>
+lazymatch goal with
+A7 : ew Ev 887%nat = _, A8 : ew Ev 888%nat = _, A9 : ew Ev 889%nat = _, A0 : ew Ev 890%nat = _ |- _ =>
+add_fact HS 887%nat 1 65535 A7 ft; add_fact HS 888%nat 1 65535 A8 ft;
+add_fact HS 889%nat 0 65535 A9 ft; add_fact HS 890%nat 0 65535 A0 ft end end;
 norm_ss HS.
-add_atom HS 880%nat (Z_to_bv 64 h) E880. add_fact HS 880%nat 1 65535 E880 ltac:(clear - Hh1 Ht0 Hth HH65 Hob241 Hob242 Hob253 Huar; lia).
-seat160 HS 880%nat h E60 E880 V160 ltac:(clear - Hsp1 Hceil Hslo Hstk0 FFS C1 Hshi H47 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - Hh1 Ht0 Hth HH65 Hob241 Hob242 Hob253 Huar; lia).
-rebase_goal.
-assert (Hing3 : In (g, CGIF_SIZE) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hing).
-assert (Hcur3 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hcur_in).
-assert (Hpf3 : In (pf, FILE_BLOCK) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hpf_in).
-fl_blocks3X Hing3 Hcur3 Hpf3. fold F in HdFG, HdFC.
-relowF HS AG E10 E11 E32 E10n E11n E32n. reshok HS.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJ3 SHOK FLBspan 0x1fb8.
-all: match goal with |- range_addressable _ _ _ _ => match goal with |- ?g => idtac "OBL-LEFT" g end | _ => idtac end.
+Lemma fl_DdX_aux : fl_fromX0 KS MT XN B CTX wfn ss_D1 (INV_D1X MT B) -> fl_fromX0 KS MT XN B CTX wfn ss_DIMS (INV_DIMSX MT B).
+Proof using TL LAWS TLF.
+intros NextD1. clear ML AMALLOC AIL MLAWF HDEEP RO AMEMCPY MLAW AMALLOC4 HXM HXMN HTR. fl_preludeX.
+destruct HINV as (Kle0 & Blk3 & (gv & G621 & Grng) & Np625 & (fb & Bef) & (wv & hv & tv & lv & W861 & Slot160 & T862 & L863 & Wlo & Llo & LWhi & Hlo & Tlo & THhi & Dims) & G621x & Gflag & Meter).
+assert (InG3 : In (g, CGIF_SIZE) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hing).
+assert (InC3 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hcur_in).
+assert (InP3 : In (pf, FILE_BLOCK) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hpf_in).
+fl_blocks3X InG3 InC3 InP3. fold F in HdFG, HdFC.
+lazymatch type of HS with st_ok_pi _ _ ?Ev ?ssv ?msv =>
+pose proof (st_ok_pi_havoc_hi 887 Ev ssv msv [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv] HS ltac:(vm_compute; reflexivity)) as Fresh4 end.
+clear HS; rename Fresh4 into HS.
+assert (A887 : ew (havoc E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv]) 887 = Z_to_bv 64 wv)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv] 0 (Z_to_bv 64 0) ltac:(nat_side)).
+assert (A888 : ew (havoc E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv]) 888 = Z_to_bv 64 hv)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv] 1 (Z_to_bv 64 0) ltac:(nat_side)).
+assert (A889 : ew (havoc E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv]) 889 = Z_to_bv 64 tv)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv] 2 (Z_to_bv 64 0) ltac:(nat_side)).
+assert (A890 : ew (havoc E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv]) 890 = Z_to_bv 64 lv)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv] 3 (Z_to_bv 64 0) ltac:(nat_side)).
+pose proof (fl_bef_havoc _ fb E 887 [Z_to_bv 64 wv; Z_to_bv 64 hv; Z_to_bv 64 tv; Z_to_bv 64 lv] ltac:(nat_side) Bef) as Bef4.
+rebaseF HS AG Env4.
+relowF HS AG E10 E11 E32 E10n E11n E32n.
+seat160 HS 888%nat hv A888 Slot160 ltac:(idtac; clear - Hsp1 Hslo Hceil Hshi H47 C1 FFS Hlo Tlo THhi R8; lia).
+reshok HS.
+hei_havoc HS; paj_run_to_tok RUNTO HS HJ3 SHOK FLBspan 8120.
 1: awrFL AG fpos F EFA3.
-clear_frames.
-rebase_goal.
-lazymatch goal with HS : st_ok_pi _ _ _ _ _ |- _ =>
-prreg HS (@BV 5 26 I) Qw; prreg HS (@BV 5 27 I) Qt; prreg HS (@BV 5 23 I) Ql end.
-rewrite E861 in Qw. rewrite E862 in Qt. rewrite E863 in Ql.
-d1_joinX RD1 w h top left Qw Qt Ql ltac:(clear - Hw1 Hl0 Hlw HW65 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - Hh1 Ht0 Hth HH65 Hob241 Hob242 Hob253 Huar; lia)
-ltac:(clear - Hh1 Ht0 Hth HH65 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear - Hw1 Hl0 Hlw HW65 Hob241 Hob242 Hob253 Huar; lia).
-split; [exact Hk3|]. split; [exact Eab3|].
-split; [exists gen; split; [rewrite !ew_havoc_old by (clear; lia); assumption | exact Rgen]|].
-split; [rewrite !ew_havoc_old by (clear; lia); assumption|].
-split; [exists fb; repeat (apply fl_bef_havoc; [clear; lia|]); split; [exact Hfb|]; cbn [c_i c_s]; bef_EB|].
-split.
-{ exists w, h, top, left. cbn [c_s].
-split; [rewrite 4 ew_havoc_old by (clear; lia); exact E887|].
-split; [rewrite 3 ew_havoc_old by (clear; lia); exact E888|].
-split; [rewrite 2 ew_havoc_old by (clear; lia); exact E889|].
-split; [rewrite 1 ew_havoc_old by (clear; lia); exact E890|].
-split; [exact Hw1|]. split; [exact Hl0|]. split; [exact Hlw|]. split; [exact Hh1|]. split; [exact Ht0|]. split; [exact Hth|].
-exact XD. }
-split; [rewrite !ew_havoc_old by (clear; lia); exact E621X | split; [exact XF2 | exact MLE0]].
+d1_joinX HS ltac:(idtac; cbn [sv_denot]; rewrite ?Z.add_0_r, ?Z_to_bv_bv_unsigned;
+rewrite ?A887, ?A888, ?A889, ?A890, ?W861, ?T862, ?L863; reflexivity)
+ltac:(idtac; clear - Wlo Llo LWhi Hlo Tlo THhi R7 R8; lia).
+ra_join_win HS ss_D1 891%nat fl_D1_deads_bv idtac.
+fl_handX NextD1 HS.
+rewrite !ew_havoc_old by nat_side.
+refine (conj Kle0 (conj Blk3 (conj (ex_intro _ gv (conj G621 Grng)) (conj Np625 (conj _ (conj _ (conj G621x (conj Gflag Meter)))))))).
+- exists fb. apply fl_bef_havoc; [nat_side|]. rewrite Env4. exact Bef4.
+- exists wv, hv, tv, lv.
+exact (conj A887 (conj A888 (conj A889 (conj A890 (conj Wlo (conj Llo (conj LWhi (conj Hlo (conj Tlo (conj THhi Dims)))))))))).
 Qed.
 Lemma fl_DdX : fl_fromX0 KS MT XN B CTX wfn ss_D1 (INV_D1X MT B) -> fl_fromX0 KS MT XN B CTX wfn ss_DIMS (INV_DIMSX MT B).
 Proof. exact fl_DdX_aux. Qed.
 Lemma fl_DiX_aux : fl_fromX0 KS MT XN B CTX wfn ss_D1 (INV_D1X MT B) -> fl_fromX0 KS MT XN B CTX wfn ss_DIMSi (INV_DIMSiX MT B).
-Proof.
-intros RD1. fl_preludeX.
-unfold INV_DIMSi in HINV. cbn [c_ly c_S c_s c_i c_sp1] in HINV.
-pose proof HINV as ((Hk3 & Eab3 & (gen & E621 & Rgen) & E625 & (fb & Hfb & EB) & V160) & XD & E621X & XF2 & MLE0).
-cbn [c_i c_s] in Hfb. cbn [c_sp1] in V160.
-pose proof (EB 0%nat _ eq_refl) as E651. pose proof (EB 1%nat _ eq_refl) as E652. pose proof (EB 2%nat _ eq_refl) as E653.
-pose proof (EB 3%nat _ eq_refl) as E654. pose proof (EB 4%nat _ eq_refl) as E655. pose proof (EB 5%nat _ eq_refl) as E656.
-pose proof (EB 6%nat _ eq_refl) as E657. pose proof (EB 7%nat _ eq_refl) as E658. pose proof (EB 8%nat _ eq_refl) as E659.
-cbn [Nat.add] in E651, E652, E653, E654, E655, E656, E657, E658, E659.
-assert (Hing3 : In (g, CGIF_SIZE) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hing).
-assert (Hcur3 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hcur_in).
-assert (Hpf3 : In (pf, FILE_BLOCK) (ablocks B ly3 S3)) by (rewrite Eab3; exact Hpf_in).
-fl_blocks3X Hing3 Hcur3 Hpf3. fold F in HdFG, HdFC.
-add_atom HS 880%nat (Z_to_bv 64 1) E880. add_fact HS 880%nat 1 65535 E880 ltac:(clear; lia).
-seat160 HS 880%nat 1 E60 E880 V160 ltac:(clear - Hsp1 Hceil Hslo Hstk0 FFS C1 Hshi H47 Hob241 Hob242 Hob253 Huar; lia) ltac:(clear; lia).
-rebase_goal.
-relowF HS AG E10 E11 E32 E10n E11n E32n. reshok HS.
-hei_havoc HS; paj_run_to_tok RUNTO HS HJ3 SHOK FLBspan 0x1fb8.
-all: match goal with |- range_addressable _ _ _ _ => match goal with |- ?g => idtac "OBL-LEFT" g end | _ => idtac end.
+Proof using TL LAWS TLF.
+intros NextD1. clear ML AMALLOC AIL MLAWF HDEEP RO AMEMCPY MLAW AMALLOC4 HXM HXMN HTR. fl_preludeX.
+destruct HINV as ((Kle0 & Blk3 & (gv & G621 & Grng) & Np625 & (fb & Bef) & One160) & Dims11 & G621x & Gflag & Meter).
+assert (InG3 : In (g, CGIF_SIZE) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hing).
+assert (InC3 : In (fr_ptr f, FRAME_SIZE) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hcur_in).
+assert (InP3 : In (pf, FILE_BLOCK) (ablocks B ly3 S3)) by (rewrite Blk3; exact Hpf_in).
+fl_blocks3X InG3 InC3 InP3. fold F in HdFG, HdFC.
+pose proof (fl_bef_havoc _ fb E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0] ltac:(nat_side) Bef) as Bef4.
+lazymatch type of HS with st_ok_pi _ _ ?Ev ?ssv ?msv =>
+pose proof (st_ok_pi_havoc_hi 887 Ev ssv msv [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0] HS ltac:(vm_compute; reflexivity)) as Fresh4 end.
+clear HS; rename Fresh4 into HS.
+assert (A890 : ew (havoc E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0]) 890 = Z_to_bv 64 0)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0] 3 (Z_to_bv 64 0) ltac:(nat_side)).
+assert (A889 : ew (havoc E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0]) 889 = Z_to_bv 64 0)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0] 2 (Z_to_bv 64 0) ltac:(nat_side)).
+assert (A888 : ew (havoc E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0]) 888 = Z_to_bv 64 1)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0] 1 (Z_to_bv 64 0) ltac:(nat_side)).
+assert (A887 : ew (havoc E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0]) 887 = Z_to_bv 64 1)
+by exact (ew_havoc_new E 887 [Z_to_bv 64 1; Z_to_bv 64 1; Z_to_bv 64 0; Z_to_bv 64 0] 0 (Z_to_bv 64 0) ltac:(nat_side)).
+rebaseF HS AG Env4.
+relowF HS AG E10 E11 E32 E10n E11n E32n.
+seat160 HS 888%nat 1 A888 One160 ltac:(idtac; clear - Hsp1 Hslo Hceil Hshi H47 C1 FFS; lia).
+reshok HS.
+hei_havoc HS; paj_run_to_tok RUNTO HS HJ3 SHOK FLBspan 8120.
 1: awrFL AG fpos F EFA3.
-clear_frames.
-rebase_goal.
-lazymatch goal with HS : st_ok_pi _ _ _ _ _ |- _ =>
-prreg HS (@BV 5 26 I) Qw; prreg HS (@BV 5 27 I) Qt; prreg HS (@BV 5 23 I) Ql end.
-d1_joinX RD1 1 1 0 0 Qw Qt Ql ltac:(clear; lia) ltac:(clear; lia) ltac:(clear; lia) ltac:(clear; lia).
-split; [exact Hk3|]. split; [exact Eab3|].
-split; [exists gen; split; [rewrite !ew_havoc_old by (clear; lia); assumption | exact Rgen]|].
-split; [rewrite !ew_havoc_old by (clear; lia); assumption|].
-split; [exists fb; repeat (apply fl_bef_havoc; [clear; lia|]); split; [exact Hfb|]; cbn [c_i c_s]; bef_EB|].
-split.
-{ exists 1, 1, 0, 0. cbn [c_s].
-split; [rewrite 4 ew_havoc_old by (clear; lia); exact E887|].
-split; [rewrite 3 ew_havoc_old by (clear; lia); exact E888|].
-split; [rewrite 2 ew_havoc_old by (clear; lia); exact E889|].
-split; [rewrite 1 ew_havoc_old by (clear; lia); exact E890|].
-split; [clear; lia|]. split; [clear; lia|]. split; [clear - HW1; lia|]. split; [clear; lia|]. split; [clear; lia|]. split; [clear - HH1; lia|].
-exact XD. }
-split; [rewrite !ew_havoc_old by (clear; lia); exact E621X | split; [exact XF2 | exact MLE0]].
+d1_joinX HS ltac:(idtac; cbn [sv_denot]; rewrite ?Z.add_0_r, ?Z_to_bv_bv_unsigned; rewrite ?A887, ?A888, ?A889, ?A890; reflexivity)
+ltac:(idtac; clear; lia).
+ra_join_win HS ss_D1 891%nat fl_D1_deads_bv idtac.
+fl_handX NextD1 HS.
+rewrite !ew_havoc_old by nat_side.
+split; [exact Kle0|]. split; [exact Blk3|]. split; [exists gv; exact (conj G621 Grng)|]. split; [exact Np625|].
+split; [exists fb; apply fl_bef_havoc; [nat_side | rewrite Env4; exact Bef4]|].
+split; [|exact (conj G621x (conj Gflag Meter))].
+exists 1, 1, 0, 0. do 4 (split; [assumption|]).
+split; [apply Z.le_refl|]. split; [apply Z.le_refl|]. split; [exact HW1|].
+split; [apply Z.le_refl|]. split; [apply Z.le_refl|]. split; [exact HH1 | exact Dims11].
 Qed.
 Lemma fl_DiX : fl_fromX0 KS MT XN B CTX wfn ss_D1 (INV_D1X MT B) -> fl_fromX0 KS MT XN B CTX wfn ss_DIMSi (INV_DIMSiX MT B).
 Proof. exact fl_DiX_aux. Qed.

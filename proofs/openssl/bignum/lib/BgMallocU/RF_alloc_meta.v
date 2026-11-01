@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.bignum.lib.BgLib Require Import ImageBg.
 
@@ -45,13 +45,15 @@ Proof. try (pose proof ceil_window_holds as CEIL_RANGE__). intros A a Ha Hc. spl
 
 Lemma rrw_cells_magree C m m' A cs :
   rw_cells bgusegs m A cs -> magree C m m' -> (forall a, A <= a < A + Z.of_nat (cells_size cs) -> ~ C a) -> rw_cells bgusegs m' A cs.
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros H AG HC. pose proof (rw_cells_bound _ _ _ _ H). eapply RA2.rrw_cells_agree; [exact H|]. intros a Ha. apply AG; [lia| apply HC; exact Ha].
+Proof.
+  intros cells agree away.
+  exact (rpres_except_rw_cells C m m' A cs (rpres_of_magree C m m' agree) cells away).
 Qed.
 Lemma rbytes_at_magree C m m' A bs :
   bytes_at bgusegs m A bs -> magree C m m' -> (forall a, A <= a < A + Z.of_nat (length bs) -> ~ C a) -> bytes_at bgusegs m' A bs.
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros H AG HC. pose proof (bytes_at_bound _ _ _ _ H). eapply RA2.rbytes_at_agree; [exact H|]. intros a Ha. apply AG; [lia| apply HC; exact Ha].
+Proof.
+  intros bytes agree away.
+  exact (rpres_except_bytes_at C m m' A bs (rpres_of_magree C m m' agree) bytes away).
 Qed.
 
 Lemma rauxv_ok_magree C m m' B :
@@ -100,14 +102,18 @@ Lemma rfinish_K : forall (st1 : mstate) (mo : optr) (sX : PState) (m' : mem) (e 
   rv = pw st1 mo ->
   rimplT o (k st1 mo) sX Q
         (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 rv a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (ret_pc ra) fc None m' (seg_rom bgusegs)).
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros st1 mo sX m' e t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 rv REL MR1 MI1 ST1 ERR1 AUX1 AG BL1 P1 P2 P3 ->.
-  apply KH; [| exact BL1]. unfold ram_post. do 16 eexists. split; [reflexivity|].
-  split; [exact MI1|]. split; [exact ST1|]. split; [exact ERR1|]. split; [exact AUX1|]. split.
-  { apply rpres_of_magree. exact AG. }
-  split; [exact MR1|]. split.
-  { destruct TK as [T1 T2]. split; intros; rewrite (amr_shadow _ _ _ REL) in *; rewrite (amr_tick _ _ _ REL); eauto. }
-  auto.
+Proof using TK KH.
+  intros st1 mo sX m' e t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 rv.
+  intros rel1 rep1 inv1 stk1 errno1 auxv1 agree1 link1 sameM sameFa sameSo retv.
+  assert (ticks1 : ticks_ok st1).
+  { unfold ticks_ok. rewrite (amr_shadow _ _ _ rel1), (amr_tick _ _ _ rel1). exact TK. }
+  pose proof (rpres_of_magree (rFP st1) m m' agree1) as pres1.
+  subst rv.
+  apply KH; [|exact link1].
+  unfold ram_post.
+  exists t0, t1, t2, a1, a2, a3, a4, a5, a6, a7, t3, t4, t5, t6, m', e.
+  exact (conj eq_refl (conj inv1 (conj stk1 (conj errno1 (conj auxv1 (conj pres1
+          (conj rep1 (conj ticks1 (conj sameM (conj sameFa (conj sameSo rel1))))))))))).
 Qed.
 
 Lemma rFP_mono stX stY a :
@@ -165,33 +171,35 @@ Lemma rcarve_K : forall (stY : mstate) (p : aptr) (r : region) (mX : mem) (sX : 
   rimplT o (k (am_took (carve_st stY p) (aadd p AREA_HDR) 100) (Some (aadd p AREA_HDR))) sX Q
         (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 s0x (Z_to_bv 64 (conc stY p)) a0 a1 a2 a3 a4 a5 a6 a7
                  (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x2b18f8) fc None mX (seg_rom bgusegs)).
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros until t6. intros AI INI Hr NK S0 S1 SAL SLR ANone FRESH TL CNT MRX MIX ZB ZW FRX STX ERRX AUXX AGX BLX P1 P2 P3.
-  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR. unfold RAM_STACK in LOLE.
-  pose proof MRX as (WFX & _).
+Proof using AMP TK LO LOLE TP KH.
+  intros stY p r mX sX junk e x1 t0 t1 t2 s0x a0 a1 a2 a3 a4 a5 a6 a7 s4x t3 t4 t5 t6.
+  intros amiY initY regY kindY offLo offHi alignY lrloY freeY slotsY tailY countY repY invY zeroY wrY
+    frameY stkY errY auxY agrY linkY sameM sameFa sameSo.
+  pose proof (proj1 repY) as wfY.
+  assert (regsC : s_regions (carve_st stY p) = s_regions stY) by apply carve_st_regions.
+  assert (fpC : forall a, ram_fp (carve_st stY p) lo (bv_unsigned sp) a -> ram_fp stY lo (bv_unsigned sp) a)
+    by (intros a; apply (ram_fp_same stY (carve_st stY p) lo (bv_unsigned sp) a regsC)).
+  assert (regsT : s_regions (am_took (carve_st stY p) (aadd p AREA_HDR) 100) = s_regions stY) by exact regsC.
+  assert (stackRoom : lo <= bv_unsigned sp - 64) by (unfold RAM_STACK in LOLE; lia).
   eapply rimplT_evt.
-  { eapply (ram_carve_walk sp gp tp t0 t1 t2 s0x a0 a1 a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 ra s0 s1 s2 s3 s4 F fc mX junk lo stY p r);
-      first [exact MRX | exact MIX | exact Hr | exact NK | exact S0 | exact S1 | exact SAL | exact SLR | exact ANone | exact FRESH | exact TL | exact CNT
-            | exact (ami_secretr _ _ AI) | exact INI | exact ZB | exact ZW | exact FRX | exact STX | exact LO | lia]. }
-  intros ms2 RP. unfold ram_ret_post in RP.
-  destruct RP as (v0 & v1 & v2 & v4 & v5 & v6 & v7 & v8 & v9 & v10 & v11 & v12 & v13 & v14 & m2 & -> & PE2 & WM2 & MI2 & ST2 & MR2).
-  pose proof (carve_st_regions stY p) as RC.
-  eapply rfinish_K.
-  - eapply (ram_rel_carve st stY p r AI); assumption.
-  - exact MR2.
-  - exact MI2.
-  - exact ST2.
-  - eapply rrw_cells_magree; [exact ERRX| apply rmagree_of_pres; exact PE2|]. cbn. intros a Ha X.
-    apply (rerrno_not_amfp stY a WFX); [exact (proj1 (ram_fp_same stY _ lo _ a RC) X) | lia].
-  - eapply rauxv_ok_magree; [exact AUXX| apply rmagree_of_pres; exact PE2|]. intros a X. apply (rFP_below stY _ WFX). apply rFP_am. exact (proj1 (ram_fp_same stY _ lo _ a RC) X).
-  - assert (RA : s_regions (am_took (carve_st stY p) (aadd p AREA_HDR) 100) = s_regions stY) by (cbn; exact RC).
-    eapply magree_trans; [exact AGX| apply rmagree_of_pres; exact PE2| intros a X; exact (rFP_same stY _ a RA X) | intros a X; apply rFP_am; refine (proj2 (ram_fp_same (carve_st stY p) _ lo _ a _) X); reflexivity].
-  - unfold brk_link_ps in *. rewrite rbrk_am_took, rbrk_carve. destruct (c_brk (ctx stY)) as [| |rid off]; auto.
-    rewrite rconc_am_took, rconc_carve. exact BLX.
-  - exact P1.
-  - exact P2.
-  - exact P3.
-  - unfold pw, oconc, wz. rewrite rconc_am_took, rconc_carve. rewrite (conc_aadd stY p AREA_HDR) by (rewrite Hr; eauto). reflexivity.
+  { eapply ram_carve_walk with (raw := ra) (s0o := s0) (s1o := s1) (s2o := s2) (s3o := s3) (s4o := s4)
+              (junk := junk) (lo := lo) (st := stY) (p := p) (r := r); try eassumption.
+    exact (ami_secretr _ _ amiY). }
+  intros ms' (t0' & t1' & t2' & b1 & b2 & b3 & b4 & b5 & b6 & b7 & t3' & t4' & t5' & t6' & mY & -> & presY & _ & invY' & stkY' & repY').
+  apply (rfinish_K _ _ sX mY e); try assumption.
+  - exact (ram_rel_carve st stY p r amiY regY kindY freeY slotsY tailY).
+  - apply (rpres_except_rw_cells _ _ _ _ _ presY errY).
+    intros a errnoCell inFP. change (Z.of_nat (cells_size [C4 e])) with 4 in errnoCell.
+    exact (rerrno_not_amfp stY a wfY (fpC a inFP) errnoCell).
+  - apply (rauxv_ok_magree _ mX mY _ auxY (rmagree_of_pres _ _ _ presY)).
+    intros a inFP. exact (rFP_below stY a wfY (rFP_am stY a (fpC a inFP))).
+  - apply (magree_trans _ _ _ m mX mY agrY (rmagree_of_pres _ _ _ presY)); intros a inA.
+    + exact (rFP_same stY _ a regsT inA).
+    + exact (rFP_same stY _ a regsT (rFP_am stY a (fpC a inA))).
+  - revert linkY. unfold brk_link_ps. rewrite rbrk_am_took, rbrk_carve.
+    destruct (c_brk (ctx stY)); try rewrite rconc_am_took, rconc_carve; tauto.
+  - unfold pw, oconc, wz. rewrite rconc_am_took, rconc_carve.
+    unfold conc, get_region, aadd. cbn [fst snd]. rewrite regY. unfold AREA_HDR. f_equal. lia.
 Qed.
 
 Lemma rrepfoot_low stY a : rregions_wf stY -> rrepfoot stY a -> a < alloc_ceiling /\ ~ (errno_addr tp <= a < errno_addr tp + 4).
@@ -220,87 +228,105 @@ Lemma rfinish_path : forall (stY : mstate) (p : aptr) (r : region) (mX : mem) (s
   rimplT o (am_finish stY true k bail) sX Q
         (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) (Z_to_bv 64 (conc stY p)) a0 a1 a2 a3 a4 a5 a6 a7
                  (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x2b1988) fc None mX (seg_rom bgusegs)).
-Proof using AMP KH LO LOLE TK TP.
-  intros until t6. intros AI INI AMA Hr NK S0 S1 SAL SLR ANone FRESH TL CNT MRX MIX FRX STX ERRX AUXX AGX BLX P1 P2 P3.
-  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR. unfold RAM_STACK in LOLE.
-  pose proof LO as LO'. unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in LO'; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
-  pose proof MRX as (WFX & _ & (_ & _ & PGX & _) & _). pose proof WFX as (RS & WR & DJ & WA & WG).
-  destruct (WR _ _ Hr) as (RB0 & RBAL & RL0 & RBC & RF). destruct (rreserved_disjoint _ _ RF) as (DR1 & _ & DR23 & DR2). unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in RBC; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
-  pose proof (conc_region' stY p r Hr) as Cp. pose proof (round_up_pg_ge (r_len r)) as RU. pose proof (lr_lo_ge r) as LRG.
-  assert (PAL : conc stY p mod 4096 = 0) by (rewrite Cp; unfold pgal in SAL; clear - RBAL SAL; Z.div_mod_to_equations; lia).
-  assert (IMG : conc stY p + 4096 <= 0x10000 \/ 0x353000 <= conc stY p) by (pose proof (rreserved_disjoint1 _ _ RF ltac:(lia)); lia).
-  pose proof rETP as rETP'. pose proof TP as TPv. unfold wz in PGX.
-
-  unfold am_finish. rewrite AMA. unfold pgal in SAL. unfold PGSZ at 1. rewrite (proj2 (Z.eqb_eq _ _) SAL). cbn [negb].
-
-  eapply rimplT_evt.
-  { apply (ram_to_mprotect (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc mX (conc stY p)). }
-  intros ms2 ->.
-  eapply (rimplT_mprotect o (conc stY p) PGSZ PROT_RW _ sX).
-  { eapply rimpl_enode_dec_weaken; [| intros rsp a Hd; exact (dec_mprotect_rw_weaken _ _ rsp a Hd)].
-    unfold PGSZ, PROT_RW.
-    eapply rmprotect_spec with (lo := lo) (errv := e);
-      [ rewrite unsigned_lit by lia; exact STX | exact ERRX | exact PGX | exact MIX | reflexivity | reflexivity | reflexivity
-      | exact PAL | reflexivity | lia | lia | lia | lia | ..]; rewrite ?rETP', ?TPv, ?unsigned_lit by lia; unfold RPAGE_SIZE; try lia. }
-  intros ans ms3 [MP G]. unfold rmprotect_post in MP.
-  destruct MP as (u0 & u1 & u2 & u3 & u4 & u5 & u6 & u7 & u8 & u9 & u10 & u11 & u12 & u13 & m3 & -> & MU3 & WM3 & MI3 & ST3 & ERR3 & PG3 & CASE).
-  rewrite unsigned_lit in MU3, ST3 by lia.
-  replace (ret_pc (Z_to_bv 64 0x2b1998)) with (Z_to_bv 64 0x2b1998 : word) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-
-  assert (FR3 : rw_cells bgusegs m3 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
-  { eapply rw_cells_transport; [exact FRX| exact MU3| exact WM3|]. rewrite rETP'. cbn. unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in LO; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. lia. }
-  assert (MR3 : rmrep stY m3).
-  { eapply rmrep_transport_unowned; [exact MRX| exact MU3| exact WM3|].
-    intros lo' hi' y [E|[E|[E|[]]]] Hy; inversion E; subst lo' hi'.
-    - intros RFt. destruct (rrepfoot_low stY y WFX RFt). unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. lia.
-    - intros RFt. destruct (rrepfoot_low stY y WFX RFt). lia.
-    - eapply (rfresh_page_avoids stY mX p r y MRX); try assumption; lia. }
-  assert (M23 : magree (rFP stY) mX m3).
-  { eapply magree_of_munch; [exact MU3|].
-    cbn. split; [| split; [| split; [| exact I]]]; intros x Hx.
-    - left. left. lia.
-    - left. right. left. rewrite TPv in Hx. exact Hx.
-    - left. right. right. right. exists (fst p), r. split; [exact Hr|]. split; [exact NK|]. lia. }
-  assert (AG3 : magree (rFP stY) m m3) by (eapply magree_trans; [exact AGX| exact M23| intros a X; exact X| intros a X; exact X]).
-  assert (AUX3 : rauxv_ok m3 (bv_unsigned sp)) by (eapply rauxv_ok_magree; [exact AUXX| exact M23| intros a X; exact (rFP_below stY a WFX X)]).
-  clear MU3 WM3.
-  destruct ans as [e'|b]; cbn in G.
-  -
-    cbn [range_val F_mm_syscalls.munmap_ret F_mm_syscalls.rg_errno] in *.
-    unfold mprotect_answer_ok, is_errno_form, neg_errno, TWO64, ENOSYS.
-    replace ((2 ^ 64 - e' =? 0) || ((2 ^ 64 - 4095 <=? 2 ^ 64 - e') && (2 ^ 64 - e' <? 2 ^ 64))) with true by (symmetry; apply orb_true_iff; right; apply andb_true_iff; split; [apply Z.leb_le| apply Z.ltb_lt]; lia).
-    replace ((2 ^ 64 - e' =? 0) || (2 ^ 64 - e' =? 2 ^ 64 - 38)) with false by (symmetry; apply orb_false_iff; split; apply Z.eqb_neq; lia).
-    cbn [negb].
+Proof using AMP TK LO LOLE TP KH.
+  intros stY p r mX sX junk e x1 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s4x t3 t4 t5 t6.
+  intros amiY initY availY regY kindY offLo offHi alignY lrloY freeY slotsY tailY countY repY invY
+    frameY stkY errY auxY agrY linkY sameM sameFa sameSo.
+  pose proof (proj1 repY) as wfY.
+  pose proof repY as (_ & _ & (_ & _ & pgszY & _) & _).
+  destruct (proj1 (proj2 wfY) _ _ regY) as (baseLo & baseAl & _ & topHi & resvFree).
+  assert (concY : conc stY p = r_base r + p.2) by (unfold conc, get_region; rewrite regY; reflexivity).
+  pose proof (rreserved_disjoint1 _ _ resvFree ltac:(lia)) as sideY.
+  pose proof (u64_range sp) as spRange.
+  assert (spDown : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -64)) = bv_unsigned sp + -64)
+    by (apply unsigned_lit; unfold RAM_STACK in LOLE; lia).
+  assert (tpVal : bv_unsigned tp = 3346328) by (rewrite TP; apply unsigned_lit; lia).
+  assert (aligned : (p.2 mod PGSZ =? 0) = true) by (apply Z.eqb_eq; exact alignY).
+  unfold am_finish. rewrite availY, am_carve_took. cbv beta iota zeta. rewrite aligned. cbv beta iota delta [negb].
+  eapply rimplT_evt; [apply ram_to_mprotect|].
+  intros ms0 ->.
+  eapply rimplT_mprotect.
+  { apply rimpl_enode_dec_weaken with (dec := dec_mprotect (conc stY p) PGSZ);
+      [|exact (dec_mprotect_rw_weaken (conc stY p) PGSZ)].
+    apply rmprotect_spec with (lo := lo) (errv := e).
+    - rewrite spDown. exact stkY.
+    - exact errY.
+    - exact pgszY.
+    - exact invY.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
+    - rewrite concY, Z.add_mod, baseAl by lia. unfold pgal in alignY. rewrite alignY. reflexivity.
+    - reflexivity.
+    - lia.
+    - unfold PGSZ. lia.
+    - unfold PGSZ. lia.
+    - unfold PROT_RW. lia.
+    - rewrite spDown. unfold RAM_STACK in LOLE. lia.
+    - rewrite spDown, tpVal. unfold RAM_STACK in LOLE. lia.
+    - left. unfold PGSZ. lia.
+    - rewrite tpVal, concY. unfold PGSZ. lia.
+    - rewrite concY. unfold PGSZ. lia.
+    - lia.
+    - rewrite tpVal. unfold RPAGE_SIZE. lia.
+    - rewrite tpVal. lia.
+    - unfold PGSZ. lia. }
+  intros ans ms1 (post1 & strict).
+  destruct post1 as (u0 & u1 & u2 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & m1 & -> & munch1 & mono1 & inv1 & stk1 & errno1 & _ & shape1).
+  rewrite spDown in munch1, stk1.
+  assert (avoidFoot : ivs_avoid [(bv_unsigned sp + -64 - 32, bv_unsigned sp + -64); (bv_unsigned tp + -164, bv_unsigned tp + -164 + 4); (conc stY p, conc stY p + PGSZ)] (rrepfoot stY)).
+  { intros l h a inW range foot. destruct (rrepfoot_low stY a wfY foot) as [below notErrno].
+    destruct inW as [hit|[hit|[hit|[]]]]; injection hit as <- <-.
+    - unfold RAM_STACK in LOLE. lia.
+    - exact (notErrno range).
+    - unfold PGSZ in range.
+      exact (rfresh_page_avoids stY mX p r a repY regY kindY offLo offHi alignY lrloY freeY range foot). }
+  assert (coverFP : ivs_covered (rFP stY) [(bv_unsigned sp + -64 - 32, bv_unsigned sp + -64); (bv_unsigned tp + -164, bv_unsigned tp + -164 + 4); (conc stY p, conc stY p + PGSZ)]).
+  { cbn [ivs_covered]. refine (conj _ (conj _ (conj _ I))); intros a range.
+    - left. left. unfold RAM_STACK in LOLE. lia.
+    - left. right. left. rewrite TP in range. exact range.
+    - left. right. right. right. exists p.1, r. split; [exact regY|]. split; [exact kindY|].
+      rewrite concY in range. unfold PGSZ in range. lia. }
+  pose proof (rmrep_transport_unowned stY mX m1 _ repY munch1 mono1 avoidFoot) as rep1.
+  pose proof (magree_of_munch _ _ mX m1 munch1 coverFP) as agree1.
+  pose proof (rauxv_ok_magree _ mX m1 _ auxY agree1 (fun a inFP => rFP_below stY a wfY inFP)) as aux1.
+  pose proof (magree_trans _ _ _ m mX m1 agrY agree1 (fun a h => h) (fun a h => h)) as agreeM1.
+  assert (frame1 : rw_cells bgusegs m1 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
+  { apply (rrw_cells_magree (fun a => ~ outside [(bv_unsigned sp + -64 - 32, bv_unsigned sp + -64); (bv_unsigned tp + -164, bv_unsigned tp + -164 + 4); (conc stY p, conc stY p + PGSZ)] a) mX m1 _ _ frameY).
+    - apply (magree_of_munch _ _ mX m1 munch1). cbn [ivs_covered outside].
+      repeat split; intros x range away; tauto.
+    - intros a range inW. apply inW. cbn [outside].
+      change (Z.of_nat (cells_size (ram_frame junk s4 s3 s2 s1 s0 ra))) with 64 in range.
+      rewrite tpVal, concY. unfold PGSZ, RAM_STACK in *. lia. }
+  destruct ans as [err | changed]; cbn [mp_strict] in strict; cbn [F_mm_syscalls.rg_errno] in errno1; cbv beta.
+  - assert (okErr : mprotect_answer_ok (range_val (RgErr err)) = true).
+    { unfold mprotect_answer_ok, is_errno_form, range_val, neg_errno, TWO64.
+      apply orb_true_iff. right. apply andb_true_iff. split; [apply Z.leb_le | apply Z.ltb_lt]; lia. }
+    assert (notCarve : ((range_val (RgErr err) =? 0) || (range_val (RgErr err) =? TWO64 - ENOSYS)) = false).
+    { unfold range_val, neg_errno, TWO64, ENOSYS. apply orb_false_iff. split; apply Z.eqb_neq; lia. }
+    rewrite okErr, notCarve. cbv beta iota delta [negb].
+    cbn [F_mm_syscalls.munmap_ret]. rewrite ret_pc_even by first [lia | reflexivity].
     eapply rimplT_evt.
-    { eapply (ram_mp_fail sp gp tp u0 u1 u2 (Z_to_bv 64 4096) (Z_to_bv 64 (conc stY p)) u3 u4 u5 u6 u7 u8 u9 s4x s5 s6 s7 s8 s9 s10 s11 u10 u11 u12 u13 _ ra s0 s1 s2 s3 s4 F fc m3 m3 junk lo e' stY);
-        first [exact MR3 | exact MI3 | exact TPv | exact ERR3 | exact G | apply rpres_except_refl | apply wmono_refl | exact FR3 | exact ST3 | exact LO | lia]. }
-    intros ms4 [RP ERR4]. unfold ram_ret_post in RP. cbn [ms_mem] in ERR4.
-    destruct RP as (v0 & v1 & v2 & v4 & v5 & v6 & v7 & v8 & v9 & v10 & v11 & v12 & v13 & v14 & m4 & EQ & PE4 & WM4 & MI4 & ST4 & MR4).
-    rewrite EQ in ERR4 |- *. cbn [ms_mem] in ERR4.
-    eapply rfinish_K.
-    + apply (ram_rel_none st stY AI).
-    + exact MR4.
-    + exact MI4.
-    + exact ST4.
-    + exact ERR4.
-    + eapply rauxv_ok_magree; [exact AUX3| apply rmagree_of_pres; exact PE4| intros a X; exact (rFP_below stY a WFX (rFP_am stY a X))].
-    + eapply magree_trans; [exact AG3| apply rmagree_of_pres; exact PE4| intros a X; exact X| intros a X; exact (rFP_am stY a X)].
-    + exact BLX.
-    + exact P1.
-    + exact P2.
-    + exact P3.
+    { apply ram_mp_fail with (m0 := m1) (junk := junk) (lo := lo) (e := err) (st := stY)
+        (raw := ra) (s0o := s0) (s1o := s1) (s2o := s2) (s3o := s3) (s4o := s4); try assumption.
+      - apply rpres_except_refl.
+      - intros x keep. exact keep.
+      - unfold RAM_STACK in LOLE. lia. }
+    intros ms2 ((w0 & w1 & w2 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & w3 & w4 & w5 & w6 & m2 & -> & pres2 & _ & inv2 & stk2 & rep2) & errno2).
+    cbn [ms_mem] in errno2.
+    apply (rfinish_K stY None sX m2 (Z_to_bv 64 err)); try assumption.
+    + exact (ram_rel_none st stY amiY).
+    + exact (rauxv_ok_magree _ m1 m2 _ aux1 (rmagree_of_pres _ _ _ pres2) (fun a inFP => rFP_below stY a wfY (rFP_am stY a inFP))).
+    + exact (magree_trans _ _ _ m m1 m2 agreeM1 (rmagree_of_pres _ _ _ pres2) (fun a h => h) (fun a h => rFP_am stY a h)).
     + reflexivity.
-  -
-    subst b. cbn [range_val] in *.
-    unfold mprotect_answer_ok. cbn [Z.eqb orb negb].
-    rewrite (am_carve_eq stY p k bail), (ram_take_took (carve_st stY p) p k bail).
-    destruct CASE as [[_ ZB] ZW]. cbn [cells_bytes cbytes cells_size csize Nat.add app] in ZB, ZW. rewrite app_nil_r in ZB.
-    eapply rimplT_evt.
-    { apply (ram_mp_ok0 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp u0 u1 u2 (Z_to_bv 64 4096) (Z_to_bv 64 (conc stY p)) u3 u4 u5 u6 u7 u8 u9 (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 u10 u11 u12 u13 (Z_to_bv 64 0x2b1998) F fc m3). }
-    intros ms4 ->.
-    eapply (rcarve_K stY p r m3 sX junk); first [exact AI | exact INI | exact Hr | exact NK | exact S0 | exact S1 | exact SLR | exact ANone | exact FRESH | exact TL | exact CNT
-      | exact MR3 | exact MI3 | exact ZB | exact ZW | exact FR3 | exact ST3 | exact ERR3 | exact AUX3 | exact AG3 | exact BLX | exact P1 | exact P2 | exact P3 | idtac].
-    unfold pgal. exact SAL.
+  - subst changed.
+    cbn [range_val mprotect_answer_ok negb orb Z.eqb F_mm_syscalls.munmap_ret].
+    rewrite ret_pc_even by first [lia | reflexivity].
+    eapply rimplT_evt; [apply ram_mp_ok0|].
+    intros ms2 ->.
+    apply (rcarve_K stY p r m1 sX junk e); try assumption.
+    + pose proof (rw_cells_bytes_at _ _ _ _ shape1) as zeros1. exact zeros1.
+    + exact (proj2 shape1).
 Qed.
 
 Lemma rlive_ranges_same stA stB : s_regions stB = s_regions stA -> s_reserved stB = s_reserved stA -> live_ranges stB = live_ranges stA.
@@ -350,176 +376,237 @@ Lemma rmmap_path : forall (stY : mstate) (mX : mem) (sX : PState) (junk : list b
   rimplT o (am_after_brk stY true k bail) sX Q
         (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) s1x a0 a1 a2 a3 a4 a5 a6 a7
                  (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x2b1898) fc None mX (seg_rom bgusegs)).
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros until t6. intros AI INI RGY ACNT SHR TL MK PTR MRX MIX FRX STX ERRX AUXX AGX BLX P1 P2 P3.
-  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR. unfold RAM_STACK in LOLE.
-  pose proof LO as LO'. unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in LO'; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. pose proof rETP as rETP'. pose proof TP as TPv.
-  pose proof MRX as (WFX & _). pose proof WFX as (RS & WR & DJ & WA & WG).
-  set (n := Z.shiftl 2 (c_meta_alloc_shift (ctx stY))).
-  assert (NR : 2 <= n <= 2^39).
-  { unfold n. rewrite Z.shiftl_mul_pow2 by lia. split.
-    - rewrite <- (Z.mul_1_r 2) at 1. apply Z.mul_le_mono_nonneg_l; [lia|]. apply Z.pow_le_mono_r with (b := 0); lia || (change 1 with (2^0); apply Z.pow_le_mono_r; lia).
-    - change (2^39) with (2 * 2^38). apply Z.mul_le_mono_nonneg_l; [lia|]. apply Z.pow_le_mono_r; lia. }
-  unfold am_after_brk. rewrite ACNT. cbn [Z.eqb]. fold n.
-
-  eapply rimplT_evt.
-  { apply (ram_to_mmap (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc mX stY MRX ltac:(lia)). }
-  intros ms2 ->. fold n.
-  pose proof MRX as MR2. pose proof MIX as MI2. pose proof FRX as FR2. pose proof STX as ST2. pose proof ERRX as ERR2. pose proof AGX as AG2. pose proof AUXX as AUX2.
-  set (m2 := mX) in MR2, MI2, FR2, ST2, ERR2, AG2, AUX2 |- *.
-  clear MRX MIX FRX STX ERRX AUXX AGX.
-  eapply (rimplT_mmap_none o (n * PGSZ) _ sX).
-  { unfold PGSZ. replace (Z_to_bv 64 (n * 4096)) with (Z_to_bv 64 (n * 4096)%Z) by reflexivity.
-    eapply (rmmap_anon_spec true) with (lo := lo) (errv := e) (avoid := []);
-      [ rewrite unsigned_lit by lia; exact ST2 | exact ERR2 | exact MI2 | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | ..];
-      rewrite ?rETP', ?TPv, ?unsigned_lit by lia; first [lia | pose proof F_mm_syscalls.alloc_ceiling_val; lia]. }
-  intros ans ms3 MP. unfold rmmap_anon_post in MP.
-  destruct ans as [e'|x].
-  -
-    destruct MP as (u0 & u1 & u2 & u3 & u4 & u5 & u6 & u7 & u8 & u9 & u10 & u11 & u12 & u13 & m3 & -> & MU3 & WM3 & MI3 & ST3 & ERR3 & ER).
-    rewrite unsigned_lit in MU3, ST3 by lia.
-    replace (ret_pc (Z_to_bv 64 0x2b18c4)) with (Z_to_bv 64 0x2b18c4 : word) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-    cbn [mmap_val]. unfold mmap_answer_ok, is_errno_form, is_err, neg_errno, TWO64.
-    replace ((2 ^ 64 - 4095 <=? 2 ^ 64 - e') && (2 ^ 64 - e' <? 2 ^ 64)) with true by (symmetry; apply andb_true_iff; split; [apply Z.leb_le| apply Z.ltb_lt]; lia).
-    cbn [orb negb]. replace (2 ^ 64 - 4096 <? 2 ^ 64 - e') with true by (symmetry; apply Z.ltb_lt; lia).
-    assert (FR3 : rw_cells bgusegs m3 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
-    { eapply rw_cells_transport; [exact FR2| exact MU3| exact WM3|]. rewrite rETP'. cbn. lia. }
-    assert (MR3 : rmrep stY m3).
-    { eapply rmrep_transport_unowned; [exact MR2| exact MU3| exact WM3|].
-      intros lo' hi' y [E|[E|[]]] Hy; inversion E; subst lo' hi'; intros RFt; destruct (rrepfoot_low stY y WFX RFt); unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia. }
-    assert (M23 : magree (rFP stY) m2 m3).
-    { eapply magree_of_munch; [exact MU3|]. cbn. split; [| split; [| exact I]]; intros y Hy; [left; left; lia|]. left. right. left. rewrite TPv in Hy. exact Hy. }
-    assert (AG3 : magree (rFP stY) m m3) by (eapply magree_trans; [exact AG2| exact M23| intros a X; exact X| intros a X; exact X]).
-    assert (AUX3 : rauxv_ok m3 (bv_unsigned sp)) by (eapply rauxv_ok_magree; [exact AUX2| exact M23| intros a X; exact (rFP_below stY a WFX X)]).
+Proof using AMP TK LO LOLE TP KH.
+  intros stY mX sX junk e x1 t0 t1 t2 s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x t3 t4 t5 t6.
+  intros amiY initY regsY countY shiftY tailY keysY ptrsY repY invY frameY stkY errY auxY agrY linkY sameM sameFa sameSo.
+  pose proof (proj1 repY) as wfY.
+  pose proof (u64_range sp) as spRange.
+  assert (spDown : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -64)) = bv_unsigned sp + -64)
+    by (apply unsigned_lit; unfold RAM_STACK in LOLE; lia).
+  assert (tpVal : bv_unsigned tp = 3346328) by (rewrite TP; apply unsigned_lit; lia).
+  assert (resvY : s_reserved stY = s_reserved st) by exact (ami_reserved _ _ amiY).
+  pose (n := 2 ≪ c_meta_alloc_shift (ctx stY)).
+  pose (len := n * PGSZ).
+  assert (nVal : n = 2 * 2 ^ c_meta_alloc_shift (ctx stY)) by (apply Z.shiftl_mul_pow2; lia).
+  assert (powLo : 0 < 2 ^ c_meta_alloc_shift (ctx stY)) by (apply Z.pow_pos_nonneg; lia).
+  assert (powHi : 2 ^ c_meta_alloc_shift (ctx stY) <= 2 ^ 38) by (apply Z.pow_le_mono_r; lia).
+  assert (lenRange : 8192 <= len <= 2 ^ 51) by (unfold len, PGSZ; rewrite nVal; lia).
+  unfold am_after_brk. rewrite countY. change (0 =? 0) with true. cbv beta iota zeta.
+  eapply rimplT_evt; [apply ram_to_mmap; [exact repY | lia]|].
+  intros ms0 ->.
+  eapply rimplT_mmap_none.
+  { apply (rmmap_anon_spec true) with (lo := lo) (errv := e) (avoid := []).
+    - rewrite spDown. exact stkY.
+    - exact errY.
+    - exact invY.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
+    - change (2 ≪ c_meta_alloc_shift (ctx stY) * PGSZ) with len. lia.
+    - rewrite spDown. unfold RAM_STACK in LOLE. lia.
+    - exact LO.
+    - rewrite spDown, tpVal. unfold RAM_STACK in LOLE. lia.
+    - rewrite tpVal. lia. }
+  intros ans ms1 post1.
+  destruct ans as [err | x]; cbv beta.
+  - destruct post1 as (u0 & u1 & u2 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & m1 & -> & munch1 & mono1 & inv1 & stk1 & errno1 & errRange).
+    rewrite spDown in munch1, stk1.
+    assert (answerOk : mmap_answer_ok (live_ranges stY) (2 ≪ c_meta_alloc_shift (ctx stY) * PGSZ) (mmap_val (MmErr err)) = true).
+    { unfold mmap_answer_ok, is_errno_form, mmap_val, neg_errno, TWO64.
+      apply orb_true_iff. left. apply andb_true_iff. split; [apply Z.leb_le | apply Z.ltb_lt]; lia. }
+    assert (answerErr : is_err (mmap_val (MmErr err)) = true).
+    { unfold is_err, mmap_val, neg_errno, TWO64. apply Z.ltb_lt. lia. }
+    rewrite answerOk, answerErr. cbv beta iota delta [negb].
+    rewrite ret_pc_even by first [lia | reflexivity].
+    assert (avoid1 : ivs_avoid [(bv_unsigned sp + -64 - 80, bv_unsigned sp + -64); (bv_unsigned tp + -164, bv_unsigned tp + -164 + 4)] (rrepfoot stY)).
+    { intros l h a inW range foot. destruct (rrepfoot_low stY a wfY foot) as [below notErrno].
+      destruct inW as [hit|[hit|[]]]; injection hit as <- <-.
+      - unfold RAM_STACK in LOLE. lia.
+      - exact (notErrno range). }
+    assert (cover1 : ivs_covered (rFP stY) [(bv_unsigned sp + -64 - 80, bv_unsigned sp + -64); (bv_unsigned tp + -164, bv_unsigned tp + -164 + 4)]).
+    { cbn [ivs_covered]. refine (conj _ (conj _ I)); intros a range.
+      - left. left. unfold RAM_STACK in LOLE. lia.
+      - left. right. left. rewrite TP in range. exact range. }
+    pose proof (rmrep_transport_unowned stY mX m1 _ repY munch1 mono1 avoid1) as rep1.
+    pose proof (magree_of_munch _ _ mX m1 munch1 cover1) as agree1.
+    pose proof (rauxv_ok_magree _ mX m1 _ auxY agree1 (fun a inFP => rFP_below stY a wfY inFP)) as aux1.
+    pose proof (magree_trans _ _ _ m mX m1 agrY agree1 (fun a keep => keep) (fun a keep => keep)) as agreeM1.
+    assert (frame1 : rw_cells bgusegs m1 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
+    { apply (rrw_cells_magree (fun a => ~ outside [(bv_unsigned sp + -64 - 80, bv_unsigned sp + -64); (bv_unsigned tp + -164, bv_unsigned tp + -164 + 4)] a) mX m1 _ _ frameY).
+      - apply (magree_of_munch _ _ mX m1 munch1). cbn [ivs_covered outside].
+        repeat split; intros y range away; tauto.
+      - intros a range inW. apply inW. cbn [outside].
+        change (Z.of_nat (cells_size (ram_frame junk s4 s3 s2 s1 s0 ra))) with 64 in range.
+        rewrite tpVal. unfold RAM_STACK in LOLE. lia. }
     eapply rimplT_evt.
-    { eapply (ram_mm_fail sp gp tp u0 u1 u2 (Z_to_bv 64 4096) (Z_to_bv 64 n) u3 u4 u5 u6 u7 u8 u9 s5 s6 s7 s8 s9 s10 s11 u10 u11 u12 u13 _ ra s0 s1 s2 s3 s4 F fc m3 m3 junk lo stY);
-        first [exact MR3 | exact MI3 | apply rpres_except_refl | apply wmono_refl | exact FR3 | exact ST3 | exact LO | lia]. }
-    intros ms4 RP. unfold ram_ret_post in RP.
-    destruct RP as (v0 & v1 & v2 & v4 & v5 & v6 & v7 & v8 & v9 & v10 & v11 & v12 & v13 & v14 & m4 & -> & PE4 & WM4 & MI4 & ST4 & MR4).
-    eapply rfinish_K.
-    + apply (ram_rel_none st stY AI).
-    + exact MR4.
-    + exact MI4.
-    + exact ST4.
-    + eapply rrw_cells_magree; [exact ERR3| apply rmagree_of_pres; exact PE4|]. cbn. intros a Ha X. apply (rerrno_not_amfp stY a WFX); [exact X| lia].
-    + eapply rauxv_ok_magree; [exact AUX3| apply rmagree_of_pres; exact PE4| intros a X; exact (rFP_below stY a WFX (rFP_am stY a X))].
-    + eapply magree_trans; [exact AG3| apply rmagree_of_pres; exact PE4| intros a X; exact X| intros a X; exact (rFP_am stY a X)].
-    + exact BLX.
-    + exact P1.
-    + exact P2.
-    + exact P3.
+    { apply ram_mm_fail with (m0 := m1) (junk := junk) (lo := lo) (st := stY)
+        (raw := ra) (s0o := s0) (s1o := s1) (s2o := s2) (s3o := s3) (s4o := s4); try assumption.
+      - apply rpres_except_refl.
+      - intros y keep. exact keep.
+      - unfold RAM_STACK in LOLE. lia. }
+    intros ms2 (w0 & w1 & w2 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & w3 & w4 & w5 & w6 & m2 & -> & pres2 & _ & inv2 & stk2 & rep2).
+    apply (rfinish_K stY None sX m2 (Z_to_bv 64 (F_mm_syscalls.mmap_fix_errno err))); try assumption.
+    + exact (ram_rel_none st stY amiY).
+    + apply (rpres_except_rw_cells _ _ _ _ _ pres2 errno1).
+      intros a errnoCell inFP. change (Z.of_nat (cells_size [C4 (Z_to_bv 64 (F_mm_syscalls.mmap_fix_errno err))])) with 4 in errnoCell.
+      exact (rerrno_not_amfp stY a wfY inFP errnoCell).
+    + exact (rauxv_ok_magree _ m1 m2 _ aux1 (rmagree_of_pres _ _ _ pres2) (fun a inFP => rFP_below stY a wfY (rFP_am stY a inFP))).
+    + exact (magree_trans _ _ _ m m1 m2 agreeM1 (rmagree_of_pres _ _ _ pres2) (fun a keep => keep) (fun a inFP => rFP_am stY a inFP)).
     + reflexivity.
-  -
-    destruct MP as (u0 & u1 & u2 & u3 & u4 & u5 & u6 & u7 & u8 & u9 & u10 & u11 & u12 & u13 & m2' & -> & MU3 & WM3 & MI3 & ST3 & ERR3 & AOK).
-    rewrite unsigned_lit in MU3, ST3 by lia.
-    replace (ret_pc (Z_to_bv 64 0x2b18c4)) with (Z_to_bv 64 0x2b18c4 : word) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+  - destruct post1 as (u0 & u1 & u2 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & m2 & -> & munch2 & mono2 & inv2 & stkRaw & errno2 & addrOk).
+    rewrite spDown in munch2, stkRaw.
+    unfold mmap_addr_ok in addrOk. rewrite !andb_true_iff in addrOk.
+    destruct addrOk as (((alignX & posX) & topX) & _).
+    apply Z.eqb_eq in alignX. apply Z.ltb_lt in posX. apply Z.leb_le in topX.
+    rewrite KStepLite.page_size_eq in alignX. rewrite mmap_len_round_up in topX.
+    assert (roundLen : round_up_pg len = len).
+    { apply round_up_pg_aligned. unfold len, PGSZ. apply Z.mod_mul. lia. }
+    change (2 ≪ c_meta_alloc_shift (ctx stY) * PGSZ) with len in *.
+    rewrite roundLen in topX.
     cbn [mmap_val].
-    destruct (mmap_answer_ok (live_ranges stY) (n * PGSZ) x) eqn:VOK; cbn [negb]; [| apply rimplT_undef].
-
-    unfold mmap_addr_ok in AOK. apply andb_prop in AOK. destruct AOK as [AOK _]. apply andb_prop in AOK. destruct AOK as [AOK XC].
-    apply andb_prop in AOK. destruct AOK as [XA X0]. apply Z.eqb_eq in XA. apply Z.ltb_lt in X0. apply Z.leb_le in XC.
-    rewrite A2.mmap_len_round_up in XC. first [pose proof F_mm_syscalls.alloc_ceiling_val | unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in XC; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *]. change page_size with 4096 in XA.
-    assert (LAL : round_up_pg (n * PGSZ) = n * PGSZ) by (apply round_up_pg_aligned; unfold PGSZ; apply Z.mod_mul; lia).
-    rewrite LAL in XC.
-    unfold mmap_answer_ok in VOK. rewrite LAL in VOK. apply orb_prop in VOK.
-    assert (RF : ranges_free (live_ranges stY) x (n * PGSZ) = true).
-    { destruct VOK as [V|V]; [| apply andb_prop in V; destruct V as [_ V]; exact V].
-      unfold is_errno_form, TWO64 in V. apply andb_prop in V. destruct V as [V _]. apply Z.leb_le in V. unfold PGSZ in XC. exfalso. lia. }
-    unfold is_err, TWO64. replace (2 ^ 64 - 4096 <? x) with false by (symmetry; apply Z.ltb_ge; unfold PGSZ in XC; lia).
-    unfold new_region. cbv beta iota zeta delta [fst snd].
-    set (rid := s_next_rid stY).
-    pose proof (rAMI_new_region st stY RKMeta x (n * PGSZ) AI ltac:(discriminate) ltac:(unfold PGSZ; lia)) as (AI1 & RG1 & CQ1 & CN1).
-    unfold new_region in AI1, RG1, CQ1, CN1. cbn [fst snd] in AI1, RG1, CQ1, CN1. fold rid in AI1, RG1, CQ1, CN1 |- *.
-    set (st1 := set_next_rid (N.succ rid) _) in AI1, RG1, CQ1, CN1 |- *.
-    set (st2 := upd_ctx _ st1).
-    assert (E2 : st2 = mm_ok_st st1 rid n) by reflexivity.
-
-    unfold F_mm_syscalls.mmap_raw in ST3 |- *. rewrite A2.mmap_len_round_up, LAL in ST3 |- *.
-    set (m3 := apply_unmaps m2' [(wa x, Z_to_bv 64 (n * PGSZ))]) in *.
-    assert (Hx1 : 0 <= x < 2^64) by (unfold PGSZ in XC; lia). assert (Hn1 : 0 <= n * PGSZ < 2^64) by (unfold PGSZ in *; lia). assert (Hxn : x + n * PGSZ <= 2^64) by (unfold PGSZ in *; lia).
-    assert (FR3 : rw_cells bgusegs m3 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
-    { apply (rw_cells_unmaps_other bgusegs m2' x (n * PGSZ) Hx1 Hn1 Hxn).
-      - eapply rw_cells_transport; [exact FR2| exact MU3| exact WM3|]. cbn. lia.
-      - cbn. unfold PGSZ in *. lia. }
-    assert (ERR4 : rw_cells bgusegs m3 (errno_addr tp) [C4 e]).
-    { apply (rw_cells_unmaps_other bgusegs m2' x (n * PGSZ) Hx1 Hn1 Hxn); [exact ERR3|]. cbn. rewrite rETP'.
-      pose proof (rimage_clear_of_ranges_free stY x (n * PGSZ) (0x330f98 - 164) RS RF ltac:(lia)).
-      pose proof (rimage_clear_of_ranges_free stY x (n * PGSZ) (0x330f98 - 161) RS RF ltac:(lia)). unfold PGSZ in *. lia. }
-    assert (MI4 : mem_inv bgusegs m3) by (apply (mem_inv_unmaps bgusegs m2' x (n * PGSZ) Hx1 Hn1 Hxn); exact MI3).
-    assert (MR2' : rmrep stY m2').
-    { eapply rmrep_transport_unowned; [exact MR2| exact MU3| exact WM3|].
-      intros lo' hi' y [E|[]] Hy; inversion E; subst lo' hi'; intros RFt; destruct (rrepfoot_low stY y WFX RFt); unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia. }
-    assert (MR3 : rmrep stY m3).
-    { eapply rmrep_transport_agree'; [exact MR2'|]. intros y Hy HF. unfold m3. apply (unmaps_outside m2' x (n * PGSZ) Hx1 Hn1 Hxn).
-      rewrite wa_unsigned by lia. pose proof (rrepfoot_clear stY m2' x (n * PGSZ) y MR2' RF HF). lia. }
-    assert (MRn : rmrep st1 m3).
-    { unfold st1. apply (RA2.rmrep_new_region stY m3 m3 x (n * PGSZ) RKMeta);
-        first [ exact MR3
-              | eapply ptrs_in_mono; [| exact PTR]; intros q Hq; cbn in Hq; intros ->; unfold rid in Hq; lia
-              | apply (ami_fresh _ _ AI); unfold rid; lia
-              | unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; rewrite LAL; exact XC
-              | rewrite LAL; exact RF
-              | intros; reflexivity
-              | intros; discriminate
-              | unfold PGSZ in *; lia ]. }
-    assert (M23 : magree (rFP stY) m2 m3).
-    { intros y Hy Hc. unfold m3. rewrite (unmaps_outside m2' x (n * PGSZ) Hx1 Hn1 Hxn).
-      - apply MU3. rewrite wa_unsigned by lia. cbn. split; [| exact I]. intros X. apply Hc. left. left. lia.
-      - rewrite wa_unsigned by lia. destruct (Z.lt_ge_cases y x); [lia|]. destruct (Z.lt_ge_cases y (x + n * PGSZ)); [| lia].
-        exfalso. apply Hc. right. eapply (rfresh_of_ranges_free stY x (n * PGSZ)); [exact RGY| exact (ami_reserved _ _ AI)| exact RF| unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; exact XC| lia]. }
-    assert (AG3 : magree (rFP stY) m m3) by (eapply magree_trans; [exact AG2| exact M23| intros a X; exact X| intros a X; exact X]).
-    assert (AUX3 : rauxv_ok m3 (bv_unsigned sp)) by (eapply rauxv_ok_magree; [exact AUX2| exact M23| intros a X; exact (rFP_below stY a WFX X)]).
-    clearbody m3. clear MU3 WM3 MR2 MR2' MI3 ERR3.
-
+    destruct (mmap_answer_ok (live_ranges stY) len x) eqn:answerOk; cbv beta iota delta [negb].
+    2: { unfold bad_answer. apply rimplT_undef. }
+    assert (freeX : ranges_free (live_ranges stY) x len = true).
+    { unfold mmap_answer_ok in answerOk. rewrite roundLen in answerOk.
+      apply orb_true_iff in answerOk. destruct answerOk as [errForm | fine].
+      - exfalso. unfold is_errno_form, TWO64 in errForm. apply andb_true_iff in errForm. destruct errForm as [tooBig _].
+        apply Z.leb_le in tooBig. lia.
+      - apply andb_true_iff in fine. exact (proj2 fine). }
+    assert (answerErr : is_err x = false) by (unfold is_err, TWO64; apply Z.ltb_ge; lia).
+    rewrite answerErr. cbv beta iota.
+    destruct (new_region RKMeta x len stY) as [st1 rid] eqn:newEq. cbv beta iota.
+    assert (st1Eq : (new_region RKMeta x len stY).1 = st1) by (rewrite newEq; reflexivity).
+    assert (ridEq : rid = s_next_rid stY) by (unfold new_region in newEq; injection newEq as _ <-; reflexivity).
+    subst rid.
+    pose (rN := {| r_kind := RKMeta; r_base := x; r_len := len |}).
+    pose proof (rAMI_new_region st stY RKMeta x len amiY ltac:(discriminate) ltac:(lia)) as (ami1 & lookupNew & concOld & concNew).
+    rewrite st1Eq in ami1, lookupNew, concOld, concNew.
+    assert (lookupOld : forall q rq, s_regions stY !! q = Some rq -> s_regions st1 !! q = Some rq).
+    { intros q rq found. rewrite <- st1Eq. rewrite rnr_lookup_old; [exact found|].
+      intros same. subst q. destruct (ami_fresh _ _ amiY (s_next_rid stY) (N.le_refl _)) as [noReg _].
+      rewrite noReg in found. discriminate. }
+    pose proof (u64_range tp) as tpRange.
+    assert (clearX : forall a, 65536 <= a < 3485696 -> ~ (x <= a < x + len))
+      by (intros a imageA; exact (rimage_clear_of_ranges_free stY x len a (proj1 wfY) freeX imageA)).
+    assert (avoid2 : ivs_avoid [(bv_unsigned sp + -64 - 80, bv_unsigned sp + -64)] (rrepfoot stY)).
+    { intros l h a inW range foot. destruct (rrepfoot_low stY a wfY foot) as [below _].
+      destruct inW as [hit|[]]; injection hit as <- <-. unfold RAM_STACK in LOLE. lia. }
+    pose proof (rmrep_transport_unowned stY mX m2 _ repY munch2 mono2 avoid2) as rep2.
+    assert (cover2 : ivs_covered (rFP stY) [(bv_unsigned sp + -64 - 80, bv_unsigned sp + -64)]).
+    { cbn [ivs_covered]. refine (conj _ I). intros a range. left. left. unfold RAM_STACK in LOLE. lia. }
+    pose proof (magree_of_munch _ _ mX m2 munch2 cover2) as agree2.
+    assert (frame2 : rw_cells bgusegs m2 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
+    { apply (rrw_cells_magree (fun a => ~ outside [(bv_unsigned sp + -64 - 80, bv_unsigned sp + -64)] a) mX m2 _ _ frameY).
+      - apply (magree_of_munch _ _ mX m2 munch2). cbn [ivs_covered outside].
+        repeat split; intros y range away; tauto.
+      - intros a range inW. apply inW. cbn [outside].
+        change (Z.of_nat (cells_size (ram_frame junk s4 s3 s2 s1 s0 ra))) with 64 in range. lia. }
+    assert (rawSpec : forall a, 0 <= a < 2 ^ 64 -> a < x \/ x + len <= a -> F_mm_syscalls.mmap_raw true x len m2 (wa a) = m2 (wa a)).
+    { intros a aRange away. unfold F_mm_syscalls.mmap_raw. rewrite mmap_len_round_up, roundLen.
+      apply unmaps_outside; [lia | lia | lia |]. unfold wa. rewrite unsigned_lit by lia. exact away. }
+    assert (repRaw : rmrep st1 (F_mm_syscalls.mmap_raw true x len m2)).
+    { rewrite <- st1Eq. apply (rmrep_new_region stY m2); try assumption.
+      - apply (ptrs_in_mono (fun q => (q < s_next_rid stY)%N) _ stY); [|exact ptrsY]. intros q below same. subst q. lia.
+      - exact (proj2 (ami_fresh _ _ amiY (s_next_rid stY) (N.le_refl _))).
+      - lia.
+      - rewrite roundLen. lia.
+      - rewrite roundLen. exact freeX.
+      - intros a aRange away. rewrite roundLen in away. exact (rawSpec a aRange away).
+      - discriminate. }
+    assert (agreeRaw : magree (rFP stY) m2 (F_mm_syscalls.mmap_raw true x len m2)).
+    { intros a aRange notFP. apply rawSpec; [exact aRange|].
+      destruct (Z.lt_ge_cases a x) as [lowA | highA]; [left; exact lowA|].
+      destruct (Z.lt_ge_cases a (x + len)) as [inA | pastA]; [|right; exact pastA].
+      exfalso. apply notFP. right. exact (rfresh_of_ranges_free stY x len a regsY resvY freeX ltac:(lia) ltac:(lia)). }
+    assert (frameRaw : rw_cells bgusegs (F_mm_syscalls.mmap_raw true x len m2) (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
+    { unfold F_mm_syscalls.mmap_raw. rewrite mmap_len_round_up, roundLen.
+      apply rw_cells_unmaps_other; [lia | lia | lia | exact frame2 |].
+      change (Z.of_nat (cells_size (ram_frame junk s4 s3 s2 s1 s0 ra))) with 64. right. unfold RAM_STACK in LOLE. lia. }
+    assert (errnoRaw : rw_cells bgusegs (F_mm_syscalls.mmap_raw true x len m2) (bv_unsigned tp + -164) [C4 e]).
+    { unfold F_mm_syscalls.mmap_raw. rewrite mmap_len_round_up, roundLen.
+      apply rw_cells_unmaps_other; [lia | lia | lia | exact errno2 |].
+      change (Z.of_nat (cells_size [C4 e])) with 4. rewrite tpVal.
+      destruct (Z.lt_ge_cases x 3346164) as [lowX | highX].
+      - right. destruct (Z.le_gt_cases (x + len) 3346164) as [fits | crosses]; [lia|].
+        exfalso. apply (clearX 3346164); lia.
+      - left. destruct (Z.le_gt_cases 3346168 x) as [above | inside]; [lia|].
+        exfalso. apply (clearX x); lia. }
+    rewrite ret_pc_even by first [lia | reflexivity].
     eapply rimplT_evt.
-    { eapply (ram_mm_ok sp gp tp u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 s5 s6 s7 s8 s9 s10 s11 u10 u11 u12 u13 _ ra s0 s1 s2 s3 s4 F fc m3 m3 junk lo x n st1 st1 rid (mkRegion RKMeta x (n * PGSZ)));
-        first [exact MRn | exact MI4 | intros a X; exact X | exact RG1 | reflexivity | exact XA | exact X0 | apply rpres_except_refl | apply wmono_refl | exact FR3 | exact ST3 | exact LO | idtac];
-        try (unfold PGSZ, OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia).
-      change (ctx st1) with (ctx stY). lia. }
-    intros ms4 (m4 & -> & PE4 & WM4 & MI5 & FR4 & ST4 & MR4).
-    pose proof MRn as (WFn & _).
-    assert (RG2 : forall q, (s_regions st2) !! q = if decide (q = rid) then Some (mkRegion RKMeta x (n * PGSZ)) else (s_regions stY) !! q).
-    { intros q. change (s_regions st2) with (<[rid := mkRegion RKMeta x (n * PGSZ)]> (s_regions stY)).
-      destruct (decide (q = rid)) as [->|NE]; [rewrite lookup_insert_eq| rewrite lookup_insert_ne by congruence]; reflexivity. }
-    destruct (ami_fresh _ _ AI rid ltac:(unfold rid; lia)) as [FRr FRs].
-    replace (Z_to_bv 64 (x + 4096)) with (Z_to_bv 64 (conc st2 (rid, 4096))) by (change (conc st2 (rid, 4096)) with (conc st1 (rid, 4096)); rewrite CN1; reflexivity).
-    eapply (rfinish_path st2 (rid, 4096) (mkRegion RKMeta x (n * PGSZ)) m4 sX junk e).
-    all: try exact INI.
-    + unfold st2. apply (rAMI_ctx st st1 _ AI1).
-      * cbn. repeat split; reflexivity.
-      * cbn. exact (ami_secretr _ _ AI1).
-      * right. exists (rid, PGSZ), (mkRegion RKMeta x (n * PGSZ)). cbn [fst]. split; [reflexivity|]. split; [exact RG1| cbn; discriminate].
-      * left. reflexivity.
+    { apply ram_mm_ok with (m0 := F_mm_syscalls.mmap_raw true x len m2) (st0 := stY) (st := st1) (rid := s_next_rid stY)
+        (r := rN) (junk := junk) (lo := lo) (raw := ra) (s0o := s0) (s1o := s1) (s2o := s2) (s3o := s3) (s4o := s4); try assumption.
+      - unfold F_mm_syscalls.mmap_raw. rewrite mmap_len_round_up, roundLen. apply mem_inv_unmaps; [lia | lia | lia | exact inv2].
+      - intros a [stackA | [ctxA | (q & rq & foundQ & kindQ & liveQ)]].
+        + left. exact stackA.
+        + right. left. exact ctxA.
+        + right. right. exists q, rq. exact (conj (lookupOld q rq foundQ) (conj kindQ liveQ)).
+      - reflexivity.
+      - lia.
+      - fold n. rewrite nVal. lia.
+      - replace (ctx st1) with (ctx stY) by (rewrite <- st1Eq; reflexivity). lia.
+      - apply rpres_except_refl.
+      - intros y keep. exact keep.
+      - unfold RAM_STACK in LOLE. lia. }
+    intros ms2 (m3 & -> & pres3 & _ & inv3 & frame3 & stk3 & rep3).
+    pose (st2 := mm_ok_st st1 (s_next_rid stY) n).
+    assert (regs2 : s_regions st2 = s_regions st1) by reflexivity.
+    assert (conc2 : conc st2 (s_next_rid stY, 4096) = x + 4096) by exact (concNew 4096).
+    assert (grow2 : forall q rq, s_regions stY !! q = Some rq ->
+                    exists rq', s_regions st2 !! q = Some rq' /\ r_kind rq' = r_kind rq /\ r_base rq' = r_base rq /\ r_len rq <= r_len rq').
+    { intros q rq found. exists rq. rewrite regs2. split; [exact (lookupOld q rq found)|].
+      split; [reflexivity|]. split; [reflexivity|]. lia. }
+    pose proof (proj1 rep3) as wf2.
+    assert (fp1to2 : forall a, ram_fp st1 lo (bv_unsigned sp) a -> rFP st2 a)
+      by (intros a inFP; exact (rFP_same st1 st2 a regs2 (rFP_am st1 a inFP))).
+    assert (agreeM3 : magree (rFP st2) m m3).
+    { intros a aRange notFP.
+      assert (notFPY : ~ rFP stY a) by (intros inY; apply notFP; exact (rFP_mono stY st2 a grow2 inY)).
+      rewrite (rmagree_of_pres _ _ _ pres3 a aRange (fun inFP => notFP (fp1to2 a inFP))).
+      rewrite (agreeRaw a aRange notFPY), (agree2 a aRange notFPY).
+      exact (agrY a aRange notFPY). }
+    assert (agreeX3 : magree (rFP st2) mX m3).
+    { intros a aRange notFP.
+      assert (notFPY : ~ rFP stY a) by (intros inY; apply notFP; exact (rFP_mono stY st2 a grow2 inY)).
+      rewrite (rmagree_of_pres _ _ _ pres3 a aRange (fun inFP => notFP (fp1to2 a inFP))).
+      rewrite (agreeRaw a aRange notFPY), (agree2 a aRange notFPY). reflexivity. }
+    assert (ami2 : AMI st st2).
+    { apply rAMI_ctx; [exact ami1 | | | |].
+      - repeat split; reflexivity.
+      - exact (ami_secretr _ _ ami1).
+      - right. exists (s_next_rid stY, 4096), rN. split; [reflexivity|]. split; [exact lookupNew|]. discriminate.
+      - left. reflexivity. }
+    assert (areas2 : s_areas st2 = s_areas stY) by (unfold st2; rewrite <- st1Eq; reflexivity).
+    assert (areaFresh : forall a ar, s_areas stY !! a = Some ar -> (a.1 < s_next_rid stY)%N).
+    { intros a ar found. pose proof ptrsY as (_ & _ & _ & _ & _ & _ & _ & _ & areaP & _). exact (proj1 (areaP a ar found)). }
+    replace (Z_to_bv 64 (x + 4096)) with (Z_to_bv 64 (conc st2 (s_next_rid stY, 4096))) by (rewrite conc2; reflexivity).
+    apply (rfinish_path st2 (s_next_rid stY, 4096) rN m3 sX junk e); try assumption.
+    + change (c_init_done (ctx st1) <> 0). replace (ctx st1) with (ctx stY) by (rewrite <- st1Eq; reflexivity). exact initY.
     + reflexivity.
-    + cbn [fst]. rewrite RG2. destruct (decide (rid = rid)); [reflexivity| congruence].
-    + cbn. discriminate.
-    + cbn. lia.
-    + cbn [snd r_len]. rewrite LAL. unfold PGSZ. lia.
-    + unfold pgal. reflexivity.
-    + cbn. lia.
-    + change (s_areas st2) with (s_areas stY). lazymatch goal with |- ?t = None => destruct t as [ar|] eqn:EA end; [| reflexivity].
-      exfalso. destruct (WA _ _ EA) as (rr & Hrr & _). cbn [fst] in Hrr. rewrite FRr in Hrr. discriminate.
-    + intros j Hj. change (s_metas st2) with (s_metas stY). lazymatch goal with |- ?t = None => destruct t as [mr|] eqn:EM end; [| reflexivity].
-      exfalso. destruct (MK _ _ EM) as (a & ar & kk & Ha & Hk & Eq). destruct (WA _ _ Ha) as (rr & Hrr & _).
-      assert (Ef : fst a = rid) by (unfold aadd in Eq; cbn in Eq; inversion Eq; reflexivity). rewrite Ef, FRr in Hrr. discriminate.
-    + intros tl Htl. change (s_areas st2) with (s_areas stY). apply TL. exact Htl.
-    + cbn. lia.
-    + exact MR4.
-    + exact MI5.
-    + exact FR4.
-    + exact ST4.
-    + eapply rrw_cells_magree; [exact ERR4| apply rmagree_of_pres; exact PE4|]. cbn. intros a Ha X. apply (rerrno_not_amfp st1 a WFn); [exact X| lia].
-    + eapply rauxv_ok_magree; [exact AUX3| apply rmagree_of_pres; exact PE4| intros a X; exact (rFP_below st1 a WFn (rFP_am st1 a X))].
-    + eapply magree_trans; [exact AG3| apply rmagree_of_pres; exact PE4| |].
-      * intros a X. eapply rFP_mono; [| exact X]. intros q rq Hq. exists rq. rewrite RG2.
-        destruct (decide (q = rid)) as [->|NE]; [rewrite FRr in Hq; discriminate|]. repeat split; auto; lia.
-      * intros a X. eapply rFP_same; [| exact (rFP_am st1 a X)]. reflexivity.
-    + unfold brk_link_ps in *. change (c_brk (ctx st2)) with (c_brk (ctx stY)).
-      destruct PTR as (_ & _ & _ & _ & _ & _ & PB & _).
-      destruct (c_brk (ctx stY)) as [| |rb ob]; auto. change (conc st2 (rb, ob)) with (conc st1 (rb, ob)). rewrite CQ1; [exact BLX|]. cbn [fst]. unfold rid. lia.
-    + exact P1.
-    + exact P2.
-    + exact P3.
+    + discriminate.
+    + cbn [snd]. lia.
+    + unfold rN. cbn [snd r_len]. rewrite roundLen. lia.
+    + reflexivity.
+    + unfold rN. cbn [lr_lo r_kind r_base snd]. lia.
+    + rewrite areas2. match goal with |- ?found = None => destruct found as [ar|] eqn:foundA; [|reflexivity] end.
+      pose proof (areaFresh _ _ foundA) as below. cbn [fst] in below. lia.
+    + intros j slotJ. replace (s_metas st2) with (s_metas stY) by (unfold st2; rewrite <- st1Eq; reflexivity).
+      match goal with |- ?found = None => destruct found as [mr|] eqn:foundM; [|reflexivity] end.
+      destruct (keysY _ _ foundM) as (a & ar & kk & foundA & _ & sameSlot).
+      pose proof (areaFresh _ _ foundA) as below. apply (f_equal fst) in sameSlot. cbn [fst aadd] in sameSlot. rewrite <- sameSlot in below. lia.
+    + intros tl tailIs. rewrite areas2. apply tailY. rewrite <- tailIs. unfold st2. rewrite <- st1Eq. reflexivity.
+    + change (1 <= n - 1 < 2 ^ 64). rewrite nVal. lia.
+    + apply (rpres_except_rw_cells _ _ _ _ _ pres3 errnoRaw).
+      intros a errnoCell inFP. change (Z.of_nat (cells_size [C4 e])) with 4 in errnoCell.
+      exact (rerrno_not_amfp st1 a (proj1 repRaw) inFP errnoCell).
+    + exact (rauxv_ok_magree _ mX m3 _ auxY agreeX3 (fun a inFP => rFP_below st2 a wf2 inFP)).
+    + revert linkY. unfold brk_link_ps. replace (c_brk (ctx st2)) with (c_brk (ctx stY)) by (unfold st2; rewrite <- st1Eq; reflexivity).
+      pose proof ptrsY as (_ & _ & _ & _ & _ & _ & brkP & _).
+      destruct (c_brk (ctx stY)) as [| | bid boff]; try tauto.
+      intros linkOld. rewrite linkOld. unfold st2, conc, get_region. rewrite <- st1Eq.
+      cbn [fst]. rewrite rnr_lookup_old; [reflexivity|]. intros same. rewrite same in brkP. lia.
 Qed.
 
 Lemma rimage_range_clear stY x L : s_reserved stY = ref_reserved -> ranges_free (live_ranges stY) x L = true -> 0 < L ->
@@ -552,167 +639,184 @@ Lemma rbrk_live_path : forall (stI : mstate) (brid : N) (boff : Z) (m1 : mem) (j
                am_after_brk st2 false k bail)) s Q
         (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) s1x a0 a1 a2 a3 a4 a5 a6 a7
                  (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x2b17e8) fc None m1 (seg_rom bgusegs)).
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros until t6. intros AMPI AI INI RGI BLI ACNT BRK PTRI MR1 MI1 FR1 ST1 ERR1 AUX1 AG1.
-  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR. unfold RAM_STACK in LOLE.
-  pose proof LO as LO'. unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in LO'; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. pose proof rETP as rETP'. pose proof TP as TPv.
-  pose proof MR1 as (WF1 & (HX1 & HX2 & HX3 & HX4 & HX5 & HX6) & _). pose proof WF1 as (RS & WR & DJ & WA & WG).
-  pose proof (amp_brk stI AMPI) as HB. rewrite BRK in HB. destruct HB as (r & Hr & Kr & Lr & OAL & O4 & FRA & UNQ).
-  pose proof (conc_region' stI (brid, boff) r Hr) as OLD. cbn [snd] in OLD.
-  destruct (WR _ _ Hr) as (RB0 & RBAL & RL0 & RBC & RFr). unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in RBC; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. rewrite Lr in RBC.
-  assert (RUB : round_up_pg boff = boff) by (apply round_up_pg_aligned; unfold PGSZ in OAL; exact OAL). rewrite RUB in RBC.
-  set (old := conc stI (brid, boff)) in *.
-  assert (TLI : forall tl, c_meta_area_tail (ctx stI) = Some tl -> is_Some ((s_areas stI) !! tl)) by (exact (amp_tail stI AMPI)).
-  assert (MKI : forall q mr, (s_metas stI) !! q = Some mr -> meta_slot stI q) by (exact (amp_mkeys stI AMPI)).
-  unfold brk_link_ps in BLI. rewrite BRK in BLI. fold old in BLI.
-  cbv zeta.
-
+Proof using AMP TK LO LOLE ERR TP KH.
+  intros stI brid boff m1 junk e1 x1 t0 t1 t2 s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x t3 t4 t5 t6.
+  intros preI amiI initI regsI linkI countI brkI ptrsI repI invI frameI stkI errI auxI agreeI.
+  pose proof (proj1 repI) as wfI.
+  pose proof (amp_brk stI preI) as liveI. rewrite brkI in liveI.
+  destruct liveI as (r & regI & kindI & lenI & alignI & lowI & freshI & onlyI).
+  unfold PGSZ in alignI, lowI.
+  assert (kindNG : r_kind r <> RKGroup) by (rewrite kindI; discriminate).
+  destruct (proj1 (proj2 wfI) _ _ regI) as (baseLo & baseAl & _ & topHi & _).
+  rewrite lenI, (round_up_pg_aligned boff alignI) in topHi.
+  assert (concAt : forall d, conc stI (brid, d) = r_base r + d)
+    by (intros d; unfold conc, get_region; cbn [fst snd]; rewrite regI; reflexivity).
+  pose proof (concAt boff) as oldEq.
+  assert (linkOld : ps_brk s = conc stI (brid, boff))
+    by (unfold brk_link_ps in linkI; rewrite brkI in linkI; exact linkI).
+  pose proof (u64_range sp) as spRange.
+  assert (tpVal : bv_unsigned tp = 3346328) by (rewrite TP; apply unsigned_lit; lia).
+  unfold RAM_STACK in LOLE.
+  cbv zeta. unfold PGSZ.
   eapply rimplT_evt.
-  { eapply (ram_disp_live _ gp tp t0 t1 t2 s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc m1 stI brid boff); [exact MR1| exact ACNT| exact BRK| fold old; lia| fold old; unfold PGSZ; lia]. }
-  intros ms2 ->. fold old.
-  eapply (rimplT_brk o (old + PGSZ) _ s).
-  { unfold PGSZ; lia. }
-  { rewrite BLI. unfold PGSZ.
-    exact (ram_brk_node_at x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) (Z_to_bv 64 (old + 4096)) (Z_to_bv 64 (-1)) a2 a3 a4 a5 a6 (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK)
-             s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m1 0x2b180c (or_introl eq_refl) old (old + 4096) ltac:(lia)). }
-  intros a ms3 [-> HCB]. rewrite BLI. unfold brk_res, brk_mem, rbrk_regs.
-  destruct a.
-  -
-    unfold brk_answer_ok. rewrite Z.eqb_refl. cbn [orb negb].
-    destruct (brk_pages_ok stI old PGSZ) eqn:BPO; cbn [negb]; [| apply rimplT_undef].
-    unfold brk_pages_ok in BPO. apply andb_prop in BPO. destruct BPO as [BPO RF]. apply andb_prop in BPO. destruct BPO as [_ OC]. apply Z.leb_le in OC.
-    unfold PGSZ, OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in OC; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. unfold PGSZ in RF.
-    assert (OALD : old mod 4096 = 0) by (rewrite OLD; rewrite Z.add_mod, RBAL by lia; unfold PGSZ in OAL; rewrite OAL; reflexivity).
-    rewrite (brk_new_pages_aligned old 4096) by (first [lia | exact OALD | reflexivity]).
-    rewrite (rgr_eq stI brid r boff Hr).
-    set (stG := set_regions _ stI).
-    unfold PGSZ. rewrite (am_after_brk_false_eq stG _ (brid, boff) k bail) by (cbn; first [lia | reflexivity | unfold PGSZ in OAL; exact OAL]).
-    rewrite am_carve_took, carve_st_brk_irrel.
-    set (stX := upd_ctx _ stG).
-
-    assert (Ho1 : 0 <= old < 2^64) by lia. assert (Hn1 : 0 <= 4096 < 2^64) by lia. assert (Hon : old + 4096 <= 2^64) by lia.
-    pose proof (rimage_range_clear stI old 4096 RS RF ltac:(lia)) as IMG.
-    set (m2 := apply_zeros m1 [(wa old, Z_to_bv 64 4096)]).
-    unfold rctx_head_cells in HX1. rewrite ACNT in HX1. unfold ctx_tail_cells, brk_word in HX6. rewrite BRK in HX6. fold old in HX6.
-    assert (HC2 : rw_cells bgusegs m2 RCTX ltac:(lazymatch type of HX1 with rw_cells _ _ _ ?cs => exact cs end))
-      by (apply (rw_cells_zeros_other bgusegs m1 old 4096 Ho1 Hn1 Hon); [exact HX1| cbn; unfold RCTX; lia]).
-    assert (TC2 : rw_cells bgusegs m2 (RCTX + 912) [C1 (b8 (c_seq (ctx stI))); CB 7 (zeros 7); C8 (wz old)])
-      by (apply (rw_cells_zeros_other bgusegs m1 old 4096 Ho1 Hn1 Hon); [exact HX6| cbn; unfold RCTX; lia]).
-    assert (MI2 : mem_inv bgusegs m2).
-    { apply (mem_inv_zeros bgusegs m1 old 4096 Ho1 Hn1 Hon MI1); [| unfold UTOP; lia]. intros y Hy. apply ref_ro_addr_false. lia. }
-    assert (FR2 : rw_cells bgusegs m2 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra))
-      by (apply (rw_cells_zeros_other bgusegs m1 old 4096 Ho1 Hn1 Hon); [exact FR1| cbn; lia]).
-    assert (ST2 : stk bgusegs m2 lo (bv_unsigned sp + -64)) by (apply (stk_zeros bgusegs m1 old 4096 Ho1 Hn1 Hon); exact ST1).
-    assert (ERR2 : rw_cells bgusegs m2 (errno_addr tp) [C4 e1])
-      by (apply (rw_cells_zeros_other bgusegs m1 old 4096 Ho1 Hn1 Hon); [exact ERR1| cbn; rewrite rETP'; lia]).
-    pose proof (rw_cells_zeros_new bgusegs m1 old 4096 Ho1 Hn1 Hon) as ZN. fold m2 in ZN.
-    assert (MU12 : munch [(old, old + 4096)]%Z m1 m2) by (apply (munch_zeros m1 old 4096 Ho1 Hn1 Hon); [apply munch_refl| cbn; lia]).
-    assert (WM12 : wmono bgusegs m1 m2) by (apply (wmono_zeros bgusegs m1 old 4096 Ho1 Hn1 Hon); apply wmono_refl).
-    assert (MR2 : rmrep stI m2).
-    { eapply rmrep_transport_unowned; [exact MR1| exact MU12| exact WM12|].
-      intros lo' hi' y [E|[]] Hy; inversion E; subst lo' hi'. intros RFt. apply (rrepfoot_clear stI m1 old 4096 y MR1 RF (or_introl RFt)). lia. }
-    assert (M12 : magree (rFP stI) m1 m2).
-    { intros y Hy Hc. unfold m2. apply (zeros_outside m1 old 4096 Ho1 Hn1 Hon). rewrite wa_unsigned by lia.
-      destruct (Z.lt_ge_cases y old); [lia|]. destruct (Z.lt_ge_cases y (old + 4096)); [| lia].
-      exfalso. apply Hc. right. eapply (rfresh_of_ranges_free stI old 4096); [exact RGI| exact (ami_reserved _ _ AI)| exact RF| unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia| lia]. }
-    clearbody m2.
-
+  { apply ram_disp_live with (st := stI) (rid := brid) (off := boff); [exact repI | exact countI | exact brkI | lia | lia]. }
+  intros ms0 ->.
+  eapply rimplT_brk; [lia | apply ram_brk_node_at; [left; reflexivity | lia] |].
+  intros [|] ms1 (-> & capOk); cbv beta iota in capOk |- *; rewrite linkOld.
+  - unfold brk_answer_ok. rewrite Z.eqb_refl. cbn [orb negb].
+    destruct (brk_pages_ok stI (conc stI (brid, boff)) 4096) eqn:pagesOk; cbn [negb];
+      [| unfold bad_answer; apply rimplT_undef].
+    unfold brk_pages_ok in pagesOk. apply andb_true_iff in pagesOk as (_ & freeOld).
+    pose proof (rimage_range_clear stI _ 4096 (proj1 wfI) freeOld ltac:(lia)) as pageClear.
+    assert (pageRange : 0 <= conc stI (brid, boff) < 2 ^ 64) by lia.
+    assert (pageEnd : conc stI (brid, boff) + 4096 <= 2 ^ 64) by lia.
+    assert (oldAl : conc stI (brid, boff) mod 4096 = 0)
+      by (rewrite oldEq, Z.add_mod, baseAl, alignI by lia; reflexivity).
+    set (mB := apply_zeros m1 [(wa (conc stI (brid, boff)), Z_to_bv 64 4096)]).
+    assert (memB : brk_mem m1 (conc stI (brid, boff)) (conc stI (brid, boff) + 4096) BrkGrown = mB).
+    { unfold brk_mem. rewrite brk_new_pages_aligned by first [exact oldAl | reflexivity | lia]. reflexivity. }
+    rewrite memB. cbn [brk_res].
+    assert (munchB : munch [(conc stI (brid, boff), conc stI (brid, boff) + 4096)] m1 mB).
+    { intros x outPage. cbn [outside] in outPage. pose proof (u64_range x) as xRange.
+      apply zeros_outside; lia. }
+    assert (monoB : wmono bgusegs m1 mB)
+      by exact (wview_zeros_mono bgusegs m1 _ 4096 pageRange ltac:(lia) pageEnd).
+    assert (invB : mem_inv bgusegs mB).
+    { apply mem_inv_zeros; [exact pageRange | lia | exact pageEnd | exact invI | | unfold UTOP; lia].
+      intros x inPage. apply ref_ro_addr_false. lia. }
+    assert (avoidB : ivs_avoid [(conc stI (brid, boff), conc stI (brid, boff) + 4096)] (rrepfoot stI)).
+    { intros l h a inW range foot. destruct inW as [hit|[]]. injection hit as <- <-.
+      exact (rrepfoot_clear stI m1 _ 4096 a repI freeOld (or_introl foot) range). }
+    pose proof (rmrep_transport_unowned stI m1 mB _ repI munchB monoB avoidB) as repB.
+    pose proof repB as (_ & (headB & _ & _ & _ & _ & tailB) & _).
+    assert (presB : rpres_except (fun a => conc stI (brid, boff) <= a < conc stI (brid, boff) + 4096) m1 mB).
+    { apply (rpres_except_of_munch_cov _ _ m1 mB munchB monoB). cbn [ivs_covered].
+      split; [intros x inPage; exact inPage | exact I]. }
+    rewrite (am_after_brk_false_eq _ _ (brid, boff) k bail) by first [reflexivity | exact alignI | cbn; lia].
+    rewrite am_carve_took, carve_st_brk_irrel, (rgr_eq stI brid r boff regI).
+    set (grown := {| r_kind := r_kind r; r_base := r_base r; r_len := boff + 4096 |}).
+    set (stW := set_regions (<[brid:=grown]> (s_regions stI)) stI).
+    set (stC := upd_ctx (fun c : mctx => set_avail_meta_area_count 1 (set_brk (BrkLive brid (boff + 4096)) c)) stW).
     eapply rimplT_evt.
-    { eapply (ram_bl_ok _ gp tp t0 t1 t2 (Z_to_bv 64 (-1)) a2 a3 a4 a5 a6 _ s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m2 (old + 4096)); [lia | | | exact MI2].
-      - unfold pw in HC2. cbn [oconc] in HC2. exact HC2.
-      - unfold wz in TC2. exact TC2. }
-    intros ms4 (m3 & -> & MU3 & WM3 & MI3 & HC3 & TC3). replace (old + 4096 - 4096) with old by lia.
-
-    pose proof (rAMI_grow st stI brid r boff AI Hr ltac:(rewrite Kr; discriminate) Lr) as (AIG & CQG & RG'). fold stG in AIG, CQG, RG'.
-    assert (MRG : rmrep stG m2).
-    { unfold stG. apply (rmrep_grow_region stI m2 brid r boff MR2 Hr);
-        first [ rewrite Kr; discriminate
-              | exact Lr
-              | unfold PGSZ in OAL; exact OAL
-              | rewrite <- OLD; exact RF
-              | exact (amp_rpos stI AMPI)
-              | intros q rq Hq NE KB; apply NE; exact (UNQ q rq Hq KB)
-              | unfold PGSZ, OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia ]. }
-    assert (PWX : forall q, pw stX q = pw stI q) by (intros [q|]; unfold pw, oconc; [change (conc stX q) with (conc stG q); rewrite CQG|]; reflexivity).
-    assert (PWG : forall q, pw stG q = pw stI q) by (intros [q|]; unfold pw, oconc; [rewrite CQG|]; reflexivity).
-    assert (CQX : forall q, conc stX q = conc stI q) by (intros q; change (conc stX q) with (conc stG q); apply CQG).
-    assert (MRX : rmrep stX m3).
-    { eapply (rmrep_ctx_frameW stG stX m2 m3 _ MRG MU3 WM3); try reflexivity.
-      - intros lo' hi' [E|[E|[]]]; inversion E; subst; unfold RCTX; lia.
-      - left. unfold rctx_head_cells. rewrite !PWX.
-        cbn [ctx stX stG upd_ctx s_ctx set_regions set_avail_meta_area_count set_brk c_secret c_init_done c_mmap_counter c_free_meta_head c_avail_meta
-              c_avail_meta_count c_avail_meta_area_count c_meta_alloc_shift c_meta_area_head c_meta_area_tail c_avail_meta_areas].
-        change (s_ctx stI) with (ctx stI). unfold wz at 5. exact HC3.
-      - right. split; [| intros lo' hi' [E|[E|[]]]; inversion E; subst; unfold RCTX; lia].
-        unfold actives. apply map_ext. intros i. rewrite PWX, PWG. reflexivity.
-      - right. split; [reflexivity| intros lo' hi' [E|[E|[]]]; inversion E; subst; unfold RCTX; lia].
-      - right. split; [reflexivity| intros lo' hi' [E|[E|[]]]; inversion E; subst; unfold RCTX; lia].
-      - right. split; [reflexivity| intros lo' hi' [E|[E|[]]]; inversion E; subst; unfold RCTX; lia].
-      - left. unfold ctx_tail_cells, brk_word. cbn [ctx stX upd_ctx s_ctx set_avail_meta_area_count set_brk c_brk c_seq].
-        change (conc stX (brid, boff + 4096)) with (conc stG (brid, boff + 4096)).
-        rewrite CQG. rewrite (conc_region' stI (brid, boff + 4096) r Hr). cbn [snd]. unfold wz.
-        replace (r_base r + (boff + 4096)) with (old + 4096) by lia. change (s_ctx stI) with (ctx stI). exact TC3. }
-
-    assert (M23 : magree (rFP stX) m2 m3).
-    { eapply magree_of_munch; [exact MU3|]. cbn. unfold RCTX. split; [| split; [| exact I]]; intros y Hy; left; right; right; left; unfold RCTX; lia. }
-    assert (ZN3 : rw_cells bgusegs m3 old [CB (Z.to_nat 4096) (repeat (Z_to_bv 8 0) (Z.to_nat 4096))]).
-    { eapply rw_cells_transport; [exact ZN| exact MU3| exact WM3|]. cbn. unfold RCTX. lia. }
-    destruct ZN3 as [[_ ZB] ZW]. cbn [cells_bytes cbytes cells_size csize Nat.add app] in ZB, ZW. rewrite app_nil_r in ZB.
-    assert (FR3 : rw_cells bgusegs m3 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)) by (eapply rw_cells_transport; [exact FR2| exact MU3| exact WM3|]; cbn; unfold RCTX; lia).
-    assert (ST3 : stk bgusegs m3 lo (bv_unsigned sp + -64)) by (eapply stk_transport_disjoint; [exact ST2| exact MU3| exact WM3|]; cbn; unfold RCTX; lia).
-    assert (ERR3 : rw_cells bgusegs m3 (errno_addr tp) [C4 e1]) by (eapply rw_cells_transport; [exact ERR2| exact MU3| exact WM3|]; cbn; rewrite rETP'; unfold RCTX; lia).
-    assert (AGX1 : forall y, rFP stI y -> rFP stX y).
-    { intros y X. eapply rFP_mono; [| exact X]. intros q rq Hq. destruct (ami_regions _ _ AI q rq) as (r0 & H0 & _); [rewrite <- RGI; exact Hq|].
-      destruct (decide (q = brid)) as [->|NE].
-      - eexists. split; [exact RG'|]. rewrite Hr in Hq. inversion Hq; subst. cbn. repeat split; lia.
-      - exists rq. change (s_regions stX) with (<[brid := mkRegion (r_kind r) (r_base r) (boff + 4096)]> (s_regions stI)). rewrite lookup_insert_ne by congruence. repeat split; auto; lia. }
-    assert (AG3 : magree (rFP stX) m m3).
-    { eapply magree_trans; [| exact M23| exact AGX1| intros y X; exact X]. eapply magree_trans; [exact AG1| exact M12| intros y X; exact X| intros y X; exact X]. }
-    assert (AUX3 : rauxv_ok m3 (bv_unsigned sp)).
-    { eapply rauxv_ok_magree; [exact AUX1| |intros y X; exact (rFP_below stX y (proj1 MRX) X)].
-      eapply magree_trans; [exact M12| exact M23| exact AGX1| intros y X; exact X]. }
-    replace (Z_to_bv 64 old) with (Z_to_bv 64 (conc stX (brid, boff))) by (change (conc stX (brid, boff)) with (conc stG (brid, boff)); rewrite CQG; reflexivity).
-    eapply (rcarve_K stX (brid, boff) (mkRegion (r_kind r) (r_base r) (boff + 4096)) m3 _ junk e1);
-      first [exact RG' | exact MRX | exact MI3 | exact FR3 | exact ST3 | exact ERR3 | exact AUX3 | exact AG3 | reflexivity | exact INI | idtac].
-    + unfold stX. apply (rAMI_ctx st stG _ AIG).
-      * cbn. repeat split; reflexivity.
-      * cbn. exact (ami_secretr _ _ AIG).
-      * left. reflexivity.
-      * right. right. exists brid, (boff + 4096), (mkRegion (r_kind r) (r_base r) (boff + 4096)). split; [reflexivity|]. split; [exact RG'|]. cbn. rewrite Kr. discriminate.
-    + cbn. rewrite Kr. discriminate.
-    + cbn. lia.
-    + cbn [snd r_len]. rewrite round_up_pg_aligned; [lia|]. rewrite Z.add_mod, OAL by lia. reflexivity.
-    + unfold pgal. unfold PGSZ in OAL. exact OAL.
-    + cbn [snd r_base]. unfold lr_lo. cbn [r_kind r_base]. rewrite Kr. unfold PGSZ in O4. lia.
-    + change (s_areas stX) with (s_areas stI). apply (proj1 (FRA (brid, boff) eq_refl ltac:(cbn; lia))).
-    + intros j Hj. change (s_metas stX) with (s_metas stI). apply (proj2 (FRA (aadd (brid, boff) (AREA_HDR + META_SIZE * j)) eq_refl ltac:(cbn; unfold AREA_HDR, META_SIZE; lia))).
-    + intros tl Htl. change (s_areas stX) with (s_areas stI). apply TLI. exact Htl.
-    + cbn. lia.
-    + change (conc stX (brid, boff)) with (conc stG (brid, boff)). rewrite CQG. fold old. exact ZB.
-    + change (conc stX (brid, boff)) with (conc stG (brid, boff)). rewrite CQG. fold old. exact ZW.
-    + unfold brk_link_ps. cbn [ctx stX upd_ctx s_ctx set_avail_meta_area_count set_brk c_brk ps_brk set_brk_ps].
-      rewrite CQX. rewrite (conc_region' stI (brid, boff + 4096) r Hr). cbn [snd]. unfold PGSZ. lia.
-  -
-    unfold brk_answer_ok. rewrite Z.eqb_refl.
-    replace (old =? old + PGSZ) with false by (symmetry; apply Z.eqb_neq; unfold PGSZ; lia). cbn [orb negb].
+    { eapply ram_bl_ok; [lia | exact headB | exact tailB | exact invB]. }
+    intros ms2 (mX & -> & munchX & monoX & invX & headX & tailX).
+    set (stJ := upd_ctx (fun c : mctx => set_avail_meta_area_count 1 (set_brk (BrkLive brid (boff + 4096)) c)) stI).
+    assert (tailJ : rw_cells bgusegs mX (RCTX + 912) (ctx_tail_cells stJ)).
+    { assert (brkJ : brk_word stJ = conc stI (brid, boff) + 4096)
+        by (change (conc stI (brid, boff + 4096) = conc stI (brid, boff) + 4096); rewrite !concAt; lia).
+      unfold ctx_tail_cells. rewrite brkJ. exact tailX. }
+    assert (repJ : rmrep stJ mX).
+    { apply (rmrep_ctx_frameW stI stJ mB mX _ repB munchX monoX);
+        [reflexivity .. | | left; exact headX | | | | | left; exact tailJ].
+      all: try (right; split; [reflexivity |]).
+      all: intros wLo wHi inW; destruct inW as [hit|[hit|[]]]; injection hit as <- <-; unfold RCTX; lia. }
+    assert (repC : rmrep stC mX).
+    { assert (freeBase : ranges_free (live_ranges stI) (r_base r + boff) 4096 = true) by (rewrite <- oldEq; exact freeOld).
+      exact (rmrep_grow_region stJ mX brid r boff repJ regI kindNG lenI ltac:(lia) alignI freeBase ltac:(lia)
+               (amp_rpos stI preI) (fun q rq lookQ otherQ brkQ => otherQ (onlyI q rq lookQ brkQ))). }
+    assert (presX : rpres_except (fun a => RCTX <= a < RCTX + 928) mB mX).
+    { apply (rpres_except_of_munch_cov _ _ mB mX munchX monoX). cbn [ivs_covered].
+      refine (conj _ (conj _ I)); intros x inW; cbv beta; unfold RCTX in *; lia. }
+    assert (pres1X : rpres_except (fun a => (conc stI (brid, boff) <= a < conc stI (brid, boff) + 4096) \/ (RCTX <= a < RCTX + 928)) m1 mX).
+    { apply (rpres_except_trans _ m1 mB mX).
+      - exact (rpres_except_mono _ _ m1 mB presB (fun a inPage => or_introl inPage)).
+      - exact (rpres_except_mono _ _ mB mX presX (fun a inCtx => or_intror inCtx)). }
+    assert (concC : forall q, conc stC q = conc stI q) by exact (rgr_conc stI brid r boff regI).
+    replace (conc stI (brid, boff) + 4096 - 4096) with (conc stC (brid, boff)) by (rewrite concC; lia).
+    apply (rcarve_K stC (brid, boff) grown mX (set_brk_ps (conc stI (brid, boff) + 4096) s) junk e1).
+    + destruct (rAMI_grow st stI brid r boff amiI regI kindNG lenI) as (amiW & _ & _).
+      apply rAMI_ctx; [exact amiW | unfold ctx_core_eq; repeat split | exact (ami_secretr _ _ amiI) | left; reflexivity |].
+      right. right. exists brid, (boff + 4096), grown.
+      exact (conj eq_refl (conj (rgr_lookup_new stI brid r boff) kindNG)).
+    + exact initI.
+    + exact (rgr_lookup_new stI brid r boff).
+    + exact kindNG.
+    + cbn [snd]. lia.
+    + change (boff + 4096 <= round_up_pg (boff + 4096)).
+      rewrite rgr_ru, (round_up_pg_aligned boff alignI) by first [exact alignI | lia]. lia.
+    + exact alignI.
+    + assert (lrGrown : lr_lo grown = r_base r + 4096)
+        by (unfold lr_lo; change (r_kind grown) with (r_kind r); rewrite kindI; reflexivity).
+      rewrite lrGrown. change (r_base r + 4096 <= r_base r + boff). lia.
+    + exact (proj1 (freshI (brid, boff) eq_refl (Z.le_refl boff))).
+    + intros j slotJ.
+      exact (proj2 (freshI (aadd (brid, boff) (AREA_HDR + META_SIZE * j)) eq_refl
+                      ltac:(cbn [aadd snd]; unfold AREA_HDR, META_SIZE, NSLOTS in *; lia))).
+    + exact (amp_tail stI preI).
+    + change (1 <= 1 < 2 ^ 64). lia.
+    + exact repC.
+    + exact invX.
+    + rewrite concC.
+      pose proof (bytes_at_zeros_new bgusegs m1 _ 4096 pageRange ltac:(lia) pageEnd) as zerosB.
+      apply (rpres_except_bytes_at _ mB mX _ _ presX zerosB).
+      intros a range [ctxLo ctxHi].
+      change (Z.of_nat (length (repeat (Z_to_bv 8 0) (Z.to_nat 4096)))) with 4096 in range.
+      unfold RCTX in *. lia.
+    + rewrite concC.
+      apply (rpres_except_wr_at _ mB mX _ _ presX (wr_at_zeros_new bgusegs m1 _ 4096 pageRange ltac:(lia) pageEnd)).
+      intros a range [ctxLo ctxHi]. unfold RCTX in *. lia.
+    + apply (rpres_except_rw_cells _ m1 mX _ _ pres1X frameI).
+      intros a range [inPage|[ctxLo ctxHi]];
+        change (Z.of_nat (cells_size (ram_frame junk s4 s3 s2 s1 s0 ra))) with 64 in range; unfold RCTX in *; lia.
+    + apply (rpres_except_stk _ m1 mX _ _ pres1X stkI).
+      intros a range [inPage|[ctxLo ctxHi]]; unfold RCTX in *; lia.
+    + apply (rpres_except_rw_cells _ m1 mX _ _ pres1X errI).
+      intros a range [inPage|[ctxLo ctxHi]]; change (Z.of_nat (cells_size [C4 e1])) with 4 in range;
+        rewrite tpVal in range; unfold RCTX in *; lia.
+    + apply (rauxv_ok_magree _ m1 mX _ auxI (rmagree_of_pres _ _ _ pres1X)).
+      intros a [inPage|[ctxLo ctxHi]]; unfold RAUXV_CELL, RCTX in *; split; lia.
+    + apply (magree_trans _ _ _ m m1 mX agreeI (rmagree_of_pres _ _ _ pres1X)).
+      * intros a inFP. refine (rFP_mono stI stC a _ inFP).
+        intros q rq lookQ. destruct (N.eq_dec q brid) as [->|otherQ].
+        -- rewrite regI in lookQ. injection lookQ as <-.
+           exists grown. refine (conj (rgr_lookup_new stI brid r boff) (conj eq_refl (conj eq_refl _))).
+           change (r_len r <= boff + 4096). lia.
+        -- exists rq.
+           exact (conj (eq_trans (rgr_lookup_old stI brid r boff q otherQ) lookQ) (conj eq_refl (conj eq_refl (Z.le_refl _)))).
+      * intros a [inPage|inCtx].
+        -- right. exact (rfresh_of_ranges_free stI _ 4096 a regsI (ami_reserved _ _ amiI) freeOld capOk inPage).
+        -- left. right. right. left. exact inCtx.
+    + change (conc stI (brid, boff) + 4096 = conc stC (brid, boff + 4096)). rewrite concC, !concAt. lia.
+    + reflexivity.
+    + reflexivity.
+    + reflexivity.
+  - assert (sameNe : (conc stI (brid, boff) =? conc stI (brid, boff) + 4096) = false) by (apply Z.eqb_neq; lia).
+    unfold brk_answer_ok. rewrite sameNe, Z.eqb_refl. cbn [orb negb brk_res brk_mem].
     eapply rimplT_evt.
-    { unfold PGSZ. eapply (ram_bl_fail _ gp tp t0 t1 t2 a2 a3 a4 a5 a6 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc m1 stI old); [exact MR1| exact ACNT| lia| lia| exact MI1]. }
-    intros ms4 (m3 & -> & MU3 & WM3 & MI3 & MRD).
-    assert (M13 : magree (rFP stI) m1 m3).
-    { eapply magree_of_munch; [exact MU3|]. cbn. split; [| exact I]. intros y Hy. left. right. right. left. unfold RCTX in *. lia. }
-    eapply (rmmap_path (upd_ctx (set_brk BrkDead) stI) m3 s junk e1); first [exact MRD | exact MI3 | reflexivity | exact INI | idtac].
-    + apply (rAMI_ctx st stI _ AI); [cbn; repeat split; reflexivity| cbn; exact (ami_secretr _ _ AI)| left; reflexivity| right; left; reflexivity].
-    + exact RGI.
-    + exact ACNT.
-    + change (ctx (upd_ctx (set_brk BrkDead) stI)) with (set_brk BrkDead (ctx stI)). cbn [c_meta_alloc_shift set_brk]. pose proof (amp_shift stI AMPI). lia.
-    + exact TLI.
-    + exact MKI.
-    + pose proof PTRI as (Y1 & Y2 & Y3 & Y4 & Y5 & Y6 & Y7 & Y8 & Y9 & Y10). apply rptrs_in_upd_ctx; cbn; try assumption; try reflexivity; try exact I.
-    + eapply rw_cells_transport; [exact FR1| exact MU3| exact WM3|]. cbn. unfold RCTX. lia.
-    + eapply stk_transport_disjoint; [exact ST1| exact MU3| exact WM3|]. cbn. unfold RCTX. lia.
-    + eapply rw_cells_transport; [exact ERR1| exact MU3| exact WM3|]. cbn. rewrite rETP'. unfold RCTX. lia.
-    + eapply rauxv_ok_magree; [exact AUX1| exact M13| intros y X; exact (rFP_below stI y WF1 X)].
-    + eapply (magree_trans (rFP stI) (rFP stI) _ m m1 m3 AG1 M13); intros y X; (eapply rFP_same; [| exact X]); reflexivity.
+    { apply ram_bl_fail with (st := stI); [exact repI | exact countI | lia | lia | exact invI]. }
+    intros ms2 (m2 & -> & munch2 & mono2 & inv2 & rep2).
+    assert (pres2 : rpres_except (fun a => RCTX <= a < RCTX + 928) m1 m2).
+    { apply (rpres_except_of_munch_cov _ _ m1 m2 munch2 mono2). cbn [ivs_covered].
+      split; [intros x inW; cbv beta; unfold RCTX in *; lia | exact I]. }
+    apply (rmmap_path _ m2 s junk e1).
+    + apply rAMI_ctx; [exact amiI | unfold ctx_core_eq; repeat split | exact (ami_secretr _ _ amiI) | left; reflexivity | right; left; reflexivity].
+    + exact initI.
+    + exact regsI.
+    + exact countI.
+    + exact (amp_shift stI preI).
+    + exact (amp_tail stI preI).
+    + exact (amp_mkeys stI preI).
+    + pose proof ptrsI as (fmhP & amP & mahP & matP & amaP & _).
+      apply rptrs_in_upd_ctx; [exact fmhP | exact amP | exact mahP | exact matP | exact amaP | reflexivity | exact I | exact ptrsI].
+    + exact rep2.
+    + exact inv2.
+    + apply (rpres_except_rw_cells _ m1 m2 _ _ pres2 frameI).
+      intros a range [ctxLo ctxHi].
+      change (Z.of_nat (cells_size (ram_frame junk s4 s3 s2 s1 s0 ra))) with 64 in range. unfold RCTX in *. lia.
+    + apply (rpres_except_stk _ m1 m2 _ _ pres2 stkI).
+      intros a range [ctxLo ctxHi]. unfold RCTX in *. lia.
+    + apply (rpres_except_rw_cells _ m1 m2 _ _ pres2 errI).
+      intros a range [ctxLo ctxHi]. change (Z.of_nat (cells_size [C4 e1])) with 4 in range.
+      rewrite tpVal in range. unfold RCTX in *. lia.
+    + apply (rauxv_ok_magree _ m1 m2 _ auxI (rmagree_of_pres _ _ _ pres2)).
+      intros a [ctxLo ctxHi]. unfold RAUXV_CELL, RCTX in *. split; lia.
+    + apply (magree_trans _ _ _ m m1 m2 agreeI (rmagree_of_pres _ _ _ pres2)).
+      * intros a inFP. exact (rFP_same stI _ a eq_refl inFP).
+      * intros a inCtx. left. right. right. left. exact inCtx.
+    + exact I.
+    + reflexivity.
+    + reflexivity.
+    + reflexivity.
 Qed.
 
 Lemma rbrk_untried_path : forall (stI : mstate) (m1 : mem) (junk : list byte) (e1 : word)
@@ -742,246 +846,300 @@ Lemma rbrk_untried_path : forall (stI : mstate) (m1 : mem) (junk : list byte) (e
                 am_after_brk st2 false k bail)))) s Q
         (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) s1x a0 a1 a2 a3 a4 a5 a6 a7
                  (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x2b17e8) fc None m1 (seg_rom bgusegs)).
-Proof using AMP ERR KH LO LOLE TK TP.
-  intros until t6. intros AMPI AI INI RGI ACNT BRK PTRI MR1 MI1 FR1 ST1 ERR1 AUX1 AG1 _.
-  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR. unfold RAM_STACK in LOLE.
-  pose proof LO as LO'. unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in LO'; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. pose proof rETP as rETP'. pose proof TP as TPv.
-  pose proof MR1 as (WF1 & (HX1 & HX2 & HX3 & HX4 & HX5 & HX6) & _). pose proof WF1 as (RS & WR & DJ & WA & WG).
-  assert (TLI : forall tl, c_meta_area_tail (ctx stI) = Some tl -> is_Some ((s_areas stI) !! tl)) by (exact (amp_tail stI AMPI)).
-  assert (MKI : forall q mr, (s_metas stI) !! q = Some mr -> meta_slot stI q) by (exact (amp_mkeys stI AMPI)).
-  unfold rctx_head_cells in HX1. rewrite ACNT in HX1. unfold ctx_tail_cells, brk_word in HX6. rewrite BRK in HX6.
-
-  eapply rimplT_evt.
-  { eapply (ram_disp_untried _ gp tp t0 t1 t2 s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc m1 stI); [exact MR1| exact ACNT| exact BRK]. }
-  intros ms2 ->.
-  eapply (rimplT_brk0 o _ s).
-  { exact (ram_brk0_node x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) (Z_to_bv 64 0) (Z_to_bv 64 4095) a2 a3 a4 a5 a6 (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK)
-             s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m1). }
-  intros cur ms3 [-> CR]. unfold rbrk_regs.
-  destruct (brk0_answer_ok cur) eqn:B0; cbn [negb]; [| apply rimplT_undef].
-  unfold brk0_answer_ok, TWO64, PGSZ in B0. apply andb_prop in B0. destruct B0 as [B0 _]. apply andb_prop in B0. destruct B0 as [C0 CAL].
-  apply Z.ltb_lt in C0. apply Z.eqb_eq in CAL.
-  rewrite (round_up_pg_aligned cur CAL). cbv zeta. unfold PGSZ.
-  replace (2 * 4096) with 8192 by reflexivity.
-
-  eapply rimplT_evt.
-  { eapply (ram_bu_mid _ gp tp t0 t1 t2 a2 a3 a4 a5 a6 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 _ _ _ F fc m1 cur); [lia| exact CAL| unfold wz in HX6; exact HX6| exact MI1]. }
-  intros ms4 (a2' & m2 & -> & MU2 & WM2 & MI2 & TC2).
-  eapply (rimplT_brk o (cur + 8192) _ (set_brk_ps cur s)).
-  { lia. }
-  { exact (ram_brk_node_at x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) (Z_to_bv 64 (cur + 8192)) (Z_to_bv 64 0) a2' a3 a4 a5 a6 (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK)
-             s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m2 0x2b1848 (or_intror eq_refl) cur (cur + 8192) ltac:(lia)). }
-  intros a ms5 [-> HCB]. cbn [ps_brk set_brk_ps]. unfold brk_res, brk_mem, rbrk_regs.
-
-  assert (FR2 : rw_cells bgusegs m2 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)) by (eapply rw_cells_transport; [exact FR1| exact MU2| exact WM2|]; cbn; unfold RCTX; lia).
-  assert (ST2 : stk bgusegs m2 lo (bv_unsigned sp + -64)) by (eapply stk_transport_disjoint; [exact ST1| exact MU2| exact WM2|]; cbn; unfold RCTX; lia).
-  assert (ERR2 : rw_cells bgusegs m2 (errno_addr tp) [C4 e1]) by (eapply rw_cells_transport; [exact ERR1| exact MU2| exact WM2|]; cbn; rewrite rETP'; unfold RCTX; lia).
-  assert (VML2 : rw_cells bgusegs m2 RVMLOCK [C4 (Z_to_bv 64 0)]) by (eapply rw_cells_transport; [exact (rmrep_vmlock _ _ MR1)| exact MU2| exact WM2|]; cbn; unfold RVMLOCK, RCTX; lia).
-  assert (HC2 : rw_cells bgusegs m2 RCTX ltac:(lazymatch type of HX1 with rw_cells _ _ _ ?cs => exact cs end))
-    by (eapply rw_cells_transport; [exact HX1| exact MU2| exact WM2|]; cbn; unfold RCTX; lia).
-  assert (M12 : magree (rFP stI) m1 m2).
-  { eapply magree_of_munch; [exact MU2|]. cbn. split; [| exact I]. intros y Hy. left. right. right. left. unfold RCTX in *. lia. }
-  destruct a.
-  -
-    unfold brk_answer_ok. rewrite Z.eqb_refl. cbn [orb negb].
-    destruct (brk_pages_ok stI cur 8192) eqn:BPO; cbn [negb]; [| apply rimplT_undef].
-    unfold brk_pages_ok in BPO. apply andb_prop in BPO. destruct BPO as [BPO RF]. apply andb_prop in BPO. destruct BPO as [_ OC]. apply Z.leb_le in OC.
-    unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in OC; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
-    rewrite (brk_new_pages_aligned cur 8192) by (first [lia | exact CAL | reflexivity]).
-    pose proof (rimage_range_clear stI cur 8192 RS RF ltac:(lia)) as IMG.
-    assert (Hc1 : 0 <= cur < 2^64) by lia. assert (Hn1 : 0 <= 8192 < 2^64) by lia. assert (Hcn : cur + 8192 <= 2^64) by lia.
-    set (m3 := apply_zeros m2 [(wa cur, Z_to_bv 64 8192)]).
-    assert (HC3 : rw_cells bgusegs m3 RCTX ltac:(lazymatch type of HX1 with rw_cells _ _ _ ?cs => exact cs end))
-      by (apply (rw_cells_zeros_other bgusegs m2 cur 8192 Hc1 Hn1 Hcn); [exact HC2| cbn; unfold RCTX; lia]).
-    assert (TC3 : rw_cells bgusegs m3 (RCTX + 912) [C1 (b8 (c_seq (ctx stI))); CB 7 (zeros 7); C8 (Z_to_bv 64 cur)])
-      by (apply (rw_cells_zeros_other bgusegs m2 cur 8192 Hc1 Hn1 Hcn); [unfold RCTX in TC2 |- *; exact TC2| cbn; unfold RCTX; lia]).
-    assert (MI3 : mem_inv bgusegs m3) by (apply (mem_inv_zeros bgusegs m2 cur 8192 Hc1 Hn1 Hcn MI2); [intros y Hy; apply ref_ro_addr_false; lia | unfold UTOP; lia]).
-    assert (FR3 : rw_cells bgusegs m3 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)) by (apply (rw_cells_zeros_other bgusegs m2 cur 8192 Hc1 Hn1 Hcn); [exact FR2| cbn; lia]).
-    assert (ST3 : stk bgusegs m3 lo (bv_unsigned sp + -64)) by (apply (stk_zeros bgusegs m2 cur 8192 Hc1 Hn1 Hcn); exact ST2).
-    assert (ERR3 : rw_cells bgusegs m3 (errno_addr tp) [C4 e1]) by (apply (rw_cells_zeros_other bgusegs m2 cur 8192 Hc1 Hn1 Hcn); [exact ERR2| cbn; rewrite rETP'; lia]).
-    assert (VML3 : rw_cells bgusegs m3 RVMLOCK [C4 (Z_to_bv 64 0)]) by (apply (rw_cells_zeros_other bgusegs m2 cur 8192 Hc1 Hn1 Hcn); [exact VML2| cbn; unfold RVMLOCK; lia]).
-    pose proof (rw_cells_zeros_new bgusegs m2 cur 8192 Hc1 Hn1 Hcn) as ZN. fold m3 in ZN.
-    assert (M23 : magree (rFP stI) m2 m3).
-    { intros y Hy Hc. unfold m3. apply (zeros_outside m2 cur 8192 Hc1 Hn1 Hcn). rewrite wa_unsigned by lia.
-      destruct (Z.lt_ge_cases y cur); [lia|]. destruct (Z.lt_ge_cases y (cur + 8192)); [| lia].
-      exfalso. apply Hc. right. eapply (rfresh_of_ranges_free stI cur 8192); [exact RGI| exact (ami_reserved _ _ AI)| exact RF| unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia| lia]. }
-
-    assert (E23 : forall y, 0 <= y < 2^64 -> ~ (cur <= y < cur + 8192) -> m3 (wa y) = m2 (wa y)).
-    { intros y Hy Hn. unfold m3. apply (zeros_outside m2 cur 8192 Hc1 Hn1 Hcn). rewrite wa_unsigned by lia. lia. }
-    clearbody m3.
-
-    eapply rimplT_evt.
-    { eapply (ram_bu_ok _ gp tp t0 t1 t2 (Z_to_bv 64 0) a2' a3 a4 a5 a6 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 _ _ F fc m3 cur);
-        first [exact TC3 | lia]. }
-    intros ms6 ->.
-    pose proof MI3 as MI4. pose proof FR3 as FR4. pose proof ST3 as ST4. pose proof TC3 as TC4. pose proof HC3 as HC4. pose proof ERR3 as ERR4.
-    eapply (rimplT_mmap_fixed o cur PGSZ _ (set_brk_ps (cur + 8192) (set_brk_ps cur s))).
-    { unfold PGSZ. eapply (rmmap_fixed_spec (dec_mmap_fixed cur 4096) (fx_rel cur)) with (lo := lo) (errv := e1);
-        [ intros rsp fa Hd; exact (dec_mmap_fixed_shape cur 4096 rsp fa Hd)
-        | rewrite unsigned_lit by lia; exact ST4 | exact ERR4 | exact VML3 | lia | exact MI4 | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | ..];
-        rewrite ?A2.mmap_len_round_up, ?rETP', ?TPv, ?unsigned_lit by lia; try (change (round_up_pg 4096) with 4096); try lia. }
-    intros fa ms7 MP. unfold rmmap_fixed_post in MP.
-    destruct MP as (rr & u & u0 & u1 & u2 & u3 & u4 & u5 & u6 & u7 & u8 & u9 & u10 & u11 & u12 & u13 & m5 & REL & -> & MU5 & WM5 & MI5 & ST5 & ERR5).
-    rewrite A2.mmap_len_round_up in MU5. change (round_up_pg 4096) with 4096 in MU5. rewrite unsigned_lit in MU5, ST5 by lia.
-    replace (ret_pc (Z_to_bv 64 0x2b186c)) with (Z_to_bv 64 0x2b186c : word) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
-
-    replace (mmap_fixed_answer_ok cur (fixed_val cur fa)) with true.
-    2:{ symmetry. unfold mmap_fixed_answer_ok, is_errno_form, fixed_val, neg_errno, TWO64.
-        destruct fa as [e|  |e]; cbn in REL.
-        - destruct REL as [RE _]. destruct (errno_of_Some _ _ RE) as [_ HE]. apply orb_true_iff. left. apply andb_true_iff. split; [apply Z.leb_le| apply Z.ltb_lt]; lia.
-        - apply orb_true_iff. right. apply Z.eqb_refl.
-        - destruct REL as [RE _]. destruct (errno_of_Some _ _ RE) as [_ HE]. apply orb_true_iff. left. apply andb_true_iff. split; [apply Z.leb_le| apply Z.ltb_lt]; lia. }
-    cbn [negb].
-    unfold new_region. cbv beta iota zeta delta [fst snd].
-    set (rid := s_next_rid stI).
-    pose proof (rAMI_new_region st stI RKBrk cur 8192 AI ltac:(discriminate) ltac:(lia)) as (AI1 & RG1 & CQ1 & CN1).
-    unfold new_region in AI1, RG1, CQ1, CN1. cbn [fst snd] in AI1, RG1, CQ1, CN1. fold rid in AI1, RG1, CQ1, CN1 |- *.
-    set (st1 := set_next_rid (N.succ rid) _) in AI1, RG1, CQ1, CN1 |- *.
-    rewrite (am_after_brk_false_eq st1 _ (rid, 4096) k bail) by (cbn; first [lia | reflexivity]).
+Proof using AMP TK LO LOLE ERR TP KH.
+  intros stI m1 junk e1 x1 t0 t1 t2 s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x t3 t4 t5 t6.
+  intros preI amiI initI regsI noAreasI untriedI ptrsI repI invI frameI stkI errI auxI agreeI _.
+  pose proof repI as (wfI & (headI & _ & _ & _ & _ & tailI) & _).
+  pose proof wfI as (resvI & regWfI & _ & areaWfI & groupWfI).
+  pose proof ptrsI as (pFree & pAvail & pHead & pTail & pAreas & _).
+  unfold ctx_tail_cells in tailI.
+  assert (spHigh : lo + 160 <= bv_unsigned sp) by (unfold RAM_STACK in LOLE; lia).
+  assert (spDown : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -64)) = bv_unsigned sp + -64)
+    by (pose proof (u64_range sp); apply unsigned_lit; lia).
+  assert (tpVal : bv_unsigned tp = 3346328) by (rewrite TP; apply unsigned_lit; lia).
+  eapply rimplT_evt; [eapply ram_disp_untried; [exact repI | exact noAreasI | exact untriedI]|].
+  intros ms0 ->.
+  eapply rimplT_brk0; [apply ram_brk0_node|].
+  intros cur ms1 (-> & curRange).
+  unfold rbrk_regs. cbv beta.
+  destruct (brk0_answer_ok cur) eqn:curOk; cbn [negb]; [|apply rimplT_undef].
+  unfold brk0_answer_ok, TWO64 in curOk.
+  rewrite !andb_true_iff, !Z.ltb_lt, Z.eqb_eq in curOk.
+  destruct curOk as [[curPos curAligned] _].
+  unfold PGSZ in curAligned.
+  rewrite (round_up_pg_aligned cur curAligned).
+  change (cur + 2 * PGSZ) with (cur + 8192).
+  eapply rimplT_evt; [eapply ram_bu_mid; [lia | exact curAligned | exact tailI | exact invI]|].
+  intros ms2 (a2x & mA & -> & munchA & monoA & invA & tailA).
+  eapply rimplT_brk; [lia | apply ram_brk_node_at with (cur := cur); [right; reflexivity | lia]|].
+  intros ans ms3 (-> & ansFact).
+  destruct ans; cbv beta iota in ansFact |- *.
+  - rename ansFact into ceilReq.
+    assert (pagesNew : brk_new_pages cur (cur + 8192) = Some (cur, 8192)) by (apply brk_new_pages_aligned; lia).
+    unfold brk_res, brk_mem, rbrk_regs. rewrite pagesNew. cbv beta iota.
+    assert (grownOk : brk_answer_ok cur (cur + 8192) (cur + 8192) = true)
+      by (unfold brk_answer_ok; rewrite Z.eqb_refl; reflexivity).
+    rewrite grownOk, Z.eqb_refl. cbn [negb].
+    destruct (brk_pages_ok stI cur (2 * PGSZ)) eqn:pagesOk; cbn [negb]; [|apply rimplT_undef].
+    unfold brk_pages_ok in pagesOk. rewrite !andb_true_iff in pagesOk.
+    destruct pagesOk as [_ freeI]. change (2 * PGSZ) with 8192 in freeI.
+    pose proof (rimage_range_clear stI cur 8192 resvI freeI ltac:(lia)) as imageClear.
+    set (mB := apply_zeros mA [(wa cur, Z_to_bv 64 8192)]).
+    pose (E1 := fun a : Z => RCTX + 920 <= a < RCTX + 928 \/ cur <= a < cur + 8192).
+    pose proof (magree_of_munch E1 _ m1 mA munchA (conj (fun x range => or_introl range) I)) as agree1A.
+    assert (agreeAB : magree E1 mA mB).
+    { intros a range away. apply zeros_outside; [lia | lia | lia |].
+      unfold wa. rewrite unsigned_lit by lia. unfold E1 in away. lia. }
+    pose proof (magree_trans E1 E1 E1 m1 mA mB agree1A agreeAB (fun _ inE => inE) (fun _ inE => inE)) as agree1B.
+    assert (stkB : stk bgusegs mB lo (bv_unsigned sp + -64)).
+    { apply (rpres_except_stk E1 m1 mB lo _ (rpres_of_magree _ _ _ agree1B) stkI).
+      intros a range inE. unfold E1, RCTX in inE. lia. }
+    assert (errB : rw_cells bgusegs mB (bv_unsigned tp + -164) [C4 e1]).
+    { apply (rrw_cells_magree E1 m1 mB _ _ errI agree1B).
+      intros a range inE. simpl in range. unfold E1, RCTX in inE. lia. }
+    assert (vmB : rw_cells bgusegs mB RVMLOCK [C4 (Z_to_bv 64 0)]).
+    { apply (rrw_cells_magree E1 m1 mB _ _ (rmrep_vmlock stI m1 repI) agree1B).
+      intros a range inE. simpl in range. unfold E1, RCTX, RVMLOCK in *. lia. }
+    assert (headB : rw_cells bgusegs mB RCTX (rctx_head_cells stI)).
+    { apply (rrw_cells_magree E1 m1 mB _ _ headI agree1B).
+      intros a range inE. simpl in range. unfold E1, RCTX in *. lia. }
+    assert (invB : mem_inv bgusegs mB).
+    { apply mem_inv_zeros; [lia | lia | lia | exact invA | | unfold UTOP; lia].
+      intros x range. apply ref_ro_addr_false. lia. }
+    assert (tailB : rw_cells bgusegs mB (RCTX + 912) [C1 (b8 (c_seq (ctx stI))); CB 7 (zeros 7); C8 (Z_to_bv 64 cur)]).
+    { apply rw_cells_zeros_other; [lia | lia | lia | exact tailA |]. simpl. unfold RCTX. lia. }
+    assert (zeroB : rw_cells bgusegs mB (cur + 4096) [CB 4096 (zeros 4096)]).
+    { apply (rrw_cells_of_zeros mB cur (Z.to_nat 8192) 4096).
+      - exact (bytes_at_zeros_new bgusegs mA cur 8192 ltac:(lia) ltac:(lia) ltac:(lia)).
+      - exact (wr_at_zeros_new bgusegs mA cur 8192 ltac:(lia) ltac:(lia) ltac:(lia)).
+      - split; [reflexivity | exact I].
+      - reflexivity.
+      - lia.
+      - change (4096 + 4096 <= 8192). lia. }
+    eapply rimplT_evt; [eapply ram_bu_ok; [lia | lia | exact tailB]|].
+    intros ms4 ->.
+    eapply rimplT_mmap_fixed.
+    { apply rmmap_fixed_spec with (R := fx_rel cur) (lo := lo) (errv := e1).
+      - exact (dec_mmap_fixed_shape cur PGSZ).
+      - rewrite spDown. exact stkB.
+      - exact errB.
+      - exact vmB.
+      - lia.
+      - exact invB.
+      - reflexivity.
+      - reflexivity.
+      - reflexivity.
+      - reflexivity.
+      - reflexivity.
+      - reflexivity.
+      - lia.
+      - unfold PGSZ. lia.
+      - change (mmap_len PGSZ) with 4096. lia.
+      - lia.
+      - rewrite spDown. lia.
+      - rewrite spDown. lia.
+      - change (mmap_len PGSZ) with 4096. lia.
+      - change (mmap_len PGSZ) with 4096. lia.
+      - lia. }
+    intros fx ms5 (rr & uu & u0 & u1 & u2 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & mC & _ & -> & munchC & _ & invC & stkC & errC).
+    rewrite spDown in stkC. change (mmap_len PGSZ) with 4096 in munchC.
+    rewrite ret_pc_even by first [lia | reflexivity].
+    cbv beta.
+    destruct (mmap_fixed_answer_ok cur (fixed_val cur fx)); cbn [negb]; [|apply rimplT_undef].
+    rewrite (surjective_pairing (new_region RKBrk cur (2 * PGSZ) stI)).
+    cbv beta iota zeta.
+    change (snd (new_region RKBrk cur (2 * PGSZ) stI)) with (s_next_rid stI).
+    destruct (rAMI_new_region st stI RKBrk cur (2 * PGSZ) amiI ltac:(discriminate) ltac:(reflexivity)) as (ami1 & newLookup & oldConc & newConc).
+    set (st1 := fst (new_region RKBrk cur (2 * PGSZ) stI)) in *.
+    rewrite (am_after_brk_false_eq st1 _ (s_next_rid stI, PGSZ)); [|intros zero1; discriminate zero1 | reflexivity | reflexivity].
     rewrite am_carve_took, carve_st_brk_irrel.
-    set (stX := upd_ctx _ st1).
-
-    assert (E45 : forall y, 0 <= y < 2^64 -> ~ (bv_unsigned sp - 64 - 96 <= y < bv_unsigned sp - 64) -> ~ (errno_addr tp <= y < errno_addr tp + 4) -> ~ (cur <= y < cur + 4096) -> m5 (wa y) = m3 (wa y)).
-    { intros y Hy N1 N2 N3. apply MU5. rewrite wa_unsigned by lia. cbn. rewrite ?rETP' in *. repeat split; lia. }
-    assert (HC5 : rw_cells bgusegs m5 RCTX ltac:(lazymatch type of HX1 with rw_cells _ _ _ ?cs => exact cs end)).
-    { eapply RA2.rrw_cells_agree; [exact HC4|]. cbn. intros y Hy. apply E45; rewrite ?rETP'; unfold RCTX in *; lia. }
-    assert (TC5 : rw_cells bgusegs m5 (RCTX + 912) [C1 (b8 (c_seq (ctx stI))); CB 7 (zeros 7); C8 (Z_to_bv 64 cur)]).
-    { eapply RA2.rrw_cells_agree; [exact TC4|]. cbn. intros y Hy. apply E45; rewrite ?rETP'; unfold RCTX in *; lia. }
-    assert (FR5 : rw_cells bgusegs m5 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
-    { eapply RA2.rrw_cells_agree; [exact FR4|]. cbn. intros y Hy. apply E45; rewrite ?rETP'; lia. }
+    set (st2 := upd_ctx (fun c : mctx => set_avail_meta_area_count 1 (set_brk (BrkLive (s_next_rid stI) (2 * PGSZ)) c)) st1).
+    pose (E2 := fun a : Z => bv_unsigned sp - 160 <= a < bv_unsigned sp - 64
+                             \/ bv_unsigned tp + -164 <= a < bv_unsigned tp + -164 + 4 \/ cur <= a < cur + 4096).
+    assert (agreeBC : magree E2 mB mC).
+    { apply (magree_of_munch E2 _ mB mC munchC). cbn [ivs_covered].
+      repeat split; intros x range; unfold E2; lia. }
+    assert (headC : rw_cells bgusegs mC RCTX
+      [C8 (wz (rsec (c_init_done (ctx stI)) (c_secret (ctx stI)))); C4 (wz (c_init_done (ctx stI))); C4 (wz (c_mmap_counter (ctx stI)));
+       C8 (pw stI (c_free_meta_head (ctx stI))); C8 (pw stI (c_avail_meta (ctx stI))); C8 (wz (c_avail_meta_count (ctx stI)));
+       C8 (wz (c_avail_meta_area_count (ctx stI))); C8 (wz (c_meta_alloc_shift (ctx stI))); C8 (pw stI (c_meta_area_head (ctx stI)));
+       C8 (pw stI (c_meta_area_tail (ctx stI))); C8 (pw stI (c_avail_meta_areas (ctx stI)))]).
+    { apply (rrw_cells_magree E2 mB mC _ _ headB agreeBC).
+      intros a range inE. simpl in range. unfold E2, RCTX in *. lia. }
+    assert (tailC : rw_cells bgusegs mC (RCTX + 912) [C1 (b8 (c_seq (ctx stI))); CB 7 (zeros 7); C8 (Z_to_bv 64 cur)]).
+    { apply (rrw_cells_magree E2 mB mC _ _ tailB agreeBC).
+      intros a range inE. simpl in range. unfold E2, RCTX in *. lia. }
+    eapply rimplT_evt; [eapply ram_b_store with (nw := cur + 8192); [lia | exact headC | exact tailC | exact invC]|].
+    intros ms6 (mD & -> & munchD & _ & invD & headD & tailD).
+    pose (E3 := fun a : Z => RCTX + 40 <= a < RCTX + 48 \/ RCTX + 920 <= a < RCTX + 928).
+    pose (E23 := fun a : Z => E2 a \/ E3 a).
+    pose (D := fun a : Z => E1 a \/ E23 a).
+    pose proof (magree_of_munch E3 _ mC mD munchD (conj (fun x range => or_introl range) (conj (fun x range => or_intror range) I))) as agreeCD.
+    pose proof (magree_trans E2 E3 E23 mB mC mD agreeBC agreeCD (fun _ inE => or_introl inE) (fun _ inE => or_intror inE)) as agreeBD.
+    pose proof (magree_trans E1 E23 D m1 mB mD agree1B agreeBD (fun _ inE => or_introl inE) (fun _ inE => or_intror inE)) as agree1D.
+    assert (frameD : rw_cells bgusegs mD (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)).
+    { apply (rrw_cells_magree D m1 mD _ _ frameI agree1D).
+      intros a range inD. simpl in range. unfold D, E1, E23, E2, E3, RCTX in inD. lia. }
+    assert (stkD : stk bgusegs mD lo (bv_unsigned sp + -64)).
+    { apply (rpres_except_stk E3 mC mD lo _ (rpres_of_magree _ _ _ agreeCD) stkC).
+      intros a range inE. unfold E3, RCTX in inE. lia. }
+    assert (errD : rw_cells bgusegs mD (bv_unsigned tp + -164) [C4 (sysret_errno rr e1)]).
+    { apply (rrw_cells_magree E3 mC mD _ _ errC agreeCD).
+      intros a range inE. simpl in range. unfold E3, RCTX in inE. lia. }
+    assert (auxD : rauxv_ok mD (bv_unsigned sp)).
+    { apply (rauxv_ok_magree D m1 mD _ auxI agree1D).
+      intros a inD. unfold D, E1, E23, E2, E3, RCTX, RAUXV_CELL in *. lia. }
+    assert (zeroD : rw_cells bgusegs mD (cur + 4096) [CB 4096 (zeros 4096)]).
+    { apply (rrw_cells_magree E23 mB mD _ _ zeroB agreeBD).
+      intros a range inE. simpl in range. unfold E23, E2, E3, RCTX in inE. lia. }
+    pose proof (proj2 (amp_ptrs stI preI) (s_next_rid stI) (N.le_refl _)) as freshNext.
+    assert (ridOld : forall q r, s_regions stI !! q = Some r -> q <> s_next_rid stI).
+    { intros q r regHit sameRid. rewrite sameRid, (proj1 freshNext) in regHit. discriminate regHit. }
+    assert (noAreaNext : forall q ar, s_areas stI !! q = Some ar -> q.1 <> s_next_rid stI).
+    { intros q ar areaHit. destruct (areaWfI q ar areaHit) as (r & regHit & _). exact (ridOld _ _ regHit). }
+    assert (areaFree : s_areas stI !! (s_next_rid stI, PGSZ) = None).
+    { destruct (s_areas stI !! (s_next_rid stI, PGSZ)) as [ar|] eqn:areaHit; [|reflexivity].
+      exfalso. exact (noAreaNext _ _ areaHit eq_refl). }
+    assert (metaFree : forall q, q.1 = s_next_rid stI -> s_metas stI !! q = None).
+    { intros q onNext. destruct (s_metas stI !! q) as [mr|] eqn:metaHit; [|reflexivity].
+      destruct (amp_mkeys stI preI q mr metaHit) as (ak & ar & j & akHit & _ & ->).
+      exfalso. exact (noAreaNext ak ar akHit onNext). }
+    assert (rep1 : rmrep st1 m1).
+    { apply (rmrep_new_region stI m1 m1 cur (2 * PGSZ) RKBrk repI
+               (ptrs_in_mono (fun rid => (rid < s_next_rid stI)%N) _ stI (fun r below => N.lt_neq _ _ below) ptrsI) (proj2 freshNext));
+        [lia | exact curAligned | unfold PGSZ; lia | exact ceilReq | exact freeI | intros; reflexivity | intros kindEq; discriminate kindEq]. }
+    assert (regionAway : forall rid r a, s_regions stI !! rid = Some r -> lr_lo r <= a < r_base r + round_up_pg (r_len r) ->
+                                         0 <= a < 2 ^ 64 /\ ~ D a).
+    { intros rid r a regHit range.
+      destruct (regWfI rid r regHit) as (basePos & _ & _ & baseTop & resvFree).
+      destruct (rreserved_disjoint _ _ resvFree) as (_ & _ & _ & imageSide).
+      pose proof (lr_lo_ge r) as loGe.
+      pose proof (clear_range_of_ranges_free stI cur 8192 freeI rid r a regHit range) as notBrk.
+      split; [lia|]. unfold D, E1, E23, E2, E3, RCTX. lia. }
+    assert (pwSame : forall p, optr_in (fun rid => (rid < s_next_rid stI)%N) p -> pw st2 p = pw stI p).
+    { intros p inP.
+      exact (rpw_extP stI st2 (fun rid => (rid < s_next_rid stI)%N) (fun q below => oldConc q (N.lt_neq _ _ below)) p inP). }
+    assert (headD2 : rw_cells bgusegs mD RCTX (rctx_head_cells st2)).
+    { rewrite <- (pwSame _ pFree), <- (pwSame _ pAvail), <- (pwSame _ pHead), <- (pwSame _ pTail), <- (pwSame _ pAreas) in headD.
+      exact headD. }
+    assert (brkWord : brk_word st2 = cur + 8192) by exact (newConc (2 * PGSZ)).
+    assert (tailD2 : rw_cells bgusegs mD (RCTX + 912) (ctx_tail_cells st2)).
+    { unfold ctx_tail_cells. rewrite brkWord. exact tailD. }
+    assert (midAgree : A2.agree_on m1 mD (RCTX + 80) 832).
+    { intros a range. refine (agree1D a _ _); unfold D, E1, E23, E2, E3, RCTX in *; lia. }
+    pose proof (rmrep_ctx_mid_agree st1 st2 m1 mD rep1
+                  (or_intror (conj (fun _ => eq_refl) (conj (fun _ => eq_refl) (conj (fun _ => eq_refl) (fun _ => eq_refl)))))
+                  eq_refl midAgree) as (actD & useD & unmapD & bounceD).
+    assert (repD : rmrep st2 mD).
+    { apply (rmrep_agree_but_ctx st1 st2 m1 mD rep1); try reflexivity.
+      1-5: intros a range; unfold RMLOCK, RLIBC, RGOT_SSP, RSSP_GUARD, RVMLOCK in range;
+           refine (agree1D a _ _); [lia | unfold D, E1, E23, E2, E3, RCTX; lia].
+      - intros ak ar akHit a range.
+        rewrite (oldConc ak (noAreaNext ak ar akHit)) in range.
+        destruct (areaWfI ak ar akHit) as (r & regHit & _).
+        destruct (regionAway _ _ a regHit (rarea_in_live stI ak ar r a wfI akHit regHit range)) as [bounds away].
+        exact (agree1D a bounds away).
+      - intros b gh groupHit a range.
+        destruct (groupWfI b gh groupHit) as (r & regHit & _).
+        rewrite (oldConc b (ridOld _ _ regHit)) in range.
+        destruct (regionAway _ _ a regHit (rgroup_in_live stI b gh r a wfI groupHit regHit range)) as [bounds away].
+        exact (agree1D a bounds away).
+      - intros rid r regHit kindG a range.
+        destruct (rnr_lookup_inv stI cur (2 * PGSZ) RKBrk rid r regHit) as [[_ ->] | [_ oldHit]]; [discriminate kindG|].
+        destruct (regionAway rid r a oldHit ltac:(rewrite (lr_lo_group r kindG); lia)) as [bounds away].
+        exact (agree1D a bounds away).
+      - exact (conj headD2 (conj actD (conj useD (conj unmapD (conj bounceD tailD2))))). }
+    assert (growI : forall rid r, s_regions stI !! rid = Some r ->
+                      exists r', s_regions st2 !! rid = Some r' /\ r_kind r' = r_kind r /\ r_base r' = r_base r /\ r_len r <= r_len r').
+    { intros rid r regHit. exists r.
+      exact (conj (eq_trans (rnr_lookup_old stI cur (2 * PGSZ) RKBrk rid (ridOld _ _ regHit)) regHit)
+                  (conj eq_refl (conj eq_refl (Z.le_refl _)))). }
+    assert (DinFP : forall a, D a -> rFP st2 a).
+    { intros a inD. unfold D, E1, E23, E2, E3 in inD.
+      destruct inD as [[ctxHit | brkHit] | [[stackHit | [errHit | guardHit]] | [ctxHit | ctxHit]]].
+      - left. right. right. left. lia.
+      - right. exact (rfresh_of_ranges_free stI cur 8192 a regsI (ami_reserved _ _ amiI) freeI ceilReq brkHit).
+      - left. left. lia.
+      - left. right. left. rewrite TP in errHit. exact errHit.
+      - right. apply (rfresh_of_ranges_free stI cur 8192 a regsI (ami_reserved _ _ amiI) freeI ceilReq). lia.
+      - left. right. right. left. lia.
+      - left. right. right. left. lia. }
+    assert (ami2 : AMI st st2).
+    { apply rAMI_ctx.
+      - exact ami1.
+      - unfold ctx_core_eq. repeat split.
+      - exact (ami_secretr _ _ ami1).
+      - left. reflexivity.
+      - right. right. exists (s_next_rid stI), (2 * PGSZ), {| r_kind := RKBrk; r_base := cur; r_len := 2 * PGSZ |}.
+        split; [reflexivity|]. split; [exact newLookup | discriminate]. }
+    assert (concP : conc st2 (s_next_rid stI, PGSZ) = cur + 4096) by exact (newConc PGSZ).
+    replace (cur + 8192 - 4096) with (conc st2 (s_next_rid stI, PGSZ)) by (rewrite concP; lia).
+    apply (rcarve_K st2 (s_next_rid stI, PGSZ) {| r_kind := RKBrk; r_base := cur; r_len := 2 * PGSZ |} mD _ junk (sysret_errno rr e1)).
+    + exact ami2.
+    + exact initI.
+    + exact newLookup.
+    + discriminate.
+    + change (0 <= 4096). lia.
+    + change (4096 + 4096 <= 8192). lia.
+    + exact eq_refl.
+    + change (cur + 4096 <= cur + 4096). lia.
+    + exact areaFree.
+    + intros j _. exact (metaFree (aadd (s_next_rid stI, PGSZ) (AREA_HDR + META_SIZE * j)) eq_refl).
+    + exact (amp_tail stI preI).
+    + change (1 <= 1 < 2 ^ 64). lia.
+    + exact repD.
+    + exact invD.
+    + rewrite concP. exact (rw_cells_bytes_at _ _ _ _ zeroD).
+    + rewrite concP. exact (proj2 zeroD).
+    + exact frameD.
+    + exact stkD.
+    + exact errD.
+    + exact auxD.
+    + exact (magree_trans (rFP stI) D (rFP st2) m m1 mD agreeI agree1D (fun a inP => rFP_mono stI st2 a growI inP) DinFP).
+    + exact (eq_sym (newConc (2 * PGSZ))).
+    + reflexivity.
+    + reflexivity.
+    + reflexivity.
+  - change (ps_brk (set_brk_ps cur s)) with cur.
+    assert (sameOk : brk_answer_ok cur (cur + 8192) cur = true)
+      by (unfold brk_answer_ok; rewrite Z.eqb_refl, orb_true_r; reflexivity).
+    assert (sameNe : (cur =? cur + 8192) = false) by (apply Z.eqb_neq; lia).
+    rewrite sameOk, sameNe. cbn [negb].
+    unfold brk_res, brk_mem, rbrk_regs.
     eapply rimplT_evt.
-    { eapply (ram_b_store _ gp tp u0 u1 u2 _ u3 u4 u5 u6 u7 u8 u9 s4x s5 s6 s7 s8 s9 s10 s11 u10 u11 u12 u13 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m5 (cur + 8192));
-        first [exact HC5 | exact TC5 | exact MI5 | lia]. }
-    intros ms8 (m6 & -> & MU6 & WM6 & MI6 & HC6 & TC6). replace (cur + 8192 - 4096) with (cur + 4096) by lia.
-    assert (FR6 : rw_cells bgusegs m6 (bv_unsigned sp + -64) (ram_frame junk s4 s3 s2 s1 s0 ra)) by (eapply rw_cells_transport; [exact FR5| exact MU6| exact WM6|]; cbn; unfold RCTX; lia).
-    destruct (ami_fresh _ _ AI rid ltac:(unfold rid; lia)) as [FRr FRs].
-
-    assert (E16 : forall y, 0 <= y < 2^64 ->
-              ~ (RCTX + 40 <= y < RCTX + 48) -> ~ (RCTX + 920 <= y < RCTX + 928) -> ~ (lo <= y < bv_unsigned sp) -> ~ (errno_addr tp <= y < errno_addr tp + 4) -> ~ (cur <= y < cur + 8192) ->
-              m6 (wa y) = m1 (wa y)).
-    { intros y Hy N0 N1 N2 N3 N4.
-      rewrite (MU6 (wa y)) by (rewrite wa_unsigned by lia; cbn; unfold RCTX in *; lia).
-      rewrite (E45 y Hy) by (rewrite ?rETP' in *; lia).
-      rewrite (E23 y Hy) by lia.
-      apply MU2. rewrite wa_unsigned by lia. cbn. unfold RCTX in *. lia. }
-    assert (MRn1 : rmrep st1 m1).
-    { unfold st1. apply (RA2.rmrep_new_region stI m1 m1 cur 8192 RKBrk);
-        first [ exact MR1
-              | eapply ptrs_in_mono; [| exact PTRI]; intros q Hq; cbn in Hq; intros ->; unfold rid in Hq; lia
-              | exact FRr | exact FRs
-              | unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; change (round_up_pg 8192) with 8192; lia
-              | change (round_up_pg 8192) with 8192; exact RF
-              | intros; reflexivity
-              | intros; discriminate
-              | lia ]. }
-    assert (CQX : forall q, fst q <> rid -> conc stX q = conc stI q) by (intros q Hq; change (conc stX q) with (conc st1 q); apply CQ1; exact Hq).
-    pose proof PTRI as (Y1 & Y2 & Y3 & Y4 & Y5 & Y6 & Y7 & Y8 & Y9 & Y10).
-    assert (PWX : forall q, optr_in (fun r => (r < s_next_rid stI)%N) q -> pw stX q = pw stI q).
-    { intros [q|] Hq; unfold pw, oconc; [rewrite CQX; [reflexivity|]|reflexivity]. cbn in Hq. unfold rid. lia. }
-    assert (MRX : rmrep stX m6).
-    { apply (rmrep_agree_but_ctx st1 stX m1 m6 MRn1); try reflexivity.
-      - intros y Hy. apply E16; rewrite ?rETP'; unfold RMLOCK, RCTX in *; lia.
-      - intros y Hy. apply E16; rewrite ?rETP'; unfold RLIBC, RCTX in *; lia.
-      - intros y Hy. apply E16; rewrite ?rETP'; unfold RGOT_SSP, RCTX in *; lia.
-      - intros y Hy. apply E16; rewrite ?rETP'; unfold RSSP_GUARD, RCTX in *; lia.
-      - intros y Hy. apply E16; rewrite ?rETP'; unfold RVMLOCK, RCTX in *; lia.
-      - intros a ar Ha y Hy. change (s_areas st1) with (s_areas stI) in Ha.
-        destruct (rarea_conc stI a ar WF1 Ha) as (rra & Hra & Ca & Sa0 & Sa1 & SaL & NKa & RBa & RBAa & RBCa).
-        destruct (WR _ _ Hra) as (_ & _ & _ & _ & RFa). destruct (rreserved_disjoint _ _ RFa) as (Da1 & _ & Da23 & Da2). unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in RBCa; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
-        rewrite (CQ1 a) in Hy by (intros E; rewrite E, FRr in Hra; discriminate).
-        apply E16; rewrite ?rETP'; unfold RCTX; try lia. apply (rrepfoot_clear stI m1 cur 8192 y MR1 RF). left. eapply rrepfoot_area; [exact Ha| lia].
-      - intros b gh Hb y Hy. change (s_groups st1) with (s_groups stI) in Hb.
-        destruct (rgroup_conc stI b gh WF1 Hb) as (rb & Hrb & Cb & Krb & Sb0 & Sb1 & Alb & RBb & RBCb).
-        destruct (WR _ _ Hrb) as (_ & _ & _ & _ & RFb). destruct (rreserved_disjoint _ _ RFb) as (Db1 & _ & Db23 & Db2). unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in RBCb; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
-        pose proof (round_up_pg_ge (r_len rb)).
-        rewrite (CQ1 b) in Hy by (intros E; rewrite E, FRr in Hrb; discriminate).
-        apply E16; rewrite ?rETP'; unfold RCTX; try lia. apply (rrepfoot_clear stI m1 cur 8192 y MR1 RF). left. do 5 right. left. exists b, gh. split; [exact Hb| lia].
-      - intros q rq Hq Kq y Hy.
-        assert (Hq' : (s_regions stI) !! q = Some rq).
-        { change (s_regions st1) with (<[rid := mkRegion RKBrk cur 8192]> (s_regions stI)) in Hq.
-          destruct (decide (q = rid)) as [->|NE]; [rewrite lookup_insert_eq in Hq; inversion Hq; subst; discriminate| rewrite lookup_insert_ne in Hq by congruence; exact Hq]. }
-        destruct (WR _ _ Hq') as (RB0 & _ & _ & RBC & RFq). destruct (rreserved_disjoint _ _ RFq) as (Dq1 & _ & Dq23 & Dq2). unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in RBC; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
-        apply E16; rewrite ?rETP'; unfold RCTX; try lia. apply (rrepfoot_clear stI m1 cur 8192 y MR1 RF). right. exists q, rq. auto.
-      -
-        destruct (rmrep_ctx_mid_agree st1 stX m1 m6 MRn1 ltac:(right; repeat split; reflexivity) eq_refl) as (X2 & X3 & X4 & X5).
-        { intros y Hy. apply E16; rewrite ?rETP'; unfold RCTX in *; lia. }
-        split; [| split; [exact X2| split; [exact X3| split; [exact X4| split; [exact X5|]]]]].
-        + unfold rctx_head_cells. rewrite !PWX by assumption.
-          cbn [ctx stX st1 upd_ctx s_ctx set_next_rid set_regions set_avail_meta_area_count set_brk c_secret c_init_done c_mmap_counter c_free_meta_head c_avail_meta
-               c_avail_meta_count c_avail_meta_area_count c_meta_alloc_shift c_meta_area_head c_meta_area_tail c_avail_meta_areas].
-          change (s_ctx stI) with (ctx stI). unfold pw in HC6 |- *. cbn [oconc] in HC6 |- *. unfold wz. exact HC6.
-        + unfold ctx_tail_cells, brk_word. cbn [ctx stX upd_ctx s_ctx set_avail_meta_area_count set_brk c_brk c_seq].
-          change (conc stX (rid, 8192)) with (conc st1 (rid, 8192)). rewrite CN1. change (s_ctx st1) with (ctx stI). unfold wz. exact TC6. }
-
-    assert (ZP3 : rw_cells bgusegs m3 (cur + 4096) [CB 4096 (zeros 4096)]).
-    { destruct ZN as [[_ ZB0] ZW0]. cbn [cells_bytes cbytes cells_size csize app] in ZB0, ZW0. rewrite app_nil_r in ZB0. rewrite Nat.add_0_r in ZW0.
-      eapply (rrw_cells_of_zeros m3 cur 8192 4096); [exact ZB0| exact ZW0| split; [exact (zeros_length 4096)| exact I]| cbn [cells_bytes cbytes cells_size csize]; rewrite app_nil_r, Nat.add_0_r; reflexivity| lia| cbv; discriminate]. }
-    assert (ZP6 : rw_cells bgusegs m6 (cur + 4096) [CB 4096 (zeros 4096)]).
-    { eapply rw_cells_transport; [| exact MU6| exact WM6| cbn [cells_size csize]; rewrite ?Nat.add_0_r; cbn; unfold RCTX; lia].
-      eapply RA2.rrw_cells_agree; [exact ZP3|].
-      cbn [cells_size csize]. rewrite ?Nat.add_0_r. cbn. intros y Hy. apply E45; rewrite ?rETP'; lia. }
-    destruct ZP6 as [[_ ZB] ZW]. cbn [cells_bytes cbytes cells_size csize app] in ZB, ZW. rewrite app_nil_r in ZB. rewrite Nat.add_0_r in ZW.
-    assert (ST6 : stk bgusegs m6 lo (bv_unsigned sp + -64)) by (eapply stk_transport_disjoint; [exact ST5| exact MU6| exact WM6|]; cbn; unfold RCTX; lia).
-    assert (ERR6 : rw_cells bgusegs m6 (errno_addr tp) [C4 (sysret_errno rr e1)]) by (eapply rw_cells_transport; [exact ERR5| exact MU6| exact WM6|]; cbn; rewrite rETP'; unfold RCTX; lia).
-    assert (FPX : forall y, rFP stI y -> rFP stX y).
-    { intros y X. eapply rFP_mono; [| exact X]. intros q rq Hq. exists rq.
-      change (s_regions stX) with (<[rid := mkRegion RKBrk cur 8192]> (s_regions stI)).
-      rewrite lookup_insert_ne by (intros ->; rewrite FRr in Hq; discriminate). repeat split; auto; lia. }
-    assert (M16 : magree (rFP stX) m1 m6).
-    { intros y Hy Hc.
-      assert (~ (RCTX + 40 <= y < RCTX + 48)) by (intros X; apply Hc; left; right; right; left; unfold RCTX in *; lia).
-      assert (~ (RCTX + 920 <= y < RCTX + 928)) by (intros X; apply Hc; left; right; right; left; unfold RCTX in *; lia).
-      assert (~ (lo <= y < bv_unsigned sp)) by (intros X; apply Hc; left; left; exact X).
-      assert (~ (errno_addr tp <= y < errno_addr tp + 4)) by (intros X; apply Hc; left; right; left; rewrite <- TPv; exact X).
-      assert (~ (cur <= y < cur + 8192)).
-      { intros X. apply Hc. right. eapply (rfresh_of_ranges_free stI cur 8192); [exact RGI| exact (ami_reserved _ _ AI)| exact RF| unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia| exact X]. }
-      apply E16; assumption. }
-    replace (Z_to_bv 64 (cur + 4096)) with (Z_to_bv 64 (conc stX (rid, 4096))) by (change (conc stX (rid, 4096)) with (conc st1 (rid, 4096)); rewrite CN1; reflexivity).
-    eapply (rcarve_K stX (rid, 4096) (mkRegion RKBrk cur 8192) m6 _ _ (sysret_errno rr e1));
-      first [exact RG1 | exact MRX | exact MI6 | exact FR6 | exact ST6 | exact ERR6 | reflexivity | exact INI | idtac].
-    all: try (cbn [snd fst r_len r_base r_kind]; unfold pgal, lr_lo; cbn [r_kind r_base]; change (round_up_pg 8192) with 8192; first [discriminate | lia]).
-    + unfold stX. apply (rAMI_ctx st st1 _ AI1).
-      * cbn. repeat split; reflexivity.
-      * cbn. exact (ami_secretr _ _ AI1).
-      * left. reflexivity.
-      * right. right. exists rid, 8192, (mkRegion RKBrk cur 8192). split; [reflexivity|]. split; [exact RG1|]. cbn. discriminate.
-    + change (s_areas stX) with (s_areas stI). lazymatch goal with |- ?t = None => destruct t as [ar|] eqn:EA end; [| reflexivity].
-      exfalso. destruct (WA _ _ EA) as (rr0 & Hrr & _). cbn [fst] in Hrr. rewrite FRr in Hrr. discriminate.
-    + intros j Hj. change (s_metas stX) with (s_metas stI). lazymatch goal with |- ?t = None => destruct t as [mr|] eqn:EM end; [| reflexivity].
-      exfalso. destruct (MKI _ _ EM) as (a & ar & kk & Ha & Hk & Eq). destruct (WA _ _ Ha) as (rr0 & Hrr & _).
-      assert (Ef : fst a = rid) by (unfold aadd in Eq; cbn in Eq; inversion Eq; reflexivity). rewrite Ef, FRr in Hrr. discriminate.
-    + intros tl Htl. change (s_areas stX) with (s_areas stI). apply TLI. exact Htl.
-    + cbn. lia.
-    + change (conc stX (rid, 4096)) with (conc st1 (rid, 4096)). rewrite CN1. exact ZB.
-    + change (conc stX (rid, 4096)) with (conc st1 (rid, 4096)). rewrite CN1. exact ZW.
-    + eapply rauxv_ok_magree; [exact AUX1| exact M16| intros y X; exact (rFP_below stX y (proj1 MRX) X)].
-    + eapply magree_trans; [exact AG1| exact M16| exact FPX| intros y X; exact X].
-    + unfold brk_link_ps. cbn [ctx stX upd_ctx s_ctx set_avail_meta_area_count set_brk c_brk ps_brk set_brk_ps].
-      change (conc stX (rid, 8192)) with (conc st1 (rid, 8192)). rewrite CN1. reflexivity.
-  -
-    unfold brk_answer_ok. rewrite Z.eqb_refl.
-    replace (cur =? cur + 8192) with false by (symmetry; apply Z.eqb_neq; lia). cbn [orb negb].
-    eapply rimplT_evt.
-    { eapply (ram_bu_fail _ gp tp t0 t1 t2 (Z_to_bv 64 0) a2' a3 a4 a5 a6 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 _ _ F fc m1 m2 stI cur);
-        first [exact MR1 | exact MU2 | exact WM2 | exact ACNT | exact MI2 | reflexivity | exact TC2 | lia]. }
-    intros ms6 (m3 & -> & MU3 & WM3 & MI3 & MRD).
-    assert (M23 : magree (rFP stI) m2 m3).
-    { eapply magree_of_munch; [exact MU3|]. cbn. split; [| exact I]. intros y Hy. left. right. right. left. unfold RCTX in *. lia. }
-    eapply (rmmap_path (upd_ctx (set_brk BrkDead) stI) m3 (set_brk_ps cur s) junk e1); first [exact MRD | exact MI3 | reflexivity | exact INI | idtac].
-    + apply (rAMI_ctx st stI _ AI); [cbn; repeat split; reflexivity| cbn; exact (ami_secretr _ _ AI)| left; reflexivity| right; left; reflexivity].
-    + exact RGI.
-    + exact ACNT.
-    + change (ctx (upd_ctx (set_brk BrkDead) stI)) with (set_brk BrkDead (ctx stI)). cbn [c_meta_alloc_shift set_brk]. pose proof (amp_shift stI AMPI). lia.
-    + exact TLI.
-    + exact MKI.
-    + pose proof PTRI as (Y1 & Y2 & Y3 & Y4 & Y5 & Y6 & Y7 & Y8 & Y9 & Y10). apply rptrs_in_upd_ctx; cbn; try assumption; try reflexivity; try exact I.
-    + eapply rw_cells_transport; [exact FR2| exact MU3| exact WM3|]. cbn. unfold RCTX. lia.
-    + eapply stk_transport_disjoint; [exact ST2| exact MU3| exact WM3|]. cbn. unfold RCTX. lia.
-    + eapply rw_cells_transport; [exact ERR2| exact MU3| exact WM3|]. cbn. rewrite rETP'. unfold RCTX. lia.
-    + eapply rauxv_ok_magree; [exact AUX1| | intros y X; exact (rFP_below stI y WF1 X)].
-      eapply magree_trans; [exact M12| exact M23| intros y X; exact X| intros y X; exact X].
-    + eapply (magree_trans (rFP stI) (rFP stI) _ m m1 m3 AG1); [eapply magree_trans; [exact M12| exact M23| intros y X; exact X| intros y X; exact X] | |];
-        intros y X; (eapply rFP_same; [| exact X]); reflexivity.
+    { eapply ram_bu_fail with (m0 := m1) (st := stI);
+        [exact repI | exact munchA | exact monoA | exact noAreasI | lia | lia | exact tailA | reflexivity | reflexivity | exact invA]. }
+    intros ms4 (mB & -> & munchB & _ & invB & repB).
+    pose (W920 := fun a : Z => RCTX + 920 <= a < RCTX + 928).
+    pose proof (magree_trans W920 W920 W920 m1 mA mB
+                  (magree_of_munch W920 _ m1 mA munchA (conj (fun x range => range) I))
+                  (magree_of_munch W920 _ mA mB munchB (conj (fun x range => range) I))
+                  (fun _ inW => inW) (fun _ inW => inW)) as agreeW.
+    apply (rmmap_path (upd_ctx (set_brk BrkDead) stI) mB (set_brk_ps cur s) junk e1).
+    + apply rAMI_ctx; [exact amiI | unfold ctx_core_eq; repeat split | exact (ami_secretr _ _ amiI) | left; reflexivity | right; left; reflexivity].
+    + exact initI.
+    + exact regsI.
+    + exact noAreasI.
+    + exact (amp_shift stI preI).
+    + exact (amp_tail stI preI).
+    + exact (amp_mkeys stI preI).
+    + apply rptrs_in_upd_ctx; [exact pFree | exact pAvail | exact pHead | exact pTail | exact pAreas | reflexivity | exact I | exact ptrsI].
+    + exact repB.
+    + exact invB.
+    + apply (rrw_cells_magree W920 m1 mB _ _ frameI agreeW).
+      intros a range inW. simpl in range. unfold W920, RCTX in inW. lia.
+    + apply (rpres_except_stk W920 m1 mB lo _ (rpres_of_magree _ _ _ agreeW) stkI).
+      intros a range inW. unfold W920, RCTX in inW. lia.
+    + apply (rrw_cells_magree W920 m1 mB _ _ errI agreeW).
+      intros a range inW. simpl in range. unfold W920, RCTX in inW. lia.
+    + apply (rauxv_ok_magree W920 m1 mB _ auxI agreeW).
+      intros a inW. unfold W920, RCTX, RAUXV_CELL in *. lia.
+    + apply (magree_trans (rFP stI) W920 (rFP (upd_ctx (set_brk BrkDead) stI)) m m1 mB agreeI agreeW (fun _ inP => inP)).
+      intros a inW. left. right. right. left. unfold W920 in inW. lia.
+    + exact I.
+    + reflexivity.
+    + reflexivity.
+    + reflexivity.
 Qed.
 
 Lemma rbody_spec : forall (stI : mstate) (x1 t0 t1 t2 s1x s4x a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (m1 : mem) (junk : list byte) (e1 : word),
@@ -993,148 +1151,170 @@ Lemma rbody_spec : forall (stI : mstate) (x1 t0 t1 t2 s1x s4x a0 a1 a2 a3 a4 a5 
         (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 4096) s1x a0 a1 a2 a3 a4 a5 a6 a7
                  (Z_to_bv 64 RSSP_GUARD) (Z_to_bv 64 RMLOCK) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
             F (Z_to_bv 64 0x2b1794) fc None m1 (seg_rom bgusegs)).
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros until e1. intros AMPI AI INI RGI BLI MR1 MI1 FR1 ST1 ERR1 AUX1 AG1.
-  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR. unfold RAM_STACK in LOLE.
-  pose proof MR1 as (WF1 & _).
+Proof using AMP TK LO LOLE ERR TP KH.
+  intros stI x1 t0 t1 t2 s1x s4x a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m1 junk e1.
+  intros preI amiI initI regsI linkI repI invI frameI stkI errI auxI agrI.
+  pose proof (proj1 repI) as wfI.
+  assert (stackRoom : lo <= bv_unsigned sp - 64) by (unfold RAM_STACK in LOLE; lia).
+  assert (metaSame : forall g, get_meta_rec stI g = get_meta_rec st g)
+    by (intros g; unfold get_meta_rec; rewrite (ami_metas _ _ amiI); reflexivity).
+  assert (slotSame : forall g, meta_slot stI g -> meta_slot st g)
+    by (intros g; unfold meta_slot; rewrite (ami_areas _ _ amiI); exact (fun inSlot => inSlot)).
+  pose proof (ami_ctx _ _ amiI) as (_ & freeSame & availSame & _).
+  pose proof (amp_ptrs _ preI) as (ptrsI & _).
+  assert (linkKeep : forall X, s_regions X = s_regions stI -> c_brk (ctx X) = c_brk (ctx stI) -> brk_link_ps X s).
+  { intros X regsX brkX. revert linkI. unfold brk_link_ps. rewrite brkX.
+    destruct (c_brk (ctx stI)) as [| | bid boff]; try tauto.
+    intros linkOld. rewrite linkOld. unfold conc, get_region. rewrite regsX. reflexivity. }
+  assert (errnoKeep : forall mY, rpres_except (ram_fp stI lo (bv_unsigned sp)) m1 mY -> rw_cells bgusegs mY (bv_unsigned tp + -164) [C4 e1]).
+  { intros mY presY. apply (rpres_except_rw_cells _ _ _ _ _ presY errI).
+    intros a errnoCell inFP. change (Z.of_nat (cells_size [C4 e1])) with 4 in errnoCell.
+    exact (rerrno_not_amfp stI a wfI inFP errnoCell). }
   unfold am_body.
-  destruct (c_free_meta_head (ctx stI)) as [h|] eqn:FMH.
-  -
-    pose proof (amp_fmh stI AMPI h FMH) as [HN0 HM0].
-    pose proof (amp_links stI AMPI) as [CLn CLp CLno CLs].
-    pose proof (CLs h HN0) as MSh.
-    pose proof (amp_fml stI AMPI h HM0 HN0) as (CL0 & FMn & FMp).
-    destruct (m_next (get_meta_rec stI h)) as [nx|] eqn:HN; [| exfalso; apply HN0; reflexivity].
-    destruct (m_prev (get_meta_rec stI h)) as [pv|] eqn:HP.
-    2:{ exfalso. pose proof (proj2 (CLno h) HP) as X. rewrite HN in X. discriminate. }
-    destruct (CLn h nx HN) as [PVn MSn]. destruct (CLp h pv HP) as [NXp MSp].
-    assert (SELF : nx = h <-> pv = h).
-    { split; intros ->; [rewrite HP in PVn| rewrite HN in NXp]; congruence. }
+  destruct (c_free_meta_head (ctx stI)) as [h|] eqn:freeI.
+  - destruct (amp_fmh _ preI h freeI) as [nextSome memNone].
+    pose proof (amp_links _ preI) as linksI.
+    pose proof (cl_self _ linksI h nextSome) as slotH.
+    pose proof (amp_fml _ preI h memNone nextSome) as (clearH & nextFree & prevFree).
+    destruct (m_next (get_meta_rec stI h)) as [nx|] eqn:nextH; [|contradiction].
+    destruct (m_prev (get_meta_rec stI h)) as [pv|] eqn:prevH.
+    2: { apply (cl_none _ linksI h) in prevH. rewrite nextH in prevH. discriminate. }
+    destruct (cl_next _ linksI h nx nextH) as (nxBack & slotNx).
+    destruct (cl_prev _ linksI h pv prevH) as (pvBack & slotPv).
+    assert (loopIff : nx = h <-> pv = h).
+    { split; intros same.
+      - rewrite same in nxBack. rewrite nxBack in prevH. injection prevH as <-. reflexivity.
+      - rewrite same in pvBack. rewrite pvBack in nextH. injection nextH as <-. reflexivity. }
     eapply rimplT_evt.
-    { eapply (ram_deq sp gp tp t0 t1 t2 (Z_to_bv 64 4096) s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 ra s0 s1 s2 s3 s4 F fc m1 junk lo stI h nx pv);
-        first [exact MR1 | exact MI1 | exact FMH | exact MSh | exact HN | exact HP | exact MSn | exact MSp | exact SELF | exact FR1 | exact ST1 | exact LO | lia]. }
-    intros ms2 RP. unfold ram_ret_post in RP.
-    destruct RP as (v0 & v1 & v2 & v4 & v5 & v6 & v7 & v8 & v9 & v10 & v11 & v12 & v13 & v14 & m2 & -> & PE2 & WM2 & MI2 & ST2 & MR2).
-    eapply rfinish_K.
-    + eapply (ram_rel_deq st stI h nx pv AI); try assumption.
-      * rewrite <- FMH. symmetry. exact (proj1 (proj2 (ami_ctx _ _ AI))).
-      * unfold get_meta_rec. rewrite <- (ami_metas _ _ AI). exact HN.
-      * unfold get_meta_rec. rewrite <- (ami_metas _ _ AI). exact HP.
-      * eapply meta_slot_same_areas; [| exact MSh]. symmetry. exact (ami_areas _ _ AI).
-      * unfold get_meta_rec. rewrite <- (ami_metas _ _ AI). exact CL0.
-      * unfold get_meta_rec. rewrite <- (ami_metas _ _ AI). exact (FMn nx eq_refl).
-      * unfold get_meta_rec. rewrite <- (ami_metas _ _ AI). intros X. apply (proj1 (CLno nx)) in X. rewrite PVn in X. discriminate.
-      * unfold get_meta_rec. rewrite <- (ami_metas _ _ AI). exact (FMp pv eq_refl).
-      * unfold get_meta_rec. rewrite <- (ami_metas _ _ AI). rewrite NXp. discriminate.
-    + exact MR2.
-    + exact MI2.
-    + exact ST2.
-    + eapply rrw_cells_magree; [exact ERR1| apply rmagree_of_pres; exact PE2|]. cbn. intros a Ha X. apply (rerrno_not_amfp stI a WF1); [exact X| lia].
-    + eapply rauxv_ok_magree; [exact AUX1| apply rmagree_of_pres; exact PE2|]. intros a X. apply (rFP_below stI _ WF1). apply rFP_am. exact X.
-    + pose proof (sbl_regions _ _ (sbl_dequeue stI LFree h)) as RD.
-      eapply magree_trans; [exact AG1| apply rmagree_of_pres; exact PE2| intros a X; eapply rFP_same; [exact RD| exact X] | intros a X; apply rFP_am; eapply (proj2 (ram_fp_same _ _ lo _ a RD)); exact X].
-    + unfold brk_link_ps in *. rewrite (sbl_brk _ _ (sbl_dequeue stI LFree h)). destruct (c_brk (ctx stI)) as [| |rid off]; auto.
-      unfold conc, get_region. rewrite (sbl_regions _ _ (sbl_dequeue stI LFree h)). exact BLI.
+    { apply ram_deq with (junk := junk) (lo := lo) (st := stI) (h := h) (nx := nx) (pv := pv)
+        (raw := ra) (s0o := s0) (s1o := s1) (s2o := s2) (s3o := s3) (s4o := s4); assumption. }
+    intros ms' (w0 & w1 & w2 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & w3 & w4 & w5 & w6 & mD & -> & presD & _ & invD & stkD & repD).
+    assert (regsD : s_regions (dequeue LFree h stI) = s_regions stI /\ c_brk (ctx (dequeue LFree h stI)) = c_brk (ctx stI)).
+    { unfold dequeue, set_head. cbv zeta. rewrite nextH, prevH.
+      destruct (negb (optr_eqb (Some nx) (Some h))); [|split; reflexivity].
+      destruct (optr_eqb _ _); split; reflexivity. }
+    destruct regsD as [regsD brkD].
+    apply (rfinish_K (dequeue LFree h stI) (Some h) s mD e1); try assumption.
+    + apply (ram_rel_deq st stI h nx pv amiI); try assumption.
+      * rewrite <- freeSame. reflexivity.
+      * rewrite <- metaSame. exact nextH.
+      * rewrite <- metaSame. exact prevH.
+      * exact (slotSame h slotH).
+      * rewrite <- metaSame. exact clearH.
+      * rewrite <- metaSame. exact (nextFree nx eq_refl).
+      * rewrite <- metaSame. intros noNext. apply (cl_none _ linksI nx) in noNext. rewrite nxBack in noNext. discriminate.
+      * rewrite <- metaSame. exact (prevFree pv eq_refl).
+      * rewrite <- metaSame. rewrite pvBack. discriminate.
+    + exact (errnoKeep mD presD).
+    + exact (rauxv_ok_magree _ m1 mD _ auxI (rmagree_of_pres _ _ _ presD) (fun a inFP => rFP_below stI a wfI (rFP_am stI a inFP))).
+    + exact (magree_trans _ _ _ m m1 mD agrI (rmagree_of_pres _ _ _ presD)
+               (fun a inA => rFP_same stI _ a regsD inA) (fun a inFP => rFP_same stI _ a regsD (rFP_am stI a inFP))).
+    + exact (linkKeep _ regsD brkD).
     + reflexivity.
     + reflexivity.
     + reflexivity.
-    + unfold pw, oconc, wz, conc, get_region. rewrite (sbl_regions _ _ (sbl_dequeue stI LFree h)). reflexivity.
-  -
-    destruct (Z.eqb_spec (c_avail_meta_count (ctx stI)) 0) as [CNT|CNT]; cbn [negb].
-    +
-      eapply rimplT_evt.
-      { eapply (ram_disp0 _ gp tp t0 t1 t2 (Z_to_bv 64 4096) s1x a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 RSSP_GUARD) s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc m1 stI); [exact MR1| exact FMH| exact CNT]. }
-      intros ms2 ->.
-      assert (TLI : forall tl, c_meta_area_tail (ctx stI) = Some tl -> is_Some ((s_areas stI) !! tl)) by (exact (amp_tail stI AMPI)).
-      assert (MKI : forall q mr, (s_metas stI) !! q = Some mr -> meta_slot stI q) by (exact (amp_mkeys stI AMPI)).
-      assert (PTRI : ptrs_in (fun rid => (rid < s_next_rid stI)%N) stI).
-      { apply (ami_ptrs _ _ AI); [| eapply ptrs_in_mono; [| exact (proj1 (amp_ptrs st AMP))]; intros q Hq; cbn in Hq; pose proof (ami_next _ _ AI); lia]. intros rid r Hr _.
-        destruct (N.lt_ge_cases rid (s_next_rid stI)) as [L|G]; [exact L|]. destruct (ami_fresh _ _ AI rid G) as [X _]. rewrite X in Hr. discriminate. }
-      destruct (Z.eqb_spec (c_avail_meta_area_count (ctx stI)) 0) as [ACNT|ACNT]; cbn [andb].
-      *
-        destruct (c_brk (ctx stI)) as [| |brid boff] eqn:BRK; cbn [negb].
-        --
-           eapply (rbrk_untried_path stI m1 junk e1); first [exact AMPI | exact AI | exact INI | exact RGI | exact ACNT | exact BRK | exact PTRI | exact MR1 | exact MI1 | exact FR1 | exact ST1 | exact ERR1 | exact AUX1 | exact AG1 | reflexivity].
-        --
-           eapply rimplT_evt.
-           { eapply (ram_disp_dead _ gp tp t0 t1 t2 s1x _ _ a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc m1 stI); [exact MR1| exact ACNT| exact BRK]. }
-           intros ms3 ->.
-           eapply (rmmap_path stI m1 s junk e1); first [exact AI | exact INI | exact RGI | exact ACNT | exact TLI | exact MKI | exact PTRI | exact MR1 | exact MI1 | exact FR1 | exact ST1 | exact ERR1 | exact AUX1 | exact AG1 | exact BLI | reflexivity | idtac].
-           pose proof (amp_shift stI AMPI). lia.
-        --
-           eapply (rbrk_live_path stI brid boff m1 junk e1); first [exact AMPI | exact AI | exact INI | exact RGI | exact BLI | exact ACNT | exact BRK | exact PTRI | exact MR1 | exact MI1 | exact FR1 | exact ST1 | exact ERR1 | exact AUX1 | exact AG1].
-      *
-        destruct (amp_avail_areas stI AMPI ACNT) as (p & r & AMA & Hr & NK & PAL & P0 & PLR & PHI & FRA).
-        pose proof (amp_acount stI AMPI) as ACR.
-        unfold am_after_brk. rewrite (proj2 (Z.eqb_neq _ _) ACNT).
-        eapply rimplT_evt.
-        { eapply (ram_disp_fin _ gp tp t0 t1 t2 s1x _ _ a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 F fc m1 stI p r);
-            first [exact MR1 | exact ACNT | exact AMA | exact Hr | unfold pgal, PGSZ in *; exact PAL | lia | idtac]. unfold PGSZ in *. lia. }
-        intros ms3 ->.
-        eapply (rfinish_path stI p r m1 s junk e1); first [exact AI | exact INI | exact AMA | exact Hr | exact NK | exact P0 | exact PLR | exact TLI | exact MR1 | exact MI1 | exact FR1 | exact ST1 | exact ERR1 | exact AUX1 | exact AG1 | exact BLI | reflexivity | idtac].
-        -- unfold PGSZ in PHI. lia.
-        -- unfold pgal. unfold PGSZ in PAL. exact PAL.
-        -- apply (proj1 (FRA p eq_refl ltac:(lia))).
-        -- intros j Hj. apply (proj2 (FRA (aadd p (AREA_HDR + META_SIZE * j)) eq_refl ltac:(cbn; unfold AREA_HDR, META_SIZE; lia))).
-        -- lia.
-    +
-      destruct (amp_avail stI AMPI CNT) as (aa & ar & kk & Haa & AVM & K0 & K1 & MQ).
-      pose proof (amp_count stI AMPI) as CR.
-      assert (MSq : meta_slot stI (aadd aa (AREA_HDR + META_SIZE * kk))) by (exists aa, ar, kk; repeat split; auto; unfold NSLOTS in *; lia).
-      rewrite (am_take_eq stI k bail _ AVM).
-      eapply rimplT_evt.
-      { eapply (ram_take_walk sp gp tp t0 t1 t2 (Z_to_bv 64 4096) s1x a0 a1 a2 a3 a4 a5 a6 a7 s4x s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 ra s0 s1 s2 s3 s4 F fc m1 junk lo stI _);
-          first [exact MR1 | exact MI1 | exact FMH | exact CNT | exact AVM | exact MSq | exact FR1 | exact ST1 | exact LO | unfold NSLOTS in CR; lia | lia]. }
-      intros ms2 RP. unfold ram_ret_post in RP.
-      destruct RP as (v0 & v1 & v2 & v4 & v5 & v6 & v7 & v8 & v9 & v10 & v11 & v12 & v13 & v14 & m2 & -> & PE2 & WM2 & MI2 & ST2 & MR2).
-      eapply rfinish_K.
-      * eapply (ram_rel_take st stI _ AI).
-        -- rewrite <- AVM. symmetry. exact (proj1 (proj2 (proj2 (ami_ctx _ _ AI)))).
-        -- rewrite <- (ami_metas _ _ AI). exact MQ.
-        -- eapply meta_slot_same_areas; [| exact MSq]. symmetry. exact (ami_areas _ _ AI).
-      * exact MR2.
-      * exact MI2.
-      * exact ST2.
-      * eapply rrw_cells_magree; [exact ERR1| apply rmagree_of_pres; exact PE2|]. cbn. intros a Ha X. apply (rerrno_not_amfp stI a WF1); [exact X| lia].
-      * eapply rauxv_ok_magree; [exact AUX1| apply rmagree_of_pres; exact PE2|]. intros a X. apply (rFP_below stI _ WF1). apply rFP_am. exact X.
-      * eapply magree_trans; [exact AG1| apply rmagree_of_pres; exact PE2| intros a X; eapply rFP_same; [| exact X]; reflexivity | intros a X; apply rFP_am; eapply (proj2 (ram_fp_same _ _ lo _ a ltac:(reflexivity))); exact X].
-      * unfold brk_link_ps in *. unfold ctx in BLI. cbn. destruct (c_brk (s_ctx stI)) as [| |rid off]; auto.
+    + unfold pw, oconc, wz, conc, get_region. rewrite regsD. reflexivity.
+  - destruct (Z.eqb_spec (c_avail_meta_count (ctx stI)) 0) as [countZ | countNZ]; cbn [negb].
+    2: { destruct (amp_avail _ preI countNZ) as (a & ar & kk & foundA & availQ & kkLo & kkHi & metaNone).
+         pose proof (amp_count _ preI) as countRange.
+         rewrite (am_take_eq stI k bail _ availQ).
+         assert (slotQ : meta_slot stI (aadd a (AREA_HDR + META_SIZE * kk))).
+         { exists a, ar, kk. split; [exact foundA|]. split; [unfold NSLOTS in *; lia | reflexivity]. }
+         eapply rimplT_evt.
+         { apply ram_take_walk with (junk := junk) (lo := lo) (st := stI) (q := aadd a (AREA_HDR + META_SIZE * kk))
+             (raw := ra) (s0o := s0) (s1o := s1) (s2o := s2) (s3o := s3) (s4o := s4); try assumption.
+           unfold NSLOTS in countRange. lia. }
+         intros ms' (w0 & w1 & w2 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & w3 & w4 & w5 & w6 & mT & -> & presT & _ & invT & stkT & repT).
+         assert (regsT : s_regions (am_took stI (aadd a (AREA_HDR + META_SIZE * kk)) (c_avail_meta_count (ctx stI) - 1)) = s_regions stI)
+           by reflexivity.
+         apply (rfinish_K _ _ s mT e1); try assumption.
+         - apply ram_rel_take; [exact amiI | | | exact (slotSame _ slotQ)].
+           + rewrite <- availSame. exact availQ.
+           + rewrite <- (ami_metas _ _ amiI). exact metaNone.
+         - exact (errnoKeep mT presT).
+         - exact (rauxv_ok_magree _ m1 mT _ auxI (rmagree_of_pres _ _ _ presT) (fun b inFP => rFP_below stI b wfI (rFP_am stI b inFP))).
+         - exact (magree_trans _ _ _ m m1 mT agrI (rmagree_of_pres _ _ _ presT)
+                    (fun b inA => rFP_same stI _ b regsT inA) (fun b inFP => rFP_same stI _ b regsT (rFP_am stI b inFP))).
+         - reflexivity.
+         - reflexivity.
+         - reflexivity.
+         - unfold pw, oconc, wz. rewrite rconc_am_took. reflexivity. }
+    eapply rimplT_evt; [apply ram_disp0 with (st := stI); assumption|].
+    intros ms0 ->.
+    destruct (Z.eqb_spec (c_avail_meta_area_count (ctx stI)) 0) as [areasZ | areasNZ]; cbn [andb].
+    2: { unfold am_after_brk. rewrite (proj2 (Z.eqb_neq _ _) areasNZ). cbv beta iota.
+         destruct (amp_avail_areas _ preI areasNZ) as (p & r & availP & regP & kindP & alignP & offLo & lrloP & roomP & freshP).
+         pose proof (amp_acount _ preI) as areaCount.
+         assert (alignedP : pgal p.2) by exact alignP.
+         assert (roomOne : p.2 + 4096 <= round_up_pg (r_len r)) by (unfold PGSZ in roomP; lia).
+         assert (countWord : 0 <= c_avail_meta_area_count (ctx stI) < 2 ^ 64) by lia.
+         eapply rimplT_evt.
+         { apply ram_disp_fin with (st := stI) (p := p) (r := r); assumption. }
+         intros ms1 ->.
+         apply (rfinish_path stI p r m1 s junk e1); try assumption.
+         - exact (proj1 (freshP p eq_refl (Z.le_refl _))).
+         - intros j slotJ. apply (freshP (aadd p (AREA_HDR + META_SIZE * j))); [reflexivity|].
+           cbn [aadd snd]. unfold AREA_HDR, META_SIZE. lia.
+         - exact (amp_tail _ preI).
+         - lia.
+         - reflexivity.
+         - reflexivity.
+         - reflexivity. }
+    destruct (c_brk (ctx stI)) as [| | bid boff] eqn:brkI; cbn [andb negb].
+    + apply rbrk_untried_path with (junk := junk) (e1 := e1); try assumption. reflexivity.
+    + eapply rimplT_evt; [apply ram_disp_dead with (st := stI); assumption|].
+      intros ms1 ->.
+      apply (rmmap_path stI m1 s junk e1); try assumption.
+      * exact (amp_shift _ preI).
+      * exact (amp_tail _ preI).
+      * exact (amp_mkeys _ preI).
       * reflexivity.
       * reflexivity.
       * reflexivity.
-      * unfold pw, oconc, wz. reflexivity.
+    + apply rbrk_live_path with (junk := junk) (e1 := e1); assumption.
 Qed.
 
 Lemma ralloc_meta_main : forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word),
   rimplT o (alloc_meta st k bail) s Q
         (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
             F (Z_to_bv 64 ralloc_meta_entry) fc None m (seg_rom bgusegs)).
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros. pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR. unfold RAM_STACK in LOLE.
-  pose proof LO as LO'. unfold OssFuzzTheorems.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in LO'; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. pose proof rETP as rETP'. pose proof TP as TPv.
-  pose proof MR as (WF0 & _).
-  rewrite alloc_meta_eq. unfold ralloc_meta_entry.
+Proof using AMP MR TK BL AUX ST LO LOLE ERR MI TP KH.
+  intros t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6.
+  rewrite alloc_meta_eq.
+  pose proof (u64_range sp) as spRange.
+  assert (stackRoom : lo <= bv_unsigned sp - 64) by (unfold RAM_STACK in LOLE; lia).
   eapply rimplT_evt.
-  { eapply (ram_entry ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo st);
-      first [exact MR | exact MI | exact AUX | exact ST | exact LO | exact (amp_init st AMP) | exact (amp_s_secret st AMP) | exact (amp_secret st AMP) | lia]. }
-  intros ms1 (x1 & u0 & u1 & u2 & s1x & s4x & u3 & u4 & u5 & u6 & u7 & u8 & u9 & u9' & u10 & u11 & u12 & u13 & m1 & junk & -> & MU1 & WM1 & MI1 & FR1 & ST1 & MR1).
-  assert (M01 : magree (rFP (am_init_st st)) m m1).
-  { eapply magree_of_munch; [exact MU1|]. cbn. split; [| split; [| exact I]]; intros y Hy.
-    - left. left. lia.
-    - left. right. right. left. unfold RCTX in *. lia. }
-  eapply (rbody_spec (am_init_st st) x1 u0 u1 u2 s1x s4x u3 u4 u5 u6 u7 u8 u9 u9' u10 u11 u12 u13 m1 junk errv).
+  { apply ram_entry with (lo := lo) (st := st); try assumption.
+    - exact (amp_init _ AMP).
+    - exact (amp_s_secret _ AMP).
+    - exact (amp_secret _ AMP). }
+  intros ms' (x1 & u0 & u1 & u2 & s1x & s4x & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & junk
+              & -> & munch1 & mono1 & inv1 & frame1 & stk1 & rep1).
+  assert (cover1 : ivs_covered (rFP (am_init_st st)) [(bv_unsigned sp - 64, bv_unsigned sp); (RCTX, RCTX + 16)]).
+  { cbn [ivs_covered]. refine (conj _ (conj _ I)); intros a range.
+    - left. left. unfold RAM_STACK in LOLE. lia.
+    - left. right. right. left. lia. }
+  apply (rbody_spec (am_init_st st) x1 u0 u1 u2 s1x s4x b0 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 m1 junk errv).
   - exact (rAMpre_init st AMP).
   - exact (rAMI_init st AMP).
   - exact (ram_init_done st).
   - exact (ram_init_regions st).
-  - unfold brk_link_ps in *. rewrite ram_init_brk. destruct (c_brk (ctx st)) as [| |rid off]; auto. rewrite ram_init_conc. exact BL.
-  - exact MR1.
-  - exact MI1.
-  - exact FR1.
-  - exact ST1.
-  - eapply rw_cells_transport; [exact ERR| exact MU1| exact WM1|]. rewrite rETP'. cbn. unfold RCTX. lia.
-  - eapply rauxv_ok_magree; [exact AUX| exact M01| intros a X; exact (rFP_below (am_init_st st) a (proj1 MR1) X)].
-  - exact M01.
+  - revert BL. unfold brk_link_ps. rewrite ram_init_brk.
+    destruct (c_brk (ctx st)) as [| | bid boff]; try tauto.
+    intros linkOld. rewrite linkOld, ram_init_conc. reflexivity.
+  - exact rep1.
+  - exact inv1.
+  - exact frame1.
+  - exact stk1.
+  - apply (rrw_cells_magree (fun a => ~ outside [(bv_unsigned sp - 64, bv_unsigned sp); (RCTX, RCTX + 16)] a) m m1 _ _ ERR).
+    + apply (magree_of_munch _ _ m m1 munch1). cbn [ivs_covered outside].
+      repeat split; intros y range away; tauto.
+    + intros a range inW. apply inW. cbn [outside].
+      change (Z.of_nat (cells_size [C4 errv])) with 4 in range.
+      rewrite TP, unsigned_lit in range by lia. unfold RCTX, RAM_STACK in *. lia.
+  - apply (rauxv_ok_frame m m1 _ _ AUX munch1 mono1).
+    repeat constructor; cbn [fst snd]; unfold RCTX, RAUXV_CELL, RAM_STACK in *; lia.
+  - exact (magree_of_munch _ _ m m1 munch1 cover1).
 Qed.
 End ASM.
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.11.0 (2026-11-01), a patch release
+
+- 277 proof-library files in 37 units are rewritten. In 1 of them the rewritten text came out byte-identical to the released text; the rest change. Where a released file carries a copyright or attribution notice, the rewritten file keeps it unchanged.
+- Release v2026.10.2 is withdrawn. v2026.10.1 and v2026.10.0 are unchanged.
+- No statement changes. Library definitions that now say something different include these five groups:
+  - `XENV_CORE_FPA` in `proofs/simdjson/fuzz_dump_raw_tape/lib/B/X_xdefs.v`: four lemmas keep byte-identical statements that cover 64 bytes fewer and 248 bytes more. The unit's top theorem `main_rta` and its assumptions are unchanged. A definition of the same name stands in eight other units; the three whose `X_xdefs.v` is also rewritten were checked and are unaffected.
+  - `hs_xenv_ok` in `proofs/simdjson/fuzz_dump_raw_tape/lib/B/HandoffCLX.v`: for eleven one-byte slots from 0x6aa3e0 to 0x6aa3ea it requires only that the bytes can be read and written, where the released text also required the state's knowledge table to give a literal byte for each. Lemmas that assume it now assume less. The checks on the unit's four certified states now check less, and those four states satisfy the released definition too. `Print Assumptions` for the unit's top theorems gives the same output as before.
+  - `XENV_FPA` in `proofs/openssl/pem/lib/A/X_xdefs.v`: it covers 32 bytes fewer, the range [0x669460, 0x669480), which lies in no section. Each of the seven statements that name it is proved equivalent to its published form, using three proved facts about those 32 bytes.
+  - `common_facts` and `common_facts3` in `proofs/cgif/cgif_rgb_fuzzer/lib/UI2s.v`: two of their bounds are narrower, `4096 .. CEIL_MAX - 1` and `CEIL_MIN + 8560 .. 2^63 - 184`. Four published lemmas name them, and each is proved to claim at least what the released version did; every other use is inside a proof.
+  - `lib0_statics` in `proofs/openssl/pem/lib/A/Fz_lib0.v`: it requires 192 more bytes to be zero and writable, 12 objects of `crypto/init.c` and three runs inside `default_context_int`. The two theorems that take it as a premise, `fuzz_init_A` and `fuzz_init_closed`, now assume more. The kept `lib0_at_main_A` proves the stronger form holds at `main` in the pinned `pem.asan`.
+- Each proved agreement statement, and each proved halts statement except one, assumes that the run stays in its memory budget. The premise is `~ run_scfg_budget_refused` or its equivalent, in [theories/Shapes.v](theories/Shapes.v). No theorem shows yet that this is true for a released build. This also applies to 2026.10.0 and 2026.10.1.
+- The proofs had 456 lines with a wall-clock time limit. 59 remain, each with a comment that gives the reason, and `oft lint` refuses a limit without one. On a slow machine, a remaining limit can make a proof fail.
+- The pinned checker image predates the step in `toolchain/checker.Dockerfile` that no longer trusts five root certificates (four of emSign and Comodo's AAA Certificate Services). No result depends on it, because every check runs with no network. A later release rebuilds the image and pins it.
+
 ## 2026.10.2 (2026-10-27), a patch release
 
 - 20,164 statements: 336 proved (202 in 2026.10.1), 5 known false, 229 blocked by the model, 19,594 open.

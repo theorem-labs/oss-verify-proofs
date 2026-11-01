@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From Stdlib Require Import Uint63.
@@ -28,24 +28,36 @@ Lemma seg_rw_tsdmain : seg_rw_ok bsegs 12567040 64 = true. Proof. vm_compute. re
 (* [comment removed for export] *)
 Lemma fact_lit (rho : valuation) (m : word -> option byte) (B off : Z) (n : nat) (v : Z) :
   0 <= v -> bytes_at bsegs m (B + off) (Z_to_le_bytes n v) -> fact_holds bsegs rho m B (off, kbs_Z n v).
-Proof. intros Hv Hb. exists (Z_to_le_bytes n v). split; [apply kbs_Z_intro; exact Hv | exact Hb]. Qed.
+Proof.
+  intros Hv_nonneg Hlit_bytes. unfold fact_holds; cbn [fst snd].
+  exists (Z_to_le_bytes n v). split; [apply kbs_Z_intro; exact Hv_nonneg | exact Hlit_bytes].
+Qed.
 
 Lemma fact_ptr (rho : valuation) (m : word -> option byte) (B off : Z) (tag : int) (A : Z) :
   rho tag = A -> 0 <= A < 2 ^ 64 -> bytes_at bsegs m (B + off) (le8 (Z_to_bv 64 A)) -> fact_holds bsegs rho m B (off, kbs_ptr tag).
-Proof. intros Er HA Hb. exists (le8 (Z_to_bv 64 A)). split; [exact (kbs_ptr_intro rho tag A Er HA) | exact Hb]. Qed.
+Proof.
+  intros Htag_val Hword_range Hptr_bytes.
+  pose proof (kbs_ptr_intro rho tag A Htag_val Hword_range) as Hptr_kbs.
+  exists (le8 (Z_to_bv 64 A)). exact (conj Hptr_kbs Hptr_bytes).
+Qed.
 
 (* [comment removed for export] *)
 Lemma c8_bytes (m : word -> option byte) (a : Z) (w : word) : ro_cells bsegs m a [C8 w] -> bytes_at bsegs m a (le8 w).
-Proof. intros [_ B1]. cbn [cells_bytes cbytes] in B1. rewrite app_nil_r in B1. exact B1. Qed.
+Proof. intros [_ Hc8_raw]. cbn [cells_bytes cbytes] in Hc8_raw. rewrite app_nil_r in Hc8_raw. exact Hc8_raw. Qed.
 Lemma c4_bytes (m : word -> option byte) (a : Z) (w : word) : ro_cells bsegs m a [C4 w] -> bytes_at bsegs m a (le4 w).
-Proof. intros [_ B1]. cbn [cells_bytes cbytes] in B1. rewrite app_nil_r in B1. exact B1. Qed.
+Proof. intros Hc4_cells. apply (bytes_at_ext bsegs m a (le4 w ++ [])); [exact (proj2 Hc4_cells) | apply app_nil_r]. Qed.
 Lemma c1_bytes (m : word -> option byte) (a : Z) (b : byte) : ro_cells bsegs m a [C1 b] -> bytes_at bsegs m a [b].
-Proof. intros [_ B1]. cbn [cells_bytes cbytes] in B1. exact B1. Qed.
+Proof. intros Hc1_cells. exact (proj2 Hc1_cells). Qed.
 
 (* [comment removed for export] *)
 Lemma seg_rw_mapped (m : word -> option byte) (a n : Z) : seg_rw_ok bsegs a n = true ->
   forall i, 0 <= i < n -> (exists b, mrd bsegs m (wa (a + i)) = Some b) /\ wview bsegs m (wa (a + i)) <> None.
-Proof. intros H i Hi. destruct (proj2 (seg_rw_ok_sound bsegs a n H m)) as (_ & _ & Hs). destruct (Hs (a + i) ltac:(lia)) as [Hw Hb]. split; assumption. Qed.
+Proof.
+  intros Hrw_ok i Hi_span.
+  destruct (seg_rw_ok_sound bsegs a n Hrw_ok m) as [_ (_ & _ & Hstk_byte)].
+  destruct (Hstk_byte (a + i) ltac:(lia)) as [Hview_some Hread_some].
+  exact (conj Hread_some Hview_some).
+Qed.
 
 (* [comment removed for export] *)
 Definition chunk_rng (lo A n : Z) : Prop :=
@@ -80,9 +92,9 @@ Hypothesis C_master_key : ro_cells bsegs m 0xbd6200 [C4 (Z_to_bv 64 3)].
 Hypothesis H_imgsh : region_ok bsegs rho TE_IMGSH RG_IMGSH_E m.
 
 Lemma eg4_ok : region_ok bsegs rho 4%uint63 eg_4 m.
-Proof. exact (HxaHandoffImg.rg4_ok rho m MI). Qed.
+Proof. exact (rg4_ok rho m MI). Qed.
 Lemma eg5_ok : region_ok bsegs rho 5%uint63 eg_5 m.
-Proof. exact (HxaHandoffImg.rg5_ok rho m V_relro). Qed.
+Proof. exact (rg5_ok rho m V_relro). Qed.
 
 Lemma Hri01 : to_Z ri = 0 \/ to_Z ri = 16.
 Proof. destruct H_ri as [-> | ->]; [left | right]; reflexivity. Qed.
@@ -92,39 +104,47 @@ Lemma sz3 : to_Z ((ESTK + ri) >> 3)%uint63 = (81920 + to_Z ri) / 8.
 Proof. destruct H_ri as [-> | ->]; reflexivity. Qed.
 
 (* [comment removed for export] *)
-Local Ltac lit_learn a n Hseg fs :=
-  apply (region_ok_learn bsegs rho _ _ m fs);
-  [ closed_side | closed_side | closed_side | closed_side | closed_side | closed_side | closed_side
-  | intros i Hi; exact (proj1 (seg_rw_mapped m a n Hseg i Hi)) | discriminate | | closed_side ].
+Local Ltac lit_learn base span seg_ok fs :=
+  lazymatch goal with
+  | |- region_ok bsegs ?val ?tg ?rg ?mm =>
+      apply (region_ok_learn bsegs val tg rg mm fs);
+      [ closed_side ..
+      | intros off_i Hoff_i; change (to_Z (rg_size rg)) with span in Hoff_i; change (rbase val tg rg) with base;
+        exact (proj1 (seg_rw_mapped mm base span seg_ok off_i Hoff_i))
+      | intros Hwr_set; vm_compute in Hwr_set; discriminate Hwr_set
+      | change (rbase val tg rg) with base;
+        repeat (apply Forall_cons;
+          [ first [ apply fact_lit; [closed_side | ] | eapply fact_ptr; [eassumption | assumption | ] ];
+            first
+              [ match goal with Hcell : ro_cells bsegs _ _ [C8 _] |- _ => exact (c8_bytes _ _ _ Hcell) end
+              | match goal with Hcell : ro_cells bsegs _ _ [C4 _] |- _ => exact (c4_bytes _ _ _ Hcell) end
+              | match goal with Hcell : ro_cells bsegs _ _ [C1 _] |- _ => exact (c1_bytes _ _ _ Hcell) end
+              | match goal with Hcell : rw_cells bsegs _ _ [C8 _] |- _ => exact (c8_bytes _ _ _ (proj1 Hcell)) end ]
+          | ]);
+        apply Forall_nil
+      | vm_compute; reflexivity ]
+  end.
 
 Lemma eg6_ok : region_ok bsegs rho 6%uint63 eg_6 m.
-Proof.
-  lit_learn 6186592 2784 seg_rw_libdata [(0, kbs_Z 8 0x1bcc34); (32, kbs_Z 8 0x1f261c); (96, kbs_Z 8 0x1f2b40)].
-  repeat (constructor; [|]); [ | | | ].
-  - exact (fact_lit rho m 6186592 0 8 0x1bcc34 ltac:(lia) (c8_bytes m _ _ C_memset)).
-  - exact (fact_lit rho m 6186592 32 8 0x1f261c ltac:(lia) (c8_bytes m _ _ C_malloc)).
-  - exact (fact_lit rho m 6186592 96 8 0x1f2b40 ltac:(lia) (c8_bytes m _ _ C_free)).
-  - constructor.
-Qed.
+Proof. lit_learn 6186592 2784 seg_rw_libdata [(0, kbs_Z 8 1821748); (32, kbs_Z 8 2041372); (96, kbs_Z 8 2042688)]. Qed.
 
 Lemma eg7_ok : region_ok bsegs rho 7%uint63 eg_7 m.
-Proof. exact (HxaHandoff.rg7_ok rho m C_shb C_uar 0). Qed.
+Proof.
+  assert (Hshb_rw : seg_rw_ok bsegs 6961656 12 = true) by closed_side.
+  lit_learn 6961656 12 Hshb_rw [(0, kbs_Z 8 SHB); (8, kbs_Z 4 1)].
+Qed.
 
 Lemma eg8_ok : region_ok bsegs rho 8%uint63 eg_8 m.
 Proof.
-  lit_learn 12411008 2528 seg_rw_libbss [(352, kbs_Z 4 2); (384, kbs_Z 4 3); (1440, kbs_Z 1 0); (1600, kbs_Z 8 2); (1632, kbs_Z 4 2); (1664, kbs_Z 4 1)].
-  repeat (constructor; [|]); [ | | | | | | ].
-  - exact (fact_lit rho m 12411008 352 4 2 ltac:(lia) (c4_bytes m _ _ C_master_once)).
-  - exact (fact_lit rho m 12411008 384 4 3 ltac:(lia) (c4_bytes m _ _ C_master_key)).
-  - exact (fact_lit rho m 12411008 1440 1 0 ltac:(lia) (c1_bytes m _ _ C_stopped)).
-  - exact (fact_lit rho m 12411008 1600 8 2 ltac:(lia) (c8_bytes m _ _ C_optsdone)).
-  - exact (fact_lit rho m 12411008 1632 4 2 ltac:(lia) (c4_bytes m _ _ C_base_once)).
-  - exact (fact_lit rho m 12411008 1664 4 1 ltac:(lia) (c4_bytes m _ _ C_base_ret)).
-  - constructor.
+  lit_learn 12411008 2528 seg_rw_libbss
+    [(352, kbs_Z 4 2); (384, kbs_Z 4 3); (1440, kbs_Z 1 0); (1600, kbs_Z 8 2); (1632, kbs_Z 4 2); (1664, kbs_Z 4 1)].
 Qed.
 
 Lemma eg9_ok : region_ok bsegs rho 9%uint63 eg_9 m.
-Proof. exact (HxaHandoff.rg12_ok rho m C_tsd 0). Qed.
+Proof.
+  assert (Htsd_rw : seg_rw_ok bsegs 12430840 8 = true) by closed_side.
+  lit_learn 12430840 8 Htsd_rw [(0, kbs_Z 8 12567032)].
+Qed.
 
 Lemma eg11_ok : region_ok bsegs rho 11%uint63 eg_11 m.
 Proof. exact H_imgsh. Qed.
@@ -155,28 +175,35 @@ Qed.
 
 Lemma eg3_ok : region_ok bsegs rho 3%uint63 (eg_3 ri) m.
 Proof.
-  destruct B0_facts as (F1 & F2 & F3 & F4). pose proof Hri01 as Hr. unfold eg_3.
-  apply (zero_region_ok_d rho 3%uint63 _ 11 m (shad (sp0 - to_Z ri - 81920)) Hrho3); rewrite ?sz3.
-  - lia.
-  - unfold two63. lia.
-  - Z.div_mod_to_equations; lia.
-  - change (8 * 2 ^ Z.of_nat 11) with 16384. Z.div_mod_to_equations; lia.
-  - cbn; lia.
-  - exact Z_stk.
+  pose proof sz3 as Hshadow_len.
+  pose proof Hri01 as Hri_cases.
+  destruct B0_facts as (_ & _ & Hshadow_lo & Hshadow_hi).
+  assert (Hshadow_run : forall i, 0 <= i < to_Z ((ESTK + ri) >> 3)%uint63 ->
+            mrd bsegs m (wa (shad (sp0 - to_Z ri - 81920) + i)) = Some z8)
+    by (rewrite Hshadow_len; exact Z_stk).
+  refine (zero_region_ok_d rho 3 _ 11 m _ Hrho3 _ _ _ _ _ Hshadow_run).
+  all: rewrite ?Hshadow_len; unfold two63; lia.
 Qed.
 
 Lemma eg2_ok : region_ok bsegs rho 2%uint63 (eg_2 ri) m.
 Proof.
-  destruct B0_facts as (F1 & F2 & F3 & F4). pose proof Hri01 as Hr. unfold eg_2, USTACK_TOP in *.
-  apply region_ok_fresh; unfold rbase; cbn [rg_abs]; rewrite ?Hrho2, ?sz2.
-  - lia.
-  - unfold two63. lia.
-  - lia.
-  - change (8 * 2 ^ Z.of_nat 14) with 131072. lia.
-  - cbn; lia.
-  - closed_side.
-  - change (to_Z 5%uint63) with 5. change (2 ^ 5) with 32. exact F2.
-  - intros i Hi. destruct STKH as (_ & _ & Hs). destruct (Hs (sp0 - to_Z ri - 81920 + i) ltac:(lia)) as [Hw Hb]. split; [exact Hb | intros _; exact Hw].
+  pose proof sz2 as Hframe_len.
+  pose proof Hri01 as Hri_cases.
+  pose proof Hsp47 as Hsp_top. unfold USTACK_TOP in Hsp_top.
+  destruct B0_facts as (Hframe_lo & Hframe_align & _ & _).
+  destruct STKH as (_ & _ & Hstk_cell).
+  rewrite <- Hrho2 in Hframe_lo, Hframe_align.
+  assert (Hframe_pos : 0 < rho 2%uint63) by lia.
+  assert (Hframe_top : rho 2%uint63 + to_Z (ESTK + ri)%uint63 < two63) by (rewrite Hframe_len; unfold two63; lia).
+  assert (Hframe_cap : to_Z (ESTK + ri)%uint63 < 2 ^ 62) by (rewrite Hframe_len; lia).
+  assert (Hframe_depth : to_Z (ESTK + ri)%uint63 <= 8 * 2 ^ Z.of_nat 14) by (rewrite Hframe_len; lia).
+  assert (Hframe_bytes : forall i, 0 <= i < to_Z (ESTK + ri)%uint63 ->
+            (exists b, mrd bsegs m (wa (rho 2%uint63 + i)) = Some b) /\ (true = true -> wview bsegs m (wa (rho 2%uint63 + i)) <> None)).
+  { intros i Hi_span. rewrite Hframe_len in Hi_span.
+    destruct (Hstk_cell (rho 2%uint63 + i)) as [Hview_some Hread_some]; [lia |].
+    split; [exact Hread_some | intros _; exact Hview_some]. }
+  refine (region_ok_fresh bsegs rho 2 None (ESTK + ri)%uint63 5 true 14 m
+            Hframe_pos Hframe_top Hframe_cap Hframe_depth _ _ Hframe_align Hframe_bytes); closed_side.
 Qed.
 
 (* [comment removed for export] *)
@@ -186,12 +213,23 @@ Lemma chunk_learn (t : int) (rg : region) (A n : Z) (fs : list fact) :
   wr_at bsegs m A n -> Forall (fact_holds bsegs rho m A) fs -> learn_check bsegs rg fs 0 (Z.to_nat n) = true ->
   region_ok bsegs rho t rg m.
 Proof.
-  intros Ea Er Es Eal (H0 & H16 & Hlo' & _) Hn Hd1 Hd2 (_ & _ & Hw) Hfs Hck. pose proof lo_hi as Hlh.
-  assert (Eb : rbase rho t rg = A) by (unfold rbase; rewrite Ea; exact Er).
-  apply (region_ok_learn bsegs rho t rg m fs); rewrite ?Eb, ?Es, ?Eal; try assumption; try lia.
-  - unfold two63. lia.
-  - intros i Hi. exact (wview_mrd bsegs m _ asegs_wr_rd (Hw i Hi)).
-  - intros _ i Hi. exact (Hw i Hi).
+  intros Habs_none Htag_base Hsize_n Hal_four Hrng_A Hn_bounds Hn_depth Hdepth_cap Hwr_span Hfacts Hcheck.
+  pose proof lo_hi as Hlo_cap.
+  destruct Hrng_A as (Hpos_A & Halign_A & Hfits_lo & _).
+  assert (Hrbase_A : rbase rho t rg = A) by (unfold rbase; rewrite Habs_none; exact Htag_base).
+  pose proof Hwr_span as (_ & _ & Hview_all).
+  apply (region_ok_learn bsegs rho t rg m fs); rewrite ?Hrbase_A, ?Hsize_n, ?Hal_four.
+  - exact Hpos_A.
+  - unfold two63; lia.
+  - lia.
+  - exact Hn_depth.
+  - exact Hdepth_cap.
+  - closed_side.
+  - exact Halign_A.
+  - intros i Hi_span. exact (wview_mrd bsegs m (wa (A + i)) asegs_wr_rd (Hview_all i Hi_span)).
+  - intros _ i Hi_span. exact (Hview_all i Hi_span).
+  - exact Hfacts.
+  - exact Hcheck.
 Qed.
 
 (* [comment removed for export] *)
@@ -200,9 +238,17 @@ Lemma chunk_shadow (t n : int) (d : nat) (A : Z) :
   (forall i, 0 <= i < to_Z n -> mrd bsegs m (wa (shad A + i)) = Some z8) ->
   region_ok bsegs rho t (RG None n 0 false DZero d IEmpty) m.
 Proof.
-  intros Er H0 Hlo' Hd1 Hd2 HZ. pose proof lo_hi as Hlh. pose proof (to_Z_bounded n) as Bn.
-  destruct (shad_chunk A (to_Z n) H0 ltac:(lia) ltac:(lia)) as [S1 S2].
-  apply (zero_region_ok_d rho t n d m (shad A) Er); try assumption; try lia. unfold two63. lia.
+  intros Hsh_tag Hpos_A Hroom Hdepth_fit Hdepth_cap Hzero_bytes.
+  pose proof lo_hi as Hlo_cap.
+  pose proof (to_Z_bounded n) as Hn_range.
+  destruct (shad_chunk A (to_Z n) Hpos_A ltac:(lia) ltac:(lia)) as [Hsh_floor Hsh_top].
+  apply (zero_region_ok_d rho t n d m (shad A) Hsh_tag).
+  - lia.
+  - unfold two63; lia.
+  - lia.
+  - exact Hdepth_fit.
+  - exact Hdepth_cap.
+  - exact Hzero_bytes.
 Qed.
 
 (* [comment removed for export] *)
@@ -236,60 +282,90 @@ Proof. intros (H0 & _ & H1 & _) Hn. pose proof lo_hi. lia. Qed.
 
 Lemma eg10_ok : region_ok bsegs rho 10%uint63 eg_10 m.
 Proof.
+  pose proof (chunk_word MK 72 R_mk ltac:(closed_side)) as Hmk_word.
   lit_learn 12567040 64 seg_rw_tsdmain [(16, kbs_ptr 32)].
-  constructor; [|constructor].
-  exact (fact_ptr rho m 12567040 16 32%uint63 MK Hrho32 (chunk_word MK 72 R_mk ltac:(lia)) (c8_bytes m _ _ C_slot)).
 Qed.
 
 Lemma eg32_ok : region_ok bsegs rho 32%uint63 eg_32 m.
 Proof.
-  apply (chunk_learn 32%uint63 eg_32 MK 72 [(24, kbs_ptr 34)]);
-    [reflexivity | exact Hrho32 | reflexivity | reflexivity | exact R_mk | lia | closed_side | closed_side | exact W_mk | | closed_side].
-  constructor; [|constructor]. exact (fact_ptr rho m MK 24 34%uint63 SA Hrho34 (chunk_word SA 32 R_sa ltac:(lia)) (c8_bytes m _ _ C_mk)).
+  pose proof (chunk_word SA 32 R_sa ltac:(closed_side)) as Hsa_word.
+  pose proof (c8_bytes m (MK + 24) (Z_to_bv 64 SA) C_mk) as Hmk_link_bytes.
+  pose proof (fact_ptr rho m MK 24 34 SA Hrho34 Hsa_word Hmk_link_bytes) as Hmk_link.
+  apply (chunk_learn 32 eg_32 MK 72 [(24, kbs_ptr 34)]);
+    [ closed_side | exact Hrho32 | closed_side | closed_side | exact R_mk | split; closed_side | closed_side | closed_side
+    | exact W_mk | constructor; [exact Hmk_link | constructor] | closed_side ].
 Qed.
 
 Lemma eg34_ok : region_ok bsegs rho 34%uint63 eg_34 m.
 Proof.
-  apply (chunk_learn 34%uint63 eg_34 SA 32 [(0, kbs_Z 4 1 ++ kbs_any 4 ++ kbs_Z 8 0 ++ kbs_Z 8 1 ++ kbs_ptr 36)]);
-    [reflexivity | exact Hrho34 | reflexivity | reflexivity | exact R_sa | lia | closed_side | closed_side | exact W_sa | | closed_side].
-  constructor; [|constructor].
-  destruct C_sa as [Hwf Hb]. cbn [cells_bytes cbytes] in Hb. rewrite app_nil_r in Hb.
-  assert (Hpad : length pad = 4%nat) by (cbn [cells_wf cell_wf] in Hwf; tauto).
-  exists (le4 (Z_to_bv 64 1) ++ pad ++ le8 (Z_to_bv 64 0) ++ le8 (Z_to_bv 64 1) ++ le8 (Z_to_bv 64 ND)). split; [|cbn [fst]; rewrite Z.add_0_r; exact Hb].
-  cbn [snd]. apply Forall2_app; [apply (kbs_Z_intro rho 4 1); lia|]. apply Forall2_app; [rewrite <- Hpad; apply kbs_any_intro|].
-  apply Forall2_app; [apply (kbs_Z_intro rho 8 0); lia|]. apply Forall2_app; [apply (kbs_Z_intro rho 8 1); lia|].
-  exact (kbs_ptr_intro rho 36%uint63 ND Hrho36 (chunk_word ND 128 R_nd ltac:(lia))).
+  pose proof (chunk_word ND 128 R_nd ltac:(closed_side)) as Hnd_word.
+  pose proof C_sa as [Hsa_shape Hsa_raw].
+  cbn [cells_wf cell_wf] in Hsa_shape. destruct Hsa_shape as (_ & Hpad_len & _).
+  cbn [cells_bytes cbytes] in Hsa_raw. rewrite app_nil_r in Hsa_raw.
+  pose (sa_kbs := kbs_Z 4 1 ++ kbs_any 4 ++ kbs_Z 8 0 ++ kbs_Z 8 1 ++ kbs_ptr 36).
+  assert (Hsa_fact : fact_holds bsegs rho m SA (0, sa_kbs)).
+  { unfold sa_kbs, fact_holds; cbn [fst snd]. rewrite Z.add_0_r.
+    exists (le4 (Z_to_bv 64 1) ++ pad ++ le8 (Z_to_bv 64 0) ++ le8 (Z_to_bv 64 1) ++ le8 (Z_to_bv 64 ND)).
+    split; [|exact Hsa_raw].
+    apply Forall2_app; [apply kbs_Z_intro; closed_side |].
+    apply Forall2_app; [rewrite <- Hpad_len; apply kbs_any_intro |].
+    apply Forall2_app; [apply kbs_Z_intro; closed_side |].
+    apply Forall2_app; [apply kbs_Z_intro; closed_side |].
+    exact (kbs_ptr_intro rho 36 ND Hrho36 Hnd_word). }
+  apply (chunk_learn 34 eg_34 SA 32 [(0, sa_kbs)]);
+    [ closed_side | exact Hrho34 | closed_side | closed_side | exact R_sa | split; closed_side | closed_side | closed_side
+    | exact W_sa | constructor; [exact Hsa_fact | constructor] | unfold sa_kbs; closed_side ].
 Qed.
 
 Lemma eg36_ok : region_ok bsegs rho 36%uint63 eg_36 m.
 Proof.
-  apply (chunk_learn 36%uint63 eg_36 ND 128 [(0, kbs_ptr 38)]);
-    [reflexivity | exact Hrho36 | reflexivity | reflexivity | exact R_nd | lia | closed_side | closed_side | exact W_nd | | closed_side].
-  constructor; [|constructor].
-  apply (fact_ptr rho m ND 0 38%uint63 ES Hrho38 (chunk_word ES 904 R_es ltac:(lia))). rewrite Z.add_0_r. exact (c8_bytes m _ _ C_nd).
+  pose proof (chunk_word ES 904 R_es ltac:(closed_side)) as Hes_word.
+  assert (Hnd_link : fact_holds bsegs rho m ND (0, kbs_ptr 38)).
+  { apply (fact_ptr rho m ND 0 38 ES Hrho38 Hes_word). rewrite Z.add_0_r. exact (c8_bytes m ND _ C_nd). }
+  apply (chunk_learn 36 eg_36 ND 128 [(0, kbs_ptr 38)]);
+    [ closed_side | exact Hrho36 | closed_side | closed_side | exact R_nd | split; closed_side | closed_side | closed_side
+    | exact W_nd | constructor; [exact Hnd_link | constructor] | closed_side ].
 Qed.
 
 Definition ES_ZS : list Z := repeat 0 704 ++ repeat 255 64 ++ repeat 0 136.
 
 Lemma eg38_ok : region_ok bsegs rho 38%uint63 eg_38 m.
 Proof.
-  destruct C_es as [[Hwf Hb] Hw]. cbn [cells_bytes cbytes] in Hb. rewrite app_nil_r in Hb. cbn [cells_size csize Nat.add] in Hw.
-  apply (chunk_learn 38%uint63 eg_38 ES 904 [(0, kbs_bytes ES_ZS)]);
-    [reflexivity | exact Hrho38 | reflexivity | reflexivity | exact R_es | lia | closed_side | closed_side | exact Hw | | closed_side].
-  constructor; [|constructor]. exists (map (Z_to_bv 8) ES_ZS). split.
-  - cbn [snd]. apply kbs_bytes_intro. unfold ES_ZS. apply Forall_app. split; [|apply Forall_app; split];
-      apply Forall_forall; intros z Hz; apply repeat_spec in Hz; subst z; lia.
-  - cbn [fst]. rewrite Z.add_0_r. unfold ES_ZS. rewrite !map_app, !map_repeat. exact Hb.
+  pose proof C_es as [[_ Hes_raw] Hes_wr].
+  cbn [cells_bytes cbytes] in Hes_raw. rewrite app_nil_r in Hes_raw.
+  assert (Hzs_bytes : Forall (fun z => 0 <= z < 256) ES_ZS).
+  { unfold ES_ZS. apply Forall_app; split; [|apply Forall_app; split];
+      apply Forall_forall; intros z Hz_in; apply repeat_spec in Hz_in; subst z; split; closed_side. }
+  assert (Hes_fact : fact_holds bsegs rho m ES (0, kbs_bytes ES_ZS)).
+  { exists (map (Z_to_bv 8) ES_ZS). cbn [fst snd]. rewrite Z.add_0_r.
+    exact (conj (kbs_bytes_intro rho ES_ZS Hzs_bytes) Hes_raw). }
+  apply (chunk_learn 38 eg_38 ES 904 [(0, kbs_bytes ES_ZS)]);
+    [ closed_side | exact Hrho38 | closed_side | closed_side | exact R_es | split; closed_side | closed_side | closed_side
+    | exact Hes_wr | constructor; [exact Hes_fact | constructor] | closed_side ].
 Qed.
 
 Lemma eg33_ok : region_ok bsegs rho 33%uint63 eg_33 m.
-Proof. destruct R_mk as (K1 & _ & K3 & _). apply (chunk_shadow 33%uint63 9 1 MK Hrho33 K1); [change (to_Z 9%uint63) with 9; lia | closed_side | closed_side | exact Z_mk]. Qed.
+Proof.
+  pose proof R_mk as (Hmk_pos & _ & Hmk_end & _).
+  assert (Hmk_room : MK + 8 * to_Z 9%uint63 <= lo) by (change (to_Z 9%uint63) with 9; lia).
+  exact (chunk_shadow 33 9 1 MK Hrho33 Hmk_pos Hmk_room ltac:(closed_side) ltac:(closed_side) Z_mk).
+Qed.
 Lemma eg35_ok : region_ok bsegs rho 35%uint63 eg_35 m.
-Proof. destruct R_sa as (K1 & _ & K3 & _). apply (chunk_shadow 35%uint63 4 0 SA Hrho35 K1); [change (to_Z 4%uint63) with 4; lia | closed_side | closed_side | exact Z_sa]. Qed.
+Proof.
+  pose proof R_sa as (Hsa_pos & _ & Hsa_end & _).
+  apply (chunk_shadow 35 4 0 SA Hrho35 Hsa_pos); [change (to_Z 4%uint63) with 4; lia | closed_side | closed_side | exact Z_sa].
+Qed.
 Lemma eg37_ok : region_ok bsegs rho 37%uint63 eg_37 m.
-Proof. destruct R_nd as (K1 & _ & K3 & _). apply (chunk_shadow 37%uint63 16 1 ND Hrho37 K1); [change (to_Z 16%uint63) with 16; lia | closed_side | closed_side | exact Z_nd]. Qed.
+Proof.
+  pose proof R_nd as (Hnd_pos & _ & Hnd_end & _).
+  refine (chunk_shadow 37 16 1 ND Hrho37 Hnd_pos _ _ _ Z_nd); [change (to_Z 16%uint63) with 16; lia | closed_side ..].
+Qed.
 Lemma eg39_ok : region_ok bsegs rho 39%uint63 eg_39 m.
-Proof. destruct R_es as (K1 & _ & K3 & _). apply (chunk_shadow 39%uint63 113 4 ES Hrho39 K1); [change (to_Z 113%uint63) with 113; lia | closed_side | closed_side | exact Z_es]. Qed.
+Proof.
+  pose proof R_es as (Hes_pos & _ & Hes_end & _).
+  assert (Hes_room : ES + 8 * to_Z 113%uint63 <= lo) by (change (to_Z 113%uint63) with 113; lia).
+  apply (chunk_shadow 39 113 4 ES Hrho39 Hes_pos Hes_room); [closed_side | closed_side | exact Z_es].
+Qed.
 
 Definition ivw (t : int) (rg : region) : Z * Z * bool := (rbase rho t rg, rbase rho t rg + to_Z (rg_size rg), rg_wr rg).
 
@@ -304,65 +380,45 @@ Local Ltac sepw :=
 (* [comment removed for export] *)
 Lemma rmemE : Rmem bsegs rho (ME ri) m.
 Proof.
-  destruct B0_facts as (F1 & F2 & F3 & F4). pose proof Hri01 as Hr. pose proof lo_hi as Hlh. unfold USTACK_TOP in *.
-  pose proof R_mk as (KM1 & _ & KM3 & _). pose proof R_sa as (KS1 & _ & KS3 & _). pose proof R_nd as (KN1 & _ & KN3 & _). pose proof R_es as (KE1 & _ & KE3 & KE4 & KE5).
-  destruct (shad_chunk MK 9 KM1 ltac:(lia) ltac:(lia)) as [SM1 SM2]. destruct (shad_chunk SA 4 KS1 ltac:(lia) ltac:(lia)) as [SS1 SS2].
-  destruct (shad_chunk ND 16 KN1 ltac:(lia) ltac:(lia)) as [SN1 SN2]. destruct (shad_chunk ES 113 KE1 ltac:(lia) ltac:(lia)) as [SE1 SE2].
-  assert (F5 : shad (sp0 - to_Z ri - 81920) + (81920 + to_Z ri) / 8 <= 0x10007fff8000) by (unfold shad, SHB; Z.div_mod_to_equations; lia).
-  pose proof D_mk as DM. pose proof D_sa as DS. pose proof D_nd as DN. unfold apart in DM, DS, DN.
-  pose proof (Rmem_empty bsegs rho m) as R3x. pose proof (dir_inw_empty rho) as I3x.
-  assert (RI4 : Rmem bsegs rho ME_4 m /\ dir_inw rho ME_4 ([ivw 4%uint63 eg_4])).
-  { unfold ME_4. apply (Rmem_add_sepw bsegs rho IEmpty 4%uint63 eg_4 m ([]) R3x I3x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg4_ok | sepw]. }
-  destruct RI4 as [R4x I4x]. clear R3x I3x.
-  assert (RI5 : Rmem bsegs rho ME_5 m /\ dir_inw rho ME_5 ([ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_5. apply (Rmem_add_sepw bsegs rho ME_4 5%uint63 eg_5 m ([ivw 4%uint63 eg_4]) R4x I4x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg5_ok | sepw]. }
-  destruct RI5 as [R5x I5x]. clear R4x I4x.
-  assert (RI6 : Rmem bsegs rho ME_6 m /\ dir_inw rho ME_6 ([ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_6. apply (Rmem_add_sepw bsegs rho ME_5 6%uint63 eg_6 m ([ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R5x I5x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg6_ok | sepw]. }
-  destruct RI6 as [R6x I6x]. clear R5x I5x.
-  assert (RI7 : Rmem bsegs rho ME_7 m /\ dir_inw rho ME_7 ([ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_7. apply (Rmem_add_sepw bsegs rho ME_6 7%uint63 eg_7 m ([ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R6x I6x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg7_ok | sepw]. }
-  destruct RI7 as [R7x I7x]. clear R6x I6x.
-  assert (RI8 : Rmem bsegs rho ME_8 m /\ dir_inw rho ME_8 ([ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_8. apply (Rmem_add_sepw bsegs rho ME_7 8%uint63 eg_8 m ([ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R7x I7x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg8_ok | sepw]. }
-  destruct RI8 as [R8x I8x]. clear R7x I7x.
-  assert (RI9 : Rmem bsegs rho ME_9 m /\ dir_inw rho ME_9 ([ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_9. apply (Rmem_add_sepw bsegs rho ME_8 9%uint63 eg_9 m ([ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R8x I8x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg9_ok | sepw]. }
-  destruct RI9 as [R9x I9x]. clear R8x I8x.
-  assert (RI10 : Rmem bsegs rho ME_10 m /\ dir_inw rho ME_10 ([ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_10. apply (Rmem_add_sepw bsegs rho ME_9 10%uint63 eg_10 m ([ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R9x I9x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg10_ok | sepw]. }
-  destruct RI10 as [R10x I10x]. clear R9x I9x.
-  assert (RI11 : Rmem bsegs rho ME_11 m /\ dir_inw rho ME_11 ([ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_11. apply (Rmem_add_sepw bsegs rho ME_10 11%uint63 eg_11 m ([ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R10x I10x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg11_ok | sepw]. }
-  destruct RI11 as [R11x I11x]. clear R10x I10x.
-  assert (RI32 : Rmem bsegs rho ME_32 m /\ dir_inw rho ME_32 ([ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_32. apply (Rmem_add_sepw bsegs rho ME_11 32%uint63 eg_32 m ([ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R11x I11x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg32_ok | sepw]. }
-  destruct RI32 as [R32x I32x]. clear R11x I11x.
-  assert (RI33 : Rmem bsegs rho ME_33 m /\ dir_inw rho ME_33 ([ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_33. apply (Rmem_add_sepw bsegs rho ME_32 33%uint63 eg_33 m ([ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R32x I32x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg33_ok | sepw]. }
-  destruct RI33 as [R33x I33x]. clear R32x I32x.
-  assert (RI34 : Rmem bsegs rho ME_34 m /\ dir_inw rho ME_34 ([ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_34. apply (Rmem_add_sepw bsegs rho ME_33 34%uint63 eg_34 m ([ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R33x I33x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg34_ok | sepw]. }
-  destruct RI34 as [R34x I34x]. clear R33x I33x.
-  assert (RI35 : Rmem bsegs rho ME_35 m /\ dir_inw rho ME_35 ([ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_35. apply (Rmem_add_sepw bsegs rho ME_34 35%uint63 eg_35 m ([ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R34x I34x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg35_ok | sepw]. }
-  destruct RI35 as [R35x I35x]. clear R34x I34x.
-  assert (RI36 : Rmem bsegs rho ME_36 m /\ dir_inw rho ME_36 ([ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_36. apply (Rmem_add_sepw bsegs rho ME_35 36%uint63 eg_36 m ([ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R35x I35x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg36_ok | sepw]. }
-  destruct RI36 as [R36x I36x]. clear R35x I35x.
-  assert (RI37 : Rmem bsegs rho ME_37 m /\ dir_inw rho ME_37 ([ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_37. apply (Rmem_add_sepw bsegs rho ME_36 37%uint63 eg_37 m ([ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R36x I36x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg37_ok | sepw]. }
-  destruct RI37 as [R37x I37x]. clear R36x I36x.
-  assert (RI38 : Rmem bsegs rho ME_38 m /\ dir_inw rho ME_38 ([ivw 38%uint63 eg_38; ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_38. apply (Rmem_add_sepw bsegs rho ME_37 38%uint63 eg_38 m ([ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R37x I37x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg38_ok | sepw]. }
-  destruct RI38 as [R38x I38x]. clear R37x I37x.
-  assert (RI39 : Rmem bsegs rho ME_39 m /\ dir_inw rho ME_39 ([ivw 39%uint63 eg_39; ivw 38%uint63 eg_38; ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_39. apply (Rmem_add_sepw bsegs rho ME_38 39%uint63 eg_39 m ([ivw 38%uint63 eg_38; ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R38x I38x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg39_ok | sepw]. }
-  destruct RI39 as [R39x I39x]. clear R38x I38x.
-  assert (RIs : Rmem bsegs rho (ME_3 ri) m /\ dir_inw rho (ME_3 ri) ([ivw 3%uint63 (eg_3 ri); ivw 39%uint63 eg_39; ivw 38%uint63 eg_38; ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4])).
-  { unfold ME_3, ME_abs. apply (Rmem_add_sepw bsegs rho ME_39 3%uint63 (eg_3 ri) m ([ivw 39%uint63 eg_39; ivw 38%uint63 eg_38; ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) R39x I39x); [vm_compute; reflexivity | vm_compute; reflexivity | exact eg3_ok | sepw]. }
-  destruct RIs as [Rsx Isx].
-  unfold ME. apply (Rmem_add_sepw bsegs rho (ME_3 ri) 2%uint63 (eg_2 ri) m ([ivw 3%uint63 (eg_3 ri); ivw 39%uint63 eg_39; ivw 38%uint63 eg_38; ivw 37%uint63 eg_37; ivw 36%uint63 eg_36; ivw 35%uint63 eg_35; ivw 34%uint63 eg_34; ivw 33%uint63 eg_33; ivw 32%uint63 eg_32; ivw 11%uint63 eg_11; ivw 10%uint63 eg_10; ivw 9%uint63 eg_9; ivw 8%uint63 eg_8; ivw 7%uint63 eg_7; ivw 6%uint63 eg_6; ivw 5%uint63 eg_5; ivw 4%uint63 eg_4]) Rsx Isx); [destruct H_ri as [-> | ->]; vm_compute; reflexivity | vm_compute; reflexivity | exact eg2_ok | sepw].
+  pose proof Hri01 as Hri_cases.
+  pose proof lo_hi as Hlo_cap.
+  pose proof B0_facts as (Hstk_floor & _ & Hstk_sh_floor & Hstk_sh_top).
+  pose proof Hsp47 as Hsp_top. unfold USTACK_TOP in Hsp_top.
+  assert (Hstk_span : sp0 - to_Z ri - 81920 + 8 * ((81920 + to_Z ri) / 8) < 2 ^ 47) by lia.
+  destruct (shad_chunk (sp0 - to_Z ri - 81920) ((81920 + to_Z ri) / 8) ltac:(lia) ltac:(lia) Hstk_span) as [_ Hstk_sh_cap].
+  pose proof R_mk as (Hmk_pos & _ & Hmk_end & _).
+  pose proof R_sa as (Hsa_pos & _ & Hsa_end & _).
+  pose proof R_nd as (Hnd_pos & _ & Hnd_end & _).
+  pose proof R_es as (Hes_pos & _ & Hes_end & Hes_img & Hes_sh).
+  destruct (shad_chunk MK 9 Hmk_pos ltac:(lia) ltac:(lia)) as [Hmk_sh_floor Hmk_sh_top].
+  destruct (shad_chunk SA 4 Hsa_pos ltac:(lia) ltac:(lia)) as [Hsa_sh_floor Hsa_sh_top].
+  destruct (shad_chunk ND 16 Hnd_pos ltac:(lia) ltac:(lia)) as [Hnd_sh_floor Hnd_sh_top].
+  destruct (shad_chunk ES 113 Hes_pos ltac:(lia) ltac:(lia)) as [Hes_sh_floor Hes_sh_top].
+  pose proof D_mk as Hes_mk_apart. pose proof D_sa as Hes_sa_apart. pose proof D_nd as Hes_nd_apart.
+  unfold apart in Hes_mk_apart, Hes_sa_apart, Hes_nd_apart.
+  pose proof eg4_ok as Hreg4. pose proof eg5_ok as Hreg5. pose proof eg6_ok as Hreg6. pose proof eg7_ok as Hreg7.
+  pose proof eg8_ok as Hreg8. pose proof eg9_ok as Hreg9. pose proof eg10_ok as Hreg10. pose proof eg11_ok as Hreg11.
+  pose proof eg32_ok as Hreg32. pose proof eg33_ok as Hreg33. pose proof eg34_ok as Hreg34. pose proof eg35_ok as Hreg35.
+  pose proof eg36_ok as Hreg36. pose proof eg37_ok as Hreg37. pose proof eg38_ok as Hreg38. pose proof eg39_ok as Hreg39.
+  pose proof eg3_ok as Hreg3. pose proof eg2_ok as Hreg2.
+  pose proof (fun M t rg L (Hpair : Rmem bsegs rho M m /\ dir_inw rho M L) =>
+                Rmem_add_sepw bsegs rho M t rg m L (proj1 Hpair) (proj2 Hpair)) as Hextend.
+  enough (Hchain : exists L, Rmem bsegs rho (ME ri) m /\ dir_inw rho (ME ri) L)
+    by (destruct Hchain as (dirs & Hrmem & _); exact Hrmem).
+  eexists.
+  unfold ME, ME_3, ME_abs, ME_39, ME_38, ME_37, ME_36, ME_35, ME_34, ME_33, ME_32, ME_11, ME_10, ME_9, ME_8, ME_7, ME_6, ME_5, ME_4.
+  let rec grow :=
+    lazymatch goal with
+    | |- Rmem _ _ IEmpty _ /\ dir_inw _ IEmpty _ => exact (conj (Rmem_empty bsegs rho m) (dir_inw_empty rho))
+    | |- Rmem _ _ (mset ?M ?t ?rg) _ /\ _ =>
+        eapply (Hextend M t rg);
+        [ grow
+        | vm_compute; reflexivity
+        | closed_side
+        | match goal with Hreg_known : region_ok bsegs rho t rg m |- _ => exact Hreg_known end
+        | sepw ]
+    end
+  in grow.
 Qed.
 
 End Handoff.

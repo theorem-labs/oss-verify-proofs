@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 (* [comment removed for export] *)
@@ -52,7 +52,7 @@ Section Z4SF.
   Notation n := (zlen src).
   Notation DW := [(lo, SP); (DST, DST + dcap)].
   Notation FRS := [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra].
-  Notation W z := (Z_to_bv 64 z) (only parsing).
+  Notation W v := (Z_to_bv 64 v) (only parsing).
   Notation DL := (W (tl + 256 * mtl)) (only parsing).
   Notation D7 := (W (DST + dcap - 7)) (only parsing).
   Notation DE := (W (DST + dcap)) (only parsing).
@@ -63,7 +63,7 @@ Section Z4SF.
 
   (* [comment removed for export] *)
   Definition Z4SF (mm : amem) (spl bd4 bd3 bd2 bd1 : list cell) : Prop :=
-    (exists buf, u8arr bsegs mm DST (map (Z_to_bv 8) buf) /\ zlen buf = dcap)
+    (exists out : list Z, u8arr bsegs mm DST (map (Z_to_bv 8) out) /\ zlen out = dcap)
     /\ bytes_at bsegs mm SS (map (Z_to_bv 8) src)
     /\ bytes_at bsegs mm (DT + 4) cbs
     /\ bytes_at bsegs mm DT [Z_to_bv 8 mtl; Z_to_bv 8 1; Z_to_bv 8 tl; Z_to_bv 8 mtl]
@@ -74,88 +74,101 @@ Section Z4SF.
     /\ rw_cells bsegs mm (SP + -184) bd2 /\ cells_size bd2 = 40%nat
     /\ rw_cells bsegs mm (SP + -144) bd1 /\ cells_size bd1 = 40%nat
     /\ rw_cells bsegs mm (SP + -104) FRS
-    /\ mem_inv bsegs mm /\ munch DW m0 mm /\ wmono bsegs m0 mm.
+    /\ mem_inv bsegs mm
+    /\ munch DW m0 mm
+    /\ wmono bsegs m0 mm.
 
   (* [comment removed for export] *)
-  Notation ZS pc mm r1 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29
-             r30 r31 :=
-    (MS (mkR r1 (Z_to_bv 64 (SP + -384)) gp tp r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23
-             r24 r25 r26 r27 r28 r29 r30 r31) FR (Z_to_bv 64 pc) fc None mm (seg_rom bsegs)) (only parsing).
+  Notation ZS ip mem v1 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15 v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27
+             v28 v29 v30 v31 :=
+    (MS (mkR v1 (W (SP + -384)) gp tp v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15 v16 v17 v18 v19 v20 v21 v22 v23
+             v24 v25 v26 v27 v28 v29 v30 v31) FR (W ip) fc None mem (seg_rom bsegs)) (only parsing).
 
   (* [comment removed for export] *)
   Definition z4s31_goal (Q : machine_state -> Prop) (O L Qe : Z) : Prop :=
-    forall (q pt b : Z) (c : word) (jp : list byte) (w0 w1 w4 w5 w7 w8 w10 w11 w12 : word) (bd4 bd3 bd2 : list cell) mm
-           (x1 x5 x6 x7 x8 x9 x10 x11 x13 x14 x15 x16 x18 x19 x20 x22 x23 x24 x25 x26 x27 x28 x29 x31 : word),
-    Z4SF mm (SPD w0 w1 DL D7 w4 w5 DE w7 w8 (W (DST + Qe)) w10 w11 w12 DT4 DC) bd4 bd3 bd2
-         (BD4A c (W b) jp (W (SS + O + pt)) (W (SS + O)) (W (SS + O + 8))) ->
-    0 <= q <= Qe -> 0 <= pt -> (pt = 0 \/ pt + 8 <= L) -> 0 <= b < 2^31 ->
-    (forall mm' (c' b' p' s' l' : word) (jp' : list byte) (v0 v4 v5 v7 v8 v9 v11 : word)
-            (z1 z5 z7 z8 z10 z11 z12 z13 z14 z15 z16 z17 z20 z22 z23 z24 z25 z27 z28 z29 z31 : word),
-       Z4SF mm' (SPD v0 w1 DL D7 v4 v5 DE v7 v8 v9 w10 v11 (W tl) DT4 DC) bd4 bd3 bd2 (BD4A c' b' jp' p' s' l') ->
-       evtF bsegs RNG Q (ZS AZ4_S2 mm' z1 z5 DE z7 z8 x9 z10 z11 z12 z13 z14 z15 z16 z17 x18 x19 z20 SB z22 z23 z24 z25
-                            M61 z27 z28 z29 DT4 z31)) ->
-    evtF bsegs RNG Q (ZS AZ4_S1 mm x1 x5 x6 x7 x8 x9 x10 x11 (W (DST + q)) x13 x14 x15 x16 (W (DST + Qe)) x18 x19 x20 SB
-                         x22 x23 x24 x25 x26 x27 x28 x29 DT4 x31).
+    forall (op ip nb : Z) (cont : word) (pad : list byte)
+           (f0 f1 f4 f5 f7 f8 f10 f11 f12 : word) (d4 d3 d2 : list cell) (mem : amem)
+           (r1 r5 r6 r7 r8 r9 r10 r11 r13 r14 r15 r16 r18 r19 r20 r22 r23 r24 r25 r26 r27 r28 r29 r31 : word),
+      Z4SF mem (SPD f0 f1 DL D7 f4 f5 DE f7 f8 (W (DST + Qe)) f10 f11 f12 DT4 DC) d4 d3 d2
+        (BD4A cont (W nb) pad (W (SS + O + ip)) (W (SS + O)) (W (SS + O + 8))) ->
+      0 <= op <= Qe -> 0 <= ip -> ip = 0 \/ ip + 8 <= L -> 0 <= nb < 2^31 ->
+      (forall (mem' : amem) (bc bn bp bs bl : word) (pad' : list byte) (g0 g4 g5 g7 g8 g9 g11 : word)
+              (t1 t5 t7 t8 t10 t11 t12 t13 t14 t15 t16 t17 t20 t22 t23 t24 t25 t27 t28 t29 t31 : word),
+         Z4SF mem' (SPD g0 f1 DL D7 g4 g5 DE g7 g8 g9 f10 g11 (W tl) DT4 DC) d4 d3 d2 (BD4A bc bn pad' bp bs bl) ->
+         evtF bsegs RNG Q (ZS AZ4_S2 mem' t1 t5 DE t7 t8 r9 t10 t11 t12 t13 t14 t15 t16 t17 r18 r19 t20 SB t22 t23
+                             t24 t25 M61 t27 t28 t29 DT4 t31)) ->
+      evtF bsegs RNG Q (ZS AZ4_S1 mem r1 r5 r6 r7 r8 r9 r10 r11 (W (DST + op)) r13 r14 r15 r16 (W (DST + Qe)) r18 r19
+                          r20 SB r22 r23 r24 r25 r26 r27 r28 r29 DT4 r31).
 
   (* [comment removed for export] *)
   Definition z4s32_goal (Q : machine_state -> Prop) (O L Qe : Z) : Prop :=
-    forall (q pt b : Z) (c : word) (jp : list byte) (w0 w1 w4 w5 w7 w8 w9 w11 : word) (bd4 bd3 bd1 : list cell) mm
-           (x1 x5 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x20 x22 x23 x24 x25 x27 x28 x29 x31 : word),
-    Z4SF mm (SPD w0 w1 DL D7 w4 w5 DE w7 w8 w9 (W (DST + Qe)) w11 (W tl) DT4 DC) bd4 bd3
-         (BD4A c (W b) jp (W (SS + O + pt)) (W (SS + O)) (W (SS + O + 8))) bd1 ->
-    0 <= q <= Qe -> 0 <= pt -> (pt = 0 \/ pt + 8 <= L) -> 0 <= b < 2^31 ->
-    (forall mm' (c' b' p' s' l' : word) (jp' : list byte) (v0 v4 v5 v7 v8 v9 v10 v11 : word)
-            (z1 z5 z7 z8 z10 z11 z12 z13 z14 z15 z16 z17 z19 z20 z22 z23 z24 z25 z27 z28 z29 z31 : word),
-       Z4SF mm' (SPD v0 w1 DL D7 v4 v5 DE v7 v8 v9 v10 v11 (W tl) DT4 DC) bd4 bd3 (BD4A c' b' jp' p' s' l') bd1 ->
-       evtF bsegs RNG Q (ZS AZ4_S3 mm' z1 z5 DE z7 z8 x9 z10 z11 z12 z13 z14 z15 z16 z17 x18 z19 z20 SB z22 z23 z24 z25
-                            M61 z27 z28 z29 DT4 z31)) ->
-    evtF bsegs RNG Q (ZS AZ4_S2 mm x1 x5 DE x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 (W (DST + q)) x20 SB
-                         x22 x23 x24 x25 M61 x27 x28 x29 DT4 x31).
+    forall (op ip nb : Z) (cont : word) (pad : list byte)
+           (f0 f1 f4 f5 f7 f8 f9 f11 : word) (d4 d3 d1 : list cell) (mem : amem)
+           (r1 r5 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r20 r22 r23 r24 r25 r27 r28 r29 r31 : word),
+      Z4SF mem (SPD f0 f1 DL D7 f4 f5 DE f7 f8 f9 (W (DST + Qe)) f11 (W tl) DT4 DC) d4 d3
+        (BD4A cont (W nb) pad (W (SS + O + ip)) (W (SS + O)) (W (SS + O + 8))) d1 ->
+      0 <= op <= Qe -> 0 <= ip -> ip = 0 \/ ip + 8 <= L -> 0 <= nb < 2^31 ->
+      (forall (mem' : amem) (bc bn bp bs bl : word) (pad' : list byte) (g0 g4 g5 g7 g8 g9 g10 g11 : word)
+              (t1 t5 t7 t8 t10 t11 t12 t13 t14 t15 t16 t17 t19 t20 t22 t23 t24 t25 t27 t28 t29 t31 : word),
+         Z4SF mem' (SPD g0 f1 DL D7 g4 g5 DE g7 g8 g9 g10 g11 (W tl) DT4 DC) d4 d3 (BD4A bc bn pad' bp bs bl) d1 ->
+         evtF bsegs RNG Q (ZS AZ4_S3 mem' t1 t5 DE t7 t8 r9 t10 t11 t12 t13 t14 t15 t16 t17 r18 t19 t20 SB t22 t23
+                             t24 t25 M61 t27 t28 t29 DT4 t31)) ->
+      evtF bsegs RNG Q (ZS AZ4_S2 mem r1 r5 DE r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 (W (DST + op)) r20 SB
+                          r22 r23 r24 r25 M61 r27 r28 r29 DT4 r31).
 
   (* [comment removed for export] *)
   Definition z4s33_goal (Q : machine_state -> Prop) (O L Qe : Z) : Prop :=
-    forall (q pt b : Z) (c : word) (jp : list byte) (w0 w4 w5 w7 w8 w9 w10 w11 : word) (bd4 bd2 bd1 : list cell) mm
-           (x1 x5 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x19 x20 x22 x23 x24 x25 x27 x28 x29 x31 : word),
-    Z4SF mm (SPD w0 (W (DST + Qe)) DL D7 w4 w5 DE w7 w8 w9 w10 w11 (W tl) DT4 DC) bd4
-         (BD4A c (W b) jp (W (SS + O + pt)) (W (SS + O)) (W (SS + O + 8))) bd2 bd1 ->
-    0 <= q <= Qe -> 0 <= pt -> (pt = 0 \/ pt + 8 <= L) -> 0 <= b < 2^31 ->
-    (forall mm' (c' b' p' s' l' : word) (jp' : list byte) (v0 v1 v4 v5 v7 v8 v9 v10 v11 : word)
-            (z1 z5 z7 z8 z10 z11 z12 z13 z14 z15 z16 z17 z18 z19 z20 z22 z23 z24 z25 z27 z28 z29 z31 : word),
-       Z4SF mm' (SPD v0 v1 DL D7 v4 v5 DE v7 v8 v9 v10 v11 (W tl) DT4 DC) bd4 (BD4A c' b' jp' p' s' l') bd2 bd1 ->
-       evtF bsegs RNG Q (ZS AZ4_S4 mm' z1 z5 DE z7 z8 x9 z10 z11 z12 z13 z14 z15 z16 z17 z18 z19 z20 SB z22 z23 z24 z25
-                            M61 z27 z28 z29 DT4 z31)) ->
-    evtF bsegs RNG Q (ZS AZ4_S3 mm x1 x5 DE x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 (W (DST + q)) x19 x20 SB
-                         x22 x23 x24 x25 M61 x27 x28 x29 DT4 x31).
+    forall (op ip nb : Z) (cont : word) (pad : list byte)
+           (f0 f4 f5 f7 f8 f9 f10 f11 : word) (d4 d2 d1 : list cell) (mem : amem)
+           (r1 r5 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r19 r20 r22 r23 r24 r25 r27 r28 r29 r31 : word),
+      Z4SF mem (SPD f0 (W (DST + Qe)) DL D7 f4 f5 DE f7 f8 f9 f10 f11 (W tl) DT4 DC) d4
+        (BD4A cont (W nb) pad (W (SS + O + ip)) (W (SS + O)) (W (SS + O + 8))) d2 d1 ->
+      0 <= op <= Qe -> 0 <= ip -> ip = 0 \/ ip + 8 <= L -> 0 <= nb < 2^31 ->
+      (forall (mem' : amem) (bc bn bp bs bl : word) (pad' : list byte) (g0 g1 g4 g5 g7 g8 g9 g10 g11 : word)
+              (t1 t5 t7 t8 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t22 t23 t24 t25 t27 t28 t29 t31 : word),
+         Z4SF mem' (SPD g0 g1 DL D7 g4 g5 DE g7 g8 g9 g10 g11 (W tl) DT4 DC) d4 (BD4A bc bn pad' bp bs bl) d2 d1 ->
+         evtF bsegs RNG Q (ZS AZ4_S4 mem' t1 t5 DE t7 t8 r9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 SB t22 t23
+                             t24 t25 M61 t27 t28 t29 DT4 t31)) ->
+      evtF bsegs RNG Q (ZS AZ4_S3 mem r1 r5 DE r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 (W (DST + op)) r19 r20 SB
+                          r22 r23 r24 r25 M61 r27 r28 r29 DT4 r31).
 
   (* [comment removed for export] *)
   Definition z4s34_goal (Q : machine_state -> Prop) (O L : Z) : Prop :=
-    forall (q pt b : Z) (c : word) (jp : list byte) (w0 w1 w4 w5 w7 w8 w9 w10 w11 : word) (bd3 bd2 bd1 : list cell) mm
-           (x1 x5 x7 x8 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x22 x23 x24 x25 x27 x28 x29 x31 : word),
-    Z4SF mm (SPD w0 w1 DL D7 w4 w5 DE w7 w8 w9 w10 w11 (W tl) DT4 DC)
-         (BD4A c (W b) jp (W (SS + O + pt)) (W (SS + O)) (W (SS + O + 8))) bd3 bd2 bd1 ->
-    0 <= q <= dcap -> 0 <= pt -> (pt = 0 \/ pt + 8 <= L) -> 0 <= b < 2^31 ->
-    (forall mm' (c' b' p' s' l' : word) (jp' : list byte) (v0 v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 : word)
-            (z1 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15 z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 : word),
-       Z4SF mm' (SPD v0 v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 DC) (BD4A c' b' jp' p' s' l') bd3 bd2 bd1 ->
-       evtF bsegs RNG Q (ZS AZ4_END mm' z1 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15 z16 z17 z18 z19 z20 z21 z22 z23 z24 z25
-                            z26 z27 z28 z29 z30 z31)) ->
-    evtF bsegs RNG Q (ZS AZ4_S4 mm x1 x5 DE x7 x8 (W (DST + q)) x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 SB
-                         x22 x23 x24 x25 M61 x27 x28 x29 DT4 x31).
+    forall (op ip nb : Z) (cont : word) (pad : list byte)
+           (f0 f1 f4 f5 f7 f8 f9 f10 f11 : word) (d3 d2 d1 : list cell) (mem : amem)
+           (r1 r5 r7 r8 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r22 r23 r24 r25 r27 r28 r29 r31 : word),
+      Z4SF mem (SPD f0 f1 DL D7 f4 f5 DE f7 f8 f9 f10 f11 (W tl) DT4 DC)
+        (BD4A cont (W nb) pad (W (SS + O + ip)) (W (SS + O)) (W (SS + O + 8))) d3 d2 d1 ->
+      0 <= op <= dcap -> 0 <= ip -> ip = 0 \/ ip + 8 <= L -> 0 <= nb < 2^31 ->
+      (forall (mem' : amem) (bc bn bp bs bl : word) (pad' : list byte)
+              (g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 : word)
+              (t1 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 t25 t26 t27 t28 t29
+               t30 t31 : word),
+         Z4SF mem' (SPD g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 DC) (BD4A bc bn pad' bp bs bl) d3 d2 d1 ->
+         evtF bsegs RNG Q (ZS AZ4_END mem' t1 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23
+                             t24 t25 t26 t27 t28 t29 t30 t31)) ->
+      evtF bsegs RNG Q (ZS AZ4_S4 mem r1 r5 DE r7 r8 (W (DST + op)) r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 SB
+                          r22 r23 r24 r25 M61 r27 r28 r29 DT4 r31).
 
   Definition z4end_goal (Q : machine_state -> Prop) : Prop :=
-    forall (w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 : word)
-           (c1 b1 p1 s1' l1 c2 b2 p2 s2' l2 c3 b3 p3 s3' l3 c4 b4 p4 s4' l4 : word) (jp1 jp2 jp3 jp4 : list byte) mm
-           (x1 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 : word),
-    Z4SF mm (SPD w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 DC)
-         (BD4A c4 b4 jp4 p4 s4' l4) (BD4A c3 b3 jp3 p3 s3' l3) (BD4A c2 b2 jp2 p2 s2' l2) (BD4A c1 b1 jp1 p1 s1' l1) ->
-    (forall mm' (spl : list cell) (r : Z) (z1 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15 z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 : word),
-       Z4SF mm' spl
-         (BD4A c4 b4 jp4 p4 s4' l4) (BD4A c3 b3 jp3 p3 s3' l3) (BD4A c2 b2 jp2 p2 s2' l2) (BD4A c1 b1 jp1 p1 s1' l1) ->
-       r = dcap \/ r = 2^64 - 20 ->
-       evtF bsegs RNG Q (ZS AZ4_DEPI mm' z1 (W r) z6 z7 z8 z9 z10 z11 z12 z13 z14 z15 z16 z17 z18 z19 z20 z21 z22 z23 z24 z25
-                            z26 z27 z28 z29 z30 z31)) ->
-    evtF bsegs RNG Q (ZS AZ4_END mm x1 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25
-                         x26 x27 x28 x29 x30 x31).
+    forall (f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 : word)
+           (bc1 bn1 bp1 bs1 bl1 bc2 bn2 bp2 bs2 bl2 bc3 bn3 bp3 bs3 bl3 bc4 bn4 bp4 bs4 bl4 : word)
+           (pad1 pad2 pad3 pad4 : list byte) (mem : amem)
+           (r1 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30
+            r31 : word),
+      Z4SF mem (SPD f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 DC)
+        (BD4A bc4 bn4 pad4 bp4 bs4 bl4) (BD4A bc3 bn3 pad3 bp3 bs3 bl3)
+        (BD4A bc2 bn2 pad2 bp2 bs2 bl2) (BD4A bc1 bn1 pad1 bp1 bs1 bl1) ->
+      (forall (mem' : amem) (frame : list cell) (rv : Z)
+              (u1 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30
+               u31 : word),
+         Z4SF mem' frame (BD4A bc4 bn4 pad4 bp4 bs4 bl4) (BD4A bc3 bn3 pad3 bp3 bs3 bl3)
+           (BD4A bc2 bn2 pad2 bp2 bs2 bl2) (BD4A bc1 bn1 pad1 bp1 bs1 bl1) ->
+         rv = dcap \/ rv = 2^64 - 20 ->
+         evtF bsegs RNG Q (ZS AZ4_DEPI mem' u1 (W rv) u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21
+                             u22 u23 u24 u25 u26 u27 u28 u29 u30 u31)) ->
+      evtF bsegs RNG Q (ZS AZ4_END mem r1 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23 r24
+                          r25 r26 r27 r28 r29 r30 r31).
 
 End Z4SF.
 

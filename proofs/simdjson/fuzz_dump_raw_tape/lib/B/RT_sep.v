@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -46,41 +46,23 @@ Section GWIN. Context {GWc : OssFuzzTheorems.Proofs.simdjson.fuzz_dump_raw_tape.
 
 Lemma client_static_cover : forall x, client_static x -> ~ outside CS_W x.
 Proof.
-  intros x (Hin & Hn). destruct Hin as (lo & hi & Hin & Hx). unfold CLIENT_STATIC in Hin.
-  destruct Hin as [E|[E|[E|[]]]]; injection E as <- <-.
-  - destruct (Z_lt_le_dec x 0x1731c0); [cs_pick 0x172c90 0x1731c0|].
-    destruct (Z_lt_le_dec x 0x173280); [rt_contra 0x1731c0 0x173280 Hn|].
-    cs_pick 0x173280 0x174558.
-  - cs_pick 0x69a210 0x6aa210.
-  - destruct (Z_lt_le_dec x 0x6aa270); [cs_pick 0x6aa210 0x6aa270|].
-    destruct (Z_lt_le_dec x 0x6aa2a0); [rt_contra 0x6aa270 0x6aa2a0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa2a8); [cs_pick 0x6aa2a0 0x6aa2a8|].
-    destruct (Z_lt_le_dec x 0x6aa2c0); [rt_contra 0x6aa2a8 0x6aa2c0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa2c8); [cs_pick 0x6aa2c0 0x6aa2c8|].
-    destruct (Z_lt_le_dec x 0x6aa2e0); [rt_contra 0x6aa2c8 0x6aa2e0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa2e8); [cs_pick 0x6aa2e0 0x6aa2e8|].
-    destruct (Z_lt_le_dec x 0x6aa300); [rt_contra 0x6aa2e8 0x6aa300 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa310); [cs_pick 0x6aa300 0x6aa310|].
-    destruct (Z_lt_le_dec x 0x6aa320); [rt_contra 0x6aa310 0x6aa320 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa328); [cs_pick 0x6aa320 0x6aa328|].
-    destruct (Z_lt_le_dec x 0x6aa340); [rt_contra 0x6aa328 0x6aa340 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa348); [cs_pick 0x6aa340 0x6aa348|].
-    destruct (Z_lt_le_dec x 0x6aa360); [rt_contra 0x6aa348 0x6aa360 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa390); [cs_pick 0x6aa360 0x6aa390|].
-    destruct (Z_lt_le_dec x 0x6aa3c0); [rt_contra 0x6aa390 0x6aa3c0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa3c8); [cs_pick 0x6aa3c0 0x6aa3c8|].
-    destruct (Z_lt_le_dec x 0x6aa3e0); [rt_contra 0x6aa3c8 0x6aa3e0 Hn|].
-    destruct (Z_lt_le_dec x 0x6abd90); [cs_pick 0x6aa3e0 0x6abd90|].
-    destruct (Z_lt_le_dec x 0x6abd98); [rt_contra 0x6abd90 0x6abd98 Hn|].
-    destruct (Z_lt_le_dec x 0x6abde0); [cs_pick 0x6abd98 0x6abde0|].
-    destruct (Z_lt_le_dec x 0x6abe00); [rt_contra 0x6abde0 0x6abe00 Hn|].
-    destruct (Z_lt_le_dec x 0x6abe08); [cs_pick 0x6abe00 0x6abe08|].
-    destruct (Z_lt_le_dec x 0x6abe18); [rt_contra 0x6abe08 0x6abe18 Hn|].
-    destruct (Z_lt_le_dec x 0x6cc0a8); [cs_pick 0x6abe18 0x6cc0a8|].
-    destruct (Z_lt_le_dec x 0x6cc0b0); [rt_contra 0x6cc0a8 0x6cc0b0 Hn|].
-    destruct (Z_lt_le_dec x 0x6cd2a0); [cs_pick 0x6cc0b0 0x6cd2a0|].
-    destruct (Z_lt_le_dec x 0x6cd2a8); [rt_contra 0x6cd2a0 0x6cd2a8 Hn|].
-    cs_pick 0x6cd2a8 0x6cd7d8.
+  intros x [cs_mem rt_free] cs_out.
+  assert (rt_out : outside RT_STATIC x).
+  { revert rt_free. generalize RT_STATIC as rs.
+    induction rs as [|[a b] rs step]; intro miss; cbn [outside]; [exact I|]. split.
+    - intro hit. apply miss. exists a, b. split; [apply in_eq | exact hit].
+    - apply step. intros (c & d & mem & hit). apply miss. exists c, d. split; [apply in_cons; exact mem | exact hit]. }
+  unfold RT_STATIC in rt_out. cbn [outside] in rt_out.
+  unfold CS_W in cs_out. cbn [outside] in cs_out.
+  repeat match goal with both : _ /\ _ |- _ => destruct both as [? ?] end.
+  destruct cs_mem as (lo & hi & mem & lb & ub).
+  unfold CLIENT_STATIC in mem. cbn [In] in mem.
+  destruct mem as [pick | [pick | [pick | []]]]; injection pick as e_lo e_hi; subst lo hi;
+  repeat match goal with
+  | lb : ?c <= x, gap : ~ (?c <= x < ?b) |- _ =>
+      destruct (Z_lt_le_dec x b) as [within | ?lb]; [elim (gap (conj lb within)) | clear lb gap]
+  end;
+  match goal with lb : ?c <= x, ub : x < ?h |- _ => clear - lb ub; lia end.
 Qed.
 
 Lemma W_client_cover : forall Σ sp x, aclient (live Σ) (frames Σ) sp x -> ~ outside (W_client Σ sp) x.

@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -30,11 +30,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Definition j0g_post (sp1 : Z) (ra gp t0 t1 t2 s0 a4 a5 a6 a7 s3 s7 s8 s9 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (len LB1 f fl : Z) (m : mem)
-    : machine_state -> Prop :=
-  fun ms => exists (a0' a2' : word) (m' : mem),
-    ms = MS (mkR ra (wz sp1) gp (wz TP_A) t0 t1 t2 s0 (wz sp1) a0' (wz len) a2' (wz 1) a4 a5 a6 a7 (wz 6) s3 (wz LIT_BEGIN) (wz LB1) (wz LIT_TAIL) s7 s8 s9
-                 (wz (Z.land fl (Z.lnot 4))) (wz (LB1 - 6)) t3 t4 t5 t6) F (wz J_GN) fc None m' (seg_rom asegs)
+Definition j0g_post (sp1 : Z) (ra gp t0 t1 t2 s0 a4 a5 a6 a7 s3 s7 s8 s9 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32)
+    (len LB1 f fl : Z) (m : mem) : machine_state -> Prop :=
+  fun ms => exists m',
+    ms = MS (mkR ra (wz sp1) gp (wz TP_A) t0 t1 t2 s0 (wz sp1) (wz (LIT_BEGIN + 1964)) (wz len) (wz (LIT_TAIL + 1940)) (wz 1) a4 a5 a6 a7
+                 (wz 6) s3 (wz LIT_BEGIN) (wz LB1) (wz LIT_TAIL) s7 s8 s9 (wz (Z.land fl (Z.lnot 4))) (wz (LB1 - 6)) t3 t4 t5 t6)
+            F (wz J_GN) fc None m' (seg_rom asegs)
     /\ munch [(sp1 + 80, sp1 + 104)] m m' /\ wmono asegs m m' /\ mem_inv asegs m'
     /\ rw_cells asegs m' (sp1 + 80) [C8 (wz (f + 48)); C8 (wz (f + 32)); C8 (wz (f + 64))].
 
@@ -47,16 +48,14 @@ Lemma j0g_walk : forall ra sp1 gp t0 t1 t2 s0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s6 s
   evt asegs (j0g_post sp1 ra gp t0 t1 t2 s0 a4 a5 a6 a7 s3 s7 s8 s9 t3 t4 t5 t6 F fc len LB1 f fl m)
     (MS (mkR ra (wz sp1) gp (wz TP_A) t0 t1 t2 s0 (wz sp1) (wz len) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 (wz LB1) s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (wz J_J0G) fc None m (seg_rom asegs)).
 Proof.
-  intros until c13. intros SP0 SPH F0 FH FL L16 LH MI FRF FRE. unfold J_J0G, TP_A in *.
-  pose proof (munch_refl [(sp1 + 80, sp1 + 104)] m) as MU. pose proof (wmono_refl asegs m) as WM.
-  assert (EUs : bv_unsigned (Z_to_bv 64 sp1) = sp1) by (apply unsigned_lit; lia).
-  assert (EUf : bv_unsigned (Z_to_bv 64 f) = f) by (apply unsigned_lit; lia).
-  assert (EUfl : bv_unsigned (Z_to_bv 64 fl) = fl) by (apply unsigned_lit; lia).
-  assert (EUl : bv_unsigned (Z_to_bv 64 LB1) = LB1) by (apply unsigned_lit; lia).
-  do 17 (zstep; lfix).
-  unfold j0g_post, J_GN, TP_A, LIT_BEGIN, LIT_TAIL. apply evt_done. do 3 eexists.
-  split. { rewrite land_m5_lnot4 by lia. replace (LB1 + -6) with (LB1 - 6) by lia. reflexivity. }
-  split; [assumption|]. split; [assumption|]. split; assumption.
+  intros until c13. intros SP_LO SP_HI F_LO F_HI FL_RNG LB_LO LB_HI INV0 SLOT_F SLOT_E.
+  unfold J_J0G.
+  pose proof (munch_refl [(sp1 + 80, sp1 + 104)] m) as MUNCHED. pose proof (wmono_refl asegs m) as WMONO.
+  do 17 zstep.
+  rewrite (land_m5_lnot4 fl FL_RNG).
+  apply evt_done. unfold j0g_post.
+  refine (ex_intro _ m0 (conj _ (conj MUNCHED (conj WMONO (conj INV0 SLOT_F))))).
+  reflexivity.
 Qed.
 
 Section CJ0g.
@@ -85,68 +84,79 @@ Local Notation pem_ms := (pem_ms RT).
 Theorem J0G_proof : J0G_stmt RT libenv errst_at_rest errst_live FZ_SITES FZ_CALLS.
 Proof.
   intros en Σ m off crem lrem j0 lH lF endv x1 x2 gap hj lenv j1 tav j2 bmv j3 F fc xra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s2 s4 s6 s10 s11 t3 t4 t5 t6
-         LB1 hBv dBv len bs KX KY methX methY maxX maxY.
-  cbv zeta. intros COM ER0 REM LRM PFR FFC ON AL16 LBS LBC LEN NUL MBX MBY MX0 MY0. unfold pem_at, cps. intros T c HA Hk.
-  pose proof COM as (ART0 & MI & ST & PD & PDM & TOP & LOW & LOR & HLOS & CLE & SEC & LE & INCL & INE & NLE & NTL & MB & OFF & BLT & KLV & PERM & CFR & ND & LPOS
-     & FRS & FRN & SP0 & CG & LIV & LR0 & CR & CR0 & CRE & CGH & CGS & CTX & UWC & F0 & F64 & FTOP & FSEG & FSH & FFS & SAVED & PRES & FLR & NDO & OUTS & FDO & MST).
-  destruct (com_lists RT libenv FZ_SITES FZ_CALLS en Σ m off crem lrem _ COM) as [ELV CLV].
-  assert (HLB : In (LB1, 256) (mbio_ent KX maxX ++ mbio_ent KY maxY ++ [(LB1, 256)])) by (do 2 (apply in_or_app; right); left; reflexivity).
-  assert (HLO : e_lo RT en <= e_sp1 RT en) by (clear - LOR; unfold RT_STACK, PEM_CALLEE_STACK in *; lia).
-  assert (INF : In (e_f RT en, 1%nat) (rt_frames RT Σ)) by (rewrite FRS; left; reflexivity).
-  assert (SP0' : 0 <= e_sp1 RT en) by (clear - HLO HLOS; lia). assert (SPH : e_sp1 RT en + 368 <= 2 ^ 47) by (clear - TOP PD; unfold e_sp1, USTACK_TOP in *; lia).
-  assert (FH : e_f RT en + 128 < 2 ^ 47) by (clear - FTOP; unfold USTACK_TOP in FTOP; lia).
-  pose proof (cur_live_facts RT AF GOBJ AFP libenv FZ_SITES FZ_CALLS en Σ m off crem lrem _ (LB1, 256) COM HLB ltac:(cbn; lia)) as (INL & L0 & LLO & LHI & LNAC). cbn [fst snd] in L0, LLO, LHI, LNAC.
-  assert (L16 : 16 <= LB1) by (clear - L0 AL16; Z.div_mod_to_equations; lia).
-  assert (LH : LB1 + 256 <= 2 ^ 47) by (clear - LLO HLO SPH; lia).
-  pose proof PFR as (FR0 & FRH & SZH & FRF & SZF & FR104 & FRE & FR224 & FRG).
-  pose proof (rw_cells_blur m (e_sp1 RT en + 80) lF [] ltac:(rewrite app_nil_r; exact FRF)) as FRFB.
-  replace (cells_size lF) with 24%nat in FRFB by (clear - SZF; lia).
-  pose proof FRE as FRE'. unfold loc_E in FRE'.
-  pose proof (j0g_walk xra (e_sp1 RT en) (e_gp RT en) t0 t1 t2 (e_sp RT en) a1 a2 a3 a4 a5 a6 a7 s2 (wz dBv) s4 s6 (wz hBv) (wz (shad (e_f RT en))) (wz SHB) s10 s11 t3 t4 t5 t6
-                F fc m len LB1 (e_f RT en) (e_flags RT en) (cells_bytes lF) _ _ _ _ _ _ _ _ _ _ _ _
-                SP0' SPH F0 FH FLR L16 LH MI FRFB FRE') as W1.
-  cl_lift W1 HA c2 Hc2.
-  destruct (ASTA_unpack RT Σ _ _ c2 Hc2) as (ms2 & (a0' & a2' & m2 & -> & MU2 & WM2 & MI2 & FRF2) & Hc2'). clear Hc2 HA.
-  (* [comment removed for export] *)
-  set (W2 := [(e_sp1 RT en + 80, e_sp1 RT en + 104)]) in *.
-  assert (HW2 : forall x, (x < e_sp1 RT en \/ e_PL RT en - 104 <= x) -> outside W2 x) by (intros x Hx; subst W2; cbn; unfold e_sp1 in *; clear - Hx PD; lia).
-  destruct (stk_win_facts RT AF GOBJ AFP libenv FZ_SITES FZ_CALLS en Σ m off crem lrem _ W2 COM HW2) as (W2L & W2F & W2O).
-  assert (KP : forall A cs, rw_cells asegs m A cs -> (forall x, A <= x < A + Z.of_nat (cells_size cs) -> outside W2 x) -> rw_cells asegs m2 A cs).
-  { intros A cs C HO. eapply rw_cells_agree_nw; [exact C|]. intros a Ha. apply MU2. exact (HO _ Ha). }
-  assert (PR2 : rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (e_sp1 RT en) W2 m m2) by (intros a _ Ho; exact (MU2 a Ho)).
-  assert (ST2 : stk asegs m2 (e_lo RT en) (e_sp1 RT en)).
-  { eapply stk_munch; [exact ST| exact MU2| exact WM2|]. intros x Hx. apply HW2. left. clear - Hx. lia. }
-  assert (COM2 : pem_com en Σ m2 off crem lrem (mbio_ent KX maxX ++ mbio_ent KY maxY ++ [(LB1, 256)])).
-  { eapply (com_seg RT AF GOBJ AFP libenv libenv_fp libenv_agree libenv_fp_where FZ_SITES FZ_CALLS en Σ m m2); [exact COM| exact MU2| exact WM2| exact MI2| exact ST2|].
-    subst W2. apply Forall_cons; [| apply Forall_nil]; left; cbn [fst snd]; unfold e_sp1 in *; clear - PD; lia. }
-  assert (REST2 : errst_at_rest (e_E RT en) [] m2).
-  { eapply (rest_keep_n RT libenv errst_at_rest errst_fp errst_rest_agree errst_fp_where FZ_SITES FZ_CALLS en Σ m m2); [exact COM| exact ER0| exact PR2| exact (ELV _ INE)| intros x Hx; exact (W2L _ _ x (ELV _ INE) Hx)]. }
-  assert (FFC2 : rw_cells asegs m2 (e_f RT en) (ff_cells hj lenv j1 tav j2 bmv j3)).
-  { apply (KP _ _ FFC). unfold ff_cells. cbn [cells_size csize Nat.add]. intros x Hx. apply W2F. clear - Hx. lia. }
-  assert (ON2 : out_null RT en m2).
-  { destruct ON as (O1 & O2 & O3 & O4).
-    assert (G8 : forall P vv, In P [e_PN RT en; e_PH RT en; e_PD RT en; e_PLN RT en] -> rw_cells asegs m P [C8 vv] -> rw_cells asegs m2 P [C8 vv]).
-    { intros P vv HPP C. apply (KP _ _ C). cbn [cells_size csize Nat.add]. intros x Hx. apply (W2O P x HPP). clear - Hx. lia. }
-    split; [apply G8; [cbn; tauto| exact O1]|]. split; [apply G8; [cbn; tauto| exact O2]|]. split; [apply G8; [cbn; tauto| exact O3]|]. apply G8; [cbn; tauto| exact O4]. }
-  assert (MBX2 : mbio_rep (rt_live RT Σ) m2 KX hBv methX 0 maxX 0).
-  { eapply (mbio_rep_keep (rt_live RT Σ)); [exact MBX| exact PR2| intros e He; split; apply CLV; apply in_or_app; left; exact He|].
-    intros [p n] x He Hx. exact (W2L p n x (CLV _ ltac:(apply in_or_app; left; exact He)) Hx). }
-  assert (MBY2 : mbio_rep (rt_live RT Σ) m2 KY dBv methY 0 maxY 0).
-  { eapply (mbio_rep_keep (rt_live RT Σ)); [exact MBY| exact PR2| intros e He; split; apply CLV; apply in_or_app; right; apply in_or_app; left; exact He|].
-    intros [p n] x He Hx. exact (W2L p n x (CLV _ ltac:(apply in_or_app; right; apply in_or_app; left; exact He)) Hx). }
-  assert (LBC2 : rw_cells asegs m2 LB1 [CB 256 bs]).
-  { apply (KP _ _ LBC). cbn [cells_size csize]. intros x Hx. apply (W2L LB1 256 x (CLV _ HLB)). clear - Hx. lia. }
-  assert (PFR2 : pem_frame en m2 j0 lH (loc_F RT en) endv hBv dBv x1 x2 gap).
-  { split; [apply (KP _ _ FR0); cbn [cells_size csize Nat.add]; intros x Hx; subst W2; cbn; clear - Hx; lia|].
-    split; [apply (KP _ _ FRH); rewrite SZH; intros x Hx; subst W2; cbn; clear - Hx; lia|]. split; [exact SZH|].
-    split; [unfold loc_F; exact FRF2|]. split; [reflexivity|].
-    split; [apply (KP _ _ FR104); cbn [cells_size csize Nat.add]; intros x Hx; subst W2; cbn; clear - Hx; lia|].
-    split; [apply (KP _ _ FRE); cbn [cells_size csize Nat.add]; intros x Hx; subst W2; cbn; clear - Hx; lia|].
-    split; [apply (KP _ _ FR224); cbn [cells_size csize Nat.add]; intros x Hx; subst W2; cbn; clear - Hx; lia|].
-    apply (KP _ _ FRG). cbn [cells_size csize]. intros x Hx. subst W2. cbn. clear - Hx PD. lia. }
-  clear COM ER0 PFR FFC ON MBX MBY LBC FR0 FRH FRF FR104 FRE FRE' FR224 FRG FRFB KP.
-  refine (H_GN (e_blen RT en - off) en Σ m2 off crem lrem j0 lH endv x1 x2 gap hj lenv j1 tav j2 bmv j3 F fc xra t0 t1 t2 a0' a2' a4 a5 a6 a7 (wz dBv) (wz hBv) t3 t4 t5 t6
-            LB1 hBv dBv len 1 bs KX KY methX methY maxX maxY ltac:(clear; lia) COM2 REST2 REM LRM PFR2 FFC2 ON2 AL16 LBS LBC2 LEN NUL ltac:(clear; lia)
-            MBX2 MBY2 MX0 MY0 T c2 Hc2' Hk).
+         LB1 hBv dBv len bs KX KY methX methY maxX maxY cur
+         COM REST NEED LIVE_ROOM FRM FAKE ONULL LB_AL BS_LEN BUF LEN_RNG NUL_AT REP_X REP_Y MAXX0 MAXY0.
+  pose proof COM as (_ & INV0 & STK0 & PD_CASES & _ & PL_TOP & _ & LO_ROOM & LO_MIN & _ & _ & _ & _ & E_LIVE & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & F_POS & _ & F_TOP & _ & _ & _ & _ & _ & FLAGS & _ & _ & _ & MSTAB).
+  unfold RT_STACK, PEM_CALLEE_STACK in LO_ROOM. unfold USTACK_TOP in PL_TOP, F_TOP.
+  assert (LB_OWNED : In (LB1, 256) cur) by (apply in_or_app; right; apply in_or_app; right; left; reflexivity).
+  destruct (cur_live_facts RT AF GOBJ AFP libenv FZ_SITES FZ_CALLS en Σ m off crem lrem cur (LB1, 256) COM LB_OWNED ltac:(cbn; lia))
+    as (_ & _ & LB_BELOW & LB_HIGH & _).
+  cbn [fst snd] in LB_BELOW, LB_HIGH. specialize (LB_HIGH ltac:(lia)).
+  destruct (com_lists RT libenv FZ_SITES FZ_CALLS en Σ m off crem lrem cur COM) as (ENTRY_IN_NOW & CUR_IN_NOW).
+  destruct FRM as (SL_J0 & SL_H & SZ_H & SL_F & SZ_F & SL_END & SL_E & SL_X & SL_GAP).
+  destruct (rw_cells_forget asegs m (e_sp1 RT en + 80) lF SL_F) as (lfj & SL_F_RAW).
+  replace (cells_size lF) with 24%nat in SL_F_RAW by lia.
+  pose proof SL_E as SL_E_FLAT. unfold loc_E in SL_E_FLAT.
+  assert (SP1_LO : 0 <= e_sp1 RT en) by lia.
+  assert (SP1_HI : e_sp1 RT en + 368 <= 2 ^ 47) by (unfold e_sp1; lia).
+  assert (FRAME_ROOM : e_sp1 RT en + 104 <= e_PL RT en - 104) by (unfold e_sp1; lia).
+  assert (F_HI : e_f RT en + 128 < 2 ^ 47) by lia.
+  pose proof (j0g_walk xra (e_sp1 RT en) (e_gp RT en) t0 t1 t2 (e_sp RT en) a1 a2 a3 a4 a5 a6 a7 s2 (wz dBv) s4 s6 (wz hBv) (wz (shad (e_f RT en))) (wz SHB)
+                s10 s11 t3 t4 t5 t6 F fc m len LB1 (e_f RT en) (e_flags RT en) lfj _ _ _ _ _ _ _ _ _ _ _ _
+                SP1_LO SP1_HI F_POS F_HI FLAGS ltac:(lia) ltac:(lia) INV0 SL_F_RAW SL_E_FLAT) as WALK.
+  unfold pem_at, cps. intros T c START KONT.
+  refine (asta_evt' RT AF Σ (e_PMc RT en) _
+            (j0g_post (e_sp1 RT en) xra (e_gp RT en) t0 t1 t2 (e_sp RT en) a4 a5 a6 a7 (wz dBv) (wz hBv) (wz (shad (e_f RT en))) (wz SHB)
+                      t3 t4 t5 t6 F fc len LB1 (e_f RT en) (e_flags RT en) m)
+            MSTAB _ T c START _).
+  { intros ms <-. exact WALK. }
+  intros c1 AT_GN.
+  destruct (ASTA_unpack RT Σ _ _ c1 AT_GN) as (ms1 & ARRIVED & AT_GN1).
+  destruct ARRIVED as (m1 & -> & MUNCHED & WMONO & INV1 & SL_F1).
+  assert (NOT_HIT : forall x, ~ (e_sp1 RT en + 80 <= x < e_sp1 RT en + 104) -> outside [(e_sp1 RT en + 80, e_sp1 RT en + 104)] x)
+    by (intros x MISS; cbn [outside]; split; [exact MISS | exact I]).
+  assert (CARRY : forall A cs n, rw_cells asegs m A cs -> Z.of_nat (cells_size cs) = n ->
+                    (forall x, A <= x < A + n -> outside [(e_sp1 RT en + 80, e_sp1 RT en + 104)] x) ->
+                    rw_cells asegs m1 A cs).
+  { intros A cs n CELLS SIZE AWAY. subst n. apply (rw_cells_agree asegs m m1 A cs CELLS); [|exact WMONO].
+    exact (agree_of_munch _ m m1 _ MUNCHED AWAY). }
+  destruct (stk_win_facts RT AF GOBJ AFP libenv FZ_SITES FZ_CALLS en Σ m off crem lrem cur [(e_sp1 RT en + 80, e_sp1 RT en + 104)] COM
+              ltac:(intros x SIDE; apply NOT_HIT; lia)) as (LIVE_AWAY & FAKE_AWAY & PTR_AWAY).
+  assert (COM1 : pem_com en Σ m1 off crem lrem cur).
+  { apply (com_seg RT AF GOBJ AFP libenv libenv_fp libenv_agree libenv_fp_where FZ_SITES FZ_CALLS en Σ m m1 off crem lrem cur _ COM MUNCHED WMONO INV1).
+    - apply (stk_munch _ m m1 _ _ STK0 MUNCHED WMONO). intros x BELOW. apply NOT_HIT. lia.
+    - constructor; [|constructor]. unfold seg_ok. left. cbn [fst snd]. lia. }
+  assert (REST1 : errst_at_rest (e_E RT en) [] m1).
+  { apply (errst_rest_agree m m1 (e_E RT en) [] REST). apply (agree_of_munch _ m m1 _ MUNCHED).
+    intros x FP. destruct (errst_fp_where _ _ _ FP) as [IN_E | (p & n & NONE & _)]; [|destruct NONE].
+    exact (LIVE_AWAY _ _ x (ENTRY_IN_NOW _ E_LIVE) IN_E). }
+  assert (FRM1 : pem_frame en m1 j0 lH (loc_F RT en) endv hBv dBv x1 x2 gap).
+  { refine (conj (CARRY _ _ 24 SL_J0 eq_refl _) (conj (CARRY _ _ 56 SL_H SZ_H _) (conj SZ_H (conj SL_F1 (conj eq_refl
+           (conj (CARRY _ _ 8 SL_END eq_refl _) (conj (CARRY _ _ 112 SL_E eq_refl _) (conj (CARRY _ _ 24 SL_X eq_refl _)
+           (CARRY _ _ (e_pd RT en) SL_GAP ltac:(cbn [cells_size csize]; lia) _))))))))); intros x RNG; apply NOT_HIT; lia. }
+  assert (FAKE1 : rw_cells asegs m1 (e_f RT en) (ff_cells hj lenv j1 tav j2 bmv j3)).
+  { apply (CARRY _ _ 120 FAKE eq_refl). intros x RNG. apply FAKE_AWAY. lia. }
+  assert (ONULL1 : out_null RT en m1).
+  { destruct ONULL as (P_N & P_H & P_D & P_L).
+    assert (PTR_CELL : forall P, In P [e_PN RT en; e_PH RT en; e_PD RT en; e_PLN RT en] ->
+                         rw_cells asegs m P [C8 (wz 0)] -> rw_cells asegs m1 P [C8 (wz 0)]).
+    { intros P WHICH CELL. apply (CARRY P _ 8 CELL eq_refl). intros x RNG. exact (PTR_AWAY P x WHICH RNG). }
+    exact (conj (PTR_CELL _ (or_introl eq_refl) P_N) (conj (PTR_CELL _ (or_intror (or_introl eq_refl)) P_H)
+           (conj (PTR_CELL _ (or_intror (or_intror (or_introl eq_refl))) P_D) (PTR_CELL _ (or_intror (or_intror (or_intror (or_introl eq_refl)))) P_L)))). }
+  assert (BUF1 : rw_cells asegs m1 LB1 [CB 256 bs]).
+  { apply (CARRY _ _ 256 BUF eq_refl). intros x RNG. exact (LIVE_AWAY LB1 256 x (CUR_IN_NOW _ LB_OWNED) RNG). }
+  assert (BIO_AWAY : forall K mx, (forall e, In e (mbio_ent K mx) -> In e (rt_live RT Σ)) ->
+                       forall x, mbio_fp K mx x -> outside [(e_sp1 RT en + 80, e_sp1 RT en + 104)] x).
+  { intros K mx ENTS x ((p, n) & ENT & RNG). exact (LIVE_AWAY p n x (ENTS _ ENT) RNG). }
+  assert (REP_X1 : mbio_rep (rt_live RT Σ) m1 KX hBv methX 0 maxX 0).
+  { apply (mbio_rep_agree _ m m1 _ _ _ _ _ _ REP_X). apply (agree_of_munch _ m m1 _ MUNCHED).
+    apply BIO_AWAY. intros e ENT. exact (mbio_rep_ents _ _ _ _ _ _ _ _ e REP_X ENT). }
+  assert (REP_Y1 : mbio_rep (rt_live RT Σ) m1 KY dBv methY 0 maxY 0).
+  { apply (mbio_rep_agree _ m m1 _ _ _ _ _ _ REP_Y). apply (agree_of_munch _ m m1 _ MUNCHED).
+    apply BIO_AWAY. intros e ENT. exact (mbio_rep_ents _ _ _ _ _ _ _ _ e REP_Y ENT). }
+  exact (H_GN (e_blen RT en - off) en Σ m1 off crem lrem j0 lH endv x1 x2 gap hj lenv j1 tav j2 bmv j3 F fc xra t0 t1 t2
+              (wz (LIT_BEGIN + 1964)) (wz (LIT_TAIL + 1940)) a4 a5 a6 a7 (wz dBv) (wz hBv) t3 t4 t5 t6 LB1 hBv dBv len 1 bs KX KY methX methY maxX maxY
+              (Z.le_refl _) COM1 REST1 NEED LIVE_ROOM FRM1 FAKE1 ONULL1 LB_AL BS_LEN BUF1 LEN_RNG NUL_AT ltac:(lia) REP_X1 REP_Y1 MAXX0 MAXY0
+              T c1 AT_GN1 KONT).
 Qed.
 End CJ0g.

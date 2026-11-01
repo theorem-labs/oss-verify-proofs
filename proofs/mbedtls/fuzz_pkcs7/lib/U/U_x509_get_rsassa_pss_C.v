@@ -67,51 +67,66 @@ Section Walk.
       (MS (mkR x1 SPF gp tp x5 x6 x7 (Z_to_bv 64 ENDv) (Z_to_bv 64 MGF) x10 x11 x12 x13 x14 x15 x16 x17 (Z_to_bv 64 e2) (Z_to_bv 64 SALT) x20 s5 s6 s7 s8 s9 s10 s11 x28 x29 x30 x31)
           F (Z_to_bv 64 0x27b00) fc None mm (seg_rom usegs))
 (* [comment removed for export] *).
-  Proof.
-    intros q2 e2 ap qp j4 tfw lw qtag qpad QLw atag apad ALw w1 w2 w3 x1 x5 x6 x7 x10 x11 x12 x13 x14 x15 x16 x17 x20 x28 x29 x30 x31 mm
-      F0 FPAR FALG FL FP FS HMD HMGF HSALT HBUF ST MU WM MI SOK HAP1 HAP2 HQP Hq0 Hq1 Hq2.
-    open_ctx HC.
-    pose proof (bv_unsigned_in_range 64 plen) as PLR. unfold bv_modulus in PLR. cbn in PLR.
-    pose proof (bv_unsigned_in_range 64 ALw) as ALR. unfold bv_modulus in ALR. cbn in ALR.
-    pose proof (bv_unsigned_in_range 64 QLw) as QLR. unfold bv_modulus in QLR. cbn in QLR.
-    pose proof (bytes_at_bound _ _ _ _ HBUF) as BB.
-    lxp_run (PLAN [0x1e5b8; 0x1e6d0; 0x1edc0; 0x1ef8c; 0x2612c; 0x2798c; 0x279b4; 0x279dc; 0x27a7c; 0x27bf8; 0x46940] [] 197%N).
-    { (* [comment removed for export] *)
-      lxp_apply exit_walk. }
-    lxp_gc.
-    assert (A9 : bv_unsigned ALw = 9) by lxp_lia.
-    (* [comment removed for export] *)
-    ro_const 0x109dd 9%nat RO.
-    set (obs := firstn (Z.to_nat 9) (skipn (Z.to_nat (ap - BUF)) bs)).
-    assert (LENO : Z.of_nat (length obs) = 9) by (subst obs; apply bytes_at_sub_length; plia).
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mx _) =>
-      lazymatch goal with HB : bytes_at _ mx BUF bs |- _ =>
-        assert (HOB : bytes_at usegs mx ap obs) by (subst obs; eapply bytes_at_sub; [exact HB| plia| plia| plia]) end end.
-    clearbody obs.
-    pose proof U_bcmp_spec as SPB. unfold memcmp_stmt in SPB.
-    callp (eapply SPB; rewrite ?unsigned_lit by (clear_disj; lia);
-           [ exact RO | exact HOB | reflexivity | clear -LENO; cbn; lia ]).
-    clear SPB RO.
-    match goal with H : ?x = Z_to_bv 64 ?rr |- _ => subst x; rename rr into rb end.
-    lxp_gc.
-    lxp_run (PLAN [0x1e5b8; 0x1e6d0; 0x1edc0; 0x1ef8c; 0x2612c; 0x2798c; 0x279b4; 0x279dc; 0x27a7c; 0x27bf8; 0x46940] [] 197%N).
-    { (* [comment removed for export] *) lxp_apply exit_walk. }
-    (* [comment removed for export] *)
-    lxp_gc. try lxp_statics.
-    lxp_frame_cut (bv_unsigned sp + -128) [16; 40].
-    pose proof HHASH as SPH. unfold x509_get_hash_alg_stmt, U_X509_GET_HASH_ALG in SPH.
-    callx_sp (bv_unsigned sp + -128)
-      (eapply SPH with (ALG := bv_unsigned sp + -112) (MGF := MGF) (BUF := BUF) (bs := bs) (ap := qp) (alen := QLw) (lo := lo);
-       rewrite ?(unsigned_lit (bv_unsigned sp + -128)) by plia; try eassumption; try reflexivity; try plia).
-    clear SPH.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m6 end.
-    match goal with H : ?x = Z_to_bv 64 ?rr |- _ => subst x; rename rr into r end.
-    match goal with H : _ < r <= 0 |- _ => rename H into Hr end.
-    match goal with H : stk _ m6 lo _ |- _ => rename H into ST6 end.
-    lxp_gc.
-    lxp_run (PLAN [0x1e5b8; 0x1e6d0; 0x1edc0; 0x1ef8c; 0x2612c; 0x2798c; 0x279b4; 0x279dc; 0x27a7c; 0x27bf8; 0x46940] [] 197%N).
-    all: first [ lxp_at 162428; lxp_apply exit_walk | lxp_at 162188; lxp_apply s3_walk ].
-  Qed.
+Proof.
+  intros q2 e2 ap qp j4 tfw lw qtag qpad QLw atag apad ALw w1 w2 w3
+         x1 x5 x6 x7 x10 x11 x12 x13 x14 x15 x16 x17 x20 x28 x29 x30 x31 mm
+         fr_hdr fr_par fr_alg fr_len fr_ptr fr_sav c_md c_mgf c_salt in_buf
+         st_lo mu0 wm0 inv0 sta0 ap_ge ap_fit par_case q2_ge q2_le e2_le.
+  pose proof HC as (_ & _ & _ & spec_hash & buf_end & pp_nn & buf_top
+    & dj_md_mgf & dj_md_salt & dj_mgf_salt & _ & _ & _
+    & dj_md_buf & dj_mgf_buf & dj_salt_buf & _ & al_md & al_mgf & al_salt
+    & _ & pos_md & pos_mgf & pos_salt & pos_buf & stk_lo & ceil_lo & ceil_big & al_sp
+    & _ & sd_md & sd_mgf & sd_salt & sd_buf & _ & cst_tbl & dat_hi
+    & dd_md & dd_mgf & dd_salt & rg_sp & [rg_md0 rg_md1] & [rg_mgf0 rg_mgf1] & [rg_salt0 rg_salt1]
+    & _ & _).
+  lxp_run (PLAN [289088; 162808; 162428; 162188] [] 200%N).
+  all: tryif lxp_at 289088 then
+    (assert (alw9 : bv_unsigned ALw = 9)
+       by (lazymatch goal with
+           | took : (if zlow 64 (bv_unsigned ?w) =? zlow 64 9 then false else true) = false |- _ =>
+               pose proof (bv_unsigned_in_range 64 w) as w_rng; unfold bv_modulus in w_rng;
+               destruct (Z.eqb_spec (zlow 64 (bv_unsigned w)) (zlow 64 9)) as [same | differ];
+               [ unfold zlow in same; lia | discriminate took ]
+           end);
+     ro_const 68061 9%nat oid_rom;
+     pose proof (bytes_at_sub usegs mm BUF bs ap 9 in_buf ap_ge ltac:(lia) ltac:(lia)) as ap_bytes;
+     eapply evt_cut;
+     [ eapply U_bcmp_spec;
+       [ rewrite unsigned_lit by lia; exact oid_rom
+       | rewrite unsigned_lit by lia; exact ap_bytes
+       | rewrite unsigned_lit by lia; reflexivity
+       | rewrite unsigned_lit, length_firstn, length_skipn by lia; lia ]
+     | intros ms1 cmp_post;
+       destruct cmp_post as (a0c & a1c & a2c & a3c & a4c & rc & ms1_eq & a0c_eq & rc_rng & _);
+       subst ms1 a0c; clear oid_rom ap_bytes;
+       rewrite (ret_pc_even 162608) by lia;
+       lxp_run (PLAN [162808; 162428; 162188] [] 200%N) ])
+  else idtac.
+  all: tryif lxp_at 162808 then
+    (pose proof spec_hash as hash_call;
+     unfold x509_get_hash_alg_stmt, U_X509_GET_HASH_ALG in hash_call;
+     callx_sp (bv_unsigned sp + -128)
+       (eapply hash_call with (ALG := bv_unsigned sp + -112) (MGF := MGF) (BUF := BUF) (ap := qp) (lo := lo)
+                              (bs := bs) (atag := qtag) (apad := qpad) (alen := QLw) (v0 := w2);
+        rewrite ?(unsigned_lit (bv_unsigned sp + -128)) by lia; try reflexivity);
+     clear hash_call;
+     lazymatch goal with
+     | ret_eq : ?a0w = Z_to_bv 64 ?hr, ret_rng : -12288 < ?hr <= 0 |- _ =>
+         subst a0w; rename hr into hash_ret, ret_rng into hash_ret_rng
+     end;
+     lxp_run (PLAN [162428; 162188] [] 200%N))
+  else idtac.
+  all: tryif lxp_at 162428 then (eapply exit_walk'; first [ eassumption | lia ]) else idtac.
+  lxp_at 162188.
+  assert (end_hit : q2 = e2).
+  { lazymatch goal with
+    | took : (if zlow 64 q2 =? zlow 64 e2 then false else true) = false |- _ =>
+        destruct (Z.eqb_spec (zlow 64 q2) (zlow 64 e2)) as [same | differ];
+        [ unfold zlow in same; lia | discriminate took ]
+    end. }
+  subst e2.
+  eapply s3_walk'; first [ eassumption | lia ].
+Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
 End Walk.

@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -17,26 +17,55 @@ Lemma wg_keep_live_nw : forall live frames sp W (m m' : mem) p n X cs, rw_cells 
   In (p, n) live -> p <= X -> X + Z.of_nat (cells_size cs) <= p + n ->
   (forall x, X <= x < X + Z.of_nat (cells_size cs) -> outside W x) -> rw_cells asegs m' X cs.
 Proof.
-  intros live frames sp W m m' p n X cs H PR IN H1 H2 HO. apply (rw_cells_agree_nw asegs m m' X cs H).
-  intros a Ha. apply PR; [|exact (HO _ Ha)]. right; right; left. exists p, n. split; [exact IN | lia].
+  intros live frames sp W m m' p n X cs src_cells frame_pres blk_live blk_lo blk_hi rng_unwritten.
+  refine (rw_cells_agree_nw asegs m m' X cs src_cells _).
+  intros w w_in; cbv beta in w_in.
+  assert (w_live : in_live live (bv_unsigned w)).
+  { exists p, n. split; [exact blk_live | lia]. }
+  apply frame_pres.
+  - right; right; left; exact w_live.
+  - exact (rng_unwritten (bv_unsigned w) w_in).
 Qed.
 
 Lemma wg_keep_static_nw : forall live frames sp W (m m' : mem) X cs, rw_cells asegs m X cs -> rt_pres_fp live frames sp W m m' ->
   (forall x, X <= x < X + Z.of_nat (cells_size cs) -> client_static x /\ outside W x) -> rw_cells asegs m' X cs.
 Proof.
-  intros live frames sp W m m' X cs H PR HO. apply (rw_cells_agree_nw asegs m m' X cs H).
-  intros a Ha. destruct (HO _ Ha) as [S O]. apply PR; [right; left; exact S | exact O].
+  intros live frames sp W m m' X cs src_cells frame_pres rng_static.
+  apply (rw_cells_agree_nw asegs m m' X cs src_cells).
+  intros w w_in.
+  destruct (rng_static _ w_in) as [w_static w_out].
+  exact (frame_pres w (or_intror (or_introl w_static)) w_out).
 Qed.
 
 Lemma wg_keep_seg_nw : forall W (m m' : mem) X cs, rw_cells asegs m X cs -> munch W m m' ->
   (forall x, X <= x < X + Z.of_nat (cells_size cs) -> outside W x) -> rw_cells asegs m' X cs.
-Proof. intros W m m' X cs H MU HO. apply (rw_cells_agree_nw asegs m m' X cs H). intros a Ha. apply MU. exact (HO _ Ha). Qed.
+Proof.
+  intros W m m' X cs src_cells unwritten rng_out.
+  apply (rw_cells_agree_nw asegs m m' X cs src_cells).
+  intros w w_in.
+  apply unwritten, rng_out, w_in.
+Qed.
 
 (* [comment removed for export] *)
-Ltac cl_keep_nw H AG H' :=
-  lazymatch type of H with
-  | rw_cells _ ?m ?a ?cs =>
-      lazymatch type of AG with forall a k, _ -> _ -> agree_on _ m ?m' =>
-        assert (H' : rw_cells asegs m' a cs)
-          by (apply (rw_cells_agree_nw asegs m m' a cs H); apply AG; [lia | cbn [cells_size csize Nat.add]; unfold USTACK_TOP in *; lia]) end
-  end.
+Ltac cl_keep_nw src agr dst :=
+  let kept := fresh "kept" in
+  lazymatch type of src with
+  | rw_cells ?segs ?m0 ?A ?cs =>
+      eassert (kept : rw_cells segs _ A cs);
+      [ eapply (rw_cells_agree_nw segs m0 _ A cs src)
+      | ]
+  | ro_cells ?segs ?m0 ?A ?cs =>
+      eassert (kept : ro_cells segs _ A cs);
+      [ eapply (ro_cells_agree segs m0 _ A cs src)
+      | ]
+  end;
+  [ first
+      [ eapply agr;
+        solve [ cbn [cells_size csize Nat.add]; lia
+              | cbn [cells_size csize Nat.add] in *; unfold USTACK_TOP, RT_STACK, STACK_WIN in *; lia
+              | intros ? ?; cbv beta in *; cbn [cells_size csize Nat.add] in *; lia ]
+      | eapply agree_sub;
+        [ exact agr
+        | intros ? ?; cbv beta in *; cbn [cells_size csize Nat.add] in *;
+          solve [ lia | unfold USTACK_TOP, RT_STACK, STACK_WIN in *; lia ] ] ]
+  | first [ rename kept into dst | clear src; rename kept into dst ] ].

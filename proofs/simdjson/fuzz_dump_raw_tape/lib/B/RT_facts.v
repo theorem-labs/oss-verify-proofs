@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -305,45 +305,29 @@ End Facts2.
 
 Lemma cs_acc_cover : forall x, client_static x -> ~ (0x173630 <= x < 0x1744f0) -> exists r, In r CS_ACC /\ fst r <= x < snd r.
 Proof.
-  intros x (Hin & Hn) Hg. destruct Hin as (lo & hi & Hin & Hx). unfold CLIENT_STATIC in Hin.
-  Ltac pick_r lo hi := exists (lo, hi); split; [unfold CS_ACC; repeat (first [left; reflexivity | right]) | cbn; lia].
-  Ltac rt_no lo hi Hn := exfalso; apply Hn; exists lo, hi; split; [unfold RT_STATIC; repeat (first [left; reflexivity | right]) | lia].
-  destruct Hin as [E|[E|[E|[]]]]; injection E as <- <-.
-  - destruct (Z_lt_le_dec x 0x1731c0); [pick_r 0x172c90 0x1731c0|].
-    destruct (Z_lt_le_dec x 0x173280); [rt_no 0x1731c0 0x173280 Hn|].
-    destruct (Z_lt_le_dec x 0x173630); [pick_r 0x173280 0x173630|].
-    destruct (Z_lt_le_dec x 0x1744f0); [exfalso; lia|].
-    pick_r 0x1744f0 0x174558.
-  - pick_r 0x69a210 0x6aa210.
-  - destruct (Z_lt_le_dec x 0x6aa270); [pick_r 0x6aa210 0x6aa270|].
-    destruct (Z_lt_le_dec x 0x6aa2a0); [rt_no 0x6aa270 0x6aa2a0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa2a8); [pick_r 0x6aa2a0 0x6aa2a8|].
-    destruct (Z_lt_le_dec x 0x6aa2c0); [rt_no 0x6aa2a8 0x6aa2c0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa2c8); [pick_r 0x6aa2c0 0x6aa2c8|].
-    destruct (Z_lt_le_dec x 0x6aa2e0); [rt_no 0x6aa2c8 0x6aa2e0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa2e8); [pick_r 0x6aa2e0 0x6aa2e8|].
-    destruct (Z_lt_le_dec x 0x6aa300); [rt_no 0x6aa2e8 0x6aa300 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa310); [pick_r 0x6aa300 0x6aa310|].
-    destruct (Z_lt_le_dec x 0x6aa320); [rt_no 0x6aa310 0x6aa320 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa328); [pick_r 0x6aa320 0x6aa328|].
-    destruct (Z_lt_le_dec x 0x6aa340); [rt_no 0x6aa328 0x6aa340 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa348); [pick_r 0x6aa340 0x6aa348|].
-    destruct (Z_lt_le_dec x 0x6aa360); [rt_no 0x6aa348 0x6aa360 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa390); [pick_r 0x6aa360 0x6aa390|].
-    destruct (Z_lt_le_dec x 0x6aa3c0); [rt_no 0x6aa390 0x6aa3c0 Hn|].
-    destruct (Z_lt_le_dec x 0x6aa3c8); [pick_r 0x6aa3c0 0x6aa3c8|].
-    destruct (Z_lt_le_dec x 0x6aa3e0); [rt_no 0x6aa3c8 0x6aa3e0 Hn|].
-    destruct (Z_lt_le_dec x 0x6abd90); [pick_r 0x6aa3e0 0x6abd90|].
-    destruct (Z_lt_le_dec x 0x6abd98); [rt_no 0x6abd90 0x6abd98 Hn|].
-    destruct (Z_lt_le_dec x 0x6abde0); [pick_r 0x6abd98 0x6abde0|].
-    destruct (Z_lt_le_dec x 0x6abe00); [rt_no 0x6abde0 0x6abe00 Hn|].
-    destruct (Z_lt_le_dec x 0x6abe08); [pick_r 0x6abe00 0x6abe08|].
-    destruct (Z_lt_le_dec x 0x6abe18); [rt_no 0x6abe08 0x6abe18 Hn|].
-    destruct (Z_lt_le_dec x 0x6cc0a8); [pick_r 0x6abe18 0x6cc0a8|].
-    destruct (Z_lt_le_dec x 0x6cc0b0); [rt_no 0x6cc0a8 0x6cc0b0 Hn|].
-    destruct (Z_lt_le_dec x 0x6cd2a0); [pick_r 0x6cc0b0 0x6cd2a0|].
-    destruct (Z_lt_le_dec x 0x6cd2a8); [rt_no 0x6cd2a0 0x6cd2a8 Hn|].
-    pick_r 0x6cd2a8 0x6cd7d8.
+  intros x Static OffGap.
+  assert (Spot : exists lo hi, In (lo, hi) CS_W /\ lo <= x < hi).
+  { generalize (client_static_cover x Static). generalize CS_W as W.
+    induction W as [| [lo hi] W' Later]; cbn [outside]; intros Covered.
+    - case (Covered I).
+    - assert (Choice : lo <= x < hi \/ ~ (lo <= x < hi)) by lia.
+      destruct Choice as [Inside | Elsewhere].
+      + exists lo, hi. split; [left; reflexivity | exact Inside].
+      + destruct (Later ltac:(tauto)) as (lo' & hi' & Mem & Range).
+        exists lo', hi'. split; [right; exact Mem | exact Range]. }
+  assert (Wshape : CS_W = (1518736, 1520064) :: (1520256, 1525080) :: tl (tl CS_W)) by reflexivity.
+  assert (Ashape : CS_ACC = (1518736, 1520064) :: (1520256, 1521200) :: (1524976, 1525080)
+                            :: tl (tl CS_W) ++ skipn 19 CS_ACC) by reflexivity.
+  destruct Spot as (lo & hi & Window & Range).
+  rewrite Wshape in Window. rewrite Ashape.
+  destruct Window as [Head | [Mid | Tail]].
+  - exists (lo, hi). split; [left; exact Head | exact Range].
+  - injection Mid as Elo Ehi. subst lo hi.
+    assert (Side : x < 1521200 \/ 1524976 <= x) by lia.
+    destruct Side as [Low | High].
+    + exists (1520256, 1521200). split; [right; left; reflexivity | cbn [fst snd]; lia].
+    + exists (1524976, 1525080). split; [do 2 right; left; reflexivity | cbn [fst snd]; lia].
+  - exists (lo, hi). split; [do 3 right; apply in_or_app; left; exact Tail | exact Range].
 Qed.
 
 Lemma rta_acc_static : forall Σ m a n, ART_A Σ m -> 0 <= a ->

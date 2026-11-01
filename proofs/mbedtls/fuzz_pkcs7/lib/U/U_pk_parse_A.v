@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -39,11 +39,14 @@ Notation MT := U_MT (only parsing).
 
 Lemma pk_lxor_sb : forall x, 0 <= x < 9223372036854775808 -> Z.lxor x 9223372036854775808 = x + 9223372036854775808.
 Proof.
-  intros x Hx. change 9223372036854775808 with (2^63).
-  rewrite <- Z.add_nocarry_lxor; [reflexivity|].
-  apply Z.bits_inj'. intros i Hi. rewrite Z.land_spec, Z.bits_0, Z.pow2_bits_eqb by lia.
-  destruct (Z.eqb_spec 63 i) as [<-|]; [| apply andb_false_r].
-  rewrite andb_true_r. rewrite <- (Z.mod_small x (2^63)) by lia. apply Z.mod_pow2_bits_high. lia.
+  intros x Rx.
+  assert (Bit63 : Z.testbit x 63 = false).
+  { apply Z.testbit_false; [lia|]. rewrite Z.div_small by lia. reflexivity. }
+  assert (NoOverlap : Z.land x 9223372036854775808 = 0).
+  { apply Z.bits_inj'. intros k Kpos. rewrite Z.land_spec, Z.bits_0.
+    change 9223372036854775808 with (2 ^ 63). rewrite Z.pow2_bits_eqb by lia.
+    destruct (Z.eqb_spec 63 k) as [At63|Off63]; [subst k; rewrite Bit63; reflexivity| apply andb_false_r]. }
+  symmetry. apply Z.add_nocarry_lxor. exact NoOverlap.
 Qed.
 Ltac pk_ltb_fix H tac :=
   repeat match type of H with context [?x <? ?y] =>
@@ -133,7 +136,7 @@ Section PA.
   Hypothesis SPR : bv_unsigned sp < 2^64.
 
   Notation POST := (pk_parse_subpubkey_post usegs L HI PK SI ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc h0 LB PP P END PKA lo m0 mo0).
-  Notation FRS mm := (rw_cells usegs mm (bv_unsigned sp + -48) [C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
+  Notation FRS mx := (rw_cells usegs mx (bv_unsigned sp + -48) [C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
   Notation FP := ([(PP, PP + 8); (PKA, PKA + 16)] ++ XS).
 
   #[using="DIMG"] Lemma DI1 : hl_img_lo L <= hl_data_lo L. Proof. exact (proj1 DIMG). Qed.
@@ -162,39 +165,52 @@ Section PA.
   #[using="HLS HL HMC BUF bs HH0 INB SPP SPK ACL SLO HTOP DHI CWPP CWP"] Lemma pctx_munch : ltac2:(CDefT.buildp (gd_tbl_P_pk_parse_A ()) "Ph,(8.$9.VL,VHI,)PLBc,(0.$1.)Pm,P,(:.&40.)(;.(:.&8.))Pm',P,(:.&40.)(;.(:.&8.))Pmo,$<.PW,(0.$34.)P,(35.R6.R5.R4.R2.)P,(36.R2.R5.R4.)P,(37.$9.R6.R5.)P,(2:.$9.R6.)P,(38.(5.$3.$3.)Liv,(5.$3.$3.)(22.(10.(1>.Vlo,(6.$3.$3.R1.))(1>.(39.$3.$3.R1.)(28.&40.Vsp,)))(22.(11.(5.$3.$3.)R1.(30.$3.$3.VPP,(1?.VPP,+8.)))(11.(5.$3.$3.)R1.(30.$3.$3.VPKA,(1?.VPKA,+10.)))))R5.)(35.R;.R:.R8.R7.)")
 (* [comment removed for export] *).
   Proof.
-    (intros h LBc m m' mo W dd_H; ddestruct dd_H as (HH & HT & MF & MI & SOK & IDS & SUB & PX); intros MU WM MI' HW).
-    dpose pa_basics as (ACP & BAC & BIM & PPD & PKD & SLO').
-    assert (HWa : forall a, ~ outside W a -> (lo <= a < bv_unsigned sp) \/ (PP <= a < PP + 8) \/ (PKA <= a < PKA + 16)).
-    { clear -HW. intros a Ha. revert HW Ha. induction W as [|[u v] W IH]; intros HW Ha; [exfalso; apply Ha; exact I|].
-      inversion HW as [|? ? Q1 Q2]; subst. cbn in Ha.
-      destruct (Z_le_dec u a) as [GE|LT]; [destruct (Z_lt_dec a v) as [LT2|GE2]|].
-      - cbn in Q1. destruct Q1 as [Q1|[Q1|Q1]]; [left; clear -Q1 GE LT2; lia| right; left| right; right];
-          injection Q1; intros; subst; clear -GE LT2; lia.
-      - apply IH; [exact Q2|]. intros Ho. apply Ha. split; [clear -GE2; lia| exact Ho].
-      - apply IH; [exact Q2|]. intros Ho. apply Ha. split; [clear -LT; lia| exact Ho]. }
-    assert (DJ : forall a n, hl_data_lo L <= a -> a + n <= hl_data_hi L -> disjoint_from W a n).
-    { intros a n H1 H2. clear -HW PPD PKD DHI ACL H1 H2. induction W as [|[u v] W IH]; [exact I|]. inversion HW as [|? ? Q1 Q2]; subst. cbn. split; [| apply IH; exact Q2].
-      cbn in Q1. destruct Q1 as [Q1|[Q1|Q1]]; [left; clear -Q1 H2 DHI ACL; lia| | ]; injection Q1; intros; subst; [clear -PPD H1 H2; lia| clear -PKD H1 H2; lia]. }
-    split. { apply (Asn1AuxA.HEAP_munch usegs L HI h LBc m m' mo lo _ HH ACL MU WM).
-             intros a Ha NO. destruct (HWa a NO) as [Q|[Q|Q]].
-             - left. rewrite HT. clear -Q SLO' HLS HTOP. lia.
-             - destruct (CWPP a ltac:(clear -Q; lia)) as [X|[X|X]]; [left; rewrite HT; exact X| right; left; exact X| right; right].
-               ddestruct X as (b & Hb & Hr). exists b. split; [apply SUB; exact Hb| exact Hr].
-             - destruct (CWP a ltac:(clear -Q; lia)) as [X|[X|X]]; [left; rewrite HT; exact X| right; left; exact X| right; right].
-               ddestruct X as (b & Hb & Hr). exists b. split; [apply SUB; exact Hb| exact Hr]. }
-    split; [exact HT|]. split; [exact MF|]. split; [exact MI'|].
-    split. { eapply statics_ok_munch; [exact SOK| exact MU|]. intros a Ha NW.
-             destruct (outside_dec W a) as [Ho|No]; [exact Ho|]. exfalso. destruct (HWa a No) as [Q|[Q|Q]]; [clear -Q Ha DHI ACL; lia| clear -Q Ha PPD; lia| clear -Q Ha PKD; lia]. }
-    split. { pose proof IL1 as I1. pose proof IL2 as I2. pose proof IL3 as I3. pose proof ML1 as M1. pose proof ML2 as M2. destruct IDS as [IDS [cnt RC]]. split.
-             - eapply ecp_ids_state_munch; [exact IDS| exact MU| exact WM| |]; (apply DJ; clear -I1 I2 I3; lia).
-             - exists cnt. eapply rw_cells_transport; [exact RC| exact MU| exact WM|]. apply DJ; clear -M1 M2; cbn; lia. }
-    split; [exact SUB|].
-    eapply heap_presx_trans; [exact PX|]. eapply heap_presx_of_munch; [exact MU| exact WM|].
-    intros a Ha Hc Ho. destruct (outside_dec W a) as [Hw|Nw]; [exact Hw|]. exfalso. cbn in Ho.
-    destruct (HWa a Nw) as [Q|[Q|Q]]; [| clear -Q Ho; lia| clear -Q Ho; lia].
-    destruct (heap_blocks _ _ HI _ _ _ _ HH0) as [HBR _].
-    destruct Hc as [Hs|[[Hd1 Hd2]|(b & Hb & Hr)]]; [clear -Hs Q; lia| clear -Hd1 Q DHI ACL; lia|].
-    pose proof (proj1 (Forall_forall _ _) HBR _ Hb) as (_ & _ & _ & Bc & _). destruct b as [Bb kk]; cbn in Hr, Bc. clear -Hr Bc Q ACL. lia.
+    intros h LBc m m' mo W Ctx Mu Wm MemOkNew Wfp.
+    clear HFREE HCALLOC SW DIMG HND HPERM CA_MSF CA_RSA0 CA_RSA72 CA_RSA80 CA_EC0 CA_EC72 CA_EC80 CAT_ECGRP CAT_PKALG
+      CAT_ECALGID CA_PKTBL CA_BP HPRB HCPK HPP0 ALPP HBS0 BP PE EB B63 BUF0 HPKA0 ALP PPT PKT DPK ST0 SPA MI0 SOK0 SIP0
+      TP DKB DPB NZPP NZP DSPP DSP DSB CRB RA SPR.
+    dpose pa_basics as (CeilBig & _ & _ & PPclear & PKAclear & Room).
+    destruct (heap_blocks _ _ HI _ _ _ _ HH0) as [BlkRange _].
+    destruct Ctx as (Heap & TopEq & ModelFr & _ & StatOk & SinvOk & Grow & Kept).
+    assert (Where : forall a, ~ outside W a ->
+              (lo <= a < bv_unsigned sp) \/ (PP <= a < PP + 8) \/ (PKA <= a < PKA + 16)).
+    { clear -Wfp. induction Wfp as [|[u v] W' Head Tail IH]; intros a Out; cbn [outside] in Out.
+      - exfalso. exact (Out I).
+      - destruct (Asn1AuxA.outside_dec W' a) as [Rest|Rest]; [|exact (IH a Rest)].
+        assert (Inside : u <= a < v).
+        { destruct (Z_le_gt_dec u a) as [Lo|Lo]; destruct (Z_lt_ge_dec a v) as [Hi|Hi];
+            first [ lia | exfalso; apply Out; split; [lia| exact Rest] ]. }
+        cbn [fst snd] in Head. destruct Head as [Stack|[E1|E2]].
+        + left. lia.
+        + injection E1 as -> ->. right. left. exact Inside.
+        + injection E2 as -> ->. right. right. exact Inside. }
+    assert (AboveCeil : forall a, ~ outside W a -> alloc_ceiling <= a).
+    { intros a Out. destruct (Where a Out) as [Zone|[Zone|Zone]]; lia. }
+    refine (conj _ (conj TopEq (conj ModelFr (conj MemOkNew (conj _ (conj _ (conj Grow _))))))).
+    - apply (Asn1AuxA.HEAP_munch usegs L HI h LBc m m' mo lo W Heap ACL Mu Wm).
+      pose proof (client_wrange_mono L LB LBc lo (heap_top usegs L HI h0) PP 8 CWPP Grow) as PPwr.
+      pose proof (client_wrange_mono L LB LBc lo (heap_top usegs L HI h0) PKA 16 CWP Grow) as PKwr.
+      intros a Ra Out. rewrite TopEq.
+      destruct (Where a Out) as [Zone|[Zone|Zone]]; [left; lia| exact (PPwr a Zone)| exact (PKwr a Zone)].
+    - apply (statics_ok_munch usegs L W m m' StatOk Mu).
+      intros a [_ Dhi] _.
+      destruct (Asn1AuxA.outside_dec W a) as [Fine|Hit]; [exact Fine|].
+      pose proof (AboveCeil a Hit) as Up. exfalso. lia.
+    - change (si_P (U_pk_sinv L HL HMC) m').
+      apply (si_frame (U_pk_sinv L HL HMC) m m' SinvOk).
+      intros a Ra Fp. destruct (si_data (U_pk_sinv L HL HMC) a Fp) as [[_ Dhi] _].
+      apply Mu. rewrite (wa_unsigned a Ra).
+      destruct (Asn1AuxA.outside_dec W a) as [Fine|Hit]; [exact Fine|].
+      pose proof (AboveCeil a Hit) as Up. exfalso. lia.
+    - apply (heap_presx_trans usegs L LB (bv_unsigned sp) FP m0 m m' Kept).
+      apply (heap_presx_of_munch usegs L LB (bv_unsigned sp) FP W m m' Mu Wm).
+      intros a Ra Ca Oa.
+      destruct (Asn1AuxA.outside_dec W a) as [Fine|Hit]; [exact Fine|]. exfalso.
+      cbn [outside app] in Oa. destruct Oa as (NotPP & NotPKA & _).
+      destruct (Where a Hit) as [Zone|[Zone|Zone]]; [| exact (NotPP Zone)| exact (NotPKA Zone)].
+      destruct Ca as [Up|[[[_ Dhi] _]|(b & Inb & Rb)]]; [lia| lia|].
+      pose proof (proj1 (Forall_forall _ _) BlkRange b Inb) as (_ & _ & _ & BTop & _).
+      lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -250,16 +266,24 @@ Section PA.
     (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.U.UImg.usegs)))
 (* [comment removed for export] *).
   Proof.
-    intros until x31. intros HH HT MF MI SOK IDS PX RR HPP PB HPKA REP RNZ -> FRL FR ST.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK. dpose pa_basics as (ACP & BAC & BIM & PPD & PKD & SLO').
-    zstep. zstep. zstep. zstep. zstep. zstep. zstep.
-    release_frame FRL ST (bv_unsigned sp + -48). release_frame FR ST (bv_unsigned sp).
-    zstep.
+    intros m mo h LBc r p' info ctx owned lj x1 x5 x6 x7 x8 x9 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x28 x29 x30 x31
+      Heap TopEq ModelFr MemOk StatOk SinvOk Kept RetRange PPCell PRange PKCell PkRep ErrZero LBcEq LocalBuf SavedRegs StackOk.
+    assert (Room : lo + 30000 + hl_stack L <= bv_unsigned sp) by (unfold PK_PARSE_STACK in SLO; lia).
+    assert (FrameStk : stk usegs m lo (bv_unsigned sp)).
+    { pose proof (stk_release _ _ _ _ _ StackOk LocalBuf ltac:(lia)) as UpTo48.
+      cbn [cells_size csize Nat.add] in UpTo48.
+      replace (bv_unsigned sp + -112 + Z.of_nat 64) with (bv_unsigned sp + -48) in UpTo48 by lia.
+      pose proof (stk_release _ _ _ _ _ UpTo48 SavedRegs ltac:(lia)) as Whole.
+      cbn [cells_size csize Nat.add] in Whole.
+      replace (bv_unsigned sp + -48 + Z.of_nat 48) with (bv_unsigned sp) in Whole by lia.
+      exact Whole. }
+    pose proof (heap_mok _ _ HI _ _ _ _ Heap) as Mok.
+    do 6 zstep. zstep. zstep.
     apply aevtM_done. unfold pk_parse_subpubkey_post.
-    deexists 15. dexists m, mo, h, r, p', info, ctx, owned.
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact RR|].
-    split; [exact MI|]. split; [exact SOK|]. split; [exact IDS|]. split; [exact ST|]. split; [exact MF|]. split; [exact HT|].
-    split; [exact HPP|]. split; [exact PB|]. split; [exact HPKA|]. split; [exact REP|]. split; [exact RNZ|]. split; [exact HH| exact PX].
+    exists x5, x6, x7, (Z_to_bv 64 r), x11, x12, x13, x14, x15, x16, x17, x28, x29, x30, x31, m, mo, h, r, p', info, ctx, owned.
+    split; [reflexivity|].
+    refine (conj eq_refl (conj RetRange (conj MemOk (conj StatOk (conj SinvOk (conj FrameStk (conj ModelFr (conj TopEq _)))))))).
+    refine (conj PPCell (conj PRange (conj PKCell (conj PkRep (conj ErrZero (conj Heap Kept)))))).
   Qed.
 
   (* [comment removed for export] *)
@@ -340,54 +364,66 @@ Section PA.
     (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.U.UImg.usegs)))
 (* [comment removed for export] *).
   Proof.
-    intros until x31. (intros dd_H; ddestruct dd_H as (HH & HT & MF & MI & SOK & IDS & SUB & PX); intros PERM RR HPP PB HPKA REP FRL FR ST).
-    dpose pa_basics as (ACP & BAC & BIM & PPD & PKD & SLO').
-    destruct (HPERM _ _ _ _ _ HH PERM) as (h1 & HH1 & HT1).
-    pose proof (heap_mok _ _ HI _ _ _ _ HH1) as MK.
+    intros m mo h LBc r p' info ctx owned lj x1 x5 x6 x7 x9 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x28 x29 x30 x31
+      Ctx Perm RetRange PPCell PRange PKCell PkRep LocalBuf SavedRegs StackOk.
+    clear HCALLOC CA_RSA0 CA_RSA72 CA_EC0 CA_EC72 CAT_ECGRP CAT_PKALG CAT_ECALGID CA_PKTBL CA_BP HPRB HCPK HPP0 ALPP HBS0
+      B63 HPKA0 PPT ST0 MI0 SOK0 SIP0 CWP CRB RA.
+    destruct Ctx as (Heap & TopEq & ModelFr & MemOk & StatOk & SinvOk & Grow & Kept).
+    assert (Room : lo + 30000 + hl_stack L <= bv_unsigned sp) by (unfold PK_PARSE_STACK in SLO; lia).
+    pose proof alloc_ceiling_pos as CeilPos.
+    assert (FrameLit : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -112)) = bv_unsigned sp + -112).
+    { apply unsigned_lit. lia. }
+    destruct (HPERM h LBc (owned ++ LB) m mo Heap Perm) as (hp & HeapP & TopP).
+    pose proof (heap_mok _ _ HI _ _ _ _ HeapP) as Mok.
     zstep. zstep. zstep.
-    pose proof (U_pk_free_spec L HI U_MT HFREE HLS SW DIMG HND CA_MSF CA_RSA80 CA_EC80) as SPF. unfold pk_free_c_stmt, pk_free_c_post, U_PK_FREE in SPF.
+    pose proof (U_pk_free_spec L HI U_MT HFREE HLS SW DIMG HND CA_MSF CA_RSA80 CA_EC80) as FreeSpec.
+    unfold pk_free_c_stmt, U_PK_FREE in FreeSpec.
     eapply aevtM_cut.
-    { eapply SPF with (lo := lo) (h := h1) (LBo := owned) (LB := LB) (owned := owned);
-        rewrite ?(unsigned_lit (bv_unsigned sp + -112)) by (clear -SLO' HLS ACL ACP SPR; lia);
-        first [ exact HH1 | exact HPKA | exact REP | exact ALP | exact ST | exact MI | exact SOK | exact TP | exact ACL | exact DHI | reflexivity
-              | intros b Hb; exact Hb
-              | rewrite HT1, HT; clear -SPK PKT HTOP SLO' HLS; lia
-              | clear -SPK SPA SPR SLO' HLS; lia
-              | match goal with |- ?g => idtac "PFLEFT" g end ]. }
-    clear SPF.
-    intros ms' mo' PO. destruct_exs PO. destruct PO as [E PO]. injection E as E1 E2. subst ms' mo'.
-    rewrite ?(unsigned_lit (bv_unsigned sp + -112)) in PO by (clear -SLO' HLS ACL ACP SPR; lia).
-    ddestruct PO as (MI2 & SOK2 & ST2 & MF2 & HT2 & HH2 & SUBo & KEEP & HPKA2 & PX2 & NIN).
-    lazymatch goal with |- _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
-      replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ clear; lia | reflexivity ]) end.
-    lazymatch goal with |- aevtM _ ?mox _ (MS _ _ _ _ _ ?mx _) => rename mx into m2; rename mox into mo2 end.
-    match type of HH2 with HEAP _ _ _ ?hh (?lbo ++ _) _ _ => rename hh into h2; rename lbo into LBo' end.
-    assert (E0 : LBo' = []).
-    { apply list_nil_of_empty. intros b Hb. apply (NIN b Hb). apply in_map. exact (SUBo b Hb). }
-    subst LBo'. cbn [app] in HH2, PX2.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2. clear MK.
-    (* [comment removed for export] *)
-    assert (TR : forall A cs, rw_cells usegs m A cs -> bv_unsigned sp + -112 <= A -> A + Z.of_nat (cells_size cs) <= bv_unsigned sp -> rw_cells usegs m2 A cs).
-    { intros A cs Hc B1 B2. eapply heap_presx_rw_cells; [exact PX2| exact Hc| intros a Ha; left; clear -Ha B1; lia| cbn; split; [clear -B2 SPK; lia| exact I]]. }
-    apply TR in FRL; [| clear; lia| cbn; clear; lia]. apply TR in FR; [| clear; lia| cbn; clear; lia]. clear TR.
-    assert (HPP2 : rw_cells usegs m2 PP [C8 (Z_to_bv 64 p')]).
-    { eapply heap_presx_rw_cells; [exact PX2| exact HPP| |]; cbn [cells_size csize Nat.add disjoint_from].
-      - intros a Ha. destruct (CWPP a Ha) as [Q|[Q|Q]]; [left; clear -Q DSPP Ha; lia| right; left; exact Q| right; right; exact Q].
-      - split; [clear -DPK; lia| exact I]. }
+    { eapply FreeSpec with (LBo := owned) (LB := LB) (h := hp) (lo := lo) (info := info) (ctx := ctx) (owned := owned);
+        rewrite ?FrameLit; try eassumption; try reflexivity;
+        first [ intros b Owns; exact Owns | rewrite TopP, TopEq; lia | lia ]. }
+    clear FreeSpec.
+    intros ms' mo' Ret. unfold pk_free_c_post in Ret.
+    ddestruct Ret as (t0' & t1' & t2' & a0' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m1 & mo1 & h1 & LBo1 &
+      Cfg & MemOk1 & StatOk1 & Stk1 & ModelFr1 & Top1 & Heap1 & Shrunk & _ & Zeroed & Presx1 & Gone).
+    injection Cfg as -> ->.
+    rewrite FrameLit in Stk1, Presx1.
+    assert (NoneLeft : LBo1 = []).
+    { apply list_nil_of_empty. intros b Inb. exact (Gone b Inb (in_map fst owned b (Shrunk b Inb))). }
+    subst LBo1.
+    rewrite (ret_pc_even 169240) by (first [lia | reflexivity]).
+    assert (StackSide : forall A cs, rw_cells usegs m A cs -> bv_unsigned sp + -112 <= A ->
+              disjoint_from [(PKA, PKA + 16)] A (Z.of_nat (cells_size cs)) -> rw_cells usegs m1 A cs).
+    { intros A cs Cells Above Apart.
+      apply (heap_presx_rw_cells usegs L ([] ++ LB) (bv_unsigned sp + -112) [(PKA, PKA + 16)] m m1 A cs Presx1 Cells);
+        [| exact Apart].
+      intros a Ra. left. lia. }
+    assert (PPCell1 : rw_cells usegs m1 PP [C8 (Z_to_bv 64 p')]).
+    { apply StackSide; [exact PPCell| lia|]. cbn [disjoint_from cells_size csize Nat.add]. split; [lia| exact I]. }
+    assert (LocalBuf1 : rw_cells usegs m1 (bv_unsigned sp + -112) [CB 64 lj]).
+    { apply StackSide; [exact LocalBuf| lia|]. cbn [disjoint_from cells_size csize Nat.add]. split; [lia| exact I]. }
+    assert (SavedRegs1 : FRS m1).
+    { apply StackSide; [exact SavedRegs| lia|]. cbn [disjoint_from cells_size csize Nat.add]. split; [lia| exact I]. }
+    assert (SinvOk1 : pk_sinv_P m1).
+    { change (si_P (U_pk_sinv L HL HMC) m1). apply (si_frame (U_pk_sinv L HL HMC) m m1 SinvOk).
+      intros a Ra Fp. destruct (si_data (U_pk_sinv L HL HMC) a Fp) as [Drange [_ NotStatic]].
+      refine (proj1 (Presx1 a Ra _ _)).
+      - right. left. split; [exact Drange| exact NotStatic].
+      - cbn [outside]. split; [lia| exact I]. }
+    assert (Kept1 : heap_presx usegs L LB (bv_unsigned sp) FP m0 m1).
+    { apply (heap_presx_trans usegs L LB (bv_unsigned sp) FP m0 m m1 Kept).
+      intros a Ra Client Out. apply Presx1; [exact Ra| |].
+      - destruct Client as [Up|[Dt|Blk]]; [left; lia| right; left; exact Dt| right; right; exact Blk].
+      - cbn [outside app] in Out |- *. destruct Out as (_ & NotPKA & _). split; [exact NotPKA| exact I]. }
+    pose proof (heap_mok _ _ HI _ _ _ _ Heap1) as Mok1.
     zstep. zstep.
-    eapply ret_walk with (owned := []) (info := 0) (ctx := 0) (h := h2); try eassumption.
-    - rewrite HT2, HT1. exact HT.
-    - eapply mo_frame_trans; [exact MF| exact MF2].
-    - pose proof IL1 as I1; pose proof IL2 as I2; pose proof IL3 as I3. pose proof ML1 as M1; pose proof ML2 as M2. destruct IDS as [IDS [cnt RC]]. split.
-      + apply (ecp_ids_state_presx usegs L _ _ _ _ _ m m2 IDS PX2 HL); cbn; clear -PKD I1 I2 I3; (split; [lia| exact I]).
-      + exists cnt. eapply heap_presx_rw_cells; [exact PX2| exact RC| |]; cbn [cells_size csize Nat.add disjoint_from].
-        * intros a Ha. right; left. split; [clear -Ha M1 M2; lia| exact (proj2 (proj2 (proj2 HMC) a Ha))].
-        * split; [clear -PKD M1 M2; lia| exact I].
-    - eapply heap_presx_trans; [exact PX|]. eapply heap_presx_weak; [exact PX2| intros b Hb; exact Hb| clear; lia|].
-      intros a Ha. cbn [outside app] in Ha |- *. clear -Ha. tauto.
-    - clear -RR. lia.
+    refine (ret_walk m1 mo1 h1 LB r p' 0 0 [] lj _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+              Heap1 _ _ MemOk1 StatOk1 SinvOk1 Kept1 _ PPCell1 PRange Zeroed _ _ _ LocalBuf1 SavedRegs1 Stk1).
+    - rewrite Top1, TopP. exact TopEq.
+    - exact (mo_frame_trans mo0 mo mo1 ModelFr ModelFr1).
+    - lia.
     - apply pk_rep_c_null.
-    - intros _. repeat split; reflexivity.
+    - intros _. split; [reflexivity| split; reflexivity].
     - reflexivity.
   Qed.
 

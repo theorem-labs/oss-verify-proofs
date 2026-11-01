@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -43,19 +43,19 @@ assert (L : length (cdbk_bytes base n) = n) by (vm_compute; reflexivity);
 split; [| exact L]; apply cdbk_ro; [exact MI| vm_compute; reflexivity| lia| rewrite L; lia].
 
 Lemma cdbk_nb_ro : forall m, mem_inv rsegs m -> exists CD, u8ro rsegs m 0x113a8 CD /\ length CD = 640%nat.
-Proof. cdbk_ro_tac 0x113a8 640%nat. Qed.
+Proof. cdbk_ro_tac 70568 640%nat. Qed.
 Lemma cdbk_nb_low1_ro : forall m, mem_inv rsegs m -> exists CD, u8ro rsegs m 0x11628 CD /\ length CD = 320%nat.
-Proof. cdbk_ro_tac 0x11628 320%nat. Qed.
+Proof. cdbk_ro_tac 71208 320%nat. Qed.
 Lemma cdbk_nb_low2_ro : forall m, mem_inv rsegs m -> exists CD, u8ro rsegs m 0x11768 CD /\ length CD = 320%nat.
-Proof. cdbk_ro_tac 0x11768 320%nat. Qed.
+Proof. cdbk_ro_tac 71528 320%nat. Qed.
 Lemma cdbk_nb_high1_ro : forall m, mem_inv rsegs m -> exists CD, u8ro rsegs m 0x118a8 CD /\ length CD = 320%nat.
-Proof. cdbk_ro_tac 0x118a8 320%nat. Qed.
+Proof. cdbk_ro_tac 71848 320%nat. Qed.
 Lemma cdbk_nb_high2_ro : forall m, mem_inv rsegs m -> exists CD, u8ro rsegs m 0x119e8 CD /\ length CD = 320%nat.
-Proof. cdbk_ro_tac 0x119e8 320%nat. Qed.
+Proof. cdbk_ro_tac 72168 320%nat. Qed.
 Lemma high_lsp_cdbk_ro : forall m, mem_inv rsegs m -> exists CD, u8ro rsegs m 0x11b28 CD /\ length CD = 512%nat.
-Proof. cdbk_ro_tac 0x11b28 512%nat. Qed.
+Proof. cdbk_ro_tac 72488 512%nat. Qed.
 Lemma high_lsp_cdbk2_ro : forall m, mem_inv rsegs m -> exists CD, u8ro rsegs m 0x11d28 CD /\ length CD = 512%nat.
-Proof. cdbk_ro_tac 0x11d28 512%nat. Qed.
+Proof. cdbk_ro_tac 73000 512%nat. Qed.
 
 Lemma rodata_ro : forall x, 0x10000 <= x < 0x1b000 -> ro_addr rsegs (wa x) = true.
 Proof.
@@ -104,26 +104,29 @@ F2 (Z_to_bv 64 0x2b1f8) fc2 None m2 (seg_rom rsegs)
 (MS (mkR ra sp gp tp t0 t1 t2 (Z_to_bv 64 qlsp) s1 (Z_to_bv 64 i) (Z_to_bv 64 cnt) (Z_to_bv 64 1) (Z_to_bv 64 pa) (Z_to_bv 64 pb) a5 a6 a7 (Z_to_bv 64 1) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x2b1c0) fc1 None m1 (seg_rom rsegs)).
 Proof.
-induction k as [|k IH]; intros i qlsp cnt pa pb cur m0
-ra sp gp tp t0 t1 t2 s1 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
-Hk Hi -> -> -> Q0 QA Lcur MU WM MI FRM; [lia|].
-pose proof (u32arr_bound _ _ _ _ QA) as BQ. rewrite Lcur in BQ.
-zstep. if_false_x.
-zstep. zstep. zstep. if_false_z.
-zstep. if_false_x.
-zstep. zstep. zstep. zstep. zstep.
-pose proof (u32arr_store_ok rsegs m1 qlsp cur i _ QA ltac:(lia) eq_refl) as SOK.
+intros k; induction k as [|n Step];
+intros i qlsp cnt pa pb cur m0 ra sp gp tp t0 t1 t2 s1 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
+  Fuel Rng Cnt Pa Pb QPos Arr Len Foot Mono Inv Rnd; [lia|].
+subst cnt pa pb.
+assert (Slot : 0 <= i < Z.of_nat (length cur)) by (rewrite Len; lia).
+pose proof (u32arr_bound _ _ _ _ Arr) as Room. rewrite Len in Room.
+zstep. if_false_z.
+do 3 zstep. if_false_z.
+zstep. if_false_z.
+do 5 zstep.
+pose proof (u32arr_store_ok rsegs m1 qlsp cur i (wa (qlsp + 4 * i)) Arr Slot eq_refl) as Wok.
 zstep.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (le4 ?v)) _) =>
-pose proof (u32arr_write rsegs m1 qlsp cur i v QA ltac:(lia)) as QA' end.
-clear QA. store_done. try clear SOK.
-zstep. zstep.
-zstep. if_cases K; zify_cond K.
-- eapply (IH (i + 1) qlsp _ _ _ _ m0); try eassumption; try lia. rewrite upd_length; exact Lcur.
-- apply evt_done.
-sf_eexists 10%nat. split; [ms_eq|].
-split; [eassumption|]. split; [eassumption|]. split; [eassumption|]. split; [eassumption|].
-split; [eassumption|]. rewrite upd_length; exact Lcur.
+  pose proof (u32arr_write rsegs m1 qlsp cur i v Arr Slot) as Arr' end.
+clear Arr. store_done.
+do 3 zstep.
+destruct (Z.eq_dec i 9) as [Last|More].
+- subst i. if_false_x. finish.
+  + exact Arr'.
+  + rewrite upd_length. exact Len.
+- if_true_x.
+  eapply Step; try eassumption; try lia.
+  rewrite upd_length. exact Len.
 Qed.
 
 #[using="Type"] Lemma lbr_loop1 : forall (k : nat) (i qlsp CDB row cnt pa pb : Z) (CD : list byte) (cur : list word) (m0 : mem)
@@ -142,42 +145,38 @@ F2 (Z_to_bv 64 0x2b2ac) fc2 None m2 (seg_rom rsegs)
 (MS (mkR ra sp gp tp t0 t1 t2 (Z_to_bv 64 qlsp) s1 (Z_to_bv 64 i) (Z_to_bv 64 cnt) (Z_to_bv 64 CDB) (Z_to_bv 64 1) (Z_to_bv 64 row) (Z_to_bv 64 pa) (Z_to_bv 64 pb) a7 (Z_to_bv 64 1) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x2b23c) fc1 None m1 (seg_rom rsegs)).
 Proof.
-induction k as [|k IH]; intros i qlsp CDB row cnt pa pb CD cur m0
-ra sp gp tp t0 t1 t2 s1 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
-Hk Hi -> -> -> Q0 C0 R0 R1 R2 RO AP QA Lcur MU WM MI FRM; [lia|].
-pose proof (u32arr_bound _ _ _ _ QA) as BQ. rewrite Lcur in BQ.
-pose proof RO as RO'. destruct RO' as [B0 [B1 _]].
-assert (Hnth : nth_error CD (Z.to_nat (row + i)) = Some (nth (Z.to_nat (row + i)) CD (Z_to_bv 8 0))).
-{ apply nth_error_nth'. lia. }
-pose proof (u8ro_read rsegs m1 CDB CD (row + i) _ _ RO Hnth ltac:(lia) ltac:(f_equal; lia)) as RD.
-pose proof (u32arr_read_nth rsegs m1 qlsp cur i _ QA ltac:(lia) eq_refl) as RD'.
-zstep. zstep. nswrap.
-zstep. if_false_x.
-zstep. sxw.
-zstep.
-zstep. if_false_x.
-zstep. zstep. zstep. zstep.
-zstep. pof.
-zstep. if_false_x.
-zstep. zstep.
+intros k; induction k as [|n Step];
+intros i qlsp CDB row cnt pa pb CD cur m0 ra sp gp tp t0 t1 t2 s1 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
+  Fuel Rng Cnt Pa Pb QPos CdPos RowPos RowFit CdSmall Tab Sep Arr Len Foot Mono Inv Rnd; [lia|].
+subst cnt pa pb.
+assert (Slot : 0 <= i < Z.of_nat (length cur)) by (rewrite Len; lia).
+pose proof (u32arr_bound _ _ _ _ Arr) as Room. rewrite Len in Room.
+pose proof (bytes_at_bound _ _ _ _ Tab) as TabRoom.
+zstep. zstep. sxw. zstep. if_false_z.
+zstep. sxw. zstep. zstep. if_false_z.
+do 5 zstep. pof.
 zstep. if_false_z.
-zstep. if_false_x.
-zstep. zstep. clear RD RD' Hnth.
-zstep. nswrap.
-zstep. zstep.
-do 4 zstep.
-pose proof (u32arr_store_ok rsegs m1 qlsp cur i _ QA ltac:(lia) eq_refl) as SOK.
+do 3 zstep. if_false_z.
+zstep. if_false_z.
+assert (Cell : nth_error CD (Z.to_nat (row + i)) = Some (nth (Z.to_nat (row + i)) CD (Z_to_bv 8 0))) by (apply nth_error_nth'; lia).
+pose proof (u8ro_read rsegs m1 CDB CD (row + i) _ (wa (CDB + (row + i))) Tab Cell ltac:(lia) eq_refl) as Rd8.
+zstep.
+pose proof (u32arr_read_nth rsegs m1 qlsp cur i (wa (qlsp + 4 * i)) Arr Slot eq_refl) as Rd32.
+zstep. zstep. sxw.
+do 6 zstep.
+pose proof (u32arr_store_ok rsegs m1 qlsp cur i (wa (qlsp + 4 * i)) Arr Slot eq_refl) as Wok.
 zstep.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (le4 ?v)) _) =>
-pose proof (u32arr_write rsegs m1 qlsp cur i v QA ltac:(lia)) as QA' end.
-clear QA. store_done. try clear SOK.
-zstep.
-zstep. if_cases K; zify_cond K.
-- eapply (IH (i + 1) qlsp CDB row _ _ _ CD _ m0); try eassumption; try lia. rewrite upd_length; exact Lcur.
-- apply evt_done.
-sf_eexists 14%nat. split; [ms_eq|].
-split; [eassumption|]. split; [eassumption|]. split; [eassumption|]. split; [eassumption|].
-split; [eassumption|]. rewrite upd_length; exact Lcur.
+  pose proof (u32arr_write rsegs m1 qlsp cur i v Arr Slot) as Arr' end.
+clear Arr. store_done.
+zstep. zstep.
+destruct (Z.eq_dec i 9) as [Last|More].
+- subst i. if_false_x. finish.
+  + exact Arr'.
+  + rewrite upd_length. exact Len.
+- if_true_x.
+  eapply Step; try eassumption; try lia.
+  rewrite upd_length. exact Len.
 Qed.
 
 #[using="Type"] Lemma lbr_loop2 : forall (k : nat) (i qlsp CDB row off : Z) (CD : list byte) (cur : list word) (m0 : mem)
@@ -196,39 +195,36 @@ F2 (Z_to_bv 64 0x2b348) fc2 None m2 (seg_rom rsegs)
 (MS (mkR ra sp gp tp t0 t1 t2 (Z_to_bv 64 qlsp) s1 (Z_to_bv 64 i) (Z_to_bv 64 off) (Z_to_bv 64 CDB) (Z_to_bv 64 row) (Z_to_bv 64 20) a5 a6 a7 (Z_to_bv 64 (18446744073709551615 - qlsp)) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x2b2ec) fc1 None m1 (seg_rom rsegs)).
 Proof.
-induction k as [|k IH]; intros i qlsp CDB row off CD cur m0
-ra sp gp tp t0 t1 t2 s1 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
-Hk Hi -> C0 R0 R1 R2 RO AP QA Lcur MU WM MI FRM; [lia|].
-pose proof (u32arr_bound _ _ _ _ QA) as BQ. rewrite Lcur in BQ.
-pose proof RO as RO'. destruct RO' as [B0 [B1 _]].
-assert (Hnth : nth_error CD (Z.to_nat (row + i)) = Some (nth (Z.to_nat (row + i)) CD (Z_to_bv 8 0))).
-{ apply nth_error_nth'. lia. }
-pose proof (u8ro_read rsegs m1 CDB CD (row + i) _ _ RO Hnth ltac:(lia) ltac:(f_equal; lia)) as RD.
-pose proof (u32arr_read_nth rsegs m1 qlsp cur i _ QA ltac:(lia) eq_refl) as RD'.
-zstep. zstep. nswrap.
-zstep. if_false_x.
-zstep. sxw.
+intros k; induction k as [|n Step];
+intros i qlsp CDB row off CD cur m0 ra sp gp tp t0 t1 t2 s1 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
+  Fuel Rng Off CdPos RowPos RowFit CdSmall Tab Sep Arr Len Foot Mono Inv Rnd; [lia|].
+subst off.
+assert (Slot : 0 <= i < Z.of_nat (length cur)) by (rewrite Len; lia).
+pose proof (u32arr_bound _ _ _ _ Arr) as Room. rewrite Len in Room.
+pose proof (bytes_at_bound _ _ _ _ Tab) as TabRoom.
+zstep. zstep. sxw. zstep. if_false_z.
+zstep. sxw. zstep. zstep. if_false_z.
+do 5 zstep. pof.
+zstep. if_false_z.
 zstep.
-zstep. if_false_x.
-zstep. zstep. zstep. zstep.
-zstep. pof.
-zstep. if_false_x.
+assert (Cell : nth_error CD (Z.to_nat (row + i)) = Some (nth (Z.to_nat (row + i)) CD (Z_to_bv 8 0))) by (apply nth_error_nth'; lia).
+pose proof (u8ro_read rsegs m1 CDB CD (row + i) _ (wa (CDB + (row + i))) Tab Cell ltac:(lia) eq_refl) as Rd8.
 zstep.
-zstep. zstep. clear RD RD' Hnth.
-zstep.
-do 4 zstep.
-pose proof (u32arr_store_ok rsegs m1 qlsp cur i _ QA ltac:(lia) eq_refl) as SOK.
+pose proof (u32arr_read_nth rsegs m1 qlsp cur i (wa (qlsp + 4 * i)) Arr Slot eq_refl) as Rd32.
+do 6 zstep.
+pose proof (u32arr_store_ok rsegs m1 qlsp cur i (wa (qlsp + 4 * i)) Arr Slot eq_refl) as Wok.
 zstep.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (le4 ?v)) _) =>
-pose proof (u32arr_write rsegs m1 qlsp cur i v QA ltac:(lia)) as QA' end.
-clear QA. store_done. try clear SOK.
-zstep. nswrap.
-zstep. if_cases K; zify_cond K.
-- eapply (IH (i + 1) qlsp CDB row _ CD _ m0); try eassumption; try lia. rewrite upd_length; exact Lcur.
-- apply evt_done.
-sf_eexists 12%nat. split; [ms_eq|].
-split; [eassumption|]. split; [eassumption|]. split; [eassumption|]. split; [eassumption|].
-split; [eassumption|]. rewrite upd_length; exact Lcur.
+  pose proof (u32arr_write rsegs m1 qlsp cur i v Arr Slot) as Arr' end.
+clear Arr. store_done.
+zstep. sxw. zstep.
+destruct (Z.eq_dec i 4) as [Last|More].
+- subst i. if_false_x. finish.
+  + exact Arr'.
+  + rewrite upd_length. exact Len.
+- if_true_x.
+  eapply Step; try eassumption; try lia.
+  rewrite upd_length. exact Len.
 Qed.
 
 #[using="Type"] Lemma lbr_loop3 : forall (k : nat) (i qlsp CDB row off : Z) (CD : list byte) (cur : list word) (m0 : mem)
@@ -247,39 +243,36 @@ F2 (Z_to_bv 64 0x2b3d8) fc2 None m2 (seg_rom rsegs)
 (MS (mkR ra sp gp tp t0 t1 t2 (Z_to_bv 64 qlsp) s1 (Z_to_bv 64 i) (Z_to_bv 64 CDB) (Z_to_bv 64 off) (Z_to_bv 64 row) (Z_to_bv 64 40) a5 a6 a7 (Z_to_bv 64 (18446744073709551615 - qlsp)) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x2b37c) fc1 None m1 (seg_rom rsegs)).
 Proof.
-induction k as [|k IH]; intros i qlsp CDB row off CD cur m0
-ra sp gp tp t0 t1 t2 s1 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
-Hk Hi -> C0 R0 R1 R2 RO AP QA Lcur MU WM MI FRM; [lia|].
-pose proof (u32arr_bound _ _ _ _ QA) as BQ. rewrite Lcur in BQ.
-pose proof RO as RO'. destruct RO' as [B0 [B1 _]].
-assert (Hnth : nth_error CD (Z.to_nat (row + i)) = Some (nth (Z.to_nat (row + i)) CD (Z_to_bv 8 0))).
-{ apply nth_error_nth'. lia. }
-pose proof (u8ro_read rsegs m1 CDB CD (row + i) _ _ RO Hnth ltac:(lia) ltac:(f_equal; lia)) as RD.
-pose proof (u32arr_read_nth rsegs m1 qlsp cur (5 + i) _ QA ltac:(lia) eq_refl) as RD'.
-zstep. zstep. nswrap.
-zstep. if_false_x.
-zstep. sxw.
+intros k; induction k as [|n Step];
+intros i qlsp CDB row off CD cur m0 ra sp gp tp t0 t1 t2 s1 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1
+  Fuel Rng Off CdPos RowPos RowFit CdSmall Tab Sep Arr Len Foot Mono Inv Rnd; [lia|].
+subst off.
+assert (Slot : 0 <= 5 + i < Z.of_nat (length cur)) by (rewrite Len; lia).
+pose proof (u32arr_bound _ _ _ _ Arr) as Room. rewrite Len in Room.
+pose proof (bytes_at_bound _ _ _ _ Tab) as TabRoom.
+zstep. zstep. sxw. zstep. if_false_z.
+zstep. sxw. zstep. zstep. if_false_z.
+do 5 zstep. pof.
+zstep. if_false_z.
 zstep.
-zstep. if_false_x.
-zstep. zstep. zstep. zstep.
-zstep. pof.
-zstep. if_false_x.
+assert (Cell : nth_error CD (Z.to_nat (row + i)) = Some (nth (Z.to_nat (row + i)) CD (Z_to_bv 8 0))) by (apply nth_error_nth'; lia).
+pose proof (u8ro_read rsegs m1 CDB CD (row + i) _ (wa (CDB + (row + i))) Tab Cell ltac:(lia) eq_refl) as Rd8.
 zstep.
-zstep. zstep. clear RD RD' Hnth.
-zstep.
-do 4 zstep.
-pose proof (u32arr_store_ok rsegs m1 qlsp cur (5 + i) _ QA ltac:(lia) eq_refl) as SOK.
+pose proof (u32arr_read_nth rsegs m1 qlsp cur (5 + i) (wa (qlsp + 4 * (5 + i))) Arr Slot eq_refl) as Rd32.
+do 6 zstep.
+pose proof (u32arr_store_ok rsegs m1 qlsp cur (5 + i) (wa (qlsp + 4 * (5 + i))) Arr Slot eq_refl) as Wok.
 zstep.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (le4 ?v)) _) =>
-pose proof (u32arr_write rsegs m1 qlsp cur (5 + i) v QA ltac:(lia)) as QA' end.
-clear QA. store_done. try clear SOK.
-zstep. nswrap.
-zstep. if_cases K; zify_cond K.
-- eapply (IH (i + 1) qlsp CDB row _ CD _ m0); try eassumption; try lia. rewrite upd_length; exact Lcur.
-- apply evt_done.
-sf_eexists 12%nat. split; [ms_eq|].
-split; [eassumption|]. split; [eassumption|]. split; [eassumption|]. split; [eassumption|].
-split; [eassumption|]. rewrite upd_length; exact Lcur.
+  pose proof (u32arr_write rsegs m1 qlsp cur (5 + i) v Arr Slot) as Arr' end.
+clear Arr. store_done.
+zstep. sxw. zstep.
+destruct (Z.eq_dec i 4) as [Last|More].
+- subst i. if_false_x. finish.
+  + exact Arr'.
+  + rewrite upd_length. exact Len.
+- if_true_x.
+  eapply Step; try eassumption; try lia.
+  rewrite upd_length. exact Len.
 Qed.
 
 Ltac rebits R A D bb rj Lrj OBJ bs DAT Hbs SIDE :=
@@ -300,114 +293,94 @@ by (let X := fresh in pose proof OKn as X; unfold bits_ok in X; rewrite Hbs, zle
 
 #[using="Type"] Lemma lsp_unquant_lbr_proof : @lsp_unquant_stmt ptr LspUnquantLbr.
 Proof.
-unfold lsp_unquant_stmt. intros until m. intros REP OK CG QC LQ STK LO GLO GLQ GLA AQ1 AQ2 AQ3 AQ4 AQ5 -> -> -> MI FRM Q0 Q4.
-change (lsp_order LspUnquantLbr) with 10 in *. change (4 * 10) with 40 in *.
-unfold lsp_entry, A_lsp_unquant_lbr, LSPQ_DEPTH, NB_GLOBALS_TOP in *. assert (BS : BITS_SIZEOF = 48) by reflexivity.
-pose proof (bv_unsigned_in_range 64 sp) as Rsp. unfold bv_modulus in Rsp. change (2 ^ Z.of_N 64)%Z with (2^64)%Z in Rsp.
-pose proof REP as ((rj & Lrj & OBJ) & (bs & DAT & Hbs) & SIDE).
-pose proof SIDE as sfP_; first [ sf_destruct 6%nat sfP_ as AL Apos Dpos BUFMAX _ SEP | sf_fb; destruct sfP_ as (AL & Apos & Dpos & BUFMAX & _ & SEP) ]. unfold BITS_BUF_MAX in BUFMAX.
-unfold bits_cells in OBJ. clear REP.
-pose proof (rw_cells_bound _ _ _ _ OBJ) as GB. cbn [cells_size csize Nat.add length] in GB.
-pose proof (u8arr_bound _ _ _ _ DAT) as DB.
-assert (Lbs : Z.of_nat (length bs) = sb_buf_size b).
-{ pose proof OK as OK'. unfold bits_ok in OK'. rewrite Hbs, zlength_map_unsigned in OK'. lia. }
-pose proof (rw_cells_bound _ _ _ _ QC) as GQ. rewrite cells_size_f32, LQ in GQ.
-
-pose proof QC as [_ WQ]. rewrite cells_size_f32, LQ in WQ. change (4 * Z.of_nat 10) with 40 in WQ.
-pose proof (wr_at_apart_ro m qlsp 40 0x113a8 640 MI WQ ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia)) as RA1.
-pose proof (wr_at_apart_ro m qlsp 40 0x11628 320 MI WQ ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia)) as RA2.
-pose proof (wr_at_apart_ro m qlsp 40 0x118a8 320 MI WQ ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia)) as RA3.
-clear WQ.
-destruct CG as [CG1 CG2]. unfold NB_GOT_LSP_HIGH, NB_GOT_LSP_NB in CG1, CG2.
-pose proof (munch_refl [(lo, bv_unsigned sp); (qlsp, qlsp + 40); (A, A + BITS_SIZEOF)] m) as MU.
-pose proof (wmono_refl rsegs m) as WM.
-unfold apart in AQ1, AQ2, AQ3, AQ4, AQ5.
-carve_frame 48%nat STK.
-do 11 zstep.
-zstep. if_false_x.
-do 7 zstep.
-cond_prep. rewrite ?Q4. cond_prep.
-
-pose proof (u32arr_of_f32 rsegs _ _ _ QC) as QA. clear QC.
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
-pose proof (munch_refl [(qlsp, qlsp + 40)] mc) as MUL; pose proof (wmono_refl rsegs mc) as WML;
-call (lbr_loop0 10%nat 0 qlsp _ _ _ old mc) end.
-all: try lia. all: try exact MUL. all: try exact WML. all: try eassumption.
-clear MUL WML LQ; try clear QA.
-lazymatch goal with H : u32arr rsegs _ qlsp ?c, L : length ?c = 10%nat |- _ => rename H into QA; rename L into LQ end.
-try rename MI0 into MI.
-
-zstep. zstep.
-rebits REP A D b rj Lrj OBJ bs DAT Hbs SIDE.
-zstep. call (speex_bits_unpack_unsigned_spec A D b 6); [exact REP | exact OK | lia | exact MI |]. clear REP.
-after_unpack b b 6 rj1 Lrj1 OBJ1 bs1 DAT1 Hbs1 SIDE1 OK OK1 Hv1 Lbs1.
-
-zstep. zstep. zstep. nswrap.
-zstep. if_false_x.
-zstep. zstep. zstep. zstep. zstep.
-zstep. zstep. zstep. sxw. zstep. zstep.
-cond_prep.
-destruct (cdbk_nb_ro _ MI) as (CD1 & RO1 & LC1).
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
-pose proof (munch_refl [(qlsp, qlsp + 40)] mc) as MUL; pose proof (wmono_refl rsegs mc) as WML;
-call (lbr_loop1 10%nat 0 qlsp 0x113a8 _ _ _ _ CD1 _ mc) end.
-all: try lia. all: try exact MUL. all: try exact WML. all: try eassumption. all: try (rewrite LC1; lia).
-clear MUL WML LQ LC1; try clear QA; try clear RO1; try clear CD1.
-lazymatch goal with H : u32arr rsegs _ qlsp ?c, L : length ?c = 10%nat |- _ => rename H into QA; rename L into LQ end.
-try rename MI0 into MI.
-
-zstep. zstep.
-rebits REP A D (ub b 6) rj1 Lrj1 OBJ1 bs1 DAT1 Hbs1 SIDE1.
-zstep. call (speex_bits_unpack_unsigned_spec A D (ub b 6) 6); [exact REP | exact OK1 | lia | exact MI |]. clear REP.
-after_unpack b (ub b 6) 6 rj2 Lrj2 OBJ2 bs2 DAT2 Hbs2 SIDE2 OK1 OK2 Hv2 Lbs2.
-
-zstep. rewrite Z.shiftl_mul_pow2 by lia. change (2^2) with 4.
-zstep.
-zstep. nswrap.
-zstep. if_false_x.
-zstep. zstep. zstep. zstep. zstep. zstep.
-zstep. rewrite zb_lxor_ones by lia.
-zstep. sxw.
-zstep.
-destruct (cdbk_nb_low1_ro _ MI) as (CD2 & RO2 & LC2).
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
-pose proof (munch_refl [(qlsp, qlsp + 40)] mc) as MUL; pose proof (wmono_refl rsegs mc) as WML;
-call (lbr_loop2 5%nat 0 qlsp 0x11628 _ _ CD2 _ mc) end.
-all: try lia. all: try exact MUL. all: try exact WML. all: try eassumption. all: try (rewrite LC2; lia).
-clear MUL WML LQ LC2; try clear QA; try clear RO2; try clear CD2.
-lazymatch goal with H : u32arr rsegs _ qlsp ?c, L : length ?c = 10%nat |- _ => rename H into QA; rename L into LQ end.
-try rename MI0 into MI.
-
-zstep. zstep.
-rebits REP A D (ub (ub b 6) 6) rj2 Lrj2 OBJ2 bs2 DAT2 Hbs2 SIDE2.
-zstep. call (speex_bits_unpack_unsigned_spec A D (ub (ub b 6) 6) 6); [exact REP | exact OK2 | lia | exact MI |]. clear REP.
-after_unpack b (ub (ub b 6) 6) 6 rj3 Lrj3 OBJ3 bs3 DAT3 Hbs3 SIDE3 OK2 OK3 Hv3 Lbs3.
-
-zstep. rewrite Z.shiftl_mul_pow2 by lia. change (2^2) with 4.
-zstep.
-zstep. nswrap.
-zstep. if_false_x.
-zstep. zstep. zstep. zstep.
-zstep. sxw.
-zstep.
-destruct (cdbk_nb_high1_ro _ MI) as (CD3 & RO3 & LC3).
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
-pose proof (munch_refl [(qlsp, qlsp + 40)] mc) as MUL; pose proof (wmono_refl rsegs mc) as WML;
-call (lbr_loop3 5%nat 0 qlsp 0x118a8 _ _ CD3 _ mc) end.
-all: try lia. all: try exact MUL. all: try exact WML. all: try eassumption. all: try (rewrite LC3; lia).
-clear MUL WML LQ LC3; try clear QA; try clear RO3; try clear CD3.
-lazymatch goal with H : u32arr rsegs _ qlsp ?c, L : length ?c = 10%nat |- _ => rename H into QA; rename L into LQ end.
-try rename MI0 into MI.
-
-do 7 zstep.
-release_frame FR STK (bv_unsigned sp).
-zstep.
-apply evt_done. unfold lsp_unquant_post. cbn [lsp_bits lsp_order].
-eexists _, (ICL _ _ _ _ _ _ _ _ _ _ _ _ _ _), _, _, _, _.
-split; [unfold callR; cbn [c_t0 c_t1 c_t2 c_a1 c_a2 c_a3 c_a4 c_a5 c_a6 c_a7 c_t3 c_t4 c_t5 c_t6]; reflexivity|].
-split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [assumption|]. split; [exact STK|].
-split; [apply f32_of_u32arr; exact QA|]. split; [exact LQ|].
-split; [| exact OK3].
-split; [exists rj3; split; [exact Lrj3| unfold bits_cells; exact OBJ3]| split; [exists bs3; split; [exact DAT3| exact Hbs3]| exact SIDE3]].
+intros A D b qlsp old lo ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m
+  Rep Ok Got Old LenOld Stk Deep LoTop QTop ATop QvsStk AvsStk DvsStk QvsA QvsD Ea0 Ea1 Ea2 Inv Rnd QPos QAl.
+subst a0 a1 a2.
+unfold lsp_unquant_post. cbn [lsp_entry lsp_order lsp_bits] in *.
+unfold A_lsp_unquant_lbr, LSPQ_DEPTH, NB_GLOBALS_TOP, BITS_SIZEOF in *.
+pose proof (munch_refl [(lo, bv_unsigned sp); (qlsp, qlsp + 40); (A, A + 48)] m) as Foot.
+pose proof (wmono_refl rsegs m) as Mono.
+pose proof (u32arr_of_f32 rsegs m qlsp old Old) as Lsp. clear Old.
+pose proof (u32arr_bound _ _ _ _ Lsp) as QRoom. rewrite LenOld in QRoom. change (Z.of_nat (Z.to_nat 10)) with 10 in QRoom.
+destruct Rep as ((pad & PadLen & Hdr) & (buf & Buf & Dmap) & Side). unfold bits_cells in Hdr.
+assert (BufLen : Z.of_nat (length buf) = sb_buf_size b)
+  by (pose proof Ok as Sz; unfold bits_ok in Sz; rewrite Dmap, zlength_map_unsigned in Sz; lia).
+destruct Got as (GotHi & GotNb). unfold NB_GOT_LSP_HIGH, NB_GOT_LSP_NB in GotHi, GotNb.
+carve_frame 48%nat Stk.
+assert (Bsz : BITS_SIZEOF = 48) by reflexivity.
+do 12 zstep. if_false_z.
+do 7 zstep. cond_prep.
+eapply evt_cut;
+  [ eapply (lbr_loop0 10 0 qlsp 10 qlsp qlsp old m1); first [ lia | eassumption | apply munch_refl | apply wmono_refl ]
+  | post_call rsegs m1 ].
+clear Rnd LenOld.
+lazymatch goal with Q : u32arr rsegs _ qlsp ?w, L : length ?w = 10%nat, R : frm0 _ |- _ =>
+  rename w into lsp1, Q into Lsp, L into LspLen, R into Rnd end.
+do 3 zstep.
+rebits Rep0 A D b pad PadLen Hdr buf Buf Dmap Side.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+  eapply evt_cut;
+  [ eapply (speex_bits_unpack_unsigned_spec A D b 6); [ exact Rep0 | exact Ok | lia | assumption ]
+  | post_call rsegs mm ] end.
+clear Rep0.
+after_unpack b b 6 pad1 PadLen1 Hdr1 buf1 Buf1 Dmap1 Side1 Ok Ok1 Id1 BufLen1.
+zstep. zstep. zstep. sxw. zstep. if_false_z.
+destruct (cdbk_nb_ro _ MI) as (CD1 & Tab1 & LenCD1).
+do 10 zstep. cond_prep. sxw.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+  eapply evt_cut;
+  [ eapply (lbr_loop1 10 0 qlsp 70568 (uv b 6 * 10) 10 qlsp qlsp CD1 lsp1 mm);
+    first [ lia | eassumption | apply munch_refl | apply wmono_refl ]
+  | post_call rsegs mm ] end.
+clear Rnd LspLen Tab1.
+lazymatch goal with Q : u32arr rsegs _ qlsp ?w, L : length ?w = 10%nat, R : frm0 _ |- _ =>
+  rename w into lsp2, Q into Lsp, L into LspLen, R into Rnd end.
+do 3 zstep.
+rebits Rep1 A D (ub b 6) pad1 PadLen1 Hdr1 buf1 Buf1 Dmap1 Side1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+  eapply evt_cut;
+  [ eapply (speex_bits_unpack_unsigned_spec A D (ub b 6) 6); [ exact Rep1 | exact Ok1 | lia | assumption ]
+  | post_call rsegs mm ] end.
+clear Rep1.
+after_unpack b (ub b 6) 6 pad2 PadLen2 Hdr2 buf2 Buf2 Dmap2 Side2 Ok1 Ok2 Id2 BufLen2.
+do 3 zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4. zsimp. sxw. zstep. if_false_z.
+destruct (cdbk_nb_low1_ro _ MI) as (CD2 & Tab2 & LenCD2).
+do 9 zstep. sxw. rewrite zb_lxor_ones by lia.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+  eapply evt_cut;
+  [ eapply (lbr_loop2 5 0 qlsp 71208 _ 0 CD2 lsp2 mm);
+    first [ lia | eassumption | apply munch_refl | apply wmono_refl ]
+  | post_call rsegs mm ] end.
+clear Rnd LspLen Tab2.
+lazymatch goal with Q : u32arr rsegs _ qlsp ?w, L : length ?w = 10%nat, R : frm0 _ |- _ =>
+  rename w into lsp3, Q into Lsp, L into LspLen, R into Rnd end.
+do 3 zstep.
+rebits Rep2 A D (ub (ub b 6) 6) pad2 PadLen2 Hdr2 buf2 Buf2 Dmap2 Side2.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+  eapply evt_cut;
+  [ eapply (speex_bits_unpack_unsigned_spec A D (ub (ub b 6) 6) 6); [ exact Rep2 | exact Ok2 | lia | assumption ]
+  | post_call rsegs mm ] end.
+clear Rep2.
+after_unpack b (ub (ub b 6) 6) 6 pad3 PadLen3 Hdr3 buf3 Buf3 Dmap3 Side3 Ok2 Ok3 Id3 BufLen3.
+do 3 zstep. rewrite !Z.shiftl_mul_pow2 by lia. change (2 ^ 2) with 4. zsimp. sxw. zstep. if_false_z.
+destruct (cdbk_nb_high1_ro _ MI) as (CD3 & Tab3 & LenCD3).
+do 6 zstep. sxw.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+  eapply evt_cut;
+  [ eapply (lbr_loop3 5 0 qlsp 71848 _ 20 CD3 lsp3 mm);
+    first [ lia | eassumption | apply munch_refl | apply wmono_refl ]
+  | post_call rsegs mm ] end.
+clear Rnd LspLen Tab3.
+lazymatch goal with Q : u32arr rsegs _ qlsp ?w, L : length ?w = 10%nat, R : frm0 _ |- _ =>
+  rename w into lsp4, Q into Lsp, L into LspLen, R into Rnd end.
+do 8 zstep.
+release_frame FR Stk (bv_unsigned sp).
+rebits Rep3 A D (ub (ub (ub b 6) 6) 6) pad3 PadLen3 Hdr3 buf3 Buf3 Dmap3 Side3.
+apply evt_done.
+eexists _, (ICL _ _ _ _ _ _ _ _ _ _ _ _ _ _), _, _, _, lsp4.
+split; [reflexivity|].
+split; [exact Foot|]. split; [exact Mono|]. split; [assumption|]. split; [exact Rnd|]. split; [exact Stk|].
+split; [apply f32_of_u32arr; exact Lsp|]. split; [rewrite LspLen; reflexivity|].
+split; [exact Rep3 | exact Ok3].
 Qed.
 End F.

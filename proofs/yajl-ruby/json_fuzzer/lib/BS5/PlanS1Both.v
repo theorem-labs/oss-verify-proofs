@@ -17,110 +17,91 @@ Variable js_2 : acs.
 Variable js_11 : acs.
 
 Definition s1_plan_brkfail1 : plan :=
-  PExt 5 [ELit 1; ELit 34359736319; ELit 4096] (* [comment removed for export] *)
-  (PGhost (escale 4096 (EVar 455)) (ELit 4096) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMprotect (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PGhost (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemset [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemset [] (* [comment removed for export] *)
-  (PRun [0x822d0] (* [comment removed for export] *)
-  (PBump 498 (* [comment removed for export] *)
-  (PHavoc [5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat (* [comment removed for export] *)
-  (PFog 0 8192 (* [comment removed for export] *)
-  (PFog 1 8192 (* [comment removed for export] *)
-  (PShDisj (escale 4096 (EVar 456)) (ELit 8192) (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-  (PGhost (escale 4096 (EVar 5)) (ELit 8192) (* [comment removed for export] *)
-  (PGhost (escale 4096 (EVar 455)) (ELit 4096) (* [comment removed for export] *)
-  (PUnvis (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (* [comment removed for export] *)
-  (PUnvis (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-  (PFact (KRange (EVar 456) 1 34359736319) (* [comment removed for export] *)
-  (PFact (KRange (EVar 457) 1 34359736319) (* [comment removed for export] *)
-  (PHavocBrk 0x603000 0x80605000 (* [comment removed for export] *)
-  (PFact (KRange (eaddz (esub (escale 16 (EVar 6)) (escale 4096 (EVar 374))) 3935) 0 4095) (* [comment removed for export] *)
-  (PFact (KRange (EVar 374) 0 1) (* [comment removed for export] *)
-  (PHandoff 0 (* [comment removed for export] *)))))))))))))))))))))))))))))).
+  (* Low brk base, brk growth refused: mmap fallback for the meta area, then hole 0. *)
+  PRun [] (
+  PExt 5 [ELit 1; ELit 34359736319; ELit 4096] (
+  PGhost (escale 4096 (EVar 455)) (ELit 4096) (
+  PMmap (
+  PRun [] (
+  PMprotect (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PX XIMemset [] (
+  PRun [] (
+  PX XIMemset [] (
+  PRun [0x822d0] (
+  PBump 498 (
+  PHavoc [5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat (
+  PHavocBrk 6303744 2153795584 (
+  PFog 0 8192 (
+  PFog 1 8192 (
+  PUnvis (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (
+  PUnvis (escale 4096 (EVar 457)) (ELit 4096) (
+  PGhost (escale 4096 (EVar 5)) (ELit 8192) (
+  PGhost (escale 4096 (EVar 455)) (ELit 4096) (
+  PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (
+  PGhost (escale 4096 (EVar 457)) (ELit 4096) (
+  PFact (KRange (EVar 456) 1 34359736319) (
+  PHandoff 0))))))))))))))))))))))))).
 
 Definition s1_plan_brkblocked2 : plan :=
-  PExt 5 [ELit 1; ELit 34359736319; ELit 4096] (* [comment removed for export] *)
-  (PGhost (escale 4096 (EVar 455)) (ELit 4096) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMprotect (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PGhost (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemset [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemset [] (* [comment removed for export] *)
-  (PRun [0x822d0] (* [comment removed for export] *)
-  (PBump 498 (* [comment removed for export] *)
-  (PHavoc [5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat (* [comment removed for export] *)
-  (PFog 0 8192 (* [comment removed for export] *)
-  (PFog 1 8192 (* [comment removed for export] *)
-  (PShDisj (escale 4096 (EVar 456)) (ELit 8192) (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-  (PGhost (escale 4096 (EVar 455)) (ELit 4096) (* [comment removed for export] *)
-  (PUnvis (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (* [comment removed for export] *)
-  (PUnvis (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-  (PFact (KRange (EVar 456) 1 34359736319) (* [comment removed for export] *)
-  (PFact (KRange (EVar 457) 1 34359736319) (* [comment removed for export] *)
-  (PHavocBrk 0x603000 0x80605000 (* [comment removed for export] *)
-  (PFact (KRange (eaddz (esub (escale 16 (EVar 6)) (escale 4096 (EVar 374))) 3935) 0 4095) (* [comment removed for export] *)
-  (PFact (KRange (EVar 374) 0 1) (* [comment removed for export] *)
-  (PHandoff 1 (* [comment removed for export] *))))))))))))))))))))))))))))).
+  (* High brk base, growth blocked by the shadow: mmap fallback, then hole 1. *)
+  PRun [] (
+  PExt 5 [ELit 1; ELit 34359736319; ELit 4096] (
+  PGhost (escale 4096 (EVar 455)) (ELit 4096) (
+  PMmap (
+  PRun [] (
+  PMprotect (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PX XIMemset [] (
+  PRun [] (
+  PX XIMemset [] (
+  PRun [0x822d0] (
+  PBump 498 (
+  PHavoc [5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat (
+  PHavocBrk 6303744 2153795584 (
+  PFog 0 8192 (
+  PFog 1 8192 (
+  PUnvis (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (
+  PUnvis (escale 4096 (EVar 457)) (ELit 4096) (
+  PGhost (escale 4096 (EVar 455)) (ELit 4096) (
+  PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (
+  PGhost (escale 4096 (EVar 457)) (ELit 4096) (
+  PFact (KRange (EVar 456) 1 34359736319) (
+  PHandoff 1)))))))))))))))))))))))).
 
 Definition s1_plan_tail3 : plan :=
-  PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [0x535bc] (* [comment removed for export] *)
-  (PExt 4 [ELit 15] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XMemcpy [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PSys YBrk (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PSplit (EVar 5) 524277 (* [comment removed for export] *)
-  (PBrk2 (* [comment removed for export] *)
-   (s1_plan_brkfail1)
-   (PRun [] (* [comment removed for export] *)
-    (PMmapIn (* [comment removed for export] *)
-    (PRun [] (* [comment removed for export] *)
-    (PMmap (* [comment removed for export] *)
-    (PGhost (escale 4096 (EVar 455)) (ELit 4096) (* [comment removed for export] *)
-    (PExt 5 [ELit 1; ELit 34359736319; ELit 8192] (* [comment removed for export] *)
-    (PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (* [comment removed for export] *)
-    (PExt 5 [ELit 1; ELit 34359736319; ELit 4096] (* [comment removed for export] *)
-    (PGhost (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-    (PRun [] (* [comment removed for export] *)
-    (PX XIMemset [] (* [comment removed for export] *)
-    (PRun [] (* [comment removed for export] *)
-    (PX XIMemset [] (* [comment removed for export] *)
-    (PRun [0x822d0] (* [comment removed for export] *)
-    (PBump 498 (* [comment removed for export] *)
-    (PHavoc [5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat (* [comment removed for export] *)
-    (PFog 0 8192 (* [comment removed for export] *)
-    (PFog 1 8192 (* [comment removed for export] *)
-    (PUnvis (escale 4096 (EVar 5)) (ELit 8192) (* [comment removed for export] *)
-    (PUnvis (escale 4096 (EVar 455)) (ELit 4096) (* [comment removed for export] *)
-    (PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (* [comment removed for export] *)
-    (PGhost (escale 4096 (EVar 457)) (ELit 4096) (* [comment removed for export] *)
-    (PFact (KRange (EVar 455) 1 34359736319) (* [comment removed for export] *)
-    (PHavocBrk 0x603000 0x80605000 (* [comment removed for export] *)
-    (PFact (KRange (eaddz (esub (escale 16 (EVar 6)) (escale 4096 (EVar 374))) 3935) 0 4095) (* [comment removed for export] *)
-    (PFact (KRange (EVar 374) 0 1) (* [comment removed for export] *)
-    (PHandoff 0 (* [comment removed for export] *)))))))))))))))))))))))))))))
-  (PSys YBrk (* [comment removed for export] *)
-   (s1_plan_brkblocked2))))))))))).
+  (* From the brk growth request to the two handoff states. *)
+  PSplit (EVar 5) 524277
+    (PBrk2 s1_plan_brkfail1
+       (PRun [] (
+        PMmapIn (
+        PRun [] (
+        PMmap (
+        PExt 5 [ELit 1; ELit 34359736319; ELit 8192] (
+        PExt 5 [ELit 1; ELit 34359736319; ELit 4096] (
+        PGhost (escale 4096 (EVar 455)) (ELit 4096) (
+        PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (
+        PGhost (escale 4096 (EVar 457)) (ELit 4096) (
+        PRun [] (
+        PX XIMemset [] (
+        PRun [] (
+        PX XIMemset [] (
+        PRun [0x822d0] (
+        PBump 498 (
+        PHavoc [5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat (
+        PHavocBrk 6303744 2153795584 (
+        PFog 0 8192 (
+        PFog 1 8192 (
+        PUnvis (escale 4096 (EVar 5)) (ELit 8192) (
+        PUnvis (escale 4096 (EVar 455)) (ELit 4096) (
+        PGhost (eaddz (escale 4096 (EVar 456)) 4096) (ELit 4096) (
+        PGhost (escale 4096 (EVar 457)) (ELit 4096) (
+        PHandoff 0)))))))))))))))))))))))))
+    (PSys YBrk s1_plan_brkblocked2).
 
 Definition s1_plan_s2A4 : plan :=
   PRun [0x6dbcc] (* [comment removed for export] *)
@@ -141,262 +122,107 @@ Definition s1_plan_arm11_5 : plan :=
   (PHavoc [5; 6; 7; 13; 14; 15; 16; 17; 28; 29; 30; 31]%nat (PMerge 11) (* [comment removed for export] *)))).
 
 Definition s1_plan : plan :=
-  PRun [] (* [comment removed for export] *)
-  (PX XIMemset [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XEnvScan [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XPnScan [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PSys YSetTid (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [0x925d4] (* [comment removed for export] *)
-  (PExt 1 [ELit 0x601590; ELit 8] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XMaxVA [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [0x65654] (* [comment removed for export] *)
-  (PX XIStrncpy [] (* [comment removed for export] *)
-  (PRun [0x65654] (* [comment removed for export] *)
-  (PX XIStrncpy [] (* [comment removed for export] *)
-  (PRun [0x5ac8c] (* [comment removed for export] *)
-  (PDropRange (ELit 0x13e080) (ELit 0xfff) (PDropRange (ELit 0x13f080) (ELit 0xfff) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemset [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [0x3ea7c] (* [comment removed for export] *)
-  (PRun [0x3efb0] (* [comment removed for export] *)
-  (PRun [0x632c4] (* [comment removed for export] *)
-  (PRun [0x635a4] (* [comment removed for export] *)
-  (PRun [0x63884] (* [comment removed for export] *)
-  (PRun [0x63b6c] (* [comment removed for export] *)
-  (PRun [0x63fa0] (* [comment removed for export] *)
-  (PRun [0x3efbc] (* [comment removed for export] *)
-  (PRun [0x3f010] (* [comment removed for export] *)
-  (PRun [0x632c4] (* [comment removed for export] *)
-  (PRun [0x635a4] (* [comment removed for export] *)
-  (PRun [0x63884] (* [comment removed for export] *)
-  (PRun [0x63b6c] (* [comment removed for export] *)
-  (PRun [0x63fa0] (* [comment removed for export] *)
-  (PRun [0x81834] (* [comment removed for export] *)
-  (PRun [0x632c4] (* [comment removed for export] *)
-  (PRun [0x635a4] (* [comment removed for export] *)
-  (PRun [0x63884] (* [comment removed for export] *)
-  (PRun [0x63b6c] (* [comment removed for export] *)
-  (PRun [0x63fa0] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemset [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XIMemcpy [] (* [comment removed for export] *)
-  (PRun [0x5ac90] (* [comment removed for export] *)
-  (PDropRange (escale 4096 (EVar 95)) (ELit 0x10000) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XMaxVA [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [0x4b27c] (* [comment removed for export] *)
-  (PRun [0x4cc78] (* [comment removed for export] *)
-  (PRun [0x4e6a0] (* [comment removed for export] *)
-  (PRun [0x4ffc4] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x525a8] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x52614] (* [comment removed for export] *)
-  (PRun [0x5ad54] (* [comment removed for export] *)
-  (PDropRange (ELit 0xabeb8) (ELit 0x12b0) (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PExt 3 [escale 4096 (EVar 226); ELit 137439023104; ELit 4295491576] (* [comment removed for export] *)
-  (PRun [0x6d698] (* [comment removed for export] *)
-  (PFresh 9 12 None (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmapIn (* [comment removed for export] *)
-  (PRun [0x55090] (* [comment removed for export] *)
-  (PExt 3 [escale 4096 (EVar 226); ELit 137439023104; ELit 4295491576] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PX XMemset [] (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [] (* [comment removed for export] *)
-  (PMmap (* [comment removed for export] *)
-  (PRun [0x55090] (* [comment removed for export] *)
-  (PVia 11 js_11 275 (* [comment removed for export] *)
-  (PCase2 (EVar 246) 524263 (* [comment removed for export] *)
-   (s1_plan_arm11_5)
-   (s1_plan_arm11_5))
-  (PRun [] (* [comment removed for export] *)
-   (PMmap (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PX XIMemcpy [] (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PX XIMemcpy [] (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PX XMemIsZero [] (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PX XMemset [] (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PMmap (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PMmap (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PX XIMemcpy [] (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PX XIMemcpy [] (* [comment removed for export] *)
-   (PRun [] (* [comment removed for export] *)
-   (PSys YMunmap (* [comment removed for export] *)
-   (PVia 2 js_2 423 (* [comment removed for export] *)
-   (PSplit (EVar 6) 10 (* [comment removed for export] *)
-    (PSplit (EVar 10) 0 (* [comment removed for export] *)
-     (s1_plan_s2A4)
-     (PSplit (EVar 10) 6 (* [comment removed for export] *)
-      (s1_plan_s2A4)
-      (s1_plan_s2A4)))
-    (PSplit (EVar 10) 0 (* [comment removed for export] *)
-     (s1_plan_s2A4)
-     (PSplit (EVar 10) 6 (* [comment removed for export] *)
-      (s1_plan_s2A4)
-      (s1_plan_s2A4))))
-   (s1_plan_tail3)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))).
+  (* The whole S1 plan, joining at js_11 and js_2. *)
+  PRun [] (
+  PX XIMemset [] (
+  PRun [] (
+  PX XEnvScan [] (
+  PRun [] (
+  PX XPnScan [] (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PSys YSetTid (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PExt 1 [ELit 6296976; ELit 8] (
+  PRun [] (
+  PX XMaxVA [] (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PBump 95 (
+  PMmap (
+  PRun [] (
+  PX XIMemset [] (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PX XIMemset [] (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PX XIMemcpy [] (
+  PRun [] (
+  PX XMaxVA [] (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PMmap (
+  PRun [0x6d698] (
+  PFresh 9 12 None (
+  PRun [] (
+  PMmapIn (
+  PRun [] (
+  PExt 3 [escale 4096 (EVar 226); ELit 137439023104; ELit 4295491576] (
+  PRun [] (
+  PX XMemset [] (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PMmap (
+  PRun [] (
+  PDropRange (escale 4096 (EVar 95)) (ELit 65536) (
+  PVia 11 js_11 247
+    (PCase2 (EVar 246) 524263
+       (PRun [] (PX XMemset [] (PMerge 11)))
+       s1_plan_arm11_5)
+    (PRun [] (
+     PMmap (
+     PRun [] (
+     PX XIMemcpy [] (
+     PRun [] (
+     PX XIMemcpy [] (
+     PRun [] (
+     PX XMemIsZero [] (
+     PRun [] (
+     PX XMemset [] (
+     PRun [] (
+     PMmap (
+     PRun [] (
+     PMmap (
+     PRun [] (
+     PX XIMemcpy [] (
+     PRun [] (
+     PX XIMemcpy [] (
+     PRun [] (
+     PSys YMunmap (
+     PVia 2 js_2 375
+       (PSplit (EVar 6) 10 s1_plan_s2A4 s1_plan_s2A4)
+       (PRun [] (
+        PMmap (
+        PRun [] (
+        PExt 4 [ELit 15] (
+        PRun [] (
+        PX XMemcpy [] (
+        PRun [] (
+        PSys YBrk (
+        PRun [] (
+        PSplit (EVar 10) 0 s1_plan_tail3
+          (PSplit (EVar 10) 6 s1_plan_tail3 s1_plan_tail3))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))).
 
 End s1_plan_sec.
 (* [comment removed for export] *)

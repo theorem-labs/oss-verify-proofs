@@ -109,7 +109,7 @@ Lemma node_of_iff : forall c (I : Type) (evs : I -> list event) (nx : I -> confi
   (forall i, sstep_cfg segs ACFG c (evs i) (SNext (nx i))) ->
   (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i)) ->
   node_ok segs c I evs nx.
-Proof. intros; split; assumption. Qed.
+Proof. intros c I evs nx reach covers. exact (conj reach covers). Qed.
 
 Lemma adv_ret_epend : forall regs pc mem rom x8 r,
   advance_past_svc (apply_effect (epend regs pc mem rom x8) (mkEffectU r [] [] [] [] []))
@@ -178,14 +178,16 @@ Proof.
 Qed.
 Definition brk_res_acfg (m : Model) (req r : word) : Prop :=
   brk_resolution_ok m req r
-  /\ (brk_refusal_b m req r = true ->
-      forall r', brk_resolution_ok m req r' -> brk_refusal_b m req r' = true).
+  /\ ~ (brk_refusal_b m req r = true
+        /\ exists r', brk_resolution_ok m req r' /\ brk_refusal_b m req r' = false).
 Lemma refusal_b_brk : forall ms x8 model r,
   bv_unsigned x8 = 214%Z ->
   refusal_b (sys_input segs ms x8) model r = brk_refusal_b model (ms_gpr ms 0) r.
 Proof.
-  intros ms x8 model r Hno. rewrite (refusal_b_214 _ _ _ (eq_trans (f_equal bv_unsigned (in_sysno_sys_input segs ms x8)) Hno)).
-  rewrite in_arg_sys_input by lia. reflexivity.
+  intros ms x8 model r sysno.
+  assert (no_214 : bv_unsigned (in_sysno (sys_input segs ms x8)) = 214%Z)
+    by (rewrite in_sysno_si; exact sysno).
+  rewrite (refusal_b_214 _ model r no_214). reflexivity.
 Qed.
 Lemma brk_acfg_iff : forall ms x8 model eff model' evs,
   m_halted model = None ->
@@ -198,25 +200,38 @@ Lemma brk_acfg_iff : forall ms x8 model eff model' evs,
     /\ brk_res_acfg model (ms_gpr ms 0) (eff_ret eff)
     /\ model' = brk_model (ms_gpr ms 0) (eff_ret eff) model)).
 Proof.
-  intros ms x8 model eff model' evs Hh Hno. split.
-  - intros [Hs Hok].
-    apply (brk_ok_iff segs ms x8 model eff model' evs Hno) in Hs. destruct Hs as (He & -> & Hr & ->).
-    assert (Hh' : m_halted (brk_model (ms_gpr ms 0) (eff_ret eff) model) = None) by (rewrite brk_model_halted; exact Hh).
-    split; [exact He|]. split; [reflexivity|]. split; [| reflexivity]. split; [exact Hr|].
-    intros Hrb r' Hr'. destruct (brk_refusal_b model (ms_gpr ms 0) r') eqn:E; [reflexivity|]. exfalso.
-    apply (Hok Hh').
-    eapply (refusal_spurious_of_grant ACFG _ _ eff _ _ _
-             (acfg_family_off_214 _ (eq_trans (f_equal bv_unsigned (in_sysno_sys_input segs ms x8)) Hno)));
-      [ rewrite refusal_b_brk by exact Hno; exact Hrb
-      | exact (brk_ok_intro segs ms x8 model r' Hno Hr')
-      | rewrite refusal_b_brk by exact Hno; cbn [eff_ret]; exact E ].
-  - intros (He & -> & [Hr Hf] & ->). split.
-    + apply (brk_ok_iff segs ms x8 model eff _ [] Hno). auto.
-    + cbn. intros _. destruct (brk_refusal_b model (ms_gpr ms 0) (eff_ret eff)) eqn:E.
-      * intros (_ & _ & (eff' & m' & evs' & Hs' & Hnr)). rewrite refusal_b_brk in Hnr by exact Hno.
-        apply (brk_ok_iff segs ms x8 model eff' m' evs' Hno) in Hs'. destruct Hs' as (_ & _ & Hr' & _).
-        rewrite (Hf eq_refl _ Hr') in Hnr. discriminate Hnr.
-      * apply spurious_refusal_not_refusal. rewrite refusal_b_brk by exact Hno. exact E.
+  intros ms x8 model eff model' evs halted_none sysno.
+  assert (no_214 : bv_unsigned (in_sysno (sys_input segs ms x8)) = 214%Z)
+    by (rewrite in_sysno_si; exact sysno).
+  assert (spurious_iff : forall e,
+    spurious_refusal_cfg ACFG (sys_input segs ms x8) model e
+    <-> brk_refusal_b model (ms_gpr ms 0) (eff_ret e) = true
+        /\ exists r', brk_resolution_ok model (ms_gpr ms 0) r'
+                      /\ brk_refusal_b model (ms_gpr ms 0) r' = false).
+  { intros e. unfold spurious_refusal_cfg.
+    rewrite (acfg_family_off_214 _ no_214), (refusal_b_brk ms x8 model _ sysno).
+    split.
+    - intros (_ & refused & e' & m2 & evs2 & spec2 & granted).
+      rewrite (refusal_b_brk ms x8 model _ sysno) in granted.
+      apply (brk_ok_iff segs ms x8 model e' m2 evs2 sysno) in spec2.
+      destruct spec2 as (_ & _ & ok2 & _).
+      split; [exact refused|]. exists (eff_ret e'). exact (conj ok2 granted).
+    - intros (refused & r' & ok' & granted). split; [reflexivity|]. split; [exact refused|].
+      exists (mkEffectU r' [] (brk_zeros (ms_gpr ms 0) r' (vm_brk (m_vmmaps model)))
+                (brk_unmaps r' (vm_brk (m_vmmaps model))) [] []),
+             (brk_model (ms_gpr ms 0) r' model), [].
+      split; [exact (brk_ok_intro segs ms x8 model r' sysno ok')|].
+      rewrite (refusal_b_brk ms x8 model _ sysno). exact granted. }
+  unfold syscall_spec_acfg. rewrite (brk_ok_iff segs ms x8 model eff model' evs sysno).
+  cbn [spec_step_ok outcome_rect]. split.
+  - intros ((shape & evs_nil & ok & model_eq) & step_ok).
+    assert (halted' : m_halted model' = None)
+      by (rewrite model_eq, brk_model_halted; exact halted_none).
+    refine (conj shape (conj evs_nil (conj (conj ok _) model_eq))).
+    intros refusal_pair. apply (step_ok halted'). apply spurious_iff. exact refusal_pair.
+  - intros (shape & evs_nil & (ok & not_spurious) & model_eq).
+    split; [exact (conj shape (conj evs_nil (conj ok model_eq)))|].
+    intros _ spurious. apply not_spurious, spurious_iff. exact spurious.
 Qed.
 
 Lemma node_brk : forall ms model x8,
@@ -231,29 +246,38 @@ Lemma node_brk : forall ms model x8,
                           (brk_unmaps (proj1_sig i) (vm_brk (m_vmmaps model))) [] [])))
                     (brk_model (ms_gpr ms 0) (proj1_sig i) model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno. split.
-  - intros [r Hr]. cbn [proj1_sig].
-    assert (Hspec : syscall_spec_acfg (sys_input segs ms x8) model
-              (Ok (mkEffectU r [] (brk_zeros (ms_gpr ms 0) r (vm_brk (m_vmmaps model)))
-                                  (brk_unmaps r (vm_brk (m_vmmaps model))) [] [])
-                  (brk_model (ms_gpr ms 0) r model) [])).
-    { apply (brk_acfg_iff ms x8 model _ _ _ Hh Hno). cbn [eff_ret]. auto. }
-    destruct (brk_step_shape segs ms x8 model _ _ _ Hh Hlazy Hno (proj1 Hspec)) as (_ & Hh' & _ & _ & Hlazy').
-    apply (sstep_cfg_syscall_acfg segs ms model x8 _ _ _ [] Hh Hsvc Hspec Hh').
-    apply materialize_model_accesses_no_lazy. rewrite Hlazy'. exact Hlazy.
-  - intros e st Hss.
-    destruct (sstep_cfg_sys_inv_acfg segs ms model x8 e st Hsvc Hss)
-      as [(eff & m' & ev & Hsp & Hh2 & Hm) | [(eff & m' & ev & code' & Hsp & Hh2 & _)
-         | [(eff & m' & ev & sig & Hsp & Hk & _) | (Hsp & -> & ->)]]].
-    + pose proof (brk_step_shape segs ms x8 model _ _ _ Hh Hlazy Hno (proj1 Hsp)) as (_ & _ & _ & _ & Hlazy').
-      apply (brk_acfg_iff ms x8 model eff m' ev Hh Hno) in Hsp. destruct Hsp as (Heff & -> & Hok & ->).
-      rewrite (materialize_model_accesses_no_lazy _ _ (eq_trans Hlazy' Hlazy)) in Hm. destruct Hm as [-> ->].
-    exists (exist _ (eff_ret eff) Hok). cbn [proj1_sig]. rewrite <- Heff. split; reflexivity.
-    + exfalso. pose proof (brk_step_shape segs ms x8 model _ _ _ Hh Hlazy Hno (proj1 Hsp)) as (_ & Hh' & _).
-      rewrite Hh' in Hh2. discriminate Hh2.
-    + exfalso. pose proof (brk_step_shape segs ms x8 model _ _ _ Hh Hlazy Hno (proj1 Hsp)) as (_ & Hh' & _).
-      rewrite (m_killed_of_m_halted_none _ Hh') in Hk. discriminate Hk.
-    + exfalso. exact (brk_no_unmodeled segs ms x8 model Hno (proj1 Hsp)).
+  intros ms model x8 halted_none lazy_nil pending sysno.
+  assert (acfg_of : forall i : {r : word | brk_res_acfg model (ms_gpr ms 0) r},
+    syscall_spec_acfg (sys_input segs ms x8) model
+      (Ok (mkEffectU (proj1_sig i) []
+             (brk_zeros (ms_gpr ms 0) (proj1_sig i) (vm_brk (m_vmmaps model)))
+             (brk_unmaps (proj1_sig i) (vm_brk (m_vmmaps model))) [] [])
+          (brk_model (ms_gpr ms 0) (proj1_sig i) model) [])).
+  { intros [r res]. apply (brk_acfg_iff ms x8 model _ _ _ halted_none sysno).
+    exact (conj eq_refl (conj eq_refl (conj res eq_refl))). }
+  assert (via_brk : forall eff,
+    check_syscall (sys_input segs ms x8) eff model = check_brk (ms_gpr ms 0) eff model).
+  { intros eff. unfold check_syscall. rewrite in_sysno_si, sysno. reflexivity. }
+  apply (node_chk segs ms model x8 _
+           (fun i => mkEffectU (proj1_sig i) []
+              (brk_zeros (ms_gpr ms 0) (proj1_sig i) (vm_brk (m_vmmaps model)))
+              (brk_unmaps (proj1_sig i) (vm_brk (m_vmmaps model))) [] [])
+           (fun i => brk_model (ms_gpr ms 0) (proj1_sig i) model) halted_none pending).
+  - intros i. apply check_syscall_ok_iff. exact (proj1 (acfg_of i)).
+  - intros i. pose proof (proj2 (acfg_of i)) as step_ok.
+    cbn [spec_step_ok outcome_rect] in step_ok. apply step_ok.
+    rewrite brk_model_halted. exact halted_none.
+  - intros eff m' evs accepted step_ok. apply check_syscall_ok_iff in accepted.
+    destruct (proj1 (brk_acfg_iff ms x8 model eff m' evs halted_none sysno) (conj accepted step_ok))
+      as (shape & evs_nil & res & model_eq).
+    exists (exist _ (eff_ret eff) res). exact (conj shape (conj model_eq evs_nil)).
+  - intros eff. rewrite via_brk.
+    destruct eff as [r ws zs us cs ci]. destruct ws as [|w ws]; [|discriminate].
+    destruct cs as [|c cs]; [|discriminate]. destruct ci as [|ci cis]; [|discriminate].
+    cbn [check_brk]. destruct (Mmap.brk_r_ok _ _ _ && _ && _); discriminate.
+  - intros i. exact (eq_trans (brk_model_halted _ _ _) halted_none).
+  - intros i. unfold brk_model, with_brk_next. cbv zeta.
+    apply forget_vm_ranges_frame. rewrite with_vmmaps_lazy'. exact lazy_nil.
 Qed.
 
 Lemma brk_r_ok_grow_cases : forall m req r,
@@ -530,46 +554,38 @@ Lemma node_set_tid : forall ms model x8,
   node_ok segs (mkCfg ms model) tid_I (fun _ => [])
     (fun i => mkCfg (advance_past_svc (set_gpr0 ms (proj1_sig i))) (with_tid (proj1_sig i) model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Htid.
-  assert (Hchk : forall eff, check_syscall (sys_input segs ms x8) eff model =
-     match eff with
-     | mkEffectU ret [] [] [] [] [] =>
-         if (0 <? bv_unsigned ret)%Z && (bv_unsigned ret <? PID_MAX_ENVELOPE)%Z
-         then CheckOk (with_tid ret model) [] else CheckReject
-     | _ => CheckReject end).
-  { intros eff. rewrite (check_syscall_96 ms x8 eff model Hno). unfold check_set_tid_address. rewrite Htid. reflexivity. }
-  pose (effs := fun i : tid_I => mkEffectU (proj1_sig i) [] [] [] [] []).
-  assert (Enx : forall i : tid_I,
-    mkCfg (advance_past_svc (set_gpr0 ms (proj1_sig i))) (with_tid (proj1_sig i) model)
-    = mkCfg (advance_past_svc (apply_effect ms (effs i))) (with_tid (proj1_sig i) model)).
-  { intros [t Ht]. cbn [proj1_sig effs]. rewrite <- (apply_effect_no_write ms t). reflexivity. }
-  apply node_ok_of_transparent; [| apply (transparent_nonalloc_no segs ms model x8 96 Hsvc Hno eq_refl)].
-  split.
-  - intros i. rewrite Enx. apply (sstep_of_check segs ms model x8); [exact Hh | exact Hsvc | | rewrite with_tid_halted; exact Hh | rewrite with_tid_lazy; exact Hlazy].
-    destruct i as [t [Ht1 Ht2]]. subst effs. cbn [proj1_sig]. rewrite Hchk.
-    rewrite (proj2 (Z.ltb_lt _ _) Ht1), (proj2 (Z.ltb_lt _ _) Ht2). reflexivity.
-  - assert (Hinv : forall eff m' ev, check_syscall (sys_input segs ms x8) eff model = CheckOk m' ev ->
-              exists i : tid_I, eff = effs i /\ m' = with_tid (proj1_sig i) model /\ ev = []).
-    { intros [ret ws zs us cs ci] m' ev Hc. rewrite Hchk in Hc.
-      destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct us; [|discriminate].
-      destruct cs; [|discriminate]. destruct ci; [|discriminate].
-      destruct ((0 <? bv_unsigned ret)%Z && (bv_unsigned ret <? PID_MAX_ENVELOPE)%Z) eqn:Eb; [|discriminate].
-      apply andb_true_iff in Eb as [E1 E2]. apply Z.ltb_lt in E1. apply Z.ltb_lt in E2.
-      injection Hc as <- <-. exists (exist _ ret (conj E1 E2)). repeat split; reflexivity. }
-    intros e st Hss.
-    destruct (sstep_svc_inv segs ms model x8 e st Hsvc Hss)
-      as [(eff & model' & ev & Hc & [(m'' & Hh2 & -> & Hmat & ->) | [(Hh2 & -> & Hmat & ->) | (code & Hh2 & -> & ->)]])
-         | (eff & Hc & -> & ->)].
-    + destruct (Hinv _ _ _ Hc) as (i & -> & -> & ->).
-      rewrite (materialize_model_accesses_no_lazy _ _ (eq_trans (with_tid_lazy _ model) Hlazy)) in Hmat.
-      injection Hmat as <-. exists i. rewrite Enx. split; reflexivity.
-    + destruct (Hinv _ _ _ Hc) as (i & -> & -> & ->).
-      rewrite (materialize_model_accesses_no_lazy _ _ (eq_trans (with_tid_lazy _ model) Hlazy)) in Hmat. discriminate.
-    + destruct (Hinv _ _ _ Hc) as (i & -> & -> & ->). rewrite with_tid_halted in Hh2. congruence.
-    + exfalso. rewrite Hchk in Hc. destruct eff as [ret ws zs us cs ci].
-      destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct us; [|discriminate].
-      destruct cs; [|discriminate]. destruct ci; [|discriminate].
-      destruct ((0 <? bv_unsigned ret)%Z && (bv_unsigned ret <? PID_MAX_ENVELOPE)%Z); discriminate.
+  intros ms model x8 halted_none lazy_nil pending sysno tid_none.
+  assert (family_on : injected_family_off ACFG (sys_input segs ms x8) = false).
+  { unfold injected_family_off. rewrite in_sysno_si, sysno. vm_compute. reflexivity. }
+  enough (via_effect : node_ok segs (mkCfg ms model) tid_I (fun _ => [])
+            (fun i => mkCfg (advance_past_svc (apply_effect ms (mkEffect (proj1_sig i) [] [])))
+                            (with_tid (proj1_sig i) model))).
+  { destruct via_effect as [reach covers]. split.
+    - intros i. specialize (reach i). cbv beta in reach |- *.
+      rewrite apply_effect_no_write in reach. exact reach.
+    - intros e st step. destruct (covers e st step) as (i & e_eq & st_eq).
+      exists i. rewrite apply_effect_no_write in st_eq. exact (conj e_eq st_eq). }
+  apply (node_chk segs ms model x8 tid_I (fun i => mkEffect (proj1_sig i) [] [])
+           (fun i => with_tid (proj1_sig i) model) halted_none pending).
+  - intros [t [lo hi]]. rewrite check_syscall_96 by exact sysno.
+    cbn [proj1_sig check_set_tid_address]. rewrite tid_none.
+    rewrite (proj2 (Z.ltb_lt _ _) lo), (proj2 (Z.ltb_lt _ _) hi). reflexivity.
+  - intros i (family_off & _). rewrite family_on in family_off. discriminate family_off.
+  - intros eff m' evs accepted _. rewrite check_syscall_96 in accepted by exact sysno.
+    destruct eff as [ret ws zs us cs ci].
+    destruct ws, zs, us, cs, ci; cbn [check_set_tid_address] in accepted; try discriminate accepted.
+    rewrite tid_none in accepted. cbn iota in accepted.
+    destruct ((0 <? bv_unsigned ret) && (bv_unsigned ret <? PID_MAX_ENVELOPE))%Z eqn:range;
+      [|discriminate accepted].
+    injection accepted as model_eq evs_nil. apply andb_true_iff in range as [lo hi].
+    exists (exist _ ret (conj (proj1 (Z.ltb_lt _ _) lo) (proj1 (Z.ltb_lt _ _) hi))).
+    split; [reflexivity|]. split; symmetry; assumption.
+  - intros eff. rewrite check_syscall_96 by exact sysno.
+    destruct eff as [ret ws zs us cs ci].
+    destruct ws, zs, us, cs, ci; cbn [check_set_tid_address]; try discriminate.
+    rewrite tid_none. destruct (_ && _)%Z; discriminate.
+  - intros i. exact (eq_trans (with_tid_halted _ _) halted_none).
+  - intros i. exact (eq_trans (with_tid_lazy _ _) lazy_nil).
 Qed.
 
 Lemma rz_exit_at : forall regs (pc : word) mem rom model w code,

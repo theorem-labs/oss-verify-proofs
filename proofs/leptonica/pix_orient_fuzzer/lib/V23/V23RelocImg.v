@@ -8,28 +8,24 @@ From OssFuzzTheorems.Proofs.leptonica.pix_orient_fuzzer.lib.V23 Require Import V
 Local Open Scope Z_scope.
 
 Lemma v23_cells_ok : @cells_check v23_reloc canon_cells = true.
-Proof.
-vm_cast_no_check (@eq_refl bool true). Qed.
+Proof. vm_cast_no_check (eq_refl true). Qed.
 
-Definition v23_img : RelocImg v23_reloc := {| rl_cells_ok := v23_cells_ok |}.
+Definition v23_img : RelocImg v23_reloc := Build_RelocImg v23_reloc v23_cells_ok.
 
 Lemma v23_data_wseg : wseg_ok (@rl_segs v23_reloc) (Z_to_bv 64 0x127000) (Z.to_nat (@rl_img_hi v23_reloc - 0x127000)) = true.
-Proof.
-vm_cast_no_check (@eq_refl bool true). Qed.
+Proof. vm_cast_no_check (eq_refl true). Qed.
 
 Lemma v23_data_ok : (0 <=? 0x127000) && (0x127000 <=? @rl_img_hi v23_reloc) && (@rl_img_hi v23_reloc <=? 2^32) = true.
-Proof.
-reflexivity. Qed.
+Proof. exact (eq_refl true). Qed.
 
-Definition v23_data : RelocData v23_reloc := {| rl_data_lo := 0x127000; rl_data_ok := v23_data_ok; rl_data_wseg := v23_data_wseg |}.
+Definition v23_data : RelocData v23_reloc :=
+  Build_RelocData v23_reloc 1208320 v23_data_ok v23_data_wseg.
 
 Lemma v23_hull_ok : @hull_okb v23_reloc v23_data = true.
-Proof.
-vm_cast_no_check (@eq_refl bool true). Qed.
+Proof. exact (eq_refl true). Qed.
 Lemma v23_spans_ok : @spans_check v23_reloc v23_data canon_spans = true.
-Proof.
-vm_cast_no_check (@eq_refl bool true). Qed.
+Proof. vm_cast_no_check (eq_refl true). Qed.
 Lemma v23_orders_ok : @orders_check v23_reloc canon_spans canon_order = true.
-Proof.
-vm_cast_no_check (@eq_refl bool true). Qed.
-Definition v23_spans : RelocSpans v23_reloc v23_data := {| rl_hull_ok := v23_hull_ok; rl_spans_ok := v23_spans_ok; rl_orders_ok := v23_orders_ok |}.
+Proof. vm_cast_no_check (eq_refl true). Qed.
+Definition v23_spans : RelocSpans v23_reloc v23_data :=
+  Build_RelocSpans v23_reloc v23_data v23_hull_ok v23_spans_ok v23_orders_ok.

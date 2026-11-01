@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -36,28 +36,33 @@ Lemma ec_w0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s
        /\ rw_cells asegs m' (bv_unsigned sp + -16) [C8 s0; C8 ra] /\ stk asegs m' lo (bv_unsigned sp + -16))
     (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 e_crypto_strs) fc None m (seg_rom asegs)).
 Proof.
-  intros until lo. intros ST LO0 LO HTOP MI. unfold e_crypto_strs.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 16, bv_unsigned sp)]%Z m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  th_frame 16%nat [8; 8]%nat ST.
+  intros until lo. intros stack_ok lo_high lo_room sp_cap mem_ok.
+  pose proof (wmono_refl asegs m) as grown.
+  pose proof (munch_refl [(bv_unsigned sp - 16, bv_unsigned sp)] m) as touched.
+  carve_frame 16%nat stack_ok.
   do 5 zstep.
-  apply evt_done. unfold e_err_strings. eexists.
-  split; [cbv delta [mkR]; reflexivity|]. split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [eassumption| assumption].
+  apply evt_done. exists m1.
+  split; [reflexivity|].
+  split; [exact touched|]. split; [exact grown|]. split; [exact mem_ok|]. split; [exact FR | exact stack_ok].
 Qed.
 
 (* [comment removed for export] *)
-Definition ecw_spec (Rp Rk E : Z) : Prop := forall (sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z),
-  stk asegs m lo (bv_unsigned sp + -16) -> 0x10007fff8000 <= lo -> lo <= bv_unsigned sp - 16 -> bv_unsigned sp <= 2 ^ 47 -> mem_inv asegs m ->
-  evt asegs (fun ms => ms = MS (mkR (Z_to_bv 64 Rk) (Z_to_bv 64 (bv_unsigned sp + -16)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-                            F (Z_to_bv 64 E) fc None m (seg_rom asegs))
-    (MS (mkR (Z_to_bv 64 Rp) (Z_to_bv 64 (bv_unsigned sp + -16)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-        F (Z_to_bv 64 Rp) fc None m (seg_rom asegs)).
+Definition ecw_spec (Rp Rk E : Z) : Prop :=
+  forall (sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z),
+    stk asegs m lo (bv_unsigned sp + -16) -> 0x10007fff8000 <= lo -> lo <= bv_unsigned sp - 16 -> bv_unsigned sp <= 2 ^ 47 -> mem_inv asegs m ->
+    evt asegs (fun ms => ms = MS (mkR (Z_to_bv 64 Rk) (Z_to_bv 64 (bv_unsigned sp + -16)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                                 F (Z_to_bv 64 E) fc None m (seg_rom asegs))
+      (MS (mkR (Z_to_bv 64 Rp) (Z_to_bv 64 (bv_unsigned sp + -16)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 Rp) fc None m (seg_rom asegs)).
 Ltac ecw_tac sp m :=
-  let RSP := fresh "RSP" in pose proof (bv_unsigned_in_range 64 sp) as RSP; unfold bv_modulus in RSP; cbn in RSP;
-  let MU := fresh "MU" in let WM := fresh "WM" in pose proof (munch_refl ([] : list (Z * Z)) m) as MU; pose proof (wmono_refl asegs m) as WM;
-  let HWU := fresh "HWU" in let HWS := fresh "HWS" in assert (HWU : ut_fp []) by ut_fp_lia; assert (HWS : sh_fp []) by sh_fp_lia;
-  zstep; th_if_lit; zstep; apply evt_done; cbv delta [mkR]; reflexivity.
+  set (frame_sp := Z_to_bv 64 (bv_unsigned sp + -16)) in *;
+  zstep;
+  lazymatch goal with
+  | |- evt asegs _ (MS _ _ (if ?taken then _ else _) _ _ m _) =>
+      let v := eval vm_compute in taken in change taken with v; cbv iota
+  end;
+  zstep;
+  apply evt_done; reflexivity.
 Lemma ec_w1 : ecw_spec 0x511118 0x511120 0x51123c. Proof. unfold ecw_spec; intros until lo; intros ST LO0 LO HTOP MI; ecw_tac sp m. Qed.
 Lemma ec_w2 : ecw_spec 0x511120 0x511128 0x511284. Proof. unfold ecw_spec; intros until lo; intros ST LO0 LO HTOP MI; ecw_tac sp m. Qed.
 Lemma ec_w3 : ecw_spec 0x511128 0x511130 0x5112cc. Proof. unfold ecw_spec; intros until lo; intros ST LO0 LO HTOP MI; ecw_tac sp m. Qed.
@@ -102,16 +107,12 @@ Lemma ec_wx : forall (sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s
     (MS (mkR (Z_to_bv 64 0x511228) (Z_to_bv 64 (bv_unsigned sp + -16)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
         F (Z_to_bv 64 0x511228) fc None m (seg_rom asegs)).
 Proof.
-  intros until s0v. intros FR ST LO0 LO HTOP MI.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl ([] : list (Z * Z)) m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  cl_eu (bv_unsigned sp) (-16) EU1.
-  do 3 zstep.
-  pose proof FR as FR'. eapply stk_release in FR'; [| exact ST| lia]. cbn [cells_size csize Nat.add] in FR'.
-  replace (bv_unsigned sp + -16 + Z.of_nat 16) with (bv_unsigned sp) in FR' by lia.
-  zstep. zstep. apply evt_done. split; [| exact FR']. cbv delta [mkR].
-  replace (bv_unsigned sp + -16 + 16) with (bv_unsigned sp) by lia. rewrite ?(Z_to_bv_bv_unsigned sp). reflexivity.
+  intros until s0v. intros saved stack_ok lo_high lo_room sp_cap mem_ok.
+  do 5 zstep.
+  apply evt_done. split; [reflexivity|].
+  pose proof (stk_release asegs m lo (bv_unsigned sp + -16) [C8 s0v; C8 rav] stack_ok saved ltac:(lia)) as popped.
+  cbn [cells_size csize Nat.add Z.of_nat] in popped.
+  replace (bv_unsigned sp) with (bv_unsigned sp + -16 + 16) by lia. exact popped.
 Qed.
 
 Section Crypto.
@@ -161,78 +162,218 @@ Hypothesis GO_PROP : exists b sz, GOBJ b sz /\ b <= 0x5a1aa0 /\ 0x5a1aa0 + 16 * 
 Hypothesis GO_PROV : exists b sz, GOBJ b sz /\ b <= 0x5a1b80 /\ 0x5a1b80 + 16 * (160 + 1) <= b + sz.
 
 Lemma TAB_libraries : els_table GOBJ ERR_TAB1 43.
-Proof. destruct GO_libraries as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x52ec60 43 b sz G B1 B2 els_okb_libraries). Qed.
+Proof using GO_libraries.
+  destruct GO_libraries as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ ERR_TAB1 43%nat base size owner base_below end_within _).
+  exact els_okb_libraries.
+Qed.
 Lemma TAB_reasons : els_table GOBJ ERR_TAB2 39.
-Proof. destruct GO_reasons as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x52efc0 39 b sz G B1 B2 els_okb_reasons). Qed.
+Proof using GO_reasons.
+  destruct GO_reasons as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ ERR_TAB2 39%nat base size owner base_below end_within _).
+  exact els_okb_reasons.
+Qed.
 
 Lemma TAB_BN : els_table GOBJ 0x59b500 22.
-Proof. destruct GO_BN as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59b500 22 b sz G B1 B2 els_okb_BN). Qed.
+Proof using GO_BN.
+  destruct GO_BN as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59b500 22%nat base size owner base_below end_within _).
+  exact els_okb_BN.
+Qed.
 Lemma TAB_RSA : els_table GOBJ 0x59b6c0 81.
-Proof. destruct GO_RSA as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59b6c0 81 b sz G B1 B2 els_okb_RSA). Qed.
+Proof using GO_RSA.
+  destruct GO_RSA as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59b6c0 81%nat base size owner base_below end_within _).
+  exact els_okb_RSA.
+Qed.
 Lemma TAB_DH : els_table GOBJ 0x59bd20 31.
-Proof. destruct GO_DH as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59bd20 31 b sz G B1 B2 els_okb_DH). Qed.
+Proof using GO_DH.
+  destruct GO_DH as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59bd20 31%nat base size owner base_below end_within _).
+  exact els_okb_DH.
+Qed.
 Lemma TAB_EVP : els_table GOBJ 0x59bfa0 125.
-Proof. destruct GO_EVP as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59bfa0 125 b sz G B1 B2 els_okb_EVP). Qed.
+Proof using GO_EVP.
+  destruct GO_EVP as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59bfa0 125%nat base size owner base_below end_within _).
+  exact els_okb_EVP.
+Qed.
 Lemma TAB_BUF : els_table GOBJ 0xf88e0 0.
 Proof. destruct GO_BUF as (b & sz & G & B1 & B2). exact (els_table_rom0 GOBJ 0xf88e0 b sz G B1 ltac:(lia) eq_refl ltac:(lia) ltac:(unfold SEGTOP_A; lia) buf_table_rom). Qed.
 Lemma TAB_OBJ : els_table GOBJ 0x59c960 3.
-Proof. destruct GO_OBJ as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59c960 3 b sz G B1 B2 els_okb_OBJ). Qed.
+Proof using GO_OBJ.
+  destruct GO_OBJ as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59c960 3%nat base size owner base_below end_within _).
+  exact els_okb_OBJ.
+Qed.
 Lemma TAB_PEM : els_table GOBJ 0x59c9c0 34.
-Proof. destruct GO_PEM as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59c9c0 34 b sz G B1 B2 els_okb_PEM). Qed.
+Proof using GO_PEM.
+  destruct GO_PEM as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59c9c0 34%nat base size owner base_below end_within _).
+  exact els_okb_PEM.
+Qed.
 Lemma TAB_DSA : els_table GOBJ 0x59cc80 16.
-Proof. destruct GO_DSA as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59cc80 16 b sz G B1 B2 els_okb_DSA). Qed.
+Proof using GO_DSA.
+  destruct GO_DSA as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59cc80 16%nat base size owner base_below end_within _).
+  exact els_okb_DSA.
+Qed.
 Lemma TAB_X509 : els_table GOBJ 0x59cde0 47.
-Proof. destruct GO_X509 as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59cde0 47 b sz G B1 B2 els_okb_X509). Qed.
+Proof using GO_X509.
+  destruct GO_X509 as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59cde0 47%nat base size owner base_below end_within _).
+  exact els_okb_X509.
+Qed.
 Lemma TAB_ASN1 : els_table GOBJ 0x59d1a0 117.
-Proof. destruct GO_ASN1 as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59d1a0 117 b sz G B1 B2 els_okb_ASN1). Qed.
+Proof using GO_ASN1.
+  destruct GO_ASN1 as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59d1a0 117%nat base size owner base_below end_within _).
+  exact els_okb_ASN1.
+Qed.
 Lemma TAB_CONF : els_table GOBJ 0x59dac0 27.
-Proof. destruct GO_CONF as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59dac0 27 b sz G B1 B2 els_okb_CONF). Qed.
+Proof using GO_CONF.
+  destruct GO_CONF as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59dac0 27%nat base size owner base_below end_within _).
+  exact els_okb_CONF.
+Qed.
 Lemma TAB_CRYPTO : els_table GOBJ 0x59dce0 31.
-Proof. destruct GO_CRYPTO as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59dce0 31 b sz G B1 B2 els_okb_CRYPTO). Qed.
+Proof using GO_CRYPTO.
+  destruct GO_CRYPTO as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59dce0 31%nat base size owner base_below end_within _).
+  exact els_okb_CRYPTO.
+Qed.
 Lemma TAB_COMP : els_table GOBJ 0x59df60 10.
-Proof. destruct GO_COMP as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59df60 10 b sz G B1 B2 els_okb_COMP). Qed.
+Proof using GO_COMP.
+  destruct GO_COMP as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59df60 10%nat base size owner base_below end_within _).
+  exact els_okb_COMP.
+Qed.
 Lemma TAB_EC : els_table GOBJ 0x59e040 76.
-Proof. destruct GO_EC as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59e040 76 b sz G B1 B2 els_okb_EC). Qed.
+Proof using GO_EC.
+  destruct GO_EC as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59e040 76%nat base size owner base_below end_within _).
+  exact els_okb_EC.
+Qed.
 Lemma TAB_BIO : els_table GOBJ 0x59e640 47.
-Proof. destruct GO_BIO as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59e640 47 b sz G B1 B2 els_okb_BIO). Qed.
+Proof using GO_BIO.
+  destruct GO_BIO as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59e640 47%nat base size owner base_below end_within _).
+  exact els_okb_BIO.
+Qed.
 Lemma TAB_PKCS7 : els_table GOBJ 0x59ea00 38.
-Proof. destruct GO_PKCS7 as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59ea00 38 b sz G B1 B2 els_okb_PKCS7). Qed.
+Proof using GO_PKCS7.
+  destruct GO_PKCS7 as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59ea00 38%nat base size owner base_below end_within _).
+  exact els_okb_PKCS7.
+Qed.
 Lemma TAB_X509V3 : els_table GOBJ 0x59ed00 73.
-Proof. destruct GO_X509V3 as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59ed00 73 b sz G B1 B2 els_okb_X509V3). Qed.
+Proof using GO_X509V3.
+  destruct GO_X509V3 as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59ed00 73%nat base size owner base_below end_within _).
+  exact els_okb_X509V3.
+Qed.
 Lemma TAB_PKCS12 : els_table GOBJ 0x59f2c0 22.
-Proof. destruct GO_PKCS12 as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59f2c0 22 b sz G B1 B2 els_okb_PKCS12). Qed.
+Proof using GO_PKCS12.
+  destruct GO_PKCS12 as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59f2c0 22%nat base size owner base_below end_within _).
+  exact els_okb_PKCS12.
+Qed.
 Lemma TAB_RAND : els_table GOBJ 0x59f480 45.
-Proof. destruct GO_RAND as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59f480 45 b sz G B1 B2 els_okb_RAND). Qed.
+Proof using GO_RAND.
+  destruct GO_RAND as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59f480 45%nat base size owner base_below end_within _).
+  exact els_okb_RAND.
+Qed.
 Lemma TAB_DSO : els_table GOBJ 0x59f800 16.
-Proof. destruct GO_DSO as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59f800 16 b sz G B1 B2 els_okb_DSO). Qed.
+Proof using GO_DSO.
+  destruct GO_DSO as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59f800 16%nat base size owner base_below end_within _).
+  exact els_okb_DSO.
+Qed.
 Lemma TAB_TS : els_table GOBJ 0x59f960 39.
-Proof. destruct GO_TS as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59f960 39 b sz G B1 B2 els_okb_TS). Qed.
+Proof using GO_TS.
+  destruct GO_TS as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59f960 39%nat base size owner base_below end_within _).
+  exact els_okb_TS.
+Qed.
 Lemma TAB_HTTP : els_table GOBJ 0x59fc80 32.
-Proof. destruct GO_HTTP as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59fc80 32 b sz G B1 B2 els_okb_HTTP). Qed.
+Proof using GO_HTTP.
+  destruct GO_HTTP as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59fc80 32%nat base size owner base_below end_within _).
+  exact els_okb_HTTP.
+Qed.
 Lemma TAB_OCSP : els_table GOBJ 0x59ff20 25.
-Proof. destruct GO_OCSP as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x59ff20 25 b sz G B1 B2 els_okb_OCSP). Qed.
+Proof using GO_OCSP.
+  destruct GO_OCSP as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x59ff20 25%nat base size owner base_below end_within _).
+  exact els_okb_OCSP.
+Qed.
 Lemma TAB_UI : els_table GOBJ 0x5a0120 13.
-Proof. destruct GO_UI as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a0120 13 b sz G B1 B2 els_okb_UI). Qed.
+Proof using GO_UI.
+  destruct GO_UI as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a0120 13%nat base size owner base_below end_within _).
+  exact els_okb_UI.
+Qed.
 Lemma TAB_CMS : els_table GOBJ 0x5a0220 102.
-Proof. destruct GO_CMS as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a0220 102 b sz G B1 B2 els_okb_CMS). Qed.
+Proof using GO_CMS.
+  destruct GO_CMS as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a0220 102%nat base size owner base_below end_within _).
+  exact els_okb_CMS.
+Qed.
 Lemma TAB_CRMF : els_table GOBJ 0x5a0a20 30.
-Proof. destruct GO_CRMF as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a0a20 30 b sz G B1 B2 els_okb_CRMF). Qed.
+Proof using GO_CRMF.
+  destruct GO_CRMF as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a0a20 30%nat base size owner base_below end_within _).
+  exact els_okb_CRMF.
+Qed.
 Lemma TAB_CMP : els_table GOBJ 0x5a0c80 106.
-Proof. destruct GO_CMP as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a0c80 106 b sz G B1 B2 els_okb_CMP). Qed.
+Proof using GO_CMP.
+  destruct GO_CMP as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a0c80 106%nat base size owner base_below end_within _).
+  exact els_okb_CMP.
+Qed.
 Lemma TAB_CT : els_table GOBJ 0x5a14e0 17.
-Proof. destruct GO_CT as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a14e0 17 b sz G B1 B2 els_okb_CT). Qed.
+Proof using GO_CT.
+  destruct GO_CT as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a14e0 17%nat base size owner base_below end_within _).
+  exact els_okb_CT.
+Qed.
 Lemma TAB_ESS : els_table GOBJ 0x5a1640 9.
-Proof. destruct GO_ESS as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a1640 9 b sz G B1 B2 els_okb_ESS). Qed.
+Proof using GO_ESS.
+  destruct GO_ESS as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a1640 9%nat base size owner base_below end_within _).
+  exact els_okb_ESS.
+Qed.
 Lemma TAB_ASYNC : els_table GOBJ 0x5a1700 4.
-Proof. destruct GO_ASYNC as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a1700 4 b sz G B1 B2 els_okb_ASYNC). Qed.
+Proof using GO_ASYNC.
+  destruct GO_ASYNC as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a1700 4%nat base size owner base_below end_within _).
+  exact els_okb_ASYNC.
+Qed.
 Lemma TAB_SM2 : els_table GOBJ 0x5a1780 14.
-Proof. destruct GO_SM2 as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a1780 14 b sz G B1 B2 els_okb_SM2). Qed.
+Proof using GO_SM2.
+  destruct GO_SM2 as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a1780 14%nat base size owner base_below end_within _).
+  exact els_okb_SM2.
+Qed.
 Lemma TAB_OSSL_STORE : els_table GOBJ 0x5a18a0 25.
-Proof. destruct GO_OSSL_STORE as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a18a0 25 b sz G B1 B2 els_okb_OSSL_STORE). Qed.
+Proof using GO_OSSL_STORE.
+  destruct GO_OSSL_STORE as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a18a0 25%nat base size owner base_below end_within _).
+  exact els_okb_OSSL_STORE.
+Qed.
 Lemma TAB_PROP : els_table GOBJ 0x5a1aa0 11.
-Proof. destruct GO_PROP as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a1aa0 11 b sz G B1 B2 els_okb_PROP). Qed.
+Proof using GO_PROP.
+  destruct GO_PROP as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a1aa0 11%nat base size owner base_below end_within _).
+  exact els_okb_PROP.
+Qed.
 Lemma TAB_PROV : els_table GOBJ 0x5a1b80 160.
-Proof. destruct GO_PROV as (b & sz & G & B1 & B2). exact (els_table_ut GOBJ 0x5a1b80 160 b sz G B1 B2 els_okb_PROV). Qed.
+Proof using GO_PROV.
+  destruct GO_PROV as (base & size & owner & base_below & end_within).
+  refine (els_table_ut GOBJ 0x5a1b80 160%nat base size owner base_below end_within _).
+  exact els_okb_PROV.
+Qed.
 
 Section Run.
 Variable Σ0 : rts RT.
@@ -258,18 +399,24 @@ Hypothesis POS : Forall (fun x => 0 < snd x) (rt_live RT Σ0).
 
 (* [comment removed for export] *)
 Definition CRI (site bnd itb crd : Z) (c : config) : Prop :=
-  exists (Σ : rts RT) (m : mem) (pk lh B : Z) (L : list (Z * Z)) (g : lh_geo) (bks : list (list (bptr * Z))) (lb : byte)
-         (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32),
-    ASTA RT Σ PMc (eq (MS (mkR (Z_to_bv 64 site) (Z_to_bv 64 (usp + -16)) gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-                            F (Z_to_bv 64 site) fc None m (seg_rom asegs))) c
-    /\ ART RT Σ m /\ mem_inv asegs m /\ stk asegs m lo (usp + -16) /\ rw_cells asegs m (usp + -16) [C8 s0; C8 ra]
-    /\ cl_env m lb canary
-    /\ rw_cells asegs m G_IC_STOPPED [C1 (Z_to_bv 8 0)] /\ rw_cells asegs m G_IC_OPTSDONE [C8 od] /\ rw_cells asegs m G_IC_BASE_ONCE [C4 (Z_to_bv 64 2)] /\ rw_cells asegs m G_IC_BASE_RET [C4 (Z_to_bv 64 1)]
-    /\ err_statics m pk lh /\ rw_cells asegs m G_CANCELBUF [C8 oldcb] /\ rw_cells asegs m pk (mutex_cells z64 z64)
-    /\ lh_repE GOBJ m L lh B g bks /\ Permutation (rt_live RT Σ) (L ++ (pk, 40) :: rt_live RT Σ0) /\ Z.of_nat (length L) <= bnd /\ 0 <= g_items g <= itb
-    /\ rt_frames RT Σ = rt_frames RT Σ0 /\ rt_sp0 RT Σ = rt_sp0 RT Σ0 /\ rt_credit RT Σ0 - crd <= rt_credit RT Σ /\ rt_cg RT Σ = rt_cg RT Σ0
-    /\ uw_chain m sp s0 outer /\ rt_pres_fp (rt_live RT Σ0) (rt_frames RT Σ0) usp (EFIRST_W pk) m0 m
-    /\ (forall x, aclient (rt_live RT Σ0) (rt_frames RT Σ0) usp x -> ~ (pk <= x < pk + 40)) /\ 0 < pk /\ pk mod 16 = 0 /\ pk + 40 < USTACK_TOP /\ 0x10007fff8000 <= pk.
+  exists (Σ' : rts RT) (pk lh B : Z) (L' : list (Z * Z)) (g' : lh_geo) (bks' : list (list (bptr * Z))) (lb' : byte),
+    ASTA RT Σ' PMc (fun ms => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (F' : bvmap 5 word) (fc' : bv 32) (m' : mem),
+        ms = MS (mkR (Z_to_bv 64 site) (Z_to_bv 64 (bv_unsigned sp + -16)) gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 (Z_to_bv 64 1)
+                     a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F' (Z_to_bv 64 site) fc' None m' (seg_rom asegs)
+        /\ ART RT Σ' m' /\ mem_inv asegs m' /\ stk asegs m' lo (bv_unsigned sp + -16)
+        /\ rw_cells asegs m' (bv_unsigned sp + -16) [C8 s0; C8 ra] /\ uw_chain m' sp s0 outer
+        /\ rt_pres_fp (rt_live RT Σ0) (rt_frames RT Σ0) (bv_unsigned sp) (EFIRST_W pk) m0 m'
+        /\ cl_env m' lb' canary
+        /\ rw_cells asegs m' G_IC_STOPPED [C1 (Z_to_bv 8 0)] /\ rw_cells asegs m' G_IC_OPTSDONE [C8 od]
+        /\ rw_cells asegs m' G_IC_BASE_ONCE [C4 (Z_to_bv 64 2)] /\ rw_cells asegs m' G_IC_BASE_RET [C4 (Z_to_bv 64 1)]
+        /\ err_statics m' pk lh /\ rw_cells asegs m' G_CANCELBUF [C8 oldcb] /\ rw_cells asegs m' pk (mutex_cells z64 z64)
+        /\ lh_repE GOBJ m' L' lh B g' bks') c
+    /\ Permutation (rt_live RT Σ') (L' ++ (pk, 40) :: rt_live RT Σ0)
+    /\ Z.of_nat (length L') <= bnd /\ 0 <= g_items g' <= itb
+    /\ rt_frames RT Σ' = rt_frames RT Σ0 /\ rt_sp0 RT Σ' = rt_sp0 RT Σ0
+    /\ rt_credit RT Σ0 - crd <= rt_credit RT Σ' /\ rt_cg RT Σ' = rt_cg RT Σ0
+    /\ 0 < pk /\ pk mod 16 = 0 /\ pk + 40 < USTACK_TOP /\ 0x10007fff8000 <= pk
+    /\ (forall x, aclient (rt_live RT Σ0) (rt_frames RT Σ0) (bv_unsigned sp + -16) x -> ~ (pk <= x < pk + 40)).
 
 (* [comment removed for export] *)
 Lemma cr_step : forall (E R2 TAB n Rp Rk bnd itb crd bnd' itb' crd' : Z),
@@ -278,72 +425,95 @@ Lemma cr_step : forall (E R2 TAB n Rp Rk bnd itb crd bnd' itb' crd' : Z),
   0 <= Rk < 2 ^ 32 -> Rk mod 2 = 0 ->
   bnd + 82 + n <= bnd' -> itb + 82 + n <= itb' -> crd + 1 <= crd' -> 0 <= bnd -> bnd' <= 4320 -> itb' <= 4318 -> 0 <= crd -> crd' <= 36 ->
   forall c, CRI Rp bnd itb crd c -> (forall c', CRI Rk bnd' itb' crd' c' -> realizes asegs c' T) -> realizes asegs c T.
-Proof.
-  intros E R2 TAB n Rp Rk bnd itb crd bnd' itb' crd' STUB TAB_E N0 ECW INS INC INSS INCC RK EVEN Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 c (Σ & m & pk & lh & B & L & g & bks & lb & t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & F & fc & HA & ART1 & MI1 & ST1 & FR1 & ENV1 & STP1 & OD1 & ONCE1 & BRET1
-            & STC1 & CB1 & MC1 & REPE1 & PERM1 & LL1 & IT1 & FRS1 & SP1 & CR1 & CG1 & UWC1 & PRES1 & NPK & PK0 & PK16 & PKHI & PKH) Hk.
-  pose proof CALL as (ST & LOW & LOR & SPT & SPA). pose proof (af_sp0_win RT AF Σ0 m0 ART00) as SP0W. pose proof (af_sp0_range RT AF Σ0 m0 ART00) as SP0R.
-  assert (NUM : 0x10007fff8000 <= lo /\ usp <= USTACK_TOP) by (unfold usp, RT_STACK, STACK_WIN, USTACK_TOP in *; lia).
-  assert (EU1 : bv_unsigned (Z_to_bv 64 (usp + -16)) = usp + -16) by (apply unsigned_lit; unfold usp, USTACK_TOP, RT_STACK in *; lia).
-  assert (HT1 : bv_unsigned sp <= 2 ^ 47) by (unfold usp, USTACK_TOP in *; lia).
-  pose proof (ECW sp gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo ST1 ltac:(lia) ltac:(unfold usp, RT_STACK in *; lia) HT1 MI1) as W.
-  cl_lift W HA c1 Hc1. destruct (ASTA_unpack RT Σ _ _ c1 Hc1) as (ms1 & -> & Hc1'). clear Hc1.
-  pose proof CTX as CTXk. pose proof CGH as CGHk. rewrite <- CG1 in CTXk, CGHk.
-  destruct (cl_chain_call (rt_cg RT Σ) e_crypto_strs E Rk m m ra s0 sp (Z_to_bv 64 (usp + -16)) outer CTXk (cg_has_site _ _ _ Rk e_crypto_strs CGHk (memP_true _ _ INS)) (cg_has_call _ _ _ Rk E CGHk (memP_true _ _ INC)) UWC1 ltac:(intros a _; reflexivity)
-              ltac:(fold usp; replace (usp - 16) with (usp + -16) by lia; exact FR1) ltac:(rewrite EU1; unfold usp; lia) SPT) as (CTXc & UWCc).
-  pose proof (Permutation_length PERM1) as PL1. rewrite length_app in PL1. cbn [length] in PL1.
-  assert (INPK : In (pk, 40) (rt_live RT Σ)) by (eapply Permutation_in; [apply Permutation_sym; exact PERM1| apply in_or_app; right; left; reflexivity]).
-  pose proof (af_live_range RT AF Σ m pk 40 ART1 INPK) as (_ & PKLO & _). rewrite SP1 in PKLO.
-  apply (STUB Σ PMc (Z_to_bv 64 Rk) (Z_to_bv 64 (usp + -16)) gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 (Z_to_bv 64 1) a1 a2 a3 a4 a5 a6 a7
-           s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo (bv_unsigned ra :: outer) lb canary L ((pk, 40) :: rt_live RT Σ0) lh B g bks pk 43 39 FDO MST eq_refl ART1 MI1).
-  { unfold call_ok. rewrite EU1. split; [exact ST1|]. split; [rewrite SP1; exact LOW|]. split; [unfold usp, RT_STACK in *; lia|]. split; [unfold usp, USTACK_TOP in *; lia|].
-    unfold usp in *. clear - SPA. Z.div_mod_to_equations. lia. }
-  { rewrite EU1. unfold usp, RT_STACK in *. lia. }
-  { rewrite (unsigned_lit Rk) by lia. exact CTXc. }
-  { exact UWCc. }
-  { exact (cg_has_weaken _ _ _ _ _ CGHk INSS INCC). }
-  { rewrite FRS1. exact Hfr. }
-  { cbn [length]. lia. }
-  { lia. }
-  { exact ENV1. }
-  { exact STC1. }
-  { left. reflexivity. }
-  { clear - PK16. Z.div_mod_to_equations. lia. }
-  { exact MC1. }
-  { exact REPE1. }
-  { exact PERM1. }
-  { constructor; [cbn; lia| exact POS]. }
-  { exact TAB_libraries. }
-  { exact TAB_reasons. }
-  { exact TAB_E. }
-  { lia. }
-  { lia. }
-  { lia. }
-  { unfold LH_KMAX. lia. }
-  { exact Hc1'. }
-  clear Hc1'. intros c2 (Σ2 & L2 & B2 & g2 & bks2 & lb2 & Hc2 & PERM2 & LL2 & IT2 & FRS2 & SP2 & CR2 & CG2).
-  destruct (ASTA_unpack RT Σ2 _ _ c2 Hc2) as (ms2 & (m2 & RS2 & (ART2 & MI2 & ST2) & PRES2 & ENV2 & REPE2 & MC2 & STC2) & Hc2'). clear Hc2.
-  destruct RS2 as (w0 & w1 & w2 & e1 & e2 & e3 & e4 & e5 & e6 & e7 & w3 & w4 & w5 & w6 & F2 & fc2 & ->).
-  rewrite EU1 in ST2, PRES2. rewrite (ret_pc_even Rk) in Hc2' by lia. rewrite FRS1 in PRES2.
-  assert (AG2 : forall P : Z -> Prop, (forall x, P x -> aclient ((pk, 40) :: rt_live RT Σ0) (rt_frames RT Σ0) (usp - 16) x /\ x <> G_ALLOW_CUST /\ ~ (pk + 4 <= x < pk + 8)) -> agree_on P m m2).
-  { intros P HP a Ha. destruct (HP _ Ha) as (X1 & X2 & X3). apply PRES2; [| cbn [outside]; repeat split; try exact I; lia].
-    apply (aclient_mono _ _ _ _ _ _ _ X1); [intros e He; exact He| intros e He; exact He| lia]. }
-  assert (STAT2 : forall a cs, rw_cells asegs m a cs -> 0xb8f190 <= a -> a + Z.of_nat (cells_size cs) <= 0xba3e98 -> (a + Z.of_nat (cells_size cs) <= G_ALLOW_CUST \/ G_ALLOW_CUST + 1 <= a) -> rw_cells asegs m2 a cs).
-  { intros a cs H H1 H2 H3. apply (rw_cells_agree_nw asegs m m2 _ _ H). apply AG2. intros x Hx. split; [right; left; apply client_static_intro; lia|]. unfold G_ALLOW_CUST in *. lia. }
-  unfold G_ALLOW_CUST, G_IC_STOPPED, G_IC_OPTSDONE, G_IC_BASE_ONCE, G_IC_BASE_RET, G_CANCELBUF in *.
-  apply Hk. exists Σ2, m2, pk, lh, B2, L2, g2, bks2, lb2, w0, w1, w2, e1, e2, e3, e4, e5, e6, e7, w3, w4, w5, w6, F2, fc2.
-  split; [exact Hc2'|]. split; [exact ART2|]. split; [exact MI2|]. split; [exact ST2|].
-  split. { apply (rw_cells_agree_nw asegs m m2 _ _ FR1). apply AG2. cbn [cells_size csize Nat.add]. intros x Hx. split; [left; unfold usp, USTACK_TOP in *; lia|]. unfold usp, STACK_WIN, RT_STACK in *. lia. }
-  split; [exact ENV2|].
-  split; [exact (STAT2 _ _ STP1 ltac:(lia) ltac:(cbn; lia) ltac:(cbn; lia))|]. split; [exact (STAT2 _ _ OD1 ltac:(lia) ltac:(cbn; lia) ltac:(cbn; lia))|].
-  split; [exact (STAT2 _ _ ONCE1 ltac:(lia) ltac:(cbn; lia) ltac:(cbn; lia))|]. split; [exact (STAT2 _ _ BRET1 ltac:(lia) ltac:(cbn; lia) ltac:(cbn; lia))|].
-  split; [exact STC2|]. split; [exact (STAT2 _ _ CB1 ltac:(lia) ltac:(cbn; lia) ltac:(cbn; lia))|]. split; [exact MC2|]. split; [exact REPE2|]. split; [exact PERM2|].
-  split; [lia|]. split; [pose proof (proj1 (proj1 REPE2)) as GOK; unfold lh_geo_ok in GOK; lia|].
-  split; [rewrite FRS2; exact FRS1|]. split; [rewrite SP2; exact SP1|]. split; [lia|]. split; [rewrite CG2; exact CG1|].
-  split; [exact (uw_chain_agree outer m m2 sp s0 UWC1 ltac:(apply AG2; intros x Hx; split; [left; unfold usp in *; lia|]; unfold usp, USTACK_TOP, STACK_WIN, RT_STACK in *; lia))|].
-  split. { intros a Ha Ho. pose proof Ho as Ho'. cbn [outside] in Ho'. destruct Ho' as (O1 & _). unfold G_ALLOW_CUST in O1.
-           rewrite (PRES2 a ltac:(apply (aclient_mono _ _ _ _ _ _ _ Ha); [intros e He; right; exact He| intros e He; exact He| lia]) ltac:(cbn [outside]; pose proof (NPK _ Ha); repeat split; try exact I; lia)).
-           exact (PRES1 a Ha Ho). }
-  split; [exact NPK|]. split; [exact PK0|]. split; [exact PK16|]. exact (conj PKHI PKH).
+Proof using AF GO_libraries GO_reasons FDO MST ART00 CALL HSTK CTX CGH Hfr Hlen Hcr POS.
+  intros E R2 TAB n Rp Rk bnd itb crd bnd' itb' crd' callee table n_nonneg walk
+    site_in call_in sites_in calls_in rk_range rk_even
+    bnd_step itb_step crd_step bnd_pos bnd_cap itb_cap crd_pos crd_cap c here next.
+  destruct here as (Σ1 & pk & lh & B & L1 & g1 & bks1 & lb1 & at1 & perm1 & len1 & items1 & frames1 & sp01 & credit1 & cg1 & pk_pos & pk_al & pk_top & pk_high & pk_apart).
+  destruct (ASTA_unpack RT Σ1 PMc _ c at1) as (ms1 & (t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & F1 & fc1 & m1 & -> & art1 & inv1 & stk1 & frame1 & chain1 & pres1 & env1 & stp1 & od1 & once1 & bret1 & errs1 & cbuf1 & mtx1 & rep1) & now1).
+  clear at1.
+  destruct CALL as (stk0 & lo_win & lo_stack & sp_top & sp_align).
+  pose proof (af_sp0_win RT AF Σ0 m0 ART00) as sp0_high.
+  assert (lo_high : 0x10007fff8000 <= lo) by (unfold STACK_WIN in *; lia).
+  assert (lo_room : lo <= bv_unsigned sp - 16) by (unfold usp, RT_STACK in *; lia).
+  assert (sp_cap : bv_unsigned sp <= 2 ^ 47) by (unfold USTACK_TOP in *; lia).
+  assert (callee_sp : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -16)) = bv_unsigned sp + -16) by (apply unsigned_lit; lia).
+  assert (rk_lit : bv_unsigned (Z_to_bv 64 Rk) = Rk) by (apply unsigned_lit; lia).
+  pose proof (walk sp gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+                F1 fc1 m1 lo stk1 lo_high lo_room sp_cap inv1) as run1.
+  refine (cps_realizes asegs _ _ T c (asta_evt' RT AF Σ1 PMc _ _ MST _) now1 _); [intros ms <-; exact run1|].
+  intros c2 at2. clear run1 now1.
+  refine (callee Σ1 PMc (Z_to_bv 64 Rk) (Z_to_bv 64 (bv_unsigned sp + -16)) gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 (Z_to_bv 64 1)
+            a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F1 fc1 m1 lo (bv_unsigned ra :: outer) lb1 canary
+            L1 ((pk, 40) :: rt_live RT Σ0) lh B g1 bks1 pk 43 39 FDO MST eq_refl art1 inv1 _ _ _ _ _ _ _ _ env1 errs1 (or_introl eq_refl) _ mtx1 rep1 perm1 _
+            TAB_libraries TAB_reasons table _ _ n_nonneg _ T c2 _ _).
+
+  - unfold call_ok. rewrite callee_sp. rewrite sp01.
+    refine (conj stk1 (conj lo_win (conj _ (conj _ _)))); [unfold RT_STACK in *; lia | lia |].
+    rewrite Zplus_mod, sp_align. reflexivity.
+  - rewrite callee_sp. unfold usp, RT_STACK in *. lia.
+  - rewrite cg1, rk_lit.
+    apply (cg_ctx_call _ e_crypto_strs E Rk _ CTX).
+    + exact (cg_has_site _ _ _ _ _ CGH (memP_true _ _ site_in)).
+    + exact (cg_has_call _ _ _ _ _ CGH (memP_true _ _ call_in)).
+  - cbn [uw_chain]. rewrite callee_sp.
+    split; [lia|]. split; [exact sp_top|]. exists s0. split; [|exact chain1].
+    rewrite (Z_to_bv_bv_unsigned ra). replace (bv_unsigned sp - 16) with (bv_unsigned sp + -16) by lia. exact frame1.
+  - rewrite cg1. exact (cg_has_weaken _ _ _ _ _ CGH sites_in calls_in).
+  - rewrite frames1. exact Hfr.
+  - rewrite (Permutation_length perm1), length_app. cbn [length]. lia.
+  - lia.
+  - clear - pk_al. Z.div_mod_to_equations. lia.
+  - constructor; [cbn; lia | exact POS].
+  - lia.
+  - lia.
+  - unfold LH_KMAX. lia.
+  - refine (ASTA_conseq RT Σ1 PMc _ _ c2 at2 _). intros ms ->. reflexivity.
+  - intros c3 (Σ2 & L2 & B2 & g2 & bks2 & lb2 & at3 & perm2 & len2 & items2 & frames2 & sp02 & credit2 & cg2).
+    apply next. unfold CRI.
+    exists Σ2, pk, lh, B2, L2, g2, bks2, lb2.
+    refine (conj _ (conj perm2 _)).
+    2: { split; [lia|]. split; [lia|]. split; [congruence|]. split; [congruence|]. split; [lia|]. split; [congruence|].
+         exact (conj pk_pos (conj pk_al (conj pk_top (conj pk_high pk_apart)))). }
+    refine (ASTA_conseq RT Σ2 PMc _ _ c3 at3 _).
+    intros ms (m2 & (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->) & (art2 & inv2 & stk2) & pres2 & env2 & rep2 & mtx2 & errs2).
+    rewrite callee_sp in stk2, pres2.
+    assert (kept : forall a : word, aclient (rt_live RT Σ0) (rt_frames RT Σ0) (bv_unsigned sp + -16) (bv_unsigned a) ->
+                    ~ (G_ALLOW_CUST <= bv_unsigned a < G_ALLOW_CUST + 1) -> m2 a = m1 a).
+    { intros a client not_flag. apply pres2.
+      - apply (aclient_mono _ _ _ _ _ _ _ client); [intros e e_in; right; exact e_in | rewrite frames1; tauto | lia].
+      - cbn [outside]. pose proof (pk_apart _ client). split; [exact not_flag|]. split; [lia | exact I]. }
+    assert (stays : forall A cs, rw_cells asegs m1 A cs ->
+                (forall x, A <= x < A + Z.of_nat (cells_size cs) ->
+                   aclient (rt_live RT Σ0) (rt_frames RT Σ0) (bv_unsigned sp + -16) x /\ ~ (G_ALLOW_CUST <= x < G_ALLOW_CUST + 1)) ->
+                rw_cells asegs m2 A cs).
+    { intros A cs held span. apply (rw_cells_agree_nw asegs m1 m2 A cs held). intros a a_in. destruct (span _ a_in) as [client flag]. exact (kept a client flag). }
+    exists u0, u1, u2, b1, b2, b3, b4, b5, b6, b7, u3, u4, u5, u6, F2, fc2, m2.
+    split. { rewrite (ret_pc_even Rk) by lia. reflexivity. }
+    split; [exact art2|]. split; [exact inv2|]. split; [exact stk2|].
+    split.
+    { apply (stays _ _ frame1). intros x x_in. cbn [cells_size csize Nat.add] in x_in.
+      split; [left; unfold USTACK_TOP in *; lia | unfold G_ALLOW_CUST; lia]. }
+    split.
+    { apply (uw_chain_agree outer m1 m2 sp s0 chain1). intros a a_in. cbv beta in a_in.
+      apply kept; [left; lia | unfold G_ALLOW_CUST; lia]. }
+    split.
+    { intros a client outside_w. pose proof outside_w as flag. cbn [EFIRST_W outside] in flag. destruct flag as [flag _].
+      rewrite (kept a ltac:(apply (aclient_mono _ _ _ _ _ _ _ client); [tauto | tauto | lia]) flag).
+      exact (pres1 a client outside_w). }
+    split; [exact env2|].
+    split.
+    { apply (stays _ _ stp1). intros x x_in. cbn in x_in. split; [right; left; apply client_static_intro|]; unfold G_ALLOW_CUST, G_IC_STOPPED in *; lia. }
+    split.
+    { apply (stays _ _ od1). intros x x_in. cbn in x_in. split; [right; left; apply client_static_intro|]; unfold G_ALLOW_CUST, G_IC_OPTSDONE in *; lia. }
+    split.
+    { apply (stays _ _ once1). intros x x_in. cbn in x_in. split; [right; left; apply client_static_intro|]; unfold G_ALLOW_CUST, G_IC_BASE_ONCE in *; lia. }
+    split.
+    { apply (stays _ _ bret1). intros x x_in. cbn in x_in. split; [right; left; apply client_static_intro|]; unfold G_ALLOW_CUST, G_IC_BASE_RET in *; lia. }
+    split; [exact errs2|].
+    split.
+    { apply (stays _ _ cbuf1). intros x x_in. cbn in x_in. split; [right; left; apply client_static_intro|]; unfold G_ALLOW_CUST, G_CANCELBUF in *; lia. }
+    exact (conj mtx2 rep2).
 Qed.
 
 (* [comment removed for export] *)
@@ -354,75 +524,85 @@ Lemma cr_step0 : forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (F
   rw_cells asegs m0 G_CANCELBUF [C8 oldcb] ->
   ASTA RT Σ0 PMc (eq (entry_st ra sp gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_crypto_strs m0)) c ->
   (forall c', CRI 0x511118 84 82 2 c' -> realizes asegs c' T) -> realizes asegs c T.
-Proof.
-  intros t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 F fc lb lk0 h0 f0 c MI0 UWC ENV STP OD ONCE BRET ONC LKC LHC FLC CBC HA Hk.
-  pose proof CALL as (ST & LOW & LOR & SPT & SPA). pose proof (af_sp0_win RT AF Σ0 m0 ART00) as SP0W. pose proof (af_sp0_range RT AF Σ0 m0 ART00) as SP0R.
-  assert (NUM : 0x10007fff8000 <= lo /\ usp <= USTACK_TOP /\ SEGTOP_A <= lo) by (unfold usp, RT_STACK, STACK_WIN, USTACK_TOP, SEGTOP_A in *; lia).
-  assert (EU1 : bv_unsigned (Z_to_bv 64 (usp + -16)) = usp + -16) by (apply unsigned_lit; unfold usp, USTACK_TOP, RT_STACK in *; lia).
-  assert (HT1 : bv_unsigned sp <= 2 ^ 47) by (unfold usp, USTACK_TOP in *; lia).
-  pose proof (ec_w0 ra sp gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m0 lo ST ltac:(lia) ltac:(unfold usp, RT_STACK in *; lia) HT1 MI0) as W.
-  cl_lift W HA c1 Hc1. destruct (ASTA_unpack RT Σ0 _ _ c1 Hc1) as (ms1 & (m1 & -> & MU1 & WM1 & MI1 & FR1 & ST1) & Hc1'). clear Hc1. fold usp in MU1, FR1, ST1, Hc1'.
-  assert (MU1' : munch ([] ++ [(usp - 16, usp)]) m0 m1) by (eapply munch_weaken; [| exact MU1]; unfold sub_fp; cbn [outside app]; intros; lia).
-  pose proof (cl_seg_ART RT AF Σ0 m0 m1 usp 16 [] ART00 ltac:(unfold usp, RT_STACK in *; lia) ltac:(lia) MU1' ltac:(intros x Hx; exfalso; apply Hx; exact I) WM1) as ART1.
-  pose proof (cl_seg_pres RT AF Σ0 m0 m1 usp 16 [] ART00 ltac:(unfold usp, RT_STACK in *; lia) ltac:(lia) MU1') as PR1.
-  assert (STAT1 : forall a cs, rw_cells asegs m0 a cs -> 0x10000 <= a -> a + Z.of_nat (cells_size cs) <= SEGTOP_A -> rw_cells asegs m1 a cs).
-  { intros a cs H H1 H2. apply (rw_cells_agree asegs m0 m1 _ _ H); [| exact WM1]. intros x Hx. cbv beta in Hx. apply MU1. cbn [outside]. unfold SEGTOP_A, RT_STACK in *. split; [lia| exact I]. }
-  unfold G_IC_STOPPED, G_IC_OPTSDONE, G_IC_BASE_ONCE, G_IC_BASE_RET, G_ERR_ONCE, G_ERR_LOCK, G_ERR_HASH, G_ERR_FLAG, G_CANCELBUF in *.
-  assert (ENV1 : cl_env m1 lb canary).
-  { apply (cl_env_agree m0 m1 lb canary ENV). intros a Ha. pose proof (client_static_range _ (cl_cell_static _ Ha)) as CR. unfold SEGTOP_A, RT_STACK in *. apply MU1. cbn [outside]. split; [lia| exact I]. }
-  pose proof (uw_chain_agree outer m0 m1 sp s0 UWC ltac:(intros a Ha; apply MU1; cbn [outside]; cbv beta in Ha; unfold usp in *; split; [lia| exact I])) as UWC1.
-  pose proof CTX as CTXk. pose proof CGH as CGHk.
-  destruct (cl_chain_call (rt_cg RT Σ0) e_crypto_strs e_err_strings 0x511118 m1 m1 ra s0 sp (Z_to_bv 64 (usp + -16)) outer CTXk
-              (cg_has_site _ _ _ 0x511118 e_crypto_strs CGHk ltac:(apply memP_true; vm_compute; reflexivity))
-              (cg_has_call _ _ _ 0x511118 e_err_strings CGHk ltac:(apply memP_true; vm_compute; reflexivity)) UWC1 ltac:(intros a _; reflexivity)
-              ltac:(fold usp; replace (usp - 16) with (usp + -16) by lia; exact FR1) ltac:(rewrite EU1; unfold usp; lia) SPT) as (CTXc & UWCc).
-  apply (C_EFIRST Σ0 PMc (Z_to_bv 64 0x511118) (Z_to_bv 64 (usp + -16)) gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 a0 a1 a2 a3 a4 a5 a6 a7
-           s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m1 lo (bv_unsigned ra :: outer) lb canary od lk0 h0 f0 oldcb 43 39 FDO MST eq_refl ART1 MI1).
-  { unfold call_ok. rewrite EU1. split; [exact ST1|]. split; [exact LOW|]. split; [unfold usp, RT_STACK in *; lia|]. split; [unfold usp, USTACK_TOP in *; lia|].
-    unfold usp in *. clear - SPA. Z.div_mod_to_equations. lia. }
-  { rewrite EU1. unfold usp, RT_STACK in *. lia. }
-  { rewrite (unsigned_lit 0x511118) by lia. exact CTXc. }
-  { exact UWCc. }
-  { apply (cg_has_weaken _ _ _ _ _ CGHk); vm_compute; reflexivity. }
-  { exact Hfr. }
-  { lia. }
-  { lia. }
-  { exact POS. }
-  { exact ENV1. }
-  { exact (STAT1 _ _ STP ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ OD ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ ONCE ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ BRET ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ ONC ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ LKC ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ LHC ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ FLC ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact (STAT1 _ _ CBC ltac:(lia) ltac:(cbn; unfold SEGTOP_A; lia)). }
-  { exact TAB_libraries. }
-  { exact TAB_reasons. }
-  { lia. }
-  { lia. }
-  { unfold LH_KMAX. lia. }
-  { exact Hc1'. }
-  clear Hc1'. intros c2 (Σ2 & pk & lh & B & L2 & g2 & bks2 & lb2 & Hc2 & PERM2 & LL2 & IT2 & FRS2 & SP2 & CR2 & CG2 & PK0 & PK16 & PKHI & PKH & NPK).
-  destruct (ASTA_unpack RT Σ2 _ _ c2 Hc2) as (ms2 & (m2 & RS2 & (ART2 & MI2 & ST2) & PRES2 & ENV2 & STP2 & OD2 & ONCE2 & BRET2 & STC2 & CB2 & MC2 & REPE2) & Hc2'). clear Hc2.
-  destruct RS2 as (w0 & w1 & w2 & e1 & e2 & e3 & e4 & e5 & e6 & e7 & w3 & w4 & w5 & w6 & F2 & fc2 & ->).
-  rewrite EU1 in ST2, PRES2, NPK. rewrite (ret_pc_even 0x511118) in Hc2' by lia. fold usp in NPK.
-  assert (AG2 : forall P : Z -> Prop, (forall x, P x -> aclient (rt_live RT Σ0) (rt_frames RT Σ0) (usp - 16) x /\ x <> G_ALLOW_CUST /\ ~ (0xb9f820 <= x < 0xb9f824) /\ ~ (0xb9f7e0 <= x < 0xb9f7e8)
-                    /\ ~ (0xb9f800 <= x < 0xb9f808) /\ ~ (0xb9f840 <= x < 0xb9f844) /\ ~ (0xba3e90 <= x < 0xba3e98)) -> agree_on P m1 m2).
-  { intros P HP a Ha. destruct (HP _ Ha) as (X1 & X2 & X3 & X4 & X5 & X6 & X7). apply PRES2; [exact X1|]. unfold EFIRST_W. cbn [outside]. unfold G_ALLOW_CUST, G_ERR_ONCE, G_ERR_LOCK, G_ERR_HASH, G_ERR_FLAG, G_CANCELBUF in *. repeat split; try exact I; lia. }
-  apply Hk. exists Σ2, m2, pk, lh, B, L2, g2, bks2, lb2, w0, w1, w2, e1, e2, e3, e4, e5, e6, e7, w3, w4, w5, w6, F2, fc2.
-  split; [exact Hc2'|]. split; [exact ART2|]. split; [exact MI2|]. split; [exact ST2|].
-  split. { apply (rw_cells_agree_nw asegs m1 m2 _ _ FR1). apply AG2. cbn [cells_size csize Nat.add]. intros x Hx. split; [left; unfold usp, USTACK_TOP in *; lia|]. unfold G_ALLOW_CUST, usp, STACK_WIN, RT_STACK in *. repeat split; lia. }
-  split; [exact ENV2|]. split; [exact STP2|]. split; [exact OD2|]. split; [exact ONCE2|]. split; [exact BRET2|]. split; [exact STC2|]. split; [exact CB2|]. split; [exact MC2|]. split; [exact REPE2|]. split; [exact PERM2|].
-  split; [lia|]. split; [lia|].
-  split; [exact FRS2|]. split; [exact SP2|]. split; [lia|]. split; [exact CG2|].
-  split; [exact (uw_chain_agree outer m1 m2 sp s0 UWC1 ltac:(apply AG2; intros x Hx; split; [left; unfold usp in *; lia|]; unfold G_ALLOW_CUST, usp, USTACK_TOP, STACK_WIN, RT_STACK in *; repeat split; lia))|].
-  split. { intros a Ha Ho. assert (NPKa : ~ (pk <= bv_unsigned a < pk + 40)) by (apply NPK; apply (aclient_mono _ _ _ _ _ _ _ Ha); [intros e He; exact He| intros e He; exact He| lia]).
-           pose proof Ho as Ho'. cbn [outside] in Ho'. unfold G_ALLOW_CUST, G_ERR_ONCE, G_ERR_LOCK, G_ERR_HASH, G_ERR_FLAG, G_CANCELBUF in Ho'. destruct Ho' as (O1 & O2 & O3 & O4 & O5 & O6 & _).
-           rewrite (PRES2 a ltac:(apply (aclient_mono _ _ _ _ _ _ _ Ha); [intros e He; exact He| intros e He; exact He| lia]) Ho). exact (PR1 a Ha I). }
-  split; [intros x Hx; apply NPK; apply (aclient_mono _ _ _ _ _ _ _ Hx); [intros e He; exact He| intros e He; exact He| lia]|].
-  split; [exact PK0|]. split; [exact PK16|]. exact (conj PKHI PKH).
+Proof using AF C_EFIRST GO_libraries GO_reasons FDO MST ART00 CALL HSTK CTX CGH Hfr Hlen Hcr POS.
+  intros t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 F fc lb lk0 h0 f0 c
+    inv0 chain0 env0 stp0 od0 once0 bret0 eonce0 elock0 ehash0 eflag0 cbuf0 entry next.
+  destruct CALL as (stk0 & lo_win & lo_stack & sp_top & sp_align).
+  pose proof (af_sp0_win RT AF Σ0 m0 ART00) as sp0_high.
+  assert (lo_high : 0x10007fff8000 <= lo) by (unfold STACK_WIN in *; lia).
+  assert (lo_room : lo <= bv_unsigned sp - 16) by (unfold usp, RT_STACK in *; lia).
+  assert (sp_cap : bv_unsigned sp <= 2 ^ 47) by (unfold USTACK_TOP in *; lia).
+  assert (callee_sp : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -16)) = bv_unsigned sp + -16) by (apply unsigned_lit; lia).
+  pose proof (ec_w0 ra sp gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+                F fc m0 lo stk0 lo_high lo_room sp_cap inv0) as run0.
+  refine (cps_realizes asegs _ _ T c (asta_evt' RT AF Σ0 PMc _ _ MST _) entry _); [intros ms <-; exact run0|].
+  intros c1 at1. clear run0 entry.
+  destruct (ASTA_unpack RT Σ0 PMc _ c1 at1) as (ms1 & (m1 & -> & munch1 & mono1 & inv1 & frame1 & stk1) & now1). clear at1.
+  pose proof (cl_seg_ART RT AF Σ0 m0 m1 (bv_unsigned sp) 16 [] ART00 ltac:(unfold STACK_WIN in *; lia) ltac:(lia) munch1
+                ltac:(intros x x_out; exfalso; apply x_out; exact I) mono1) as art1.
+  pose proof (cl_seg_pres RT AF Σ0 m0 m1 (bv_unsigned sp) 16 [] ART00 ltac:(unfold STACK_WIN in *; lia) ltac:(lia) munch1) as pres01.
+  assert (above1 : agree_on (fun x => bv_unsigned sp <= x < USTACK_TOP) m0 m1).
+  { intros a a_in. apply munch1. cbn [outside]. split; [lia | exact I]. }
+  assert (below : forall A cs, rw_cells asegs m0 A cs -> A + Z.of_nat (cells_size cs) <= bv_unsigned sp - 16 -> rw_cells asegs m1 A cs).
+  { intros A cs held fits. apply (rw_cells_agree_nw asegs m0 m1 A cs held). intros a a_in. apply munch1. cbn [outside]. split; [lia | exact I]. }
+  pose proof (cl_env_seg [(bv_unsigned sp - 16, bv_unsigned sp)] m0 m1 lb canary env0 munch1 ltac:(cl_fp_lia)) as env1.
+  refine (C_EFIRST Σ0 PMc (Z_to_bv 64 0x511118) (Z_to_bv 64 (bv_unsigned sp + -16)) gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 a0 a1 a2 a3 a4 a5 a6 a7
+            s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m1 lo (bv_unsigned ra :: outer) lb canary od lk0 h0 f0 oldcb 43 39
+            FDO MST eq_refl art1 inv1 _ _ _ _ _ Hfr _ _ POS env1 _ _ _ _ _ _ _ _ _ TAB_libraries TAB_reasons _ _ _ T c1 now1 _).
+
+  - unfold call_ok. rewrite callee_sp.
+    refine (conj stk1 (conj lo_win (conj _ (conj _ _)))); [unfold RT_STACK in *; lia | lia |].
+    rewrite Zplus_mod, sp_align. reflexivity.
+  - rewrite callee_sp. unfold usp, RT_STACK in *. lia.
+  - rewrite (unsigned_lit 0x511118) by lia.
+    apply (cg_ctx_call _ e_crypto_strs e_err_strings 0x511118 _ CTX).
+    + apply (cg_has_site _ _ _ _ _ CGH). vm_compute. left. reflexivity.
+    + apply (cg_has_call _ _ _ _ _ CGH). vm_compute. left. reflexivity.
+  - cbn [uw_chain]. rewrite callee_sp.
+    split; [lia|]. split; [exact sp_top|]. exists s0. split.
+    + rewrite (Z_to_bv_bv_unsigned ra). replace (bv_unsigned sp - 16) with (bv_unsigned sp + -16) by lia. exact frame1.
+    + exact (uw_chain_agree outer m0 m1 sp s0 chain0 above1).
+  - apply (cg_has_weaken _ _ _ _ _ CGH); vm_compute; reflexivity.
+  - lia.
+  - lia.
+  - apply (below _ _ stp0). cbn. unfold G_IC_STOPPED. lia.
+  - apply (below _ _ od0). cbn. unfold G_IC_OPTSDONE. lia.
+  - apply (below _ _ once0). cbn. unfold G_IC_BASE_ONCE. lia.
+  - apply (below _ _ bret0). cbn. unfold G_IC_BASE_RET. lia.
+  - apply (below _ _ eonce0). cbn. unfold G_ERR_ONCE. lia.
+  - apply (below _ _ elock0). cbn. unfold G_ERR_LOCK. lia.
+  - apply (below _ _ ehash0). cbn. unfold G_ERR_HASH. lia.
+  - apply (below _ _ eflag0). cbn. unfold G_ERR_FLAG. lia.
+  - apply (below _ _ cbuf0). cbn. unfold G_CANCELBUF. lia.
+  - lia.
+  - lia.
+  - unfold LH_KMAX. lia.
+  - intros c2 (Σ1 & pk & lh & B & L1 & g1 & bks1 & lb1 & at2 & perm1 & len1 & items1 & frames1 & sp01 & credit1 & cg1 & pk_pos & pk_al & pk_top & pk_high & pk_apart).
+    rewrite callee_sp in pk_apart.
+    apply next. unfold CRI. exists Σ1, pk, lh, B, L1, g1, bks1, lb1.
+    refine (conj _ (conj perm1 _)).
+    2: { split; [lia|]. split; [lia|]. split; [exact frames1|]. split; [exact sp01|]. split; [lia|]. split; [exact cg1|].
+         exact (conj pk_pos (conj pk_al (conj pk_top (conj pk_high pk_apart)))). }
+    refine (ASTA_conseq RT Σ1 PMc _ _ c2 at2 _).
+    intros ms (m2 & (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->) & (art2 & inv2 & stk2) & pres12 & env2
+                  & stp2 & od2 & once2 & bret2 & errs2 & cbuf2 & mtx2 & rep2).
+    rewrite callee_sp in stk2, pres12.
+    exists u0, u1, u2, b1, b2, b3, b4, b5, b6, b7, u3, u4, u5, u6, F2, fc2, m2.
+    split. { rewrite (ret_pc_even 0x511118) by lia. reflexivity. }
+    split; [exact art2|]. split; [exact inv2|]. split; [exact stk2|].
+    split.
+    { apply (rw_cells_agree_nw asegs m1 m2 _ _ frame1). intros a a_in. cbn [cells_size csize Nat.add] in a_in. cbv beta in a_in.
+      apply pres12; [left; unfold USTACK_TOP in *; lia|].
+      cbn [EFIRST_W outside]. unfold G_ALLOW_CUST, G_ERR_ONCE, G_ERR_LOCK, G_ERR_HASH, G_ERR_FLAG, G_CANCELBUF. repeat split; try lia. }
+    split.
+    { apply (uw_chain_agree outer m0 m2 sp s0 chain0). intros a a_in. cbv beta in a_in.
+      rewrite (pres12 a ltac:(left; lia)); [exact (above1 a a_in)|].
+      cbn [EFIRST_W outside]. unfold G_ALLOW_CUST, G_ERR_ONCE, G_ERR_LOCK, G_ERR_HASH, G_ERR_FLAG, G_CANCELBUF. repeat split; try lia. }
+    split.
+    { intros a client outside_w.
+      rewrite (pres12 a ltac:(apply (aclient_mono _ _ _ _ _ _ _ client); [tauto | tauto | lia]) outside_w).
+      exact (pres01 a client I). }
+    exact (conj env2 (conj stp2 (conj od2 (conj once2 (conj bret2 (conj errs2 (conj cbuf2 (conj mtx2 rep2)))))))).
 Qed.
 
 (* [comment removed for export] *)
@@ -437,19 +617,26 @@ Lemma cr_exit : forall (Hk0 : forall c', (exists (Σ' : rts RT) (pk lh B : Z) (L
        /\ rt_frames RT Σ' = rt_frames RT Σ0 /\ rt_sp0 RT Σ' = rt_sp0 RT Σ0 /\ rt_credit RT Σ0 - 36 <= rt_credit RT Σ' /\ rt_cg RT Σ' = rt_cg RT Σ0
        /\ 0 < pk /\ pk mod 16 = 0 /\ pk + 40 < USTACK_TOP) -> realizes asegs c' T) c,
   CRI 0x511228 4320 4318 36 c -> realizes asegs c T.
-Proof.
-  intros Hk0 c (Σ & m & pk & lh & B & L & g & bks & lb & t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & F & fc & HA & ART1 & MI1 & ST1 & FR1 & ENV1 & STP1 & OD1 & ONCE1 & BRET1
-            & STC1 & CB1 & MC1 & REPE1 & PERM1 & LL1 & IT1 & FRS1 & SP1 & CR1 & CG1 & UWC1 & PRES1 & NPK & PK0 & PK16 & PKHI & PKH).
-  pose proof CALL as (ST & LOW & LOR & SPT & SPA). pose proof (af_sp0_win RT AF Σ0 m0 ART00) as SP0W.
-  assert (HT1 : bv_unsigned sp <= 2 ^ 47) by (unfold usp, USTACK_TOP in *; lia).
-  pose proof (ec_wx sp gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo ra s0 FR1 ST1 ltac:(unfold RT_STACK, STACK_WIN in *; lia) ltac:(unfold usp, RT_STACK in *; lia) HT1 MI1) as W.
-  cl_lift W HA c1 Hc1. destruct (ASTA_unpack RT Σ _ _ c1 Hc1) as (ms1 & (-> & ST2) & Hc1'). clear Hc1.
-  apply Hk0. exists Σ, pk, lh, B, L, g, bks, lb.
-  split; [| split; [exact PERM1| split; [exact LL1| split; [exact IT1| split; [exact FRS1| split; [exact SP1| split; [exact CR1| split; [exact CG1| split; [exact PK0| exact (conj PK16 PKHI)]]]]]]]]].
-  apply (ASTA_conseq RT Σ PMc _ _ c1 Hc1'). intros ms1 <-. exists m.
-  split; [exists t0, t1, t2, a1, a2, a3, a4, a5, a6, a7, t3, t4, t5, t6, F, fc; reflexivity|].
-  split; [exact (conj ART1 (conj MI1 ST2))|]. split; [exact PRES1|]. split; [exact ENV1|]. split; [exact STP1|]. split; [exact OD1|]. split; [exact ONCE1|]. split; [exact BRET1|].
-  split; [exact STC1|]. split; [exact CB1|]. exact (conj MC1 REPE1).
+Proof using AF MST ART00 CALL HSTK Hfr.
+  intros done c here.
+  destruct here as (Σ1 & pk & lh & B & L1 & g1 & bks1 & lb1 & at1 & perm1 & len1 & items1 & frames1 & sp01 & credit1 & cg1 & pk_pos & pk_al & pk_top & _ & pk_apart).
+  destruct (ASTA_unpack RT Σ1 PMc _ c at1) as (ms1 & (t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & F1 & fc1 & m1 & -> & art1 & inv1 & stk1 & frame1 & chain1 & pres1 & env1 & stp1 & od1 & once1 & bret1 & errs1 & cbuf1 & mtx1 & rep1) & now1).
+  clear at1.
+  destruct CALL as (stk0 & lo_win & lo_stack & sp_top & sp_align).
+  pose proof (af_sp0_win RT AF Σ0 m0 ART00) as sp0_high.
+  assert (lo_high : 0x10007fff8000 <= lo) by (unfold STACK_WIN in *; lia).
+  assert (lo_room : lo <= bv_unsigned sp - 16) by (unfold usp, RT_STACK in *; lia).
+  assert (sp_cap : bv_unsigned sp <= 2 ^ 47) by (unfold USTACK_TOP in *; lia).
+  pose proof (ec_wx sp gp (Z_to_bv 64 0xba3ef0) t0 t1 t2 sp s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+                F1 fc1 m1 lo ra s0 frame1 stk1 lo_high lo_room sp_cap inv1) as run1.
+  refine (cps_realizes asegs _ _ T c (asta_evt' RT AF Σ1 PMc _ _ MST _) now1 _); [intros ms <-; exact run1|].
+  intros c2 at2. apply done.
+  exists Σ1, pk, lh, B, L1, g1, bks1, lb1.
+  split.
+  - refine (ASTA_conseq RT Σ1 PMc _ _ c2 at2 _). intros ms (-> & stk2).
+    exists m1. split; [exists t0, t1, t2, a1, a2, a3, a4, a5, a6, a7, t3, t4, t5, t6, F1, fc1; reflexivity|].
+    exact (conj (conj art1 (conj inv1 stk2)) (conj pres1 (conj env1 (conj stp1 (conj od1 (conj once1 (conj bret1 (conj errs1 (conj cbuf1 (conj mtx1 rep1)))))))))).
+  - exact (conj perm1 (conj len1 (conj items1 (conj frames1 (conj sp01 (conj credit1 (conj cg1 (conj pk_pos (conj pk_al pk_top))))))))).
 Qed.
 End Run.
 
@@ -458,17 +645,14 @@ Local Notation L := (ltac:(lia)) (only parsing).
 
 (* [comment removed for export] *)
 Definition crypto_strs_stmt : Prop :=
-  forall (Σ : rts RT) PMc (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
-    F fc (m : mem) (lo : Z) (outer : list Z) (lb : byte) (canary od lk0 h0 f0 oldcb : word),
+  forall (Σ : rts RT) (PMc : Model -> Prop) (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (outer : list Z) (lb : byte) (canary od lk0 h0 f0 oldcb : word),
   fdfs_only PMc -> mat_stable PMc -> tp = Z_to_bv 64 0xba3ef0 ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo -> lo + RT_STACK + 0x2f0 <= bv_unsigned sp ->
-  cg_ctx (rt_cg RT Σ) e_crypto_strs (bv_unsigned ra :: outer) -> uw_chain m sp s0 outer ->
-  cg_has (rt_cg RT Σ) CR_SITES CR_CALLS ->
+  cg_ctx (rt_cg RT Σ) e_crypto_strs (bv_unsigned ra :: outer) -> uw_chain m sp s0 outer -> cg_has (rt_cg RT Σ) CR_SITES CR_CALLS ->
   (length (rt_frames RT Σ) < FRAMES_MAX)%nat -> Z.of_nat (length (rt_live RT Σ)) + 4324 < LIVE_MAX -> 36 <= rt_credit RT Σ ->
-  Forall (fun x => 0 < snd x) (rt_live RT Σ) ->
-  cl_env m lb canary ->
-  rw_cells asegs m G_IC_STOPPED [C1 (Z_to_bv 8 0)] -> rw_cells asegs m G_IC_OPTSDONE [C8 od] ->
-  rw_cells asegs m G_IC_BASE_ONCE [C4 (Z_to_bv 64 2)] -> rw_cells asegs m G_IC_BASE_RET [C4 (Z_to_bv 64 1)] ->
+  Forall (fun x => 0 < snd x) (rt_live RT Σ) -> cl_env m lb canary ->
+  rw_cells asegs m G_IC_STOPPED [C1 (Z_to_bv 8 0)] -> rw_cells asegs m G_IC_OPTSDONE [C8 od] -> rw_cells asegs m G_IC_BASE_ONCE [C4 (Z_to_bv 64 2)] -> rw_cells asegs m G_IC_BASE_RET [C4 (Z_to_bv 64 1)] ->
   rw_cells asegs m G_ERR_ONCE [C4 z64] -> rw_cells asegs m G_ERR_LOCK [C8 lk0] -> rw_cells asegs m G_ERR_HASH [C8 h0] -> rw_cells asegs m G_ERR_FLAG [C4 f0] ->
   rw_cells asegs m G_CANCELBUF [C8 oldcb] ->
   cps asegs (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_crypto_strs m)))

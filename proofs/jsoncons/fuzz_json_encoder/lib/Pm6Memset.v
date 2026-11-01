@@ -52,126 +52,92 @@ Lemma memset304_run : forall regs (mem rom : word -> option byte) (d ret : word)
     /\ mem' = wbytes mem d (zeros 304)
     /\ regs_agree (fun r => In r memset_clob) regs regs'.
 Proof.
-  intros regs mem rom d ret Hra Hret Hd H11 H12 Hal Hnw Hok.
-  pose proof (u64_range d) as Hdr.
-  assert (Hal4 : (bv_unsigned d mod 4 = 0)%Z).
-  { rewrite <- (Z.mod_mod_divide _ 8 4) by (exists 2%Z; reflexivity). rewrite Hal. reflexivity. }
-  eexists. eexists. split; [|split].
-  - 
-    stepb_ft F_baba0 D_baba0 ltac:(pin; cond_compute).
-    stw F_baba4 D_baba4 (Z_to_bv 64 (bv_unsigned d + 0)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+  intros regs mem rom d ret x1_ret ret_good x10_dst x11_byte x12_len dst_al8 dst_room dst_ok.
+  pose proof (u64_range d) as dst_rng.
+  assert (dst_al4 : (bv_unsigned d mod 4 = 0)%Z).
+  { pose proof (Z.mod_mod_divide (bv_unsigned d) 8 4 (ex_intro _ 2%Z eq_refl)) as fold4.
+    rewrite dst_al8 in fold4. exact (eq_sym fold4). }
+  assert (fill_eq : zstores mem d memset304_ws = wbytes mem d (zeros 304)).
+  { apply (zstores_cover d 304 dst_room);
+      [ reflexivity | exact memset304_ws_inb | exact memset304_ws_cover ]. }
+  do 2 eexists. split; [| split].
+  - stepb_ft F_baba0 D_baba0 ltac:(pin; cond_compute).
+    stw F_baba4 D_baba4 (Z_to_bv 64 (bv_unsigned d + 0)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     sv F_baba8 D_baba8 (Z_to_bv 64 (bv_unsigned d + 304)).
     sn F_babac D_babac.
-    stw F_babb0 D_babb0 (Z_to_bv 64 (bv_unsigned d + 303)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_babb0 D_babb0 (Z_to_bv 64 (bv_unsigned d + 303)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     stepb_ft F_babb4 D_babb4 ltac:(pin; cond_compute).
-    stw F_babb8 D_babb8 (Z_to_bv 64 (bv_unsigned d + 1)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_babbc D_babbc (Z_to_bv 64 (bv_unsigned d + 2)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_babb8 D_babb8 (Z_to_bv 64 (bv_unsigned d + 1)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_babbc D_babbc (Z_to_bv 64 (bv_unsigned d + 2)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     sn F_babc0 D_babc0.
-    stw F_babc4 D_babc4 (Z_to_bv 64 (bv_unsigned d + 301)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_babc8 D_babc8 (Z_to_bv 64 (bv_unsigned d + 302)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_babc4 D_babc4 (Z_to_bv 64 (bv_unsigned d + 301)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_babc8 D_babc8 (Z_to_bv 64 (bv_unsigned d + 302)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     stepb_ft F_babcc D_babcc ltac:(pin; cond_compute).
-    stw F_babd0 D_babd0 (Z_to_bv 64 (bv_unsigned d + 3)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_babd0 D_babd0 (Z_to_bv 64 (bv_unsigned d + 3)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     sn F_babd4 D_babd4.
-    stw F_babd8 D_babd8 (Z_to_bv 64 (bv_unsigned d + 300)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_babd8 D_babd8 (Z_to_bv 64 (bv_unsigned d + 300)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     stepb_ft F_babdc D_babdc ltac:(pin; cond_compute).
     sn F_babe0 D_babe0.
     sn F_babe4 D_babe4.
     sn F_babe8 D_babe8.
-    stepiv F_babec D_babec (Z_to_bv 64 0) ltac:(gres; pin; imm_norm; apply negw_and3_aligned; exact Hal4).
+    stepiv F_babec D_babec (Z_to_bv 64 0)
+      ltac:(gres; pin; imm_norm; apply negw_and3_aligned; exact dst_al4).
     sn F_babf0 D_babf0.
     sn F_babf4 D_babf4.
-    sv F_babf8 D_babf8 (d).
+    sv F_babf8 D_babf8 d.
     sn F_babfc D_babfc.
     sn F_bac00 D_bac00.
     sn F_bac04 D_bac04.
-    stw F_bac08 D_bac08 (Z_to_bv 64 (bv_unsigned d + 0)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_bac08 D_bac08 (Z_to_bv 64 (bv_unsigned d + 0)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     sv F_bac0c D_bac0c (Z_to_bv 64 (bv_unsigned d + 304)).
-    stw F_bac10 D_bac10 (Z_to_bv 64 (bv_unsigned d + 300)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_bac10 D_bac10 (Z_to_bv 64 (bv_unsigned d + 300)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     stepb_ft F_bac14 D_bac14 ltac:(pin; cond_compute).
-    stw F_bac18 D_bac18 (Z_to_bv 64 (bv_unsigned d + 4)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac1c D_bac1c (Z_to_bv 64 (bv_unsigned d + 8)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_bac18 D_bac18 (Z_to_bv 64 (bv_unsigned d + 4)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac1c D_bac1c (Z_to_bv 64 (bv_unsigned d + 8)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     sn F_bac20 D_bac20.
-    stw F_bac24 D_bac24 (Z_to_bv 64 (bv_unsigned d + 292)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac28 D_bac28 (Z_to_bv 64 (bv_unsigned d + 296)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_bac24 D_bac24 (Z_to_bv 64 (bv_unsigned d + 292)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac28 D_bac28 (Z_to_bv 64 (bv_unsigned d + 296)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     stepb_ft F_bac2c D_bac2c ltac:(pin; cond_compute).
-    stw F_bac30 D_bac30 (Z_to_bv 64 (bv_unsigned d + 12)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac34 D_bac34 (Z_to_bv 64 (bv_unsigned d + 16)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac38 D_bac38 (Z_to_bv 64 (bv_unsigned d + 20)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac3c D_bac3c (Z_to_bv 64 (bv_unsigned d + 24)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stepiv F_bac40 D_bac40 (Z_to_bv 64 0) ltac:(gres; pin; imm_norm; apply v_andi_4_aligned8; exact Hal).
+    stw F_bac30 D_bac30 (Z_to_bv 64 (bv_unsigned d + 12)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac34 D_bac34 (Z_to_bv 64 (bv_unsigned d + 16)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac38 D_bac38 (Z_to_bv 64 (bv_unsigned d + 20)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac3c D_bac3c (Z_to_bv 64 (bv_unsigned d + 24)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stepiv F_bac40 D_bac40 (Z_to_bv 64 0)
+      ltac:(gres; pin; imm_norm; apply v_andi_4_aligned8; exact dst_al8).
     sn F_bac44 D_bac44.
     sn F_bac48 D_bac48.
     sn F_bac4c D_bac4c.
-    stw F_bac50 D_bac50 (Z_to_bv 64 (bv_unsigned d + 276)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac54 D_bac54 (Z_to_bv 64 (bv_unsigned d + 280)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac58 D_bac58 (Z_to_bv 64 (bv_unsigned d + 284)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac5c D_bac5c (Z_to_bv 64 (bv_unsigned d + 288)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
+    stw F_bac50 D_bac50 (Z_to_bv 64 (bv_unsigned d + 276)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac54 D_bac54 (Z_to_bv 64 (bv_unsigned d + 280)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac58 D_bac58 (Z_to_bv 64 (bv_unsigned d + 284)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
+    stw F_bac5c D_bac5c (Z_to_bv 64 (bv_unsigned d + 288)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok).
     stepb_ft F_bac60 D_bac60 ltac:(pin; cond_compute).
     sn F_bac64 D_bac64.
     sv F_bac68 D_bac68 (Z_to_bv 64 (bv_unsigned d + 24)).
     sn F_bac6c D_bac6c.
     sn F_bac70 D_bac70.
     sn F_bac74 D_bac74.
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 24)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 32)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 40)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 48)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 56)).
-    stepb_tk F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 56)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 64)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 72)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 80)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 88)).
-    stepb_tk F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 88)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 96)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 104)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 112)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 120)).
-    stepb_tk F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 120)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 128)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 136)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 144)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 152)).
-    stepb_tk F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 152)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 160)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 168)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 176)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 184)).
-    stepb_tk F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 184)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 192)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 200)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 208)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 216)).
-    stepb_tk F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 216)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 224)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 232)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 240)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 248)).
-    stepb_tk F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + 248)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + 256)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + 264)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + 272)) (Z_to_bv 64 0) ltac:(ok_sub Hok).
-    sn F_bac88 D_bac88.
-    sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + 280)).
-    stepb_ft F_bac90 D_bac90 ltac:(pin; cond_compute).
-    stepret F_bac94 D_bac94 ret ltac:(pin; reflexivity).
+    do 8 (
+      lazymatch goal with
+      | |- msteps _ (mkst ?rs _ _ _) _ =>
+          lazymatch wf_find rs (11 : reg) with
+          | Z_to_bv 64 (bv_unsigned d + ?at0) =>
+              let at1 := eval vm_compute in (at0 + 8)%Z in
+              let at2 := eval vm_compute in (at0 + 16)%Z in
+              let at3 := eval vm_compute in (at0 + 24)%Z in
+              let nxt := eval vm_compute in (at0 + 32)%Z in
+              stw F_bac78 D_bac78 (Z_to_bv 64 (bv_unsigned d + at0)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok);
+              stw F_bac7c D_bac7c (Z_to_bv 64 (bv_unsigned d + at1)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok);
+              stw F_bac80 D_bac80 (Z_to_bv 64 (bv_unsigned d + at2)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok);
+              stw F_bac84 D_bac84 (Z_to_bv 64 (bv_unsigned d + at3)) (Z_to_bv 64 0) ltac:(ok_sub dst_ok);
+              sn F_bac88 D_bac88;
+              sv F_bac8c D_bac8c (Z_to_bv 64 (bv_unsigned d + nxt));
+              stepb F_bac90 D_bac90
+          end
+      end).
+    stepret F_bac94 D_bac94 ret ltac:(exact x1_ret).
     apply mst_refl.
-  - rewrite <- (zstores_cover d 304 Hnw memset304_ws mem 304%nat eq_refl memset304_ws_inb memset304_ws_cover).
-    reflexivity.
+  - rewrite <- fill_eq. reflexivity.
   - unfold memset_clob. solve_regs_agree.
 Qed.
 End FPX_1.

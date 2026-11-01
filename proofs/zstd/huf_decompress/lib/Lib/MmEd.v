@@ -14,13 +14,17 @@ Open Scope bv_scope.
 Lemma page_aligned_not_ENOMEM : forall a : word,
   (bv_unsigned a mod page_size = 0)%Z -> bv_eqb a (errno_ret ENOMEM) = false.
 Proof.
-  intros a Hal. destruct (bv_eqb a (errno_ret ENOMEM)) eqn:E; [|reflexivity].
-  exfalso. apply bv_eqb_eq in E. subst a. vm_compute in Hal. discriminate Hal.
+  intros a on_page. unfold bv_eqb. apply Z.eqb_neq. intros same_value.
+  rewrite same_value, errno_ret_unsigned in on_page by (unfold ENOMEM; lia).
+  revert on_page. unfold two_pow_64, ENOMEM, page_size. now vm_compute.
 Qed.
 
 Lemma ret_in_errnos_ENOMEM_aligned : forall a : word,
   (bv_unsigned a mod page_size = 0)%Z -> ret_in_errnos [ENOMEM] a = false.
-Proof. intros a H. rewrite ret_in_errnos_ENOMEM. apply page_aligned_not_ENOMEM. exact H. Qed.
+Proof.
+  intros a on_page. pose proof (page_aligned_not_ENOMEM a on_page) as not_enomem.
+  cbn [ret_in_errnos existsb]. now rewrite not_enomem.
+Qed.
 
 Lemma vm_base_ok_intro : forall h nZ a,
   (bv_unsigned a mod page_size = 0)%Z ->
@@ -29,9 +33,9 @@ Lemma vm_base_ok_intro : forall h nZ a,
   region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true ->
   vm_base_ok h nZ a = true.
 Proof.
-  intros h nZ a Hal Hpos Htop Hfree. unfold vm_base_ok.
-  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
-    (proj2 (Z.leb_le _ _) Htop), Hfree. reflexivity.
+  intros h nZ a on_page above_zero under_top free_range.
+  apply Z.eqb_eq in on_page. apply Z.ltb_lt in above_zero. apply Z.leb_le in under_top.
+  unfold vm_base_ok. now rewrite free_range, under_top, above_zero, on_page.
 Qed.
 
 Lemma region_free_false_In : forall maps lo n,
@@ -139,12 +143,13 @@ Lemma mmap_grant_refusable_false_iff : forall flags m nZ,
   mmap_noreserve_backed_ok flags m nZ = true /\ vm_gap_available (m_vmmaps m) nZ = true.
 Proof.
   intros flags m nZ. unfold mmap_grant_refusable.
-  rewrite orb_false_iff, !negb_false_iff. reflexivity.
+  destruct (vm_gap_available (m_vmmaps m) nZ), (mmap_noreserve_backed_ok flags m nZ);
+    cbn [negb orb]; intuition congruence.
 Qed.
 
 Lemma mmap_reserve_refusable_false_iff : forall m nZ,
   mmap_reserve_refusable m nZ = false <-> vm_gap_available (m_vmmaps m) nZ = true.
-Proof. intros m nZ. unfold mmap_reserve_refusable. rewrite negb_false_iff. reflexivity. Qed.
+Proof. intros m nZ. unfold mmap_reserve_refusable. exact (negb_false_iff _). Qed.
 
 Lemma grant_conj_not_refusable : forall flags m nZ a,
   (bv_unsigned a mod page_size = 0)%Z ->
@@ -154,8 +159,10 @@ Lemma grant_conj_not_refusable : forall flags m nZ a,
   mmap_noreserve_backed_ok flags m nZ = true ->
   mmap_grant_refusable flags m nZ = false.
 Proof.
-  intros flags m nZ a Hal Hpos Htop Hfree Hbk. apply mmap_grant_refusable_false_iff.
-  split; [exact Hbk|]. apply (vm_base_ok_gap_available _ _ a). apply vm_base_ok_intro; assumption.
+  intros flags m nZ a on_page above_zero under_top free_range backed.
+  pose proof (vm_base_ok_gap_available (m_vmmaps m) nZ a
+                (vm_base_ok_intro _ _ _ on_page above_zero under_top free_range)) as gap.
+  apply mmap_grant_refusable_false_iff. exact (conj backed gap).
 Qed.
 
 Lemma reserve_conj_not_refusable : forall m nZ a,
@@ -165,8 +172,9 @@ Lemma reserve_conj_not_refusable : forall m nZ a,
   region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true ->
   mmap_reserve_refusable m nZ = false.
 Proof.
-  intros m nZ a Hal Hpos Htop Hfree. apply mmap_reserve_refusable_false_iff.
-  apply (vm_base_ok_gap_available _ _ a). apply vm_base_ok_intro; assumption.
+  intros m nZ a on_page above_zero under_top free_range.
+  apply mmap_reserve_refusable_false_iff, vm_gap_available_iff.
+  exists a. exact (conj on_page (conj above_zero (conj under_top free_range))).
 Qed.
 
 Lemma not_refusable_grant_conj : forall flags m nZ,
@@ -177,8 +185,9 @@ Lemma not_refusable_grant_conj : forall flags m nZ,
             /\ (bv_unsigned a + nZ <= alloc_top (m_vmmaps m))%Z
             /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true.
 Proof.
-  intros flags m nZ H. apply mmap_grant_refusable_false_iff in H as [Hbk Hgap].
-  split; [exact Hbk|]. apply vm_gap_available_iff. exact Hgap.
+  intros flags m nZ not_refusable.
+  destruct (proj1 (mmap_grant_refusable_false_iff flags m nZ) not_refusable) as [backed gap].
+  exact (conj backed (proj1 (vm_gap_available_iff (m_vmmaps m) nZ) gap)).
 Qed.
 
 Lemma not_refusable_reserve_conj : forall m nZ,
@@ -188,7 +197,8 @@ Lemma not_refusable_reserve_conj : forall m nZ,
             /\ (bv_unsigned a + nZ <= alloc_top (m_vmmaps m))%Z
             /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true.
 Proof.
-  intros m nZ H. apply mmap_reserve_refusable_false_iff in H. apply vm_gap_available_iff. exact H.
+  intros m nZ not_refusable.
+  apply vm_gap_available_iff, mmap_reserve_refusable_false_iff. exact not_refusable.
 Qed.
 
 Definition w_nilb {A} (l : list A) : bool :=
@@ -209,58 +219,58 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
      then check_ret_only eff (errno_ret EINVAL) m []
      else CheckUnmodeled)
   else if mmap_modeled_b prot flags off then
-  match eff with
-  | mkEffectU r [] zs [] [] [] =>
-      if errno_ret_in (mmap_errnos_when (mmap_grant_refusable flags m
-                         (page_round_up_Z (bv_unsigned len)))) r
-      then match zs with [] => CheckOk m [] | _ => CheckReject end
-      else
-        let nZ := page_round_up_Z (bv_unsigned len) in
-        let n := Z_to_bv 64 nZ in
-        if (bv_unsigned r mod page_size =? 0)%Z && (0 <? bv_unsigned r)%Z
-           && (bv_unsigned r + nZ <=? alloc_top (m_vmmaps m))%Z
-           && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) r n
-           && mmap_noreserve_backed_ok flags m nZ
-           && listNN_eqb zs [(r, n)]
-        then CheckOk
-               (with_mmap_backing flags r n
-                (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
-                             ((r, n) :: vm_maps (m_vmmaps m))
-                             (vm_noaccess (m_vmmaps m))
-                             (vm_start_brk (m_vmmaps m))
-                             (vm_brk (m_vmmaps m))
-                             (vm_limit (m_vmmaps m))
-                             (vm_mmap_base (m_vmmaps m))
-                             (vm_init_sp (m_vmmaps m))) m)) []
-        else CheckReject
-  | _ => CheckReject
-  end
+    match eff with
+    | mkEffectU r [] zs [] [] [] =>
+        if errno_ret_in (mmap_errnos_when
+             (mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len)))) r
+        then (if w_nilb zs then CheckOk m [] else CheckReject)
+        else
+          let nZ := page_round_up_Z (bv_unsigned len) in
+          let n := Z_to_bv 64 nZ in
+          if (bv_unsigned r mod page_size =? 0)%Z && (0 <? bv_unsigned r)%Z
+             && (bv_unsigned r + nZ <=? alloc_top (m_vmmaps m))%Z
+             && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) r n
+             && mmap_noreserve_backed_ok flags m nZ
+             && listNN_eqb zs [(r, n)]
+          then CheckOk
+                 (with_mmap_backing flags r n
+                  (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
+                               ((r, n) :: vm_maps (m_vmmaps m))
+                               (vm_noaccess (m_vmmaps m))
+                               (vm_start_brk (m_vmmaps m))
+                               (vm_brk (m_vmmaps m))
+                               (vm_limit (m_vmmaps m))
+                               (vm_mmap_base (m_vmmaps m))
+                               (vm_init_sp (m_vmmaps m))) m)) []
+          else CheckReject
+    | _ => CheckReject
+    end
   else if mmap_noaccess_b prot flags off then
-  match eff with
-  | mkEffectU r [] [] us [] [] =>
-      if errno_ret_in (mmap_errnos_when (mmap_reserve_refusable m
-                         (page_round_up_Z (bv_unsigned len)))) r
-      then match us with [] => CheckOk m [] | _ => CheckReject end
-      else
-        let nZ := page_round_up_Z (bv_unsigned len) in
-        let n := Z_to_bv 64 nZ in
-        if (bv_unsigned r mod page_size =? 0)%Z && (0 <? bv_unsigned r)%Z
-           && (bv_unsigned r + nZ <=? alloc_top (m_vmmaps m))%Z
-           && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) r n
-           && listNN_eqb us [(r, n)]
-        then CheckOk
-               (with_mmap_backing flags r n
-                (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
-                             ((r, n) :: vm_maps (m_vmmaps m))
-                             ((r, n) :: vm_noaccess (m_vmmaps m))
-                             (vm_start_brk (m_vmmaps m))
-                             (vm_brk (m_vmmaps m))
-                             (vm_limit (m_vmmaps m))
-                             (vm_mmap_base (m_vmmaps m))
-                             (vm_init_sp (m_vmmaps m))) m)) []
-        else CheckReject
-  | _ => CheckReject
-  end
+    match eff with
+    | mkEffectU r [] [] us [] [] =>
+        if errno_ret_in (mmap_errnos_when
+             (mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len)))) r
+        then (if w_nilb us then CheckOk m [] else CheckReject)
+        else
+          let nZ := page_round_up_Z (bv_unsigned len) in
+          let n := Z_to_bv 64 nZ in
+          if (bv_unsigned r mod page_size =? 0)%Z && (0 <? bv_unsigned r)%Z
+             && (bv_unsigned r + nZ <=? alloc_top (m_vmmaps m))%Z
+             && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) r n
+             && listNN_eqb us [(r, n)]
+          then CheckOk
+                 (with_mmap_backing flags r n
+                  (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
+                               ((r, n) :: vm_maps (m_vmmaps m))
+                               ((r, n) :: vm_noaccess (m_vmmaps m))
+                               (vm_start_brk (m_vmmaps m))
+                               (vm_brk (m_vmmaps m))
+                               (vm_limit (m_vmmaps m))
+                               (vm_mmap_base (m_vmmaps m))
+                               (vm_init_sp (m_vmmaps m))) m)) []
+          else CheckReject
+    | _ => CheckReject
+    end
   else if mmap_fixed_noaccess_b prot flags off then
     let nZ := page_round_up_Z (bv_unsigned len) in
     if (two_pow_64 <=? bv_unsigned addr + nZ)%Z
@@ -276,14 +286,7 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
       then
         match eff with
         | mkEffectU r [] [] us [] [] =>
-            if errno_ret_in (mmap_errnos_when false) r && w_nilb us
-            then CheckOk m []
-            else if errno_ret_in mmap_destructive_errnos r
-                    && listNN_eqb us [(addr, n)]
-            then CheckOk
-                   (with_mmap_destroyed addr n
-                     (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) []
-            else if bv_eqb r addr && listNN_eqb us [(addr, n)]
+            if bv_eqb r addr && listNN_eqb us [(addr, n)]
             then CheckOk
               (with_mmap_replacement flags addr n
                (with_vmmaps
@@ -294,19 +297,16 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
                                   (bv_unsigned addr + bv_unsigned n))
                   (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m))
                   (vm_limit (m_vmmaps m))
-                             (vm_mmap_base (m_vmmaps m))
-                             (vm_init_sp (m_vmmaps m))) m)) []
+                  (vm_mmap_base (m_vmmaps m))
+                  (vm_init_sp (m_vmmaps m))) m)) []
             else CheckReject
         | _ => CheckReject
         end
-      else if region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))
-                          addr n
+      else if region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr n
       then
         match eff with
         | mkEffectU r [] [] us [] [] =>
-            if errno_ret_in (mmap_errnos_when false) r
-            then match us with [] => CheckOk m [] | _ => CheckReject end
-            else if bv_eqb r addr && listNN_eqb us [(addr, n)]
+            if bv_eqb r addr && listNN_eqb us [(addr, n)]
             then CheckOk
                    (with_mmap_backing flags addr n
                     (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -315,8 +315,8 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
                                  (vm_start_brk (m_vmmaps m))
                                  (vm_brk (m_vmmaps m))
                                  (vm_limit (m_vmmaps m))
-                             (vm_mmap_base (m_vmmaps m))
-                             (vm_init_sp (m_vmmaps m))) m)) []
+                                 (vm_mmap_base (m_vmmaps m))
+                                 (vm_init_sp (m_vmmaps m))) m)) []
             else CheckReject
         | _ => CheckReject
         end
@@ -324,14 +324,7 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
       then
         match eff with
         | mkEffectU r [] [] us [] [] =>
-            if errno_ret_in (mmap_errnos_when false) r && w_nilb us
-            then CheckOk m []
-            else if errno_ret_in mmap_destructive_errnos r
-                    && listNN_eqb us [(addr, n)]
-            then CheckOk
-                   (with_mmap_destroyed addr n
-                     (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) []
-            else if bv_eqb r addr && listNN_eqb us [(addr, n)]
+            if bv_eqb r addr && listNN_eqb us [(addr, n)]
             then CheckOk
               (with_mmap_replacement flags addr n
                (with_vmmaps
@@ -355,17 +348,16 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
       then
         match eff with
         | mkEffectU r [] zs us [] [] =>
-            if errno_ret_in (mmap_errnos_when
-                   (mmap_fixed_commit_refusable flags m addr n)) r
+            if errno_ret_in (mmap_errnos_when (mmap_fixed_commit_refusable flags m addr n)) r
                && w_nilb zs && w_nilb us
             then CheckOk m []
-            else if errno_ret_in mmap_destructive_errnos r
-                    && w_nilb zs && listNN_eqb us [(addr, n)]
+            else if errno_ret_in mmap_destructive_errnos r && w_nilb zs
+                    && listNN_eqb us [(addr, n)]
             then CheckOk
-                   (with_mmap_destroyed addr n
-                     (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) []
+              (with_mmap_destroyed addr n
+                (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) []
             else match us with
-                 | _ :: _ => CheckReject       (* [comment removed for export] *)
+                 | _ :: _ => CheckReject
                  | [] =>
                      if bv_eqb r addr && listNN_eqb zs [(addr, n)]
                         && mmap_fixed_rw_budget_ok flags m addr n
@@ -377,14 +369,12 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
                  end
         | _ => CheckReject
         end
-      else if region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))
-                          addr n
+      else if region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr n
       then
         match eff with
         | mkEffectU r [] zs [] [] [] =>
-            if errno_ret_in (mmap_errnos_when
-                   (mmap_fixed_fresh_refusable flags m nZ)) r
-            then match zs with [] => CheckOk m [] | _ => CheckReject end
+            if errno_ret_in (mmap_errnos_when (mmap_fixed_fresh_refusable flags m nZ)) r
+            then (if w_nilb zs then CheckOk m [] else CheckReject)
             else if bv_eqb r addr && listNN_eqb zs [(addr, n)]
                     && mmap_noreserve_backed_ok flags m nZ
             then CheckOk
@@ -395,8 +385,8 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
                                  (vm_start_brk (m_vmmaps m))
                                  (vm_brk (m_vmmaps m))
                                  (vm_limit (m_vmmaps m))
-                             (vm_mmap_base (m_vmmaps m))
-                             (vm_init_sp (m_vmmaps m))) m)) []
+                                 (vm_mmap_base (m_vmmaps m))
+                                 (vm_init_sp (m_vmmaps m))) m)) []
             else CheckReject
         | _ => CheckReject
         end
@@ -404,17 +394,16 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
       then
         match eff with
         | mkEffectU r [] zs us [] [] =>
-            if errno_ret_in (mmap_errnos_when
-                   (mmap_fixed_span_refusable flags m addr n)) r
+            if errno_ret_in (mmap_errnos_when (mmap_fixed_span_refusable flags m addr n)) r
                && w_nilb zs && w_nilb us
             then CheckOk m []
-            else if errno_ret_in mmap_destructive_errnos r
-                    && w_nilb zs && listNN_eqb us [(addr, n)]
+            else if errno_ret_in mmap_destructive_errnos r && w_nilb zs
+                    && listNN_eqb us [(addr, n)]
             then CheckOk
-                   (with_mmap_destroyed addr n
-                     (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) []
+              (with_mmap_destroyed addr n
+                (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) []
             else match us with
-                 | _ :: _ => CheckReject       (* [comment removed for export] *)
+                 | _ :: _ => CheckReject
                  | [] =>
                      if bv_eqb r addr && listNN_eqb zs [(addr, n)]
                         && mmap_fixed_rw_span_budget_ok flags m addr n
@@ -428,7 +417,6 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
         end
       else CheckUnmodeled
   else if mmap_noreplace_noaccess_b prot flags off then
-    (* [comment removed for export] *)
     let nZ := page_round_up_Z (bv_unsigned len) in
     if (two_pow_64 <=? bv_unsigned addr + nZ)%Z
     then check_ret_only eff (errno_ret ENOMEM) m []
@@ -442,9 +430,7 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
       then
         match eff with
         | mkEffectU r [] [] us [] [] =>
-            if errno_ret_in (mmap_errnos_when false) r
-            then match us with [] => CheckOk m [] | _ => CheckReject end
-            else if bv_eqb r addr && listNN_eqb us [(addr, n)]
+            if bv_eqb r addr && listNN_eqb us [(addr, n)]
             then CheckOk
                    (with_mmap_backing flags addr n
                     (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -458,16 +444,8 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
             else CheckReject
         | _ => CheckReject
         end
-      else
-        match eff with
-        | mkEffectU r [] [] [] [] [] =>
-            if errno_ret_in (mmap_errnos_when false) r
-               || bv_eqb r (errno_ret EEXIST)
-            then CheckOk m [] else CheckReject
-        | _ => CheckReject
-        end
+      else check_ret_only eff (errno_ret EEXIST) m []
   else if mmap_noreplace_rw_b prot flags off then
-    (* [comment removed for export] *)
     let nZ := page_round_up_Z (bv_unsigned len) in
     if (two_pow_64 <=? bv_unsigned addr + nZ)%Z
     then check_ret_only eff (errno_ret ENOMEM) m []
@@ -481,9 +459,8 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
       then
         match eff with
         | mkEffectU r [] zs [] [] [] =>
-            if errno_ret_in (mmap_errnos_when
-                   (mmap_fixed_fresh_refusable flags m nZ)) r
-            then match zs with [] => CheckOk m [] | _ => CheckReject end
+            if errno_ret_in (mmap_errnos_when (mmap_fixed_fresh_refusable flags m nZ)) r
+            then (if w_nilb zs then CheckOk m [] else CheckReject)
             else if bv_eqb r addr && listNN_eqb zs [(addr, n)]
                     && mmap_noreserve_backed_ok flags m nZ
             then CheckOk
@@ -499,14 +476,7 @@ Definition check_mmap_ed (addr len prot flags fd off : word) (eff : SyscallEffec
             else CheckReject
         | _ => CheckReject
         end
-      else
-        match eff with
-        | mkEffectU r [] [] [] [] [] =>
-            if errno_ret_in (mmap_errnos_when false) r
-               || bv_eqb r (errno_ret EEXIST)
-            then CheckOk m [] else CheckReject
-        | _ => CheckReject
-        end
+      else check_ret_only eff (errno_ret EEXIST) m []
   else CheckUnmodeled.
 
 Definition check_mprotect_ed (addr len prot : word) (eff : SyscallEffect) (m : Model)
@@ -527,19 +497,16 @@ Definition check_mprotect_ed (addr len prot : word) (eff : SyscallEffect) (m : M
       match eff with
       | mkEffectU r [] zs [] [] [] =>
           if errno_ret_in (mprotect_errnos_when (mprotect_refusable m addr n)) r
-          then match zs with [] => CheckOk m [] | _ => CheckReject end
-          else if mprotect_budget_ok m addr n
-                  && w_is0 r && listNN_eqb zs [(addr, n)]
-          then CheckOk
-            (mprotect_model_next m addr n) []
+          then (if w_nilb zs then CheckOk m [] else CheckReject)
+          else if mprotect_budget_ok m addr n && w_is0 r && listNN_eqb zs [(addr, n)]
+          then CheckOk (mprotect_model_next m addr n) []
           else CheckReject
       | _ => CheckReject
       end
     else if map_contains (vm_maps (m_vmmaps m)) addr n
             && region_free (vm_noaccess (m_vmmaps m)) addr n then
       match eff with
-      | mkEffectU r [] [] [] [] [] =>
-          if w_is0 r then CheckOk m [] else CheckReject
+      | mkEffectU r [] [] [] [] [] => if w_is0 r then CheckOk m [] else CheckReject
       | _ => CheckReject
       end
     else CheckUnmodeled.
@@ -548,11 +515,11 @@ Ltac same := let H := fresh "H" in intros H; exact H.
 
 Lemma errno_ret_in_when_false_of : forall b r,
   errno_ret_in mmap_errnos r = false -> errno_ret_in (mmap_errnos_when b) r = false.
-Proof. intros [|] r H; [exact H| reflexivity]. Qed.
+Proof. intros b r not_refusal. destruct b; [exact not_refusal | reflexivity]. Qed.
 
 Lemma errno_ret_in_mprotect_when_false_of : forall b r,
   errno_ret_in mprotect_errnos r = false -> errno_ret_in (mprotect_errnos_when b) r = false.
-Proof. intros [|] r H; [exact H| reflexivity]. Qed.
+Proof. intros [|] r not_refusal; cbn [mprotect_errnos_when]; [exact not_refusal | reflexivity]. Qed.
 
 Lemma aligned_not_mmap_errno : forall a : word,
   (bv_unsigned a mod page_size = 0)%Z -> errno_ret_in mmap_errnos a = false.
@@ -562,7 +529,7 @@ Lemma eexist_not_mmap_errno : errno_ret_in mmap_errnos (errno_ret EEXIST) = fals
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma zero_not_mprotect_errno : errno_ret_in mprotect_errnos (Z_to_bv 64 0) = false.
-Proof. vm_compute. reflexivity. Qed.
+Proof. exact eq_refl. Qed.
 
 Lemma listNN_eqb_refl' : forall l, listNN_eqb l l = true.
 Proof. intros l. apply listNN_eqb_eq. reflexivity. Qed.
@@ -592,252 +559,411 @@ Lemma check_mmap_ed_fwd : forall addr len prot flags fd off eff m m' evs,
   mmap_corner_free addr len prot flags off m eff ->
   check_mmap_ed addr len prot flags fd off eff m = CheckOk m' evs.
 Proof.
-  intros addr len prot flags fd off eff m m' evs H Hf Hc. revert H.
-  unfold check_mmap_ed, check_mmap. cbv zeta.
-  destruct (negb (mmap_off_aligned_b off)) eqn:G0; [same|].
-  destruct (negb (mmap_anon_b flags)) eqn:G1; [same|].
-  destruct (w_is0 len) eqn:G2; [same|].
-  destruct (mmap_modeled_b prot flags off) eqn:G3.
-  { destruct eff as [r ws zs us cs ci].
-    destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct us as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (errno_ret_in mmap_errnos r) eqn:E.
-    - destruct (mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len))) eqn:R.
-      + cbn [mmap_errnos_when]. rewrite E. same.
-      + intros _. exfalso.
-        destruct (not_refusable_grant_conj _ _ _ R) as (Hb & a & Ha1 & Ha2 & Ha3 & Ha4).
-        assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                  (mkEffectU a [] [(a, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] [] []) m = CheckOk m2 []).
-        { eexists. unfold check_mmap. rewrite G0, G1, G2, G3. cbv beta iota zeta.
-          rewrite (aligned_not_mmap_errno a Ha1).
-          rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt _ _) Ha2), (proj2 (Z.leb_le _ _) Ha3), Ha4, Hb,
-                  listNN_eqb_refl'.
-          reflexivity. }
-        destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-        rewrite (aligned_not_mmap_errno a Ha1) in Hx. discriminate Hx.
-    - rewrite (errno_ret_in_when_false_of _ r E). same. }
-  destruct (mmap_noaccess_b prot flags off) eqn:G4.
-  { destruct eff as [r ws zs us cs ci].
-    destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct zs as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (errno_ret_in mmap_errnos r) eqn:E.
-    - destruct (mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len))) eqn:R.
-      + cbn [mmap_errnos_when]. rewrite E. same.
-      + intros _. exfalso.
-        destruct (not_refusable_reserve_conj _ _ R) as (a & Ha1 & Ha2 & Ha3 & Ha4).
-        assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                  (mkEffectU a [] [] [(a, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m = CheckOk m2 []).
-        { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4. cbv beta iota zeta.
-          rewrite (aligned_not_mmap_errno a Ha1).
-          rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt _ _) Ha2), (proj2 (Z.leb_le _ _) Ha3), Ha4,
-                  listNN_eqb_refl'.
-          reflexivity. }
-        destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-        rewrite (aligned_not_mmap_errno a Ha1) in Hx. discriminate Hx.
-    - rewrite (errno_ret_in_when_false_of _ r E). same. }
-  destruct (mmap_fixed_noaccess_b prot flags off) eqn:G5.
-  { destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W; [same|].
-    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T; [same|].
-    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A; [same|].
-    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [same|].
-    assert (Na : errno_ret_in mmap_errnos addr = false).
-    { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
-    destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
-              && map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S1.
-    { destruct eff as [r ws zs us cs ci].
-      destruct ws as [|? ?]; [|intros H; discriminate H].
-      destruct zs as [|? ?]; [|intros H; discriminate H].
-      destruct cs as [|? ?]; [|intros H; discriminate H].
-      destruct ci as [|? ?]; [|intros H; discriminate H].
-      destruct (errno_ret_in mmap_errnos r) eqn:E; [|same].
-      intros _. exfalso.
-      assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                (mkEffectU addr [] [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m = CheckOk m2 []).
-      { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5. cbv beta iota zeta.
-        rewrite W, T, A, P, S1. cbv beta iota. rewrite Na, bv_eqb_refl, listNN_eqb_refl'. reflexivity. }
-      destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-      rewrite Na in Hx. discriminate Hx. }
+  intros addr len prot flags fd off eff m m' evs std_ok forced corner_free.
+  unfold check_mmap in std_ok. unfold check_mmap_ed.
+  destruct (negb (mmap_off_aligned_b off)) eqn:off_misaligned;
+    try rewrite off_misaligned in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+  destruct (negb (mmap_anon_b flags)) eqn:not_anon;
+    try rewrite not_anon in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+  destruct (w_is0 len) eqn:empty_len;
+    try rewrite empty_len in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+  destruct (mmap_modeled_b prot flags off) eqn:hint_rw;
+    try rewrite hint_rw in std_ok; cbv iota in std_ok |- *.
+  { destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, unmaps, copies, reads; try exact std_ok.
+    cbv iota in std_ok |- *.
+    destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+      try rewrite answer_refuses in std_ok; cbv iota in std_ok.
+    - destruct zeros; [|discriminate std_ok].
+      assert (no_gap : mmap_grant_refusable flags m
+                         (page_round_up_Z (bv_unsigned len)) = true).
+      { destruct (mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len)))
+          eqn:gap_open; [reflexivity|exfalso].
+        destruct (not_refusable_grant_conj flags m _ gap_open)
+          as [backed (base & on_page & above_zero & under_top & free_range)].
+        pose proof (ret_in_errnos_ENOMEM_aligned base on_page) as base_not_errno.
+        change (ret_in_errnos [ENOMEM] base)
+          with (errno_ret_in mmap_errnos base) in base_not_errno.
+        assert (base_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                  (mkEffect base []
+                     [(base, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))]) m
+                  = CheckOk m2 evs2).
+        { do 2 eexists. unfold check_mmap.
+          rewrite off_misaligned, not_anon, empty_len, hint_rw.
+          cbv iota zeta. rewrite base_not_errno.
+          rewrite (proj2 (Z.eqb_eq _ _) on_page), (proj2 (Z.ltb_lt _ _) above_zero),
+                  (proj2 (Z.leb_le _ _) under_top), free_range, backed,
+                  (proj2 (listNN_eqb_eq _ _) eq_refl).
+          cbn [andb]. reflexivity. }
+        destruct base_ok as (m2 & evs2 & base_ok).
+        pose proof (forced answer_refuses _ _ _ base_ok) as base_is_errno.
+        discriminate (eq_trans (eq_sym base_is_errno) base_not_errno). }
+      rewrite no_gap. cbn [mmap_errnos_when]. rewrite answer_refuses.
+      cbn [w_nilb]. exact std_ok.
+    - rewrite (errno_ret_in_when_false_of _ _ answer_refuses). exact std_ok. }
+  destruct (mmap_noaccess_b prot flags off) eqn:hint_none;
+    try rewrite hint_none in std_ok; cbv iota in std_ok |- *.
+  { destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, zeros, copies, reads; try exact std_ok.
+    cbv iota in std_ok |- *.
+    destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+      try rewrite answer_refuses in std_ok; cbv iota in std_ok.
+    - destruct unmaps; [|discriminate std_ok].
+      assert (no_gap : mmap_reserve_refusable m
+                         (page_round_up_Z (bv_unsigned len)) = true).
+      { destruct (mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len)))
+          eqn:gap_open; [reflexivity|exfalso].
+        destruct (not_refusable_reserve_conj m _ gap_open)
+          as (base & on_page & above_zero & under_top & free_range).
+        pose proof (ret_in_errnos_ENOMEM_aligned base on_page) as base_not_errno.
+        change (ret_in_errnos [ENOMEM] base)
+          with (errno_ret_in mmap_errnos base) in base_not_errno.
+        assert (base_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                  (mkEffectU base [] []
+                     [(base, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m
+                  = CheckOk m2 evs2).
+        { do 2 eexists. unfold check_mmap.
+          rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none.
+          cbv iota zeta. rewrite base_not_errno.
+          rewrite (proj2 (Z.eqb_eq _ _) on_page), (proj2 (Z.ltb_lt _ _) above_zero),
+                  (proj2 (Z.leb_le _ _) under_top), free_range,
+                  (proj2 (listNN_eqb_eq _ _) eq_refl).
+          cbn [andb]. reflexivity. }
+        destruct base_ok as (m2 & evs2 & base_ok).
+        pose proof (forced answer_refuses _ _ _ base_ok) as base_is_errno.
+        discriminate (eq_trans (eq_sym base_is_errno) base_not_errno). }
+      rewrite no_gap. cbn [mmap_errnos_when]. rewrite answer_refuses.
+      cbn [w_nilb]. exact std_ok.
+    - rewrite (errno_ret_in_when_false_of _ _ answer_refuses). exact std_ok. }
+  destruct (mmap_fixed_noaccess_b prot flags off) eqn:fixed_none;
+    try rewrite fixed_none in std_ok; cbv iota in std_ok |- *.
+  { cbv zeta in std_ok |- *.
+    destruct ((two_pow_64 <=? bv_unsigned addr
+                 + page_round_up_Z (bv_unsigned len))%Z) eqn:length_wraps;
+      try rewrite length_wraps in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len)
+                      <=? alloc_top (m_vmmaps m))%Z) eqn:above_top;
+      try rewrite above_top in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:addr_off_page;
+      try rewrite addr_off_page in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:addr_is_zero;
+      try rewrite addr_is_zero in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    assert (addr_not_errno : errno_ret_in mmap_errnos addr = false).
+    { apply negb_false_iff, Z.eqb_eq in addr_off_page.
+      pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as aligned_answer.
+      change (ret_in_errnos [ENOMEM] addr)
+        with (errno_ret_in mmap_errnos addr) in aligned_answer. exact aligned_answer. }
+    let reserve_case := fun _ =>
+      destruct eff as [ret writes zeros unmaps copies reads];
+      destruct writes, zeros, copies, reads; try exact std_ok;
+      cbv iota in std_ok |- *;
+      destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+        try rewrite answer_refuses in std_ok; cbv iota in std_ok;
+      [ exfalso;
+        assert (addr_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                  (mkEffectU addr [] []
+                     [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m
+                  = CheckOk m2 evs2);
+        [ do 2 eexists; unfold check_mmap;
+          rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none, fixed_none;
+          cbv iota zeta;
+          rewrite length_wraps, above_top, addr_off_page, addr_is_zero;
+          cbv iota; try (rewrite spans; cbv iota);
+          rewrite contained; cbv iota;
+          try (rewrite free_range; cbv iota);
+          rewrite addr_not_errno, bv_eqb_refl,
+                  (proj2 (listNN_eqb_eq _ _) eq_refl);
+          cbn [andb]; reflexivity
+        | destruct addr_ok as (m2 & evs2 & addr_ok);
+          pose proof (forced answer_refuses _ _ _ addr_ok) as addr_is_errno;
+          discriminate (eq_trans (eq_sym addr_is_errno) addr_not_errno) ]
+      | exact std_ok ] in
+    destruct (region_free (vm_reserved (m_vmmaps m)) addr
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
+              && map_contains (vm_maps (m_vmmaps m)) addr
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:contained;
+      try rewrite contained in std_ok; cbv iota in std_ok |- *;
+    [ reserve_case tt |];
     destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S2.
-    { destruct eff as [r ws zs us cs ci].
-      destruct ws as [|? ?]; [|intros H; discriminate H].
-      destruct zs as [|? ?]; [|intros H; discriminate H].
-      destruct cs as [|? ?]; [|intros H; discriminate H].
-      destruct ci as [|? ?]; [|intros H; discriminate H].
-      destruct (errno_ret_in mmap_errnos r) eqn:E; [|same].
-      intros _. exfalso.
-      assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                (mkEffectU addr [] [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m = CheckOk m2 []).
-      { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5. cbv beta iota zeta.
-        rewrite W, T, A, P, S1, S2. cbv beta iota. rewrite Na, bv_eqb_refl, listNN_eqb_refl'. reflexivity. }
-      destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-      rewrite Na in Hx. discriminate Hx. }
-    destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S3;
-      [|same].
-    destruct eff as [r ws zs us cs ci].
-    destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct zs as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (errno_ret_in mmap_errnos r) eqn:E; [|same].
-    intros _. exfalso.
-    assert (Hck : exists m2, check_mmap addr len prot flags fd off
-              (mkEffectU addr [] [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m = CheckOk m2 []).
-    { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5. cbv beta iota zeta.
-      rewrite W, T, A, P, S3, S1, S2. cbv beta iota. rewrite Na, bv_eqb_refl, listNN_eqb_refl'. reflexivity. }
-    destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-    rewrite Na in Hx. discriminate Hx. }
-  destruct (mmap_fixed_rw_b prot flags off) eqn:G6.
-  { destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W; [same|].
-    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T; [same|].
-    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A; [same|].
-    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [same|].
-    assert (Na : errno_ret_in mmap_errnos addr = false).
-    { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
-    destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
-              && map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S1.
-    { destruct eff as [r ws zs us cs ci].
-      destruct ws as [|? ?]; [|intros H; discriminate H].
-      destruct cs as [|? ?]; [|intros H; discriminate H].
-      destruct ci as [|? ?]; [|intros H; discriminate H].
-      destruct (errno_ret_in mmap_errnos r) eqn:E.
-      - destruct (mmap_fixed_commit_refusable flags m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:R.
-        + intros H. destruct zs as [|? ?]; [|discriminate H].
-          destruct us as [|u us].
-          * cbn [mmap_errnos_when w_nilb]. rewrite E. exact H.
-          * exfalso. destruct (Hc G6) as [Hu|[_ Hbud]]; [discriminate Hu|].
-            unfold mmap_fixed_commit_refusable in R. rewrite Hbud in R. discriminate R.
-        + intros _. exfalso.
-          assert (Hbud : mmap_fixed_rw_budget_ok flags m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true)
-            by (unfold mmap_fixed_commit_refusable in R; apply negb_false_iff in R; exact R).
-          assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                    (mkEffectU addr [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] [] []) m = CheckOk m2 []).
-          { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6. cbv beta iota zeta.
-            rewrite W, T, A, P, S1. cbv beta iota. rewrite Na. cbv beta iota.
-            rewrite bv_eqb_refl, listNN_eqb_refl', Hbud. reflexivity. }
-          destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-          rewrite Na in Hx. discriminate Hx.
-      - rewrite (errno_ret_in_when_false_of _ r E). same. }
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:free_range;
+      try rewrite free_range in std_ok; cbv iota in std_ok |- *;
+    [ reserve_case tt |];
+    destruct (region_free (vm_reserved (m_vmmaps m)) addr
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:spans;
+      try rewrite spans in std_ok; cbv iota in std_ok |- *;
+    [ reserve_case tt | exact std_ok ]. }
+  destruct (mmap_fixed_rw_b prot flags off) eqn:fixed_rw;
+    try rewrite fixed_rw in std_ok; cbv iota in std_ok |- *.
+  { cbv zeta in std_ok |- *.
+    destruct ((two_pow_64 <=? bv_unsigned addr
+                 + page_round_up_Z (bv_unsigned len))%Z) eqn:length_wraps;
+      try rewrite length_wraps in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len)
+                      <=? alloc_top (m_vmmaps m))%Z) eqn:above_top;
+      try rewrite above_top in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:addr_off_page;
+      try rewrite addr_off_page in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:addr_is_zero;
+      try rewrite addr_is_zero in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    assert (addr_not_errno : errno_ret_in mmap_errnos addr = false).
+    { apply negb_false_iff, Z.eqb_eq in addr_off_page.
+      pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as aligned_answer.
+      change (ret_in_errnos [ENOMEM] addr)
+        with (errno_ret_in mmap_errnos addr) in aligned_answer. exact aligned_answer. }
+    destruct (region_free (vm_reserved (m_vmmaps m)) addr
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
+              && map_contains (vm_maps (m_vmmaps m)) addr
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:contained;
+      try rewrite contained in std_ok; cbv iota in std_ok |- *.
+    - destruct eff as [ret writes zeros unmaps copies reads].
+      destruct writes, copies, reads; try exact std_ok.
+      cbv iota in std_ok |- *.
+      destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+        try rewrite answer_refuses in std_ok; cbv iota in std_ok.
+      + destruct zeros; [|discriminate std_ok]. cbv iota in std_ok.
+        assert (no_budget : mmap_fixed_rw_budget_ok flags m addr
+                  (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = false).
+        { destruct (mmap_fixed_rw_budget_ok flags m addr
+                      (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))))
+            eqn:budget_left; [exfalso|reflexivity].
+          assert (addr_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                    (mkEffect addr []
+                       [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))]) m
+                    = CheckOk m2 evs2).
+          { do 2 eexists. unfold check_mmap.
+            rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none,
+                  fixed_none, fixed_rw.
+            cbv iota zeta.
+            rewrite length_wraps, above_top, addr_off_page, addr_is_zero. cbv iota.
+            rewrite contained. cbv iota.
+            rewrite addr_not_errno, bv_eqb_refl,
+                    (proj2 (listNN_eqb_eq _ _) eq_refl), budget_left.
+            cbn [andb]. reflexivity. }
+          destruct addr_ok as (m2 & evs2 & addr_ok).
+          pose proof (forced answer_refuses _ _ _ addr_ok) as addr_is_errno.
+          discriminate (eq_trans (eq_sym addr_is_errno) addr_not_errno). }
+        destruct unmaps as [|torn remains].
+        * unfold mmap_fixed_commit_refusable. rewrite no_budget.
+          cbn [negb mmap_errnos_when]. rewrite answer_refuses.
+          cbn [w_nilb andb]. exact std_ok.
+        * exfalso.
+          destruct (corner_free fixed_rw) as [keeps_range | (_ & budget_left)];
+            [discriminate keeps_range|].
+          rewrite budget_left in no_budget. discriminate no_budget.
+      + rewrite (errno_ret_in_when_false_of _ _ answer_refuses).
+        change (errno_ret_in mmap_destructive_errnos ret) with false.
+        cbn [andb]. exact std_ok.
+    - destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
+                  (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:free_range;
+        try rewrite free_range in std_ok; cbv iota in std_ok |- *.
+      + destruct eff as [ret writes zeros unmaps copies reads].
+        destruct writes, unmaps, copies, reads; try exact std_ok.
+        cbv iota in std_ok |- *.
+        destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+          try rewrite answer_refuses in std_ok; cbv iota in std_ok.
+        * destruct zeros; [|discriminate std_ok].
+          assert (no_backing : mmap_noreserve_backed_ok flags m
+                    (page_round_up_Z (bv_unsigned len)) = false).
+          { destruct (mmap_noreserve_backed_ok flags m
+                        (page_round_up_Z (bv_unsigned len))) eqn:backing_left;
+              [exfalso|reflexivity].
+            assert (addr_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                      (mkEffect addr []
+                         [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))]) m
+                      = CheckOk m2 evs2).
+            { do 2 eexists. unfold check_mmap.
+              rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none,
+                  fixed_none, fixed_rw.
+              cbv iota zeta.
+              rewrite length_wraps, above_top, addr_off_page, addr_is_zero. cbv iota.
+              rewrite contained. cbv iota. rewrite free_range. cbv iota.
+              rewrite addr_not_errno, bv_eqb_refl,
+                      (proj2 (listNN_eqb_eq _ _) eq_refl), backing_left.
+              cbn [andb]. reflexivity. }
+            destruct addr_ok as (m2 & evs2 & addr_ok).
+            pose proof (forced answer_refuses _ _ _ addr_ok) as addr_is_errno.
+            discriminate (eq_trans (eq_sym addr_is_errno) addr_not_errno). }
+          unfold mmap_fixed_fresh_refusable. rewrite no_backing.
+          cbn [negb mmap_errnos_when]. rewrite answer_refuses.
+          cbn [w_nilb]. exact std_ok.
+        * rewrite (errno_ret_in_when_false_of _ _ answer_refuses). exact std_ok.
+      + destruct (region_free (vm_reserved (m_vmmaps m)) addr
+                    (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:spans;
+          try rewrite spans in std_ok; cbv iota in std_ok |- *; [|exact std_ok].
+        destruct eff as [ret writes zeros unmaps copies reads].
+        destruct writes, copies, reads; try exact std_ok.
+        cbv iota in std_ok |- *.
+        destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+          try rewrite answer_refuses in std_ok; cbv iota in std_ok.
+        * destruct zeros; [|discriminate std_ok]. cbv iota in std_ok.
+          assert (no_budget : mmap_fixed_rw_span_budget_ok flags m addr
+                    (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = false).
+          { destruct (mmap_fixed_rw_span_budget_ok flags m addr
+                        (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))))
+              eqn:budget_left; [exfalso|reflexivity].
+            assert (addr_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                      (mkEffect addr []
+                         [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))]) m
+                      = CheckOk m2 evs2).
+            { do 2 eexists. unfold check_mmap.
+              rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none,
+                  fixed_none, fixed_rw.
+              cbv iota zeta.
+              rewrite length_wraps, above_top, addr_off_page, addr_is_zero. cbv iota.
+              rewrite spans. cbv iota. rewrite contained. cbv iota.
+              rewrite free_range. cbv iota.
+              rewrite addr_not_errno, bv_eqb_refl,
+                      (proj2 (listNN_eqb_eq _ _) eq_refl), budget_left.
+              cbn [andb]. reflexivity. }
+            destruct addr_ok as (m2 & evs2 & addr_ok).
+            pose proof (forced answer_refuses _ _ _ addr_ok) as addr_is_errno.
+            discriminate (eq_trans (eq_sym addr_is_errno) addr_not_errno). }
+          destruct unmaps as [|torn remains].
+          -- unfold mmap_fixed_span_refusable. rewrite no_budget.
+             cbn [negb mmap_errnos_when]. rewrite answer_refuses.
+             cbn [w_nilb andb]. exact std_ok.
+          -- exfalso.
+             destruct (corner_free fixed_rw) as [keeps_range | (inside & _)];
+               [discriminate keeps_range|].
+             rewrite spans in inside. discriminate (eq_trans (eq_sym inside) contained).
+        * rewrite (errno_ret_in_when_false_of _ _ answer_refuses).
+          change (errno_ret_in mmap_destructive_errnos ret) with false.
+          cbn [andb]. exact std_ok. }
+  destruct (mmap_noreplace_noaccess_b prot flags off) eqn:noreplace_none;
+    try rewrite noreplace_none in std_ok; cbv iota in std_ok |- *.
+  { cbv zeta in std_ok |- *.
+    destruct ((two_pow_64 <=? bv_unsigned addr
+                 + page_round_up_Z (bv_unsigned len))%Z) eqn:length_wraps;
+      try rewrite length_wraps in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len)
+                      <=? alloc_top (m_vmmaps m))%Z) eqn:above_top;
+      try rewrite above_top in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:addr_off_page;
+      try rewrite addr_off_page in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:addr_is_zero;
+      try rewrite addr_is_zero in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+    assert (addr_not_errno : errno_ret_in mmap_errnos addr = false).
+    { apply negb_false_iff, Z.eqb_eq in addr_off_page.
+      pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as aligned_answer.
+      change (ret_in_errnos [ENOMEM] addr)
+        with (errno_ret_in mmap_errnos addr) in aligned_answer. exact aligned_answer. }
     destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S2.
-    { destruct eff as [r ws zs us cs ci].
-      destruct ws as [|? ?]; [|intros H; discriminate H].
-      destruct us as [|? ?]; [|intros H; discriminate H].
-      destruct cs as [|? ?]; [|intros H; discriminate H].
-      destruct ci as [|? ?]; [|intros H; discriminate H].
-      destruct (errno_ret_in mmap_errnos r) eqn:E.
-      - destruct (mmap_fixed_fresh_refusable flags m (page_round_up_Z (bv_unsigned len))) eqn:R.
-        + cbn [mmap_errnos_when]. rewrite E. same.
-        + intros _. exfalso.
-          assert (Hb : mmap_noreserve_backed_ok flags m (page_round_up_Z (bv_unsigned len)) = true)
-            by (unfold mmap_fixed_fresh_refusable in R; apply negb_false_iff in R; exact R).
-          assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                    (mkEffectU addr [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] [] []) m = CheckOk m2 []).
-          { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6. cbv beta iota zeta.
-            rewrite W, T, A, P, S1, S2. cbv beta iota. rewrite Na, bv_eqb_refl, listNN_eqb_refl', Hb. reflexivity. }
-          destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-          rewrite Na in Hx. discriminate Hx.
-      - rewrite (errno_ret_in_when_false_of _ r E). same. }
-    destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S3;
-      [|same].
-    destruct eff as [r ws zs us cs ci].
-    destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (errno_ret_in mmap_errnos r) eqn:E.
-    - destruct (mmap_fixed_span_refusable flags m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:R.
-      + intros H. destruct zs as [|? ?]; [|discriminate H].
-        destruct us as [|u us].
-        * cbn [mmap_errnos_when w_nilb]. rewrite E. exact H.
-        * exfalso. destruct (Hc G6) as [Hu|[HS _]]; [discriminate Hu|]. rewrite S3, S1 in HS. discriminate HS.
-      + intros _. exfalso.
-        assert (Hbud : mmap_fixed_rw_span_budget_ok flags m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true)
-          by (unfold mmap_fixed_span_refusable in R; apply negb_false_iff in R; exact R).
-        assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                  (mkEffectU addr [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] [] []) m = CheckOk m2 []).
-        { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6. cbv beta iota zeta.
-          rewrite W, T, A, P, S3, S1, S2. cbv beta iota. rewrite Na. cbv beta iota.
-          rewrite bv_eqb_refl, listNN_eqb_refl', Hbud. reflexivity. }
-        destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-        rewrite Na in Hx. discriminate Hx.
-    - rewrite (errno_ret_in_when_false_of _ r E). same. }
-  destruct (mmap_noreplace_noaccess_b prot flags off) eqn:G7.
-  { destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W; [same|].
-    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T; [same|].
-    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A; [same|].
-    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [same|].
-    assert (Na : errno_ret_in mmap_errnos addr = false).
-    { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
-    destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S2.
-    { destruct eff as [r ws zs us cs ci].
-      destruct ws as [|? ?]; [|intros H; discriminate H].
-      destruct zs as [|? ?]; [|intros H; discriminate H].
-      destruct cs as [|? ?]; [|intros H; discriminate H].
-      destruct ci as [|? ?]; [|intros H; discriminate H].
-      destruct (errno_ret_in mmap_errnos r) eqn:E; [|same].
-      intros _. exfalso.
-      assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                (mkEffectU addr [] [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m = CheckOk m2 []).
-      { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6, G7. cbv beta iota zeta.
-        rewrite W, T, A, P, S2. cbv beta iota. rewrite Na, bv_eqb_refl, listNN_eqb_refl'. reflexivity. }
-      destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-      rewrite Na in Hx. discriminate Hx. }
-    destruct eff as [r ws zs us cs ci].
-    destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct zs as [|? ?]; [|intros H; discriminate H].
-    destruct us as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (errno_ret_in mmap_errnos r) eqn:E; [|same].
-    intros _. exfalso.
-    assert (Hck : check_mmap addr len prot flags fd off (mkEffectU (errno_ret EEXIST) [] [] [] [] []) m = CheckOk m []).
-    { unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6, G7. cbv beta iota zeta.
-      rewrite W, T, A, P, S2. cbv beta iota. rewrite bv_eqb_refl, orb_true_r. reflexivity. }
-    pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx. rewrite eexist_not_mmap_errno in Hx. discriminate Hx. }
-  destruct (mmap_noreplace_rw_b prot flags off) eqn:G8; [|same].
-  destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W; [same|].
-  destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T; [same|].
-  destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A; [same|].
-  destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [same|].
-  assert (Na : errno_ret_in mmap_errnos addr = false).
-  { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:free_range;
+      try rewrite free_range in std_ok; cbv iota in std_ok |- *.
+    - destruct eff as [ret writes zeros unmaps copies reads].
+      destruct writes, zeros, copies, reads; try exact std_ok.
+      cbv iota in std_ok |- *.
+      destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+        try rewrite answer_refuses in std_ok; cbv iota in std_ok; [|exact std_ok].
+      exfalso.
+      assert (addr_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                (mkEffectU addr [] []
+                   [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] []) m
+                = CheckOk m2 evs2).
+      { do 2 eexists. unfold check_mmap.
+        rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none,
+                  fixed_none, fixed_rw, noreplace_none.
+        cbv iota zeta.
+        rewrite length_wraps, above_top, addr_off_page, addr_is_zero. cbv iota.
+        rewrite free_range. cbv iota.
+        rewrite addr_not_errno, bv_eqb_refl, (proj2 (listNN_eqb_eq _ _) eq_refl).
+        cbn [andb]. reflexivity. }
+      destruct addr_ok as (m2 & evs2 & addr_ok).
+      pose proof (forced answer_refuses _ _ _ addr_ok) as addr_is_errno.
+      discriminate (eq_trans (eq_sym addr_is_errno) addr_not_errno).
+    - destruct eff as [ret writes zeros unmaps copies reads].
+      destruct writes, zeros, unmaps, copies, reads; try exact std_ok.
+      cbv iota in std_ok |- *.
+      destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+        cbv iota in std_ok.
+      + exfalso.
+        assert (clash_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                  (mkEffect (errno_ret EEXIST) [] []) m = CheckOk m2 evs2).
+        { do 2 eexists. unfold check_mmap.
+          rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none,
+                  fixed_none, fixed_rw, noreplace_none.
+          cbv iota zeta.
+          rewrite length_wraps, above_top, addr_off_page, addr_is_zero. cbv iota.
+          rewrite free_range. cbv iota.
+          rewrite bv_eqb_refl, orb_true_r. reflexivity. }
+        destruct clash_ok as (m2 & evs2 & clash_ok).
+        pose proof (forced answer_refuses _ _ _ clash_ok) as clash_is_errno.
+        discriminate (eq_trans (eq_sym clash_is_errno) eexist_not_mmap_errno).
+      + cbn [orb] in std_ok.
+        destruct (bv_eqb ret (errno_ret EEXIST)) eqn:is_clash; [|discriminate std_ok].
+        unfold check_ret_only. cbv iota. try rewrite is_clash. exact std_ok. }
+  destruct (mmap_noreplace_rw_b prot flags off) eqn:noreplace_rw;
+    try rewrite noreplace_rw in std_ok; cbv iota in std_ok |- *; [|exact std_ok].
+  cbv zeta in std_ok |- *.
+  destruct ((two_pow_64 <=? bv_unsigned addr
+               + page_round_up_Z (bv_unsigned len))%Z) eqn:length_wraps;
+    try rewrite length_wraps in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+  destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len)
+                    <=? alloc_top (m_vmmaps m))%Z) eqn:above_top;
+    try rewrite above_top in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+  destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:addr_off_page;
+    try rewrite addr_off_page in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+  destruct (negb (0 <? bv_unsigned addr)%Z) eqn:addr_is_zero;
+    try rewrite addr_is_zero in std_ok; cbv iota in std_ok |- *; [exact std_ok|].
+  assert (addr_not_errno : errno_ret_in mmap_errnos addr = false).
+  { apply negb_false_iff, Z.eqb_eq in addr_off_page.
+    pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as aligned_answer.
+    change (ret_in_errnos [ENOMEM] addr)
+      with (errno_ret_in mmap_errnos addr) in aligned_answer. exact aligned_answer. }
   destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-              (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S2.
-  { destruct eff as [r ws zs us cs ci].
-    destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct us as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (errno_ret_in mmap_errnos r) eqn:E.
-    - destruct (mmap_fixed_fresh_refusable flags m (page_round_up_Z (bv_unsigned len))) eqn:R.
-      + cbn [mmap_errnos_when]. rewrite E. same.
-      + intros _. exfalso.
-        assert (Hb : mmap_noreserve_backed_ok flags m (page_round_up_Z (bv_unsigned len)) = true)
-          by (unfold mmap_fixed_fresh_refusable in R; apply negb_false_iff in R; exact R).
-        assert (Hck : exists m2, check_mmap addr len prot flags fd off
-                  (mkEffectU addr [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] [] []) m = CheckOk m2 []).
-        { eexists. unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6, G7, G8. cbv beta iota zeta.
-          rewrite W, T, A, P, S2. cbv beta iota. rewrite Na, bv_eqb_refl, listNN_eqb_refl', Hb. reflexivity. }
-        destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-        rewrite Na in Hx. discriminate Hx.
-    - rewrite (errno_ret_in_when_false_of _ r E). same. }
-  destruct eff as [r ws zs us cs ci].
-  destruct ws as [|? ?]; [|intros H; discriminate H].
-  destruct zs as [|? ?]; [|intros H; discriminate H].
-  destruct us as [|? ?]; [|intros H; discriminate H].
-  destruct cs as [|? ?]; [|intros H; discriminate H].
-  destruct ci as [|? ?]; [|intros H; discriminate H].
-  destruct (errno_ret_in mmap_errnos r) eqn:E; [|same].
-  intros _. exfalso.
-  assert (Hck : check_mmap addr len prot flags fd off (mkEffectU (errno_ret EEXIST) [] [] [] [] []) m = CheckOk m []).
-  { unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6, G7, G8. cbv beta iota zeta.
-    rewrite W, T, A, P, S2. cbv beta iota. rewrite bv_eqb_refl, orb_true_r. reflexivity. }
-  pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx. rewrite eexist_not_mmap_errno in Hx. discriminate Hx.
+              (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:free_range;
+    try rewrite free_range in std_ok; cbv iota in std_ok |- *.
+  - destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, unmaps, copies, reads; try exact std_ok.
+    cbv iota in std_ok |- *.
+    destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses;
+      try rewrite answer_refuses in std_ok; cbv iota in std_ok.
+    + destruct zeros; [|discriminate std_ok].
+      assert (no_backing : mmap_noreserve_backed_ok flags m
+                (page_round_up_Z (bv_unsigned len)) = false).
+      { destruct (mmap_noreserve_backed_ok flags m
+                    (page_round_up_Z (bv_unsigned len))) eqn:backing_left;
+          [exfalso|reflexivity].
+        assert (addr_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                  (mkEffect addr []
+                     [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))]) m
+                  = CheckOk m2 evs2).
+        { do 2 eexists. unfold check_mmap.
+          rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none,
+                  fixed_none, fixed_rw, noreplace_none, noreplace_rw.
+          cbv iota zeta.
+          rewrite length_wraps, above_top, addr_off_page, addr_is_zero. cbv iota.
+          rewrite free_range. cbv iota.
+          rewrite addr_not_errno, bv_eqb_refl,
+                  (proj2 (listNN_eqb_eq _ _) eq_refl), backing_left.
+          cbn [andb]. reflexivity. }
+        destruct addr_ok as (m2 & evs2 & addr_ok).
+        pose proof (forced answer_refuses _ _ _ addr_ok) as addr_is_errno.
+        discriminate (eq_trans (eq_sym addr_is_errno) addr_not_errno). }
+      unfold mmap_fixed_fresh_refusable. rewrite no_backing.
+      cbn [negb mmap_errnos_when]. rewrite answer_refuses. cbn [w_nilb].
+      exact std_ok.
+    + rewrite (errno_ret_in_when_false_of _ _ answer_refuses). exact std_ok.
+  - destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, zeros, unmaps, copies, reads; try exact std_ok.
+    cbv iota in std_ok |- *.
+    destruct (errno_ret_in mmap_errnos ret) eqn:answer_refuses; cbv iota in std_ok.
+    + exfalso.
+      assert (clash_ok : exists m2 evs2, check_mmap addr len prot flags fd off
+                (mkEffect (errno_ret EEXIST) [] []) m = CheckOk m2 evs2).
+      { do 2 eexists. unfold check_mmap.
+        rewrite off_misaligned, not_anon, empty_len, hint_rw, hint_none,
+                  fixed_none, fixed_rw, noreplace_none, noreplace_rw.
+        cbv iota zeta.
+        rewrite length_wraps, above_top, addr_off_page, addr_is_zero. cbv iota.
+        rewrite free_range. cbv iota.
+        rewrite bv_eqb_refl, orb_true_r. reflexivity. }
+      destruct clash_ok as (m2 & evs2 & clash_ok).
+      pose proof (forced answer_refuses _ _ _ clash_ok) as clash_is_errno.
+      discriminate (eq_trans (eq_sym clash_is_errno) eexist_not_mmap_errno).
+    + cbn [orb] in std_ok.
+      destruct (bv_eqb ret (errno_ret EEXIST)) eqn:is_clash; [|discriminate std_ok].
+      unfold check_ret_only. cbv iota. try rewrite is_clash. exact std_ok.
 Qed.
 
 Lemma check_mprotect_ed_fwd : forall addr len prot eff m m' evs,
@@ -845,35 +971,50 @@ Lemma check_mprotect_ed_fwd : forall addr len prot eff m m' evs,
   forced_mprotect addr len prot m eff ->
   check_mprotect_ed addr len prot eff m = CheckOk m' evs.
 Proof.
-  intros addr len prot eff m m' evs H Hf. revert H.
-  unfold check_mprotect_ed, check_mprotect. cbv zeta.
-  destruct (mprotect_grows_conflict_b prot) eqn:G0; [same|].
-  destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:G1; [same|].
-  destruct (w_is0 len) eqn:G2; [same|].
-  destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:G3; [same|].
-  destruct (negb (mprotect_modeled_b prot)) eqn:G4; [same|].
-  destruct (map_contains (vm_noaccess (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
-            && map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S1;
-    [|same].
-  destruct eff as [r ws zs us cs ci].
-  destruct ws as [|? ?]; [|intros H; discriminate H].
-  destruct us as [|? ?]; [|intros H; discriminate H].
-  destruct cs as [|? ?]; [|intros H; discriminate H].
-  destruct ci as [|? ?]; [|intros H; discriminate H].
-  destruct (errno_ret_in mprotect_errnos r) eqn:E.
-  - destruct (mprotect_refusable m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:R.
-    + cbn [mprotect_errnos_when]. rewrite E. same.
-    + intros _. exfalso.
-      assert (Hbud : mprotect_budget_ok m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true)
-        by (unfold mprotect_refusable in R; apply negb_false_iff in R; exact R).
-      assert (Hck : exists m2, check_mprotect addr len prot
-                (mkEffectU (Z_to_bv 64 0) [] [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))] [] [] []) m
-                = CheckOk m2 []).
-      { eexists. unfold check_mprotect. rewrite G0, G1, G2, G3, G4. cbv beta iota zeta. rewrite S1. cbv beta iota.
-        rewrite zero_not_mprotect_errno, Hbud, listNN_eqb_refl'. reflexivity. }
-      destruct Hck as (m2 & Hck). pose proof (Hf E _ _ _ Hck) as Hx. cbn [eff_ret] in Hx.
-      rewrite zero_not_mprotect_errno in Hx. discriminate Hx.
-  - rewrite (errno_ret_in_mprotect_when_false_of _ r E). same.
+  intros addr len prot eff m m' evs std_ok forced.
+  unfold check_mprotect in std_ok. unfold check_mprotect_ed.
+  destruct (mprotect_grows_conflict_b prot) eqn:grows;
+    try rewrite grows in std_ok; cbv iota in std_ok; [exact std_ok|].
+  destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:off_page;
+    try rewrite off_page in std_ok; cbv iota in std_ok; [exact std_ok|].
+  destruct (w_is0 len) eqn:empty_len;
+    try rewrite empty_len in std_ok; cbv iota in std_ok; [exact std_ok|].
+  destruct ((two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z)
+    eqn:wraps; try rewrite wraps in std_ok; cbv iota in std_ok; [exact std_ok|].
+  destruct (negb (mprotect_modeled_b prot)) eqn:not_modeled;
+    try rewrite not_modeled in std_ok; cbv iota in std_ok; [exact std_ok|].
+  cbv zeta in std_ok |- *.
+  destruct (map_contains (vm_noaccess (m_vmmaps m)) addr
+              (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
+            && map_contains (vm_maps (m_vmmaps m)) addr
+              (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:protected;
+    try rewrite protected in std_ok; cbv iota in std_ok; [|exact std_ok].
+  destruct eff as [ret writes zeros unmaps copies reads].
+  destruct writes, unmaps, copies, reads; try (exact std_ok).
+  cbv iota in std_ok |- *.
+  destruct (errno_ret_in mprotect_errnos ret) eqn:refusal.
+  - destruct zeros; [|discriminate std_ok].
+    destruct (mprotect_budget_ok m addr
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:within_budget.
+    + exfalso.
+      assert (grant_ok : check_mprotect addr len prot
+                (mkEffect (Z_to_bv 64 0) []
+                   [(addr, Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))]) m
+              = CheckOk (mprotect_model_next m addr
+                           (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) []).
+      { unfold check_mprotect.
+        rewrite grows, off_page, empty_len, wraps, not_modeled.
+        cbv iota zeta. rewrite protected. cbv iota.
+        rewrite zero_not_mprotect_errno, within_budget.
+        unfold w_is0. rewrite bv_eqb_refl.
+        rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). cbn [andb]. reflexivity. }
+      pose proof (forced refusal _ _ _ grant_ok) as zero_is_errno.
+      discriminate (eq_trans (eq_sym zero_is_errno) zero_not_mprotect_errno).
+    + replace (mprotect_refusable m addr
+                 (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) with true
+        by (unfold mprotect_refusable; rewrite within_budget; reflexivity).
+      cbn [mprotect_errnos_when]. rewrite refusal. cbn [w_nilb]. exact std_ok.
+  - rewrite (errno_ret_in_mprotect_when_false_of _ _ refusal). exact std_ok.
 Qed.
 
 Lemma refusal_neq : forall r a : word,
@@ -893,9 +1034,9 @@ Proof. intros addr len prot m eff H Hr. congruence. Qed.
 
 (* [comment removed for export] *)
 Ltac if_cond H C :=
-  cbv beta iota in H;
   lazymatch type of H with
-  | (if ?c then _ else _) = CheckOk _ _ => destruct c eqn:C; [|discriminate H]
+  | context [if ?test then _ else _] =>
+      destruct test eqn:C; try rewrite C in H; cbv iota in H
   end.
 
 Ltac andb_split C :=
@@ -908,294 +1049,426 @@ Lemma check_mmap_ed_bwd : forall addr len prot flags fd off eff m m' evs,
   check_mmap addr len prot flags fd off eff m = CheckOk m' evs
   /\ forced_mmap addr len prot flags fd off m eff.
 Proof.
-  intros addr len prot flags fd off eff m m' evs H.
-  destruct (errno_ret_in mmap_errnos (eff_ret eff)) eqn:Er.
-  2:{ split; [|apply forced_mmap_nonrefusal; exact Er].
-      revert H. unfold check_mmap_ed, check_mmap. cbv zeta.
-      destruct eff as [r ws zs us cs ci]. cbn [eff_ret] in Er.
-      repeat (rewrite (errno_ret_in_when_false_of _ r Er)).
-      change (errno_ret_in mmap_destructive_errnos r) with false.
-      rewrite Er. intros H.
-      destruct (negb (mmap_off_aligned_b off)); [exact H|].
-      destruct (negb (mmap_anon_b flags)); [exact H|].
-      destruct (w_is0 len); [exact H|].
-      destruct (mmap_modeled_b prot flags off); [exact H|].
-      destruct (mmap_noaccess_b prot flags off); [exact H|].
-      destruct (mmap_fixed_noaccess_b prot flags off); [exact H|].
-      destruct (mmap_fixed_rw_b prot flags off); [exact H|].
-      destruct (mmap_noreplace_noaccess_b prot flags off); [exact H|].
-      exact H. }
-  (* [comment removed for export] *)
-  revert H. unfold check_mmap_ed. cbv zeta.
-  destruct (negb (mmap_off_aligned_b off)) eqn:G0.
-  { intros H. destruct (mmap_pglen_ok_b len); [|discriminate H].
-    apply check_ret_only_ok_iff in H as (-> & _ & _). vm_compute in Er. discriminate Er. }
-  destruct (negb (mmap_anon_b flags)) eqn:G1; [intros H; discriminate H|].
-  destruct (w_is0 len) eqn:G2.
-  { intros H. destruct (mmap_plain_anon_b flags); [|discriminate H].
-    apply check_ret_only_ok_iff in H as (-> & _ & _). vm_compute in Er. discriminate Er. }
-  destruct eff as [r ws zs us cs ci]. cbn [eff_ret] in Er.
-  destruct (mmap_modeled_b prot flags off) eqn:G3.
-  { destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct us as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len))) eqn:R.
-    - cbn [mmap_errnos_when]. rewrite Er. intros H. split.
-      + unfold check_mmap. rewrite G0, G1, G2, G3. cbv beta iota zeta. rewrite Er. exact H.
-      + intros _ eff2 m2 evs2 H2. destruct (errno_ret_in mmap_errnos (eff_ret eff2)) eqn:E2; [reflexivity|].
-        exfalso. unfold check_mmap in H2. rewrite G0, G1, G2, G3 in H2. cbv zeta in H2.
-        destruct eff2 as [r2 ws2 zs2 us2 cs2 ci2]. cbn [eff_ret] in E2.
-        destruct ws2 as [|? ?]; [|discriminate H2]. destruct us2 as [|? ?]; [|discriminate H2].
-        destruct cs2 as [|? ?]; [|discriminate H2]. destruct ci2 as [|? ?]; [|discriminate H2].
-        rewrite E2 in H2. if_cond H2 C. andb_split C.
-        apply Z.eqb_eq in C. apply Z.ltb_lt in C4. apply Z.leb_le in C3.
-        rewrite (grant_conj_not_refusable flags m _ r2 C C4 C3 C2 C1) in R. discriminate R.
-    - cbn [mmap_errnos_when errno_ret_in existsb]. intros H. exfalso.
-      if_cond H C. andb_split C. apply Z.eqb_eq in C.
-      rewrite (aligned_not_mmap_errno r C) in Er. discriminate Er. }
-  destruct (mmap_noaccess_b prot flags off) eqn:G4.
-  { destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct zs as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len))) eqn:R.
-    - cbn [mmap_errnos_when]. rewrite Er. intros H. split.
-      + unfold check_mmap. rewrite G0, G1, G2, G3, G4. cbv beta iota zeta. rewrite Er. exact H.
-      + intros _ eff2 m2 evs2 H2. destruct (errno_ret_in mmap_errnos (eff_ret eff2)) eqn:E2; [reflexivity|].
-        exfalso. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4 in H2. cbv zeta in H2.
-        destruct eff2 as [r2 ws2 zs2 us2 cs2 ci2]. cbn [eff_ret] in E2.
-        destruct ws2 as [|? ?]; [|discriminate H2]. destruct zs2 as [|? ?]; [|discriminate H2].
-        destruct cs2 as [|? ?]; [|discriminate H2]. destruct ci2 as [|? ?]; [|discriminate H2].
-        rewrite E2 in H2. if_cond H2 C. andb_split C.
-        apply Z.eqb_eq in C. apply Z.ltb_lt in C3. apply Z.leb_le in C2.
-        rewrite (reserve_conj_not_refusable m _ r2 C C3 C2 C1) in R. discriminate R.
-    - cbn [mmap_errnos_when errno_ret_in existsb]. intros H. exfalso.
-      if_cond H C. andb_split C. apply Z.eqb_eq in C.
-      rewrite (aligned_not_mmap_errno r C) in Er. discriminate Er. }
-  destruct (mmap_fixed_noaccess_b prot flags off) eqn:G5.
-  { destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W.
-    { intros H. split.
-      - unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5. cbv beta iota zeta. rewrite W. exact H.
-      - intros _ eff2 m2 evs2 H2. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5 in H2. cbv zeta in H2.
-        rewrite W in H2. apply check_ret_only_ok_iff in H2 as (-> & _ & _). vm_compute. reflexivity. }
-    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T;
-      [intros H; discriminate H|].
-    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A.
-    { intros H. apply check_ret_only_ok_iff in H as (H & _ & _). apply (f_equal eff_ret) in H. cbn in H. subst r.
-      vm_compute in Er. discriminate Er. }
-    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [intros H; discriminate H|].
-    assert (Na : errno_ret_in mmap_errnos addr = false).
-    { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
-    rewrite (refusal_neq r addr Er Na).
-    change (errno_ret_in (mmap_errnos_when false) r) with false.
-    change (errno_ret_in mmap_destructive_errnos r) with false.
-    intros H. exfalso.
-    destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
-              && map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))));
-    [|destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-                  (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))));
-      [|destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))))]];
-    try discriminate H;
-    destruct ws as [|? ?]; try discriminate H; destruct zs as [|? ?]; try discriminate H;
-    destruct cs as [|? ?]; try discriminate H; destruct ci as [|? ?]; try discriminate H;
-    destruct us as [|? ?]; discriminate H. }
-  destruct (mmap_fixed_rw_b prot flags off) eqn:G6.
-  { destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W.
-    { intros H. split.
-      - unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6. cbv beta iota zeta. rewrite W. exact H.
-      - intros _ eff2 m2 evs2 H2. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5, G6 in H2. cbv zeta in H2.
-        rewrite W in H2. apply check_ret_only_ok_iff in H2 as (-> & _ & _). vm_compute. reflexivity. }
-    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T;
-      [intros H; discriminate H|].
-    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A.
-    { intros H. apply check_ret_only_ok_iff in H as (H & _ & _). apply (f_equal eff_ret) in H. cbn in H. subst r.
-      vm_compute in Er. discriminate Er. }
-    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [intros H; discriminate H|].
-    assert (Na : errno_ret_in mmap_errnos addr = false).
-    { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
-    rewrite (refusal_neq r addr Er Na).
-    change (errno_ret_in mmap_destructive_errnos r) with false.
-    destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
-              && map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S1.
-    { destruct ws as [|? ?]; [|intros H; discriminate H].
-      destruct cs as [|? ?]; [|intros H; discriminate H].
-      destruct ci as [|? ?]; [|intros H; discriminate H].
-      destruct (mmap_fixed_commit_refusable flags m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:R.
-      - cbn [mmap_errnos_when]. rewrite Er.
-        destruct zs as [|? ?]; [|intros H; destruct us; discriminate H].
-        destruct us as [|? ?]; [|intros H; discriminate H].
-        intros H. split.
-        + unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6. cbv beta iota zeta. rewrite W, T, A, P, S1.
-          cbv beta iota. rewrite Er. exact H.
-        + intros _ eff2 m2 evs2 H2. destruct (errno_ret_in mmap_errnos (eff_ret eff2)) eqn:E2; [reflexivity|].
-          exfalso. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5, G6 in H2. cbv zeta in H2.
-          rewrite W, T, A, P, S1 in H2.
-          destruct eff2 as [r2 ws2 zs2 us2 cs2 ci2]. cbn [eff_ret] in E2.
-          destruct ws2 as [|? ?]; [|discriminate H2]. destruct cs2 as [|? ?]; [|discriminate H2].
-          destruct ci2 as [|? ?]; [|discriminate H2]. rewrite E2 in H2.
-          destruct us2 as [|? ?]; [|discriminate H2].
-          if_cond H2 C. andb_split C. unfold mmap_fixed_commit_refusable in R. rewrite C0 in R. discriminate R.
-      - cbn [mmap_errnos_when errno_ret_in existsb]. intros H. exfalso.
-        destruct us; discriminate H. }
-    destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S2.
-    { destruct ws as [|? ?]; [|intros H; discriminate H].
-      destruct us as [|? ?]; [|intros H; discriminate H].
-      destruct cs as [|? ?]; [|intros H; discriminate H].
-      destruct ci as [|? ?]; [|intros H; discriminate H].
-      destruct (mmap_fixed_fresh_refusable flags m (page_round_up_Z (bv_unsigned len))) eqn:R.
-      - cbn [mmap_errnos_when]. rewrite Er. intros H. split.
-        + unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6. cbv beta iota zeta. rewrite W, T, A, P, S1, S2.
-          cbv beta iota. rewrite Er. exact H.
-        + intros _ eff2 m2 evs2 H2. destruct (errno_ret_in mmap_errnos (eff_ret eff2)) eqn:E2; [reflexivity|].
-          exfalso. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5, G6 in H2. cbv zeta in H2.
-          rewrite W, T, A, P, S1, S2 in H2.
-          destruct eff2 as [r2 ws2 zs2 us2 cs2 ci2]. cbn [eff_ret] in E2.
-          destruct ws2 as [|? ?]; [|discriminate H2]. destruct us2 as [|? ?]; [|discriminate H2].
-          destruct cs2 as [|? ?]; [|discriminate H2]. destruct ci2 as [|? ?]; [|discriminate H2].
-          rewrite E2 in H2. if_cond H2 C. andb_split C.
-          unfold mmap_fixed_fresh_refusable in R. rewrite C0 in R. discriminate R.
-      - cbn [mmap_errnos_when errno_ret_in existsb]. intros H. exfalso. discriminate H. }
-    destruct (region_free (vm_reserved (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S3;
-      [|intros H; discriminate H].
-    destruct ws as [|? ?]; [|intros H; discriminate H].
-    destruct cs as [|? ?]; [|intros H; discriminate H].
-    destruct ci as [|? ?]; [|intros H; discriminate H].
-    destruct (mmap_fixed_span_refusable flags m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:R.
-    - cbn [mmap_errnos_when]. rewrite Er.
-      destruct zs as [|? ?]; [|intros H; destruct us; discriminate H].
-      destruct us as [|? ?]; [|intros H; discriminate H].
-      intros H. split.
-      + unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6. cbv beta iota zeta. rewrite W, T, A, P, S3, S1, S2.
-        cbv beta iota. rewrite Er. exact H.
-      + intros _ eff2 m2 evs2 H2. destruct (errno_ret_in mmap_errnos (eff_ret eff2)) eqn:E2; [reflexivity|].
-        exfalso. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5, G6 in H2. cbv zeta in H2.
-        rewrite W, T, A, P, S3, S1, S2 in H2.
-        destruct eff2 as [r2 ws2 zs2 us2 cs2 ci2]. cbn [eff_ret] in E2.
-        destruct ws2 as [|? ?]; [|discriminate H2]. destruct cs2 as [|? ?]; [|discriminate H2].
-        destruct ci2 as [|? ?]; [|discriminate H2]. rewrite E2 in H2.
-        destruct us2 as [|? ?]; [|discriminate H2].
-        if_cond H2 C. andb_split C. unfold mmap_fixed_span_refusable in R. rewrite C0 in R. discriminate R.
-    - cbn [mmap_errnos_when errno_ret_in existsb]. intros H. exfalso.
-      destruct us; discriminate H. }
-  destruct (mmap_noreplace_noaccess_b prot flags off) eqn:G7.
-  { destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W.
-    { intros H. split.
-      - unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6, G7. cbv beta iota zeta. rewrite W. exact H.
-      - intros _ eff2 m2 evs2 H2. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5, G6, G7 in H2.
-        cbv zeta in H2. rewrite W in H2. apply check_ret_only_ok_iff in H2 as (-> & _ & _). vm_compute. reflexivity. }
-    destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T;
-      [intros H; discriminate H|].
-    destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A.
-    { intros H. apply check_ret_only_ok_iff in H as (H & _ & _). apply (f_equal eff_ret) in H. cbn in H. subst r.
-      vm_compute in Er. discriminate Er. }
-    destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [intros H; discriminate H|].
-    assert (Na : errno_ret_in mmap_errnos addr = false).
-    { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
-    assert (Nx : bv_eqb r (errno_ret EEXIST) = false) by (apply (refusal_neq r _ Er eexist_not_mmap_errno)).
-    rewrite (refusal_neq r addr Er Na), Nx.
-    change (errno_ret_in (mmap_errnos_when false) r) with false.
-    intros H. exfalso.
-    destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-                (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))));
-    destruct ws as [|? ?]; try discriminate H; destruct zs as [|? ?]; try discriminate H;
-    destruct cs as [|? ?]; try discriminate H; destruct ci as [|? ?]; try discriminate H;
-    destruct us as [|? ?]; discriminate H. }
-  destruct (mmap_noreplace_rw_b prot flags off) eqn:G8; [|intros H; discriminate H].
-  destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:W.
-  { intros H. split.
-    - unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6, G7, G8. cbv beta iota zeta. rewrite W. exact H.
-    - intros _ eff2 m2 evs2 H2. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5, G6, G7, G8 in H2.
-      cbv zeta in H2. rewrite W in H2. apply check_ret_only_ok_iff in H2 as (-> & _ & _). vm_compute. reflexivity. }
-  destruct (negb (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (m_vmmaps m))%Z) eqn:T;
-    [intros H; discriminate H|].
-  destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:A.
-  { intros H. apply check_ret_only_ok_iff in H as (H & _ & _). apply (f_equal eff_ret) in H. cbn in H. subst r.
-    vm_compute in Er. discriminate Er. }
-  destruct (negb (0 <? bv_unsigned addr)%Z) eqn:P; [intros H; discriminate H|].
-  assert (Na : errno_ret_in mmap_errnos addr = false).
-  { apply aligned_not_mmap_errno. apply negb_false_iff, Z.eqb_eq in A. exact A. }
-  assert (Nx : bv_eqb r (errno_ret EEXIST) = false) by (apply (refusal_neq r _ Er eexist_not_mmap_errno)).
-  rewrite (refusal_neq r addr Er Na), Nx.
-  destruct (region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) addr
-              (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S2.
-  2:{ change (errno_ret_in (mmap_errnos_when false) r) with false. intros H. exfalso.
-      destruct ws as [|? ?]; try discriminate H; destruct zs as [|? ?]; try discriminate H;
-      destruct cs as [|? ?]; try discriminate H; destruct ci as [|? ?]; try discriminate H;
-      destruct us as [|? ?]; discriminate H. }
-  destruct ws as [|? ?]; [|intros H; discriminate H].
-  destruct us as [|? ?]; [|intros H; discriminate H].
-  destruct cs as [|? ?]; [|intros H; discriminate H].
-  destruct ci as [|? ?]; [|intros H; discriminate H].
-  destruct (mmap_fixed_fresh_refusable flags m (page_round_up_Z (bv_unsigned len))) eqn:R.
-  - cbn [mmap_errnos_when]. rewrite Er. intros H. split.
-    + unfold check_mmap. rewrite G0, G1, G2, G3, G4, G5, G6, G7, G8. cbv beta iota zeta. rewrite W, T, A, P, S2.
-      cbv beta iota. rewrite Er. exact H.
-    + intros _ eff2 m2 evs2 H2. destruct (errno_ret_in mmap_errnos (eff_ret eff2)) eqn:E2; [reflexivity|].
-      exfalso. unfold check_mmap in H2. rewrite G0, G1, G2, G3, G4, G5, G6, G7, G8 in H2. cbv zeta in H2.
-      rewrite W, T, A, P, S2 in H2.
-      destruct eff2 as [r2 ws2 zs2 us2 cs2 ci2]. cbn [eff_ret] in E2.
-      destruct ws2 as [|? ?]; [|discriminate H2]. destruct us2 as [|? ?]; [|discriminate H2].
-      destruct cs2 as [|? ?]; [|discriminate H2]. destruct ci2 as [|? ?]; [|discriminate H2].
-      rewrite E2 in H2. if_cond H2 C. andb_split C.
-      unfold mmap_fixed_fresh_refusable in R. rewrite C0 in R. discriminate R.
-  - cbn [mmap_errnos_when errno_ret_in existsb]. intros H. exfalso. discriminate H.
+  intros addr len prot flags fd off eff m m' evs ed_ok.
+  unfold check_mmap_ed in ed_ok. unfold forced_mmap, check_mmap.
+  if_cond ed_ok off_misaligned.
+  { if_cond ed_ok pglen_ok; [|discriminate ed_ok].
+    split; [exact ed_ok|].
+    intros refused other m2 evs2 other_ok.
+    apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+    apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+  if_cond ed_ok not_anon; [discriminate ed_ok|].
+  if_cond ed_ok empty_len.
+  { if_cond ed_ok plain_anon; [|discriminate ed_ok].
+    split; [exact ed_ok|].
+    intros refused other m2 evs2 other_ok.
+    apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+    apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+  if_cond ed_ok hint_rw.
+  { destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, unmaps, copies, reads; try discriminate ed_ok.
+    cbv iota in ed_ok |- *. cbn [eff_ret].
+    destruct (mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len)))
+      eqn:grant_refusable; try rewrite grant_refusable in ed_ok;
+      cbn [mmap_errnos_when] in ed_ok.
+    - if_cond ed_ok answer_refuses.
+      + if_cond ed_ok no_zeros; [|discriminate ed_ok].
+        apply w_nilb_true in no_zeros as ->.
+        try rewrite answer_refuses. split; [exact ed_ok|].
+        intros _ other m2 evs2 other_ok.
+        destruct other as [r2 w2 z2 u2 c2 i2]. cbn [eff_ret].
+        destruct w2, u2, c2, i2; try discriminate other_ok.
+        cbv iota in other_ok.
+        destruct (errno_ret_in mmap_errnos r2) eqn:other_refuses; [reflexivity|].
+        exfalso. try rewrite other_refuses in other_ok. cbv iota in other_ok.
+        if_cond other_ok other_grants; [|discriminate other_ok].
+        apply andb_prop in other_grants as [other_grants zeros_shape].
+        apply andb_prop in other_grants as [other_grants backed].
+        apply andb_prop in other_grants as [other_grants free_range].
+        apply andb_prop in other_grants as [other_grants under_top].
+        apply andb_prop in other_grants as [on_page above_zero].
+        apply Z.eqb_eq in on_page. apply Z.ltb_lt in above_zero.
+        apply Z.leb_le in under_top.
+        rewrite (grant_conj_not_refusable flags m _ r2 on_page above_zero
+                   under_top free_range backed) in grant_refusable.
+        discriminate grant_refusable.
+      + try rewrite answer_refuses. split; [exact ed_ok|].
+        intros refused.
+        first [ discriminate refused
+              | discriminate (eq_trans (eq_sym refused) answer_refuses) ].
+    - cbn [errno_ret_in existsb] in ed_ok. cbv iota in ed_ok.
+      if_cond ed_ok granted; [|discriminate ed_ok].
+      apply andb_prop in granted as [granted _].
+      apply andb_prop in granted as [granted _].
+      apply andb_prop in granted as [granted _].
+      apply andb_prop in granted as [granted _].
+      apply andb_prop in granted as [on_page _].
+      apply Z.eqb_eq in on_page.
+      pose proof (ret_in_errnos_ENOMEM_aligned ret on_page) as answer_not_errno.
+      change (ret_in_errnos [ENOMEM] ret) with (errno_ret_in mmap_errnos ret)
+        in answer_not_errno.
+      try rewrite answer_not_errno. split; [exact ed_ok|].
+      intros refused.
+      first [ discriminate refused
+            | discriminate (eq_trans (eq_sym refused) answer_not_errno) ]. }
+  if_cond ed_ok hint_none.
+  { destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, zeros, copies, reads; try discriminate ed_ok.
+    cbv iota in ed_ok |- *. cbn [eff_ret].
+    destruct (mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len)))
+      eqn:reserve_refusable; try rewrite reserve_refusable in ed_ok;
+      cbn [mmap_errnos_when] in ed_ok.
+    - if_cond ed_ok answer_refuses.
+      + if_cond ed_ok no_unmaps; [|discriminate ed_ok].
+        apply w_nilb_true in no_unmaps as ->.
+        try rewrite answer_refuses. split; [exact ed_ok|].
+        intros _ other m2 evs2 other_ok.
+        destruct other as [r2 w2 z2 u2 c2 i2]. cbn [eff_ret].
+        destruct w2, z2, c2, i2; try discriminate other_ok.
+        cbv iota in other_ok.
+        destruct (errno_ret_in mmap_errnos r2) eqn:other_refuses; [reflexivity|].
+        exfalso. try rewrite other_refuses in other_ok. cbv iota in other_ok.
+        if_cond other_ok other_reserves; [|discriminate other_ok].
+        apply andb_prop in other_reserves as [other_reserves unmaps_shape].
+        apply andb_prop in other_reserves as [other_reserves free_range].
+        apply andb_prop in other_reserves as [other_reserves under_top].
+        apply andb_prop in other_reserves as [on_page above_zero].
+        apply Z.eqb_eq in on_page. apply Z.ltb_lt in above_zero.
+        apply Z.leb_le in under_top.
+        rewrite (reserve_conj_not_refusable m _ r2 on_page above_zero
+                   under_top free_range) in reserve_refusable.
+        discriminate reserve_refusable.
+      + try rewrite answer_refuses. split; [exact ed_ok|].
+        intros refused.
+        first [ discriminate refused
+              | discriminate (eq_trans (eq_sym refused) answer_refuses) ].
+    - cbn [errno_ret_in existsb] in ed_ok. cbv iota in ed_ok.
+      if_cond ed_ok reserved; [|discriminate ed_ok].
+      apply andb_prop in reserved as [reserved _].
+      apply andb_prop in reserved as [reserved _].
+      apply andb_prop in reserved as [reserved _].
+      apply andb_prop in reserved as [on_page _].
+      apply Z.eqb_eq in on_page.
+      pose proof (ret_in_errnos_ENOMEM_aligned ret on_page) as answer_not_errno.
+      change (ret_in_errnos [ENOMEM] ret) with (errno_ret_in mmap_errnos ret)
+        in answer_not_errno.
+      try rewrite answer_not_errno. split; [exact ed_ok|].
+      intros refused.
+      first [ discriminate refused
+            | discriminate (eq_trans (eq_sym refused) answer_not_errno) ]. }
+  if_cond ed_ok hint_fixed_none.
+  { cbv zeta in ed_ok |- *.
+    if_cond ed_ok length_wraps.
+    { split; [exact ed_ok|].
+      intros refused other m2 evs2 other_ok.
+      apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+      apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+    if_cond ed_ok above_top; [discriminate ed_ok|].
+    if_cond ed_ok addr_off_page.
+    { split; [exact ed_ok|].
+      intros refused other m2 evs2 other_ok.
+      apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+      apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+    if_cond ed_ok addr_is_zero; [discriminate ed_ok|].
+    apply negb_false_iff, Z.eqb_eq in addr_off_page.
+    pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as addr_not_errno.
+    change (ret_in_errnos [ENOMEM] addr) with (errno_ret_in mmap_errnos addr)
+      in addr_not_errno.
+    let reserve_case := fun _ =>
+      destruct eff as [ret writes zeros unmaps copies reads];
+      destruct writes, zeros, copies, reads; try discriminate ed_ok;
+      cbv iota in ed_ok |- *;
+      if_cond ed_ok installs; [|discriminate ed_ok];
+      apply andb_prop in installs as [same_answer _];
+      apply bv_eqb_eq in same_answer as ->;
+      try rewrite addr_not_errno;
+      split; [exact ed_ok|];
+      intros refused;
+      first [ discriminate refused
+            | discriminate (eq_trans (eq_sym refused) addr_not_errno) ] in
+    if_cond ed_ok contained; [reserve_case tt|];
+    if_cond ed_ok free_range; [reserve_case tt|];
+    if_cond ed_ok spans; [reserve_case tt|discriminate ed_ok]. }
+  if_cond ed_ok fixed_rw.
+  { cbv zeta in ed_ok |- *.
+    if_cond ed_ok length_wraps.
+    { split; [exact ed_ok|].
+      intros refused other m2 evs2 other_ok.
+      apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+      apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+    if_cond ed_ok above_top; [discriminate ed_ok|].
+    if_cond ed_ok addr_off_page.
+    { split; [exact ed_ok|].
+      intros refused other m2 evs2 other_ok.
+      apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+      apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+    if_cond ed_ok addr_is_zero; [discriminate ed_ok|].
+    apply negb_false_iff, Z.eqb_eq in addr_off_page.
+    pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as addr_not_errno.
+    change (ret_in_errnos [ENOMEM] addr) with (errno_ret_in mmap_errnos addr)
+      in addr_not_errno.
+    if_cond ed_ok contained.
+    - destruct eff as [ret writes zeros unmaps copies reads].
+      destruct writes, copies, reads; try discriminate ed_ok.
+      cbv iota in ed_ok |- *.
+      if_cond ed_ok budget_refusal.
+      + apply andb_prop in budget_refusal as [budget_refusal no_unmaps].
+        apply andb_prop in budget_refusal as [listed no_zeros].
+        apply w_nilb_true in no_zeros as ->. apply w_nilb_true in no_unmaps as ->.
+        destruct (mmap_fixed_commit_refusable flags m addr
+                    (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:no_budget;
+          [|cbn [mmap_errnos_when errno_ret_in existsb] in listed; discriminate listed].
+        change (errno_ret_in mmap_errnos ret = true) in listed.
+        try rewrite listed. split; [exact ed_ok|].
+        intros _ other m2 evs2 other_ok.
+        destruct other as [r2 w2 z2 u2 c2 i2]. cbn [eff_ret].
+        destruct w2, c2, i2; try discriminate other_ok.
+        cbv iota in other_ok.
+        destruct (errno_ret_in mmap_errnos r2) eqn:other_refuses; [reflexivity|].
+        exfalso. try rewrite other_refuses in other_ok. cbv iota in other_ok.
+        destruct u2; [|discriminate other_ok]. cbv iota in other_ok.
+        if_cond other_ok other_commits; [|discriminate other_ok].
+        apply andb_prop in other_commits as [_ other_budget].
+        unfold mmap_fixed_commit_refusable in no_budget.
+        rewrite other_budget in no_budget. discriminate no_budget.
+      + if_cond ed_ok destroyed_refusal.
+        * apply andb_prop in destroyed_refusal as [destroyed_refusal _].
+          apply andb_prop in destroyed_refusal as [destructive _].
+          cbn [errno_ret_in mmap_destructive_errnos existsb] in destructive.
+          discriminate destructive.
+        * destruct unmaps; [|discriminate ed_ok].
+          cbv iota in ed_ok |- *.
+          if_cond ed_ok commits; [|discriminate ed_ok].
+          apply andb_prop in commits as [commits _].
+          apply andb_prop in commits as [same_answer _].
+          apply bv_eqb_eq in same_answer as ->.
+          try rewrite addr_not_errno. split; [exact ed_ok|].
+          intros refused.
+          first [ discriminate refused
+                | discriminate (eq_trans (eq_sym refused) addr_not_errno) ].
+    - if_cond ed_ok free_range.
+      + destruct eff as [ret writes zeros unmaps copies reads].
+        destruct writes, unmaps, copies, reads; try discriminate ed_ok.
+        cbv iota in ed_ok |- *.
+        destruct (mmap_fixed_fresh_refusable flags m (page_round_up_Z (bv_unsigned len)))
+          eqn:no_backing; try rewrite no_backing in ed_ok;
+          cbn [mmap_errnos_when] in ed_ok.
+        * if_cond ed_ok answer_refuses.
+          -- if_cond ed_ok no_zeros; [|discriminate ed_ok].
+             apply w_nilb_true in no_zeros as ->.
+             try rewrite answer_refuses. split; [exact ed_ok|].
+             intros _ other m2 evs2 other_ok.
+             destruct other as [r2 w2 z2 u2 c2 i2]. cbn [eff_ret].
+             destruct w2, u2, c2, i2; try discriminate other_ok.
+             cbv iota in other_ok.
+             destruct (errno_ret_in mmap_errnos r2) eqn:other_refuses; [reflexivity|].
+             exfalso. try rewrite other_refuses in other_ok. cbv iota in other_ok.
+             if_cond other_ok other_grants; [|discriminate other_ok].
+             apply andb_prop in other_grants as [_ other_backed].
+             unfold mmap_fixed_fresh_refusable in no_backing.
+             rewrite other_backed in no_backing. discriminate no_backing.
+          -- try rewrite answer_refuses. split; [exact ed_ok|].
+             intros refused.
+             first [ discriminate refused
+                   | discriminate (eq_trans (eq_sym refused) answer_refuses) ].
+        * cbn [errno_ret_in existsb] in ed_ok. cbv iota in ed_ok.
+          if_cond ed_ok grants; [|discriminate ed_ok].
+          apply andb_prop in grants as [grants _].
+          apply andb_prop in grants as [same_answer _].
+          apply bv_eqb_eq in same_answer as ->.
+          try rewrite addr_not_errno. split; [exact ed_ok|].
+          intros refused.
+          first [ discriminate refused
+                | discriminate (eq_trans (eq_sym refused) addr_not_errno) ].
+      + if_cond ed_ok spans; [|discriminate ed_ok].
+        destruct eff as [ret writes zeros unmaps copies reads].
+        destruct writes, copies, reads; try discriminate ed_ok.
+        cbv iota in ed_ok |- *.
+        if_cond ed_ok budget_refusal.
+        * apply andb_prop in budget_refusal as [budget_refusal no_unmaps].
+          apply andb_prop in budget_refusal as [listed no_zeros].
+          apply w_nilb_true in no_zeros as ->. apply w_nilb_true in no_unmaps as ->.
+          destruct (mmap_fixed_span_refusable flags m addr
+                      (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:no_budget;
+            [|cbn [mmap_errnos_when errno_ret_in existsb] in listed; discriminate listed].
+          change (errno_ret_in mmap_errnos ret = true) in listed.
+          try rewrite listed. split; [exact ed_ok|].
+          intros _ other m2 evs2 other_ok.
+          destruct other as [r2 w2 z2 u2 c2 i2]. cbn [eff_ret].
+          destruct w2, c2, i2; try discriminate other_ok.
+          cbv iota in other_ok.
+          destruct (errno_ret_in mmap_errnos r2) eqn:other_refuses; [reflexivity|].
+          exfalso. try rewrite other_refuses in other_ok. cbv iota in other_ok.
+          destruct u2; [|discriminate other_ok]. cbv iota in other_ok.
+          if_cond other_ok other_spans; [|discriminate other_ok].
+          apply andb_prop in other_spans as [_ other_budget].
+          unfold mmap_fixed_span_refusable in no_budget.
+          rewrite other_budget in no_budget. discriminate no_budget.
+        * if_cond ed_ok destroyed_refusal.
+          -- apply andb_prop in destroyed_refusal as [destroyed_refusal _].
+             apply andb_prop in destroyed_refusal as [destructive _].
+             cbn [errno_ret_in mmap_destructive_errnos existsb] in destructive.
+             discriminate destructive.
+          -- destruct unmaps; [|discriminate ed_ok].
+             cbv iota in ed_ok |- *.
+             if_cond ed_ok replaces; [|discriminate ed_ok].
+             apply andb_prop in replaces as [replaces _].
+             apply andb_prop in replaces as [same_answer _].
+             apply bv_eqb_eq in same_answer as ->.
+             try rewrite addr_not_errno. split; [exact ed_ok|].
+             intros refused.
+             first [ discriminate refused
+                   | discriminate (eq_trans (eq_sym refused) addr_not_errno) ]. }
+  if_cond ed_ok noreplace_none.
+  { cbv zeta in ed_ok |- *.
+    if_cond ed_ok length_wraps.
+    { split; [exact ed_ok|].
+      intros refused other m2 evs2 other_ok.
+      apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+      apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+    if_cond ed_ok above_top; [discriminate ed_ok|].
+    if_cond ed_ok addr_off_page.
+    { split; [exact ed_ok|].
+      intros refused other m2 evs2 other_ok.
+      apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+      apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+    if_cond ed_ok addr_is_zero; [discriminate ed_ok|].
+    apply negb_false_iff, Z.eqb_eq in addr_off_page.
+    pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as addr_not_errno.
+    change (ret_in_errnos [ENOMEM] addr) with (errno_ret_in mmap_errnos addr)
+      in addr_not_errno.
+    if_cond ed_ok free_range.
+    - destruct eff as [ret writes zeros unmaps copies reads].
+      destruct writes, zeros, copies, reads; try discriminate ed_ok.
+      cbv iota in ed_ok |- *.
+      if_cond ed_ok installs; [|discriminate ed_ok].
+      apply andb_prop in installs as [same_answer _].
+      apply bv_eqb_eq in same_answer as ->.
+      try rewrite addr_not_errno. split; [exact ed_ok|].
+      intros refused.
+      first [ discriminate refused
+            | discriminate (eq_trans (eq_sym refused) addr_not_errno) ].
+    - apply check_ret_only_ok_iff in ed_ok as (-> & -> & ->).
+      cbv iota. split.
+      + rewrite eexist_not_mmap_errno, bv_eqb_refl. reflexivity.
+      + intros refused.
+        discriminate (eq_trans (eq_sym refused) eexist_not_mmap_errno). }
+  if_cond ed_ok noreplace_rw; [|discriminate ed_ok].
+  cbv zeta in ed_ok |- *.
+  if_cond ed_ok length_wraps.
+  { split; [exact ed_ok|].
+    intros refused other m2 evs2 other_ok.
+    apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+    apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+  if_cond ed_ok above_top; [discriminate ed_ok|].
+  if_cond ed_ok addr_off_page.
+  { split; [exact ed_ok|].
+    intros refused other m2 evs2 other_ok.
+    apply check_ret_only_ok_iff in ed_ok as (-> & _ & _).
+    apply check_ret_only_ok_iff in other_ok as (-> & _ & _). exact refused. }
+  if_cond ed_ok addr_is_zero; [discriminate ed_ok|].
+  apply negb_false_iff, Z.eqb_eq in addr_off_page.
+  pose proof (ret_in_errnos_ENOMEM_aligned addr addr_off_page) as addr_not_errno.
+  change (ret_in_errnos [ENOMEM] addr) with (errno_ret_in mmap_errnos addr)
+    in addr_not_errno.
+  if_cond ed_ok free_range.
+  - destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, unmaps, copies, reads; try discriminate ed_ok.
+    cbv iota in ed_ok |- *.
+    destruct (mmap_fixed_fresh_refusable flags m (page_round_up_Z (bv_unsigned len)))
+      eqn:no_backing; try rewrite no_backing in ed_ok;
+      cbn [mmap_errnos_when] in ed_ok.
+    + if_cond ed_ok answer_refuses.
+      * if_cond ed_ok no_zeros; [|discriminate ed_ok].
+        apply w_nilb_true in no_zeros as ->.
+        try rewrite answer_refuses. split; [exact ed_ok|].
+        intros _ other m2 evs2 other_ok.
+        destruct other as [r2 w2 z2 u2 c2 i2]. cbn [eff_ret].
+        destruct w2, u2, c2, i2; try discriminate other_ok.
+        cbv iota in other_ok.
+        destruct (errno_ret_in mmap_errnos r2) eqn:other_refuses; [reflexivity|].
+        exfalso. try rewrite other_refuses in other_ok. cbv iota in other_ok.
+        if_cond other_ok other_grants; [|discriminate other_ok].
+        apply andb_prop in other_grants as [_ other_backed].
+        unfold mmap_fixed_fresh_refusable in no_backing.
+        rewrite other_backed in no_backing. discriminate no_backing.
+      * try rewrite answer_refuses. split; [exact ed_ok|].
+        intros refused.
+        first [ discriminate refused
+              | discriminate (eq_trans (eq_sym refused) answer_refuses) ].
+    + cbn [errno_ret_in existsb] in ed_ok. cbv iota in ed_ok.
+      if_cond ed_ok grants; [|discriminate ed_ok].
+      apply andb_prop in grants as [grants _].
+      apply andb_prop in grants as [same_answer _].
+      apply bv_eqb_eq in same_answer as ->.
+      try rewrite addr_not_errno. split; [exact ed_ok|].
+      intros refused.
+      first [ discriminate refused
+            | discriminate (eq_trans (eq_sym refused) addr_not_errno) ].
+  - apply check_ret_only_ok_iff in ed_ok as (-> & -> & ->).
+    cbv iota. split.
+    + rewrite eexist_not_mmap_errno, bv_eqb_refl. reflexivity.
+    + intros refused.
+      discriminate (eq_trans (eq_sym refused) eexist_not_mmap_errno).
 Qed.
 
 Lemma check_mprotect_ed_bwd : forall addr len prot eff m m' evs,
   check_mprotect_ed addr len prot eff m = CheckOk m' evs ->
   check_mprotect addr len prot eff m = CheckOk m' evs /\ forced_mprotect addr len prot m eff.
 Proof.
-  intros addr len prot eff m m' evs H.
-  destruct (errno_ret_in mprotect_errnos (eff_ret eff)) eqn:Er.
-  2:{ split; [|apply forced_mprotect_nonrefusal; exact Er].
-      revert H. unfold check_mprotect_ed, check_mprotect. cbv zeta.
-      destruct eff as [r ws zs us cs ci]. cbn [eff_ret] in Er.
-      rewrite (errno_ret_in_mprotect_when_false_of _ r Er), Er. intros H. exact H. }
-  revert H. unfold check_mprotect_ed. cbv zeta.
-  destruct (mprotect_grows_conflict_b prot) eqn:G0.
-  { intros H. apply check_ret_only_ok_iff in H as (-> & _ & _). vm_compute in Er. discriminate Er. }
-  destruct (negb (Z.eqb (bv_unsigned addr mod page_size) 0)) eqn:G1.
-  { intros H. apply check_ret_only_ok_iff in H as (-> & _ & _). vm_compute in Er. discriminate Er. }
-  destruct (w_is0 len) eqn:G2.
-  { intros H. apply check_ret_only_ok_iff in H as (-> & _ & _). vm_compute in Er. discriminate Er. }
-  destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:G3.
-  { intros H. split.
-    - unfold check_mprotect. rewrite G0, G1, G2, G3. exact H.
-    - intros _ eff2 m2 evs2 H2. unfold check_mprotect in H2. rewrite G0, G1, G2, G3 in H2.
-      apply check_ret_only_ok_iff in H2 as (-> & _ & _). vm_compute. reflexivity. }
-  destruct (negb (mprotect_modeled_b prot)) eqn:G4; [intros H; discriminate H|].
-  destruct eff as [r ws zs us cs ci]. cbn [eff_ret] in Er.
-  destruct (map_contains (vm_noaccess (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
-            && map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:S1.
-  2:{ intros H. exfalso.
-      destruct (map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
-                && region_free (vm_noaccess (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))));
-        [|discriminate H].
-      destruct ws as [|? ?]; try discriminate H; destruct zs as [|? ?]; try discriminate H;
-      destruct us as [|? ?]; try discriminate H; destruct cs as [|? ?]; try discriminate H;
-      destruct ci as [|? ?]; try discriminate H.
-      destruct (w_is0 r) eqn:Z0; [|discriminate H].
-      unfold w_is0 in Z0. apply bv_eqb_eq in Z0. subst r. vm_compute in Er. discriminate Er. }
-  destruct ws as [|? ?]; [|intros H; discriminate H].
-  destruct us as [|? ?]; [|intros H; discriminate H].
-  destruct cs as [|? ?]; [|intros H; discriminate H].
-  destruct ci as [|? ?]; [|intros H; discriminate H].
-  destruct (mprotect_refusable m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:R.
-  - cbn [mprotect_errnos_when]. rewrite Er. intros H. split.
-    + unfold check_mprotect. rewrite G0, G1, G2, G3, G4. cbv beta iota zeta. rewrite S1. cbv beta iota.
-      rewrite Er. exact H.
-    + intros _ eff2 m2 evs2 H2. destruct (errno_ret_in mprotect_errnos (eff_ret eff2)) eqn:E2; [reflexivity|].
-      exfalso. unfold check_mprotect in H2. rewrite G0, G1, G2, G3, G4 in H2. cbv zeta in H2. rewrite S1 in H2.
-      destruct eff2 as [r2 ws2 zs2 us2 cs2 ci2]. cbn [eff_ret] in E2.
-      destruct ws2 as [|? ?]; [|discriminate H2]. destruct us2 as [|? ?]; [|discriminate H2].
-      destruct cs2 as [|? ?]; [|discriminate H2]. destruct ci2 as [|? ?]; [|discriminate H2].
-      rewrite E2 in H2. if_cond H2 C. andb_split C.
-      unfold mprotect_refusable in R. rewrite C in R. discriminate R.
-  - cbn [mprotect_errnos_when errno_ret_in existsb]. intros H. exfalso.
-    if_cond H C. andb_split C. unfold w_is0 in C1. apply bv_eqb_eq in C1. subst r.
-    vm_compute in Er. discriminate Er.
+  intros addr len prot eff m m' evs ed_ok.
+  unfold check_mprotect_ed in ed_ok. unfold forced_mprotect, check_mprotect.
+  let fixed_answer := fun _ =>
+    split; [assumption|];
+    intros refused other m2 evs2 other_ok;
+    apply check_ret_only_ok_iff in ed_ok as (-> & _ & _);
+    apply check_ret_only_ok_iff in other_ok as (-> & _ & _);
+    exact refused in
+  if_cond ed_ok grows; [fixed_answer tt|];
+  if_cond ed_ok off_page; [fixed_answer tt|];
+  if_cond ed_ok empty_len; [fixed_answer tt|];
+  if_cond ed_ok wraps; [fixed_answer tt|].
+  if_cond ed_ok not_modeled; [discriminate ed_ok|].
+  cbv zeta in ed_ok |- *.
+  if_cond ed_ok protected.
+  - destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, unmaps, copies, reads; try discriminate ed_ok.
+    cbv iota in ed_ok |- *. cbn [eff_ret].
+    if_cond ed_ok listed.
+    + if_cond ed_ok no_zeros; [|discriminate ed_ok].
+      apply w_nilb_true in no_zeros as ->.
+      destruct (mprotect_refusable m addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))))
+        eqn:refusable; [|discriminate listed].
+      change (errno_ret_in mprotect_errnos ret = true) in listed.
+      rewrite listed. split; [exact ed_ok|].
+      intros _ other m2 evs2 other_ok.
+      destruct other as [r2 w2 z2 u2 c2 i2]; cbn [eff_ret].
+      destruct w2, u2, c2, i2; try discriminate other_ok.
+      cbv iota in other_ok.
+      if_cond other_ok other_refused; [reflexivity|].
+      if_cond other_ok other_grant; [|discriminate other_ok].
+      apply andb_prop in other_grant as [other_grant _].
+      apply andb_prop in other_grant as [other_budget _].
+      unfold mprotect_refusable in refusable. rewrite other_budget in refusable.
+      discriminate refusable.
+    + if_cond ed_ok granted; [|discriminate ed_ok].
+      apply andb_prop in granted as [granted zeros_match].
+      apply andb_prop in granted as [budget_ok answer_zero].
+      clear budget_ok zeros_match.
+      unfold w_is0 in answer_zero. apply bv_eqb_eq in answer_zero as ->.
+      rewrite zero_not_mprotect_errno.
+      split; [exact ed_ok|].
+      intros refused.
+      discriminate (eq_trans (eq_sym refused) zero_not_mprotect_errno).
+  - if_cond ed_ok open_range; [|discriminate ed_ok].
+    destruct eff as [ret writes zeros unmaps copies reads].
+    destruct writes, zeros, unmaps, copies, reads; try discriminate ed_ok.
+    cbv iota in ed_ok |- *. cbn [eff_ret].
+    if_cond ed_ok answer_zero; [|discriminate ed_ok].
+    unfold w_is0 in answer_zero. apply bv_eqb_eq in answer_zero as ->.
+    split; [exact ed_ok|].
+    intros refused.
+    discriminate (eq_trans (eq_sym refused) zero_not_mprotect_errno).
 Qed.
 
 (* [comment removed for export] *)
@@ -1217,11 +1490,12 @@ Lemma ns_of_forced_mmap : forall i m eff,
   forced_mmap (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5) m eff ->
   ~ spurious_refusal_cfg ACFG i m eff.
 Proof.
-  intros i m eff Hno Hf (_ & Hr & (eff' & m' & evs' & Hs & Hnr)).
-  rewrite (refusal_b_222 i m _ Hno) in Hr. rewrite (refusal_b_222 i m _ Hno) in Hnr.
-  apply check_syscall_ok_iff in Hs. rewrite (check_syscall_mmap i eff' m Hno) in Hs.
-  pose proof (Hf Hr _ _ _ Hs) as Hx. change (errno_ret_in mmap_errnos (eff_ret eff')) with
-    (ret_in_errnos mmap_errnos (eff_ret eff')) in Hx. congruence.
+  intros i m eff is_mmap forced (_ & refused & other & m_other & evs_other & spec_allows & granted).
+  rewrite (refusal_b_222 i m _ is_mmap) in granted.
+  rewrite (refusal_b_222 i m _ is_mmap) in refused.
+  apply check_syscall_ok_iff in spec_allows.
+  rewrite (check_syscall_mmap i other m is_mmap) in spec_allows.
+  exact (eq_true_false_abs _ (forced refused other m_other evs_other spec_allows) granted).
 Qed.
 
 Lemma forced_of_ns_mprotect : forall i m eff,
@@ -1242,11 +1516,14 @@ Lemma ns_of_forced_mprotect : forall i m eff,
   forced_mprotect (in_arg i 0) (in_arg i 1) (in_arg i 2) m eff ->
   ~ spurious_refusal_cfg ACFG i m eff.
 Proof.
-  intros i m eff Hno Hf (_ & Hr & (eff' & m' & evs' & Hs & Hnr)).
-  rewrite (refusal_b_226 i m _ Hno) in Hr. rewrite (refusal_b_226 i m _ Hno) in Hnr.
-  apply check_syscall_ok_iff in Hs. rewrite (check_syscall_mprotect i eff' m Hno) in Hs.
-  pose proof (Hf Hr _ _ _ Hs) as Hx. change (errno_ret_in mprotect_errnos (eff_ret eff')) with
-    (ret_in_errnos mprotect_errnos (eff_ret eff')) in Hx. congruence.
+  intros i m eff is_mprotect forced spurious.
+  destruct spurious as (_ & refused & other & m_other & evs_other & spec_allows & granted).
+  rewrite (refusal_b_226 i m _ is_mprotect) in refused.
+  rewrite (refusal_b_226 i m _ is_mprotect) in granted.
+  rewrite <- check_syscall_ok_iff, (check_syscall_mprotect i other m is_mprotect) in spec_allows.
+  pose proof (forced refused other m_other evs_other spec_allows) as still_refused.
+  change (ret_in_errnos mprotect_errnos (eff_ret other) = true) in still_refused.
+  congruence.
 Qed.
 
 (* [comment removed for export] *)

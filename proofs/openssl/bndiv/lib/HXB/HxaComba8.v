@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FMapPositive.
 From Stdlib Require Import Uint63.
@@ -71,26 +71,32 @@ Definition final_regs_ok8 (S : sstate) : bool := forallb (fun rv => hval_eqb (rg
 
 (* [comment removed for export] *)
 Definition outs_of (rg : region) : list int :=
-  map (fun k => match rd_cell bsegs rg k with CP t _ => t | CW _ _ => 0%uint63 end) [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13; 14; 15]%uint63.
+  map (fun k => match iget (rg_d rg) (rg_cells rg) k with Some (CP t _) => t | _ => 0%uint63 end)
+      [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13; 14; 15]%uint63.
 
 Definition kbs_ptrs (tags : list int) : list kb := concat (map kbs_ptr tags).
 
 Definition c8_ok (r : option (list snode * sstate)) : bool :=
   match r with
-  | Some (log, X) =>
-      w_eqb (s_pc X) PC_C8A_RET && (match s_resv X with RNone => true | _ => false end) && final_regs_ok8 X
-      && match mget (s_mem X) T8_R with
-         | Some rg =>
-             (match rg_abs rg with None => true | Some _ => false end) && (to_Z (rg_size rg) =? 128)
-             && kb_check bsegs rg 0 (kbs_ptrs (outs_of rg))
-             && incr_chk 56 (rev log)
-             && match arun st08 (rev log) with
-                | Some st => mul_check st TA8 TB8 (outs_of rg) (MW ^ 16)
-                | None => false
-                end
-         | None => false
-         end
   | None => false
+  | Some (log, X) =>
+      let trace := rev log in
+      w_eqb (s_pc X) PC_C8A_RET
+      && match s_resv X with RNone => true | _ => false end
+      && final_regs_ok8 X
+      && match mget (s_mem X) T8_R with
+         | None => false
+         | Some rg =>
+             match rg_abs rg with
+             | Some _ => false
+             | None =>
+                 (to_Z (rg_size rg) =? 128) && kb_check bsegs rg 0 (kbs_ptrs (outs_of rg)) && incr_chk 56 trace
+                 && match arun st08 trace with
+                    | Some st => mul_check st TA8 TB8 (outs_of rg) (MW ^ 16)
+                    | None => false
+                    end
+             end
+         end
   end.
 
 Lemma c8_ok_inv (r : option (list snode * sstate)) : c8_ok r = true ->
@@ -99,25 +105,35 @@ Lemma c8_ok_inv (r : option (list snode * sstate)) : c8_ok r = true ->
     /\ kb_check bsegs rg 0 (kbs_ptrs (outs_of rg)) = true /\ incr_chk 56 (rev log) = true
     /\ arun st08 (rev log) = Some st /\ mul_check st TA8 TB8 (outs_of rg) (MW ^ 16) = true.
 Proof.
-  destruct r as [[log X]|]; cbn [c8_ok]; [|discriminate]. intros H.
-  apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
-  destruct (mget (s_mem X) T8_R) as [rg|] eqn:Eg; [|discriminate].
-  apply andb_prop in H4 as [H4 H9]. apply andb_prop in H4 as [H4 H8]. apply andb_prop in H4 as [H4 H7]. apply andb_prop in H4 as [H5 H6].
-  destruct (arun st08 (rev log)) as [st|] eqn:Ea; [|discriminate].
-  exists log, X, rg, st. split; [reflexivity|]. split; [apply w_eqb_true_iff; exact H1|].
-  split; [destruct (s_resv X); [reflexivity | discriminate | discriminate]|]. split; [exact H3|]. split; [exact Eg|].
-  split; [destruct (rg_abs rg); [discriminate | reflexivity]|]. split; [apply Z.eqb_eq; exact H6|]. auto.
+  destruct r as [[log X]|]; intros Hgood; [|discriminate Hgood].
+  unfold c8_ok in Hgood. cbv zeta in Hgood.
+  apply andb_prop in Hgood as [Hfront Hregion].
+  apply andb_prop in Hfront as [Hfront Hregs_ok].
+  apply andb_prop in Hfront as [Hpc_ok Hresv_ok].
+  destruct (mget (s_mem X) T8_R) as [rg|] eqn:Hget_r; [|discriminate Hregion].
+  destruct (rg_abs rg) as [fixed_base|] eqn:Habs_r; [discriminate Hregion|].
+  apply andb_prop in Hregion as [Hregion Hpoly].
+  apply andb_prop in Hregion as [Hregion Hincr].
+  apply andb_prop in Hregion as [Hsize Hkb].
+  destruct (arun st08 (rev log)) as [st|] eqn:Harun; [|discriminate Hpoly].
+  destruct (s_resv X) as [| held |] eqn:Hresv; [| discriminate Hresv_ok | discriminate Hresv_ok].
+  apply w_eqb_true_iff in Hpc_ok. apply Z.eqb_eq in Hsize.
+  exists log, X, rg, st.
+  repeat split; first [reflexivity | assumption].
 Qed.
 
 Lemma c8_run_unfold : c8_run = sxs_run SHBW bsegs stop8 FUEL8 [] S8A.
-Proof. reflexivity. Qed.
+Proof. unfold c8_run. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Lemma c8_checked : c8_ok c8_run = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma fetch_final8 : exists ic', hx_fetch bsegs IEmpty PC_C8A_RET = Some (DJalr X0 X1 w_zero, ic').
-Proof. eexists. vm_compute. reflexivity. Qed.
+Proof.
+  exists (match hx_fetch bsegs IEmpty PC_C8A_RET with Some (_, cache) => cache | None => IEmpty end).
+  vm_compute. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Definition dir_b8 (k : Z) (rg : region) : bool :=
@@ -181,24 +197,41 @@ Qed.
 Lemma mapped_below (m : word -> option byte) (A n : Z) : mem_inv bsegs m -> 0 <= A -> A + n <= 2 ^ 64 -> 0 < n ->
   (forall i, 0 <= i < n -> exists b, mrd bsegs m (wa (A + i)) = Some b) -> A + n <= UTOP.
 Proof.
-  intros MI HA Hn Hpos H. destruct (H (n - 1) ltac:(lia)) as [b Hb]. pose proof (mrd_below bsegs m _ _ MI Hb) as X.
-  rewrite wa_unsigned in X by lia. lia.
+  intros Hinv Hlo Hfit Hpos Hmapped.
+  destruct (Hmapped (n - 1) ltac:(lia)) as [top_byte Htop_rd].
+  pose proof (mrd_below bsegs m _ top_byte Hinv Htop_rd) as Htop_lt.
+  rewrite wa_unsigned in Htop_lt by lia.
+  lia.
 Qed.
 
 (* [comment removed for export] *)
 Lemma acc_zero_bytes (m : word -> option byte) (p n : Z) : p mod 8 = 0 -> acc bsegs m p n -> 0 < n -> n mod 8 = 0 ->
   bytes_at bsegs m (shad p) (repeat z8 (Z.to_nat (n / 8))).
 Proof.
-  intros Hp Hacc Hn Hn8.
-  assert (G : forall i, 0 <= i < n / 8 -> bytes_at bsegs m (shad p + i) [z8]).
-  { intros i Hi. rewrite <- (shad_add8 p i). apply (acc_gran0 bsegs m p n (p + 8 * i) Hacc); Z.div_mod_to_equations; lia. }
-  split; [|split].
-  - destruct (G 0 ltac:(Z.div_mod_to_equations; lia)) as (B0 & _ & _). lia.
-  - rewrite repeat_length, Z2Nat.id by (Z.div_mod_to_equations; lia).
-    destruct (G (n / 8 - 1) ltac:(Z.div_mod_to_equations; lia)) as (_ & B1 & _). cbn [length Z.of_nat Pos.of_succ_nat] in B1. lia.
-  - intros k Hk. rewrite repeat_length in Hk. rewrite nth_error_repeat by exact Hk.
-    destruct (G (Z.of_nat k) ltac:(lia)) as (_ & _ & B). specialize (B 0%nat ltac:(cbn; lia)). cbn [nth_error Z.of_nat] in B.
-    rewrite Z.add_0_r in B. exact B.
+  intros Hp_al Hacc Hn_pos Hn_al.
+  assert (Hcount_pos : 0 < n / 8) by (Z.div_mod_to_equations; lia).
+  assert (Hcount_eq : n = 8 * (n / 8)) by (Z.div_mod_to_equations; lia).
+  destruct (Hacc 0 ltac:(lia)) as (b_first & Hat_first & _).
+  destruct (Hacc (n - 1) ltac:(lia)) as (b_last & Hat_last & _).
+  apply bytes_at_bound in Hat_first. apply bytes_at_bound in Hat_last. cbn [length] in Hat_first, Hat_last.
+  rewrite Z.add_0_r in Hat_first.
+  rewrite (shad_aligned_add p (n - 1) Hp_al ltac:(lia)) in Hat_last.
+  assert (Hlast_slot : (n - 1) / 8 = n / 8 - 1) by (Z.div_mod_to_equations; lia).
+  rewrite Hlast_slot in Hat_last.
+  split; [lia|]. split.
+  - rewrite repeat_length, Z2Nat.id by lia. lia.
+  - intros i Hi. rewrite repeat_length in Hi.
+    assert (Hi_lt : Z.of_nat i < n / 8).
+    { apply Nat2Z.inj_lt in Hi. rewrite Z2Nat.id in Hi by lia. exact Hi. }
+    rewrite nth_error_repeat by exact Hi.
+    assert (Hslot_al : (p + 8 * Z.of_nat i) mod 8 = 0).
+    { replace (p + 8 * Z.of_nat i) with (p + Z.of_nat i * 8) by ring. rewrite Z.mod_add by lia. exact Hp_al. }
+    pose proof (acc_gran0 bsegs m p n (p + 8 * Z.of_nat i) Hacc Hslot_al ltac:(lia) ltac:(lia)) as Hgranule.
+    rewrite shad_add8 in Hgranule.
+    destruct Hgranule as (_ & _ & Hgranule_rd).
+    specialize (Hgranule_rd 0%nat ltac:(cbn [length]; lia)).
+    change (Z.of_nat 0) with 0 in Hgranule_rd. rewrite Z.add_0_r in Hgranule_rd.
+    exact Hgranule_rd.
 Qed.
 
 (* [comment removed for export] *)
@@ -239,7 +272,10 @@ Local Ltac closed_side := first [ vm_compute; reflexivity | apply Z.leb_le; vm_c
 
 (* [comment removed for export] *)
 Lemma c8_le8 (m : word -> option byte) (A : Z) (w : word) : ro_cells bsegs m A [C8 w] -> bytes_at bsegs m A (le8 w).
-Proof. intros [_ B1]. cbn [cells_bytes cbytes] in B1. rewrite app_nil_r in B1. exact B1. Qed.
+Proof.
+  intros [_ Hcell_bytes]. cbn [cells_bytes cbytes] in Hcell_bytes.
+  rewrite app_nil_r in Hcell_bytes. exact Hcell_bytes.
+Qed.
 
 Section Handoff8.
 Variables (rho : valuation) (m : word -> option byte) (a b : list Z) (AP BP RP lo sp0 : Z).
@@ -276,17 +312,28 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma c8_got_ok : region_ok bsegs rho T8_GOT c8_got m.
-Proof.
-  destruct SHBC as [C1 _].
-  apply (static_region_ok bsegs rho T8_GOT c8_got m GOT_SHB_CELL (kbs_Z 8 (to_Z SHB_CELL)) (le8 (Z_to_bv 64 g_shadow_memory_dynamic_address)) eq_refl eq_refl);
-    [closed_side | apply kbs_Z_intro; closed_side | exact (c8_le8 m _ _ C1) | closed_side | closed_side].
+Proof using SHBC.
+  pose proof SHBC as [Hgot_cell _].
+  pose proof (c8_le8 m _ _ Hgot_cell) as Hgot_bytes.
+  unfold le8, word_to_le_bytes in Hgot_bytes.
+  rewrite unsigned_lit in Hgot_bytes by (unfold g_shadow_memory_dynamic_address; split; closed_side).
+  apply (static_region_ok bsegs rho T8_GOT c8_got m GOT_SHB_CELL
+           (kbs_Z 8 g_shadow_memory_dynamic_address) (Z_to_le_bytes 8 g_shadow_memory_dynamic_address));
+    [ reflexivity | reflexivity | vm_compute; reflexivity | | exact Hgot_bytes | | vm_compute; reflexivity ].
+  - apply kbs_Z_intro. unfold g_shadow_memory_dynamic_address. closed_side.
+  - rewrite length_Z_to_le_bytes. reflexivity.
 Qed.
 
 Lemma c8_shb_ok : region_ok bsegs rho T8_SHB c8_shb m.
-Proof.
-  destruct SHBC as [_ C2].
-  apply (static_region_ok bsegs rho T8_SHB c8_shb m SHB_CELL (kbs_Z 8 SHB) (le8 (Z_to_bv 64 SHB)) eq_refl eq_refl);
-    [closed_side | apply kbs_Z_intro; closed_side | exact (c8_le8 m _ _ C2) | closed_side | closed_side].
+Proof using SHBC.
+  pose proof SHBC as [_ Hshb_cell].
+  pose proof (c8_le8 m _ _ Hshb_cell) as Hshb_bytes.
+  unfold le8, word_to_le_bytes in Hshb_bytes.
+  rewrite unsigned_lit in Hshb_bytes by (unfold SHB; split; closed_side).
+  assert (Hshb_len : Z.of_nat (length (Z_to_le_bytes 8 SHB)) = to_Z (rg_size c8_shb)).
+  { rewrite length_Z_to_le_bytes. reflexivity. }
+  apply (static_region_ok bsegs rho T8_SHB c8_shb m SHB_CELL (kbs_Z 8 SHB) (Z_to_le_bytes 8 SHB) eq_refl eq_refl);
+    [ vm_compute; reflexivity | apply kbs_Z_intro; unfold SHB; closed_side | exact Hshb_bytes | exact Hshb_len | vm_compute; reflexivity ].
 Qed.
 
 (* [comment removed for export] *)
@@ -294,25 +341,22 @@ Lemma limb_region_ok (t t0 : int) (tags : list int) (A : Z) (l : list Z) :
   rho t = A -> map rho tags = l -> limbs l -> length l = 8%nat -> limbs_at bsegs m A l -> ptr_ok8 A ->
   learn_check bsegs (RG None 64 AL8A false DUnk 3%nat (limb_cells t0)) [(0, kbs_ptrs tags)] 0 64 = true ->
   region_ok bsegs rho t (RG None 64 AL8A false DUnk 3%nat (limb_cells t0)) m.
-Proof.
-  intros Er El HL Hlen Hat [Hp Hal] Hck. pose proof (limbs_at_bound bsegs m A l Hat) as [B0 B1]. rewrite Hlen in B1.
-  assert (Hmap : forall i, 0 <= i < 64 -> exists x, mrd bsegs m (wa (A + i)) = Some x).
-  { intros i Hi. apply (bytes_at_mapped bsegs m A (lbytes l) Hat). rewrite lbytes_lengthZ, Hlen. lia. }
-  pose proof (mapped_below m A 64 MI B0 ltac:(lia) ltac:(lia) Hmap) as HU. unfold UTOP in HU.
-  apply (region_ok_learn_gen bsegs rho t _ m [(0, kbs_ptrs tags)]); unfold rbase; cbn [rg_abs rg_size rg_d rg_al rg_wr]; rewrite ?Er;
-    change (to_Z 64%uint63) with 64.
-  - split; [exact B0 | left; exact Hp].
-  - unfold two63. lia.
-  - lia.
-  - cbn. lia.
-  - cbn. lia.
-  - vm_compute. reflexivity.
-  - exact Hal.
-  - exact Hmap.
-  - discriminate.
+Proof using MI HLA HLB.
+  intros Hbase Htags Hlimbs Hlen Hat Hptr Hlearn.
+  destruct Hptr as [Hpos Halign].
+  pose proof (limbs_at_bound bsegs m A l Hat) as [Hlo Hfit]. rewrite Hlen in Hfit.
+  pose proof (bytes_at_mapped bsegs m A (lbytes l) Hat) as Hmapped.
+  rewrite lbytes_lengthZ, Hlen in Hmapped.
+  pose proof (mapped_below m A 64 MI Hlo ltac:(lia) ltac:(lia) Hmapped) as Htop.
+  unfold UTOP in Htop.
+  assert (Hrb : rbase rho t (RG None 64%uint63 AL8A false DUnk 3%nat (limb_cells t0)) = A) by exact Hbase.
+  apply (region_ok_learn bsegs rho t _ m [(0, kbs_ptrs tags)]); rewrite ?Hrb; cbn [rg_size rg_d rg_al rg_wr];
+    [ exact Hpos | | closed_side | closed_side | closed_side | closed_side | exact Halign | | | | exact Hlearn ].
+  - change (to_Z 64%uint63) with 64. unfold two63. lia.
+  - intros i Hi. apply Hmapped. change (to_Z 64%uint63) with 64 in Hi. lia.
+  - intros Hro. discriminate Hro.
   - constructor; [|constructor]. exists (lbytes l). cbn [fst snd]. rewrite Z.add_0_r. split; [|exact Hat].
-    rewrite <- El. apply kbs_ptrs_intro. exact (tags_range tags l El HL).
-  - exact Hck.
+    rewrite <- Htags. apply kbs_ptrs_intro. exact (tags_range tags l Htags Hlimbs).
 Qed.
 
 Hypothesis PA : ptr_ok8 AP.
@@ -320,55 +364,67 @@ Hypothesis PB : ptr_ok8 BP.
 Hypothesis PR : ptr_ok8 RP.
 
 Lemma c8_a_ok : region_ok bsegs rho T8_A c8_a m.
-Proof. apply (limb_region_ok T8_A T8_LA TA8 AP a Hr2 HrA LA HLA RA PA). vm_compute. reflexivity. Qed.
+Proof using MI LA HLA HLB RA Hr2 HrA PA.
+  apply (limb_region_ok T8_A T8_LA TA8 AP a Hr2 HrA LA HLA RA PA). vm_compute. reflexivity.
+Qed.
 
 Lemma c8_b_ok : region_ok bsegs rho T8_B c8_b m.
-Proof. apply (limb_region_ok T8_B T8_LB TB8 BP b Hr4 HrB LB HLB RB PB). vm_compute. reflexivity. Qed.
+Proof using MI LB HLA HLB RB Hr4 HrB PB.
+  apply (limb_region_ok T8_B T8_LB TB8 BP b Hr4 HrB LB HLB RB PB). vm_compute. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma AP_hi : AP + 64 <= UTOP.
-Proof.
-  pose proof (limbs_at_bound bsegs m AP a RA) as [B0 B1]. rewrite HLA in B1.
-  apply (mapped_below m AP 64 MI B0 ltac:(lia) ltac:(lia)). intros i Hi. apply (bytes_at_mapped bsegs m AP (lbytes a) RA). rewrite lbytes_lengthZ, HLA. lia.
+Proof using MI HLA HLB RA.
+  pose proof (limbs_at_bound bsegs m AP a RA) as [Hlo Hfit]. rewrite HLA in Hfit.
+  apply (mapped_below m AP 64 MI Hlo ltac:(lia) ltac:(lia)).
+  intros i Hi. apply (bytes_at_mapped bsegs m AP (lbytes a) RA). rewrite lbytes_lengthZ, HLA. lia.
 Qed.
 Lemma BP_hi : BP + 64 <= UTOP.
-Proof.
-  pose proof (limbs_at_bound bsegs m BP b RB) as [B0 B1]. rewrite HLB in B1.
-  apply (mapped_below m BP 64 MI B0 ltac:(lia) ltac:(lia)). intros i Hi. apply (bytes_at_mapped bsegs m BP (lbytes b) RB). rewrite lbytes_lengthZ, HLB. lia.
+Proof using MI HLA HLB RB.
+  assert (Hnonempty : lbytes b <> []).
+  { intros Hempty. pose proof (lbytes_length b) as Hblen. rewrite Hempty, HLB in Hblen. discriminate Hblen. }
+  pose proof (bytes_at_below bsegs m BP (lbytes b) MI RB Hnonempty) as Hbelow.
+  rewrite lbytes_lengthZ, HLB in Hbelow. lia.
 Qed.
 Lemma RP_hi : RP + 128 <= UTOP.
-Proof.
-  destruct WR as (W0 & W1 & Hw). apply (mapped_below m RP 128 MI W0 W1 ltac:(lia)).
-  intros i Hi. apply (wview_mrd bsegs m _ asegs_wr_rd). apply Hw. exact Hi.
-Qed.
+Proof using MI HLA HLB WR. exact (wr_at_below bsegs m RP 128 MI WR ltac:(lia)). Qed.
 
 Lemma c8_r_ok : region_ok bsegs rho T8_R c8_r m.
-Proof.
-  pose proof RP_hi as HU. unfold UTOP in HU. destruct PR as [Hp Hal]. unfold c8_r.
-  apply (fresh_region_ok rho T8_R 128 AL8A true m RP Hr6 Hp); change (to_Z 128%uint63) with 128; [unfold two63; lia | lia | closed_side | exact Hal | exact WR].
+Proof using MI HLA HLB WR Hr6 PR.
+  pose proof RP_hi as Hr_top. pose proof PR as [Hr_pos Hr_align]. unfold UTOP in Hr_top.
+  apply (fresh_region_ok rho T8_R 128%uint63 AL8A true m RP Hr6 Hr_pos); [| closed_side | closed_side | exact Hr_align | exact WR].
+  change (to_Z 128%uint63) with 128. unfold two63. lia.
 Qed.
 
 (* [comment removed for export] *)
 Lemma c8_ash_ok : region_ok bsegs rho 3%uint63 c8_ash m.
-Proof.
-  pose proof AP_hi as HU. unfold UTOP in HU. destruct PA as [Hp Hal]. change (2 ^ to_Z AL8A) with 8 in Hal.
-  pose proof (AsKit.shad_range AP ltac:(lia)) as SR. unfold SHLO, SHHI in SR. unfold c8_ash.
-  apply (zero_region_ok rho 3%uint63 8 m (shad AP) Hr3); change (to_Z 8%uint63) with 8; [lia | unfold two63; lia | lia |].
-  change (Z.to_nat 8) with (Z.to_nat (64 / 8)). exact (acc_zero_bytes m AP 64 Hal ACA ltac:(lia) eq_refl).
+Proof using MI HLA HLB RA Hr3 ACA PA.
+  pose proof AP_hi as Ha_top. pose proof PA as [Ha_pos Ha_align]. unfold UTOP in Ha_top.
+  change (2 ^ to_Z AL8A) with 8 in Ha_align.
+  pose proof (acc_zero_bytes m AP 64 Ha_align ACA ltac:(lia) eq_refl) as Ha_zero.
+  apply (zero_region_ok rho 3%uint63 8%uint63 m (shad AP) Hr3); [| | closed_side | exact Ha_zero].
+  - unfold shad, SHB. Z.div_mod_to_equations. lia.
+  - change (to_Z 8%uint63) with 8. unfold shad, SHB, two63. Z.div_mod_to_equations. lia.
 Qed.
 Lemma c8_bsh_ok : region_ok bsegs rho 5%uint63 c8_bsh m.
-Proof.
-  pose proof BP_hi as HU. unfold UTOP in HU. destruct PB as [Hp Hal]. change (2 ^ to_Z AL8A) with 8 in Hal.
-  pose proof (AsKit.shad_range BP ltac:(lia)) as SR. unfold SHLO, SHHI in SR. unfold c8_bsh.
-  apply (zero_region_ok rho 5%uint63 8 m (shad BP) Hr5); change (to_Z 8%uint63) with 8; [lia | unfold two63; lia | lia |].
-  change (Z.to_nat 8) with (Z.to_nat (64 / 8)). exact (acc_zero_bytes m BP 64 Hal ACB ltac:(lia) eq_refl).
+Proof using MI HLA HLB RB Hr5 ACB PB.
+  pose proof BP_hi as Hb_top. pose proof PB as [Hb_pos Hb_align]. unfold UTOP in Hb_top.
+  change (2 ^ to_Z AL8A) with 8 in Hb_align.
+  apply (zero_region_ok rho 5%uint63 8%uint63 m (shad BP) Hr5).
+  - unfold shad, SHB. Z.div_mod_to_equations. lia.
+  - change (to_Z 8%uint63) with 8. unfold shad, SHB, two63. Z.div_mod_to_equations. lia.
+  - closed_side.
+  - exact (acc_zero_bytes m BP 64 Hb_align ACB ltac:(lia) eq_refl).
 Qed.
 Lemma c8_rsh_ok : region_ok bsegs rho 7%uint63 c8_rsh m.
-Proof.
-  pose proof RP_hi as HU. unfold UTOP in HU. destruct PR as [Hp Hal]. change (2 ^ to_Z AL8A) with 8 in Hal.
-  pose proof (AsKit.shad_range RP ltac:(lia)) as SR. unfold SHLO, SHHI in SR. unfold c8_rsh.
-  apply (zero_region_ok rho 7%uint63 16 m (shad RP) Hr7); change (to_Z 16%uint63) with 16; [lia | unfold two63; lia | lia |].
-  change (Z.to_nat 16) with (Z.to_nat (128 / 8)). exact (acc_zero_bytes m RP 128 Hal ACR ltac:(lia) eq_refl).
+Proof using MI HLA HLB WR Hr7 ACR PR.
+  pose proof RP_hi as Hr_top. pose proof PR as [Hr_pos Hr_align]. unfold UTOP in Hr_top.
+  change (2 ^ to_Z AL8A) with 8 in Hr_align.
+  assert (Hr_shad_lo : 0 <= shad RP) by (unfold shad, SHB; Z.div_mod_to_equations; lia).
+  assert (Hr_shad_hi : shad RP + 16 < two63) by (unfold shad, SHB, two63; Z.div_mod_to_equations; lia).
+  exact (zero_region_ok rho 7%uint63 16%uint63 m (shad RP) Hr7 Hr_shad_lo Hr_shad_hi ltac:(closed_side)
+           (acc_zero_bytes m RP 128 Hr_align ACR ltac:(lia) eq_refl)).
 Qed.
 
 Hypothesis STKH : stk bsegs m lo sp0.
@@ -376,15 +432,18 @@ Hypothesis Hlo : lo <= sp0 - CS8A.
 Hypothesis LOHI : SHHI <= lo.
 
 Lemma c8_stk_ok : region_ok bsegs rho T8_STK c8_stk m.
-Proof.
-  destruct STKH as (S0 & S1 & Hs). unfold SHHI in LOHI.
-  assert (Hmap : forall i, 0 <= i < CS8A -> exists x, mrd bsegs m (wa (sp0 - CS8A + i)) = Some x).
-  { intros i Hi. exact (proj2 (Hs (sp0 - CS8A + i) ltac:(unfold CS8A in *; lia))). }
-  pose proof (mapped_below m (sp0 - CS8A) CS8A MI ltac:(unfold CS8A in *; lia) ltac:(unfold CS8A in *; lia) ltac:(unfold CS8A; lia) Hmap) as HU. unfold UTOP in HU.
-  assert (W : wr_at bsegs m (sp0 - CS8A) (to_Z CS8AI)).
-  { change (to_Z CS8AI) with CS8A. split; [unfold CS8A in *; lia|]. split; [unfold CS8A in *; lia|]. intros i Hi. exact (proj1 (Hs (sp0 - CS8A + i) ltac:(unfold CS8A in *; lia))). }
-  unfold c8_stk. apply (fresh_region_ok rho T8_STK CS8AI 0 true m (sp0 - CS8A) Hr8); change (to_Z CS8AI) with CS8A; unfold CS8A in *;
-    [lia | unfold two63; lia | lia | closed_side | apply Z.mod_1_r | exact W].
+Proof using MI HLA HLB Hr8 STKH Hlo LOHI.
+  pose proof STKH as (Hlo_nonneg & Hsp_fit & Hframe).
+  unfold CS8A, SHHI in *.
+  assert (Hsp_top : sp0 <= UTOP).
+  { destruct (Hframe (sp0 - 1) ltac:(lia)) as [Hview _].
+    pose proof (wview_below bsegs m _ MI Hview) as Hview_lt. rewrite wa_unsigned in Hview_lt by lia. lia. }
+  unfold UTOP in Hsp_top.
+  apply (fresh_region_ok rho T8_STK CS8AI 0%uint63 true m (sp0 - 592) Hr8); [lia | | closed_side | closed_side | |].
+  - change (to_Z CS8AI) with 592. unfold two63. lia.
+  - change (2 ^ to_Z 0%uint63) with 1. apply Z.mod_1_r.
+  - change (to_Z CS8AI) with 592. split; [lia|]. split; [lia|].
+    intros i Hi. exact (proj1 (Hframe (sp0 - 592 + i) ltac:(lia))).
 Qed.
 
 Hypothesis DRA : RP + 128 <= AP \/ AP + 64 <= RP.
@@ -402,20 +461,30 @@ Local Ltac sep8 :=
   repeat (constructor; [cbn [fst snd]; intros Hw; first [lia | unfold shad, SHB in *; Z.div_mod_to_equations; lia | destruct Hw as [X|X]; discriminate X]|]); constructor.
 
 Lemma rmem8 : Rmem bsegs rho M8A m.
-Proof.
-  pose proof AP_hi as HUA. pose proof BP_hi as HUB. pose proof RP_hi as HUR. unfold UTOP in HUA, HUB, HUR.
-  pose proof PA as [PA0 _]. pose proof PB as [PB0 _]. pose proof PR as [PR0 _].
-  unfold SHLO, SHHI in OFFR, LOHI.
-  pose proof (Rmem_empty bsegs rho m) as R0. pose proof (dir_inw_empty rho) as I0.
-  destruct (Rmem_add_sepw bsegs rho IEmpty T8_GOT c8_got m [] R0 I0 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_got_ok ltac:(constructor)) as [R1 I1].
-  destruct (Rmem_add_sepw bsegs rho _ T8_SHB c8_shb m _ R1 I1 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_shb_ok ltac:(sep8)) as [R2 I2].
-  destruct (Rmem_add_sepw bsegs rho _ T8_A c8_a m _ R2 I2 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_a_ok ltac:(sep8)) as [R3 I3].
-  destruct (Rmem_add_sepw bsegs rho _ 3%uint63 c8_ash m _ R3 I3 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_ash_ok ltac:(sep8)) as [R4 I4].
-  destruct (Rmem_add_sepw bsegs rho _ T8_B c8_b m _ R4 I4 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_b_ok ltac:(sep8)) as [R5 I5].
-  destruct (Rmem_add_sepw bsegs rho _ 5%uint63 c8_bsh m _ R5 I5 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_bsh_ok ltac:(sep8)) as [R6 I6].
-  destruct (Rmem_add_sepw bsegs rho _ 7%uint63 c8_rsh m _ R6 I6 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_rsh_ok ltac:(sep8)) as [R7 I7].
-  destruct (Rmem_add_sepw bsegs rho _ T8_R c8_r m _ R7 I7 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_r_ok ltac:(sep8)) as [R8 I8].
-  exact (proj1 (Rmem_add_sepw bsegs rho _ T8_STK c8_stk m _ R8 I8 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) c8_stk_ok ltac:(sep8))).
+Proof using All.
+  pose proof AP_hi as Ha_top. pose proof BP_hi as Hb_top. pose proof RP_hi as Hr_top.
+  pose proof PA as [Ha_pos _]. pose proof PB as [Hb_pos _]. pose proof PR as [Hr_pos _].
+  unfold UTOP, SHLO, SHHI in *.
+  pose proof (Rmem_empty bsegs rho m) as Rm_0. pose proof (dir_inw_empty rho) as Dw_0.
+  destruct (Rmem_add_sepw bsegs rho IEmpty T8_GOT c8_got m [] Rm_0 Dw_0
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_got_ok ltac:(sep8)) as [Rm_got Dw_got].
+  destruct (Rmem_add_sepw bsegs rho M8_got T8_SHB c8_shb m _ Rm_got Dw_got
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_shb_ok ltac:(sep8)) as [Rm_shb Dw_shb].
+  destruct (Rmem_add_sepw bsegs rho M8_shb T8_A c8_a m _ Rm_shb Dw_shb
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_a_ok ltac:(sep8)) as [Rm_a Dw_a].
+  destruct (Rmem_add_sepw bsegs rho M8_a 3%uint63 c8_ash m _ Rm_a Dw_a
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_ash_ok ltac:(sep8)) as [Rm_ash Dw_ash].
+  destruct (Rmem_add_sepw bsegs rho M8_ash T8_B c8_b m _ Rm_ash Dw_ash
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_b_ok ltac:(sep8)) as [Rm_b Dw_b].
+  destruct (Rmem_add_sepw bsegs rho M8_b 5%uint63 c8_bsh m _ Rm_b Dw_b
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_bsh_ok ltac:(sep8)) as [Rm_bsh Dw_bsh].
+  destruct (Rmem_add_sepw bsegs rho M8_bsh 7%uint63 c8_rsh m _ Rm_bsh Dw_bsh
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_rsh_ok ltac:(sep8)) as [Rm_rsh Dw_rsh].
+  destruct (Rmem_add_sepw bsegs rho M8_rsh T8_R c8_r m _ Rm_rsh Dw_rsh
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_r_ok ltac:(sep8)) as [Rm_r Dw_r].
+  destruct (Rmem_add_sepw bsegs rho M8_r T8_STK c8_stk m _ Rm_r Dw_r
+              ltac:(vm_compute; reflexivity) ltac:(closed_side) c8_stk_ok ltac:(sep8)) as [Rm_all _].
+  exact Rm_all.
 Qed.
 
 End Handoff8.
@@ -470,141 +539,172 @@ Theorem comba8_okA : comba8_aspec CS8A.
 Proof.
   unfold comba8_aspec.
   intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m a b lo
-         LA LB HLA HLB RA RB WR DRA DRB Hstk Hlo SEPR SEPA SEPB Hmi SHBC ACR ACA ACB (AL_R & AL_A & AL_B & OFFR & LOHI) P0R P0A P0B RIMG.
-  set (SPz := bv_unsigned sp) in *. set (RP := bv_unsigned a0) in *. set (AP := bv_unsigned a1) in *. set (BP := bv_unsigned a2) in *.
-  set (rho0 := rho8A SPz AP BP RP ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 a b).
-  set (WIV := [(RP, RP + 8 * 16); (SPz - CS8A, SPz)]).
-  set (ms0 := MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-                 F (Z_to_bv 64 0x226a50) fc None m (seg_rom bsegs)).
-  assert (HspC : CS8A <= SPz) by (destruct Hstk as (S0 & _); lia).
-  assert (PA : ptr_ok8 AP) by (split; [exact P0A | exact AL_A]).
-  assert (PB : ptr_ok8 BP) by (split; [exact P0B | exact AL_B]).
-  assert (PR : ptr_ok8 RP) by (split; [exact P0R | exact AL_R]).
-  (* [comment removed for export] *)
-  assert (HA0 : map rho0 TA8 = a).
-  { destruct a as [|x0 [|x1 [|x2 [|x3 [|x4 [|x5 [|x6 [|x7 [|]]]]]]]]]; try discriminate HLA. reflexivity. }
-  assert (HB0 : map rho0 TB8 = b).
-  { destruct b as [|x0 [|x1 [|x2 [|x3 [|x4 [|x5 [|x6 [|x7 [|]]]]]]]]]; try discriminate HLB. reflexivity. }
-  (* [comment removed for export] *)
-  destruct (c8_ok_inv c8_run c8_checked) as (logE & SE & rgE & stE & Erun & Epc & Erv & Hregs & EgR & EaR & EsR & Hkb & Hincr & Harun & Hchk).
-  rewrite c8_run_unfold in Erun.
-  assert (Hmaps : forall rho2, (forall t, to_Z t < to_Z NEXT8A -> rho2 t = rho0 t) -> map rho2 TA8 = a /\ map rho2 TB8 = b).
-  { intros rho2 Hr. rewrite <- HA0, <- HB0. unfold TA8, TB8. cbn [map]. rewrite !Hr by (vm_compute; reflexivity). split; reflexivity. }
-  (* [comment removed for export] *)
+    Hlimbs_a Hlimbs_b Hlen_a Hlen_b Hat_a Hat_b Hwr_r Hsep_ra Hsep_rb Hstk Hlo_frame Hsep_rs Hsep_as Hsep_bs
+    Hinv Hshb Hacc_r Hacc_a Hacc_b Hptrs Hpos_r Hpos_a Hpos_b Himg_r.
+  destruct Hptrs as (Hal_r & Hal_a & Hal_b & Hoff_r & Hshhi_lo).
+  pose proof Hstk as (Hlo_nn & Hsp_fit & Hframe).
+  assert (Hsp_floor : CS8A <= bv_unsigned sp) by (unfold CS8A in *; lia).
+
+  (* the symbolic start state: every tag below NEXT8A gets its concrete value *)
+  pose (rho0 := rho8A (bv_unsigned sp) (bv_unsigned a1) (bv_unsigned a2) (bv_unsigned a0)
+                      ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 a b).
+  pose (Wfoot := [(bv_unsigned a0, bv_unsigned a0 + 8 * 16); (bv_unsigned sp - CS8A, bv_unsigned sp)]).
+  pose (ms0 := MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                  F (Z_to_bv 64 0x226a50) fc None m (seg_rom bsegs)).
+  assert (Hspell_a : [nth 0 a 0; nth 1 a 0; nth 2 a 0; nth 3 a 0; nth 4 a 0; nth 5 a 0; nth 6 a 0; nth 7 a 0] = a).
+  { clear - Hlen_a. do 8 (destruct a as [|? a]; [discriminate Hlen_a|]). destruct a; [reflexivity | discriminate Hlen_a]. }
+  assert (Hspell_b : [nth 0 b 0; nth 1 b 0; nth 2 b 0; nth 3 b 0; nth 4 b 0; nth 5 b 0; nth 6 b 0; nth 7 b 0] = b).
+  { clear - Hlen_b. do 8 (destruct b as [|? b]; [discriminate Hlen_b|]). destruct b; [reflexivity | discriminate Hlen_b]. }
+  assert (Hval : forall rho : valuation, agree_below NEXT8A rho0 rho ->
+            rho T8_STK = bv_unsigned sp - CS8A /\ rho T8_A = bv_unsigned a1 /\ rho 3%uint63 = shad (bv_unsigned a1)
+            /\ rho T8_B = bv_unsigned a2 /\ rho 5%uint63 = shad (bv_unsigned a2)
+            /\ rho T8_R = bv_unsigned a0 /\ rho 7%uint63 = shad (bv_unsigned a0)
+            /\ map rho TA8 = a /\ map rho TB8 = b).
+  { intros rho Hagree.
+    assert (Hpin : forall t, to_Z t < 56 -> rho t = rho0 t) by (intros t Ht; exact (Hagree t Ht)).
+    rewrite <- Hspell_a, <- Hspell_b. unfold TA8, TB8. cbn [map].
+    rewrite !Hpin by closed_side.
+    repeat split; reflexivity. }
+
+  (* the run starts related to the machine *)
   assert (HRS0 : RSn bsegs SHBW rho0 S8A ms0).
   { split.
-    - intros rho2 Hag. cbn [S8A s_next] in Hag.
-      assert (Hrho : forall t, to_Z t < to_Z NEXT8A -> rho2 t = rho0 t) by exact Hag.
-      destruct (Hmaps rho2 Hrho) as [HA2 HB2].
-      unfold R, ms0. cbn [ms_svc_pending ms_pc_val ms_resv ms_mem MS S8A s_pc s_regs s_resv s_mem].
+    - intros rho Hagree.
+      destruct (Hval rho Hagree) as (Hv8 & Hv2 & Hv3 & Hv4 & Hv5 & Hv6 & Hv7 & HvA & HvB).
       split; [reflexivity|]. split; [reflexivity|]. split.
-      { unfold core_of. cbn [ms_regs ms_fregs ms_pc_val ms_fcsr ms_resv MS]. eapply Rregs_init8; [exact Hrho | exact HspC]. }
-      split; [reflexivity|].
-      apply (rmem8 rho2 m a b AP BP RP lo SPz Hmi LA LB HLA HLB RA RB WR); try assumption;
-        first [ exact (Hrho T8_STK ltac:(vm_compute; reflexivity)) | exact (Hrho T8_A ltac:(vm_compute; reflexivity))
-              | exact (Hrho 3%uint63 ltac:(vm_compute; reflexivity)) | exact (Hrho T8_B ltac:(vm_compute; reflexivity))
-              | exact (Hrho 5%uint63 ltac:(vm_compute; reflexivity)) | exact (Hrho T8_R ltac:(vm_compute; reflexivity))
-              | exact (Hrho 7%uint63 ltac:(vm_compute; reflexivity)) ].
-    - (* [comment removed for export] *)
-      cbn [S8A s_next s_mem]. intros rho2 Hag s rg G Ea Hodd. rewrite SHBW_Z8.
-      pose proof (M8A_class s rg G) as C. rewrite Ea in C. destruct C as [_ C].
-      destruct (C Hodd) as [-> |[-> | ->]].
-      + rewrite (Hag 3%uint63) by (vm_compute; reflexivity). change ((3 - 1)%uint63) with T8_A. rewrite (Hag T8_A) by (vm_compute; reflexivity). reflexivity.
-      + rewrite (Hag 5%uint63) by (vm_compute; reflexivity). change ((5 - 1)%uint63) with T8_B. rewrite (Hag T8_B) by (vm_compute; reflexivity). reflexivity.
-      + rewrite (Hag 7%uint63) by (vm_compute; reflexivity). change ((7 - 1)%uint63) with T8_R. rewrite (Hag T8_R) by (vm_compute; reflexivity). reflexivity. }
-  (* [comment removed for export] *)
-  assert (HC0 : CInv bsegs M8A WIV m F fc S8A ms0).
-  { unfold CInv, ms0. cbn [S8A s_mem ms_mem ms_fregs ms_fcsr ms_rom ms_regs MS].
-    split; [apply same_dirs_refl|]. split; [apply munch_refl|]. split; [apply wmono_refl|]. split; [exact Hmi|].
-    repeat (split; [reflexivity|]). do 31 eexists. reflexivity. }
-  assert (HP : forall rho, agree_below NEXT8A rho0 rho -> sx_pres bsegs rho (CInv bsegs M8A WIV m F fc)).
-  { intros rho Hag. apply CInv_sx. intros t rg G Hw. pose proof (M8A_class t rg G) as C. unfold rbase.
-    destruct (rg_abs rg) as [x|]; [rewrite Hw in C; discriminate C|]. destruct C as [C _].
-    destruct (C Hw) as [[-> Es]|[-> Es]]; rewrite Es.
-    - rewrite (Hag T8_R) by (vm_compute; reflexivity). change (rho0 T8_R) with RP. unfold WIV. cbn [inside]. left. lia.
-    - rewrite (Hag T8_STK) by (vm_compute; reflexivity). change (rho0 T8_STK) with (SPz - CS8A). unfold WIV, CS8A. cbn [inside]. right. left. lia. }
-  destruct (sxs_run_sound SHBW bsegs stop8 (CInv bsegs M8A WIV m F fc) NEXT8A rho0 HP FUEL8 rho0 [] logE S8A SE ms0
-              (agree_below_refl _ _) ltac:(cbn [S8A s_next]; lia) HRS0 HC0 (Forall_nil _) (Forall_nil _) Erun)
-    as (rho1 & ms1 & Hag1 & Hms & HRS1 & HC1 & Hlog1 & _).
-  cbn [S8A s_next] in Hag1.
-  assert (Hv : forall t, to_Z t < to_Z NEXT8A -> rho1 t = rho0 t) by exact Hag1.
-  (* [comment removed for export] *)
-  pose proof (Rn_R bsegs rho1 SE ms1 (proj1 HRS1)) as HR1. pose proof HR1 as (Hsvc & Hpc & HRg & Hrv & HRm).
-  destruct fetch_final8 as [ic' Hfetch]. rewrite <- Epc in Hfetch.
-  destruct (hx_ret_step bsegs rho1 IEmpty ic' SE ms1 (ic_ok_empty bsegs) HR1 Hfetch) as (ms2 & Hstep & Ems2).
-  exists ms2. split; [exact (msteps_trans bsegs _ _ _ Hms (msteps_one bsegs _ _ Hstep))|].
-  destruct HC1 as (Hd1 & MU & WM & MI1 & Hfr & Hfc & Hro & Hnf).
-  rewrite Erv in Hrv. cbn [Rresv] in Hrv.
-  destruct Hnf as (y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & y15 & y16 & y17 & y18 & y19 & y20
-                   & y21 & y22 & y23 & y24 & y25 & y26 & y27 & y28 & y29 & y30 & y31 & Eregs).
-  unfold core_of in HRg, Ems2. rewrite Eregs in HRg, Ems2. rewrite Hfr, Hfc, Hro, Hrv in Ems2.
-  destruct (final_regs_den8 rho1 SE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hregs HRg)
-    as (E1 & E2 & E3 & E4 & E8 & E9 & E18 & E19 & E20 & E21 & E22 & E23 & E24 & E25 & E26 & E27).
-  rewrite (pword_scalar rho1 T8_RA ra) in E1 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 T8_GP gp) in E3 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 T8_TP tp) in E4 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 T8_S0 s0) in E8 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 1)%uint63 s1) in E9 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 2)%uint63 s2) in E18 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 3)%uint63 s3) in E19 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 4)%uint63 s4) in E20 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 5)%uint63 s5) in E21 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 6)%uint63 s6) in E22 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 7)%uint63 s7) in E23 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 8)%uint63 s8) in E24 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 9)%uint63 s9) in E25 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 10)%uint63 s10) in E26 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  rewrite (pword_scalar rho1 (T8_S0 + 11)%uint63 s11) in E27 by (rewrite Hv by (vm_compute; reflexivity); reflexivity).
-  assert (E2' : y2 = sp).
-  { rewrite E2. unfold pword. rewrite Hv by (vm_compute; reflexivity). change (rho0 T8_STK) with (SPz - CS8A). change (wZ (W false CS8AI)) with CS8A.
-    replace (SPz - CS8A + CS8A) with SPz by lia. apply Z_to_bv_bv_unsigned. }
-  subst y1 y2 y3 y4 y8 y9 y18 y19 y20 y21 y22 y23 y24 y25 y26 y27.
-  change (Sem.rget _ (Z_to_bv 5 1)) with ra in Ems2. rewrite E2' in Ems2.
-  (* [comment removed for export] *)
-  set (m' := ms_mem ms1) in *.
-  unfold vl_post. exists y5, y6, y7, y10, y11, y12, y13, y14, y15, y16, y17, y28, y29, y30, y31, m'.
-  split; [exact Ems2|]. split; [exact MU|]. split; [exact WM|]. split; [exact MI1|].
+      + exact (Rregs_init8 rho a b ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+                 F (Z_to_bv 64 0x226a50) fc None Hagree Hsp_floor).
+      + split; [reflexivity|].
+        exact (rmem8 rho m a b (bv_unsigned a1) (bv_unsigned a2) (bv_unsigned a0) lo (bv_unsigned sp)
+                 Hinv Hlimbs_a Hlimbs_b Hlen_a Hlen_b Hat_a Hat_b Hwr_r Hv8 Hv2 Hv3 Hv4 Hv5 Hv6 Hv7 HvA HvB
+                 Hshb Hacc_r Hacc_a Hacc_b (conj Hpos_a Hal_a) (conj Hpos_b Hal_b) (conj Hpos_r Hal_r)
+                 Hstk Hlo_frame Hshhi_lo Hsep_ra Hsep_rb Hsep_rs Hsep_as Hsep_bs Hoff_r Himg_r).
+    - intros rho Hagree. change (sh_law (wZ SHBW) rho M8A). intros s rg Hget Habs Hodd.
+      destruct (Hval rho Hagree) as (_ & Hv2 & Hv3 & Hv4 & Hv5 & Hv6 & Hv7 & _ & _).
+      pose proof (M8A_class s rg Hget) as Hclass. rewrite Habs in Hclass. hnf in Hclass.
+      destruct Hclass as [_ Hodd_tags]. rewrite SHBW_Z8.
+      destruct (Hodd_tags Hodd) as [-> | [-> | ->]].
+      + change (3 - 1)%uint63 with T8_A. rewrite Hv3, Hv2. reflexivity.
+      + change (5 - 1)%uint63 with T8_B. rewrite Hv5, Hv4. reflexivity.
+      + change (7 - 1)%uint63 with T8_R. rewrite Hv7, Hv6. reflexivity. }
+  assert (HC0 : CInv bsegs M8A Wfoot m F fc S8A ms0).
+  { unfold CInv. change (s_mem S8A) with M8A.
+    split; [apply same_dirs_refl|]. split; [apply munch_refl|]. split; [apply wmono_refl|]. split; [exact Hinv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+    unfold regs_nf. do 31 eexists. reflexivity. }
+  assert (Hpres : forall rho, agree_below NEXT8A rho0 rho -> sx_pres bsegs rho (CInv bsegs M8A Wfoot m F fc)).
+  { intros rho Hagree. apply CInv_sx. intros t rg Hget Hwr_rg.
+    destruct (Hval rho Hagree) as (Hv8 & _ & _ & _ & _ & Hv6 & _ & _ & _).
+    destruct (rg_abs rg) as [fixed_base|] eqn:Habs.
+    - pose proof (M8A_class t rg Hget) as Hclass. rewrite Habs in Hclass. hnf in Hclass.
+      rewrite Hclass in Hwr_rg. discriminate Hwr_rg.
+    - pose proof (M8A_class t rg Hget) as Hclass. rewrite Habs in Hclass. hnf in Hclass.
+      destruct Hclass as [Hwr_cases _].
+      unfold rbase. rewrite Habs.
+      destruct (Hwr_cases Hwr_rg) as [[-> Hsize] | [-> Hsize]]; rewrite Hsize; unfold Wfoot; cbn [inside].
+      + left. rewrite Hv6. lia.
+      + right. left. rewrite Hv8. lia. }
+
+  (* run the checked symbolic execution and read off its end state *)
+  destruct (c8_ok_inv c8_run c8_checked)
+    as (log & X & rg & st & Hrun & Hpc_end & Hresv_end & Hregs_ok & Hget_r & Habs_r & Hsize_r & Hkb_r & Hincr & Harun & Hmul).
+  rewrite c8_run_unfold in Hrun.
+  destruct (sxs_run_sound SHBW bsegs stop8 (CInv bsegs M8A Wfoot m F fc) NEXT8A rho0 Hpres FUEL8 rho0 [] log S8A X ms0
+              (agree_below_refl NEXT8A rho0) (Z.le_refl _) HRS0 HC0 (Forall_nil _) (Forall_nil _) Hrun)
+    as (rho1 & ms1 & Hagree1 & Hsteps & HRS1 & HC1 & Hlog1 & _).
+  destruct (Hval rho1 Hagree1) as (Hv8 & _ & _ & _ & _ & Hv6 & _ & HvA & HvB).
+  pose proof (Rn_R bsegs rho1 X ms1 (proj1 HRS1)) as HR1.
+  destruct fetch_final8 as [ic_end Hfetch]. rewrite <- Hpc_end in Hfetch.
+  destruct (hx_ret_step bsegs rho1 IEmpty ic_end X ms1 (ic_ok_empty bsegs) HR1 Hfetch) as (ms2 & Hstep2 & Hms2).
+  destruct HR1 as (_ & _ & Hregs1 & Hresv1 & Hmem1).
+  destruct HC1 as (Hdirs1 & Hmunch1 & Hwmono1 & Hinv1 & Hfregs1 & Hfcsr1 & Hrom1 & Hnf1).
+  rewrite Hresv_end in Hresv1. cbn [Rresv] in Hresv1.
+
+  (* callee-saved registers come back unchanged *)
+  destruct Hnf1 as (x1 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & x9 & x10 & x11 & x12 & x13 & x14 & x15 & x16 & x17 & x18 & x19 & x20
+                    & x21 & x22 & x23 & x24 & x25 & x26 & x27 & x28 & x29 & x30 & x31 & Hregs_eq).
+  unfold core_of in Hregs1. rewrite Hregs_eq in Hregs1.
+  destruct (final_regs_den8 rho1 X (ms_fregs ms1) (ms_pc_val ms1) (ms_fcsr ms1) (ms_resv ms1)
+              x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31
+              Hregs_ok Hregs1)
+    as (Ex1 & Ex2 & Ex3 & Ex4 & Ex8 & Ex9 & Ex18 & Ex19 & Ex20 & Ex21 & Ex22 & Ex23 & Ex24 & Ex25 & Ex26 & Ex27).
+  assert (Hscalar : forall (t : int) (w : word), to_Z t < 56 -> rho0 t = bv_unsigned w -> pword rho1 t w_zero = w).
+  { intros t w Ht Hw. apply pword_scalar. rewrite (Hagree1 t Ht). exact Hw. }
+  repeat match goal with
+         | E : _ = pword rho1 ?t w_zero |- _ => rewrite (Hscalar t _ ltac:(closed_side) eq_refl) in E
+         end.
+  assert (Hsp_back : pword rho1 T8_STK (W false CS8AI) = sp).
+  { unfold pword. rewrite Hv8. change (wZ (W false CS8AI)) with CS8A. rewrite Z.sub_add. apply Z_to_bv_bv_unsigned. }
+  rewrite Hsp_back in Ex2.
+  subst x1 x2 x3 x4 x8 x9 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27.
+
+  (* the result region: its bytes are the 16 output tags, whose value is the product *)
+  destruct Hmem1 as [Hregions _].
+  pose proof (Hregions T8_R rg Hget_r) as Hrg_ok.
+  assert (Hrb_r : rbase rho1 T8_R rg = bv_unsigned a0) by (unfold rbase; rewrite Habs_r; exact Hv6).
+  assert (Hkbs_len : length (kbs_ptrs (outs_of rg)) = 128%nat) by (vm_compute; reflexivity).
+  destruct (kb_check_sound bsegs rho1 T8_R rg (ms_mem ms1) (kbs_ptrs (outs_of rg)) 0 Hrg_ok Hkb_r ltac:(lia)
+              ltac:(rewrite Hkbs_len, Hsize_r; lia)) as (out_bytes & Hout_kb & Hout_at & _).
+  rewrite Z.add_0_r, Hrb_r in Hout_at.
+  assert (Hlimb_tags : Forall (fun t => limb (rho1 t)) (TA8 ++ TB8)).
+  { pose proof Hlimbs_a as Hlimbs_ta. pose proof Hlimbs_b as Hlimbs_tb.
+    rewrite <- HvA in Hlimbs_ta. rewrite <- HvB in Hlimbs_tb. unfold limbs in Hlimbs_ta, Hlimbs_tb.
+    rewrite Forall_map in Hlimbs_ta, Hlimbs_tb. apply Forall_app. split; assumption. }
+  assert (Htag_ok : forall t, In t (TA8 ++ TB8) -> 0 <= rho1 t < MW /\ to_Z t < 56).
+  { intros t Hin. split.
+    - rewrite Forall_forall in Hlimb_tags. exact (Hlimb_tags t Hin).
+    - pose proof tags_small as Hsmall. rewrite forallb_forall in Hsmall. apply Z.ltb_lt. exact (Hsmall t Hin). }
+  assert (Hprod_lt : hsum (map rho1 TA8) * hsum (map rho1 TB8) < MW ^ 16).
+  { rewrite !hsum_lval, HvA, HvB.
+    destruct (lval_bound a Hlimbs_a) as [Hval_a_lo Hval_a_hi]. destruct (lval_bound b Hlimbs_b) as [Hval_b_lo Hval_b_hi].
+    rewrite Hlen_a in Hval_a_hi. rewrite Hlen_b in Hval_b_hi.
+    change (Bp 8) with (MW ^ 8) in Hval_a_hi, Hval_b_hi.
+    replace (MW ^ 16) with (MW ^ 8 * MW ^ 8) by (rewrite <- Z.pow_add_r by lia; reflexivity).
+    exact (Z.mul_lt_mono_nonneg _ _ _ _ Hval_a_lo Hval_a_hi Hval_b_lo Hval_b_hi). }
+  destruct (mul_cert rho1 (rev log) TA8 TB8 (outs_of rg) 56 (MW ^ 16) st ltac:(apply Forall_rev; exact Hlog1)
+              Htag_ok Hincr Harun Hmul ltac:(closed_side) Hprod_lt) as [Hprod Hout_range].
+  assert (Hout_limbs : limbs (map rho1 (outs_of rg))).
+  { unfold limbs. rewrite Forall_map. eapply Forall_impl; [|exact Hout_range]. intros t Ht. exact Ht. }
+  assert (Hout_len : length (map rho1 (outs_of rg)) = 16%nat) by (rewrite length_map; reflexivity).
+  assert (Hout_val : mul_comba8 a b = map rho1 (outs_of rg)).
+  { unfold mul_comba8. rewrite <- Hout_len. apply to_limbs_unique; [exact Hout_limbs|].
+    rewrite <- hsum_lval, Hprod, !hsum_lval, HvA, HvB. reflexivity. }
+  assert (Hout_bytes : out_bytes = lbytes (map rho1 (outs_of rg))).
+  { apply (kbs_ptrs_bytes rho1 (outs_of rg) out_bytes); [|exact Hout_kb].
+    eapply Forall_impl; [|exact Hout_range]. intros t Ht. exact Ht. }
+
+  (* the stack frame region, for the caller's stack after the return *)
+  pose proof (Hdirs1 T8_STK) as Hdir_stk. rewrite M8A_get8 in Hdir_stk.
+  destruct (mget (s_mem X) T8_STK) as [rg_stk|] eqn:Hget_stk; [|destruct Hdir_stk].
+  destruct Hdir_stk as (Habs_stk & Hsize_stk & _).
+  pose proof (Hregions T8_STK rg_stk Hget_stk) as Hstk_ok.
+  assert (Hrb_stk : rbase rho1 T8_STK rg_stk = bv_unsigned sp - CS8A) by (unfold rbase; rewrite Habs_stk; exact Hv8).
+
+  (* the return step closes the run, and the post holds there *)
+  exists ms2. split.
+  { exact (msteps_trans bsegs _ _ _ Hsteps (msteps_one bsegs _ _ Hstep2)). }
+  unfold W_mul_normal.vl_post. cbv beta.
+  exists x5, x6, x7, x10, x11, x12, x13, x14, x15, x16, x17, x28, x29, x30, x31, (ms_mem ms1).
   split.
-  - (* [comment removed for export] *)
-    destruct (Hmaps rho1 Hv) as [HA1 HB1].
-    assert (Hin : forall t, In t (TA8 ++ TB8) -> 0 <= rho1 t < MW /\ to_Z t < 56).
-    { intros t Ht. split; [|apply Z.ltb_lt; exact (proj1 (forallb_forall _ _) tags_small t Ht)].
-      apply in_app_or in Ht. change MW with (2 ^ 64).
-      destruct Ht as [Ht|Ht]; [exact (proj1 (Forall_forall _ _) (tags_range rho1 TA8 a HA1 LA) t Ht) | exact (proj1 (Forall_forall _ _) (tags_range rho1 TB8 b HB1 LB) t Ht)]. }
-    assert (Hlt : hsum (map rho1 TA8) * hsum (map rho1 TB8) < MW ^ 16).
-    { rewrite HA1, HB1, !hsum_lval. pose proof (lval_bound a LA) as H1. pose proof (lval_bound b LB) as H2. rewrite HLA in H1. rewrite HLB in H2.
-      change (MW ^ 16) with (Bp 8 * Bp 8). apply mul_bound_lt; assumption. }
-    destruct (mul_cert rho1 (rev logE) TA8 TB8 (outs_of rgE) 56 (MW ^ 16) stE (Forall_rev Hlog1) Hin Hincr Harun Hchk ltac:(vm_compute; reflexivity) Hlt) as [Hsum Hrange].
-    rewrite HA1, HB1, !hsum_lval in Hsum.
-    set (L := map rho1 (outs_of rgE)) in *.
-    assert (HLl : limbs L).
-    { unfold L, limbs. rewrite Forall_map. eapply Forall_impl; [|exact Hrange]. intros t Ht. cbn in Ht. unfold limb, BW. unfold MW in Ht. exact Ht. }
-    assert (EL : L = mul_comba8 a b).
-    { unfold mul_comba8. rewrite <- (to_limbs_unique L (lval a * lval b) HLl Hsum). reflexivity. }
-    rewrite <- EL.
-    pose proof (proj1 HRm _ _ EgR) as HokR.
-    destruct (kb_check_sound bsegs rho1 T8_R rgE m' (kbs_ptrs (outs_of rgE)) 0 HokR Hkb ltac:(lia)) as (bs & HF & Hb & _).
-    { rewrite EsR. unfold kbs_ptrs, outs_of. cbn [map concat length app kbs_ptr seq]. lia. }
-    unfold rbase in Hb. rewrite EaR, Hv, Z.add_0_r in Hb by (vm_compute; reflexivity). change (rho0 T8_R) with RP in Hb.
-    unfold limbs_at, L. rewrite <- (kbs_ptrs_bytes rho1 (outs_of rgE) bs); [exact Hb | | exact HF].
-    eapply Forall_impl; [|exact Hrange]. intros t Ht. cbn in Ht. unfold MW in Ht. change (2 ^ 64) with 18446744073709551616. exact Ht.
-  - (* [comment removed for export] *)
-    destruct Hstk as (S1 & S2 & S3). split; [exact S1|]. split; [exact S2|]. intros x Hx. destruct (S3 x Hx) as [Hwv (bb & Hbb)].
-    split; [apply WM; exact Hwv|].
-    destruct (Z_lt_le_dec x (SPz - CS8A)) as [Lt|Ge]; [destruct (Z_lt_le_dec x RP) as [L1|G1]; [|destruct (Z_lt_le_dec x (RP + 128)) as [L2|G2]]|].
-    + exists bb. unfold mrd in *. rewrite MU; [exact Hbb|]. rewrite wa_unsigned by lia. unfold WIV, CS8A in *. cbn [outside]. lia.
-    + (* [comment removed for export] *)
-      pose proof (region_mapped bsegs rho1 T8_R rgE m' (proj1 HRm _ _ EgR)) as Hmp. unfold rbase in Hmp. rewrite EaR, EsR, Hv in Hmp by (vm_compute; reflexivity).
-      change (rho0 T8_R) with RP in Hmp. destruct (Hmp (x - RP) ltac:(lia)) as [Hm' _]. replace (RP + (x - RP)) with x in Hm' by lia. exact Hm'.
-    + exists bb. unfold mrd in *. rewrite MU; [exact Hbb|]. rewrite wa_unsigned by lia. unfold WIV, CS8A in *. cbn [outside]. lia.
-    + specialize (Hd1 T8_STK). rewrite M8A_get8 in Hd1.
-      destruct (mget (s_mem SE) T8_STK) as [rg1|] eqn:Eg1; [|contradiction].
-      pose proof (region_mapped bsegs rho1 T8_STK rg1 m' (proj1 HRm _ _ Eg1)) as Hmp.
-      rewrite (rbase_same_dir rho1 T8_STK c8_stk rg1 Hd1) in Hmp. destruct Hd1 as (_ & Es1 & _). rewrite Es1 in Hmp.
-      unfold rbase in Hmp. cbn [rg_abs rg_size c8_stk] in Hmp. rewrite Hv in Hmp by (vm_compute; reflexivity).
-      change (rho0 T8_STK) with (SPz - CS8A) in Hmp. change (to_Z CS8AI) with CS8A in Hmp.
-      destruct (Hmp (x - (SPz - CS8A)) ltac:(lia)) as [Hm' _].
-      replace (SPz - CS8A + (x - (SPz - CS8A))) with x in Hm' by lia. exact Hm'.
+  { assert (Hlink : Sem.rget (core_of ms1) (Z_to_bv 5 1) = ra) by (unfold core_of; rewrite Hregs_eq; reflexivity).
+    rewrite Hms2, Hlink, Hregs_eq, Hfregs1, Hfcsr1, Hrom1, Hresv1. reflexivity. }
+  split; [exact Hmunch1|]. split; [exact Hwmono1|]. split; [exact Hinv1|]. split.
+  { unfold limbs_at. rewrite Hout_val, <- Hout_bytes. exact Hout_at. }
+  split; [exact Hlo_nn|]. split; [exact Hsp_fit|].
+  intros x Hx. split; [exact (Hwmono1 (wa x) (proj1 (Hframe x Hx)))|].
+  assert (Hcases : (bv_unsigned a0 <= x < bv_unsigned a0 + 128) \/ (bv_unsigned sp - CS8A <= x < bv_unsigned sp)
+                   \/ outside Wfoot x).
+  { unfold Wfoot. cbn [outside]. lia. }
+  destruct Hcases as [Hin_res | [Hin_frame | Hout_w]].
+  - destruct (region_mapped bsegs rho1 T8_R rg (ms_mem ms1) Hrg_ok (x - bv_unsigned a0) ltac:(rewrite Hsize_r; lia))
+      as [[v Hv] _].
+    rewrite Hrb_r in Hv. replace (bv_unsigned a0 + (x - bv_unsigned a0)) with x in Hv by ring. exists v. exact Hv.
+  - destruct (region_mapped bsegs rho1 T8_STK rg_stk (ms_mem ms1) Hstk_ok (x - (bv_unsigned sp - CS8A))
+                ltac:(rewrite Hsize_stk; change (to_Z (rg_size c8_stk)) with CS8A; lia)) as [[v Hv] _].
+    rewrite Hrb_stk in Hv. replace (bv_unsigned sp - CS8A + (x - (bv_unsigned sp - CS8A))) with x in Hv by ring.
+    exists v. exact Hv.
+  - destruct (Hframe x Hx) as [_ [v Hv]]. exists v. unfold mrd in *. unfold munch in Hmunch1.
+    rewrite Hmunch1; [exact Hv|]. rewrite wa_unsigned by lia. exact Hout_w.
 Qed.
 
 Lemma CS8A_nonneg : 0 <= CS8A.

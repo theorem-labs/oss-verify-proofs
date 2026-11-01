@@ -67,23 +67,25 @@ Section C1.
       /\ getr regs' 12 = Z_to_bv 64 (n - (k + 3))
       /\ getr regs' 15 = Z_to_bv 64 16 /\ keeps regs regs'.
   Proof.
-    intros regs ret acc k H1 H11 H13 H12 H15 Hk Hnk HLN. eexists. eexists. split.
-    - mlw F_23b5c D_23b5c k.                            (* [comment removed for export] *)
-      stepn F_23b60 D_23b60.                            (* [comment removed for export] *)
-      stepb_ft F_23b64 D_23b64 ltac:(cond).             (* [comment removed for export] *)
-      stepn F_23b68 D_23b68.                            (* [comment removed for export] *)
-      stepb_tk F_23b6c D_23b6c ltac:(cond).             (* [comment removed for export] *)
-      stepn F_23d04 D_23d04.                            (* [comment removed for export] *)
-      stepn F_23d08 D_23d08.                            (* [comment removed for export] *)
-      stepn F_23d0c D_23d0c.                            (* [comment removed for export] *)
-      msb F_23d10 D_23d10 k.         (* [comment removed for export] *)
-      msb F_23d14 D_23d14 (k + 1)%Z.  (* [comment removed for export] *)
-      msb F_23d18 D_23d18 (k + 2)%Z. (* [comment removed for export] *)
-      stepn F_23d1c D_23d1c.                            (* [comment removed for export] *)
-      stepn F_23d20 D_23d20.                            (* [comment removed for export] *)
-      stepn F_23d24 D_23d24.                            (* [comment removed for export] *)
-      apply mst_refl.
-    - post. unfold v_addi. unorm. f_equal. lia.
+    intros regs ret acc k ra_kept src_at dst_at cnt_at phase_one k_nonneg room32 len_k.
+    do 2 eexists. split.
+    { mlw F_23b5c D_23b5c k.
+      stepn F_23b60 D_23b60.
+      stepb_ft F_23b64 D_23b64 ltac:(cond).
+      stepn F_23b68 D_23b68.
+      stepb_tk F_23b6c D_23b6c ltac:(cond).
+      stepn F_23d04 D_23d04.
+      stepn F_23d08 D_23d08.
+      stepn F_23d0c D_23d0c.
+      msb F_23d10 D_23d10 k.
+      msb F_23d14 D_23d14 (k + 1)%Z.
+      msb F_23d18 D_23d18 (k + 2)%Z.
+      stepn F_23d1c D_23d1c.
+      stepn F_23d20 D_23d20.
+      stepn F_23d24 D_23d24.
+      apply mst_refl. }
+    post.
+    unfold v_addi. rewrite u_Z2bv by lia. apply (f_equal (Z_to_bv 64)). lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -101,55 +103,55 @@ Section C1.
       /\ getr regs' 13 = at_ dst (kk + 16 * (Z.of_nat q + 1))
       /\ getr regs' 12 = Z_to_bv 64 (n - (kk + 16 * (Z.of_nat q + 1))) /\ keeps regs regs'.
   Proof.
-    induction q as [|q IH]; intros regs ret acc kk ja H1 H11 H13 H12 H15 Hja Hkk Hq HLN; subst ja.
-    - eexists. eexists. split.
-      + stepn F_23d28 D_23d28.                          (* [comment removed for export] *)
-        mlw F_23d2c D_23d2c (kk + 1)%Z.                 (* [comment removed for export] *)
-        mlw F_23d30 D_23d30 (kk + 5)%Z.                 (* [comment removed for export] *)
-        mlw F_23d34 D_23d34 (kk + 9)%Z.                 (* [comment removed for export] *)
-        mlw F_23d38 D_23d38 (kk + 13)%Z.                (* [comment removed for export] *)
+    assert (one_pass : forall r ra a j,
+      getr r 1 = ra -> getr r 11 = at_ src (j + 13) -> getr r 13 = at_ dst j ->
+      getr r 12 = Z_to_bv 64 (n - j) -> getr r 15 = Z_to_bv 64 16 ->
+      (3 <= j)%Z -> (j + 17 <= n)%Z -> LEN a j ->
+      exists r' a',
+        msteps RSEGS (mkst r (0x23d28 : word) (MK a) rom) (mkst r' (0x23d84 : word) (MK a') rom)
+        /\ LEN a' (j + 16) /\ getr r' 1 = ra /\ getr r' 11 = at_ src (j + 16 + 13)
+        /\ getr r' 13 = at_ dst (j + 16) /\ getr r' 12 = Z_to_bv 64 (n - (j + 16))
+        /\ getr r' 15 = Z_to_bv 64 16 /\ keeps r r').
+    { intros r ra a j ra_kept src_at dst_at cnt_at sixteen_at j_low j_room len_j.
+      do 2 eexists. split.
+      { stepn F_23d28 D_23d28.
+        mlw F_23d2c D_23d2c (j + 1)%Z.
+        mlw F_23d30 D_23d30 (j + 5)%Z.
+        mlw F_23d34 D_23d34 (j + 9)%Z.
+        mlw F_23d38 D_23d38 (j + 13)%Z.
         stepn F_23d3c D_23d3c. stepn F_23d40 D_23d40. stepn F_23d44 D_23d44.
         stepn F_23d48 D_23d48. stepn F_23d4c D_23d4c. stepn F_23d50 D_23d50.
         stepn F_23d54 D_23d54. stepn F_23d58 D_23d58. stepn F_23d5c D_23d5c.
         stepn F_23d60 D_23d60. stepn F_23d64 D_23d64.
-        stepn F_23d68 D_23d68.                          (* [comment removed for export] *)
-        msw F_23d6c D_23d6c kk.
-        msw F_23d70 D_23d70 (kk + 4)%Z.
-        msw F_23d74 D_23d74 (kk + 8)%Z.
-        msw F_23d78 D_23d78 (kk + 12)%Z.
-        stepn F_23d7c D_23d7c.                          (* [comment removed for export] *)
-        stepn F_23d80 D_23d80.                          (* [comment removed for export] *)
-        stepb_ft F_23d84 D_23d84 ltac:(unfold v_addi; cond).   (* [comment removed for export] *)
-        apply mst_refl.
-      + post. unfold v_addi. unorm. f_equal. lia.
-    - eapply (runsW_trans RSEGS _ (fun r a => mkst r (0x23d28 : word) (MK a) rom)
-               (fun r a => LEN a ((kk + 16)) /\ getr r 1 = ret /\ getr r 11 = at_ src (kk + 16 + 13) /\ getr r 13 = at_ dst (kk + 16)
-                         /\ getr r 12 = Z_to_bv 64 (n - (kk + 16))
-                         /\ getr r 15 = Z_to_bv 64 16 /\ keeps regs r)).
-      + eexists. eexists. split.
-        * stepn F_23d28 D_23d28.
-          mlw F_23d2c D_23d2c (kk + 1)%Z.
-          mlw F_23d30 D_23d30 (kk + 5)%Z.
-          mlw F_23d34 D_23d34 (kk + 9)%Z.
-          mlw F_23d38 D_23d38 (kk + 13)%Z.
-          stepn F_23d3c D_23d3c. stepn F_23d40 D_23d40. stepn F_23d44 D_23d44.
-          stepn F_23d48 D_23d48. stepn F_23d4c D_23d4c. stepn F_23d50 D_23d50.
-          stepn F_23d54 D_23d54. stepn F_23d58 D_23d58. stepn F_23d5c D_23d5c.
-          stepn F_23d60 D_23d60. stepn F_23d64 D_23d64.
-          stepn F_23d68 D_23d68.
-          msw F_23d6c D_23d6c kk.
-          msw F_23d70 D_23d70 (kk + 4)%Z.
-          msw F_23d74 D_23d74 (kk + 8)%Z.
-          msw F_23d78 D_23d78 (kk + 12)%Z.
-          stepn F_23d7c D_23d7c.
-          stepn F_23d80 D_23d80.
-          stepb_tk F_23d84 D_23d84 ltac:(unfold v_addi; cond).   (* [comment removed for export] *)
-          apply mst_refl.
-        * cbv beta. post. unfold v_addi. unorm. f_equal. lia.
-      + cbv beta. intros r1 a1 (L1 & R1 & R11 & R13 & R12 & R15 & K1).
-        destruct (IH r1 ret a1 (kk + 16)%Z (kk + 16 + 13)%Z R1 R11 R13 R12 R15 ltac:(lia) ltac:(lia) ltac:(lia) L1) as (r2 & a2 & RUN & P).
-        exists r2, a2. replace (kk + 16 * (Z.of_nat (S q) + 1))%Z with (kk + 16 + 16 * (Z.of_nat q + 1))%Z by lia.
-        split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+        stepn F_23d68 D_23d68.
+        msw F_23d6c D_23d6c j.
+        msw F_23d70 D_23d70 (j + 4)%Z.
+        msw F_23d74 D_23d74 (j + 8)%Z.
+        msw F_23d78 D_23d78 (j + 12)%Z.
+        stepn F_23d7c D_23d7c.
+        stepn F_23d80 D_23d80.
+        apply mst_refl. }
+      post.
+      unfold v_addi. rewrite u_Z2bv by lia. apply (f_equal (Z_to_bv 64)). lia. }
+    intro q. induction q as [|q later]; intros regs ret acc kk ja ra_kept src_at dst_at cnt_at sixteen_at ja_is kk_low trips len_kk; subst ja.
+    - destruct (one_pass regs ret acc kk ra_kept src_at dst_at cnt_at sixteen_at kk_low ltac:(lia) len_kk)
+        as (r1 & a1 & pass1 & len1 & ra1 & src1 & dst1 & cnt1 & sixteen1 & keep1).
+      exists r1, a1.
+      replace (kk + 16 * (Z.of_nat 0 + 1))%Z with (kk + 16)%Z by lia.
+      refine (conj _ (conj len1 (conj ra1 (conj src1 (conj dst1 (conj cnt1 keep1)))))).
+      eapply msteps_trans; [exact pass1|].
+      stepb_ft F_23d84 D_23d84 ltac:(cond).
+      apply mst_refl.
+    - destruct (one_pass regs ret acc kk ra_kept src_at dst_at cnt_at sixteen_at kk_low ltac:(lia) len_kk)
+        as (r1 & a1 & pass1 & len1 & ra1 & src1 & dst1 & cnt1 & sixteen1 & keep1).
+      destruct (later r1 ret a1 (kk + 16)%Z (kk + 16 + 13)%Z ra1 src1 dst1 cnt1 sixteen1 eq_refl ltac:(lia) ltac:(lia) len1)
+        as (r2 & a2 & rest & len2 & ra2 & src2 & dst2 & cnt2 & keep2).
+      exists r2, a2.
+      replace (kk + 16 * (Z.of_nat (S q) + 1))%Z with (kk + 16 + 16 * (Z.of_nat q + 1))%Z by lia.
+      refine (conj _ (conj len2 (conj ra2 (conj src2 (conj dst2 (conj cnt2 (keeps_trans _ _ _ keep1 keep2))))))).
+      eapply msteps_trans; [exact pass1|].
+      stepb_tk F_23d84 D_23d84 ltac:(cond).
+      exact rest.
   Qed.
 
   (* [comment removed for export] *)
@@ -167,38 +169,43 @@ Section C1.
       /\ getr regs' 13 = at_ dst (kk + Z.land m 16 + Z.land m 8 + Z.land m 4)
       /\ getr regs' 12 = Z_to_bv 64 m /\ keeps regs regs'.
   Proof.
-    intros regs ret acc kk H1 H11 H13 H12 Hkk Hm Hkn m HLN. subst m.
-    destruct (bits_lt32 (n - kk) ltac:(lia)) as (B16 & B8 & B4 & B2 & B1 & Bsum).
-    assert (0 <= Z.land (n - kk) 8)%Z by (apply Z.land_nonneg; lia). assert (0 <= Z.land (n - kk) 4)%Z by (apply Z.land_nonneg; lia).
-    assert (0 <= Z.land (n - kk) 2)%Z by (apply Z.land_nonneg; lia). assert (0 <= Z.land (n - kk) 1)%Z by (apply Z.land_nonneg; lia).
-    destruct B16 as [HL16|HL16].
-    - eapply (runsW_trans RSEGS _ (fun r a => mkst r (0x23b48 : word) (MK a) rom)
-               (fun r a => LEN a (kk) /\ getr r 1 = ret /\ getr r 11 = at_ src kk /\ getr r 13 = at_ dst kk /\ getr r 12 = Z_to_bv 64 (n - kk) /\ keeps regs r)).
-      + eexists. eexists. split.
-        * stepn F_23d88 D_23d88.                        (* [comment removed for export] *)
-          stepn F_23d8c D_23d8c.                        (* [comment removed for export] *)
-          stepb_tk F_23d90 D_23d90 ltac:(cond).         (* [comment removed for export] *)
-          apply mst_refl.
-        * cbv beta. post.
-      + cbv beta. intros r1 a1 (L1 & R1 & R11 & R13 & R12 & K1).
-        destruct (t8_run _ _ _ _ rom HOK r1 ret a1 kk (n - kk) R1 R11 R13 R12 ltac:(lia) Hkk B8 B4 ltac:(lia) L1) as (r2 & a2 & RUN & P).
-        exists r2, a2. rewrite HL16, Z.add_0_r. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
-    - eapply (runsW_trans RSEGS _ (fun r a => mkst r (0x23d94 : word) (MK a) rom)
-               (fun r a => LEN a (kk) /\ getr r 1 = ret /\ getr r 11 = at_ src kk /\ getr r 13 = at_ dst kk /\ getr r 12 = Z_to_bv 64 (n - kk) /\ keeps regs r)).
-      + eexists. eexists. split.
-        * stepn F_23d88 D_23d88.
-          stepn F_23d8c D_23d8c.
-          stepb_ft F_23d90 D_23d90 ltac:(cond).         (* [comment removed for export] *)
-          apply mst_refl.
-        * cbv beta. post.
-      + cbv beta. intros r1 a1 (L1 & R1 & R11 & R13 & R12 & K1).
-        eapply (runsW_trans RSEGS _ (fun r a => mkst r (0x23e20 : word) (MK a) rom)
-                 (fun r a => LEN a ((kk + 16)) /\ getr r 1 = ret /\ getr r 11 = at_ src (kk + 16) /\ getr r 13 = at_ dst (kk + 16) /\ getr r 12 = Z_to_bv 64 (n - kk) /\ keeps regs r)).
-        * destruct (b16_blk _ _ _ _ rom HOK r1 ret a1 kk _ R1 R11 R13 R12 ltac:(lia) ltac:(lia) L1) as (r2 & a2 & RUN & P).
-          exists r2, a2. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
-        * cbv beta. intros r2 a2 (L2 & S1 & S11 & S13 & S12 & K2).
-          destruct (b16_tail _ _ _ _ rom HOK r2 ret a2 (kk + 16)%Z (n - kk) S1 S11 S13 S12 ltac:(lia) ltac:(lia) B8 B4 ltac:(lia) L2) as (r3 & a3 & RUN & P).
-          exists r3, a3. rewrite HL16. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+    intros regs ret acc kk ra_kept src_at dst_at cnt_at kk_nonneg rem_lt32 kk_le_n m len_kk.
+    assert (m_is : m = (n - kk)%Z) by reflexivity.
+    clearbody m. rewrite <- m_is in cnt_at.
+    destruct (bits_lt32 m ltac:(lia)) as (bit16 & bit8 & bit4 & bit2 & bit1 & m_sum).
+    assert (head : exists r1,
+      msteps RSEGS (mkst regs (0x23d88 : word) (MK acc) rom) (mkst r1 (0x23d90 : word) (MK acc) rom)
+      /\ getr r1 1 = ret /\ getr r1 11 = at_ src kk /\ getr r1 13 = at_ dst kk
+      /\ getr r1 12 = Z_to_bv 64 m /\ getr r1 14 = Z_to_bv 64 16 /\ keeps regs r1).
+    { eexists. split.
+      { stepn F_23d88 D_23d88.
+        stepn F_23d8c D_23d8c.
+        apply mst_refl. }
+      post. }
+    destruct head as (r1 & run1 & ra1 & src1 & dst1 & cnt1 & sixteen1 & keep1).
+    destruct (Z_lt_le_dec m 16) as [below16 | from16].
+    - assert (no16 : Z.land m 16 = 0%Z) by lia.
+      destruct (t8_run mem0 dst src n rom HOK r1 ret acc kk m ra1 src1 dst1 cnt1
+                  ltac:(lia) kk_nonneg bit8 bit4 ltac:(lia) len_kk)
+        as (r2 & a2 & run2 & len2 & ra2 & src2 & dst2 & cnt2 & keep2).
+      exists r2, a2. rewrite no16, Z.add_0_r.
+      refine (conj _ (conj len2 (conj ra2 (conj src2 (conj dst2 (conj cnt2 (keeps_trans _ _ _ keep1 keep2))))))).
+      eapply msteps_trans; [exact run1|].
+      stepb_tk F_23d90 D_23d90 ltac:(cond).
+      exact run2.
+    - assert (has16 : Z.land m 16 = 16%Z) by lia.
+      destruct (b16_blk mem0 dst src n rom HOK r1 ret acc kk (Z_to_bv 64 m) ra1 src1 dst1 cnt1
+                  kk_nonneg ltac:(lia) len_kk)
+        as (r2 & a2 & run2 & len2 & ra2 & src2 & dst2 & cnt2 & keep2).
+      destruct (b16_tail mem0 dst src n rom HOK r2 ret a2 (kk + 16)%Z m ra2 src2 dst2 cnt2
+                  ltac:(lia) ltac:(lia) bit8 bit4 ltac:(lia) len2)
+        as (r3 & a3 & run3 & len3 & ra3 & src3 & dst3 & cnt3 & keep3).
+      exists r3, a3. rewrite has16.
+      refine (conj _ (conj len3 (conj ra3 (conj src3 (conj dst3 (conj cnt3
+                (keeps_trans _ _ _ keep1 (keeps_trans _ _ _ keep2 keep3)))))))).
+      eapply msteps_trans; [exact run1|].
+      stepb_ft F_23d90 D_23d90 ltac:(cond).
+      eapply msteps_trans; [exact run2 | exact run3].
   Qed.
 
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

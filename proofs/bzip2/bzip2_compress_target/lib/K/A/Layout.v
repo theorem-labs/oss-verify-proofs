@@ -278,28 +278,28 @@ Definition K_kAllocBegMagic : Z := 14730877155918386873.
 (* [comment removed for export] *)   (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition g_instance : Z := 809688.  (* [comment removed for export] *)
-Definition g_asan_flags : Z := 813368.  (* [comment removed for export] *)
-Definition g_common_flags : Z := 1420392.  (* [comment removed for export] *)
-Definition g_shadow_memory_dynamic_address : Z := 823608.  (* [comment removed for export] *)
-Definition g_detect_stack_use_after_return : Z := 823616.  (* [comment removed for export] *)
-Definition g_asan_inited : Z := 826904.  (* [comment removed for export] *)
+Definition g_instance : Z := 809688.
+Definition g_asan_flags : Z := 813368.
+Definition g_common_flags : Z := 1420392.
+Definition g_shadow_memory_dynamic_address : Z := 823608.
+Definition g_detect_stack_use_after_return : Z := 823616.
+Definition g_asan_inited : Z := 826904.
 (* [comment removed for export] *)  (* [comment removed for export] *)
 (* [comment removed for export] *)  (* [comment removed for export] *)
 (* [comment removed for export] *)  (* [comment removed for export] *)
-Definition g_malloc_context_size_cell : Z := 826940.  (* [comment removed for export] *)
-Definition g_can_poison_memory : Z := 821660.  (* [comment removed for export] *)
-Definition g_tsd_key_inited : Z := 821664.  (* [comment removed for export] *)
-Definition g_tsd_key : Z := 821668.  (* [comment removed for export] *)
+Definition g_malloc_context_size_cell : Z := 826940.
+Definition g_can_poison_memory : Z := 821660.
+Definition g_tsd_key_inited : Z := 821664.
+Definition g_tsd_key : Z := 821668.
 (* [comment removed for export] *)  (* [comment removed for export] *)
 (* [comment removed for export] *)  (* [comment removed for export] *)
-Definition g_rss_limit_exceeded : Z := 1356706.  (* [comment removed for export] *)
+Definition g_rss_limit_exceeded : Z := 1356706.
 (* [comment removed for export] *)  (* [comment removed for export] *)
-Definition g_PageSizeCached : Z := 1412064.  (* [comment removed for export] *)
+Definition g_PageSizeCached : Z := 1412064.
 (* [comment removed for export] *)  (* [comment removed for export] *)
-Definition g_MFHooks : Z := 1420288.  (* [comment removed for export] *)
+Definition g_MFHooks : Z := 1420288.
 (* [comment removed for export] *)  (* [comment removed for export] *)
-Definition g_read_stage : Z := 6207376.  (* [comment removed for export] *)
+Definition g_read_stage : Z := 6207376.
 (* [comment removed for export] *)  (* [comment removed for export] *)
 (* [comment removed for export] *)  (* [comment removed for export] *)
 Definition g_GOT_common_flags : Z := 784968.  (* [comment removed for export] *)

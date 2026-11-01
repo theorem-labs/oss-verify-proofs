@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -74,50 +74,64 @@ Section GL.
                s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 0x3c3a8) fc None m (seg_rom usegs)).
   Proof.
-    intros until fj. cbv zeta. intros SWC IDB HH HTQ MF PX HD AL POS HP HA HB HX HY HZ HN HT FR ST LO0 LO SX CW ND ACL HTOP DHI MI SOK RA.
-    pose proof alloc_ceiling_pos as ACP. pose proof DIMG as [DI1 DI2].
-    pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    pose proof (bv_unsigned_in_range 64 sp) as SPB. change (bv_modulus 64) with (2^64) in SPB.
-    pose proof (rw_cells_bound _ _ _ _ HT) as TB. cbn [cells_size csize Nat.add length] in TB.
-    pose proof (core_bitlen_range (cN id) (Z.of_nat (length (cN id))) ltac:(lia)) as R2.
-    pose proof (U_curve_statics m id MI IDB) as CS. dpose CS as (_ & _ & _ & (_ & _ & _ & _ & LN) & _).
-    assert (MPB : 0 <= ca_modp (U_CA id) < 2^64 /\ 0 <= ca_T (U_CA id) < 2^64).
-    { assert (C : id = 1 \/ id = 2 \/ id = 3 \/ id = 4 \/ id = 5 \/ id = 6 \/ id = 7 \/ id = 8 \/ id = 9 \/ id = 10 \/ id = 11 \/ id = 12 \/ id = 13) by lia.
-      destruct C as [->|[->|[->|[->|[->|[->|[->|[->|[->|[->|[->|[->| ->]]]]]]]]]]]]; cbn; lia. }
-    destruct MPB as [MB TBB].
-    pose proof (munch_refl [(A, A + 192); (bv_unsigned sp - 32, bv_unsigned sp)] m) as MU. pose proof (wmono_refl usegs m) as WM.
-    destruct (heap_blocks _ _ HI _ _ _ _ HH) as [HBR HAP]. pose proof (conj HH I) as HH0. clear HH. pose proof (lock MI) as MI00.
-    zstep. zstep. zstep. zstep.
-    zstep. zstep. zstep. release_frame FR ST (bv_unsigned sp). zstep.
-    replace (bv_unsigned sp - 32 + 32) with (bv_unsigned sp) by lia. rewrite (Z_to_bv_bv_unsigned sp). zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m2 end.
-    destruct HH0 as [HH _].
-    apply aevtM_done. unfold ecp_group_load_post.
-    deexists 16. dexists h, 0, (grp_sw id (U_CA id) U_ONE A idpad pP pA pB pX pY pZ pN hpad), [], (grp_free_LB g LB).
-    split; [reflexivity|]. split; [exact MI|]. split; [exact ST|]. split; [exact MF|]. split; [exact HTQ|].
-    split. { apply (@HEAP_munch usegs L HI h _ m m2 mo _ lo HH MU WM ACL).
-             intros a Ha NO. cbn in NO. rewrite HTQ.
-             destruct (Z_le_dec A a) as [C1|C1]; [destruct (Z_lt_dec a (A + 192)) as [C2|C2]|].
-             - destruct (CW a ltac:(lia)) as [Q|[Q|Q]]; [left; lia| right; left; exact Q| right; right; exact Q].
-             - left. destruct (Z_le_dec (bv_unsigned sp - 32) a); [destruct (Z_lt_dec a (bv_unsigned sp))|]; [lia| exfalso; apply NO; repeat split; try exact I; lia..].
-             - left. destruct (Z_le_dec (bv_unsigned sp - 32) a); [destruct (Z_lt_dec a (bv_unsigned sp))|]; [lia| exfalso; apply NO; repeat split; try exact I; lia..]. }
-    split; [intros b; cbn; tauto|]. split; [intros b Hb; destruct Hb|].
-    split. { eapply grp_sw_at; try eassumption; try lia.
-             - eapply curve_statics_any_mem; [exact CS| exact (unlock _ MI00)| assumption].
-             - assert (C : id = 1 \/ id = 2 \/ id = 3 \/ id = 4 \/ id = 5 \/ id = 6 \/ id = 7 \/ id = 8 \/ id = 9 \/ id = 10 \/ id = 11 \/ id = 12 \/ id = 13) by lia.
-               destruct C as [->|[->|[->|[->|[->|[->|[->|[->|[->|[->|[->|[->| ->]]]]]]]]]]]]; cbn -[c1_P c2_P c3_P c4_P c5_P c9_P c10_P c11_P c12_P c13_P]; try discriminate SWC; auto 20.
-             all: match goal with |- ?g => idtac "SWATLEFT" g end. }
-    split. { intros d1 d2 H1 H2 NE O1 O2. exfalso. unfold grp_mpds, grp_sw, pt_mpds in H1. cbn -[smpd mpd_init has_A] in H1.
-             destruct (has_A id); unfold smpd, mpd_init in H1; cbn in H1;
-             (destruct H1 as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]; cbn in O1; discriminate O1). }
-    split. { unfold grp_blocks, grp_mpds, grp_sw, pt_mpds. cbn -[smpd mpd_init has_A]. destruct (has_A id); reflexivity. }
-    split. { left. split; [reflexivity|]. split; [exact SWC|]. split; [exact IDB|]. split; [reflexivity|]. deexists 9. reflexivity. }
-    split; [| assumption].
-    eapply heap_presx_trans; [exact PX|].
-    eapply heap_presx_of_munch; [exact MU| exact WM|].
-    intros a Ha Hc Ho. cbn in Ho |- *. destruct Ho as [Ho _]. split; [exact Ho|]. split; [| exact I].
-    destruct Hc as [C|[C|([b k] & Hb & C)]]; [lia| lia|]. cbn in C.
-    assert (HBRf : Forall (fun b => block_range L (fst b) (snd b)) (grp_free_LB g LB)) by exact HBR.
-    pose proof (proj1 (Forall_forall _ _) HBRf _ Hb) as (_ & _ & _ & B4 & _). cbn in B4. lia.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m0 m mo0 mo h0 h LB A g id lo
+    idpad pP pA pB pX pY pZ pN hpad xra xs1 fj LBf ca
+    sw_id id_rng heap_now top_eq mo_fr presx0 c_id a_al a_pos c_P c_A c_B c_GX c_GY c_Z c_N c_tail c_save
+    stk_in lo_nn lo_room obj_stk obj_cw obj_data ceil_lo sp_top data_ceil inv_m stat_m ra_even.
+  (* Facts about the curve table that hold for every id: read them off U_CA by walking its match. *)
+  assert (tbl : (ca_modp (U_CA id) = 0 \/ In (ca_modp (U_CA id), (ca_P (U_CA id), cP id)) U_MT)
+                /\ 0 <= ca_modp (U_CA id) < 2 ^ 64 /\ 0 <= ca_T (U_CA id) < 2 ^ 64).
+  { clear - id.
+    destruct id as [|bits|bits]; [split; [left; reflexivity| cbn; lia]| |split; [left; reflexivity| cbn; lia]].
+    repeat (destruct bits as [bits|bits|];
+            try solve [ cbv [U_CA cP ca_modp ca_P ca_T];
+                        split; [ first [ left; reflexivity
+                                       | right; repeat (apply in_eq || apply in_cons) ]
+                               | lia ] ]). }
+  destruct tbl as [modp_known [modp_rng T_rng]].
+  pose proof (heap_mok _ _ _ _ _ _ _ heap_now) as mok.
+  pose proof (munch_refl [(A, A + 192)] m) as fp.
+  pose proof (wmono_refl usegs m) as wm.
+  pose proof (conj I heap_now) as heap_entry. clear heap_now.
+  (* The four stores into the group tail: nbits, h, T, T_size. *)
+  do 4 step.
+  (* Restore ra, s0, s1, pop the frame, return. *)
+  fsteps 5%nat.
+  lazymatch goal with |- context [MS _ _ _ _ _ ?mm _] => rename mm into m_out end.
+  destruct heap_entry as [_ heap_entry].
+  eapply stk_release in stk_in; [| exact c_save | lia].
+  change (Z.of_nat (cells_size [CB 8 fj; C8 s1; C8 s0; C8 ra])) with 32 in stk_in.
+  rewrite Z.sub_add in stk_in.
+  assert (ceil_sp : alloc_ceiling <= bv_unsigned sp) by lia.
+  assert (covered : forall a, 0 <= a < 2 ^ 64 -> ~ outside [(A, A + 192)] a ->
+                     client_waddr L LBf (bv_unsigned sp) (heap_top usegs L HI h) a).
+  { intros a _ not_out. rewrite top_eq. apply obj_cw. cbn in not_out. lia. }
+  pose proof (HEAP_munch _ _ _ _ _ _ _ _ _ _ heap_entry fp wm ceil_sp covered) as heap_out.
+  pose proof (heap_presx_of_munch usegs L LBf (bv_unsigned sp) [(A, A + ECP_GROUP_SIZE)] _ _ _ fp wm
+                (fun a _ _ out => out)) as presx_run.
+  pose proof (heap_presx_trans _ _ _ _ _ _ _ _ presx0 presx_run) as presx_out.
+  pose proof (U_curve_statics m_out id inv_m id_rng) as statics_out.
+  pose proof (grp_sw_at usegs U_MT m_out LBf ca U_ONE id A idpad pP pA pB pX pY pZ pN hpad sw_id ltac:(lia)
+                statics_out modp_known modp_rng T_rng c_id a_al a_pos c_P c_A c_B c_GX c_GY c_Z c_N c_tail)
+    as grp_out.
+  set (g' := grp_sw id ca U_ONE A idpad pP pA pB pX pY pZ pN hpad) in grp_out.
+  assert (no_heap : Forall (fun d => md_own d <> LHeap) (grp_mpds g')).
+  { unfold g', grp_mpds, grp_sw, pt_mpds. case (has_A id); repeat constructor; cbn; discriminate. }
+  assert (apart_out : mpds_apart (grp_mpds g')).
+  { intros d1 d2 in1 _ _ own1 _. destruct (proj1 (Forall_forall _ _) no_heap d1 in1 own1). }
+  assert (blocks_out : grp_blocks g' = []).
+  { unfold grp_blocks. revert no_heap. generalize (grp_mpds g') as ds.
+    induction ds as [|d ds rest]; intros all_nh; [reflexivity|].
+    pose proof (Forall_inv all_nh) as own_d. pose proof (Forall_inv_tail all_nh) as tail_nh.
+    cbn [flat_map]. rewrite (rest tail_nh), app_nil_r. cbn beta in own_d.
+    unfold mpd_blk. destruct (md_own d) eqn:own_eq; try reflexivity. contradiction. }
+  assert (res_out : gl_result U_CA U_ONE id A 0 g' []).
+  { left. refine (conj eq_refl (conj sw_id (conj id_rng (conj eq_refl _)))). do 9 eexists. reflexivity. }
+  assert (same_blocks : forall b, In b LBf <-> In b [] \/ In b (grp_free_LB g LB)).
+  { intros b. cbn [In]. tauto. }
+  assert (none_new : forall b : blk, In b [] -> ~ In b (grp_free_LB g LB)) by (intros b []).
+  rewrite Z.sub_add, Z_to_bv_bv_unsigned.
+  finish.
+  all: eassumption.
   Qed.
 End GL.

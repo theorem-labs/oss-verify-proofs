@@ -376,7 +376,7 @@ Definition open_result (mo : Model) (ent : FdEntry) (eff : resp) (mo' : Model) :
       fd_lookup (m_fds mo) fd = None /\ eff = eff0 fd /\
       mo' = with_fds (fd_insert (m_fds mo) fd ent) mo).
 
-Definition kernel_placed (flags : Z) : bool := Z.land flags 16 =? 0.
+Definition kernel_placed (flags : Z) : bool := Z.land flags MAP_FIXED =? 0.
 
 Definition mm_ok (n : node) (i : SyscallInput) (mo : Model) (eff : resp) : Prop :=
   match n with
@@ -392,22 +392,22 @@ Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list 
   match n with
   | NWritev fd bufs =>
       mo' = mo /\
-      let bs := concat bufs in
-      (bs = [] /\ eff = eff0 (Z_to_bv 64 0) /\ evs = [])
-      \/ (exists k, (1 <= k <= length bs)%nat /\
-                    eff = eff0 (Z_to_bv 64 (Z.of_nat k)) /\
-                    evs = map (WriteEv (Z_to_bv 64 fd)) (firstn k bs))
+      ((concat bufs = [] /\ eff = eff0 (Z_to_bv 64 0) /\ evs = [])
+       \/ (exists k, (1 <= k <= length (concat bufs))%nat /\
+             eff = eff0 (Z_to_bv 64 (Z.of_nat k)) /\
+             evs = map (WriteEv (Z_to_bv 64 fd)) (firstn k (concat bufs))))
   | NOpen path =>
       evs = [] /\
-      if (path_max <=? length path)%nat then eff = efferr ENAMETOOLONG /\ mo' = mo
-      else match path with
-           | [] => eff = efferr ENOENT /\ mo' = mo
-           | _ => if path_eqb path dot_path then open_result mo FdDir eff mo'
-                  else match fs_lookup (m_fs mo) path with
-                       | None => eff = efferr ENOENT /\ mo' = mo
-                       | Some _ => open_result mo (FdFile path (Z_to_bv 64 0)) eff mo'
-                       end
-           end
+      (if (path_max <=? length path)%nat then eff = efferr ENAMETOOLONG /\ mo' = mo
+       else match path with
+            | [] => eff = efferr ENOENT /\ mo' = mo
+            | _ :: _ =>
+                if path_eqb path dot_path then open_result mo FdDir eff mo'
+                else match fs_lookup (m_fs mo) path with
+                     | Some _ => open_result mo (FdFile path (Z_to_bv 64 0)) eff mo'
+                     | None => eff = efferr ENOENT /\ mo' = mo
+                     end
+            end)
   | NRead fd buf count =>
       evs = [] /\
       match fd_lookup (m_fds mo) (Z_to_bv 64 fd) with
@@ -415,40 +415,51 @@ Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list 
       | Some FdDir => eff = efferr EISDIR /\ mo' = mo
       | Some (FdFile p off) =>
           match fs_lookup (m_fs mo) p with
+          | Some d =>
+              eff = mkEffect (len_word (file_read d off (Z_to_bv 64 count)))
+                             (delivered_writes (Z_to_bv 64 buf) (file_read d off (Z_to_bv 64 count))) [] /\
+              mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd)
+                                (FdFile p (off + len_word (file_read d off (Z_to_bv 64 count)))%bv)) mo
           | None => False
-          | Some data =>
-              let bs := file_read data off (Z_to_bv 64 count) in
-              eff = mkEffect (len_word bs) (delivered_writes (Z_to_bv 64 buf) bs) [] /\
-              mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo
           end
       | Some _ => False
       end
   | NClose fd =>
       evs = [] /\ 3 <= fd < 2^32 /\
       match fd_lookup (m_fds mo) (Z_to_bv 64 fd) with
-      | None => eff = efferr EBADF /\ mo' = mo
       | Some _ => eff = eff0 (Z_to_bv 64 0) /\ mo' = with_fds (fd_remove (m_fds mo) (Z_to_bv 64 fd)) mo
+      | None => eff = efferr EBADF /\ mo' = mo
       end
-  | NIoctl fd req => evs = [] /\ eff = efferr ENOTTY /\ mo' = mo
+  | NIoctl _ _ => evs = [] /\ eff = efferr ENOTTY /\ mo' = mo
   | NSetTid =>
-      evs = [] /\ exists t, eff = eff0 t /\
-      match m_tid mo with
-      | Some t0 => t = t0 /\ mo' = mo
-      | None => 0 < bv_unsigned t < PID_MAX_ENVELOPE /\ mo' = with_tid t mo
-      end
-  | NExit _ => False
-  | NBrk _ | NMmap _ _ _ _ | NMunmap _ _ | NMprotect _ _ _ =>
       evs = [] /\
-      match node_input n with
-      | Some i => syscall_spec i mo (Ok eff mo' evs) /\ mm_ok n i mo eff
-      | None => False
-      end
+      exists t, eff = eff0 t /\
+        match m_tid mo with
+        | Some t0 => t = t0 /\ mo' = mo
+        | None => 0 < bv_unsigned t < PID_MAX_ENVELOPE /\ mo' = with_tid t mo
+        end
+  | NExit _ => False
+  | NBrk req =>
+      evs = [] /\ syscall_spec (pure_input 214 [Z_to_bv 64 req]) mo (Ok eff mo' evs) /\
+      mm_ok n (pure_input 214 [Z_to_bv 64 req]) mo eff
+  | NMmap addr len prot flags =>
+      evs = [] /\
+      syscall_spec (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
+                                    Z_to_bv 64 (-1); Z_to_bv 64 0]) mo (Ok eff mo' evs) /\
+      mm_ok n (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
+                               Z_to_bv 64 (-1); Z_to_bv 64 0]) mo eff
+  | NMunmap addr len =>
+      evs = [] /\ syscall_spec (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]) mo (Ok eff mo' evs)
+  | NMprotect addr len prot =>
+      evs = [] /\
+      syscall_spec (pure_input 226 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot]) mo (Ok eff mo' evs) /\
+      mm_ok n (pure_input 226 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot]) mo eff
   end.
 
 Definition unforced (n : node) (mo : Model) : Prop :=
   match n with
-  | NMmap _ _ _ flags => kernel_placed flags = true -> exists rsp mo' evs, nstep n mo rsp mo' evs
-  | NMprotect _ _ _ => exists rsp mo' evs, nstep n mo rsp mo' evs
+  | NMmap _ _ _ flags => kernel_placed flags = true -> exists eff mo' evs, nstep n mo eff mo' evs
+  | NMprotect _ _ _ => exists eff mo' evs, nstep n mo eff mo' evs
   | _ => True
   end.
 
@@ -573,7 +584,7 @@ Definition nsafe (n : node) (mo : Model) : Prop :=
 Definition nsafeU (n : node) (mo : Model) : Prop := nsafe n mo /\ unforced n mo.
 
 Lemma nsafeU_nsafe : forall n mo, nsafeU n mo -> nsafe n mo.
-Proof. intros n mo [H _]; exact H. Qed.
+Proof. intros n mo Both. exact (proj1 Both). Qed.
 
 Section Generic.
 Variable segs : list Segment.
@@ -594,13 +605,22 @@ Lemma sstep_svc_inv : forall ms mo x8 evs X,
                   evs = evs0 ++ [KillEv sig (m_fs mo')] /\ X = SNext (mkCfg ms mo'))
   \/ (syscall_spec (sys_input segs ms x8) mo Unmodeled /\ evs = [] /\ X = SError).
 Proof.
-  intros ms mo x8 evs X Hsvc Hst. inversion Hst; subst; try congruence;
-    match goal with H : ms_svc_pending ms = Some ?x |- _ => rewrite Hsvc in H; inversion H; subst end.
-  - left. eexists _, _, _. eauto 6.
-  - right; left. eexists _, _, _. eauto 7.
-  - right; right; left. eexists _, _, _, _. eauto.
-  - right; right; right; left. eexists _, _, _, _. eauto.
-  - right; right; right; right. auto.
+  intros ms mo x8 evs X Pend Stp.
+  pose proof (sstep_cfg_sys_inv segs ACFG ms mo x8 evs X Pend Stp) as Cases. cbv zeta in Cases.
+  destruct Cases as [Ran | [Halts | [Kills | Unm]]].
+  - destruct Ran as (eff & m1 & l1 & Sp & NoSp & Run1 & Tail).
+    destruct (materialize_model_accesses m1 (syscall_effect_accesses eff)) as [m2|] eqn:MatEq;
+      destruct Tail as [EvEq Nx].
+    + left. rewrite EvEq. exists eff, m1, m2.
+      split; [exact Sp|]. split; [exact NoSp|]. split; [exact Run1|]. split; [exact MatEq|]. exact Nx.
+    + right; left. exists eff, m1, l1.
+      split; [exact Sp|]. split; [exact NoSp|]. split; [exact Run1|]. split; [exact MatEq|].
+      split; [exact EvEq| exact Nx].
+  - right; right; left. destruct Halts as (eff & m1 & l1 & code & Sp & Halt & _ & EvEq & Nx).
+    exists eff, m1, l1, code. split; [exact Sp|]. split; [exact Halt|]. split; [exact EvEq| exact Nx].
+  - right; right; right; left. destruct Kills as (eff & m1 & l1 & sig & Sp & Kill & EvEq & Nx).
+    exists eff, m1, l1, sig. split; [exact Sp|]. split; [exact Kill|]. split; [exact EvEq| exact Nx].
+  - right; right; right; right. exact Unm.
 Qed.
 
 Lemma killed_not_running : forall mo sig, m_killed mo = Some sig -> m_halted mo <> None.
@@ -617,14 +637,14 @@ Definition node_facts (ms : machine_state) (mo : Model) (n : node) : Prop :=
 Definition node_facts_f (ms : machine_state) (mo : Model) (n : node) : Prop :=
   exists x8, ms_svc_pending ms = Some x8 /\
   (forall eff mo' evs, syscall_spec (sys_input segs ms x8) mo (Ok eff mo' evs) ->
-       m_halted mo' = None
-       /\ (~ spurious_refusal_cfg ACFG (sys_input segs ms x8) mo eff -> nstep n mo (strip eff) mo' evs)) /\
+      m_halted mo' = None /\
+      (~ spurious_refusal_cfg ACFG (sys_input segs ms x8) mo eff -> nstep n mo (strip eff) mo' evs)) /\
   (forall rsp mo' evs, nstep n mo rsp mo' evs ->
-      exists eff, strip eff = rsp /\ syscall_spec (sys_input segs ms x8) mo (Ok eff mo' evs)
-                  /\ ~ spurious_refusal_cfg ACFG (sys_input segs ms x8) mo eff) /\
+      exists eff, strip eff = rsp /\ syscall_spec (sys_input segs ms x8) mo (Ok eff mo' evs) /\
+                  ~ spurious_refusal_cfg ACFG (sys_input segs ms x8) mo eff) /\
   (~ syscall_spec (sys_input segs ms x8) mo Unmodeled) /\
-  (forall rsp mo' evs, nstep n mo rsp mo' evs -> m_halted mo' = None /\ minv mo') /\
-  (exists rsp mo' evs, nstep n mo rsp mo' evs).
+  (exists rsp mo' evs, nstep n mo rsp mo' evs) /\
+  (forall rsp mo' evs, nstep n mo rsp mo' evs -> minv mo').
 
 Lemma minv_lazy : forall mo, minv mo -> m_vm_lazy mo = [].
 Proof. intros mo H. exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 H)))))))))))))). Qed.
@@ -644,33 +664,43 @@ Proof.
 Qed.
 
 Definition node_props (ms : machine_state) (mo : Model) (n : node) : Prop :=
-  (forall evs X, sstep_cfg segs ACFG (mkCfg ms mo) evs X ->
-     exists rsp mo', X = SNext (mkCfg (nret ms rsp) mo') /\ nstep n mo rsp mo' evs)
-  /\ (forall rsp mo' evs, nstep n mo rsp mo' evs ->
-        m_halted mo' = None /\ minv mo' /\ sstep_cfg segs ACFG (mkCfg ms mo) evs (SNext (mkCfg (nret ms rsp) mo')))
-  /\ (exists rsp mo' evs, nstep n mo rsp mo' evs).
+  (forall (evs : list event) (X : step_to), sstep_cfg segs ACFG (mkCfg ms mo) evs X ->
+     exists (eff : resp) (mo' : Model), X = SNext (mkCfg (nret ms eff) mo') /\ nstep n mo eff mo' evs) /\
+  (forall (eff : resp) (mo' : Model) (evs : list event), nstep n mo eff mo' evs ->
+     m_halted mo' = None /\ minv mo' /\ sstep_cfg segs ACFG (mkCfg ms mo) evs (SNext (mkCfg (nret ms eff) mo'))) /\
+  (exists (eff : resp) (mo' : Model) (evs : list event), nstep n mo eff mo' evs).
 
 Lemma node_kit_f : forall ms mo n, node_facts_f ms mo n -> m_halted mo = None -> node_props ms mo n.
 Proof.
-  intros ms mo n (x8 & Hsvc & Hc & Hs & Hnu & Hpres & Hprog) Hh. split; [|split; [|exact Hprog]].
-  - intros evs X Hst. destruct (sstep_svc_inv _ _ _ _ _ Hsvc Hst)
-      as [(eff & mo' & mo'' & Hsp & Hns & Hh' & Hmat & ->)
-         |[(eff & mo' & evs0 & Hsp & Hns & Hh' & Hmat & -> & ->)
-         |[(eff & mo' & evs0 & code & Hsp & Hh' & -> & ->)
-         |[(eff & mo' & evs0 & sig & Hsp & Hk' & -> & ->)
-         | (Hsp & -> & ->)]]]].
-    + pose proof (proj2 (Hc _ _ _ Hsp) Hns) as Hn. destruct (Hpres _ _ _ Hn) as [_ Hminv'].
-      rewrite (materialize_model_accesses_no_lazy _ _ (minv_lazy _ Hminv')) in Hmat. inversion Hmat; subst.
-      exists (strip eff), mo''. split; [reflexivity| exact Hn].
-    + exfalso. pose proof (proj2 (Hc _ _ _ Hsp) Hns) as Hn. destruct (Hpres _ _ _ Hn) as [_ Hminv'].
-      rewrite (materialize_model_accesses_no_lazy _ _ (minv_lazy _ Hminv')) in Hmat. discriminate.
-    + exfalso. pose proof (proj1 (Hc _ _ _ Hsp)) as Hh''. congruence.
-    + exfalso. pose proof (proj1 (Hc _ _ _ Hsp)) as Hh''. exact (killed_not_running _ _ Hk' Hh'').
-    + exfalso. exact (Hnu Hsp).
-  - intros rsp mo' evs Hn. destruct (Hpres _ _ _ Hn) as [Hh' Hminv']. split; [exact Hh'|]. split; [exact Hminv'|].
-    destruct (Hs _ _ _ Hn) as (eff & <- & Hsp & Hns). rewrite nret_strip.
-    eapply sstep_cfg_syscall; [exact Hh | exact Hsvc | exact Hsp | exact Hns | exact Hh' |].
-    apply materialize_model_accesses_no_lazy. exact (minv_lazy _ Hminv').
+  intros ms mo n Facts Run.
+  destruct Facts as (x8 & Pend & Compl & Sound & NoUnm & Prog & Keep).
+  split; [|split; [|exact Prog]].
+  - intros evs X Stp.
+    destruct (sstep_svc_inv ms mo x8 evs X Pend Stp)
+      as [(eff & m1 & m2 & Sp & NoSp & _ & Mat & Nx)
+         |[(eff & m1 & l1 & Sp & NoSp & _ & Mat & _ & _)
+         |[(eff & m1 & l1 & code & Sp & Halt & _ & _)
+         |[(eff & m1 & l1 & sig & Sp & Kill & _ & _)
+         |(Unm & _ & _)]]]].
+    + assert (Step1 : nstep n mo (strip eff) m1 evs) by exact (proj2 (Compl _ _ _ Sp) NoSp).
+      rewrite (materialize_model_accesses_no_lazy m1 _ (minv_lazy m1 (Keep _ _ _ Step1))) in Mat.
+      injection Mat as <-.
+      exists (strip eff), m1. split; [rewrite nret_strip; exact Nx| exact Step1].
+    + exfalso.
+      assert (Step1 : nstep n mo (strip eff) m1 l1) by exact (proj2 (Compl _ _ _ Sp) NoSp).
+      rewrite (materialize_model_accesses_no_lazy m1 _ (minv_lazy m1 (Keep _ _ _ Step1))) in Mat.
+      discriminate Mat.
+    + exfalso. rewrite (proj1 (Compl _ _ _ Sp)) in Halt. discriminate Halt.
+    + exfalso. exact (killed_not_running m1 sig Kill (proj1 (Compl _ _ _ Sp))).
+    + exfalso. exact (NoUnm Unm).
+  - intros rsp m1 evs Step1.
+    destruct (Sound _ _ _ Step1) as (eff & Strip & Sp & NoSp).
+    pose proof (Keep _ _ _ Step1) as Inv1.
+    pose proof (proj1 (Compl _ _ _ Sp)) as Run1.
+    split; [exact Run1|]. split; [exact Inv1|].
+    rewrite <- Strip, nret_strip.
+    exact (sstep_cfg_syscall segs ACFG ms mo x8 eff m1 m1 evs Run Pend Sp NoSp Run1
+             (materialize_model_accesses_no_lazy m1 _ (minv_lazy m1 Inv1))).
 Qed.
 
 Lemma node_kit : forall ms mo n,
@@ -678,16 +708,22 @@ Lemma node_kit : forall ms mo n,
   (forall x8, ms_svc_pending ms = Some x8 -> alloc_no_b (bv_unsigned x8) = false) ->
   node_props ms mo n.
 Proof.
-  intros ms mo n (x8 & Hsvc & Hc & Hs & Hnu & Hpres) Hh Hna. specialize (Hna x8 Hsvc).
-  assert (NS : forall eff, ~ spurious_refusal_cfg ACFG (sys_input segs ms x8) mo eff).
-  { intros eff. apply acfg_nonspurious_b. rewrite in_sysno_si. exact Hna. }
-  apply node_kit_f; [|exact Hh]. exists x8. split; [exact Hsvc|]. split; [|split; [|split; [exact Hnu|split; [exact Hpres|]]]].
-  - intros eff mo' evs Hsp. pose proof (Hc _ _ _ Hsp) as Hn. split; [exact (proj1 (Hpres _ _ _ Hn))| intros _; exact Hn].
-  - intros rsp mo' evs Hn. destruct (Hs _ _ _ Hn) as (eff & E & Hsp). exists eff. split; [exact E|]. split; [exact Hsp| apply NS].
-  - pose proof (receptive (sys_input segs ms x8) mo) as Hr.
-    destruct (syscall_spec_witness (sys_input segs ms x8) mo) as [eff mo' evs|] eqn:E.
-    + exists (strip eff), mo', evs. apply Hc. exact Hr.
-    + exfalso. exact (Hnu Hr).
+  intros ms mo n Facts Run Transp.
+  apply node_kit_f; [|exact Run].
+  destruct Facts as (x8 & Pend & Compl & Sound & NoUnm & Keep).
+  assert (Clean : forall eff, ~ spurious_refusal_cfg ACFG (sys_input segs ms x8) mo eff).
+  { intros eff. apply acfg_nonspurious_b. exact (Transp x8 Pend). }
+  exists x8. split; [exact Pend|].
+  split; [|split; [|split; [exact NoUnm|split]]].
+  - intros eff m1 evs Sp. pose proof (Compl _ _ _ Sp) as Step1.
+    split; [exact (proj1 (Keep _ _ _ Step1))|]. intros _. exact Step1.
+  - intros rsp m1 evs Step1. destruct (Sound _ _ _ Step1) as (eff & Strip & Sp).
+    exists eff. split; [exact Strip|]. split; [exact Sp| apply Clean].
+  - pose proof (receptive (sys_input segs ms x8) mo) as Wit. revert Wit.
+    destruct (syscall_spec_witness (sys_input segs ms x8) mo) as [eff m1 evs|]; intros Wit.
+    + exists (strip eff), m1, evs. exact (Compl _ _ _ Wit).
+    + exfalso. exact (NoUnm Wit).
+  - intros rsp m1 evs Step1. exact (proj2 (Keep _ _ _ Step1)).
 Qed.
 
 Lemma exit_kit : forall ms mo x8 code,
@@ -698,22 +734,32 @@ Lemma exit_kit : forall ms mo x8 code,
      X = SNext (mkCfg ms (with_halted code mo)) /\ evs = [ExitEv code (m_fs mo)])
   /\ sstep_cfg segs ACFG (mkCfg ms mo) [ExitEv code (m_fs mo)] (SNext (mkCfg ms (with_halted code mo))).
 Proof.
-  intros ms mo x8 code Hsvc Hh Hchar. split.
-  - intros evs X Hst. destruct (sstep_svc_inv _ _ _ _ _ Hsvc Hst)
-      as [(eff & mo' & mo'' & Hsp & _ & Hh' & Hmat & ->)
-         |[(eff & mo' & evs0 & Hsp & _ & Hh' & Hmat & -> & ->)
-         |[(eff & mo' & evs0 & code' & Hsp & Hh' & -> & ->)
-         |[(eff & mo' & evs0 & sig & Hsp & Hk' & -> & ->)
-         | (Hsp & -> & ->)]]]].
-    + exfalso. apply Hchar in Hsp. apply Ok_inj in Hsp as (_ & -> & _). cbn in Hh'. discriminate.
-    + exfalso. apply Hchar in Hsp. apply Ok_inj in Hsp as (_ & -> & _). cbn in Hh'. discriminate.
-    + apply Hchar in Hsp. apply Ok_inj in Hsp as (_ & -> & ->). cbn in Hh'. inversion Hh'; subst.
-      split; reflexivity.
-    + exfalso. apply Hchar in Hsp. apply Ok_inj in Hsp as (_ & -> & _). cbn in Hk'. discriminate.
-    + exfalso. apply Hchar in Hsp. discriminate Hsp.
-  - change [ExitEv code (m_fs mo)] with ([] ++ [ExitEv code (m_fs (with_halted code mo))]).
-    eapply sstep_cfg_exit; [exact Hh|exact Hsvc| |reflexivity|reflexivity].
-    apply Hchar. reflexivity.
+  intros ms mo x8 code Pend Run Char.
+  pose proof (m_halted_with_halted code mo) as Halted.
+  assert (OnlyOk : forall eff m1 l1, syscall_spec (sys_input segs ms x8) mo (Ok eff m1 l1) ->
+                   m1 = with_halted code mo /\ l1 = []).
+  { intros eff m1 l1 Sp. apply Char in Sp. injection Sp as _ M1 L1. split; assumption. }
+  split.
+  - intros evs X Stp.
+    destruct (sstep_svc_inv ms mo x8 evs X Pend Stp)
+      as [(eff & m1 & m2 & Sp & _ & Run1 & _ & _)
+         |[(eff & m1 & l1 & Sp & _ & Run1 & _ & _ & _)
+         |[(eff & m1 & l1 & c1 & Sp & Halt & EvEq & Nx)
+         |[(eff & m1 & l1 & sig & Sp & Kill & _ & _)
+         |(Unm & _ & _)]]]].
+    + exfalso. destruct (OnlyOk _ _ _ Sp) as [M1 _]. rewrite M1, Halted in Run1. discriminate Run1.
+    + exfalso. destruct (OnlyOk _ _ _ Sp) as [M1 _]. rewrite M1, Halted in Run1. discriminate Run1.
+    + destruct (OnlyOk _ _ _ Sp) as [M1 L1]. subst m1 l1.
+      rewrite Halted in Halt. injection Halt as <-.
+      rewrite m_fs_with_halted in EvEq. split; [exact Nx| exact EvEq].
+    + exfalso. destruct (OnlyOk _ _ _ Sp) as [M1 _]. rewrite M1, m_killed_with_halted in Kill.
+      discriminate Kill.
+    + exfalso. pose proof (proj1 (Char Unmodeled) Unm) as Bad. discriminate Bad.
+  - assert (Sp : syscall_spec (sys_input segs ms x8) mo (Ok (eff0 (Z_to_bv 64 0)) (with_halted code mo) [])).
+    { apply Char. reflexivity. }
+    pose proof (sstep_cfg_exit segs ACFG ms mo x8 _ _ _ code Run Pend Sp Halted
+                  (m_killed_with_halted code mo)) as Stp.
+    rewrite m_fs_with_halted in Stp. exact Stp.
 Qed.
 
 End Generic.
@@ -1541,29 +1587,35 @@ Lemma mm_facts_f : forall ms mo n i x8 (chk : resp -> check_result),
   (exists eff mo' evs, syscall_spec i mo (Ok eff mo' evs) /\ mm_ok n i mo eff) ->
   node_facts_f segs ms mo n.
 Proof.
-  intros ms mo n i x8 chk Hi Hn Hsvc Hminv Hh Hc1 Hc2 Hnu Hshape Hno Ha0 Hok Hprog.
-  assert (E : forall eff mo' evs, syscall_spec (sys_input segs ms x8) mo (Ok eff mo' evs) <-> syscall_spec i mo (Ok eff mo' evs)).
-  { intros eff mo' evs. rewrite <- !check_syscall_ok_iff. rewrite Hc1, Hc2. reflexivity. }
-  assert (T : forall eff, spurious_refusal_cfg ACFG (sys_input segs ms x8) mo eff <-> spurious_refusal_cfg ACFG i mo eff).
-  { intros eff. apply spurious_refusal_transport; assumption. }
-  assert (SH : forall eff mo' evs, syscall_spec i mo (Ok eff mo' evs) -> vm_only mo mo' /\ evs = [] /\ strip eff = eff).
-  { intros eff mo' evs Hsp. apply check_syscall_ok_iff in Hsp. rewrite Hc2 in Hsp.
-    destruct (Hshape _ _ _ Hsp) as (Hv & He & Hci). split; [exact Hv|]. split; [exact He| apply strip_id; exact Hci]. }
-  exists x8. split; [exact Hsvc|]. split; [|split; [|split; [|split]]].
-  - intros eff mo' evs Hsp. apply E in Hsp. destruct (SH _ _ _ Hsp) as (Hv & -> & Es). split.
-    + destruct Hv as (_ & _ & -> & _). exact Hh.
-    + intros Hns. rewrite Es. apply Hn. split; [reflexivity|]. split; [exact Hsp|].
-      apply (Hok _ _ _ Hsp). intros Hsp'. apply Hns. apply T. exact Hsp'.
-  - intros rsp mo' evs Hns. apply Hn in Hns as (-> & Hsp & Hmm). destruct (SH _ _ _ Hsp) as (_ & _ & Es).
-    exists rsp. split; [exact Es|]. split; [apply E; exact Hsp|].
-    intros Hsp'. apply (proj1 (Hok _ _ _ Hsp) Hmm). apply T. exact Hsp'.
-  - intros Hsp. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hsp. rewrite Hc1 in Hsp.
-    exact (Hnu _ Hsp).
-  - intros rsp mo' evs Hns. apply Hn in Hns as (-> & Hsp & _). destruct (SH _ _ _ Hsp) as (Hv & _ & _). split.
-    + destruct Hv as (_ & _ & -> & _). exact Hh.
-    + eapply minv_vm_only; eassumption.
-  - destruct Hprog as (eff & mo' & evs & Hsp & Hmm). destruct (SH _ _ _ Hsp) as (_ & -> & _).
-    exists eff, mo', []. apply Hn. split; [reflexivity|]. split; assumption.
+  intros ms mo n i x8 chk Inp StepIff Pend Inv Run Chk1 Chk2 Modeled Shape SameNo SameA0 OkIff Avail.
+  set (si := sys_input segs ms x8) in *.
+  assert (SpecEq : forall eff m1 l1, syscall_spec si mo (Ok eff m1 l1) <-> syscall_spec i mo (Ok eff m1 l1)).
+  { intros eff m1 l1. split; intros Sp; apply check_syscall_ok_iff; apply check_syscall_ok_iff in Sp.
+    - rewrite Chk2. rewrite Chk1 in Sp. exact Sp.
+    - rewrite Chk1. rewrite Chk2 in Sp. exact Sp. }
+  assert (SpurEq : forall eff, spurious_refusal_cfg ACFG si mo eff <-> spurious_refusal_cfg ACFG i mo eff).
+  { intros eff. apply spurious_refusal_transport; [exact SameNo| exact SameA0| exact SpecEq]. }
+  assert (OkOf : forall eff m1 l1, syscall_spec i mo (Ok eff m1 l1) ->
+                 vm_only mo m1 /\ l1 = [] /\ eff_copyins eff = []).
+  { intros eff m1 l1 Sp. apply Shape. rewrite <- Chk2. apply check_syscall_ok_iff. exact Sp. }
+  exists x8. split; [exact Pend|].
+  split; [|split; [|split; [|split]]].
+  - intros eff m1 l1 Sp. apply SpecEq in Sp. destruct (OkOf _ _ _ Sp) as (Vm & L1 & Ci).
+    split.
+    + destruct Vm as (_ & _ & HaltEq & _). rewrite HaltEq. exact Run.
+    + intros NoSp. rewrite (strip_id eff Ci). apply StepIff.
+      split; [exact L1|]. split; [exact Sp|].
+      apply (OkIff _ _ _ Sp). intros Bad. apply NoSp. apply SpurEq. exact Bad.
+  - intros rsp m1 l1 Step1. apply StepIff in Step1. destruct Step1 as (_ & Sp & Ok1).
+    destruct (OkOf _ _ _ Sp) as (_ & _ & Ci).
+    exists rsp. split; [exact (strip_id rsp Ci)|]. split; [apply SpecEq; exact Sp|].
+    intros Bad. apply SpurEq in Bad. exact (proj1 (OkIff _ _ _ Sp) Ok1 Bad).
+  - intros Unm. apply (Modeled (eff0 (Z_to_bv 64 0))). rewrite <- Chk1.
+    exact (check_syscall_complete_unmodeled _ _ _ Unm).
+  - destruct Avail as (eff & m1 & l1 & Sp & Ok1). exists eff, m1, l1. apply StepIff.
+    split; [exact (proj1 (proj2 (OkOf _ _ _ Sp)))|]. split; [exact Sp| exact Ok1].
+  - intros rsp m1 l1 Step1. apply StepIff in Step1. destruct Step1 as (_ & Sp & _).
+    exact (minv_vm_only mo m1 (proj1 (OkOf _ _ _ Sp)) Inv).
 Qed.
 
 Lemma mm_prog_nonspurious : forall i mo (chk : resp -> check_result),
@@ -1571,86 +1623,118 @@ Lemma mm_prog_nonspurious : forall i mo (chk : resp -> check_result),
   (forall eff, chk eff <> CheckUnmodeled) ->
   exists eff mo' evs, syscall_spec i mo (Ok eff mo' evs) /\ ~ spurious_refusal_cfg ACFG i mo eff.
 Proof.
-  intros i mo chk Hc Hnu. pose proof (receptive i mo) as Hr.
-  destruct (syscall_spec_witness i mo) as [eff mo' evs|] eqn:W.
-  - exact (exists_nonspurious ACFG i mo eff mo' evs Hr).
-  - exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr. rewrite Hc in Hr.
-    exact (Hnu _ Hr).
+  intros i mo chk Agree Modeled.
+  pose proof (receptive i mo) as Wit. revert Wit.
+  destruct (syscall_spec_witness i mo) as [eff m1 evs|]; intros Wit.
+  - exact (exists_nonspurious ACFG i mo eff m1 evs Wit).
+  - exfalso. apply (Modeled (eff0 (Z_to_bv 64 0))). rewrite <- Agree.
+    exact (check_syscall_complete_unmodeled i mo _ Wit).
 Qed.
 
 Lemma brk_facts : forall ms mo req,
   at_node segs (NBrk req) ms -> minv mo -> m_halted mo = None -> nsafe (NBrk req) mo -> node_facts_f segs ms mo (NBrk req).
 Proof.
-  intros ms mo req (Hsvc & Ha0) Hminv Hh _.
-  eapply (mm_facts_f ms mo (NBrk req) _ _ (fun eff => check_brk (Z_to_bv 64 req) eff mo));
-    [reflexivity | intros; cbn [nstep node_input mm_ok]; tauto | exact Hsvc | exact Hminv | exact Hh | | | | | | | |].
-  - intros eff. dispatch check_syscall_brk. rewrite Ha0. reflexivity.
-  - intros eff. dispatch_pure check_syscall_brk. reflexivity.
-  - intros [r ws zs us cs ci]. unfold check_brk. destruct ws; [|discriminate]. destruct cs; [|discriminate].
-    destruct ci; [|discriminate]. destruct (_ && _); discriminate.
-  - intros eff mo' evs. apply check_brk_shape.
+  intros ms mo req At Inv Run _.
+  destruct At as (Pend & A0).
+  assert (NoU : forall eff, check_brk (Z_to_bv 64 req) eff mo <> CheckUnmodeled).
+  { intros [r ws zs us cs ci]. unfold check_brk. no_unm. }
+  assert (ChkI : forall eff : SyscallEffect,
+            check_syscall (pure_input 214 [Z_to_bv 64 req]) eff mo = check_brk (Z_to_bv 64 req) eff mo).
+  { intros eff. dispatch_pure check_syscall_brk. reflexivity. }
+  apply (mm_facts_f ms mo (NBrk req) (pure_input 214 [Z_to_bv 64 req]) (Z_to_bv 64 214)
+           (fun eff => check_brk (Z_to_bv 64 req) eff mo)).
   - reflexivity.
-  - rewrite in_a0_si, Ha0. reflexivity.
-  - intros eff mo' evs _. cbn [mm_ok]. reflexivity.
-  - apply (mm_prog_nonspurious _ mo (fun eff => check_brk (Z_to_bv 64 req) eff mo)).
-    + intros eff. dispatch_pure check_syscall_brk. reflexivity.
-    + intros [r ws zs us cs ci]. unfold check_brk. destruct ws; [|discriminate]. destruct cs; [|discriminate].
-      destruct ci; [|discriminate]. destruct (_ && _); discriminate.
+  - intros eff m1 l1. reflexivity.
+  - exact Pend.
+  - exact Inv.
+  - exact Run.
+  - intros eff. dispatch check_syscall_brk. rewrite A0. reflexivity.
+  - exact ChkI.
+  - exact NoU.
+  - intros eff m1 l1 Ok1. exact (check_brk_shape _ _ _ _ _ Ok1).
+  - reflexivity.
+  - rewrite in_a0_si, A0. reflexivity.
+  - intros eff m1 l1 _. reflexivity.
+  - destruct (mm_prog_nonspurious (pure_input 214 [Z_to_bv 64 req]) mo
+                (fun eff => check_brk (Z_to_bv 64 req) eff mo) ChkI NoU) as (eff & m1 & l1 & Sp & NoSp).
+    exists eff, m1, l1. split; [exact Sp| exact NoSp].
 Qed.
 
 Lemma unsigned_sysno_args : forall z args, 0 <= z < 2^64 -> bv_unsigned (in_sysno (pure_input z args)) = z.
-Proof. intros z args Hz. cbn [in_sysno pure_input]. apply unsigned_lit. exact Hz. Qed.
+Proof.
+  intros z args Range. change (in_sysno (pure_input z args)) with (Z_to_bv 64 z).
+  rewrite unsigned_lit; [reflexivity| exact Range].
+Qed.
 
 Lemma mmap_facts : forall ms mo addr len prot flags,
   at_node segs (NMmap addr len prot flags) ms -> minv mo -> m_halted mo = None -> nsafe (NMmap addr len prot flags) mo ->
   unforced (NMmap addr len prot flags) mo ->
   node_facts_f segs ms mo (NMmap addr len prot flags).
 Proof.
-  intros ms mo addr len prot flags (Hsvc & Ha0 & Ha1 & Ha2 & Ha3 & Ha4 & Ha5) Hminv Hh Hsafe Hunf.
-  pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ Hsafe) as Hnr.
-  set (i := pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags; Z_to_bv 64 (-1); Z_to_bv 64 0]).
-  assert (Hno : bv_unsigned (in_sysno i) = 222) by (apply unsigned_sysno_args; lia).
-  assert (Hchk : forall eff, check_syscall i eff mo =
-            check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo).
-  { intros eff. subst i. dispatch_pure check_syscall_mmap. reflexivity. }
-  eapply (mm_facts_f ms mo (NMmap addr len prot flags) i _
-            (fun eff => check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
-                                   (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo));
-    [reflexivity | intros; cbn [nstep node_input]; tauto | exact Hsvc | exact Hminv | exact Hh | | exact Hchk | | | | | |].
-  - intros eff. dispatch check_syscall_mmap. rewrite Ha0, Ha1, Ha2, Ha3, Ha4, Ha5. reflexivity.
-  - intros eff. apply mmap_safe_no_unmodeled. exact Hsafe.
-  - intros eff mo' evs. apply check_mmap_shape. exact Hnr.
-  - reflexivity.
-  - rewrite in_a0_si, Ha0. reflexivity.
-  - intros eff mo' evs Hsp. cbn [mm_ok]. destruct (kernel_placed flags) eqn:KP; [|reflexivity].
+  intros ms mo addr len prot flags At Inv Run Safe Unf.
+  destruct At as (Pend & A0 & A1 & A2 & A3 & A4 & A5).
+  cbn [nsafe] in Safe.
+  pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ Safe) as NoRes.
+  set (i := pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
+                            Z_to_bv 64 (-1); Z_to_bv 64 0]).
+  set (chk := fun eff => check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
+                                    (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo).
+  assert (NoU : forall eff, chk eff <> CheckUnmodeled).
+  { intros eff. apply mmap_safe_no_unmodeled. exact Safe. }
+  assert (ChkI : forall eff : SyscallEffect, check_syscall i eff mo = chk eff).
+  { intros eff. rewrite check_syscall_mmap by reflexivity. reflexivity. }
+  assert (No222 : bv_unsigned (in_sysno i) = 222) by reflexivity.
+  assert (MOk : forall (eff : SyscallEffect) (m1 : Model) (l1 : list event), syscall_spec i mo (Ok eff m1 l1) ->
+                mm_ok (NMmap addr len prot flags) i mo eff <-> ~ spurious_refusal_cfg ACFG i mo eff).
+  { intros eff m1 l1 Sp. cbn [mm_ok].
+    destruct (kernel_placed flags) eqn:Placed; cbv beta iota; [|reflexivity].
+    destruct (Unf Placed) as (g & mg & lg & (_ & GSp & GOk)).
+    cbn [mm_ok] in GOk. rewrite Placed in GOk. cbv beta iota in GOk.
     split.
-    + intros Hnr'. apply spurious_refusal_not_refusal. rewrite (refusal_b_222 _ _ _ Hno). exact Hnr'.
-    + intros Hns. destruct (ret_in_errnos mmap_errnos (eff_ret eff)) eqn:R; [|reflexivity]. exfalso.
-      cbn [unforced] in Hunf. destruct (Hunf KP) as (rsp & mo2 & evs2 & Hn2).
-      cbn [nstep node_input mm_ok] in Hn2. rewrite KP in Hn2. destruct Hn2 as (_ & Hsp2 & Hnr2).
-      apply Hns. apply (refusal_spurious_of_grant ACFG i mo eff rsp mo2 evs2);
-        [apply acfg_family_off_222; exact Hno| rewrite (refusal_b_222 _ _ _ Hno); exact R| exact Hsp2|
-         rewrite (refusal_b_222 _ _ _ Hno); exact Hnr2].
-  - cbn [unforced] in Hunf. destruct (kernel_placed flags) eqn:KP.
-    + destruct (Hunf eq_refl) as (rsp & mo2 & evs2 & Hn2). cbn [nstep node_input] in Hn2.
-      destruct Hn2 as (_ & Hsp2 & Hmm2). exists rsp, mo2, evs2. split; assumption.
-    + destruct (mm_prog_nonspurious i mo _ Hchk) as (eff & mo' & evs & Hsp & Hns).
-      { intros eff. apply mmap_safe_no_unmodeled. exact Hsafe. }
-      exists eff, mo', evs. split; [exact Hsp|]. cbn [mm_ok]. rewrite KP. exact Hns.
+    - intros NoRef (_ & Ref & _). rewrite (refusal_b_222 i mo _ No222), NoRef in Ref. discriminate Ref.
+    - intros NoSp. destruct (ret_in_errnos mmap_errnos (eff_ret eff)) eqn:RefEq; [exfalso|reflexivity].
+      apply NoSp. split; [exact (acfg_family_off_222 i No222)|]. split.
+      + rewrite (refusal_b_222 i mo _ No222). exact RefEq.
+      + exists g, mg, lg. split; [exact GSp|]. rewrite (refusal_b_222 i mo _ No222). exact GOk. }
+  assert (Avail : exists (eff : SyscallEffect) (m1 : Model) (l1 : list event),
+                    syscall_spec i mo (Ok eff m1 l1) /\ mm_ok (NMmap addr len prot flags) i mo eff).
+  { destruct (kernel_placed flags) eqn:Placed.
+    - destruct (Unf Placed) as (g & mg & lg & (_ & GSp & GOk)). exists g, mg, lg. split; [exact GSp| exact GOk].
+    - destruct (mm_prog_nonspurious i mo chk ChkI NoU) as (eff & m1 & l1 & Sp & NoSp).
+      exists eff, m1, l1. split; [exact Sp|]. cbn [mm_ok]. rewrite Placed. exact NoSp. }
+  apply (mm_facts_f ms mo (NMmap addr len prot flags) i (Z_to_bv 64 222) chk).
+  - reflexivity.
+  - intros eff m1 l1. reflexivity.
+  - exact Pend.
+  - exact Inv.
+  - exact Run.
+  - intros eff. dispatch check_syscall_mmap. rewrite A0, A1, A2, A3, A4, A5. reflexivity.
+  - exact ChkI.
+  - exact NoU.
+  - intros eff m1 l1 Ok1. exact (check_mmap_shape _ _ _ _ _ _ _ _ _ _ NoRes Ok1).
+  - reflexivity.
+  - rewrite in_a0_si, A0. reflexivity.
+  - exact MOk.
+  - exact Avail.
 Qed.
 
 Lemma munmap_facts : forall ms mo addr len,
   at_node segs (NMunmap addr len) ms -> minv mo -> m_halted mo = None -> nsafe (NMunmap addr len) mo ->
   node_facts segs ms mo (NMunmap addr len).
 Proof.
-  intros ms mo addr len (Hsvc & Ha0 & Ha1) Hminv Hh Hsafe.
-  eapply (mm_facts ms mo (NMunmap addr len) _ _
-            (fun eff => check_munmap (Z_to_bv 64 addr) (Z_to_bv 64 len) eff mo));
-    [reflexivity | intros; cbn [nstep node_input mm_ok]; tauto | exact Hsvc | exact Hminv | exact Hh | | | |].
-  - intros eff. dispatch check_syscall_munmap. rewrite Ha0, Ha1. reflexivity.
+  intros ms mo addr len At Inv Run Safe.
+  destruct At as (Pend & A0 & A1). cbn [nsafe] in Safe.
+  apply (mm_facts ms mo (NMunmap addr len) (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]) (Z_to_bv 64 215)
+           (fun eff => check_munmap (Z_to_bv 64 addr) (Z_to_bv 64 len) eff mo)).
+  - reflexivity.
+  - intros eff m1 l1. reflexivity.
+  - exact Pend.
+  - exact Inv.
+  - exact Run.
+  - intros eff. dispatch check_syscall_munmap. rewrite A0, A1. reflexivity.
   - intros eff. dispatch_pure check_syscall_munmap. reflexivity.
-  - intros eff. apply munmap_safe_no_unmodeled. exact Hsafe.
-  - intros eff mo' evs. apply check_munmap_shape.
+  - intros eff. apply munmap_safe_no_unmodeled. exact Safe.
+  - intros eff m1 l1 Ok1. exact (check_munmap_shape _ _ _ _ _ _ Ok1).
 Qed.
 
 Lemma mprotect_facts : forall ms mo addr len prot,
@@ -1658,28 +1742,35 @@ Lemma mprotect_facts : forall ms mo addr len prot,
   unforced (NMprotect addr len prot) mo ->
   node_facts_f segs ms mo (NMprotect addr len prot).
 Proof.
-  intros ms mo addr len prot (Hsvc & Ha0 & Ha1 & Ha2) Hminv Hh Hsafe Hunf.
+  intros ms mo addr len prot At Inv Run Safe Unf.
+  destruct At as (Pend & A0 & A1 & A2).
+  cbn [nsafe] in Safe.
   set (i := pure_input 226 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot]).
-  assert (Hno : bv_unsigned (in_sysno i) = 226) by (apply unsigned_sysno_args; lia).
-  eapply (mm_facts_f ms mo (NMprotect addr len prot) i _
-            (fun eff => check_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) eff mo));
-    [reflexivity | intros; cbn [nstep node_input]; tauto | exact Hsvc | exact Hminv | exact Hh | | | | | | | |].
-  - intros eff. dispatch check_syscall_mprotect. rewrite Ha0, Ha1, Ha2. reflexivity.
-  - intros eff. subst i. dispatch_pure check_syscall_mprotect. reflexivity.
-  - intros eff. apply mprotect_safe_no_unmodeled. exact Hsafe.
-  - intros eff mo' evs. apply check_mprotect_shape.
+  set (chk := fun eff => check_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) eff mo).
+  destruct Unf as (g & mg & lg & (_ & GSp & GOk)). cbn [mm_ok] in GOk.
+  assert (No226 : bv_unsigned (in_sysno i) = 226) by reflexivity.
+  assert (MOk : forall (eff : SyscallEffect) (m1 : Model) (l1 : list event), syscall_spec i mo (Ok eff m1 l1) ->
+                mm_ok (NMprotect addr len prot) i mo eff <-> ~ spurious_refusal_cfg ACFG i mo eff).
+  { intros eff m1 l1 Sp. cbn [mm_ok]. split.
+    - intros NoRef (_ & Ref & _). rewrite (refusal_b_226 i mo _ No226), NoRef in Ref. discriminate Ref.
+    - intros NoSp. destruct (ret_in_errnos mprotect_errnos (eff_ret eff)) eqn:RefEq; [exfalso|reflexivity].
+      apply NoSp. split; [exact (acfg_family_off_226 i No226)|]. split.
+      + rewrite (refusal_b_226 i mo _ No226). exact RefEq.
+      + exists g, mg, lg. split; [exact GSp|]. rewrite (refusal_b_226 i mo _ No226). exact GOk. }
+  apply (mm_facts_f ms mo (NMprotect addr len prot) i (Z_to_bv 64 226) chk).
   - reflexivity.
-  - rewrite in_a0_si, Ha0. reflexivity.
-  - intros eff mo' evs Hsp. cbn [mm_ok]. split.
-    + intros Hnr'. apply spurious_refusal_not_refusal. rewrite (refusal_b_226 _ _ _ Hno). exact Hnr'.
-    + intros Hns. destruct (ret_in_errnos mprotect_errnos (eff_ret eff)) eqn:R; [|reflexivity]. exfalso.
-      cbn [unforced] in Hunf. destruct Hunf as (rsp & mo2 & evs2 & Hn2).
-      cbn [nstep node_input mm_ok] in Hn2. destruct Hn2 as (_ & Hsp2 & Hnr2).
-      apply Hns. apply (refusal_spurious_of_grant ACFG i mo eff rsp mo2 evs2);
-        [apply acfg_family_off_226; exact Hno| rewrite (refusal_b_226 _ _ _ Hno); exact R| exact Hsp2|
-         rewrite (refusal_b_226 _ _ _ Hno); exact Hnr2].
-  - cbn [unforced] in Hunf. destruct Hunf as (rsp & mo2 & evs2 & Hn2). cbn [nstep node_input] in Hn2.
-    destruct Hn2 as (_ & Hsp2 & Hmm2). exists rsp, mo2, evs2. split; assumption.
+  - intros eff m1 l1. reflexivity.
+  - exact Pend.
+  - exact Inv.
+  - exact Run.
+  - intros eff. dispatch check_syscall_mprotect. rewrite A0, A1, A2. reflexivity.
+  - intros eff. rewrite check_syscall_mprotect by reflexivity. reflexivity.
+  - intros eff. apply mprotect_safe_no_unmodeled. exact Safe.
+  - intros eff m1 l1 Ok1. exact (check_mprotect_shape _ _ _ _ _ _ _ Ok1).
+  - reflexivity.
+  - rewrite in_a0_si, A0. reflexivity.
+  - exact MOk.
+  - exists g, mg, lg. split; [exact GSp| exact GOk].
 Qed.
 
 End PerNode5.
@@ -1689,13 +1780,17 @@ Lemma nstep_brk_iff : forall req mo eff mo' evs,
   check_brk (Z_to_bv 64 req) eff mo = CheckOk mo' evs
   /\ ~ spurious_refusal_cfg ACFG (pure_input 214 [Z_to_bv 64 req]) mo eff.
 Proof.
-  intros. cbn [nstep node_input mm_ok]. rewrite <- check_syscall_ok_iff. dispatch_pure check_syscall_brk.
-  split; [tauto|]. intros [H Hns]. split; [exact (proj1 (proj2 (check_brk_shape _ _ _ _ _ H)))| split; [exact H| exact Hns]].
+  intros req mo eff mo' evs. split.
+  - intros (_ & Sp & NoSp). split; [|exact NoSp].
+    apply check_syscall_ok_iff in Sp. rewrite check_syscall_brk in Sp by reflexivity. exact Sp.
+  - intros (Ok1 & NoSp). destruct (check_brk_shape _ _ _ _ _ Ok1) as (_ & L1 & _).
+    split; [exact L1|]. split; [|exact NoSp].
+    apply check_syscall_ok_iff. rewrite check_syscall_brk by reflexivity. exact Ok1.
 Qed.
 
 Lemma nstep_brk_check : forall req mo eff mo' evs,
   nstep (NBrk req) mo eff mo' evs -> check_brk (Z_to_bv 64 req) eff mo = CheckOk mo' evs.
-Proof. intros req mo eff mo' evs H. apply nstep_brk_iff in H. exact (proj1 H). Qed.
+Proof. intros req mo eff mo' evs Step. apply nstep_brk_iff in Step. exact (proj1 Step). Qed.
 
 Lemma nstep_mmap_iff : forall addr len prot flags mo eff mo' evs,
   mmap_noreserve_b (Z_to_bv 64 flags) = false ->
@@ -1706,8 +1801,12 @@ Lemma nstep_mmap_iff : forall addr len prot flags mo eff mo' evs,
            (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags; Z_to_bv 64 (-1); Z_to_bv 64 0])
            mo eff.
 Proof.
-  intros until evs; intros Hnr. cbn [nstep node_input]. rewrite <- check_syscall_ok_iff. dispatch_pure check_syscall_mmap.
-  split; [tauto|]. intros [H Hmm]. split; [exact (proj1 (proj2 (check_mmap_shape _ _ _ _ _ _ _ _ _ _ Hnr H)))| split; [exact H| exact Hmm]].
+  intros addr len prot flags mo eff mo' evs NoRes. split.
+  - intros (_ & Sp & MOk). split; [|exact MOk].
+    apply check_syscall_ok_iff in Sp. rewrite check_syscall_mmap in Sp by reflexivity. exact Sp.
+  - intros (Ok1 & MOk). destruct (check_mmap_shape _ _ _ _ _ _ _ _ _ _ NoRes Ok1) as (_ & L1 & _).
+    split; [exact L1|]. split; [|exact MOk].
+    apply check_syscall_ok_iff. rewrite check_syscall_mmap by reflexivity. exact Ok1.
 Qed.
 
 Lemma nstep_mmap_check : forall addr len prot flags mo eff mo' evs,
@@ -1715,13 +1814,17 @@ Lemma nstep_mmap_check : forall addr len prot flags mo eff mo' evs,
   nstep (NMmap addr len prot flags) mo eff mo' evs ->
   check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
              (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo = CheckOk mo' evs.
-Proof. intros until evs; intros Hnr H. apply nstep_mmap_iff in H; [exact (proj1 H)| exact Hnr]. Qed.
+Proof.
+  intros addr len prot flags mo eff mo' evs NoRes Step.
+  exact (proj1 (proj1 (nstep_mmap_iff addr len prot flags mo eff mo' evs NoRes) Step)).
+Qed.
 
 Lemma nstep_mmap_nonrefusal : forall addr len prot flags mo eff mo' evs,
   kernel_placed flags = true ->
   nstep (NMmap addr len prot flags) mo eff mo' evs -> ret_in_errnos mmap_errnos (eff_ret eff) = false.
 Proof.
-  intros until evs; intros KP H. cbn [nstep node_input mm_ok] in H. rewrite KP in H. exact (proj2 (proj2 H)).
+  intros addr len prot flags mo eff mo' evs Placed (_ & _ & MOk).
+  cbn [mm_ok] in MOk. rewrite Placed in MOk. exact MOk.
 Qed.
 
 Lemma nstep_mmap_spec : forall addr len prot flags mo eff mo' evs,
@@ -1734,7 +1837,11 @@ Lemma nstep_mmap_spec : forall addr len prot flags mo eff mo' evs,
             (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags; Z_to_bv 64 (-1); Z_to_bv 64 0])
             mo eff).
 Proof.
-  intros. cbn [nstep node_input]. rewrite syscall_spec_222 by reflexivity. reflexivity.
+  intros addr len prot flags mo eff mo' evs. split.
+  - intros (L1 & Sp & MOk). rewrite syscall_spec_222 in Sp by reflexivity.
+    split; [exact L1|]. split; [exact Sp| exact MOk].
+  - intros (L1 & Sp & MOk). split; [exact L1|]. split; [|exact MOk].
+    rewrite syscall_spec_222 by reflexivity. exact Sp.
 Qed.
 
 Lemma nstep_brk_spec : forall req mo eff mo' evs,
@@ -1742,26 +1849,35 @@ Lemma nstep_brk_spec : forall req mo eff mo' evs,
   (evs = [] /\ brk_spec (Z_to_bv 64 req) (pure_input 214 [Z_to_bv 64 req]) mo (Ok eff mo' evs)
    /\ ~ spurious_refusal_cfg ACFG (pure_input 214 [Z_to_bv 64 req]) mo eff).
 Proof.
-  intros. cbn [nstep node_input mm_ok]. rewrite syscall_spec_214 by reflexivity. reflexivity.
+  intros req mo eff mo' evs. split.
+  - intros (L1 & Sp & NoSp). rewrite syscall_spec_214 in Sp by reflexivity.
+    split; [exact L1|]. split; [exact Sp| exact NoSp].
+  - intros (L1 & Sp & NoSp). split; [exact L1|]. split; [|exact NoSp].
+    rewrite syscall_spec_214 by reflexivity. exact Sp.
 Qed.
 
 Lemma nstep_munmap_iff : forall addr len mo eff mo' evs,
   nstep (NMunmap addr len) mo eff mo' evs <->
   check_munmap (Z_to_bv 64 addr) (Z_to_bv 64 len) eff mo = CheckOk mo' evs.
 Proof.
-  intros. cbn [nstep node_input mm_ok]. rewrite <- check_syscall_ok_iff. dispatch_pure check_syscall_munmap.
-  split; [tauto|]. intros H. split; [exact (proj1 (proj2 (check_munmap_shape _ _ _ _ _ _ H)))| split; [exact H| exact I]].
+  intros addr len mo eff mo' evs. split.
+  - intros (_ & Sp). apply check_syscall_ok_iff in Sp. rewrite check_syscall_munmap in Sp by reflexivity.
+    exact Sp.
+  - intros Ok1. destruct (check_munmap_shape _ _ _ _ _ _ Ok1) as (_ & L1 & _). split; [exact L1|].
+    apply check_syscall_ok_iff. rewrite check_syscall_munmap by reflexivity. exact Ok1.
 Qed.
 
 Lemma nstep_munmap_check : forall addr len mo eff mo' evs,
   nstep (NMunmap addr len) mo eff mo' evs -> check_munmap (Z_to_bv 64 addr) (Z_to_bv 64 len) eff mo = CheckOk mo' evs.
-Proof. intros until evs; intros H. apply nstep_munmap_iff in H. exact H. Qed.
+Proof. intros addr len mo eff mo' evs Step. exact (proj1 (nstep_munmap_iff addr len mo eff mo' evs) Step). Qed.
 
 Lemma nstep_munmap_spec : forall addr len mo eff mo' evs,
   nstep (NMunmap addr len) mo eff mo' evs <->
   (evs = [] /\ munmap_spec (Z_to_bv 64 addr) (Z_to_bv 64 len) (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]) mo (Ok eff mo' evs)).
 Proof.
-  intros. cbn [nstep node_input mm_ok]. rewrite syscall_spec_215 by reflexivity. split; [tauto| tauto].
+  intros addr len mo eff mo' evs. split.
+  - intros (L1 & Sp). rewrite syscall_spec_215 in Sp by reflexivity. split; [exact L1| exact Sp].
+  - intros (L1 & Sp). split; [exact L1|]. rewrite syscall_spec_215 by reflexivity. exact Sp.
 Qed.
 
 Lemma nstep_mprotect_iff : forall addr len prot mo eff mo' evs,
@@ -1769,18 +1885,25 @@ Lemma nstep_mprotect_iff : forall addr len prot mo eff mo' evs,
   check_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) eff mo = CheckOk mo' evs
   /\ ret_in_errnos mprotect_errnos (eff_ret eff) = false.
 Proof.
-  intros. cbn [nstep node_input mm_ok]. rewrite <- check_syscall_ok_iff. dispatch_pure check_syscall_mprotect.
-  split; [tauto|]. intros [H Hnr]. split; [exact (proj1 (proj2 (check_mprotect_shape _ _ _ _ _ _ _ H)))| split; [exact H| exact Hnr]].
+  intros addr len prot mo eff mo' evs. split.
+  - intros (_ & Sp & MOk). split; [|exact MOk].
+    apply check_syscall_ok_iff in Sp. rewrite check_syscall_mprotect in Sp by reflexivity. exact Sp.
+  - intros (Ok1 & MOk). destruct (check_mprotect_shape _ _ _ _ _ _ _ Ok1) as (_ & L1 & _).
+    split; [exact L1|]. split; [|exact MOk].
+    apply check_syscall_ok_iff. rewrite check_syscall_mprotect by reflexivity. exact Ok1.
 Qed.
 
 Lemma nstep_mprotect_check : forall addr len prot mo eff mo' evs,
   nstep (NMprotect addr len prot) mo eff mo' evs ->
   check_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) eff mo = CheckOk mo' evs.
-Proof. intros until evs; intros H. apply nstep_mprotect_iff in H. exact (proj1 H). Qed.
+Proof.
+  intros addr len prot mo eff mo' evs Step.
+  exact (proj1 (proj1 (nstep_mprotect_iff addr len prot mo eff mo' evs) Step)).
+Qed.
 
 Lemma nstep_mprotect_nonrefusal : forall addr len prot mo eff mo' evs,
   nstep (NMprotect addr len prot) mo eff mo' evs -> ret_in_errnos mprotect_errnos (eff_ret eff) = false.
-Proof. intros until evs; intros H. apply nstep_mprotect_iff in H. exact (proj2 H). Qed.
+Proof. intros addr len prot mo eff mo' evs (_ & _ & MOk). exact MOk. Qed.
 
 Lemma nstep_mprotect_spec : forall addr len prot mo eff mo' evs,
   nstep (NMprotect addr len prot) mo eff mo' evs <->
@@ -1788,7 +1911,11 @@ Lemma nstep_mprotect_spec : forall addr len prot mo eff mo' evs,
                              (pure_input 226 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot]) mo (Ok eff mo' evs)
    /\ ret_in_errnos mprotect_errnos (eff_ret eff) = false).
 Proof.
-  intros. cbn [nstep node_input mm_ok]. rewrite syscall_spec_226 by reflexivity. reflexivity.
+  intros addr len prot mo eff mo' evs. split.
+  - intros (L1 & Sp & MOk). rewrite syscall_spec_226 in Sp by reflexivity.
+    split; [exact L1|]. split; [exact Sp| exact MOk].
+  - intros (L1 & Sp & MOk). split; [exact L1|]. split; [|exact MOk].
+    rewrite syscall_spec_226 by reflexivity. exact Sp.
 Qed.
 
 Lemma nstep_mm_vm_only : forall n mo eff mo' evs,
@@ -1796,11 +1923,13 @@ Lemma nstep_mm_vm_only : forall n mo eff mo' evs,
              | NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | _ => False end ->
   nstep n mo eff mo' evs -> vm_only mo mo' /\ evs = [] /\ eff_copyins eff = [].
 Proof.
-  intros n mo eff mo' evs Hn H. destruct n; try contradiction.
-  - apply nstep_brk_check in H. eapply check_brk_shape; exact H.
-  - apply nstep_mmap_check in H; [|exact Hn]. eapply check_mmap_shape; [exact Hn| exact H].
-  - apply nstep_munmap_check in H. eapply check_munmap_shape; exact H.
-  - apply nstep_mprotect_check in H. eapply check_mprotect_shape; exact H.
+  intros n mo eff mo' evs Kind Step.
+  destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+    try contradiction.
+  - exact (check_brk_shape _ _ _ _ _ (nstep_brk_check _ _ _ _ _ Step)).
+  - exact (check_mmap_shape _ _ _ _ _ _ _ _ _ _ Kind (nstep_mmap_check _ _ _ _ _ _ _ _ Kind Step)).
+  - exact (check_munmap_shape _ _ _ _ _ _ (nstep_munmap_check _ _ _ _ _ _ Step)).
+  - exact (check_mprotect_shape _ _ _ _ _ _ _ (nstep_mprotect_check _ _ _ _ _ _ _ Step)).
 Qed.
 
 Lemma nstep_mmap_nonrefusal_of_grant : forall addr len prot flags mo eff mo' evs eff' mo2 evs2,
@@ -1810,17 +1939,15 @@ Lemma nstep_mmap_nonrefusal_of_grant : forall addr len prot flags mo eff mo' evs
   errno_ret_in mmap_errnos (eff_ret eff') = false ->
   errno_ret_in mmap_errnos (eff_ret eff) = false.
 Proof.
-  intros until evs2; intros H Hchk Hnr'.
-  set (i := pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags; Z_to_bv 64 (-1); Z_to_bv 64 0]).
-  assert (Hno : bv_unsigned (in_sysno i) = 222) by (apply unsigned_sysno_args; lia).
-  cbn [nstep node_input mm_ok] in H. destruct H as (_ & Hsp & Hmm).
-  destruct (kernel_placed flags); [exact Hmm|].
-  destruct (errno_ret_in mmap_errnos (eff_ret eff)) eqn:R; [|reflexivity]. exfalso. apply Hmm.
-  apply (refusal_spurious_of_grant ACFG i mo eff eff' mo2 evs2).
-  - apply acfg_family_off_222. exact Hno.
-  - rewrite (refusal_b_222 _ _ _ Hno). exact R.
-  - apply check_syscall_ok_iff. subst i. dispatch_pure check_syscall_mmap. exact Hchk.
-  - rewrite (refusal_b_222 _ _ _ Hno). exact Hnr'.
+  intros addr len prot flags mo eff mo' evs eff' mo2 evs2 Step Grant NoRef'.
+  destruct Step as (_ & _ & MOk). cbn [mm_ok] in MOk.
+  destruct (kernel_placed flags); cbv beta iota in MOk; [exact MOk|].
+  destruct (errno_ret_in mmap_errnos (eff_ret eff)) eqn:Ref; [exfalso|reflexivity].
+  apply MOk. split; [apply acfg_family_off_222; reflexivity|]. split.
+  - rewrite refusal_b_222 by reflexivity. exact Ref.
+  - exists eff', mo2, evs2. split.
+    + apply check_syscall_ok_iff. rewrite check_syscall_mmap by reflexivity. exact Grant.
+    + rewrite refusal_b_222 by reflexivity. exact NoRef'.
 Qed.
 
 Lemma nstep_brk_nonrefusal_of_grant : forall req mo eff mo' evs eff' mo2 evs2,
@@ -1829,16 +1956,14 @@ Lemma nstep_brk_nonrefusal_of_grant : forall req mo eff mo' evs eff' mo2 evs2,
   brk_refusal_b mo (Z_to_bv 64 req) (eff_ret eff') = false ->
   brk_refusal_b mo (Z_to_bv 64 req) (eff_ret eff) = false.
 Proof.
-  intros until evs2; intros H Hchk Hnr'.
-  set (i := pure_input 214 [Z_to_bv 64 req]).
-  assert (Hno : bv_unsigned (in_sysno i) = 214) by (apply unsigned_sysno_args; lia).
-  cbn [nstep node_input mm_ok] in H. destruct H as (_ & Hsp & Hmm).
-  destruct (brk_refusal_b mo (Z_to_bv 64 req) (eff_ret eff)) eqn:R; [|reflexivity]. exfalso. apply Hmm.
-  apply (refusal_spurious_of_grant ACFG i mo eff eff' mo2 evs2).
-  - apply acfg_family_off_214. exact Hno.
-  - rewrite (refusal_b_214 _ _ _ Hno). exact R.
-  - apply check_syscall_ok_iff. subst i. dispatch_pure check_syscall_brk. exact Hchk.
-  - rewrite (refusal_b_214 _ _ _ Hno). exact Hnr'.
+  intros req mo eff mo' evs eff' mo2 evs2 Step Grant NoRef'.
+  destruct Step as (_ & _ & NoSp). cbn [mm_ok] in NoSp.
+  destruct (brk_refusal_b mo (Z_to_bv 64 req) (eff_ret eff)) eqn:Ref; [exfalso|reflexivity].
+  apply NoSp. split; [apply acfg_family_off_214; reflexivity|]. split.
+  - rewrite refusal_b_214 by reflexivity. exact Ref.
+  - exists eff', mo2, evs2. split.
+    + apply check_syscall_ok_iff. rewrite check_syscall_brk by reflexivity. exact Grant.
+    + rewrite refusal_b_214 by reflexivity. exact NoRef'.
 Qed.
 
 Lemma nsafe_mmap_rw : forall addr len mo,
@@ -1918,42 +2043,60 @@ Proof.
 Qed.
 
 Definition is_transparent (n : node) : Prop :=
-  match n with NExit _ | NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ => False | _ => True end.
+  match n with
+  | NWritev _ _ | NOpen _ | NRead _ _ _ | NClose _ | NIoctl _ _ | NSetTid | NMunmap _ _ => True
+  | NExit _ | NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ => False
+  end.
 Definition is_filtered (n : node) : Prop :=
-  match n with NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ => True | _ => False end.
+  match n with
+  | NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ => True
+  | _ => False
+  end.
 
 Lemma all_facts : forall segs n ms mo,
   is_transparent n ->
   at_node segs n ms -> minv mo -> m_halted mo = None -> nsafe n mo -> node_facts segs ms mo n.
 Proof.
-  intros segs n ms mo Hne Hat Hminv Hh Hsafe. destruct n; try contradiction.
-  - apply writev_facts; assumption.
-  - apply open_facts; assumption.
-  - apply read_facts; assumption.
-  - apply close_facts; assumption.
-  - apply ioctl_facts; assumption.
-  - apply set_tid_facts; assumption.
-  - apply munmap_facts; assumption.
+  intros segs n ms mo Tr At Inv Run Safe.
+  destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+    cbn [is_transparent] in Tr; try contradiction.
+  - exact (writev_facts segs ms mo fd bufs At Inv Run).
+  - exact (open_facts segs ms mo path At Inv Run Safe).
+  - exact (read_facts segs ms mo fd buf count At Inv Run).
+  - exact (close_facts segs ms mo fd At Inv Run).
+  - exact (ioctl_facts segs ms mo fd req At Inv Run).
+  - exact (set_tid_facts segs ms mo At Inv Run).
+  - exact (munmap_facts segs ms mo addr len At Inv Run Safe).
 Qed.
 
 Lemma all_facts_f : forall segs n ms mo,
   is_filtered n ->
   at_node segs n ms -> minv mo -> m_halted mo = None -> nsafe n mo -> unforced n mo -> node_facts_f segs ms mo n.
 Proof.
-  intros segs n ms mo Hne Hat Hminv Hh Hsafe Hunf. destruct n; try contradiction.
-  - apply brk_facts; assumption.
-  - apply mmap_facts; assumption.
-  - apply mprotect_facts; assumption.
+  intros segs n ms mo Fi At Inv Run Safe Unf.
+  destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+    cbn [is_filtered] in Fi; try contradiction.
+  - exact (brk_facts segs ms mo req At Inv Run Safe).
+  - exact (mmap_facts segs ms mo addr len prot flags At Inv Run Safe Unf).
+  - exact (mprotect_facts segs ms mo addr len prot At Inv Run Safe Unf).
 Qed.
 
 Lemma transparent_sysno : forall segs n ms,
   is_transparent n -> at_node segs n ms ->
   forall x8, ms_svc_pending ms = Some x8 -> alloc_no_b (bv_unsigned x8) = false.
 Proof.
-  intros segs n ms Hne Hat x8 Hx8. destruct n; try contradiction; cbn [at_node] in Hat;
-    repeat match goal with H : _ /\ _ |- _ => destruct H end;
-    match goal with H : ms_svc_pending ms = Some _ |- _ => rewrite H in Hx8; injection Hx8 as <- end;
-    vm_compute; reflexivity.
+  intros segs n ms Tr At x8 Pend.
+  assert (Code : exists k, ms_svc_pending ms = Some (Z_to_bv 64 k) /\ alloc_no_b (bv_unsigned (Z_to_bv 64 k)) = false).
+  { destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+      cbn [is_transparent] in Tr; try contradiction; cbn [at_node] in At.
+    - exists 66. split; [exact (proj1 At)| reflexivity].
+    - exists 56. split; [exact (proj1 At)| reflexivity].
+    - exists 63. split; [exact (proj1 At)| reflexivity].
+    - exists 57. split; [exact (proj1 At)| reflexivity].
+    - exists 29. split; [exact (proj1 At)| reflexivity].
+    - exists 96. split; [exact At| reflexivity].
+    - exists 215. split; [exact (proj1 At)| reflexivity]. }
+  destruct Code as (k & Pk & Free). rewrite Pk in Pend. injection Pend as <-. exact Free.
 Qed.
 
 Definition exit_code (c : Z) : word := bv_and (Z_to_bv 64 c) (Z_to_bv 64 255).
@@ -1964,12 +2107,9 @@ Lemma exit_node_facts : forall segs ms mo c,
      X = SNext (mkCfg ms (with_halted (exit_code c) mo)) /\ evs = [ExitEv (exit_code c) (m_fs mo)])
   /\ sstep_cfg segs ACFG (mkCfg ms mo) [ExitEv (exit_code c) (m_fs mo)] (SNext (mkCfg ms (with_halted (exit_code c) mo))).
 Proof.
-  intros segs ms mo c Hat Hh.
-  assert (Hx : exists x8, ms_svc_pending ms = Some x8).
-  { destruct (proj1 Hat) as [H|H]; eexists; exact H. }
-  destruct Hx as [x8 Hsvc].
-  apply (exit_kit segs ms mo x8 (exit_code c) Hsvc Hh).
-  exact (exit_char segs ms mo c x8 Hat Hsvc).
+  intros segs ms mo c At Run.
+  destruct (proj1 At) as [Pend | Pend];
+    exact (exit_kit segs ms mo _ (exit_code c) Pend Run (exit_char segs ms mo c _ At Pend)).
 Qed.
 
 Lemma nonexit_node_facts : forall segs n ms mo,
@@ -1981,47 +2121,44 @@ Lemma nonexit_node_facts : forall segs n ms mo,
         m_halted mo' = None /\ minv mo' /\ sstep_cfg segs ACFG (mkCfg ms mo) evs (SNext (mkCfg (nret ms eff) mo')))
   /\ (exists eff mo' evs, nstep n mo eff mo' evs).
 Proof.
-  intros segs n ms mo Hne Hat Hminv Hh Hsafe Hunf.
-  assert (Hcase : is_transparent n \/ is_filtered n) by (destruct n; cbn; tauto).
-  destruct Hcase as [Ht|Hf].
-  - exact (node_kit segs ms mo n (all_facts segs n ms mo Ht Hat Hminv Hh Hsafe) Hh (transparent_sysno segs n ms Ht Hat)).
-  - exact (node_kit_f segs ms mo n (all_facts_f segs n ms mo Hf Hat Hminv Hh Hsafe Hunf) Hh).
+  intros segs n ms mo NotExit At Inv Run Safe Unf.
+  assert (Kind : is_transparent n \/ is_filtered n).
+  { destruct n; first [left; exact I | right; exact I | contradiction]. }
+  destruct Kind as [Tr | Fi].
+  - exact (node_kit segs ms mo n (all_facts segs n ms mo Tr At Inv Run Safe) Run (transparent_sysno segs n ms Tr At)).
+  - exact (node_kit_f segs ms mo n (all_facts_f segs n ms mo Fi At Inv Run Safe Unf) Run).
 Qed.
 
 Theorem nodes_sound : forall segs, node_sound node segs ACFG (at_node segs) nstep nexit minv nsafeU.
 Proof.
   intros segs. constructor.
-  -
-    intros mo Hminv. exact (minv_lazy mo Hminv).
-  -
-    intros n ms Hat.
-    assert (Hx : exists x8, ms_svc_pending ms = Some x8).
-    { destruct n as [| | | | | |c| | | |]; cbn [at_node] in Hat;
-        first [ destruct Hat as [[H|H] _]; eexists; exact H
-              | destruct Hat as [H _]; eexists; exact H
-              | eexists; exact Hat ]. }
-    destruct Hx as [x8 ->]. discriminate.
-  -
-    intros n ms mo evs X Hat Hh Hminv [Hsafe Hunf] Hst.
-    assert (Hcase : (exists c, n = NExit c) \/ match n with NExit _ => False | _ => True end).
-    { destruct n; first [left; eexists; reflexivity | right; exact I]. }
-    destruct Hcase as [[c ->] | Hne].
-    + destruct (exit_node_facts segs ms mo c Hat Hh) as [Hc _]. destruct (Hc _ _ Hst) as [-> ->].
-      right. eexists _, _. split; [reflexivity|]. split; [split; reflexivity| reflexivity].
-    + destruct (nonexit_node_facts segs n ms mo Hne Hat Hminv Hh Hsafe Hunf) as (Hc & _ & _). left. exact (Hc _ _ Hst).
-  -
-    intros n ms mo rsp mo' evs Hat Hh Hminv [Hsafe Hunf] HP.
-    assert (Hne : match n with NExit _ => False | _ => True end) by (destruct n; first [exact I | destruct HP]).
-    destruct (nonexit_node_facts segs n ms mo Hne Hat Hminv Hh Hsafe Hunf) as (_ & Hs & _). exact (Hs _ _ _ HP).
-  -
-    intros n ms mo code mo' Hat Hh Hminv _ HX.
-    destruct n as [| | | | | |c| | | |]; try contradiction. cbn [nexit] in HX. destruct HX as [-> ->].
-    split; [reflexivity|]. exact (proj2 (exit_node_facts segs ms mo c Hat Hh)).
-  -
-    intros n ms mo Hat Hh Hminv [Hsafe Hunf].
-    assert (Hcase : (exists c, n = NExit c) \/ match n with NExit _ => False | _ => True end).
-    { destruct n; first [left; eexists; reflexivity | right; exact I]. }
-    destruct Hcase as [[c ->] | Hne].
-    + right. eexists _, _. split; reflexivity.
-    + destruct (nonexit_node_facts segs n ms mo Hne Hat Hminv Hh Hsafe Hunf) as (_ & _ & Hp). left. exact Hp.
+  - exact minv_lazy.
+  - intros n ms At Absent.
+    assert (Busy : exists k, ms_svc_pending ms = Some k).
+    { destruct n; cbn [at_node] in At;
+        repeat match type of At with _ /\ _ => destruct At as [At _] end;
+        try match type of At with _ \/ _ => destruct At as [At | At] end;
+        eexists; exact At. }
+    destruct Busy as (k & Pk). rewrite Pk in Absent. discriminate Absent.
+  - intros n ms mo evs X At Run Inv [Safe Unf] Stp.
+    destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+      try (left; refine (proj1 (nonexit_node_facts segs _ ms mo _ At Inv Run Safe Unf) evs X Stp); exact I).
+    right. destruct (exit_node_facts segs ms mo c At Run) as [Inv1 _].
+    destruct (Inv1 evs X Stp) as [Nx Ev].
+    exists (exit_code c), (with_halted (exit_code c) mo).
+    split; [exact Nx|]. split; [split; reflexivity|]. rewrite m_fs_with_halted. exact Ev.
+  - intros n ms mo rsp mo' evs At Run Inv [Safe Unf] Step.
+    destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+      try (refine (proj1 (proj2 (nonexit_node_facts segs _ ms mo _ At Inv Run Safe Unf)) rsp mo' evs Step);
+           exact I).
+    destruct Step.
+  - intros n ms mo code mo' At Run _ _ Ex.
+    destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+      try (destruct Ex; fail).
+    destruct Ex as [-> ->]. split; [apply m_halted_with_halted|].
+    rewrite m_fs_with_halted. exact (proj2 (exit_node_facts segs ms mo c At Run)).
+  - intros n ms mo At Run Inv [Safe Unf].
+    destruct n as [fd bufs|path|fd buf count|fd|fd req| |c|req|addr len prot flags|addr len|addr len prot];
+      try (left; refine (proj2 (proj2 (nonexit_node_facts segs _ ms mo _ At Inv Run Safe Unf))); exact I).
+    right. exists (exit_code c), (with_halted (exit_code c) mo). split; reflexivity.
 Qed.

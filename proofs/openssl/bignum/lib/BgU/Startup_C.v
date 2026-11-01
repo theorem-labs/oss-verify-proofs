@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.bignum.lib.BgLib Require Import ImageBg.
 
@@ -36,10 +36,14 @@ Local Ltac zidle_end MUz WMz :=
     lazymatch type of MUz with munch _ ?m _ =>
       try unfold zidle in *; transport_after_call segs m mm MUz WMz; clear MUz WMz end end.
 
-Local Ltac zidle_end_m m :=
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-    lazymatch goal with MU : munch _ m mm, WM : wmono _ m mm |- _ =>
-      unfold zidle in *; transport_after_call bgusegs m mm MU WM end end.
+Local Ltac zidle_end_m MUz :=
+  let fp := type of MUz in
+  match fp with munch _ ?m0 ?m1 =>
+    match goal with GR : wmono bgusegs m0 m1 |- _ =>
+      repeat match goal with ZD : zidle _ |- _ => unfold zidle in ZD end;
+      transport_after_call bgusegs m0 m1 MUz GR; clear MUz GR
+    end
+  end.
 Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
 Local Ltac mem_after_store ::= mem_after_store_fast.
 Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
@@ -75,29 +79,35 @@ Section InitLibc.
   Notation AUXV := (E + 8 * (Z.of_nat (length eps) + 1))%Z.
 
   Definition init_libc_post : Z -> machine_state -> Prop :=
-    fun t ms' => exists t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' pg m',
-    ms' = MS (mkR ra sp gp (Z_to_bv 64 RTP) t0' t1' t2' s0 s1 a0' a1' a2' a3' a4' a5' a6' a7'
-                 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3' t4' t5' t6')
-             F (ret_pc ra) fc None m' (seg_rom bgusegs)
-    /\ munch W m m' /\ wmono bgusegs m m' /\ mem_inv bgusegs m'
-    /\ stk bgusegs m' lo (bv_unsigned sp)
-    /\ rw_cells bgusegs m' RTD (rtd_cells (Z_to_bv 64 RTD) (Z_to_bv 64 RTD) (Z_to_bv 64 RTD) z64 (Z_to_bv 64 t) z64 (Z_to_bv 64 2)
-                                (Z_to_bv 64 0x330f48) (Z_to_bv 64 0x351260) (guard_of g) (Z_to_bv 64 0x330fa8) z64)
-    /\ rw_cells bgusegs m' RLIBC (libc_cells (Z_to_bv 8 1) (Z_to_bv 64 AUXV) (Z_to_bv 64 224) (Z_to_bv 64 8) (Z_to_bv 64 4096))
-    /\ rw_cells bgusegs m' RTLL [C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 (Z_to_bv 64 8); C8 z64]
-    /\ rw_cells bgusegs m' RSYSINFO [C8 z64]
-    /\ rw_cells bgusegs m' RPROGNAME [C8 pg; C8 (Z_to_bv 64 P)]
-    /\ rw_cells bgusegs m' RHWCAP [C8 hw]
-    /\ rw_cells bgusegs m' RENVIRON [C8 (Z_to_bv 64 E)]
-    /\ rw_cells bgusegs m' RDEFSTACK [C4 (Z_to_bv 64 0x20000)]
-    /\ rw_cells bgusegs m' RGUARD [C8 (guard_of g)]
-    /\ rw_cells bgusegs m' RGOT3 [C8 (Z_to_bv 64 RENVIRON); C8 (Z_to_bv 64 0x351220); C8 (Z_to_bv 64 RPROGNAME)]
-    /\ rw_cells bgusegs m' RGOT_SSP [C8 (Z_to_bv 64 RGUARD)]
-    /\ rw_cells bgusegs m' RGOT_DYNAMIC [C8 z64]
-    /\ bytes_at bgusegs m' E (u64s eps ++ le8 z64 ++ u64s (auxv20 (Z_to_bv 64 R) uid hw))
-    /\ bytes_at bgusegs m' P (s ++ [Z_to_bv 8 0])
-    /\ bytes_at bgusegs m' R (le8 g)
-    /\ (0 < t < 4194304)%Z.
+    fun tid st =>
+      exists (m' : word -> option byte) (pg r5 r6 r7 r10 r11 r12 r13 r14 r15 r16 r17 r28 r29 r30 r31 : word),
+        st = MS (mkR ra sp gp (Z_to_bv 64 0x330f98) r5 r6 r7 s0 s1 r10 r11 r12 r13 r14 r15 r16 r17
+                     s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 r28 r29 r30 r31)
+                F (ret_pc ra) fc None m' (seg_rom bgusegs)
+        /\ munch W m m'
+        /\ wmono bgusegs m m'
+        /\ mem_inv bgusegs m'
+        /\ stk bgusegs m' lo (bv_unsigned sp)
+        /\ (0 < tid < 4194304)%Z
+        /\ rw_cells bgusegs m' 0x351218 [C8 pg; C8 (Z_to_bv 64 P)]
+        /\ rw_cells bgusegs m' 0x351228
+             (libc_cells (Z_to_bv 8 1) (Z_to_bv 64 AUXV) (Z_to_bv 64 224) (Z_to_bv 64 8) (Z_to_bv 64 4096))
+        /\ rw_cells bgusegs m' 0x351290 [C8 hw]
+        /\ rw_cells bgusegs m' 0x330ec8 [C8 (Z_to_bv 64 E)]
+        /\ rw_cells bgusegs m' 0x330ed0
+             (rtd_cells (Z_to_bv 64 0x330ed0) (Z_to_bv 64 0x330ed0) (Z_to_bv 64 0x330ed0) z64
+                        (Z_to_bv 64 tid) z64 (Z_to_bv 64 2) (Z_to_bv 64 0x330f48) (Z_to_bv 64 0x351260)
+                        (guard_of g) (Z_to_bv 64 0x330fa8) z64)
+        /\ rw_cells bgusegs m' 0x350fa0 [C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 (Z_to_bv 64 8); C8 z64]
+        /\ rw_cells bgusegs m' 0x350fd8 [C8 (guard_of g)]
+        /\ bytes_at bgusegs m' R (le8 g)
+        /\ bytes_at bgusegs m' P (s ++ [Z_to_bv 8 0])
+        /\ bytes_at bgusegs m' E (u64s eps ++ le8 z64 ++ u64s (auxv20 (Z_to_bv 64 R) uid hw))
+        /\ rw_cells bgusegs m' RSYSINFO [C8 z64]
+        /\ rw_cells bgusegs m' RDEFSTACK [C4 (Z_to_bv 64 0x20000)]
+        /\ rw_cells bgusegs m' RGOT3 [C8 (Z_to_bv 64 RENVIRON); C8 (Z_to_bv 64 0x351220); C8 (Z_to_bv 64 RPROGNAME)]
+        /\ rw_cells bgusegs m' RGOT_SSP [C8 (Z_to_bv 64 RGUARD)]
+        /\ rw_cells bgusegs m' RGOT_DYNAMIC [C8 z64].
 
   Hypothesis EPS : Forall (fun w : word => bv_unsigned w <> 0%Z) eps.
   Hypothesis NONUL : Forall (fun b : byte => bv_unsigned b <> 0%Z) s.
@@ -107,14 +117,19 @@ Section InitLibc.
   Hypothesis SPP : (bv_unsigned sp <= P)%Z.
   Hypothesis SPR : (bv_unsigned sp <= R)%Z.
 
-  Definition pn_post (x5 x6 x7 x9 x11 x14 x15 x16 x17 x28 x29 x30 x31 : word) (m0 : word -> option byte) : machine_state -> Prop :=
-    fun ms' => exists pg m',
-    ms' = MS (mkR (Z_to_bv 64 0x2b0240) (Z_to_bv 64 (bv_unsigned sp + -384)) gp x11   x5 x6 x7
-                  (Z_to_bv 64 P) x9 (Z_to_bv 64 RPROGNAME) (Z_to_bv 64 (P + Z.of_nat (length s) + 1)) (Z_to_bv 64 47) z64 x14 x15 x16 x17
-                  (Z_to_bv 64 RLIBC) s3 s4 s5 s6 s7 s8 s9 s10 s11 x28 x29 x30 x31)
-             F (Z_to_bv 64 0x2b031c) fc None m' (seg_rom bgusegs)
-    /\ munch [(RPROGNAME, 0x351220)]%Z m0 m' /\ wmono bgusegs m0 m' /\ mem_inv bgusegs m'
-    /\ rw_cells bgusegs m' RPROGNAME [C8 pg; C8 (Z_to_bv 64 P)].
+  Definition pn_post (x5 x6 x7 x9 x11 x14 x15 x16 x17 x28 x29 x30 x31 : word) (m0 : word -> option byte)
+    : machine_state -> Prop :=
+    fun st =>
+      exists (pg : word) (m1 : word -> option byte),
+        st = MS (mkR (Z_to_bv 64 0x2b0240) (Z_to_bv 64 (bv_unsigned sp + -384)) gp x11 x5 x6 x7 (Z_to_bv 64 P) x9
+                     (Z_to_bv 64 0x351218) (Z_to_bv 64 (P + (Z.of_nat (length s) + 1))) (Z_to_bv 64 47) z64
+                     x14 x15 x16 x17 (Z_to_bv 64 0x351228) s3 s4 s5 s6 s7 s8 s9 s10 s11 x28 x29 x30 x31)
+                F (Z_to_bv 64 0x2b031c) fc None m1 (seg_rom bgusegs)
+        /\ munch [(0x351218, 0x351220)]%Z m0 m1
+        /\ wmono bgusegs m0 m1
+        /\ mem_inv bgusegs m1
+        /\ rw_cells bgusegs m1 0x351218 [C8 pg; C8 (Z_to_bv 64 P)]
+        /\ bytes_at bgusegs m1 P (s ++ [Z_to_bv 8 0]).
 
   Lemma pn_loop : forall (k : nat) (j : Z) (m0 mm : word -> option byte) x5 x6 x7 x9 x11 x13 x14 x15 x16 x17 x28 x29 x30 x31 pg,
     (Z.of_nat k = Z.of_nat (length s) + 1 - j)%Z -> (1 <= j)%Z ->
@@ -126,28 +141,41 @@ Section InitLibc.
                (Z_to_bv 64 P) x9 (Z_to_bv 64 RPROGNAME) (Z_to_bv 64 (P + j)) (Z_to_bv 64 47) x13 x14 x15 x16 x17
                (Z_to_bv 64 RLIBC) s3 s4 s5 s6 s7 s8 s9 s10 s11 x28 x29 x30 x31)
           F (Z_to_bv 64 0x2b0310) fc None mm (seg_rom bgusegs)).
-  Proof.
-    induction k as [|k IH]; intros j m0 mm x5 x6 x7 x9 x11 x13 x14 x15 x16 x17 x28 x29 x30 x31 pg Hk Hj MU WM MI STR G2.
-    - pose proof (bytes_at_bound _ _ _ _ STR) as BB. rewrite app_length in BB. cbn [length] in BB.
-      assert (Hn : nth_error (s ++ [Z_to_bv 8 0]) (Z.to_nat (j - 1)) = Some (Z_to_bv 8 0)).
-      { rewrite nth_error_app2 by lia. replace (Z.to_nat (j - 1) - length s)%nat with 0%nat by lia. reflexivity. }
-      pose proof (u8ro_read bgusegs mm P _ (j - 1) _ (Z_to_bv 64 (P + j + -1)) STR Hn ltac:(lia) ltac:(unfold wa; f_equal; lia)) as RD.
-      zstep. clear RD. zstep. if_false. zstep. if_false.
-      replace (Z_to_bv 64 (P + j)) with (Z_to_bv 64 (P + Z.of_nat (length s) + 1)) by (f_equal; lia).
-      unfold pn_post. finish2. all: eassumption.
-    - pose proof (bytes_at_bound _ _ _ _ STR) as BB. rewrite app_length in BB. cbn [length] in BB.
-      destruct (nth_error s (Z.to_nat (j - 1))) as [b|] eqn:Hb; [| apply nth_error_None in Hb; lia].
-      assert (Hn : nth_error (s ++ [Z_to_bv 8 0]) (Z.to_nat (j - 1)) = Some b) by (rewrite nth_error_app1 by lia; exact Hb).
-      pose proof (proj1 (Forall_forall _ _) NONUL b (nth_error_In _ _ Hb)) as NZb. cbn in NZb.
-      pose proof (bv_unsigned_in_range 8 b) as Rb. unfold bv_modulus in Rb. cbn in Rb.
-      pose proof (u8ro_read bgusegs mm P _ (j - 1) _ (Z_to_bv 64 (P + j + -1)) STR Hn ltac:(lia) ltac:(unfold wa; f_equal; lia)) as RD.
-      zstep. clear RD. zstep. if_cases K.
-      +   lstep. zstep.
-        replace (P + j + 1)%Z with (P + (j + 1))%Z by lia.
-        eapply (IH (j + 1)%Z); try eassumption; lia.
-      + zstep. if_cases K0; zify_cond K0; [| exfalso; lia]. zstep.
-        replace (P + j + 1)%Z with (P + (j + 1))%Z by lia.
-        eapply (IH (j + 1)%Z); try eassumption; lia.
+  Proof using NONUL LO LOLO SPP.
+    induction k as [|k IHk];
+      intros j m0 mm x5 x6 x7 x9 x11 x13 x14 x15 x16 x17 x28 x29 x30 x31 pg CNT JPOS FOOT GROW MINV STR PGC.
+    - assert (JEND : j = (Z.of_nat (length s) + 1)%Z) by lia.
+      subst j.
+      pose proof (bytes_at_read bgusegs mm P (s ++ [Z_to_bv 8 0]) (Z.of_nat (length s)) 1 STR ltac:(lia)
+                    ltac:(rewrite length_app; cbn [length]; lia)) as BYTE.
+      rewrite Nat2Z.id, skipn_app, skipn_all, Nat.sub_diag in BYTE. cbn [firstn skipn app] in BYTE.
+      let a := cur_mem_addr in replace (wa (P + Z.of_nat (length s))) with a in BYTE by (unfold wa; f_equal; lia).
+      lstep. clear BYTE. astep. astep.
+      apply evt_done. exists pg, mm.
+      split; [cbv delta [mkR]; reflexivity|].
+      repeat (split; [assumption|]). assumption.
+    - destruct (nth_error s (Z.to_nat (j - 1))) as [ch|] eqn:NTH.
+      2:{ apply nth_error_None in NTH. lia. }
+      assert (CHNZ : bv_unsigned ch <> 0%Z).
+      { exact (proj1 (Forall_forall _ s) NONUL ch (nth_error_In s _ NTH)). }
+      apply nth_error_split in NTH as (front & back & SPLIT & FLEN).
+      pose proof (bytes_at_read bgusegs mm P (s ++ [Z_to_bv 8 0]) (j - 1) 1 STR ltac:(lia)
+                    ltac:(rewrite length_app; cbn [length]; lia)) as BYTE.
+      rewrite SPLIT, <- app_assoc, <- FLEN, skipn_app, skipn_all, Nat.sub_diag in BYTE.
+      cbn [firstn skipn app] in BYTE.
+      let a := cur_mem_addr in replace (wa (P + (j - 1))) with a in BYTE by (unfold wa; f_equal; lia).
+      lstep. clear BYTE. cbv beta.
+      pose proof (byte_range ch) as CHRANGE.
+      lstep. rewrite bv_eqb_Z, !unsigned_lit by lia.
+      destruct (Z.eqb_spec (bv_unsigned ch) 47) as [SLASH|PLAIN]; cbv iota.
+      + lstep. lstep.
+        replace (Z_to_bv 64 (P + j + 1)) with (Z_to_bv 64 (P + (j + 1))) by (f_equal; lia).
+        eapply IHk; try eassumption; lia.
+      + lstep. rewrite bv_eqb_Z, !unsigned_lit by lia.
+        rewrite (proj2 (Z.eqb_neq _ _) CHNZ). cbv beta iota delta [negb].
+        lstep.
+        replace (Z_to_bv 64 (P + j + 1)) with (Z_to_bv 64 (P + (j + 1))) by (f_equal; lia).
+        eapply IHk; try eassumption; lia.
   Qed.
 
   Ltac scan_it AUXB vi ki :=
@@ -184,86 +212,93 @@ Section InitLibc.
     impl bgusegs (at_node bgusegs) (enode NSetTid dec_set_tid) (epost init_libc_post)
          (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
              F (Z_to_bv 64 0x2b0214) fc None m (seg_rom bgusegs)).
-  Proof.
-    intros tp a0 a1 ST ENV STR RND G2 HW ENVC SI LC TDC MT DS GU GOT3 GG GD MI -> ->.
-    unfold td_cells, libc_cells in *.
-    pose proof (munch_refl W m) as MU. pose proof (wmono_refl bgusegs m) as WM.
-    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. cbn [length auxv20] in EB.
-    pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
-    pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_le8 in RB.
-    iprefix.
-    carve_frame 384%nat ST.
-    zidle_begin sp 384%Z MUz WMz.
-    do 9 lstep.
-    zidle_end MUz WMz.
-    do 1 lstep.
-
-    apply (rw_cells_split_CB bgusegs _ _ [] 352 _ _ [48; 304]%nat) in FR; [|reflexivity]. cbn [mk_CB_cells app] in FR.
-    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [FRlo FR]. cbn [cells_size csize Nat.add] in FR.
-    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [AUX FRhi]. cbn [cells_size csize Nat.add] in FRhi.
-    change (Z.of_nat 48) with 48%Z in *. change (Z.of_nat 304) with 304%Z in *.
-    replace (bv_unsigned sp + -384 + 48)%Z with (bv_unsigned sp + -336)%Z in AUX by lia.
-    replace (bv_unsigned sp + -384 + 48 + 304)%Z with (bv_unsigned sp + -32)%Z in FRhi by lia.
-    lstep. call (memset_specZ (bv_unsigned sp + -336) 304 0); [exact AUX | exact MI | reflexivity | reflexivity | reflexivity | lia | lia | lia |].
-    rename POST into AUX. change (Z.to_nat 304) with 304%nat in AUX. try rename MI0 into MI.
-    apply (rw_cells_recast bgusegs _ _ _ (repeat (C8 z64) 38)) in AUX;
-      [| cbn; repeat split; exact I | vm_compute; reflexivity | reflexivity]. cbn [repeat] in AUX.
-
-    lstep. lstep. lstep.
-    eapply (envp_count_loop eps); [exact EPS | exact ENV |].
-
-    lstep. lstep. lstep.
-    pose proof ENV as AUXB. apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB].
-    apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, length_le8 in AUXB.
+  Proof using EPS NONUL LO LOLO SPE SPP SPR.
+    intros tp a0 a1 STK ENVB PNB RNDB PGC HWC ENVC SYSC LIBC TDC MTLS DSTK GRD GOT3 GOTG GDUM MINV A0 A1.
+    subst a0 a1.
+    unfold libc_cells in LIBC. unfold td_cells in TDC.
+    pose proof ENVB as AUXB.
+    apply bytes_at_app in AUXB as [_ AUXB]. apply bytes_at_app in AUXB as [_ AUXB].
+    rewrite u64s_length, length_le8 in AUXB.
     replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
-    ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
-
-    scan_it AUXB 1%nat 2%nat. scan_it AUXB 3%nat 4%nat. scan_it AUXB 5%nat 6%nat. scan_it AUXB 7%nat 8%nat.
-    scan_it AUXB 9%nat 10%nat. scan_it AUXB 11%nat 12%nat. scan_it AUXB 13%nat 14%nat. scan_it AUXB 15%nat 16%nat.
-    scan_it AUXB 17%nat 18%nat.
-
-    steps_to 0x2b02d0%Z.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-
-    steps_to 0x2b0310%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-      call (pn_loop (length s) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
-    rename POST into G2. try rename MI0 into MI.
-
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
-    cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
-    replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
-    replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
+    pose proof (munch_refl W m) as FOOT. pose proof (wmono_refl bgusegs m) as GROW.
+    pose proof (bv_unsigned_in_range 64 sp) as SPRANGE. change (bv_modulus 64) with (2 ^ 64)%Z in SPRANGE.
+    pose proof (bytes_at_bound _ _ _ _ PNB) as PBOUND. rewrite length_app in PBOUND. cbn [length] in PBOUND.
+    iprefix.
+    carve_frame 384%nat STK.
+    zidle_begin sp 448%Z MUz WMz.
+    unfold zidle in AUXB.
+    lstep. lstep. lstep. lstep. lstep.
+    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR as [FRLOW FRSAVE].
+    apply (rw_cells_split_CB _ _ _ [] _ _ [] [48%nat; 304%nat]) in FRLOW; [|reflexivity].
+    cbn [mk_CB_cells app] in FRLOW.
+    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FRLOW as [FRPAD AUXA].
+    cbn [cells_size csize Nat.add] in AUXA, FRSAVE.
+    change (Z.of_nat 48) with 48%Z in AUXA. change (Z.of_nat 352) with 352%Z in FRSAVE.
+    replace (bv_unsigned sp + -384 + 48)%Z with (bv_unsigned sp + -336)%Z in AUXA by lia.
+    replace (bv_unsigned sp + -384 + 352)%Z with (bv_unsigned sp + -32)%Z in FRSAVE by lia.
+    lstep. lstep. lstep. lstep. lstep. lstep.
+    call (memset_specZ (bv_unsigned sp + -336) 304 0);
+      [exact AUXA | assumption | reflexivity | reflexivity | reflexivity | lia | lia | lia | ].
+    rename POST into AUXZ. change (Z.to_nat 304) with 304%nat in AUXZ.
+    zidle_end MUz WMz.
+    lstep. lstep. lstep.
+    eapply (envp_count_loop eps); [exact EPS | exact ENVB | ].
+    lstep. lstep. lstep.
+    ldaux AUXB 0%nat. astep.
+    lstep. lstep. lstep. lstep.
+    zidle_begin sp 448%Z MUa WMa.
+    unfold zidle in AUXB.
+    scan_it AUXB 1%nat 2%nat. scan_it AUXB 3%nat 4%nat. scan_it AUXB 5%nat 6%nat.
+    scan_it AUXB 7%nat 8%nat. scan_it AUXB 9%nat 10%nat. scan_it AUXB 11%nat 12%nat.
+    scan_it AUXB 13%nat 14%nat. scan_it AUXB 15%nat 16%nat. scan_it AUXB 17%nat 18%nat.
     lstep. lstep.
-    name_sp sp (-384)%Z. name_sp sp (-336)%Z.
+    zidle_end_m MUa.
+    lstep. lstep. astep.
+    lstep. lstep. lstep.
+    rewrite bv_eqb_Z, !unsigned_lit by lia. rewrite (proj2 (Z.eqb_neq P 0)) by lia. cbv beta iota delta [negb].
+    lstep.
+    rewrite bv_eqb_Z, !unsigned_lit by lia. rewrite (proj2 (Z.eqb_neq P 0)) by lia. cbv beta iota delta [negb].
+    lstep. lstep. lstep. lstep. lstep. lstep. lstep. lstep. lstep.
+    call (pn_loop (length s) 1 m0 m0);
+      [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact PNB | exact PGC | ].
+    lstep. lstep.
+    pose proof AUXZ as PHDRS.
+    apply (proj1 (rw_cells_app _ _ _ [_] _)) in PHDRS as [_ PHDRS].
+    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in PHDRS as [PHDRS _].
+    cbn [cells_size csize Nat.add] in PHDRS. change (Z.of_nat 24) with 24%Z in PHDRS.
+    rename PC into PGC. clear POST.
+    name_sp sp (-384)%Z.
     icallk (init_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-               lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
+              lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
     all: lazymatch goal with
-         | |- forall _, _ => ipost bgusegs; unname_sp; unname_sp
-         | |- _ => unname_sp; unname_sp;
-                   first [ hyp_by_addr | reflexivity | lia
-                         | lazymatch goal with |- rw_cells _ _ (?b + -336 + 24)%Z _ =>
-                             replace (b + -336 + 24)%Z with (b + -312)%Z by lia; hyp_by_addr end ]
+         | |- forall _, _ => idtac
+         | |- _ => unname_sp; rewrite ?unsigned_lit by lia; first [ hyp_by_addr | lia ]
          end.
-    rename PC into ST. unfold td_cells, libc_cells in *.
-
+    ipost bgusegs. unname_sp.
+    rename PC into STK. rename PC0 into TDC. rename PC1 into LIBC. rename PC2 into MTLS.
+    clear PC3 PC4 PC5. unfold libc_cells in LIBC.
     lstep. lstep.
-    call_sp (init_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R g).
+    name_sp sp (-384)%Z.
+    call (init_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R g).
     all: lazymatch goal with
          | |- evt _ _ _ => idtac
-         | |- ?g => first [ hyp_by_addr | reflexivity | lia ]
+         | |- _ => unname_sp; rewrite ?unsigned_lit by lia; first [ hyp_by_addr | reflexivity | lia ]
          end.
-    match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
-
-    do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
-    do 5 lstep.
-    join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
-    release_frame FRlo ST (bv_unsigned sp).
-    lstep.
-    unfold init_libc_post, td_cells, rtd_cells, libc_cells in *. sys_finish; try lia.
-    all: hyp_by_addr.
+    unname_sp.
+    rename PC into STK. rename PC0 into GUARD. rename PC2 into TDC. clear PC1 POST0.
+    lstep. lstep. lstep.
+    rewrite bv_eqb_refl. cbv beta iota delta [negb].
+    lstep. lstep. lstep.
+    lazymatch goal with |- context [if ?c then _ else _] => replace c with false by (vm_compute; reflexivity) end.
+    cbv iota.
+    lstep. astep.
+    lstep. lstep. lstep. lstep. lstep. lstep.
+    join2 FRPAD AUXZ. join2 FRPAD FRSAVE.
+    release_frame FRPAD STK (bv_unsigned sp).
+    apply evt_done. unfold init_libc_post.
+    do 17 eexists.
+    split; [cbv delta [mkR]; reflexivity|].
+    repeat match goal with |- _ /\ _ => split end.
+    all: first [ assumption | lia | exact PGC ].
   Qed.
 End InitLibc.

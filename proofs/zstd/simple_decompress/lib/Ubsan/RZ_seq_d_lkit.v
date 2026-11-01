@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -60,26 +60,47 @@ Lemma seqd_linv_frame : forall P OEND LEND m1 cw bc ptr sLL sOF sML p0 p1 p2 LP,
   rw_cells usegs m2 (q_SPV P + -352) (seqd_frame P OEND LEND cw' bc' ptr' sLL' sOF' sML' p0' p1' p2' LP' j0 jpad jseq) ->
   seqd_linv P OEND LEND m2 cw' bc' ptr' sLL' sOF' sML' p0' p1' p2' LP'.
 Proof.
-  intros P OEND LEND m1 cw bc ptr sLL sOF sML p0 p1 p2 LP ST INV m2 cw' bc' ptr' sLL' sOF' sML' p0' p1' p2' LP' j0 jpad jseq MUL WML MI2 FR.
-  destruct INV as (_ & TLL & TOF & TML & SQB & LIT & XI).
-  split; [exists j0, jpad, jseq; exact FR|]. clear FR.
-  destruct P as [ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m SPV lo DCTX DST CAP B0 B1 SEQ nbSeq LLT MLT OFT PFX LITP LITSZ LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws].
-  cbn [seqd_static seqd_xinv q_ra q_gp q_tp q_s0 q_s1 q_s2 q_s3 q_s4 q_s5 q_s6 q_s7 q_s8 q_s9 q_s10 q_s11 q_F q_fc q_m q_SPV q_lo q_DCTX q_DST q_CAP q_B0 q_B1 q_SEQ q_nbSeq q_LLT q_MLT q_OFT q_PFX q_LITP q_LITSZ q_LITB q_LOC q_sq q_tLL q_tOF q_tML q_huf q_r0 q_r1 q_r2 q_pde q_dend q_expd q_pcs q_dsz q_bt q_stg q_le q_fe q_ws] in *.
-  sd_static_open ST. unfold held in *.
-  pose proof (tbl_len_LL _ OKLL) as LLL. pose proof (tbl_len_OF _ OKOF) as LOF. pose proof (tbl_len_ML _ OKML) as LML.
-  destruct XI as ((r0' & r1' & r2' & REP) & HH3 & BUF & STK & MU & WM & MI1).
-  unfold dctx_h3, DCTX_entropy_rep, DCTX_fseEntropy in *.
-  split; [eapply bytes_at_transport; [exact TLL | exact MUL | cbn [disjoint_from]; split; [clear - S28 S18 LLL; lia|exact I]]|].
-  split; [eapply bytes_at_transport; [exact TOF | exact MUL | cbn [disjoint_from]; split; [clear - S29 S18 LOF; lia|exact I]]|].
-  split; [eapply bytes_at_transport; [exact TML | exact MUL | cbn [disjoint_from]; split; [clear - S30 S18 LML; lia|exact I]]|].
-  split; [eapply bytes_at_transport; [exact SQB | exact MUL | cbn [disjoint_from]; rewrite length_map; split; [clear - S25 S18; lia|exact I]]|].
-  split; [eapply rdbl_transport; [exact LIT | exact MUL | intros x Hx; left; cbn [outside]; split; [clear - S26 S18 Hx; lia|exact I]]|].
-  split; [exists r0', r1', r2'; eapply rw_cells_transport; [exact REP | exact MUL | exact WML | cbn [disjoint_from cells_size csize]; split; [clear - S27 S18; lia|exact I]]|].
-  split; [eapply rw_cells_transport; [exact HH3 | exact MUL | exact WML | cbn [disjoint_from cells_size csize]; split; [clear - S27 S18; lia|exact I]]|].
-  split; [eapply stk_transport_disjoint; [exact BUF | exact MUL | exact WML | cbn [disjoint_from]; split; [clear - S24 S18; lia|exact I]]|].
-  split; [eapply stk_transport_disjoint; [exact STK | exact MUL | exact WML | cbn [disjoint_from]; split; [clear - S18; lia|exact I]]|].
-  split; [eapply munch_trans; [exact MU | eapply munch_weaken; [|exact MUL]; unfold sub_fp; cbn [outside]; intros x Hx; clear - Hx; lia]|].
-  split; [eapply wmono_trans; [exact WM | exact WML] | exact MI2].
+  intros P OEND LEND m1 cw bc ptr sLL sOF sML p0 p1 p2 LP Static Live
+         m2 cw' bc' ptr' sLL' sOF' sML' p0' p1' p2' LP' j0 jpad jseq Moved Grown Sane2 Fresh.
+  destruct Live as (_ & ImgLL & ImgOF & ImgML & ImgSq & LitOk & Ext).
+  destruct P as [ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 SP lo DC DST CAP B0 B1 SEQ nbSeq LLT MLT OFT
+                 PFX LITP LITSZ LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws].
+  destruct Static as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SpRng & LoRng & _ & _ & _ & _ & _ &
+                      OffBuf & OffSeq & OffLit & OffCtx & OffLLT & OffOFT & OffMLT & _ & _ & _ & _ & _ &
+                      OkLL & OkOF & OkML & _).
+  unfold seqd_linv.
+  cbn [q_SPV q_LLT q_OFT q_MLT q_SEQ q_LITP q_tLL q_tOF q_tML q_sq seqd_xinv] in *.
+  destruct Ext as ((e0 & e1 & e2 & RepOld) & CtxOld & BufOld & LowOld & MunOld & MonOld & _).
+  unfold dctx_h3, DCTX_entropy_rep in *.
+  assert (MonNew : wmono usegs m0 m2) by exact (wmono_trans usegs _ _ _ MonOld Grown).
+  assert (MunNew : munch [(DST, DST + CAP); (DC + 26684, DC + 26684 + 12);
+                          (DC + DCTX_fseEntropy, DC + DCTX_fseEntropy + 4); (SP - 544, SP)] m0 m2).
+  { refine (munch_trans _ m0 m1 m2 MunOld (munch_weaken [(SP - 352, SP)] _ m1 m2 _ Moved)).
+    intros a Away. cbn [outside] in Away |- *.
+    destruct Away as (_ & _ & _ & NotStack & _). split; [lia | exact I]. }
+  assert (Clear : forall A n, A + n <= SP - 352 \/ SP <= A -> disjoint_from [(SP - 352, SP)] A n).
+  { intros A n Side. cbn [disjoint_from]. exact (conj Side I). }
+  pose proof (stk_transport_disjoint usegs _ m1 m2 _ _ LowOld Moved Grown ltac:(apply Clear; lia)) as LowNew.
+  pose proof (stk_transport_disjoint usegs _ m1 m2 _ _ BufOld Moved Grown ltac:(apply Clear; lia)) as BufNew.
+  pose proof (rw_cells_transport usegs _ m1 m2 _ _ CtxOld Moved Grown
+                ltac:(apply Clear; cbn [cells_size csize Nat.add]; lia)) as CtxNew.
+  pose proof (rw_cells_transport usegs _ m1 m2 _ _ RepOld Moved Grown
+                ltac:(apply Clear; cbn [cells_size csize Nat.add]; lia)) as RepNew.
+  pose proof (tbl_len_LL tLL OkLL) as LenLL.
+  pose proof (tbl_len_OF tOF OkOF) as LenOF.
+  pose proof (tbl_len_ML tML OkML) as LenML.
+  pose proof (bytes_at_transport usegs _ m1 m2 _ _ ImgML Moved ltac:(apply Clear; lia)) as ImgMLNew.
+  pose proof (bytes_at_transport usegs _ m1 m2 _ _ ImgOF Moved ltac:(apply Clear; lia)) as ImgOFNew.
+  pose proof (bytes_at_transport usegs _ m1 m2 _ _ ImgLL Moved ltac:(apply Clear; lia)) as ImgLLNew.
+  pose proof (bytes_at_transport usegs _ m1 m2 _ _ ImgSq Moved
+                ltac:(apply Clear; rewrite length_map; lia)) as ImgSqNew.
+  assert (LitNew : rdbl usegs m2 LITP (LEND + 32)).
+  { apply (rdbl_transport usegs _ m1 m2 _ _ LitOk Moved).
+    intros a Span. left. cbn [outside]. split; [lia | exact I]. }
+  exact (conj (ex_intro _ j0 (ex_intro _ jpad (ex_intro _ jseq Fresh)))
+          (conj ImgLLNew (conj ImgOFNew (conj ImgMLNew (conj ImgSqNew (conj LitNew
+          (conj (ex_intro _ e0 (ex_intro _ e1 (ex_intro _ e2 RepNew)))
+          (conj CtxNew (conj BufNew (conj LowNew (conj MunNew (conj MonNew Sane2)))))))))))).
 Qed.
 
 (* [comment removed for export] *)
@@ -108,26 +129,49 @@ Lemma seqd_linv_cells : forall P OEND LEND BND m1 cw bc ptr sLL sOF sML p0 p1 p2
      rdn usegs m1 (wa (q_MLT P + 8 * sML + 12)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 vML))) /\
     seqd_cellfacts P nLL aLL bLL vLL nOF aOF bOF vOF nML aML bML vML.
 Proof.
-  intros P OEND LEND BND m1 cw bc ptr sLL sOF sML p0 p1 p2 LP OP ST INV LF.
-  destruct INV as (_ & TLL & TOF & TML & _). destruct LF as (_ & _ & L3 & L4 & L5 & _).
-  assert (OKS : seq_table_ok K_LL (q_tLL P) /\ seq_table_ok K_OF (q_tOF P) /\ seq_table_ok K_ML (q_tML P)).
-  { destruct P as [ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m SPV lo DCTX DST CAP B0 B1 SEQ nbSeq LLT MLT OFT PFX LITP LITSZ LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws]. cbn [seqd_static q_ra q_gp q_tp q_s0 q_s1 q_s2 q_s3 q_s4 q_s5 q_s6 q_s7 q_s8 q_s9 q_s10 q_s11 q_F q_fc q_m q_SPV q_lo q_DCTX q_DST q_CAP q_B0 q_B1 q_SEQ q_nbSeq q_LLT q_MLT q_OFT q_PFX q_LITP q_LITSZ q_LITB q_LOC q_sq q_tLL q_tOF q_tML q_huf q_r0 q_r1 q_r2 q_pde q_dend q_expd q_pcs q_dsz q_bt q_stg q_le q_fe q_ws] in *. sd_static_open ST. auto. }
-  destruct OKS as (OKLL & OKOF & OKML). clear ST.
-  destruct (seq_cell_know usegs m1 _ K_LL _ TLL OKLL sLL L3) as (A0 & A1 & A2 & A3 & (CA1 & CA2 & CA3 & SYA)).
-  destruct (seq_cell_know usegs m1 _ K_OF _ TOF OKOF sOF L4) as (B0 & B1 & B2 & B3 & (CB1 & CB2 & CB3 & SYB)).
-  destruct (seq_cell_know usegs m1 _ K_ML _ TML OKML sML L5) as (C0 & C1 & C2 & C3 & (CC1 & CC2 & CC3 & SYC)).
-  pose proof (sym_ok_kind_bounds K_LL _ SYA) as (YA1 & YA2 & YA3 & _).
-  pose proof (sym_ok_kind_bounds K_OF _ SYB) as (YB1 & YB2 & YB3 & YB4 & YB5 & _).
-  pose proof (sym_ok_kind_bounds K_ML _ SYC) as (YC1 & YC2 & YC3 & _).
-  pose proof (seq_tl_range K_LL _ OKLL) as TA. pose proof (seq_tl_range K_OF _ OKOF) as TB. pose proof (seq_tl_range K_ML _ OKML) as TC.
-  assert (PA : 2^(st_log (q_tLL P)) <= 512) by (change 512 with (2^9); apply Z.pow_le_mono_r; lia).
-  assert (PB : 2^(st_log (q_tOF P)) <= 512) by (change 512 with (2^9); apply Z.pow_le_mono_r; lia).
-  assert (PC : 2^(st_log (q_tML P)) <= 512) by (change 512 with (2^9); apply Z.pow_le_mono_r; lia).
-  assert (QA : 0 < 2^(ss_nbBits (st_cell (q_tLL P) sLL))) by (apply Z.pow_pos_nonneg; lia).
-  assert (QB : 0 < 2^(ss_nbBits (st_cell (q_tOF P) sOF))) by (apply Z.pow_pos_nonneg; lia).
-  assert (QC : 0 < 2^(ss_nbBits (st_cell (q_tML P) sML))) by (apply Z.pow_pos_nonneg; lia).
-  do 12 eexists. split; [repeat split; eassumption|]. split; [repeat split; eassumption|]. split; [repeat split; eassumption|].
-  unfold seqd_cellfacts, seqd_next. repeat split; try eassumption; try lia.
+  intros P OEND LEND BND m1 cw bc ptr sLL sOF sML p0 p1 p2 LP OP Static Live Loop.
+  assert (Ok3 : seq_table_ok K_LL (q_tLL P) /\ seq_table_ok K_OF (q_tOF P) /\ seq_table_ok K_ML (q_tML P)).
+  { clear Live Loop. destruct P.
+    do 35 (destruct Static as [_ Static]).
+    destruct Static as (OkL & OkO & OkM & _).
+    exact (conj OkL (conj OkO OkM)). }
+  destruct Ok3 as (OkLL & OkOF & OkML).
+  destruct Live as (_ & ImgLL & ImgOF & ImgML & _).
+  destruct Loop as (_ & _ & StLL & StOF & StML & _).
+  pose proof (seq_cell_know usegs m1 (q_LLT P) K_LL (q_tLL P) ImgLL OkLL sLL StLL) as KnL.
+  pose proof (seq_cell_know usegs m1 (q_OFT P) K_OF (q_tOF P) ImgOF OkOF sOF StOF) as KnO.
+  pose proof (seq_cell_know usegs m1 (q_MLT P) K_ML (q_tML P) ImgML OkML sML StML) as KnM.
+  cbv zeta in KnL, KnO, KnM.
+  pose proof (seq_tl_range K_LL (q_tLL P) OkLL) as LogL.
+  pose proof (seq_tl_range K_OF (q_tOF P) OkOF) as LogO.
+  pose proof (seq_tl_range K_ML (q_tML P) OkML) as LogM.
+  pose proof (seq_pow_le K_LL (q_tLL P) OkLL) as PowL.
+  pose proof (seq_pow_le K_OF (q_tOF P) OkOF) as PowO.
+  pose proof (seq_pow_le K_ML (q_tML P) OkML) as PowM.
+  set (cL := st_cell (q_tLL P) sLL) in KnL.
+  set (cO := st_cell (q_tOF P) sOF) in KnO.
+  set (cM := st_cell (q_tML P) sML) in KnM.
+  clearbody cL cO cM.
+  destruct cL as [nxL adL nbL bsL], cO as [nxO adO nbO bsO], cM as [nxM adM nbM bsM].
+  unfold cell_ok in KnL, KnO, KnM.
+  cbn [ss_next ss_nbAdd ss_nbBits ss_base] in KnL, KnO, KnM.
+  destruct KnL as (RdL1 & RdL2 & RdL3 & RdL4 & NbL & NxL & FitL & SymL).
+  destruct KnO as (RdO1 & RdO2 & RdO3 & RdO4 & NbO & NxO & FitO & SymO).
+  destruct KnM as (RdM1 & RdM2 & RdM3 & RdM4 & NbM & NxM & FitM & SymM).
+  exists nxL, adL, nbL, bsL, nxO, adO, nbO, bsO, nxM, adM, nbM, bsM.
+  refine (conj (conj RdL1 (conj RdL2 (conj RdL3 RdL4)))
+            (conj (conj RdO1 (conj RdO2 (conj RdO3 RdO4)))
+              (conj (conj RdM1 (conj RdM2 (conj RdM3 RdM4))) _))).
+  apply sym_ok_kind_bounds in SymL, SymO, SymM.
+  cbn [ss_nbAdd ss_base] in SymL, SymO, SymM.
+  destruct SymL as (AdL & BsL & SumL & _).
+  destruct SymO as (AdO & BsO & SumO & ZeroO & OneO & _).
+  destruct SymM as (AdM & BsM & SumM & _).
+  assert (GtL : 0 < 2 ^ nbL) by (apply Z.pow_pos_nonneg; lia).
+  assert (GtO : 0 < 2 ^ nbO) by (apply Z.pow_pos_nonneg; lia).
+  assert (GtM : 0 < 2 ^ nbM) by (apply Z.pow_pos_nonneg; lia).
+  unfold seqd_cellfacts, seqd_next.
+  repeat match goal with |- _ /\ _ => split end; lia.
 Qed.
 
 (* [comment removed for export] *)

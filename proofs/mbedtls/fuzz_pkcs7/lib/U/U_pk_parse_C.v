@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -167,7 +167,7 @@ Section PA.
   Hypothesis SPR : bv_unsigned sp < 2^64.
 
   Notation POST := (pk_parse_subpubkey_post usegs L HI PK SI ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc h0 LB PP P END PKA lo m0 mo0).
-  Notation FRS mm := (rw_cells usegs mm (bv_unsigned sp + -40) [C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
+  Notation FRS mm := (rw_cells usegs mm (bv_unsigned sp + -48) [C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
   Notation FP := ([(PP, PP + 8); (PKA, PKA + 16)] ++ XS).
 
 Notation pa_basics' := (pa_basics L HI HLS sp m0 mo0 h0 LB PP BUF PKA lo bs HH0 INB SPP SPK ACL SLO DHI).
@@ -264,179 +264,255 @@ Notation pa_basics' := (pa_basics L HI HLS sp m0 mo0 h0 LB PP BUF PKA lo bs HH0 
     (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.U.UImg.usegs)))
 (* [comment removed for export] *).
   Proof.
-    intros until x31. intros CX KP CIN BRC APC EI AP GB LEQ NEWNB RES RR HPP PB E2B HPKA FRL FR ST P00.
-    dpose pa_basics' as (ACP & BAC & BIM & PPD & PKD & SLO').
-    dpose CX as (HH & HT & MF & MI & SOK & SIP & SUB & PX). pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    dpose BRC as (C0 & C16 & _ & CAC & CIM). pose proof alloc_ceiling_lt as ACLT.
-    assert (NDL : List.NoDup (map fst LB)) by exact (HND _ _ _ _ HH0). pose proof (HND _ _ _ _ HH) as ND2.
-    assert (NINC : ~ In (C, 256) LB) by (intros Hin; destruct (APC _ _ Hin); clear -H; lia).
-    (* [comment removed for export] *)
-    assert (REP2 : pk_rep_c usegs U_RSA_INFO U_EC_INFOS MT m LB2 PKA info C (newb LB LB2)).
-    { eapply ec_rep_intro; [exact EI| intros E0; rewrite E0 in EI; cbn in EI; clear -EI; intuition discriminate| exact MI| exact ND2| exact KP| exact CIN| | | exact C16| clear -CAC ACLT; lia|].
-      - intros d1 d2 H1 H2 NE O1 O2 E. apply (AP d1 d2 (kpi_heap_grp _ _ _ _ _ _ _ H1 O1) (kpi_heap_grp _ _ _ _ _ _ _ H2 O2) NE O1 O2). injection E as Ea Eb. exact Ea.
-      - intros d Hd O E. apply (NEWNB (C, 256)); [| left; reflexivity]. rewrite <- E, <- GB. exact (grp_blk_in g d (kpi_heap_grp _ _ _ _ _ _ _ Hd O) O).
-      - intros b. rewrite newb_in, kpi_blocks, GB. cbn [In]. rewrite LEQ. cbn [In]. split.
-        + (intros dd_H; ddestruct dd_H as [[Hb|[Hb|Hb]] Hn]); [right; exact Hb| left; exact Hb| exfalso; exact (Hn Hb)].
-        + intros [Hb|Hb]; [subst b| ]; [split; [right; left; reflexivity| exact NINC]| split; [left; exact Hb| intros HbL; exact (NEWNB b Hb ltac:(right; exact HbL))]]. }
-    assert (PERM2 : Permutation LB2 (newb LB LB2 ++ LB)) by (apply newb_perm; [exact ND2| exact NDL| exact SUB]).
-    (* [comment removed for export] *)
-    assert (REPx : forall LBx, (forall b, In b (newb LB LB2) -> In b LBx) -> pk_rep_c usegs U_RSA_INFO U_EC_INFOS MT m LBx PKA info C (newb LB LB2)).
-    { intros LBx Hs. eapply pk_rep_c_frame; [exact REP2| exact MI| exact Hs| intros a _; reflexivity]. }
-    zstep. if_cases KZ; zify_cond KZ.
-    { (* [comment removed for export] *)
-      assert (NZ : r <> 0) by (intros ->; apply KZ; reflexivity).
-      eapply fail_free_walk' with (owned := newb LB LB2) (info := info) (ctx := C);
-        [ exact CX | exact PERM2 | clear -RR NZ; lia | exact HPP | clear -PB E2B; lia | exact HPKA | apply REPx; intros b Hb; apply in_or_app; left; exact Hb | exact FRL | exact FR | exact ST ]. }
-    assert (Z0 : r = 0).
-    { clear -KZ RR. apply Z.mod_divide in KZ; [| lia]. destruct KZ as [q Hq]. assert (q = 0 \/ q = -1) as [->| ->] by lia; lia. }
-    subst r. clear KZ RR. ddestruct (RES eq_refl) as (id & IDB & GL). clear RES.
-    assert (ID13 : 1 <= id <= 13).
-    { destruct GL as [(_ & _ & X & _)|[(_ & X & _)|[(X & _)|(X & _)]]]; [exact X| clear -X; lia| exfalso; unfold MBEDTLS_ERR_ECP_FEATURE_UNAVAILABLE in X; clear -X; lia| exfalso; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in X; clear -X; lia]. }
-    (* [comment removed for export] *)
-    pose proof (pctx_bytes' _ _ _ _ CX) as HBS.
-    set (kbs := firstn (Z.to_nat (E2 - p)) (skipn (Z.to_nat (p - BUF)) bs)).
-    assert (LENK : Z.of_nat (length kbs) = E2 - p) by (subst kbs; apply U_asn1_get_mpi.bytes_at_sub_length; clear -PB E2B BP EB; lia).
-    assert (HKB : bytes_at usegs m p kbs) by (subst kbs; eapply U_asn1_get_mpi.bytes_at_sub; [exact HBS| | |]; clear -PB E2B BP EB; lia).
-    clearbody kbs.
-    destruct SIP as [IDS [cnt CNT]].
-    destruct (U_bad_points_ok L LB2 m SOK CA_BP MI) as [BP1 BP2].
-    pose proof (U_pk_ecc_set_pubkey_spec L HI HLS DIMG U_MT HPRB HCPK) as SPK'. unfold pk_ecc_set_pubkey_stmt, pk_ecc_set_pubkey_post, U_PK_ECC_SET_PUBKEY in SPK'.
+    intros m mo h LB2 C p E2 info r g NB pd qX qY qZ lj x1 x5 x6 x7 x11 x12 x13 x14 x15 x16 x17 p0 x20 x28 x29 x30 x31
+      w_ctx w_key w_cin w_brange w_apart w_info w_mpds w_nb w_split w_fresh w_load w_rr w_pcell w_prange w_end w_pk w_low w_saved w_stk w_p0.
+    clear HCALLOC CA_RSA0 CA_RSA72 CA_EC0 CA_EC72 CAT_ECGRP CAT_PKALG CAT_ECALGID CA_PKTBL HPP0 ALPP HPKA0 PPT ST0 MI0 SOK0 SIP0 RA.
+    pose proof w_ctx as (w_heap & w_top & w_mof & w_mi & w_sok & w_sinv & w_grow & w_keep).
+    pose proof (heap_mok _ _ HI _ _ _ _ w_heap) as w_mok.
+    pose proof (HND _ _ _ _ w_heap) as w_nd.
+    pose proof w_brange as (w_c0 & w_c16 & _ & w_cac & w_cim).
+    pose proof alloc_ceiling_lt as w_ceil.
+    assert (w_info0 : info <> 0).
+    { intros w_z. subst info. revert w_info. cbn. intuition discriminate. }
+    assert (w_cnot : ~ In (C, 256) LB).
+    { intros w_c. destruct (w_apart C 256 w_c) as [w_x|w_x]; clear -w_x; lia. }
+    (* the blocks this function owns: those of LB2 that the caller did not pass in *)
+    assert (w_own : forall b, In b (newb LB LB2) <-> In b ((C, 256) :: NB)).
+    { intros b. rewrite newb_in. split.
+      - intros [w_in2 w_out]. apply w_split in w_in2. destruct w_in2 as [w_n|[w_c|w_l]].
+        + right. exact w_n.
+        + left. exact w_c.
+        + exfalso. exact (w_out w_l).
+      - intros [w_c|w_n].
+        + subst b. exact (conj w_cin w_cnot).
+        + split; [apply w_split; left; exact w_n|].
+          intros w_l. apply (w_fresh b w_n). right. exact w_l. }
+    assert (w_rep : forall mx LBx, mem_inv usegs mx -> List.NoDup (map fst LBx) -> In (C, 256) LBx ->
+              ecp_keypair_at usegs U_MT mx LBx C (mkKP g (mpd_init (C + 192) pd) (pt_init (C + 208) qX qY qZ)) ->
+              pk_rep_c usegs U_RSA_INFO U_EC_INFOS U_MT mx LBx PKA info C (newb LB LB2)).
+    { intros mx LBx w_mix w_ndx w_cx w_kx.
+      apply (ec_rep_intro U_MT U_RSA_INFO U_EC_INFOS mx LBx PKA C _ info (newb LB LB2) w_info w_info0 w_mix w_ndx w_kx w_cx).
+      - intros d1 d2 w_d1 w_d2 w_ne w_o1 w_o2 w_eq.
+        apply (w_mpds d1 d2 (kpi_heap_grp _ _ _ _ _ _ d1 w_d1 w_o1) (kpi_heap_grp _ _ _ _ _ _ d2 w_d2 w_o2) w_ne w_o1 w_o2).
+        injection w_eq as w_peq _. exact w_peq.
+      - intros d w_d w_o w_eq.
+        pose proof (grp_blk_in g d (kpi_heap_grp _ _ _ _ _ _ d w_d w_o) w_o) as w_gb.
+        rewrite w_nb, w_eq in w_gb. apply (w_fresh _ w_gb). left. reflexivity.
+      - exact w_c16.
+      - clear -w_cac w_ceil. lia.
+      - intros b. rewrite w_own, kpi_blocks, w_nb. reflexivity. }
+    zstep.
+    if_cases w_br; zify_cond w_br.
+    { (* a nonzero code from the group load: free the context and return it *)
+      eapply fail_free_walk' with (LBc := LB2) (owned := newb LB LB2) (info := info) (ctx := C) (p' := p);
+        [ exact w_ctx | apply newb_perm; [exact w_nd| exact (HND _ _ _ _ HH0)| exact w_grow] | | exact w_pcell | clear -w_prange w_end; lia | exact w_pk
+        | | exact w_low | exact w_saved | exact w_stk ].
+      - clear -w_rr w_br. lia.
+      - apply (pk_rep_c_frame _ _ _ _ m m LB2 _ _ _ _ _ (w_rep m LB2 w_mi w_nd w_cin w_key) w_mi).
+        + intros b w_b. apply in_or_app. left. exact w_b.
+        + intros a _. reflexivity. }
+    assert (w_r0 : r = 0) by (clear -w_rr w_br; lia). subst r.
+    destruct (w_load eq_refl) as (id & w_idr & w_gl).
+    assert (w_id13 : 1 <= id <= 13).
+    { destruct w_gl as [(_ & _ & w_x & _)|[(_ & [w_x|w_x] & _)|[(w_x & _)|(w_x & _)]]];
+        [exact w_x| subst id; lia| subst id; lia| discriminate w_x| discriminate w_x]. }
+    pose proof (pctx_bytes' h LB2 m mo w_ctx) as w_bytes.
+    pose proof pa_basics' as (w_ac4096 & w_bufac & w_bufimg & w_ppdat & w_pkdat & w_room).
+    pose proof DI1 as w_di1. pose proof DI2 as w_di2. pose proof ML1 as w_ml1. pose proof ML2 as w_ml2.
+    assert (w_spu : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -112)) = bv_unsigned sp + -112).
+    { apply unsigned_lit. clear -w_room ACL w_ac4096 HLS SPR. lia. }
+    destruct (bytes_at_sub m BUF bs (p - BUF) (E2 - p) w_bytes) as [w_xs w_xsl];
+      [clear -w_prange BP; lia| clear -w_prange; lia| clear -w_prange w_end EB; lia|].
+    set (xs := firstn (Z.to_nat (E2 - p)) (skipn (Z.to_nat (p - BUF)) bs)) in w_xs, w_xsl.
+    replace (BUF + (p - BUF)) with p in w_xs by (clear; lia).
+    assert (w_xsz : Z.of_nat (length xs) = E2 - p) by (rewrite w_xsl; clear -w_prange; lia).
+    clearbody xs. clear w_xsl.
+    pose proof w_sinv as (w_ids & cnt & w_mc).
+    pose proof (U_bad_points_ok L LB2 m w_sok CA_BP w_mi) as (w_bp1 & w_bp2).
+    pose proof (U_pk_ecc_set_pubkey_spec L HI HLS DIMG U_MT HPRB HCPK) as w_spk.
+    unfold pk_ecc_set_pubkey_stmt, U_PK_ECC_SET_PUBKEY in w_spk.
     zstep. zstep. zstep. zstep.
     eapply aevtM_cut.
-    { eapply SPK' with (lo := lo) (h := h) (LB := LB2) (PKA := PKA) (info := info) (C := C) (id := id) (B := p) (bs := kbs) (g := g);
-        rewrite ?(unsigned_lit (bv_unsigned sp + -112)) by (clear -SLO' HLS ACL ACP SPR; lia); rewrite ?LENK, <- ?GB; unfold ECP_KEYPAIR_SIZE;
-        first [ exact HH | exact HPKA | exact ALP | exact NZP | exact KP | exact CIN | exact EI | exact HKB | exact CNT | exact BP1 | exact BP2
-              | exact TP | exact MI | exact RA | exact SOK | exact CA_MSF | exact ACL | exact DHI | exact ST | reflexivity
-              | f_equal; clear; lia
-              | (* [comment removed for export] *) right; clear -SPK; lia
-              | (* [comment removed for export] *) intros a Ha; destruct (CWP a Ha) as [Q|[Q|(b & Hb & Hr)]]; [left; rewrite HT; exact Q| right; left; exact Q| right; right; exists b; split; [apply SUB; exact Hb| exact Hr]]
-              | exact (fresh_apart_pka' C 256 BRC APC ltac:(clear; lia))
-              | exact PKD
-              | (* [comment removed for export] *) pose proof DI1 as E1'; pose proof DI2 as E2''; clear -CIM E1' E2''; lia
-              | (* [comment removed for export] *) rewrite GB; exact GL
-              | apply U_curve_statics; [exact MI| exact ID13]
-              | clear -PB E2B BP EB BUF0; lia
-              | clear -PB E2B BP EB B63; lia
-              | (* [comment removed for export] *) intros a Ha; right; right; exists (BUF, Z.of_nat (length bs)); split; [apply SUB; exact INB| cbn; clear -Ha PB E2B BP EB; lia]
-              | left; clear -PB E2B BP EB BAC ACL; lia
-              | (* [comment removed for export] *) destruct (APC _ _ INB) as [Q|Q]; [right; clear -Q PB E2B BP EB; lia| left; clear -Q PB E2B BP EB; lia]
-              | (* [comment removed for export] *) pose proof ML1 as M1; pose proof ML2 as M2; pose proof DI1 as E1'; pose proof DI2 as E2''; destruct BIM as [Q|Q]; [right| left]; clear -Q PB E2B BP EB M1 M2 E1' E2''; lia
-              | exact ML1 | exact ML2 | intros a Ha; destruct (proj2 (proj2 HMC) a Ha) as [W NS]; exact (conj NS W)
-              | (* [comment removed for export] *) pose proof ML1 as M1; pose proof ML2 as M2; pose proof DI1 as E1'; pose proof DI2 as E2''; clear -CIM M1 M2 E1' E2''; lia
-              | exact (proj1 CA_BP) | exact (proj1 (proj2 CA_BP))
-              | (* [comment removed for export] *) intros a Ha Hs; exact (proj2 (proj2 CA_BP) a Ha (SW a Hs))
-              | (* [comment removed for export] *) unfold U_BAD_POINTS; clear; lia
-              | rewrite HT; clear -HTOP SLO' HLS; lia
-              | clear -SLO' HLS SPA SPR ACL; lia
-              | match goal with |- ?gl => idtac "SPKLEFT" gl end ]. }
-    clear SPK'.
-    intros ms' mo' PO. destruct_exs PO. destruct PO as [E PO]. injection E as E1 E2'. subst ms' mo'.
-    rewrite ?(unsigned_lit (bv_unsigned sp + -112)) in PO by (clear -SLO' HLS ACL ACP SPR; lia).
-    ddestruct PO as (RR3 & MI3 & ST3 & MF3 & HT3 & HH3 & KP3 & PF3 & SG3 & DIS3 & SUB3 & COV3 & NEW3 & HPKA3 & PX3 & SOK3 & CNT3).
-    lazymatch goal with |- _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
-      replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ clear; lia | reflexivity ]) end.
-    lazymatch goal with |- aevtM _ ?mox _ (MS _ _ _ _ _ ?mx _) => rename mx into m3; rename mox into mo3 end.
-    match type of HH3 with HEAP _ _ _ ?hh ?lb _ _ => rename hh into h3; rename lb into LB3 end.
-    match type of KP3 with ecp_keypair_at _ _ _ _ _ (mkKP _ _ ?q) => rename q into Q' end.
-    lazymatch goal with |- aevtM _ _ _ (MS (mkR _ _ _ _ _ _ _ _ _ (Z_to_bv 64 ?r) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) _ _ _ _ _ _) => rename r into r3 end.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH3) as MK3. clear MK.
-    (* [comment removed for export] *)
-    assert (XF : Forall (fun iv => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv) [(C + 208, C + 256); (380840, 380840 + 8)]).
-    { pose proof ML2 as M2. constructor; [cbn; left; clear -CAC ACL SLO' HLS; lia| constructor; [cbn; left; clear -M2 DHI ACL SLO' HLS; lia| constructor]]. }
-    apply (keep_frame' _ _ _ m m3 _ _ PX3 ltac:(clear; lia)) in FRL; [| clear; lia| cbn; clear; lia| exact XF].
-    apply (keep_frame' _ _ _ m m3 _ _ PX3 ltac:(clear; lia)) in FR; [| clear; lia| cbn; clear; lia| exact XF].
-    apply (keep_pp' LB2 _ _ m m3 _ PX3 SUB ltac:(clear; lia)) in HPP;
-      [| reflexivity| cbn; pose proof (fresh_apart_pp' C 256 BRC APC ltac:(clear; lia)) as Q; pose proof ML1 as M1; pose proof ML2 as M2; split; [clear -Q; lia| split; [clear -PPD M1 M2; lia| exact I]]].
-    assert (CX3 : pctx' h3 LB3 m3 mo3).
-    { split; [exact HH3|]. split; [rewrite HT3; exact HT|]. split; [eapply mo_frame_trans; [exact MF| exact MF3]|]. split; [exact MI3|]. split; [exact SOK3|].
-      split. { pose proof IL1 as I1; pose proof IL2 as I2; pose proof IL3 as I3; pose proof ML1 as M1; pose proof ML2 as M2; pose proof DI1 as E1'; pose proof DI2 as E2''. split.
-               - apply (ecp_ids_state_presx usegs L _ _ _ _ _ m m3 IDS PX3 HL); cbn; unfold U_ECP_IDS_DONE, U_ECP_IDS in *; clear -CIM I1 I2 I3 E1' E2''; (split; [lia| split; [lia| exact I]]).
-               - eexists. exact CNT3. }
-      split; [intros b Hb; apply SUB3; apply SUB; exact Hb|].
-      eapply heap_presx_trans; [exact PX|]. eapply heap_presx_weak''; [exact PX3| exact SUB| clear; lia|].
-      intros a Hc Ho. cbn. cbn in Ho. split; [| split; [clear -Ho; tauto| exact I]]. intros Ha. exact (fresh_not_client' C 256 a BRC APC ltac:(clear -Ha; lia) Hc). }
-    clear CX HH HT MF SOK IDS CNT PX HBS HKB BP1 BP2.
-    (* [comment removed for export] *)
-    pose proof (conj MI3 (conj HH3 I)) as BOX3. clear HH3.
-    pose proof (munch_refl [(PP, PP + 8)] m3) as MU. pose proof (wmono_refl usegs m3) as WM.
-    zstep. zstep. zstep. zstep. pk_ckb KN ltac:(clear -P00 PB E2B BP EB BUF0 B63; lia).
-    zstep. zstep. zstep. zstep. zstep. zstep. pk_ckb KS ltac:(clear -P00 PB E2B BP EB BUF0 B63; lia).
+    { eapply w_spk with (h := h) (LB := LB2) (PKA := PKA) (info := info) (C := C) (id := id) (lo := lo) (B := p) (bs := xs)
+        (g := g) (pd := pd) (qX := qX) (qY := qY) (qZ := qZ) (cnt := cnt) (bp1 := U_bp1) (bp2 := U_bp2);
+        rewrite ?w_spu;
+      [ exact w_heap | exact w_pk | exact ALP | exact NZP
+      | clear -DSP; lia
+      | rewrite w_top; exact (client_wrange_mono L LB LB2 lo (heap_top usegs L HI h0) PKA 16 CWP w_grow)
+      | exact (fresh_apart_pka' C 256 w_brange w_apart ltac:(lia))
+      | exact w_pkdat
+      | exact w_key
+      | exact w_cin
+      | unfold ECP_KEYPAIR_SIZE; clear -w_cim w_di1 w_di2; lia
+      | rewrite w_nb; exact w_gl
+      | exact (U_curve_statics m id w_mi w_id13)
+      | exact w_xs
+      | clear -w_prange BP BUF0; lia
+      | rewrite w_xsz; clear -w_prange w_end EB B63; lia
+      | rewrite w_xsz; apply (client_range_blk L LB2 lo BUF (Z.of_nat (length bs)) p (E2 - p) (w_grow _ INB)); clear -w_prange w_end EB BP; lia
+      | rewrite w_xsz; clear -DSB w_prange w_end EB BP; lia
+      | rewrite w_xsz; unfold ECP_KEYPAIR_SIZE; destruct (w_apart _ _ INB) as [w_q|w_q]; clear -w_q w_prange w_end EB BP; lia
+      | rewrite w_xsz; clear -w_bufimg w_di1 w_di2 w_ml1 w_ml2 w_prange w_end EB BP; lia
+      | exact w_mc
+      | exact w_ml1
+      | exact w_ml2
+      | intros a w_a; destruct (proj2 (proj2 HMC) a w_a) as [w_w w_s]; exact (conj w_s w_w)
+      | unfold ECP_KEYPAIR_SIZE; clear -w_cim w_di1 w_di2 w_ml1 w_ml2; lia
+      | exact w_bp1
+      | exact w_bp2
+      | exact (proj1 CA_BP)
+      | exact (proj1 (proj2 CA_BP))
+      | intros a w_a w_st; exact (proj2 (proj2 CA_BP) a w_a (SW a w_st))
+      | unfold U_BAD_POINTS; clear; lia
+      | exact w_stk
+      | clear -SLO HLS; unfold PK_PARSE_STACK in SLO; lia
+      | exact ACL
+      | rewrite w_top; clear -HTOP; lia
+      | clear -SPA; lia
+      | exact DHI
+      | exact TP
+      | exact w_mi
+      | vm_compute; reflexivity
+      | exact w_sok
+      | exact CA_MSF
+      | reflexivity
+      | reflexivity
+      | rewrite w_xsz; reflexivity ]. }
+    intros ms1 mo1 w_post. unfold pk_ecc_set_pubkey_post in w_post.
+    destruct w_post as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m1 & mo1' & h1 & LB3 & Q1 & r1 & cnt1 &
+      w_cfg & w_rr1 & w_mi1 & w_stk1 & w_mof1 & w_top1 & w_heap1 & w_key1 & w_qf & w_qsg & w_qdis & w_grow1 & w_back1 & w_newq & w_pk1 & w_px1 & w_sok1 & w_mc1).
+    injection w_cfg as -> ->.
+    rewrite w_spu in w_stk1, w_px1.
+    rewrite (ret_pc_even 169176) by (first [lia | reflexivity]).
+    pose proof (heap_mok _ _ HI _ _ _ _ w_heap1) as w_mok1.
+    assert (w_ppfar : PP + 8 <= C ∨ C + 256 <= PP) by exact (fresh_apart_pp' C 256 w_brange w_apart ltac:(lia)).
+    assert (w_pcell1 : rw_cells usegs m1 PP [C8 (Z_to_bv 64 p)]).
+    { apply (keep_pp' LB2 (bv_unsigned sp + -112) _ m m1 _ w_px1 w_grow ltac:(lia) w_pcell eq_refl).
+      cbn [disjoint_from]. split; [clear -w_ppfar; lia|]. split; [clear -w_ppdat w_ml1 w_ml2; lia| exact I]. }
+    assert (w_xfar : Forall (fun iv : Z * Z => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv) [(C + 208, C + 256); (380840, 380840 + 8)]).
+    { apply Forall_cons; [cbn [fst snd]; left; clear -w_cac ACL w_room HLS; lia|].
+      apply Forall_cons; [cbn [fst snd]; left; clear -ACL w_room HLS w_ml2 DHI; lia|]. apply Forall_nil. }
+    assert (w_low1 : rw_cells usegs m1 (bv_unsigned sp + -112) [CB 64 lj]).
+    { apply (keep_frame' LB2 (bv_unsigned sp + -112) _ m m1 _ _ w_px1 ltac:(lia) w_low ltac:(lia)); [cbn; lia| exact w_xfar]. }
+    assert (w_saved1 : FRS m1).
+    { apply (keep_frame' LB2 (bv_unsigned sp + -112) _ m m1 _ _ w_px1 ltac:(lia) w_saved ltac:(lia)); [cbn; lia| exact w_xfar]. }
+    clear w_pcell w_low w_saved w_pk.
+    (* the static invariant survives the call: the id list is outside its footprint *)
+    assert (w_ids1 : ecp_ids_state usegs U_ECP_IDS_DONE U_ECP_IDS m1).
+    { destruct w_ids as (w_b & w_bsl & w_i1 & w_i2 & w_iv).
+      pose proof HL as (w_l1 & w_l2 & w_l3 & w_l4).
+      exists w_b, w_bsl. split; [| split; [| exact w_iv]].
+      - apply (heap_presx_rw_cells _ _ _ _ _ m m1 _ _ w_px1 w_i1).
+        + intros a w_a. right. left. cbn in w_a. destruct (w_l4 a ltac:(clear -w_a; lia)) as [_ w_ns].
+          split; [clear -w_a w_l1 w_l2 w_l3; lia| exact w_ns].
+        + cbn. unfold U_ECP_IDS_DONE in *. split; [clear -w_cim w_di1 w_di2 w_l1 w_l3 w_l2; lia|]. split; [clear; lia| exact I].
+      - apply (heap_presx_rw_cells _ _ _ _ _ m m1 _ _ w_px1 w_i2).
+        + intros a w_a. right. left. cbn in w_a. destruct (w_l4 a ltac:(clear -w_a; lia)) as [_ w_ns].
+          split; [clear -w_a w_l1 w_l2 w_l3; lia| exact w_ns].
+        + cbn. unfold U_ECP_IDS in *. split; [clear -w_cim w_di1 w_di2 w_l1 w_l3 w_l2; lia|]. split; [clear; lia| exact I]. }
+    assert (w_grow13 : forall b, In b LB -> In b LB3) by (intros b w_b; exact (w_grow1 b (w_grow b w_b))).
+    assert (w_ctx1 : pctx' h1 LB3 m1 mo1').
+    { refine (conj w_heap1 (conj _ (conj (mo_frame_trans mo0 mo mo1' w_mof w_mof1) (conj w_mi1 (conj w_sok1 (conj _ (conj w_grow13 _))))))).
+      - rewrite w_top1. exact w_top.
+      - split; [exact w_ids1| exists cnt1; exact w_mc1].
+      - apply (heap_presx_trans usegs L LB (bv_unsigned sp) FP m0 m m1 w_keep).
+        apply (heap_presx_weak'' LB2 (bv_unsigned sp + -112) _ _ m m1 w_px1 w_grow ltac:(lia)).
+        intros a w_ca w_out. cbn [outside app] in w_out |- *.
+        destruct w_out as (_ & _ & _ & w_omc & _). split; [| split; [exact w_omc| exact I]].
+        intros w_in. destruct w_ca as [w_up|[[w_dlo _]|((w_bb & w_bk) & w_bin & w_br2)]].
+        + clear -w_up w_in w_cac ACL w_room HLS. lia.
+        + clear -w_dlo w_in w_cim w_di1 w_di2. lia.
+        + cbn [fst snd] in w_br2. destruct (w_apart w_bb w_bk w_bin) as [w_q|w_q]; clear -w_q w_br2 w_in; lia. }
+    (* what the context owns now: the key block, the group limbs and the new point limbs *)
+    assert (w_own1 : forall b, In b (newb LB LB3) <-> In b ((C, 256) :: kp_blocks {| kp_grp := g; kp_d := mpd_init (C + 192) pd; kp_Q := Q1 |})).
+    { intros b. rewrite newb_in. unfold kp_blocks. cbn [kp_grp kp_d kp_Q mpd_blk mpd_init md_own app]. rewrite w_nb.
+      split.
+      - intros [w_in3 w_out]. destruct (w_back1 b w_in3) as [w_in2|w_inq].
+        + apply w_split in w_in2. destruct w_in2 as [w_n|[w_c|w_l]].
+          * right. apply in_or_app. left. exact w_n.
+          * left. exact w_c.
+          * exfalso. exact (w_out w_l).
+        + right. apply in_or_app. right. exact w_inq.
+      - intros [w_c|w_r]; [subst b; exact (conj (w_grow1 _ w_cin) w_cnot)|].
+        apply in_app_or in w_r. destruct w_r as [w_n|w_q].
+        + split; [apply w_grow1; apply w_split; left; exact w_n|].
+          intros w_l. apply (w_fresh b w_n). right. exact w_l.
+        + split.
+          * apply (kp_blocks_in _ _ _ _ _ _ b w_key1). unfold kp_blocks. cbn [kp_grp kp_d kp_Q]. apply in_or_app. right. apply in_or_app. right. exact w_q.
+          * intros w_l. exact (w_newq b w_q (w_grow b w_l)). }
+    assert (w_blk1 : forall d, In d (kp_mpds {| kp_grp := g; kp_d := mpd_init (C + 192) pd; kp_Q := Q1 |}) -> md_own d = LHeap ->
+              (In (md_p d, 4 * md_n d) NB /\ In d (grp_mpds g)) \/ (In (md_p d, 4 * md_n d) (pt_blocks Q1) /\ In d (pt_mpds Q1))).
+    { intros d w_d w_o. unfold kp_mpds in w_d. cbn [kp_grp kp_d kp_Q] in w_d.
+      apply in_app_or in w_d. destruct w_d as [w_d|[w_d|w_d]].
+      - left. split; [rewrite <- w_nb; exact (grp_blk_in g d w_d w_o)| exact w_d].
+      - exfalso. subst d. discriminate w_o.
+      - right. split; [| exact w_d]. unfold pt_blocks. apply in_flat_map. exists d. split; [exact w_d|].
+        rewrite (mpd_blk_heap d w_o). left. reflexivity. }
+    assert (w_rep1 : pk_rep_c usegs U_RSA_INFO U_EC_INFOS U_MT m1 LB3 PKA info C (newb LB LB3)).
+    { apply (ec_rep_intro U_MT U_RSA_INFO U_EC_INFOS m1 LB3 PKA C _ info (newb LB LB3) w_info w_info0 w_mi1 (HND _ _ _ _ w_heap1) w_key1 (w_grow1 _ w_cin)).
+      - intros d1 d2 w_d1 w_d2 w_ne w_o1 w_o2.
+        destruct (w_blk1 d1 w_d1 w_o1) as [(w_b1 & w_g1)|(w_b1 & w_q1)];
+          destruct (w_blk1 d2 w_d2 w_o2) as [(w_b2 & w_g2)|(w_b2 & w_q2)].
+        + intros w_eq. injection w_eq as w_peq _. exact (w_mpds d1 d2 w_g1 w_g2 w_ne w_o1 w_o2 w_peq).
+        + intros w_eq. rewrite w_eq in w_b1. apply (w_newq _ w_b2). apply w_split. left. exact w_b1.
+        + intros w_eq. rewrite <- w_eq in w_b2. apply (w_newq _ w_b1). apply w_split. left. exact w_b2.
+        + destruct w_qdis as (w_xy & w_xz & w_yz). cbn [pt_mpds In] in w_q1, w_q2.
+          destruct w_q1 as [<-|[<-|[<-|[]]]]; destruct w_q2 as [<-|[<-|[<-|[]]]];
+            first [ exfalso; exact (w_ne eq_refl)
+                  | exact (w_xy w_o1 w_o2) | exact (w_xz w_o1 w_o2) | exact (w_yz w_o1 w_o2)
+                  | intros w_eq; symmetry in w_eq; revert w_eq; first [exact (w_xy w_o2 w_o1) | exact (w_xz w_o2 w_o1) | exact (w_yz w_o2 w_o1)] ].
+      - intros d w_d w_o w_eq. destruct (w_blk1 d w_d w_o) as [(w_b & _)|(w_b & _)]; rewrite w_eq in w_b.
+        + apply (w_fresh _ w_b). left. reflexivity.
+        + exact (w_newq _ w_b w_cin).
+      - exact w_c16.
+      - clear -w_cac w_ceil. lia.
+      - exact w_own1. }
+    clear w_key1 w_ids1 w_own1 w_blk1 w_px1 w_ids w_mc w_heap1.
+    zstep. zstep. zstep. zstep.
+    if_cases w_t1; zify_cond w_t1.
+    { exfalso. rewrite (proj2 (Z.ltb_ge p0 1)) in w_t1 by (clear -w_p0 BUF0; lia).
+      rewrite (proj2 (Z.ltb_lt 0 p)) in w_t1 by (clear -w_prange BP BUF0; lia). discriminate w_t1. }
+    zstep. zstep. zstep. zstep. zstep. zstep.
+    if_cases w_t2; zify_cond w_t2.
+    { exfalso. rewrite pk_lxor_sb in w_t2 by (clear -w_prange w_end EB B63 BP BUF0; lia).
+      rewrite (proj2 (Z.ltb_ge E2 p)) in w_t2 by (clear -w_prange; lia).
+      rewrite (proj2 (Z.ltb_ge (E2 - p + 9223372036854775808) 9223372036854775808)) in w_t2 by (clear -w_prange; lia).
+      vm_compute in w_t2. discriminate w_t2. }
+    pose proof (munch_refl [(PP, PP + 8)] m1) as w_mu. pose proof (wmono_refl usegs m1) as w_wm.
     zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m4 end.
-    match goal with M : mem_inv usegs m4 |- _ => rename M into MI4 end. match goal with W : wmono usegs m3 m4 |- _ => rename W into WM4 end.
-    pose proof (pctx_munch' _ _ _ _ _ _ CX3 MU WM4 MI4 ltac:(constructor; [cbn; right; left; reflexivity| constructor])) as CX4.
-    dpose CX4 as (HH4 & HT4 & MF4 & _ & SOK4 & SIP4 & SUB4 & PX4).
-    assert (KP4 : ecp_keypair_at usegs U_MT m4 LB3 C (mkKP g (mpd_init (C + 192) pd) Q')).
-    { destruct (heap_blocks _ _ HI _ _ _ _ (proj1 (proj2 BOX3))) as [HBR3 _].
-      eapply ecp_keypair_at_munch; [exact KP3| exact MU| exact WM4| exact (proj1 BOX3)| exact MI4| cbn [disjoint_from]; pose proof (fresh_apart_pp' C 256 BRC APC ltac:(clear; lia)) as Q; split; [clear -Q; lia| exact I]|].
-      intros d Hd HO. pose proof (kp_mpds_mpdr usegs U_MT m3 LB3 C _ d KP3 Hd) as MDd.
-      destruct (mpdr_blk_facts usegs L _ _ _ MDd HO HBR3) as (HIn & N1 & _).
-      cbn [disjoint_from]. split; [| exact I].
-      (* [comment removed for export] *)
-      assert (NOTIN : ~ In (md_p d, 4 * md_n d) LB).
-      { intros HbL. unfold kp_mpds in Hd. cbn [kp_grp kp_d kp_Q] in Hd. apply in_app_or in Hd. destruct Hd as [Hd|[<-|Hd]].
-        - apply (NEWNB _ ltac:(rewrite <- GB; exact (grp_blk_in g d Hd HO))). right. exact HbL.
-        - cbn in HO. discriminate.
-        - apply (NEW3 (md_p d, 4 * md_n d)); [| apply SUB; exact HbL]. unfold pt_blocks. apply in_flat_map. exists d. split; [exact Hd| rewrite (mpd_blk_heap d HO); left; reflexivity]. }
-      pose proof (blk_apart_pp' h3 LB3 m3 mo3 _ _ (proj1 (proj2 BOX3)) ltac:(intros b Hb; apply SUB4; exact Hb) HIn NOTIN ltac:(clear -N1; lia)) as Q. clear -Q. lia. }
-    dpose KP3 as (_ & _ & _ & _ & (EX3 & EY3 & EZ3 & _) & _). clear MU WM4 CX3 KP3.
-    match goal with H : rw_cells usegs m4 PP _ |- _ => rename H into HPP4 end.
-    (* [comment removed for export] *)
-    assert (NDL' : List.NoDup (map fst LB)) by exact NDL. pose proof (HND _ _ _ _ HH4) as ND4.
-    assert (CIN4 : In (C, 256) LB3) by (apply SUB3; exact CIN).
-    assert (REP4 : pk_rep_c usegs U_RSA_INFO U_EC_INFOS MT m4 LB3 PKA info C (newb LB LB3)).
-    { eapply ec_rep_intro; [exact EI| intros E0; rewrite E0 in EI; cbn in EI; clear -EI; intuition discriminate| exact MI4| exact ND4| exact KP4| exact CIN4| | | exact C16| clear -CAC ACLT; lia|].
-      - (* [comment removed for export] *)
-        intros d1 d2 H1 H2 NE O1 O2. unfold kp_mpds in H1, H2. cbn [kp_grp kp_d kp_Q] in H1, H2.
-        assert (CASE : forall d, In d (grp_mpds g ++ mpd_init (C + 192) pd :: pt_mpds Q') -> md_own d = LHeap ->
-                         (In d (grp_mpds g) /\ In (md_p d, 4 * md_n d) LB2) \/ (In d (pt_mpds Q') /\ ~ In (md_p d, 4 * md_n d) LB2)).
-        { intros d Hd O. apply in_app_or in Hd. destruct Hd as [Hd|[<-|Hd]]; [left| cbn in O; discriminate| right].
-          - split; [exact Hd|]. apply (proj2 (LEQ _)). left. rewrite <- GB. exact (grp_blk_in g d Hd O).
-          - split; [exact Hd|]. apply NEW3. unfold pt_blocks. apply in_flat_map. exists d. split; [exact Hd| rewrite (mpd_blk_heap d O); left; reflexivity]. }
-        destruct (CASE d1 H1 O1) as [[G1 I1]|[Q1 N1]]; destruct (CASE d2 H2 O2) as [[G2 I2]|[Q2 N2]].
-        + intros E. apply (AP d1 d2 G1 G2 NE O1 O2). injection E as Ea Eb. exact Ea.
-        + intros E. apply N2. rewrite <- E. exact I1.
-        + intros E. apply N1. rewrite E. exact I2.
-        + (* [comment removed for export] *)
-          ddestruct DIS3 as (DXY & DXZ & DYZ).
-          cbn in Q1, Q2. destruct Q1 as [<-|[<-|[<-|[]]]]; destruct Q2 as [<-|[<-|[<-|[]]]];
-            first [ exfalso; apply NE; reflexivity | exact (DXY O1 O2) | exact (DXZ O1 O2) | exact (DYZ O1 O2)
-                  | intros E; symmetry in E; revert E; first [exact (DXY O2 O1)| exact (DXZ O2 O1)| exact (DYZ O2 O1)] ].
-      - (* [comment removed for export] *)
-        intros d Hd O E. unfold kp_mpds in Hd. cbn [kp_grp kp_d kp_Q] in Hd. apply in_app_or in Hd. destruct Hd as [Hd|[<-|Hd]].
-        + apply (NEWNB (C, 256)); [| left; reflexivity]. rewrite <- E, <- GB. exact (grp_blk_in g d Hd O).
-        + cbn in O. discriminate.
-        + apply (NEW3 (C, 256)); [| exact CIN]. rewrite <- E. unfold pt_blocks. apply in_flat_map. exists d. split; [exact Hd| rewrite (mpd_blk_heap d O); left; reflexivity].
-      - (* [comment removed for export] *)
-        intros b. rewrite newb_in. unfold kp_blocks. cbn [kp_grp kp_d kp_Q]. cbn [mpd_blk md_own mpd_init app]. rewrite GB. split.
-        + intros [Hb Hn]. destruct (COV3 b Hb) as [Hb2|Hq].
-          * apply (proj1 (LEQ b)) in Hb2. destruct Hb2 as [Hb2|[Hb2|Hb2]]; [right; apply in_or_app; left; exact Hb2| left; exact Hb2| exfalso; exact (Hn Hb2)].
-          * right; apply in_or_app; right; exact Hq.
-        + intros [<-|Hb].
-          * split; [exact CIN4| exact NINC].
-          * apply in_app_or in Hb. destruct Hb as [Hb|Hb].
-            -- split; [apply SUB3; apply (proj2 (LEQ b)); left; exact Hb| intros HbL; exact (NEWNB b Hb ltac:(right; exact HbL))].
-            -- split; [eapply kp_blocks_in; [exact KP4|]; unfold kp_blocks; cbn [kp_grp kp_d kp_Q]; apply in_or_app; right; apply in_or_app; right; exact Hb
-                     | intros HbL; exact (NEW3 b Hb ltac:(apply SUB; exact HbL))]. }
-    assert (PERM4 : Permutation LB3 (newb LB LB3 ++ LB)) by (apply newb_perm; [exact ND4| exact NDL'| exact SUB4]).
-    assert (REPx4 : forall LBx, (forall b, In b (newb LB LB3) -> In b LBx) -> pk_rep_c usegs U_RSA_INFO U_EC_INFOS MT m4 LBx PKA info C (newb LB LB3)).
-    { intros LBx Hs. eapply pk_rep_c_frame; [exact REP4| exact MI4| exact Hs| intros a _; reflexivity]. }
-    clear BOX3.
-    (* [comment removed for export] *)
-    zstep. if_cases K3; zify_cond K3.
-    - (* [comment removed for export] *)
-      assert (Z3 : r3 = 0).
-      { clear -K3 RR3. apply Z.mod_divide in K3; [| lia]. destruct K3 as [q Hq]. assert (q = 0 \/ q = -1) as [->| ->] by lia; lia. }
-      subst r3. zstep. if_cases KE; zify_cond KE. 2:{ exfalso. first [ apply KE; reflexivity | clear -KE PB E2B BP EB B63 BUF0; rewrite ?unsigned_lit in KE by lia; lia ]. }
-      zstep. zstep.
-      destruct (HPERM _ _ _ _ _ HH4 PERM4) as (h5 & HH5 & HT5).
-      eapply ret_walk' with (owned := newb LB LB3) (info := info) (ctx := C) (h := h5);
-        [ exact HH5 | rewrite HT5; exact HT4 | exact MF4 | exact MI4 | exact SOK4 | exact SIP4 | exact PX4 | clear; lia | exact HPP4 | clear -PB E2B; lia
-        | exact HPKA3 | apply REPx4; intros b Hb; apply in_or_app; left; exact Hb | intros NZ; exfalso; apply NZ; reflexivity | reflexivity | exact FRL | exact FR | exact ST3 ].
-    - (* [comment removed for export] *)
-      assert (NZ : r3 <> 0) by (intros ->; apply K3; reflexivity).
-      eapply fail_free_walk' with (owned := newb LB LB3) (info := info) (ctx := C);
-        [ exact CX4 | exact PERM4 | clear -RR3 NZ; lia | exact HPP4 | clear -PB E2B; lia | exact HPKA3 | apply REPx4; intros b Hb; apply in_or_app; left; exact Hb | exact FRL | exact FR | exact ST3 ].
+    replace (p + (E2 - p)) with E2 in * by (clear; lia).
+    assert (w_wpp : Forall (fun iv : Z * Z => lo <= fst iv /\ snd iv <= bv_unsigned sp \/ iv = (PP, PP + 8) \/ iv = (PKA, PKA + 16)) [(PP, PP + 8)])
+      by (apply Forall_cons; [right; left; reflexivity| apply Forall_nil]).
+    pose proof (pctx_munch' h1 LB3 m1 m2 mo1' [(PP, PP + 8)] w_ctx1 w_mu w_wm w_mi1 w_wpp) as w_ctx2.
+    pose proof w_ctx2 as (w_heap2 & w_topc & w_mofc & w_mic & w_sokc & w_sinvc & _ & w_keepc).
+    assert (w_rep2 : pk_rep_c usegs U_RSA_INFO U_EC_INFOS U_MT m2 (newb LB LB3 ++ LB) PKA info C (newb LB LB3)).
+    { apply (pk_rep_c_frame _ _ _ _ m1 m2 LB3 _ _ _ _ _ w_rep1 w_mi1).
+      - intros b w_b. apply in_or_app. left. exact w_b.
+      - intros a ((w_bb & w_bk) & w_bin & w_ba). cbn [fst snd] in w_ba. apply newb_in in w_bin. destruct w_bin as [w_b3 w_bl].
+        pose proof (heap_blocks _ _ HI _ _ _ _ w_heap2) as [w_bf _].
+        pose proof (proj1 (Forall_forall _ _) w_bf _ w_b3) as (w_bp & _ & _ & w_bac & _). cbn [fst snd] in w_bp, w_bac.
+        apply w_mu. rewrite wa_unsigned by (clear -w_ba w_bp w_bac w_ceil; lia).
+        cbn [outside]. split; [| exact I].
+        destruct (blk_apart_pp' h1 LB3 m2 mo1' w_bb w_bk w_heap2 w_grow13 w_b3 w_bl ltac:(clear -w_ba; lia)) as [w_q|w_q];
+          clear -w_q w_ba; lia. }
+    clear w_rep1 w_ctx1 w_mu w_wm.
+    zstep.
+    if_cases w_t3; zify_cond w_t3.
+    { (* the key parsed: return 0 *)
+      assert (w_r10 : r1 = 0) by (clear -w_rr1 w_t3; lia). subst r1.
+      zstep. if_true. zstep. zstep.
+      destruct (HPERM h1 LB3 (newb LB LB3 ++ LB) m2 mo1' w_heap2 (newb_perm LB LB3 (HND _ _ _ _ w_heap2) (HND _ _ _ _ HH0) w_grow13))
+        as (h2 & w_heap3 & w_top3).
+      refine (ret_walk' m2 mo1' h2 (newb LB LB3 ++ LB) 0 E2 info C (newb LB LB3) lj _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                w_heap3 _ w_mofc w_mic w_sokc w_sinvc w_keepc _ w_pcell1 _ w_pk1 w_rep2 _ eq_refl w_low1 w_saved1 w_stk1).
+      - rewrite w_top3. exact w_topc.
+      - clear. lia.
+      - clear -w_prange w_end. lia.
+      - intros w_n. exfalso. exact (w_n eq_refl). }
+    (* the public key was refused: free the context and return the code *)
+    eapply fail_free_walk' with (LBc := LB3) (owned := newb LB LB3) (info := info) (ctx := C) (p' := E2);
+      [ exact w_ctx2 | exact (newb_perm LB LB3 (HND _ _ _ _ w_heap2) (HND _ _ _ _ HH0) w_grow13) | clear -w_rr1 w_t3; lia | exact w_pcell1
+      | clear -w_prange w_end; lia | exact w_pk1 | exact w_rep2 | exact w_low1 | exact w_saved1 | exact w_stk1 ].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -599,160 +675,238 @@ Notation pa_basics' := (pa_basics L HI HLS sp m0 mo0 h0 LB PP BUF PKA lo bs HH0 
     (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.U.UImg.usegs)))
 (* [comment removed for export] *).
   Proof.
-    intros until x31. intros CX KP BRC APC EI PARD HPP PB E2B HPKA F0 FID FALG FPAR FLEN FOID FR ST P00.
-    dpose pa_basics' as (ACP & BAC & BIM & PPD & PKD & SLO').
-    dpose CX as (HH & HT & MF & MI & SOK & SIP & SUB & PX). pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    dpose BRC as (C0 & C16 & _ & CAC & CIM). pose proof alloc_ceiling_lt as ACLT.
-    pose proof (bv_unsigned_in_range 64 plen) as PLR. change (bv_modulus 64) with (2^64) in PLR.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep. if_cases KA; zify_cond KA.
-    { (* [comment removed for export] *)
+    intros m mo h C p E2 info ta x11 idpad pP pA pB pX pY pZ pN hpad pd qX qY qZ j0 oj idw agw ptag ppad plen alen lnw pp
+      x1 x5 x6 x7 x12 x13 x14 x15 x16 x17 p0 x20 x28 x29 x30 x31
+      v_ctx v_key v_brange v_apart v_info v_par v_pcell v_prange v_end v_pk v_j0 v_idw v_agw v_parc v_lnw v_oj v_saved v_stk v_p0.
+    clear CA_RSA72 CA_EC72 CAT_PKALG CAT_ECALGID CA_PKTBL HPP0 ALPP HPKA0 PPT ST0 MI0 SOK0 SIP0 RA.
+    pose proof v_ctx as (v_heap & v_top & v_mof & v_mi & v_sok & v_sinv & v_grow & v_keep).
+    pose proof (heap_mok _ _ HI _ _ _ _ v_heap) as v_mok.
+    pose proof (pctx_bytes' h ((C, 256) :: LB) m mo v_ctx) as v_bytes.
+    pose proof pa_basics' as (v_ac4096 & v_bufac & v_bufimg & v_ppdat & v_pkdat & v_room).
+    pose proof DI1 as v_di1. pose proof DI2 as v_di2. pose proof ML1 as v_ml1. pose proof ML2 as v_ml2.
+    pose proof IL1 as v_il1. pose proof IL2 as v_il2. pose proof IL3 as v_il3.
+    pose proof v_brange as (v_c0 & v_c16 & _ & v_cac & v_cim).
+    pose proof (fresh_apart_pka' C 256 v_brange v_apart ltac:(lia)) as v_pkfar.
+    pose proof (fresh_apart_pp' C 256 v_brange v_apart ltac:(lia)) as v_ppfar.
+    assert (v_spu : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -112)) = bv_unsigned sp + -112).
+    { apply unsigned_lit. clear -v_room ACL v_ac4096 HLS SPR. lia. }
+    assert (v_lb1 : forall b, In b LB -> In b ((C, 256) :: LB)) by (intros b v_b; right; exact v_b).
+    assert (v_cwp : client_wrange L ((C, 256) :: LB) lo (heap_top usegs L HI h) PKA 16).
+    { rewrite v_top. exact (client_wrange_mono L LB _ lo (heap_top usegs L HI h0) PKA 16 CWP v_lb1). }
+    (* the stack slots below the saved registers, viewed as one 64-byte local area *)
+    pose proof (low_frame_merge m j0 idw agw ptag ppad plen (Z_to_bv 64 pp) lnw alen oj v_j0 v_idw v_agw v_parc v_lnw v_oj) as v_low.
+    set (lj := j0 ++ le4 idw ++ le4 agw ++ le4 ptag ++ le4 ppad ++ le8 plen ++ le8 (Z_to_bv 64 pp) ++ le8 lnw ++ oj ++ le8 alen) in v_low.
+    clearbody lj.
+    zstep. zstep. zstep.
+    if_cases v_t0; zify_cond v_t0.
+    { (* neither EC key kind: unknown algorithm, free the fresh context *)
       zstep. zstep. zstep.
-      eapply init_fail_walk; [exact CX| exact KP| exact BRC| exact APC| exact EI| clear; lia| exact HPP| clear -PB E2B; lia| exact HPKA
-        | exact (low_frame_merge _ _ _ _ _ _ _ _ _ _ _ F0 FID FALG FPAR FLEN FOID) | exact FR| exact ST]. }
-    clear KA.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep. zstep. if_cases KR; zify_cond KR.
-    - (* [comment removed for export] *)
+      eapply init_fail_walk with (r := -15488) (lj := lj);
+        [ exact v_ctx | exact v_key | exact v_brange | exact v_apart | exact v_info | clear; lia | exact v_pcell
+        | clear -v_prange v_end; lia | exact v_pk | exact v_low | exact v_saved | exact v_stk ]. }
+    zstep. zstep. zstep. zstep.
+    if_cases v_t1; zify_cond v_t1.
+    { (* the curve comes from the algorithm parameters *)
       zstep. zstep. zstep.
-      pose proof (U_pk_use_ecparams_spec L HI HFREE HCALLOC HLS SW DIMG HND CA_RSA0 HL) as SEP. unfold pk_use_ecparams_stmt, pk_use_ecparams_post, U_PK_USE_ECPARAMS in SEP.
-      replace plen with (Z_to_bv 64 (bv_unsigned plen)) in FPAR by (apply definitions.Z_to_bv_bv_unsigned).
-      destruct SIP as [IDS [cnt CNT]].
+      pose proof (U_pk_use_ecparams_spec L HI HFREE HCALLOC HLS SW DIMG HND CA_RSA0 HL) as v_uep.
+      unfold pk_use_ecparams_stmt, U_PK_USE_ECPARAMS in v_uep. lazy zeta in v_uep.
+      pose proof v_sinv as (v_ids & cnt & v_mc).
       eapply aevtM_cut.
-      { eapply SEP with (lo := lo) (h := h) (LB := (C, 256) :: LB) (PKA := PKA) (info := info) (C := C) (PAR := bv_unsigned sp + -96) (LEN := bv_unsigned plen) (P := pp) (BUF := BUF) (bs := bs);
-          rewrite ?(unsigned_lit (bv_unsigned sp + -112)) by (clear -SLO' HLS ACL ACP SPR; lia); unfold ECP_KEYPAIR_SIZE;
-          first [ exact HH | exact HPKA | exact ALP | exact NZP | exact EI | exact KP | exact FPAR | exact IDS | exact SOK | exact CA_MSF | exact CAT_ECGRP | exact CA_EC0
-                | exact TP | exact MI | exact ACL | exact DHI | exact ST | exact B63 | exact BUF0 | exact PKD | reflexivity
-                | right; clear -SPK; lia
-                | (* [comment removed for export] *) intros a Ha; destruct (CWP a Ha) as [Q|[Q|(b & Hb & Hr)]]; [left; rewrite HT; exact Q| right; left; exact Q| right; right; exists b; split; [right; exact Hb| exact Hr]]
-                | exact (fresh_apart_pka' C 256 BRC APC ltac:(clear; lia))
-                | left; reflexivity
-                | pose proof DI1 as E1'; pose proof DI2 as E2''; clear -CIM E1' E2''; lia
-                | clear -SPA SPR; lia | clear -SLO' HLS ACL ACP; lia
-                | right; clear; lia
-                | (* [comment removed for export] *) right; pose proof DI2 as E2''; clear -DHI ACL SLO' HLS E2''; lia
-                | right; clear -CAC ACL SLO' HLS; lia
-                | eapply pctx_bytes'; exact CX
-                | right; exact INB
-                | (* [comment removed for export] *) destruct PARD as [(Q1 & Q2 & Q3)|(Q1 & Q2)]; [left; split; [exact Q1| split; [exact Q2| exact Q3]]| right; split; [exact Q1| clear -Q2 E2B EB PE; lia]]
-                | clear -PLR; lia
-                | rewrite HT; clear -HTOP SLO' HLS; lia
-                | match goal with |- ?gl => idtac "EPLEFT" gl end ]. }
-      clear SEP.
-      intros ms' mo' PO. destruct_exs PO. destruct PO as [E PO]. injection E as E1 E2'. subst ms' mo'.
-      rewrite ?(unsigned_lit (bv_unsigned sp + -112)) in PO by (clear -SLO' HLS ACL ACP SPR; lia).
-      ddestruct PO as (MI2 & ST2 & MF2 & HT2 & HH2 & LEQ & NEWNB & KP2 & AP2 & GB2 & RES & RR2 & HPKA2 & PX2 & SOK2 & IDS2).
-      lazymatch goal with |- _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
-        replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ clear; lia | reflexivity ]) end.
-      lazymatch goal with |- aevtM _ ?mox _ (MS _ _ _ _ _ ?mx _) => rename mx into m2; rename mox into mo2 end.
-      match type of HH2 with HEAP _ _ _ ?hh ?lb _ _ => rename hh into h2; rename lb into LB2 end.
-      match type of GB2 with grp_blocks ?gg = ?nb => rename gg into g'; rename nb into NB end.
-      cbn [kp_grp kp_d kp_Q kp_init] in KP2, RES.
-      (* [comment removed for export] *)
-      assert (XF : Forall (fun iv => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv) [(C, C + ECP_GROUP_SIZE); (U_ECP_IDS_DONE, U_ECP_IDS_DONE + 1); (U_ECP_IDS, U_ECP_IDS + 56)]).
-      { pose proof IL3 as I3. pose proof IL2 as I2. unfold ECP_GROUP_SIZE. constructor; [cbn; left; clear -CAC ACL SLO' HLS; lia|].
-        constructor; [cbn; left; clear -I2 I3 DHI ACL SLO' HLS; lia|]. constructor; [cbn; left; clear -I3 DHI ACL SLO' HLS; lia| constructor]. }
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in F0; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FID; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FALG; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FPAR; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FLEN; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FOID; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FR; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_pp' ((C, 256) :: LB) _ _ m m2 _ PX2 ltac:(intros b Hb; right; exact Hb) ltac:(clear; lia)) in HPP;
-        [| reflexivity| cbn; unfold ECP_GROUP_SIZE; pose proof (fresh_apart_pp' C 256 BRC APC ltac:(clear; lia)) as Q; pose proof IL1 as I1; pose proof IL2 as I2; pose proof IL3 as I3;
-           split; [clear -Q; lia| split; [clear -PPD I1 I2 I3; lia| split; [clear -PPD I1 I2 I3; lia| exact I]]]].
-      assert (CX2 : pctx' h2 LB2 m2 mo2).
-      { split; [exact HH2|]. split; [rewrite HT2; exact HT|]. split; [eapply mo_frame_trans; [exact MF| exact MF2]|]. split; [exact MI2|]. split; [exact SOK2|].
-        split. { split; [exact IDS2|]. exists cnt. pose proof ML1 as M1; pose proof ML2 as M2; pose proof DI1 as E1'; pose proof DI2 as E2''.
-                 eapply heap_presx_rw_cells; [exact PX2| exact CNT| |]; cbn [cells_size csize Nat.add disjoint_from].
-                 - intros a Ha. right; left. split; [clear -Ha M1 M2; lia| exact (proj2 (proj2 (proj2 HMC) a Ha))].
-                 - unfold ECP_GROUP_SIZE, U_ECP_IDS_DONE, U_ECP_IDS. split; [clear -CIM M1 M2 E1' E2''; lia| split; [clear; lia| split; [clear; lia| exact I]]]. }
-        split; [intros b Hb; apply (proj2 (LEQ b)); right; right; exact Hb|].
-        eapply heap_presx_trans; [exact PX|]. eapply heap_presx_weak''; [exact PX2| intros b Hb; right; exact Hb| clear; lia|].
-        intros a Hc Ho. cbn in Ho |- *. unfold ECP_GROUP_SIZE. split; [| clear -Ho; tauto]. intros Ha. exact (fresh_not_client' C 256 a BRC APC ltac:(clear -Ha; lia) Hc). }
-      eapply ec_fin_walk with (NB := NB) (g := g');
-        [ exact CX2 | exact KP2 | apply (proj2 (LEQ _)); right; left; reflexivity | exact BRC | exact APC | exact EI | exact AP2 | exact GB2 | exact LEQ | exact NEWNB
-        | intros Z0; destruct RES as [(id & IDB & GL)|(NZ & _)]; [exists id; subst; exact (conj IDB GL)| exfalso; exact (NZ Z0)]
-        | exact RR2 | exact HPP | exact PB | exact E2B | exact HPKA2
-        | exact (low_frame_merge _ _ _ _ _ _ _ _ _ _ _ F0 FID FALG FPAR FLEN FOID) | exact FR | exact ST2 | exact P00 ].
-    - (* [comment removed for export] *)
-      zstep. zstep. zstep.
-      zstep. zstep. if_cases KP8; zify_cond KP8.
-      1-2: try (exfalso; clear -KP8 SPA SPR SLO' HLS ACL ACP; rewrite ?unsigned_lit in KP8 by lia; rewrite ?land_7_mod in KP8; lia).
-      zstep. zstep. if_cases KT; zify_cond KT.
-      { zstep. zstep. zstep. zstep. zstep. if_cases KZ1; zify_cond KZ1.
-        2:{ exfalso. clear -KZ1. first [ discriminate | lia | (vm_compute in KZ1; discriminate) ]. }
-        eapply init_fail_walk; [exact CX| exact KP| exact BRC| exact APC| exact EI| clear; lia| exact HPP| clear -PB E2B; lia| exact HPKA
-          | exact (low_frame_merge _ _ _ _ _ _ _ _ _ _ _ F0 FID FALG FPAR FLEN FOID) | exact FR| exact ST]. }
-      zstep. zstep. if_cases KL; zify_cond KL.
-      2:{ zstep. zstep. zstep. zstep. zstep. if_cases KZ2; zify_cond KZ2.
-        2:{ exfalso. clear -KZ2. first [ discriminate | lia | (vm_compute in KZ2; discriminate) ]. }
-        eapply init_fail_walk; [exact CX| exact KP| exact BRC| exact APC| exact EI| clear; lia| exact HPP| clear -PB E2B; lia| exact HPKA
-          | exact (low_frame_merge _ _ _ _ _ _ _ _ _ _ _ F0 FID FALG FPAR FLEN FOID) | exact FR| exact ST]. }
-      (* [comment removed for export] *)
-      pose proof (bv_unsigned_in_range 64 (sx32 idw)) as UR. change (bv_modulus 64) with (2^64) in UR.
-      pose proof (land_m5_9 _ UR KR) as U913. set (u := bv_unsigned (sx32 idw)) in *.
-      assert (IDB : 0 <= u < 2^31) by (clear -U913; lia).
-      pose proof (U_pk_ecc_set_group_spec L HI HFREE HCALLOC HLS SW DIMG HND CA_RSA0) as SSG. unfold pk_ecc_set_group_stmt, pk_ecc_set_group_post, U_PK_ECC_SET_GROUP in SSG.
-      destruct SIP as [IDS [cnt CNT]].
+      { eapply v_uep with (h := h) (LB := (C, 256) :: LB) (PKA := PKA) (info := info) (C := C) (lo := lo)
+          (PAR := bv_unsigned sp + -96) (LEN := bv_unsigned plen) (P := pp) (BUF := BUF) (tg := ptag) (pd := ppad) (bs := bs)
+          (idpad := idpad) (pP := pP) (pA := pA) (pB := pB) (pX := pX) (pY := pY) (pZ := pZ) (pN := pN) (hpad := hpad)
+          (qd := pd) (qX := qX) (qY := qY) (qZ := qZ);
+          rewrite ?v_spu;
+          [ exact v_heap | exact v_pk | exact ALP | exact NZP | exact v_info
+          | clear -DSP; lia
+          | exact v_cwp
+          | unfold ECP_KEYPAIR_SIZE; exact v_pkfar
+          | exact v_pkdat
+          | exact v_key
+          | left; reflexivity
+          | unfold ECP_KEYPAIR_SIZE; clear -v_cim v_di1 v_di2; lia
+          | unfold buf_cells; rewrite Z_to_bv_bv_unsigned; exact v_parc
+          | clear -SPA; lia
+          | clear -v_room HLS ACL v_ac4096; lia
+          | right; clear; lia
+          | right; clear -v_room HLS ACL DHI; lia
+          | right; unfold ECP_KEYPAIR_SIZE; clear -v_room HLS ACL v_cac; lia
+          | exact v_bytes
+          | right; exact INB
+          | destruct v_par as [v_q|v_q]; [left; exact v_q| right; clear -v_q v_end EB; lia]
+          | apply bv_unsigned_in_range
+          | exact B63
+          | exact BUF0
+          | exact v_ids
+          | exact v_sok
+          | exact CA_MSF
+          | exact CAT_ECGRP
+          | exact CA_EC0
+          | exact v_stk
+          | clear -SLO HLS; unfold PK_PARSE_STACK in SLO; lia
+          | exact ACL
+          | rewrite v_top; clear -HTOP; lia
+          | clear -SPA; lia
+          | exact DHI
+          | exact TP
+          | exact v_mi
+          | vm_compute; reflexivity
+          | reflexivity
+          | reflexivity ]. }
+      intros ms1 mo1 v_post. unfold pk_use_ecparams_post in v_post.
+      destruct v_post as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m1 & mo1' & h1 & r1 & g1 & NB1 & LB1 &
+        v_cfg & v_mi1 & v_stk1 & v_mof1 & v_top1 & v_heap1 & v_split1 & v_fresh1 & v_key1 & v_mpds1 & v_nb1 & v_res1 & v_rr1 & v_pk1 & v_px1 & v_sok1 & v_ids1).
+      injection v_cfg as -> ->.
+      rewrite v_spu in v_stk1, v_px1.
+      rewrite (ret_pc_even 169156) by (first [lia | reflexivity]).
+      unfold ECP_GROUP_SIZE in v_px1.
+      assert (v_xfar : Forall (fun iv : Z * Z => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv)
+                         [(C, C + 192); (U_ECP_IDS_DONE, U_ECP_IDS_DONE + 1); (U_ECP_IDS, U_ECP_IDS + 56)]).
+      { apply Forall_cons; [cbn [fst snd]; left; clear -v_cac ACL v_room HLS; lia|].
+        apply Forall_cons; [cbn [fst snd]; left; clear -ACL v_room HLS v_il2 v_il3 DHI; lia|].
+        apply Forall_cons; [cbn [fst snd]; left; clear -ACL v_room HLS v_il3 DHI; lia|]. apply Forall_nil. }
+      assert (v_lb2 : forall b, In b LB -> In b LB1) by (intros b v_b; apply v_split1; right; right; exact v_b).
+      assert (v_mc1 : rw_cells usegs m1 380840 [C8 cnt]).
+      { apply (heap_presx_rw_cells _ _ _ _ _ m m1 _ _ v_px1 v_mc).
+        - intros a v_a. right. left. cbn in v_a. destruct (proj2 (proj2 HMC) a ltac:(clear -v_a; lia)) as [_ v_ns].
+          split; [clear -v_a v_ml1 v_ml2; lia| exact v_ns].
+        - cbn. unfold U_ECP_IDS_DONE, U_ECP_IDS. split; [clear -v_cim v_di1 v_di2 v_ml1 v_ml2; lia|].
+          split; [clear; lia|]. split; [clear; lia| exact I]. }
+      assert (v_ctx1 : pctx' h1 LB1 m1 mo1').
+      { refine (conj v_heap1 (conj _ (conj (mo_frame_trans mo0 mo mo1' v_mof v_mof1) (conj v_mi1 (conj v_sok1 (conj _ (conj v_lb2 _))))))).
+        - rewrite v_top1. exact v_top.
+        - split; [exact v_ids1| exists cnt; exact v_mc1].
+        - apply (heap_presx_trans usegs L LB (bv_unsigned sp) FP m0 m m1 v_keep).
+          apply (heap_presx_weak'' ((C, 256) :: LB) (bv_unsigned sp + -112) _ _ m m1 v_px1 v_lb1 ltac:(lia)).
+          intros a v_ca v_out. cbn [outside app] in v_out |- *.
+          destruct v_out as (_ & _ & v_odone & _ & v_oids & _). split; [| split; [exact v_odone| split; [exact v_oids| exact I]]].
+          intros v_in. destruct v_ca as [v_up|[[v_dlo _]|((v_bb & v_bk) & v_bin & v_br)]].
+          + clear -v_up v_in v_cac ACL v_room HLS. lia.
+          + clear -v_dlo v_in v_cim v_di1 v_di2. lia.
+          + cbn [fst snd] in v_br. destruct (v_apart v_bb v_bk v_bin) as [v_q|v_q]; clear -v_q v_br v_in; lia. }
+      eapply ec_fin_walk with (h := h1) (LB2 := LB1) (C := C) (p := p) (info := info) (g := g1) (NB := NB1)
+        (pd := pd) (qX := qX) (qY := qY) (qZ := qZ) (lj := lj);
+        [ exact v_ctx1 | exact v_key1 | apply v_split1; right; left; reflexivity | exact v_brange | exact v_apart | exact v_info
+        | exact v_mpds1 | exact v_nb1 | exact v_split1 | exact v_fresh1
+        | intros v_r0; subst r1; destruct v_res1 as [(v_id & v_idr & v_gl)|(v_ne & _)];
+            [exists v_id; exact (conj v_idr v_gl)| exfalso; exact (v_ne eq_refl)]
+        | exact v_rr1
+        | | clear -v_prange; lia | exact v_end | exact v_pk1 | | | exact v_stk1 | exact v_p0 ].
+      + assert (v_sple : bv_unsigned sp + -112 <= bv_unsigned sp) by (clear; lia).
+        apply (keep_pp' ((C, 256) :: LB) (bv_unsigned sp + -112) _ m m1 _ v_px1 v_lb1 v_sple v_pcell eq_refl).
+        cbn [disjoint_from]. unfold U_ECP_IDS_DONE, U_ECP_IDS in *.
+        split; [clear -v_ppfar; lia|]. split; [clear -v_ppdat v_il1 v_il2 v_il3; lia|]. split; [clear -v_ppdat v_il1 v_il2 v_il3; lia| exact I].
+      + apply (keep_frame' ((C, 256) :: LB) (bv_unsigned sp + -112) _ m m1 _ _ v_px1 ltac:(lia) v_low ltac:(lia)); [cbn; lia| exact v_xfar].
+      + apply (keep_frame' ((C, 256) :: LB) (bv_unsigned sp + -112) _ m m1 _ _ v_px1 ltac:(lia) v_saved ltac:(lia)); [cbn; lia| exact v_xfar]. }
+    (* RFC 8410 curve: the parameters must be absent *)
+    assert (v_ginit_apart : mpds_apart (grp_mpds (grp_init C idpad pP pA pB pX pY pZ pN hpad))).
+    { intros d1 d2 v_d1 _ _ v_o1 _. exfalso. unfold grp_mpds in v_d1.
+      cbn [grp_init g_P g_A g_B g_G g_N pt_mpds pt_init pt_X pt_Y pt_Z app] in v_d1.
+      repeat (destruct v_d1 as [v_e|v_d1]; [rewrite <- v_e in v_o1; cbn in v_o1; discriminate v_o1|]).
+      destruct v_d1. }
+    assert (v_ginit_blocks : grp_blocks (grp_init C idpad pP pA pB pX pY pZ pN hpad) = []) by (unfold grp_blocks, grp_mpds; cbn; reflexivity).
+    assert (v_ginit_split : forall b, In b ((C, 256) :: LB) <-> In b [] \/ In b ((C, 256) :: LB)).
+    { intros b. split; [intros v_b; right; exact v_b| intros [[]|v_b]; exact v_b]. }
+    zstep. zstep. zstep. zstep. zstep.
+    if_cases v_al; zify_cond v_al.
+    { exfalso. apply v_al. replace 7 with (Z.ones 3) by reflexivity. rewrite Z.land_ones by (clear; lia).
+      change (2 ^ 3) with 8. clear -SPA. lia. }
+    zstep. zstep.
+    if_cases v_tg; zify_cond v_tg.
+    2: (zstep; zstep; if_cases v_ln; zify_cond v_ln).
+    2: { (* tag and length both zero: load the named group into the fresh key *)
       zstep. zstep.
+      lazymatch goal with v_c : Z.land (bv_unsigned ?w) 18446744073709551611 = 9 |- _ => set (wv := w) in * end.
+      pose proof (bv_unsigned_in_range 64 wv) as v_wrng. change (bv_modulus 64) with (2 ^ 64) in v_wrng.
+      pose proof (land_m5_9 (bv_unsigned wv) v_wrng v_t1) as v_w913.
+      assert (v_wid : 0 <= bv_unsigned wv < 2 ^ 31) by (clear -v_w913; lia).
+      pose proof (U_pk_ecc_set_group_spec L HI HFREE HCALLOC HLS SW DIMG HND CA_RSA0) as v_sgs.
+      unfold pk_ecc_set_group_stmt, U_PK_ECC_SET_GROUP in v_sgs. lazy zeta in v_sgs.
       eapply aevtM_cut.
-      { eapply SSG with (lo := lo) (h := h) (LB := (C, 256) :: LB) (PKA := PKA) (info := info) (C := C) (id := u);
-          rewrite ?(unsigned_lit (bv_unsigned sp + -112)) by (clear -SLO' HLS ACL ACP SPR; lia); unfold ECP_KEYPAIR_SIZE;
-          first [ exact HH | exact HPKA | exact ALP | exact NZP | exact EI | exact KP | exact IDB | exact SOK | exact CA_MSF | exact CA_EC0
-                | exact TP | exact MI | exact ACL | exact DHI | exact ST | exact PKD | reflexivity
-                | right; clear -SPK; lia
-                | intros a Ha; destruct (CWP a Ha) as [Q|[Q|(b & Hb & Hr)]]; [left; rewrite HT; exact Q| right; left; exact Q| right; right; exists b; split; [right; exact Hb| exact Hr]]
-                | exact (fresh_apart_pka' C 256 BRC APC ltac:(clear; lia))
-                | left; reflexivity
-                | pose proof DI1 as E1'; pose proof DI2 as E2''; clear -CIM E1' E2''; lia
-                | clear -SLO' HLS ACL ACP SPA SPR; lia
-                | rewrite HT; clear -HTOP SLO' HLS; lia
-                | subst u; symmetry; apply definitions.Z_to_bv_bv_unsigned
-                | match goal with |- ?gl => idtac "SGLEFT" gl end ]. }
-      clear SSG.
-      intros ms' mo' PO. destruct_exs PO. destruct PO as [E PO]. injection E as E1 E2'. subst ms' mo'.
-      rewrite ?(unsigned_lit (bv_unsigned sp + -112)) in PO by (clear -SLO' HLS ACL ACP SPR; lia).
-      ddestruct PO as (MI2 & ST2 & MF2 & HT2 & HH2 & LEQ & NEWNB & KP2 & AP2 & GB2 & GL & HPKA2 & PX2 & SOK2).
-      lazymatch goal with |- _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
-        replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ clear; lia | reflexivity ]) end.
-      lazymatch goal with |- aevtM _ ?mox _ (MS _ _ _ _ _ ?mx _) => rename mx into m2; rename mox into mo2 end.
-      match type of HH2 with HEAP _ _ _ ?hh ?lb _ _ => rename hh into h2; rename lb into LB2 end.
-      match type of GB2 with grp_blocks ?gg = ?nb => rename gg into g'; rename nb into NB end.
-      match type of GL with gl_result _ _ _ _ ?rr _ _ => rename rr into r2 end.
-      cbn [kp_grp kp_d kp_Q kp_init] in KP2. unfold ECP_GROUP_SIZE in PX2.
-      pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2.
-      assert (RR2 : -2^31 < r2 <= 0).
-      { destruct GL as [(X & _)|[(X & _)|[(X & _)|(X & _)]]]; rewrite X; unfold MBEDTLS_ERR_ECP_FEATURE_UNAVAILABLE, MBEDTLS_ERR_MPI_ALLOC_FAILED; clear; lia. }
-      (* [comment removed for export] *)
-      assert (XF : Forall (fun iv => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv) [(C, C + 192)]).
-      { constructor; [cbn; left; clear -CAC ACL SLO' HLS; lia| constructor]. }
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in F0; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FID; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FALG; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FPAR; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FLEN; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FOID; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_frame' _ _ _ m m2 _ _ PX2 ltac:(clear; lia)) in FR; [| clear; lia| cbn; clear; lia| exact XF].
-      apply (keep_pp' ((C, 256) :: LB) _ _ m m2 _ PX2 ltac:(intros b Hb; right; exact Hb) ltac:(clear; lia)) in HPP;
-        [| reflexivity| cbn; pose proof (fresh_apart_pp' C 256 BRC APC ltac:(clear; lia)) as Q; split; [clear -Q; lia| exact I]].
-      assert (CX2 : pctx' h2 LB2 m2 mo2).
-      { split; [exact HH2|]. split; [rewrite HT2; exact HT|]. split; [eapply mo_frame_trans; [exact MF| exact MF2]|]. split; [exact MI2|]. split; [exact SOK2|].
-        split. { pose proof IL1 as I1; pose proof IL2 as I2; pose proof IL3 as I3; pose proof ML1 as M1; pose proof ML2 as M2; pose proof DI1 as E1'; pose proof DI2 as E2''. split.
-                 - apply (ecp_ids_state_presx usegs L _ _ _ _ _ m m2 IDS PX2 HL); cbn; clear -CIM I1 I2 I3 E1' E2''; (split; [lia| exact I]).
-                 - exists cnt. eapply heap_presx_rw_cells; [exact PX2| exact CNT| |]; cbn [cells_size csize Nat.add disjoint_from].
-                   + intros a Ha. right; left. split; [clear -Ha M1 M2; lia| exact (proj2 (proj2 (proj2 HMC) a Ha))].
-                   + split; [clear -CIM M1 M2 E1' E2''; lia| exact I]. }
-        split; [intros b Hb; apply (proj2 (LEQ b)); right; right; exact Hb|].
-        eapply heap_presx_trans; [exact PX|]. eapply heap_presx_weak''; [exact PX2| intros b Hb; right; exact Hb| clear; lia|].
-        intros a Hc Ho. cbn. split; [| exact I]. intros Ha. exact (fresh_not_client' C 256 a BRC APC ltac:(clear -Ha; lia) Hc). }
+      { eapply v_sgs with (h := h) (LB := (C, 256) :: LB) (PKA := PKA) (info := info) (C := C) (id := bv_unsigned wv) (lo := lo)
+          (idpad := idpad) (pP := pP) (pA := pA) (pB := pB) (pX := pX) (pY := pY) (pZ := pZ) (pN := pN) (hpad := hpad)
+          (pd := pd) (qX := qX) (qY := qY) (qZ := qZ);
+          rewrite ?v_spu;
+          [ exact v_heap | exact v_pk | exact ALP | exact NZP | exact v_info
+          | clear -DSP; lia
+          | exact v_cwp
+          | unfold ECP_KEYPAIR_SIZE; exact v_pkfar
+          | exact v_key
+          | left; reflexivity
+          | unfold ECP_KEYPAIR_SIZE; clear -v_cim v_di1 v_di2; lia
+          | exact v_wid
+          | exact v_stk
+          | clear -SLO HLS; unfold PK_PARSE_STACK in SLO; lia
+          | exact ACL
+          | rewrite v_top; clear -HTOP; lia
+          | clear -SPA; lia
+          | exact DHI
+          | exact TP
+          | exact v_mi
+          | exact v_sok
+          | exact CA_MSF
+          | exact CA_EC0
+          | vm_compute; reflexivity
+          | reflexivity
+          | symmetry; apply Z_to_bv_bv_unsigned ]. }
+      intros ms1 mo1 v_post. unfold pk_ecc_set_group_post in v_post.
+      destruct v_post as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m1 & mo1' & h1 & r1 & g1 & NB1 & LB1 &
+        v_cfg & v_mi1 & v_stk1 & v_mof1 & v_top1 & v_heap1 & v_split1 & v_fresh1 & v_key1 & v_mpds1 & v_nb1 & v_gl1 & v_pk1 & v_px1 & v_sok1).
+      injection v_cfg as -> ->.
+      rewrite v_spu in v_stk1, v_px1.
+      rewrite (ret_pc_even 169064) by (first [lia | reflexivity]).
+      unfold ECP_GROUP_SIZE in v_px1.
+      pose proof (heap_mok _ _ HI _ _ _ _ v_heap1) as v_mok1.
       zstep.
-      eapply ec_fin_walk with (NB := NB) (g := g');
-        [ exact CX2 | exact KP2 | apply (proj2 (LEQ _)); right; left; reflexivity | exact BRC | exact APC | exact EI | exact AP2 | exact GB2 | exact LEQ | exact NEWNB
-        | intros Z0; exists u; rewrite Z0 in GL; exact (conj IDB GL)
-        | exact RR2 | exact HPP | exact PB | exact E2B | exact HPKA2
-        | exact (low_frame_merge _ _ _ _ _ _ _ _ _ _ _ F0 FID FALG FPAR FLEN FOID) | exact FR | exact ST2 | exact P00 ].
+      assert (v_xfar : Forall (fun iv : Z * Z => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv) [(C, C + 192)]).
+      { apply Forall_cons; [cbn [fst snd]; left; clear -v_cac ACL v_room HLS; lia| apply Forall_nil]. }
+      assert (v_lb2 : forall b, In b LB -> In b LB1) by (intros b v_b; apply v_split1; right; right; exact v_b).
+      pose proof v_sinv as (v_ids & cnt & v_mc).
+      assert (v_cl : forall a, hl_data_lo L <= a < hl_data_hi L -> ~ hl_static L a -> client_addr L ((C, 256) :: LB) (bv_unsigned sp + -112) a)
+        by (intros a v_a v_ns; right; left; exact (conj v_a v_ns)).
+      assert (v_cfar : forall a n, hl_data_lo L <= a -> a + n <= hl_data_hi L -> disjoint_from [(C, C + 192)] a n).
+      { intros a n v_a v_n. cbn. split; [clear -v_a v_n v_cim v_di1 v_di2; lia| exact I]. }
+      assert (v_sinv1 : pk_sinv_P m1).
+      { pose proof HL as (v_l1 & v_l2 & v_l3 & v_l4).
+        destruct v_ids as (v_b & v_bsl & v_i1 & v_i2 & v_iv). split.
+        - exists v_b, v_bsl. split; [| split; [| exact v_iv]].
+          + apply (heap_presx_rw_cells _ _ _ _ _ m m1 _ _ v_px1 v_i1); [| cbn; apply v_cfar; clear -v_l1 v_l2 v_l3; lia].
+            intros a v_a. cbn in v_a. destruct (v_l4 a ltac:(clear -v_a; lia)) as [_ v_ns]. apply v_cl; [clear -v_a v_l1 v_l2 v_l3; lia| exact v_ns].
+          + apply (heap_presx_rw_cells _ _ _ _ _ m m1 _ _ v_px1 v_i2); [| cbn; apply v_cfar; clear -v_l1 v_l2 v_l3; lia].
+            intros a v_a. cbn in v_a. destruct (v_l4 a ltac:(clear -v_a; lia)) as [_ v_ns]. apply v_cl; [clear -v_a v_l1 v_l2 v_l3; lia| exact v_ns].
+        - exists cnt. apply (heap_presx_rw_cells _ _ _ _ _ m m1 _ _ v_px1 v_mc); [| cbn; apply v_cfar; clear -v_ml1 v_ml2; lia].
+          intros a v_a. cbn in v_a. destruct (proj2 (proj2 HMC) a ltac:(clear -v_a; lia)) as [_ v_ns].
+          apply v_cl; [clear -v_a v_ml1 v_ml2; lia| exact v_ns]. }
+      assert (v_ctx1 : pctx' h1 LB1 m1 mo1').
+      { refine (conj v_heap1 (conj _ (conj (mo_frame_trans mo0 mo mo1' v_mof v_mof1) (conj v_mi1 (conj v_sok1 (conj v_sinv1 (conj v_lb2 _))))))).
+        - rewrite v_top1. exact v_top.
+        - apply (heap_presx_trans usegs L LB (bv_unsigned sp) FP m0 m m1 v_keep).
+          apply (heap_presx_weak'' ((C, 256) :: LB) (bv_unsigned sp + -112) _ _ m m1 v_px1 v_lb1 ltac:(lia)).
+          intros a v_ca _. cbn [outside]. split; [| exact I].
+          intros v_in. destruct v_ca as [v_up|[[v_dlo _]|((v_bb & v_bk) & v_bin & v_br)]].
+          + clear -v_up v_in v_cac ACL v_room HLS. lia.
+          + clear -v_dlo v_in v_cim v_di1 v_di2. lia.
+          + cbn [fst snd] in v_br. destruct (v_apart v_bb v_bk v_bin) as [v_q|v_q]; clear -v_q v_br v_in; lia. }
+      assert (v_sple : bv_unsigned sp + -112 <= bv_unsigned sp) by (clear; lia).
+      eapply ec_fin_walk with (h := h1) (LB2 := LB1) (C := C) (p := p) (info := info) (g := g1) (NB := NB1)
+        (pd := pd) (qX := qX) (qY := qY) (qZ := qZ) (lj := lj);
+        [ exact v_ctx1 | exact v_key1 | apply v_split1; right; left; reflexivity | exact v_brange | exact v_apart | exact v_info
+        | exact v_mpds1 | exact v_nb1 | exact v_split1 | exact v_fresh1
+        | intros v_r0; subst r1; exists (bv_unsigned wv); exact (conj v_wid v_gl1)
+        | destruct v_gl1 as [(-> & _)|[(-> & _)|[(-> & _)|(-> & _)]]];
+            unfold MBEDTLS_ERR_ECP_FEATURE_UNAVAILABLE, MBEDTLS_ERR_MPI_ALLOC_FAILED; clear; lia
+        | | clear -v_prange; lia | exact v_end | exact v_pk1 | | | exact v_stk1 | exact v_p0 ].
+      + apply (keep_pp' ((C, 256) :: LB) (bv_unsigned sp + -112) _ m m1 _ v_px1 v_lb1 v_sple v_pcell eq_refl).
+        cbn [disjoint_from]. split; [clear -v_ppfar; lia| exact I].
+      + apply (keep_frame' ((C, 256) :: LB) (bv_unsigned sp + -112) _ m m1 _ _ v_px1 (Z.le_refl _) v_low ltac:(lia)); [cbn; lia| exact v_xfar].
+      + apply (keep_frame' ((C, 256) :: LB) (bv_unsigned sp + -112) _ m m1 _ _ v_px1 (Z.le_refl _) v_saved ltac:(lia)); [cbn; lia| exact v_xfar]. }
+    (* a tag or a length is present: the parameters are refused before any allocation *)
+    all: zstep; zstep; zstep; zstep;
+      eapply ec_fin_walk with (h := h) (LB2 := (C, 256) :: LB) (C := C) (p := p) (info := info)
+        (g := grp_init C idpad pP pA pB pX pY pZ pN hpad) (NB := []) (pd := pd) (qX := qX) (qY := qY) (qZ := qZ) (lj := lj);
+      [ exact v_ctx | exact v_key | left; reflexivity | exact v_brange | exact v_apart | exact v_info
+      | exact v_ginit_apart | exact v_ginit_blocks | exact v_ginit_split | intros b [] | intros v_r0; discriminate v_r0 | clear; lia
+      | exact v_pcell | clear -v_prange; lia | exact v_end | exact v_pk | exact v_low | exact v_saved | exact v_stk | exact v_p0 ].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 End PA.

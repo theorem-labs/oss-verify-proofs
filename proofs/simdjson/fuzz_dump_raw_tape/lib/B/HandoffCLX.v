@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
@@ -173,9 +173,10 @@ Definition x_aex (ch : acs) : list cell :=
   [C1 (Z_to_bv 8 0); CB 3 (hs_blob ch 0x6cbe39 3); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 1); CB 4 (hs_blob ch 0x6cbe44 4);
    C8 (Z_to_bv 64 0x6cbe50); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0x14fd34); C8 (hs_word ch 0x6cbe60 8)].
 Definition hs_aex_ok (ch : acs) : bool :=
-  (hs_rw_cells ch 0x6cbe38 (x_aex ch)
-   && hs_rw_cells ch 0x6aa210 [C1 (Z_to_bv 8 0)]
-   && hs_rw_cells ch 0x6aa214 [C1 (Z_to_bv 8 0)])%bool.
+  (hs_rw_cells ch AEF_INCB [C1 (Z_to_bv 8 0)]
+   && hs_rw_cells ch TR_LATCH [C1 (Z_to_bv 8 0)]
+   && hs_rw_cells ch AEX_A0 [C8 (Z_to_bv 64 X_COVDUMP); C8 (hs_word ch (AEX_A0 + 8) 8)]
+   && hs_rw_cells ch AEX (x_aex ch))%bool.
 Definition x_libc (ch : acs) : list cell :=
   [C1 (hs_byte ch 0x6cc078); C1 (hs_byte ch 0x6cc079); C1 (hs_byte ch 0x6cc07a); C1 (Z_to_bv 8 0); C4 (hs_word ch 0x6cc07c 4)].
 Definition x_stdin (ch : acs) : list cell :=
@@ -189,31 +190,22 @@ Fixpoint hs_gds (ch : acs) (a : Z) (gs : list gdesc) : bool :=
   end.
 
 Definition hs_xenv_ok (ch : acs) : bool :=
-  (hs_tid_ok ch
-   && hs_rw_cells ch 0x172ea8 [C8 (Z_to_bv 64 0x10ba00)]
+  (hs_rw_cells ch 0x172ea8 [C8 (Z_to_bv 64 0x10ba00)]
    && hs_rw_cells ch 0x173288 [C8 (Z_to_bv 64 0xee800); C8 (Z_to_bv 64 0xee90c)]
-   && hs_aex_ok ch
-   && hs_rw_cells ch 0x6cbf58 [C8 (Z_to_bv 64 0x9e22c); C8 (hs_word ch 0x6cbf60 8)]
+   && hs_rw_cells ch 0x173418 [C8 (Z_to_bv 64 0x173330)]
+   && hs_rw_cells ch 0x173508 [C8 (Z_to_bv 64 0x173420)]
+   && hs_rw_cells ch RSTDIN (x_stdin ch)
+   && hs_rw_cells ch 0x1735f8 [C8 (Z_to_bv 64 RSTDIN)]
+   && hs_gds ch 0x173630 asan_gds
+   && hs_rw_cells ch 0x174500 [C8 (hs_word ch 0x174500 8)] && Z.ltb 0 (bv_unsigned (hs_word ch 0x174500 8))
+   && hs_rw_cells ch 0x174550 [C1 (Z_to_bv 8 0)]
+   && forallb (fun x => seg_rw_ok bsegs x 1)
+        [0x6aa3e0; 0x6aa3e1; 0x6aa3e2; 0x6aa3e3; 0x6aa3e4; 0x6aa3e5; 0x6aa3e6; 0x6aa3e7; 0x6aa3e8; 0x6aa3e9; 0x6aa3ea]
+   && hs_tid_ok ch
    && hs_rw_cells ch 0x6cc058 [C4 (Z_to_bv 64 0)]
    && hs_rw_cells ch 0x6cc078 (x_libc ch)
    && hs_rw_cells ch 0x6cc5f0 [C8 (Z_to_bv 64 0)]
-   && hs_rw_cells ch 0x173418 [C8 (Z_to_bv 64 0x173330)]
-   && hs_rw_cells ch 0x173508 [C8 (Z_to_bv 64 0x173420)]
-   && hs_rw_cells ch 0x173510 (x_stdin ch) && hs_rw_cells ch 0x1735f8 [C8 (Z_to_bv 64 0x173510)]
-   && hs_gds ch 0x173630 asan_gds
-   && negb (Z.eqb (bv_unsigned (hs_word ch 0x174500 8)) 0) && hs_rw_cells ch 0x174500 [C8 (hs_word ch 0x174500 8)]
-   && hs_rw_cells ch 0x174550 [C1 (Z_to_bv 8 0)]
-   && hs_rw_cells ch 0x6aa3e0 [C1 (hs_byte ch 0x6aa3e0)]
-   && hs_rw_cells ch 0x6aa3e1 [C1 (hs_byte ch 0x6aa3e1)]
-   && hs_rw_cells ch 0x6aa3e2 [C1 (hs_byte ch 0x6aa3e2)]
-   && hs_rw_cells ch 0x6aa3e3 [C1 (hs_byte ch 0x6aa3e3)]
-   && hs_rw_cells ch 0x6aa3e4 [C1 (hs_byte ch 0x6aa3e4)]
-   && hs_rw_cells ch 0x6aa3e5 [C1 (hs_byte ch 0x6aa3e5)]
-   && hs_rw_cells ch 0x6aa3e6 [C1 (hs_byte ch 0x6aa3e6)]
-   && hs_rw_cells ch 0x6aa3e7 [C1 (hs_byte ch 0x6aa3e7)]
-   && hs_rw_cells ch 0x6aa3e8 [C1 (hs_byte ch 0x6aa3e8)]
-   && hs_rw_cells ch 0x6aa3e9 [C1 (hs_byte ch 0x6aa3e9)]
-   && hs_rw_cells ch 0x6aa3ea [C1 (hs_byte ch 0x6aa3ea)])%bool.
+   && hs_aex_ok ch)%bool.
 
 Section Xenv.
 Variables (A : atable) (nx0 : nat) (LIMIT : Z)
@@ -256,63 +248,37 @@ Qed.
 
 Theorem hi_xenv : hs_xenv_ok ch = true -> XENVA m.
 Proof.
-  intros H. unfold hs_xenv_ok in H.
-  apply andb_prop in H as [H H27].
-  apply andb_prop in H as [H H26].
-  apply andb_prop in H as [H H25].
-  apply andb_prop in H as [H H24].
-  apply andb_prop in H as [H H23].
-  apply andb_prop in H as [H H22].
-  apply andb_prop in H as [H H21].
-  apply andb_prop in H as [H H20].
-  apply andb_prop in H as [H H19].
-  apply andb_prop in H as [H H18].
-  apply andb_prop in H as [H H17].
-  apply andb_prop in H as [H H16].
-  apply andb_prop in H as [H H15].
-  apply andb_prop in H as [H H14].
-  apply andb_prop in H as [H H13].
-  apply andb_prop in H as [H H12].
-  apply andb_prop in H as [H H11].
-  apply andb_prop in H as [H H10].
-  apply andb_prop in H as [H H9].
-  apply andb_prop in H as [H H8].
-  apply andb_prop in H as [H H7].
-  apply andb_prop in H as [H H6].
-  apply andb_prop in H as [H H5].
-  apply andb_prop in H as [H H4].
-  apply andb_prop in H as [H HX2]. apply andb_prop in H as [H HX1].
-  rename H into H1.
-  unfold XENVA. split; cycle 1.
-  {
-    left. unfold hs_aex_ok in H4. apply andb_prop in H4 as [H4 H4c]. apply andb_prop in H4 as [H4a H4b].
-    split; [exists (hs_blob ch 0x6cbe39 3), (hs_blob ch 0x6cbe44 4), (hs_word ch 0x6cbe60 8); exact (RWC _ _ H4a)|].
-    split; [exists (hs_word ch 0x6cbf60 8); exact (RWC _ _ H5)|].
-    split; [exact (RWC _ _ H4b)| exact (RWC _ _ H4c)]. }
-
-  split; [exact (hi_tid H1)|].
-  split; [exact (RWC _ _ H6)|].
-  split; [exists (hs_byte ch 0x6cc078), (hs_byte ch 0x6cc079), (hs_byte ch 0x6cc07a), (hs_word ch 0x6cc07c 4); exact (RWC _ _ H7)|].
-  split; [exact (RWC _ _ H8)|]. split; [exact (RWC _ _ H9)|]. split; [exact (RWC _ _ H10)|].
-  split; [unfold stdin_file; exists (hs_blob ch 0x173510 8), (hs_blob ch 0x173528 16), (hs_blob ch 0x173540 8), (hs_blob ch 0x173550 76),
-                             (hs_blob ch 0x1735a0 88); exact (RWC _ _ H11)|].
-  split; [exact (RWC _ _ H12)|].
-  split; [exact (hi_gds _ _ H13)|].
-  split; [exists (hs_word ch 0x174500 8); split; [apply negb_true_iff in H14; apply Z.eqb_neq in H14; exact H14| exact (RWC _ _ H15)]|].
-  split; [exact (RWC _ _ H16)|].
-  split; cycle 1. { split; [exact (RWC _ _ HX1)| exact (RWC _ _ HX2)]. }
-  exists (hs_byte ch 0x6aa3e0), (hs_byte ch 0x6aa3e1), (hs_byte ch 0x6aa3e2), (hs_byte ch 0x6aa3e3), (hs_byte ch 0x6aa3e4), (hs_byte ch 0x6aa3e5), (hs_byte ch 0x6aa3e6), (hs_byte ch 0x6aa3e7), (hs_byte ch 0x6aa3e8), (hs_byte ch 0x6aa3e9), (hs_byte ch 0x6aa3ea).
-  split; [exact (RWC _ _ H17)|].
-  split; [exact (RWC _ _ H18)|].
-  split; [exact (RWC _ _ H19)|].
-  split; [exact (RWC _ _ H20)|].
-  split; [exact (RWC _ _ H21)|].
-  split; [exact (RWC _ _ H22)|].
-  split; [exact (RWC _ _ H23)|].
-  split; [exact (RWC _ _ H24)|].
-  split; [exact (RWC _ _ H25)|].
-  split; [exact (RWC _ _ H26)|].
-  exact (RWC _ _ H27).
+  intros pass.
+  assert (byte_cell : forall x, seg_rw_ok bsegs x 1 = true -> exists o : byte, rw_cells bsegs m x [C1 o]).
+  { intros x seg1. destruct (hi_blob FULL model A' x 1 seg1) as [blob [[[blob_len _] blob_at] blob_wr]].
+    destruct blob as [|o rest]; [discriminate blob_len|]. destruct rest as [|o' rest]; [|discriminate blob_len].
+    exists o. exact (conj (conj (conj I I) blob_at) blob_wr). }
+  unfold hs_xenv_ok in pass. rewrite !Bool.andb_true_iff in pass.
+  destruct pass as [[[[[[[[[[[[[[[ok_xd1 ok_xd2] ok_seu] ok_sou] ok_stdin] ok_sinu] ok_gds] ok_flag] ok_flagpos] ok_cpl]
+                    ok_odr] ok_tid] ok_exl] ok_libc] ok_ofl] ok_aex].
+  unfold XENVA, XENV_coreA. split.
+  - refine (conj (hi_tid ok_tid) (conj (RWC _ _ ok_exl) (conj _ (conj (RWC _ _ ok_ofl) (conj (RWC _ _ ok_seu)
+              (conj (RWC _ _ ok_sou) (conj _ (conj (RWC _ _ ok_sinu) (conj (hi_gds asan_gds 0x173630 ok_gds)
+              (conj _ (conj (RWC _ _ ok_cpl) (conj _ (conj (RWC _ _ ok_xd1) (RWC _ _ ok_xd2)))))))))))))).
+    + do 4 eexists. exact (RWC _ _ ok_libc).
+    + unfold stdin_file. do 5 eexists. exact (RWC _ _ ok_stdin).
+    + exists (hs_word ch 0x174500 8). apply Z.ltb_lt in ok_flagpos.
+      split; [lia| exact (RWC _ _ ok_flag)].
+    + cbn [forallb] in ok_odr. rewrite !Bool.andb_true_iff in ok_odr.
+      destruct ok_odr as (w0 & w1 & w2 & w3 & w4 & w5 & w6 & w7 & w8 & w9 & w10 & _).
+      destruct (byte_cell _ w0) as [o1 c1]. destruct (byte_cell _ w1) as [o2 c2].
+      destruct (byte_cell _ w2) as [o3 c3]. destruct (byte_cell _ w3) as [o4 c4].
+      destruct (byte_cell _ w4) as [o5 c5]. destruct (byte_cell _ w5) as [o6 c6].
+      destruct (byte_cell _ w6) as [o7 c7]. destruct (byte_cell _ w7) as [o8 c8].
+      destruct (byte_cell _ w8) as [o9 c9]. destruct (byte_cell _ w9) as [o10 c10].
+      destruct (byte_cell _ w10) as [o11 c11].
+      exists o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11.
+      exact (conj c1 (conj c2 (conj c3 (conj c4 (conj c5 (conj c6 (conj c7 (conj c8 (conj c9 (conj c10 c11)))))))))).
+  - left. unfold hs_aex_ok in ok_aex. rewrite !Bool.andb_true_iff in ok_aex.
+    destruct ok_aex as [[[ok_incb ok_latch] ok_a0] ok_tbl].
+    unfold aex_main. refine (conj _ (conj _ (conj (RWC _ _ ok_latch) (RWC _ _ ok_incb)))).
+    + do 3 eexists. exact (RWC _ _ ok_tbl).
+    + eexists. exact (RWC _ _ ok_a0).
 Qed.
 
 End Xenv.

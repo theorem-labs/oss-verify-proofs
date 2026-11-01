@@ -221,9 +221,9 @@ S0S31S98A1S74Vs;Vsc;A2S35S98Vm0;A2A3").
 Variable rest : list sptr.
 Hypothesis Rg : ltac2:(tb__ "0|0|
 S7eS7dVX;Vs;Vsc;A3S35S98Vm0;A2S2bS98Vm0;Vrest;A3A3").
-Local Abbreviation mbyte := (@U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
-Local Abbreviation mam := (@U.Mal_aslot__G1.Mal_aslot_I.mam s m0).
-Local Abbreviation mptr_key := (@U.Mal_aslot__G1.Mal_aslot_I.mptr_key s X U sc HI Hsc m0 Hhd).
+Local Abbreviation mbyte := (U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
+Local Abbreviation mam := (U.Mal_aslot__G1.Mal_aslot_I.mam s m0).
+Local Abbreviation mptr_key := (U.Mal_aslot__G1.Mal_aslot_I.mptr_key s X U sc HI Hsc m0 Hhd).
 Variables (rd0 : word -> option byte) (wok0 : word -> bool) (vm : VmMaps).
 Hypothesis HMI : ltac2:(tb__ "0|0|
 S199S15aVX;S36S2fS98S3eA2A1VU;S156Vs;VL;A2Vrd0;Vwok0;Vvm;A8").
@@ -233,7 +233,7 @@ Hypothesis Hbnc : 0 <= bnc < 256.
 Hypothesis Hgd : 0 <= gd < 2 ^ 64.
 Hypothesis Hmaskv : 0 < maskv < 2 ^ 32.
 Hypothesis Hspanv : 0 <= spanv <= 300.
-Local Abbreviation zA := (@U.Mal_aslot__G1.Mal_aslot_I.zA L).
+Local Abbreviation zA := (U.Mal_aslot__G1.Mal_aslot_I.zA L).
 Local Notation "§1§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0) (at level 10, h__ global).
 Local Abbreviation rw1 := (§1§ U.Mal_aslot__G1.Mal_aslot_I.rw1).
 Local Abbreviation rho1 := (§1§ U.Mal_aslot__G1.Mal_aslot_I.rho1).
@@ -241,7 +241,7 @@ Local Notation "§2§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd ma
 Local Abbreviation rw1_low := (§2§ U.Mal_aslot__G1.Mal_aslot_I.rw1_low).
 Local Abbreviation zr1 := (§1§ U.Mal_aslot__G1.Mal_aslot_I.zr1).
 Local Abbreviation zr1_12 := (§2§ U.Mal_aslot__G1.Mal_aslot_I.zr1_12).
-Local Abbreviation zr1_13 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_13 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc Hreq m0 Hbnc Hgd).
+Local Abbreviation zr1_13 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_13 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc Hreq m0 Hbnc Hgd).
 Local Abbreviation zr1_173 := (§2§ U.Mal_aslot__G1.Mal_aslot_I.zr1_173).
 Local Abbreviation zr1_174 := (§2§ U.Mal_aslot__G1.Mal_aslot_I.zr1_174).
 Hypothesis Hsp : ltac2:(tb__ "0|1|
@@ -269,10 +269,10 @@ Hypothesis Hgd_holds : ltac2:(tb__ "0|0|
 S15dS15bVrd0;SbfQ40A1S2eL_;A2S15cS15aA1U8Vgd;A4").
 Let bv0 : byteview := ltac2:(tb__ "0|0|
 S15bS13dSb8VmW;A2S13eSb8VmW;A2A2").
-Local Abbreviation obj_of := (@U.Mal_aslot__G1.Mal_aslot_I.obj_of).
+Local Abbreviation obj_of := U.Mal_aslot__G1.Mal_aslot_I.obj_of.
 Local Abbreviation od_ok_at := (§1§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_at).
 Local Abbreviation od_ok := (§1§ U.Mal_aslot__G1.Mal_aslot_I.od_ok).
-Local Abbreviation od_range := (@U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
+Local Abbreviation od_range := (U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
 Hypothesis Hbnc_val : ltac2:(tb__ "0|1|
 S1S84Z7M0Vsc;A2S86Vsc;Z27A2A2S0S3eVbnc;SacS87Vsc;G0A2Sa2Vs;A1A2A3F_;").
 Variables (Kc : list event -> Model -> Prop) (RF GF : Prop) (TR : Z -> assn -> assn -> Prop).
@@ -284,20 +284,20 @@ Hypothesis HK : implK Kc K.
 Let rhoW : valuation := rho1 mW.
 Local Notation "§3§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW) (at level 10, h__ global).
 Local Abbreviation rw_agrees := (§3§ U.Mal_aslot__G2.Mal_aslot_W.rw_agrees).
-Local Abbreviation od_chg_ok := (@U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
-Local Abbreviation od_sem := (@U.Mal_aslot__G2.Mal_aslot_W.od_sem).
-Local Abbreviation objs_matchb := (@U.Mal_aslot__G2.Mal_aslot_W.objs_matchb).
-Local Abbreviation objs_matchb_holds := (@U.Mal_aslot__G2.Mal_aslot_W.objs_matchb_holds).
-Local Abbreviation objs_matchb_ranges := (@U.Mal_aslot__G2.Mal_aslot_W.objs_matchb_ranges).
-Local Abbreviation oStkF := (@U.Mal_aslot__G2.Mal_aslot_W.oStkF).
-Local Abbreviation NREL := (@U.Mal_aslot__G2.Mal_aslot_W.NREL).
+Local Abbreviation od_chg_ok := (U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
+Local Abbreviation od_sem := U.Mal_aslot__G2.Mal_aslot_W.od_sem.
+Local Abbreviation objs_matchb := U.Mal_aslot__G2.Mal_aslot_W.objs_matchb.
+Local Abbreviation objs_matchb_holds := U.Mal_aslot__G2.Mal_aslot_W.objs_matchb_holds.
+Local Abbreviation objs_matchb_ranges := U.Mal_aslot__G2.Mal_aslot_W.objs_matchb_ranges.
+Local Abbreviation oStkF := U.Mal_aslot__G2.Mal_aslot_W.oStkF.
+Local Abbreviation NREL := U.Mal_aslot__G2.Mal_aslot_W.NREL.
 Local Abbreviation rmF := (§3§ U.Mal_aslot__G2.Mal_aslot_W.rmF).
 Local Abbreviation HfrF := (§3§ U.Mal_aslot__G2.Mal_aslot_W.HfrF).
-Local Abbreviation m' := (@U.Mal_aslot__G2.Mal_aslot_W.m').
-Local Abbreviation minvI' := (@U.Mal_aslot__G2.Mal_aslot_W.minvI' s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbnc_val).
-Local Abbreviation rho' := (@U.Mal_aslot__G2.Mal_aslot_W.rho' rho).
-Local Abbreviation freg_sv_ok := (@U.Mal_aslot__G2.Mal_aslot_W.freg_sv_ok sc rho bnc gd Hsc Hbnc Hgd).
-Local Abbreviation kept := (@U.Mal_aslot__G2.Mal_aslot_W.kept s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth mW Hm_sct Hm_ctz Hbnc_val).
+Local Abbreviation m' := U.Mal_aslot__G2.Mal_aslot_W.m'.
+Local Abbreviation minvI' := (U.Mal_aslot__G2.Mal_aslot_W.minvI' s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbnc_val).
+Local Abbreviation rho' := (U.Mal_aslot__G2.Mal_aslot_W.rho' rho).
+Local Abbreviation freg_sv_ok := (U.Mal_aslot__G2.Mal_aslot_W.freg_sv_ok sc rho bnc gd Hsc Hbnc Hgd).
+Local Abbreviation kept := (U.Mal_aslot__G2.Mal_aslot_W.kept s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth mW Hm_sct Hm_ctz Hbnc_val).
 
 Ltac drop_sp := try clear Hsp_high; try clear Hdepth; try clear Hsp.
 
@@ -420,8 +420,10 @@ Proof using HSF_match HSF_objs HsmF. drop_sp. intros Hd. apply (proj1 (Forall_fo
 
 Lemma obj_G_transfer o : ltac2:(tb__ "0|0|
 S0S2dS14fS18eVo;A2S2eA3S0S2dS192Vo;A1S2eA3S56Sb8VrhoF;VmsF;Vo;A4S56Sb8S19eVmsF;Vo;A4F_;F_;F_;").
-Proof using HagF Hbnc Hgd Hreq Hreq_rho Hsc Hsc_rho Hsp. try clear Hsp_high. try clear Hdepth.
-  intros Hv Hn Ho. eapply (obj_holds_agree_vars_nl segsU fG rhoF rhoG); [apply rhoG_F | exact Hv | exact Hn | exact Ho].
+Proof using HagF Hbnc Hgd Hreq Hreq_rho Hsc Hsc_rho Hsp.
+  intros fG_vars nolist_o holds_F.
+  refine (obj_holds_agree_vars_nl segsU fG rhoF rhoG msF o _ fG_vars nolist_o holds_F).
+  intros u fG_u. apply rhoG_F. exact fG_u.
 Qed.
 
 Theorem smatch_G : ltac2:(tb__ "0|0|
@@ -566,17 +568,17 @@ S0S31S98A1S74Vs;Vsc;A2S35S98Vm0;A2A3").
 Variable rest : list sptr.
 Hypothesis Rg : ltac2:(tb__ "0|0|
 S7eS7dVX;Vs;Vsc;A3S35S98Vm0;A2S2bS98Vm0;Vrest;A3A3").
-Local Abbreviation pM0 := (@U.Mal_aslot__G1.Mal_aslot_I.pM0 m0).
+Local Abbreviation pM0 := (U.Mal_aslot__G1.Mal_aslot_I.pM0 m0).
 Local Notation "§4§ h__" := (h__ s m0) (at level 10, h__ global).
 Local Abbreviation pA := (§4§ U.Mal_aslot__G1.Mal_aslot_I.pA).
 Local Abbreviation pB := (§4§ U.Mal_aslot__G1.Mal_aslot_I.pB).
 Local Abbreviation pC := (§4§ U.Mal_aslot__G1.Mal_aslot_I.pC).
 Local Abbreviation pP := (§4§ U.Mal_aslot__G1.Mal_aslot_I.pP).
 Local Abbreviation mptr := (§4§ U.Mal_aslot__G1.Mal_aslot_I.mptr).
-Local Abbreviation mbyte := (@U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
+Local Abbreviation mbyte := (U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
 Local Abbreviation mam := (§4§ U.Mal_aslot__G1.Mal_aslot_I.mam).
-Local Abbreviation rcls := (@U.Mal_aslot__G1.Mal_aslot_I.rcls rest).
-Local Abbreviation cls1 := (@U.Mal_aslot__G1.Mal_aslot_I.cls1 s X sc Hsc m0 rest Rg).
+Local Abbreviation rcls := (U.Mal_aslot__G1.Mal_aslot_I.rcls rest).
+Local Abbreviation cls1 := (U.Mal_aslot__G1.Mal_aslot_I.cls1 s X sc Hsc m0 rest Rg).
 Local Notation "§5§ h__" := (h__ s X U sc HI Hsc m0 Hhd) (at level 10, h__ global).
 Local Abbreviation mam_used := (§5§ U.Mal_aslot__G1.Mal_aslot_I.mam_used).
 Local Abbreviation mptr_key := (§5§ U.Mal_aslot__G1.Mal_aslot_I.mptr_key).
@@ -589,34 +591,34 @@ Hypothesis Hbnc : 0 <= bnc < 256.
 Hypothesis Hgd : 0 <= gd < 2 ^ 64.
 Hypothesis Hmaskv : 0 < maskv < 2 ^ 32.
 Hypothesis Hspanv : 0 <= spanv <= 300.
-Local Abbreviation zA := (@U.Mal_aslot__G1.Mal_aslot_I.zA L).
+Local Abbreviation zA := (U.Mal_aslot__G1.Mal_aslot_I.zA L).
 Local Notation "§6§ h__" := (h__ s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) (at level 10, h__ global).
 Local Abbreviation mem_R := (§6§ U.Mal_aslot__G1.Mal_aslot_I.mem_R).
 Local Notation "§7§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0) (at level 10, h__ global).
 Local Abbreviation rho1 := (§7§ U.Mal_aslot__G1.Mal_aslot_I.rho1).
 Local Abbreviation zr1 := (§7§ U.Mal_aslot__G1.Mal_aslot_I.zr1).
 Local Abbreviation zl1 := (§7§ U.Mal_aslot__G1.Mal_aslot_I.zl1).
-Local Abbreviation vptr := (@U.Mal_aslot__G1.Mal_aslot_I.vptr).
-Local Abbreviation vmem := (@U.Mal_aslot__G1.Mal_aslot_I.vmem).
-Local Abbreviation vavail := (@U.Mal_aslot__G1.Mal_aslot_I.vavail).
-Local Abbreviation vfreed := (@U.Mal_aslot__G1.Mal_aslot_I.vfreed).
-Local Abbreviation vbits := (@U.Mal_aslot__G1.Mal_aslot_I.vbits).
-Local Abbreviation vbyte := (@U.Mal_aslot__G1.Mal_aslot_I.vbyte).
+Local Abbreviation vptr := U.Mal_aslot__G1.Mal_aslot_I.vptr.
+Local Abbreviation vmem := U.Mal_aslot__G1.Mal_aslot_I.vmem.
+Local Abbreviation vavail := U.Mal_aslot__G1.Mal_aslot_I.vavail.
+Local Abbreviation vfreed := U.Mal_aslot__G1.Mal_aslot_I.vfreed.
+Local Abbreviation vbits := U.Mal_aslot__G1.Mal_aslot_I.vbits.
+Local Abbreviation vbyte := U.Mal_aslot__G1.Mal_aslot_I.vbyte.
 Local Notation "§8§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd) (at level 10, h__ global).
 Local Abbreviation ze_ptr := (§8§ U.Mal_aslot__G1.Mal_aslot_I.ze_ptr).
 Local Abbreviation ze_mem := (§8§ U.Mal_aslot__G1.Mal_aslot_I.ze_mem).
 Local Abbreviation ze_bits := (§8§ U.Mal_aslot__G1.Mal_aslot_I.ze_bits).
 Local Abbreviation ze171 := (§7§ U.Mal_aslot__G1.Mal_aslot_I.ze171).
-Local Abbreviation e_lowbit := (@U.Mal_aslot__G1.Mal_aslot_I.e_lowbit).
-Local Abbreviation e_dbidx := (@U.Mal_aslot__G1.Mal_aslot_I.e_dbidx).
-Local Abbreviation e_bncidx := (@U.Mal_aslot__G1.Mal_aslot_I.e_bncidx).
+Local Abbreviation e_lowbit := U.Mal_aslot__G1.Mal_aslot_I.e_lowbit.
+Local Abbreviation e_dbidx := U.Mal_aslot__G1.Mal_aslot_I.e_dbidx.
+Local Abbreviation e_bncidx := U.Mal_aslot__G1.Mal_aslot_I.e_bncidx.
 Hypothesis Hsp : ltac2:(tb__ "0|1|
 S1S84Z1000Sc0Q40S49Vrho;PaA2A2M0A2S0S3eS89G0Z10A2Z0A3A2").
 Hypothesis Hdepth : ltac2:(tb__ "0|1|
 S1S84S174Z40Sc0Q40S49Vrho;PfA2A2A2M0S8aS186Z0A1A1A2S84S8aS8cZ2Z28A2A1G0A2A2").
 Hypothesis Hsp_high : ltac2:(tb__ "0|1|
 S84S15eVL;A1S85Sc0Q40M0S49Vrho;PaA2A2S174Z40Sc0G0S49Vrho;PfA2A2A2A2A2").
-Local Abbreviation F_base5 := (@U.Mal_aslot__G1.Mal_aslot_I.F_base5).
+Local Abbreviation F_base5 := U.Mal_aslot__G1.Mal_aslot_I.F_base5.
 Local Notation "§9§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hsp Hdepth Hsp_high) (at level 10, h__ global).
 Local Abbreviation ZF_base5 := (§9§ U.Mal_aslot__G1.Mal_aslot_I.ZF_base5).
 Local Abbreviation zf_ptr_ne0 := (§8§ U.Mal_aslot__G1.Mal_aslot_I.zf_ptr_ne0).
@@ -656,19 +658,19 @@ Hypothesis Hgd_holds : ltac2:(tb__ "0|0|
 S15dS15bVrd0;SbfQ40A1S2eL_;A2S15cS15aA1U8Vgd;A4").
 Let bv0 : byteview := ltac2:(tb__ "0|0|
 S15bS13dSb8VmW;A2S13eSb8VmW;A2A2").
-Local Abbreviation O_stk := (@U.Mal_aslot__G1.Mal_aslot_I.O_stk).
-Local Abbreviation optrZ := (@U.Mal_aslot__G1.Mal_aslot_I.optrZ L).
-Local Abbreviation obj_of := (@U.Mal_aslot__G1.Mal_aslot_I.obj_of).
+Local Abbreviation O_stk := U.Mal_aslot__G1.Mal_aslot_I.O_stk.
+Local Abbreviation optrZ := (U.Mal_aslot__G1.Mal_aslot_I.optrZ L).
+Local Abbreviation obj_of := U.Mal_aslot__G1.Mal_aslot_I.obj_of.
 Local Abbreviation od_ok_at := (§7§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_at).
 Local Abbreviation od_ok := (§7§ U.Mal_aslot__G1.Mal_aslot_I.od_ok).
 Local Notation "§11§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds) (at level 10, h__ global).
 Local Abbreviation od_hold := (§11§ U.Mal_aslot__G1.Mal_aslot_I.od_hold).
-Local Abbreviation od_range := (@U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
+Local Abbreviation od_range := (U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
 Local Abbreviation od_pairwise := (§4§ U.Mal_aslot__G1.Mal_aslot_I.od_pairwise).
 Local Notation "§12§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds) (at level 10, h__ global).
 Local Abbreviation carve := (§12§ U.Mal_aslot__G1.Mal_aslot_I.carve).
-Local Abbreviation e_ctz := (@U.Mal_aslot__G1.Mal_aslot_I.e_ctz).
-Local Abbreviation ze_ctz := (@U.Mal_aslot__G1.Mal_aslot_I.ze_ctz s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hsp).
+Local Abbreviation e_ctz := U.Mal_aslot__G1.Mal_aslot_I.e_ctz.
+Local Abbreviation ze_ctz := (U.Mal_aslot__G1.Mal_aslot_I.ze_ctz s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hsp).
 Local Abbreviation od_ok_meta_entry := (§8§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_meta_entry).
 Local Abbreviation od_ok_act_entry := (§8§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_act_entry).
 Local Abbreviation od_ok_mem_entry := (§8§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_mem_entry).
@@ -687,7 +689,7 @@ Variable K : ltac2:(tb__ "0|0|
 S2cS114A1S115OF_;F_;").
 Hypothesis HK : implK Kc K.
 Let rhoW : valuation := rho1 mW.
-Local Abbreviation EVu := (@U.Mal_aslot__G2.Mal_aslot_W.EVu s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW).
+Local Abbreviation EVu := (U.Mal_aslot__G2.Mal_aslot_W.EVu s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW).
 Local Notation "§14§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd mW Kc RF GF TR RR K HK) (at level 10, h__ global).
 Local Abbreviation seg_run := (§14§ U.Mal_aslot__G2.Mal_aslot_W.seg_run).
 Local Notation "§15§ h__" := (h__ Kc RF GF TR RR) (at level 10, h__ global).
@@ -699,20 +701,20 @@ Local Notation "§16§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd m
 Local Abbreviation POST := (§16§ U.Mal_aslot__G2.Mal_aslot_W.POST).
 Local Notation "§17§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW Kc RF GF TR RR K) (at level 10, h__ global).
 Local Abbreviation from_POST := (§17§ U.Mal_aslot__G2.Mal_aslot_W.from_POST).
-Local Abbreviation setp := (@U.Mal_aslot__G2.Mal_aslot_W.setp).
-Local Abbreviation keys_distinct := (@U.Mal_aslot__G2.Mal_aslot_W.keys_distinct).
-Local Abbreviation od_chg_ok := (@U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
-Local Abbreviation od_sem := (@U.Mal_aslot__G2.Mal_aslot_W.od_sem).
-Local Abbreviation objs_matchb := (@U.Mal_aslot__G2.Mal_aslot_W.objs_matchb).
-Local Abbreviation oStkF := (@U.Mal_aslot__G2.Mal_aslot_W.oStkF).
+Local Abbreviation setp := U.Mal_aslot__G2.Mal_aslot_W.setp.
+Local Abbreviation keys_distinct := U.Mal_aslot__G2.Mal_aslot_W.keys_distinct.
+Local Abbreviation od_chg_ok := (U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
+Local Abbreviation od_sem := U.Mal_aslot__G2.Mal_aslot_W.od_sem.
+Local Abbreviation objs_matchb := U.Mal_aslot__G2.Mal_aslot_W.objs_matchb.
+Local Abbreviation oStkF := U.Mal_aslot__G2.Mal_aslot_W.oStkF.
 Local Notation "§18§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbnc_val Kc) (at level 10, h__ global).
 Local Abbreviation post_okH := (§18§ U.Mal_aslot__G2.Mal_aslot_W.post_okH).
-Local Abbreviation e_avT := (@U.Mal_aslot__G3.Mal_aslot_T.e_avT).
-Local Abbreviation e_bncdec := (@U.Mal_aslot__G3.Mal_aslot_T.e_bncdec).
+Local Abbreviation e_avT := U.Mal_aslot__G3.Mal_aslot_T.e_avT.
+Local Abbreviation e_bncdec := U.Mal_aslot__G3.Mal_aslot_T.e_bncdec.
 Local Abbreviation maskA := (§4§ U.Mal_aslot__G3.Mal_aslot_T.maskA).
 Local Notation "§19§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hmaskv Hsp) (at level 10, h__ global).
 Local Abbreviation ze_avT := (§19§ U.Mal_aslot__G3.Mal_aslot_T.ze_avT).
-Local Abbreviation ze_bncdec := (@U.Mal_aslot__G3.Mal_aslot_T.ze_bncdec s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd).
+Local Abbreviation ze_bncdec := (U.Mal_aslot__G3.Mal_aslot_T.ze_bncdec s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd).
 Local Notation "§20§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd mW Hbnc_val K) (at level 10, h__ global).
 Local Abbreviation bnc_out_of := (§20§ U.Mal_aslot__G3.Mal_aslot_T.bnc_out_of).
 Local Notation "§21§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd mW K) (at level 10, h__ global).
@@ -728,49 +730,49 @@ Local Abbreviation active_len := (§23§ U.Mal_aslot__G3.Mal_aslot_T.active_len)
 Local Abbreviation bounces_len := (§23§ U.Mal_aslot__G3.Mal_aslot_T.bounces_len).
 Local Notation "§24§ h__" := (h__ sc rho bnc gd Hsc Hbnc Hgd Hsp) (at level 10, h__ global).
 Local Abbreviation active_hd_set_hd := (§24§ U.Mal_aslot__G3.Mal_aslot_T.active_hd_set_hd).
-Local Abbreviation xraw_upd_meta := (@U.Mal_aslot__G3.Mal_aslot_T.xraw_upd_meta X).
-Local Abbreviation xraw_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.xraw_set_hd X).
-Local Abbreviation xraw_s6 := (@U.Mal_aslot__G3.Mal_aslot_T.xraw_s6 X).
+Local Abbreviation xraw_upd_meta := (U.Mal_aslot__G3.Mal_aslot_T.xraw_upd_meta X).
+Local Abbreviation xraw_set_hd := (U.Mal_aslot__G3.Mal_aslot_T.xraw_set_hd X).
+Local Abbreviation xraw_s6 := (U.Mal_aslot__G3.Mal_aslot_T.xraw_s6 X).
 Local Abbreviation memb_used := (§5§ U.Mal_aslot__G3.Mal_aslot_T.memb_used).
-Local Abbreviation set_hd_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.set_hd_set_hd).
-Local Abbreviation len_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.len_set_hd).
-Local Abbreviation keys_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.keys_set_hd).
-Local Abbreviation st_active_upd_meta := (@U.Mal_aslot__G3.Mal_aslot_T.st_active_upd_meta).
+Local Abbreviation set_hd_set_hd := U.Mal_aslot__G3.Mal_aslot_T.set_hd_set_hd.
+Local Abbreviation len_set_hd := U.Mal_aslot__G3.Mal_aslot_T.len_set_hd.
+Local Abbreviation keys_set_hd := U.Mal_aslot__G3.Mal_aslot_T.keys_set_hd.
+Local Abbreviation st_active_upd_meta := U.Mal_aslot__G3.Mal_aslot_T.st_active_upd_meta.
 Local Abbreviation am_next_mam := (§5§ U.Mal_aslot__G3.Mal_aslot_T.am_next_mam).
 Local Abbreviation am_prev_mam := (§5§ U.Mal_aslot__G3.Mal_aslot_T.am_prev_mam).
 Local Abbreviation nonhead_avail0 := (§6§ U.Mal_aslot__G3.Mal_aslot_T.nonhead_avail0).
 Local Abbreviation xraw_upd_meta_ptr := (§5§ U.Mal_aslot__G3.Mal_aslot_T.xraw_upd_meta_ptr).
-Local Abbreviation ta_post_of := (@U.Mal_aslot__G3.Mal_aslot_T.ta_post_of s X U sc HI Hsc).
-Local Abbreviation loc_ctx := (@U.Mal_aslot__G3.Mal_aslot_T.loc_ctx s L X U rd0 wok0 vm HMI).
-Local Abbreviation in_meta_locs_range := (@U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho bnc gd Hsc m0 Hbnc Hgd).
-Local Abbreviation e_size := (@U.Mal_aslot__G9.Mal_aslot_L.e_size).
-Local Abbreviation e_span0 := (@U.Mal_aslot__G9.Mal_aslot_L.e_span0).
-Local Abbreviation e_a60 := (@U.Mal_aslot__G9.Mal_aslot_L.e_a60).
-Local Abbreviation e_a40 := (@U.Mal_aslot__G9.Mal_aslot_L.e_a40).
-Local Abbreviation e_byteS := (@U.Mal_aslot__G9.Mal_aslot_L.e_byteS).
-Local Abbreviation e_byteL := (@U.Mal_aslot__G9.Mal_aslot_L.e_byteL).
-Local Abbreviation e_maskG := (@U.Mal_aslot__G9.Mal_aslot_L.e_maskG).
-Local Abbreviation e_freedG := (@U.Mal_aslot__G9.Mal_aslot_L.e_freedG).
+Local Abbreviation ta_post_of := (U.Mal_aslot__G3.Mal_aslot_T.ta_post_of s X U sc HI Hsc).
+Local Abbreviation loc_ctx := (U.Mal_aslot__G3.Mal_aslot_T.loc_ctx s L X U rd0 wok0 vm HMI).
+Local Abbreviation in_meta_locs_range := (U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho bnc gd Hsc m0 Hbnc Hgd).
+Local Abbreviation e_size := U.Mal_aslot__G9.Mal_aslot_L.e_size.
+Local Abbreviation e_span0 := U.Mal_aslot__G9.Mal_aslot_L.e_span0.
+Local Abbreviation e_a60 := U.Mal_aslot__G9.Mal_aslot_L.e_a60.
+Local Abbreviation e_a40 := U.Mal_aslot__G9.Mal_aslot_L.e_a40.
+Local Abbreviation e_byteS := U.Mal_aslot__G9.Mal_aslot_L.e_byteS.
+Local Abbreviation e_byteL := U.Mal_aslot__G9.Mal_aslot_L.e_byteL.
+Local Abbreviation e_maskG := U.Mal_aslot__G9.Mal_aslot_L.e_maskG.
+Local Abbreviation e_freedG := U.Mal_aslot__G9.Mal_aslot_L.e_freedG.
 Local Abbreviation size_range := (§24§ U.Mal_aslot__G9.Mal_aslot_L.size_range).
-Local Abbreviation aidx_range := (@U.Mal_aslot__G9.Mal_aslot_L.aidx_range s sc rho byM0 byA byB byC byP bnc gd Hsc m0 Hbytes Hbnc Hgd).
+Local Abbreviation aidx_range := (U.Mal_aslot__G9.Mal_aslot_L.aidx_range s sc rho byM0 byA byB byC byP bnc gd Hsc m0 Hbytes Hbnc Hgd).
 Local Notation "§25§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hspanv Hsp) (at level 10, h__ global).
 Local Abbreviation ze_byteS := (§25§ U.Mal_aslot__G9.Mal_aslot_L.ze_byteS).
 Local Abbreviation ze_byteL := (§10§ U.Mal_aslot__G9.Mal_aslot_L.ze_byteL).
 Local Abbreviation ze_maskG := (§8§ U.Mal_aslot__G9.Mal_aslot_L.ze_maskG).
 Local Abbreviation ze_freedG := (§10§ U.Mal_aslot__G9.Mal_aslot_L.ze_freedG).
-Local Abbreviation e_last1 := (@U.Mal_aslot__G9.Mal_aslot_L.e_last1).
+Local Abbreviation e_last1 := U.Mal_aslot__G9.Mal_aslot_L.e_last1.
 Local Notation "§26§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hspanv Hsp mW K) (at level 10, h__ global).
 Local Abbreviation cnt_lt_of := (§26§ U.Mal_aslot__G9.Mal_aslot_L.cnt_lt_of).
 Local Abbreviation cnt_ge_of := (§26§ U.Mal_aslot__G9.Mal_aslot_L.cnt_ge_of).
 Local Abbreviation eq0_of := (§16§ U.Mal_aslot__G9.Mal_aslot_L.eq0_of).
 Local Abbreviation span_cnt_ge2 := (§24§ U.Mal_aslot__G9.Mal_aslot_L.span_cnt_ge2).
-Local Abbreviation rename_chk := (@U.Mal_aslot__G9.Mal_aslot_L.rename_chk).
-Local Abbreviation setsB := (@U.Mal_aslot__G9.Mal_aslot_L.setsB).
-Local Abbreviation setsX := (@U.Mal_aslot__G9.Mal_aslot_L.setsX).
-Local Abbreviation LINV := (@U.Mal_aslot__G9.Mal_aslot_L.LINV sc).
+Local Abbreviation rename_chk := U.Mal_aslot__G9.Mal_aslot_L.rename_chk.
+Local Abbreviation setsB := U.Mal_aslot__G9.Mal_aslot_L.setsB.
+Local Abbreviation setsX := U.Mal_aslot__G9.Mal_aslot_L.setsX.
+Local Abbreviation LINV := (U.Mal_aslot__G9.Mal_aslot_L.LINV sc).
 Local Notation "§27§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth mW Hbnc_val Kc RF GF TR RR K HK) (at level 10, h__ global).
 Local Abbreviation span_loop_sound := (§27§ U.Mal_aslot__G9.Mal_aslot_L.span_loop_sound).
-Local Abbreviation setsA := (@U.Mal_aslot__G9.Mal_aslot_L.setsA).
+Local Abbreviation setsA := U.Mal_aslot__G9.Mal_aslot_L.setsA.
 Local Notation "§28§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp mW K) (at level 10, h__ global).
 Local Abbreviation loop_entry := (§28§ U.Mal_aslot__G9.Mal_aslot_L.loop_entry).
 
@@ -811,7 +813,19 @@ S0S31S9aA1S75Vs;S9Vm0;A1A2S35S9aS9dVam0;A1A2A3"). Proof using HI Hhd Hsc. exact 
 Definition CLS : Prop := ltac:(let t := type of (cls1 Hr) in exact t).
 Lemma HCLS : CLS. Proof using Hr Hsc Rg. exact (cls1 Hr). Qed.
 Ltac use_cls := pose proof HCLS as HH; unfold CLS in HH; decompose [and] HH; clear HH.
-Ltac ring_norm := use_cls; cbn [mptr] in *; unfold U.Mal_aslot__G1.Mal_aslot_I.pP, U.Mal_aslot__G1.Mal_aslot_I.pC, U.Mal_aslot__G1.Mal_aslot_I.pB, U.Mal_aslot__G1.Mal_aslot_I.pA in *.
+Ltac ring_norm :=
+  use_cls;
+  repeat first
+    [ progress change (mnext pM0) with pA
+    | progress change (mnext pA) with pB
+    | progress change (mnext pB) with pC
+    | progress change (mprev pM0) with pP
+    | match goal with
+      | eq_P : pP = pM0 |- context [pP] => rewrite eq_P
+      | eq_C : pC = pM0 |- context [pC] => rewrite eq_C
+      | eq_B : pB = pM0 |- context [pB] => rewrite eq_B
+      | eq_A : pA = pM0 |- context [pA] => rewrite eq_A
+      end ].
 Ltac solve_link := ring_norm; first [reflexivity | assumption | symmetry; assumption | congruence].
 Ltac solve_neq := ring_norm; first [assumption | apply not_eq_sym; assumption | congruence].
 
@@ -1578,52 +1592,71 @@ End T2.
 
 Theorem variant_R1ns : ltac2:(tb__ "0|0|
 VTR;Z0S181Sb8VK;S11eVrhoW;A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVpart HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Hsv RR Rg am0.
-  pose proof (aidx_range MM0) as AR. pose proof last_R as LR. pose proof cnt1_ge as CG. pose proof size_range as [SR _].
-  destruct (span_facts sc (am_aidx (mam MM0)) Hsc ltac:(lia) HVpart) as [EX LE]. fold cnt1 in LE.
-
-  apply (tr_seq _ (fun w => exists rho0, (agrees rhoW rho0 /\ LINV (span0_of sc (am_aidx (mam MM0))) (am_aidx (mam MM0) + 2) rho0) /\ SymSoundR.SP segsU K SL_R1ns rho0 w)).
-  { apply (seg_run 300 SA_R1ns LA_R1ns _ rhoW eq_refl eq_refl runA_R1ns (agrees_refl rhoW)).
-    intros LfA rhoA w HinA HagA HSPA.
-    rewrite (single_leaf LA_R1ns _ SA_R1ns LfA LA_R1ns_shape HinA) in HSPA. change (lfs LA_R1ns 0 SA_R1ns) with LA_R1nss in HSPA.
-    destruct (loop_entry MM0 LA_R1nss SL_R1ns (fst DL_R1ns) swf_SL sd_A dA_ok keysA setsA_vars setsA_hi varsA inA no1A rhoA w HagA HSPA) as (Hag0 & HINV0 & HSP0).
-    exists (setp rhoA (setsA (fst DL_R1ns))). split; [split; assumption | exact HSP0]. }
-
-  apply tr_ex. intros rho0. apply tr_pure. intros [Hag0 HINV0].
-  apply (tr_seq _ (POST SX_R1ns)).
-  { apply (span_loop_sound MM0 SL_R1ns L0 L1 SX_R1ns LL_R1ns (fst DX_R1ns) runL_R1ns LL_eq SL_len SL_next SL_regs ren_chk L0_same L0_5 L0_14 L0_16 T0f T1f L1_14
-             swf_SX sd_X dX_ok keysX setsX_vars setsX_hi varsX xeX 300%nat _ _ rho0 Hag0 HINV0).
-    - unfold span0_of, UNIT. nia.
-    - lia.
-    - cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
-    - unfold span0_of, UNIT. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. nia.
-    - exact EX.
-    - rewrite Hsv. reflexivity. }
-
-  apply from_POST. intros rhoX HagX.
-  apply (tr_seq _ (fun w => (span_cnt am1_M0 = spanv /\ POST ST0_R1ns w) \/ (span_cnt am1_M0 = am_last (mam MM0) + 1 /\ POST ST2_R1ns w))).
-  { apply (seg_run 300 SX_R1ns LX_R1ns _ rhoX SX_len SX_next runX_R1ns HagX).
-    intros Lf rhoY w Hin HagY HSPY.
-    destruct (leaf4 LX_R1ns _ _ _ _ SA_R1ns Lf LX_R1ns_shape Hin) as [EL|[EL|[EL|EL]]]; rewrite EL in HSPY.
-    - assert (CS : span_cnt am1_M0 = spanv) by (rewrite Hsv; apply cnt_S; rewrite <- Hsv; exact (cnt_lt_of MM0 rhoY _ w HagY HSPY fX0)).
-      left. split; [exact CS|]. exists rhoY. split; [exact HagY|].
-      apply (linkT (lfs LX_R1ns 0 SA_R1ns) ST0_R1ns (e_maskG MM0 (EB0 MM0)) (snd DT0_R1ns) rhoY _ swf_ST0 sd_0 HagY); try assumption.
-      + reflexivity.
-      + reflexivity. + exact (ME0 CS). + exact nf_incl0. + exact ST0_vars. + exact ST0_sup. + exact ZF_ST0.
-    - exfalso. assert (CS : span_cnt am1_M0 = spanv) by (rewrite Hsv; apply cnt_S; rewrite <- Hsv; exact (cnt_lt_of MM0 rhoY _ w HagY HSPY fX1b)).
-      pose proof (eq0_of (e_maskG MM0 (EB0 MM0)) rhoY _ w HagY HSPY fX1 eq_refl eq_refl) as Z0.
-      rewrite (ME0 CS) in Z0. apply HVmask3. rewrite <- Hmv. apply (proj1 (sx32_zero_iff maskv ltac:(pose proof Hmaskv; lia))). exact Z0.
-    - assert (CS : span_cnt am1_M0 = am_last (mam MM0) + 1) by (apply cnt_L; rewrite <- Hsv; exact (cnt_ge_of MM0 rhoY _ w HagY HSPY fX2)).
-      right. split; [exact CS|]. exists rhoY. split; [exact HagY|].
-      apply (linkT (lfs LX_R1ns 2 SA_R1ns) ST2_R1ns (e_maskG MM0 (EB2 MM0)) (snd DT2_R1ns) rhoY _ swf_ST2 sd_2 HagY); try assumption.
-      + reflexivity.
-      + reflexivity. + exact (ME2 CS). + exact nf_incl2. + exact ST2_vars. + exact ST2_sup. + exact ZF_ST2.
-    - exfalso. assert (CS : span_cnt am1_M0 = am_last (mam MM0) + 1) by (apply cnt_L; rewrite <- Hsv; exact (cnt_ge_of MM0 rhoY _ w HagY HSPY fX3b)).
-      pose proof (eq0_of (e_maskG MM0 (EB2 MM0)) rhoY _ w HagY HSPY fX3 eq_refl eq_refl) as Z0.
-      rewrite (ME2 CS) in Z0. apply HVmask3. rewrite <- Hmv. apply (proj1 (sx32_zero_iff maskv ltac:(pose proof Hmaskv; lia))). exact Z0. }
-  apply tr_disj.
-  - apply tr_pure. intros CS. apply from_POST. intros rhoA HagA. exact (T0_ok CS rhoA HagA).
-  - apply tr_pure. intros CS. apply from_POST. intros rhoA HagA. exact (T2_ok CS rhoA HagA).
+Proof using s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rest Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv.
+  pose proof (aidx_range MM0) as aidx_bd.
+  pose proof size_range as size_bd.
+  pose proof Hmaskv as mask_bd.
+  destruct (span_facts sc (am_aidx (mam MM0)) Hsc aidx_bd HVpart) as [exits_ok _].
+  refine (tr_seq _ (fun w => exists rhoL : valuation,
+            (agrees rhoW rhoL /\ LINV (span0_of sc (am_aidx (mam MM0))) (am_aidx (mam MM0) + 2) rhoL)
+            /\ SymSoundR.SP segsU K SL_R1ns rhoL w) _ _ _).
+  - apply (seg_run 300 SA_R1ns LA_R1ns _ rhoW eq_refl eq_refl runA_R1ns (agrees_refl rhoW)).
+    intros leafA rhoE w leafA_in ag_E sp_E.
+    rewrite (single_leaf LA_R1ns _ SA_R1ns leafA LA_R1ns_shape leafA_in) in sp_E.
+    change (lfs LA_R1ns 0 SA_R1ns) with LA_R1nss in sp_E.
+    destruct (loop_entry MM0 LA_R1nss SL_R1ns (fst DL_R1ns) swf_SL sd_A dA_ok keysA setsA_vars setsA_hi varsA inA no1A
+                rhoE w ag_E sp_E) as (ag_L & inv_L & sp_L).
+    exists (setp rhoE (setsA (fst DL_R1ns))).
+    split; [split|]; assumption.
+  - apply (tr_ex valuation (fun rhoL w =>
+             (agrees rhoW rhoL /\ LINV (span0_of sc (am_aidx (mam MM0))) (am_aidx (mam MM0) + 2) rhoL)
+             /\ SymSoundR.SP segsU K SL_R1ns rhoL w)).
+    intros rhoL.
+    apply (tr_pure (agrees rhoW rhoL /\ LINV (span0_of sc (am_aidx (mam MM0))) (am_aidx (mam MM0) + 2) rhoL)
+             (SymSoundR.SP segsU K SL_R1ns rhoL)).
+    intros [ag_L inv_L].
+    apply (tr_seq _ (POST SX_R1ns)).
+    + apply (span_loop_sound MM0 SL_R1ns L0 L1 SX_R1ns LL_R1ns (fst DX_R1ns) runL_R1ns LL_eq SL_len SL_next SL_regs
+               ren_chk L0_same L0_5 L0_14 L0_16 T0f T1f L1_14 swf_SX sd_X dX_ok keysX setsX_vars setsX_hi varsX xeX
+               300 _ _ rhoL ag_L inv_L).
+      * unfold span0_of, UNIT. nia.
+      * lia.
+      * cbn [Z.of_nat Pos.of_succ_nat]. lia.
+      * unfold span0_of, UNIT. cbn [Z.of_nat Pos.of_succ_nat]. nia.
+      * exact exits_ok.
+      * rewrite Hsv. reflexivity.
+    + apply from_POST. intros rhoX ag_X.
+      destruct (Z_lt_le_dec cnt1 (am_last (mam MM0) + 1)) as [loop_short | loop_long].
+      * assert (cnt_eq : span_cnt am1_M0 = spanv) by (rewrite Hsv; exact (cnt_S loop_short)).
+        apply (tr_seq _ (POST ST0_R1ns)).
+        -- apply (seg_run 300 SX_R1ns LX_R1ns _ rhoX SX_len SX_next runX_R1ns ag_X).
+           intros leafX rho2 w leafX_in ag_2 sp_2.
+           destruct (leaf4 LX_R1ns _ _ _ _ SA_R1ns leafX LX_R1ns_shape leafX_in) as [at_k | [at_k | [at_k | at_k]]];
+             rewrite at_k in sp_2.
+           ++ exists rho2. split; [exact ag_2|].
+              exact (linkT _ ST0_R1ns _ _ rho2 w swf_ST0 sd_0 ag_2 eq_refl eq_refl (ME0 cnt_eq)
+                       nf_incl0 ST0_vars ST0_sup ZF_ST0 sp_2).
+           ++ exfalso. pose proof (eq0_of _ rho2 _ w ag_2 sp_2 fX1 eq_refl eq_refl) as mask_zero.
+              rewrite (ME0 cnt_eq) in mask_zero.
+              apply (ZBits.sx32_zero_iff maskv ltac:(lia)) in mask_zero. lia.
+           ++ exfalso. pose proof (cnt_ge_of MM0 rho2 _ w ag_2 sp_2 fX2). lia.
+           ++ exfalso. pose proof (cnt_ge_of MM0 rho2 _ w ag_2 sp_2 fX3b). lia.
+        -- apply from_POST. intros rhoA ag_A. exact (T0_ok cnt_eq rhoA ag_A).
+      * pose proof (cnt_L loop_long) as cnt_eq.
+        apply (tr_seq _ (POST ST2_R1ns)).
+        -- apply (seg_run 300 SX_R1ns LX_R1ns _ rhoX SX_len SX_next runX_R1ns ag_X).
+           intros leafX rho2 w leafX_in ag_2 sp_2.
+           destruct (leaf4 LX_R1ns _ _ _ _ SA_R1ns leafX LX_R1ns_shape leafX_in) as [at_k | [at_k | [at_k | at_k]]];
+             rewrite at_k in sp_2.
+           ++ exfalso. pose proof (cnt_lt_of MM0 rho2 _ w ag_2 sp_2 fX0). lia.
+           ++ exfalso. pose proof (cnt_lt_of MM0 rho2 _ w ag_2 sp_2 fX1b). lia.
+           ++ exists rho2. split; [exact ag_2|].
+              exact (linkT _ ST2_R1ns _ _ rho2 w swf_ST2 sd_2 ag_2 eq_refl eq_refl (ME2 cnt_eq)
+                       nf_incl2 ST2_vars ST2_sup ZF_ST2 sp_2).
+           ++ exfalso. pose proof (eq0_of _ rho2 _ w ag_2 sp_2 fX3 eq_refl eq_refl) as mask_zero.
+              rewrite (ME2 cnt_eq) in mask_zero.
+              apply (ZBits.sx32_zero_iff maskv ltac:(lia)) in mask_zero. lia.
+        -- apply from_POST. intros rhoA ag_A. exact (T2_ok cnt_eq rhoA ag_A).
 Qed.
 
 End VR1ns.
@@ -1662,17 +1695,17 @@ S0S31S98A1S74Vs;Vsc;A2S35S98Vm0;A2A3").
 Variable rest : list sptr.
 Hypothesis Rg : ltac2:(tb__ "0|0|
 S7eS7dVX;Vs;Vsc;A3S35S98Vm0;A2S2bS98Vm0;Vrest;A3A3").
-Local Abbreviation pM0 := (@U.Mal_aslot__G1.Mal_aslot_I.pM0 m0).
+Local Abbreviation pM0 := (U.Mal_aslot__G1.Mal_aslot_I.pM0 m0).
 Local Notation "§29§ h__" := (h__ s m0) (at level 10, h__ global).
 Local Abbreviation pA := (§29§ U.Mal_aslot__G1.Mal_aslot_I.pA).
 Local Abbreviation pB := (§29§ U.Mal_aslot__G1.Mal_aslot_I.pB).
 Local Abbreviation pC := (§29§ U.Mal_aslot__G1.Mal_aslot_I.pC).
 Local Abbreviation pP := (§29§ U.Mal_aslot__G1.Mal_aslot_I.pP).
 Local Abbreviation mptr := (§29§ U.Mal_aslot__G1.Mal_aslot_I.mptr).
-Local Abbreviation mbyte := (@U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
+Local Abbreviation mbyte := (U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
 Local Abbreviation mam := (§29§ U.Mal_aslot__G1.Mal_aslot_I.mam).
-Local Abbreviation rcls := (@U.Mal_aslot__G1.Mal_aslot_I.rcls rest).
-Local Abbreviation cls2 := (@U.Mal_aslot__G1.Mal_aslot_I.cls2 s X sc Hsc m0 rest Rg).
+Local Abbreviation rcls := (U.Mal_aslot__G1.Mal_aslot_I.rcls rest).
+Local Abbreviation cls2 := (U.Mal_aslot__G1.Mal_aslot_I.cls2 s X sc Hsc m0 rest Rg).
 Local Notation "§30§ h__" := (h__ s X U sc HI Hsc m0 Hhd) (at level 10, h__ global).
 Local Abbreviation mam_used := (§30§ U.Mal_aslot__G1.Mal_aslot_I.mam_used).
 Local Abbreviation mptr_key := (§30§ U.Mal_aslot__G1.Mal_aslot_I.mptr_key).
@@ -1685,7 +1718,7 @@ Hypothesis Hbnc : 0 <= bnc < 256.
 Hypothesis Hgd : 0 <= gd < 2 ^ 64.
 Hypothesis Hmaskv : 0 < maskv < 2 ^ 32.
 Hypothesis Hspanv : 0 <= spanv <= 300.
-Local Abbreviation zA := (@U.Mal_aslot__G1.Mal_aslot_I.zA L).
+Local Abbreviation zA := (U.Mal_aslot__G1.Mal_aslot_I.zA L).
 Local Notation "§31§ h__" := (h__ s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd) (at level 10, h__ global).
 Local Abbreviation mem_R := (§31§ U.Mal_aslot__G1.Mal_aslot_I.mem_R).
 Local Notation "§32§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0) (at level 10, h__ global).
@@ -1693,12 +1726,12 @@ Local Abbreviation rho1 := (§32§ U.Mal_aslot__G1.Mal_aslot_I.rho1).
 Local Abbreviation zr1 := (§32§ U.Mal_aslot__G1.Mal_aslot_I.zr1).
 Local Abbreviation zl1 := (§32§ U.Mal_aslot__G1.Mal_aslot_I.zl1).
 Local Abbreviation ze_lit := (§32§ U.Mal_aslot__G1.Mal_aslot_I.ze_lit).
-Local Abbreviation vptr := (@U.Mal_aslot__G1.Mal_aslot_I.vptr).
-Local Abbreviation vmem := (@U.Mal_aslot__G1.Mal_aslot_I.vmem).
-Local Abbreviation vavail := (@U.Mal_aslot__G1.Mal_aslot_I.vavail).
-Local Abbreviation vfreed := (@U.Mal_aslot__G1.Mal_aslot_I.vfreed).
-Local Abbreviation vbits := (@U.Mal_aslot__G1.Mal_aslot_I.vbits).
-Local Abbreviation vbyte := (@U.Mal_aslot__G1.Mal_aslot_I.vbyte).
+Local Abbreviation vptr := U.Mal_aslot__G1.Mal_aslot_I.vptr.
+Local Abbreviation vmem := U.Mal_aslot__G1.Mal_aslot_I.vmem.
+Local Abbreviation vavail := U.Mal_aslot__G1.Mal_aslot_I.vavail.
+Local Abbreviation vfreed := U.Mal_aslot__G1.Mal_aslot_I.vfreed.
+Local Abbreviation vbits := U.Mal_aslot__G1.Mal_aslot_I.vbits.
+Local Abbreviation vbyte := U.Mal_aslot__G1.Mal_aslot_I.vbyte.
 Local Notation "§33§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd) (at level 10, h__ global).
 Local Abbreviation ze_ptr := (§33§ U.Mal_aslot__G1.Mal_aslot_I.ze_ptr).
 Local Abbreviation ze_mem := (§33§ U.Mal_aslot__G1.Mal_aslot_I.ze_mem).
@@ -1706,16 +1739,16 @@ Local Abbreviation ze_avail := (§33§ U.Mal_aslot__G1.Mal_aslot_I.ze_avail).
 Local Abbreviation ze_freed := (§33§ U.Mal_aslot__G1.Mal_aslot_I.ze_freed).
 Local Abbreviation ze_bits := (§33§ U.Mal_aslot__G1.Mal_aslot_I.ze_bits).
 Local Abbreviation ze171 := (§32§ U.Mal_aslot__G1.Mal_aslot_I.ze171).
-Local Abbreviation e_lowbit := (@U.Mal_aslot__G1.Mal_aslot_I.e_lowbit).
-Local Abbreviation e_dbidx := (@U.Mal_aslot__G1.Mal_aslot_I.e_dbidx).
-Local Abbreviation e_bncidx := (@U.Mal_aslot__G1.Mal_aslot_I.e_bncidx).
+Local Abbreviation e_lowbit := U.Mal_aslot__G1.Mal_aslot_I.e_lowbit.
+Local Abbreviation e_dbidx := U.Mal_aslot__G1.Mal_aslot_I.e_dbidx.
+Local Abbreviation e_bncidx := U.Mal_aslot__G1.Mal_aslot_I.e_bncidx.
 Hypothesis Hsp : ltac2:(tb__ "0|1|
 S1S84Z1000Sc0Q40S49Vrho;PaA2A2M0A2S0S3eS89G0Z10A2Z0A3A2").
 Hypothesis Hdepth : ltac2:(tb__ "0|1|
 S1S84S174Z40Sc0Q40S49Vrho;PfA2A2A2M0S8aS186Z0A1A1A2S84S8aS8cZ2Z28A2A1G0A2A2").
 Hypothesis Hsp_high : ltac2:(tb__ "0|1|
 S84S15eVL;A1S85Sc0Q40M0S49Vrho;PaA2A2S174Z40Sc0G0S49Vrho;PfA2A2A2A2A2").
-Local Abbreviation F_base5 := (@U.Mal_aslot__G1.Mal_aslot_I.F_base5).
+Local Abbreviation F_base5 := U.Mal_aslot__G1.Mal_aslot_I.F_base5.
 Local Notation "§34§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hsp Hdepth Hsp_high) (at level 10, h__ global).
 Local Abbreviation ZF_base5 := (§34§ U.Mal_aslot__G1.Mal_aslot_I.ZF_base5).
 Local Abbreviation zf_ptr_ne0 := (§33§ U.Mal_aslot__G1.Mal_aslot_I.zf_ptr_ne0).
@@ -1755,18 +1788,18 @@ Hypothesis Hgd_holds : ltac2:(tb__ "0|0|
 S15dS15bVrd0;SbfQ40A1S2eL_;A2S15cS15aA1U8Vgd;A4").
 Let bv0 : byteview := ltac2:(tb__ "0|0|
 S15bS13dSb8VmW;A2S13eSb8VmW;A2A2").
-Local Abbreviation O_stk := (@U.Mal_aslot__G1.Mal_aslot_I.O_stk).
-Local Abbreviation optrZ := (@U.Mal_aslot__G1.Mal_aslot_I.optrZ L).
-Local Abbreviation obj_of := (@U.Mal_aslot__G1.Mal_aslot_I.obj_of).
+Local Abbreviation O_stk := U.Mal_aslot__G1.Mal_aslot_I.O_stk.
+Local Abbreviation optrZ := (U.Mal_aslot__G1.Mal_aslot_I.optrZ L).
+Local Abbreviation obj_of := U.Mal_aslot__G1.Mal_aslot_I.obj_of.
 Local Abbreviation od_ok_at := (§32§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_at).
 Local Abbreviation od_ok := (§32§ U.Mal_aslot__G1.Mal_aslot_I.od_ok).
 Local Notation "§36§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds) (at level 10, h__ global).
 Local Abbreviation od_hold := (§36§ U.Mal_aslot__G1.Mal_aslot_I.od_hold).
-Local Abbreviation od_range := (@U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
+Local Abbreviation od_range := (U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
 Local Abbreviation od_pairwise := (§29§ U.Mal_aslot__G1.Mal_aslot_I.od_pairwise).
 Local Notation "§37§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds) (at level 10, h__ global).
 Local Abbreviation carve := (§37§ U.Mal_aslot__G1.Mal_aslot_I.carve).
-Local Abbreviation e_ctz := (@U.Mal_aslot__G1.Mal_aslot_I.e_ctz).
+Local Abbreviation e_ctz := U.Mal_aslot__G1.Mal_aslot_I.e_ctz.
 Local Notation "§38§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hsp) (at level 10, h__ global).
 Local Abbreviation ze_ctz := (§38§ U.Mal_aslot__G1.Mal_aslot_I.ze_ctz).
 Local Abbreviation od_ok_meta_entry := (§33§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_meta_entry).
@@ -1787,7 +1820,7 @@ Variable K : ltac2:(tb__ "0|0|
 S2cS114A1S115OF_;F_;").
 Hypothesis HK : implK Kc K.
 Let rhoW : valuation := rho1 mW.
-Local Abbreviation EVu := (@U.Mal_aslot__G2.Mal_aslot_W.EVu s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW).
+Local Abbreviation EVu := (U.Mal_aslot__G2.Mal_aslot_W.EVu s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW).
 Local Notation "§40§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd mW Kc RF GF TR RR K HK) (at level 10, h__ global).
 Local Abbreviation seg_run := (§40§ U.Mal_aslot__G2.Mal_aslot_W.seg_run).
 Local Notation "§41§ h__" := (h__ Kc RF GF TR RR) (at level 10, h__ global).
@@ -1799,16 +1832,16 @@ Local Notation "§42§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd m
 Local Abbreviation POST := (§42§ U.Mal_aslot__G2.Mal_aslot_W.POST).
 Local Notation "§43§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0 mW Kc RF GF TR RR K) (at level 10, h__ global).
 Local Abbreviation from_POST := (§43§ U.Mal_aslot__G2.Mal_aslot_W.from_POST).
-Local Abbreviation setp := (@U.Mal_aslot__G2.Mal_aslot_W.setp).
-Local Abbreviation keys_distinct := (@U.Mal_aslot__G2.Mal_aslot_W.keys_distinct).
-Local Abbreviation od_chg_ok := (@U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
-Local Abbreviation od_sem := (@U.Mal_aslot__G2.Mal_aslot_W.od_sem).
-Local Abbreviation objs_matchb := (@U.Mal_aslot__G2.Mal_aslot_W.objs_matchb).
-Local Abbreviation oStkF := (@U.Mal_aslot__G2.Mal_aslot_W.oStkF).
+Local Abbreviation setp := U.Mal_aslot__G2.Mal_aslot_W.setp.
+Local Abbreviation keys_distinct := U.Mal_aslot__G2.Mal_aslot_W.keys_distinct.
+Local Abbreviation od_chg_ok := (U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
+Local Abbreviation od_sem := U.Mal_aslot__G2.Mal_aslot_W.od_sem.
+Local Abbreviation objs_matchb := U.Mal_aslot__G2.Mal_aslot_W.objs_matchb.
+Local Abbreviation oStkF := U.Mal_aslot__G2.Mal_aslot_W.oStkF.
 Local Notation "§44§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbnc_val Kc) (at level 10, h__ global).
 Local Abbreviation post_okH := (§44§ U.Mal_aslot__G2.Mal_aslot_W.post_okH).
-Local Abbreviation e_avT := (@U.Mal_aslot__G3.Mal_aslot_T.e_avT).
-Local Abbreviation e_bncdec := (@U.Mal_aslot__G3.Mal_aslot_T.e_bncdec).
+Local Abbreviation e_avT := U.Mal_aslot__G3.Mal_aslot_T.e_avT.
+Local Abbreviation e_bncdec := U.Mal_aslot__G3.Mal_aslot_T.e_bncdec.
 Local Abbreviation maskA := (§29§ U.Mal_aslot__G3.Mal_aslot_T.maskA).
 Local Notation "§45§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hmaskv Hsp) (at level 10, h__ global).
 Local Abbreviation ze_avT := (§45§ U.Mal_aslot__G3.Mal_aslot_T.ze_avT).
@@ -1829,49 +1862,49 @@ Local Abbreviation active_len := (§50§ U.Mal_aslot__G3.Mal_aslot_T.active_len)
 Local Abbreviation bounces_len := (§50§ U.Mal_aslot__G3.Mal_aslot_T.bounces_len).
 Local Notation "§51§ h__" := (h__ sc rho bnc gd Hsc Hbnc Hgd Hsp) (at level 10, h__ global).
 Local Abbreviation active_hd_set_hd := (§51§ U.Mal_aslot__G3.Mal_aslot_T.active_hd_set_hd).
-Local Abbreviation xraw_upd_meta := (@U.Mal_aslot__G3.Mal_aslot_T.xraw_upd_meta X).
-Local Abbreviation xraw_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.xraw_set_hd X).
-Local Abbreviation xraw_s6 := (@U.Mal_aslot__G3.Mal_aslot_T.xraw_s6 X).
+Local Abbreviation xraw_upd_meta := (U.Mal_aslot__G3.Mal_aslot_T.xraw_upd_meta X).
+Local Abbreviation xraw_set_hd := (U.Mal_aslot__G3.Mal_aslot_T.xraw_set_hd X).
+Local Abbreviation xraw_s6 := (U.Mal_aslot__G3.Mal_aslot_T.xraw_s6 X).
 Local Abbreviation memb_used := (§30§ U.Mal_aslot__G3.Mal_aslot_T.memb_used).
-Local Abbreviation set_hd_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.set_hd_set_hd).
-Local Abbreviation len_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.len_set_hd).
-Local Abbreviation keys_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.keys_set_hd).
-Local Abbreviation st_active_upd_meta := (@U.Mal_aslot__G3.Mal_aslot_T.st_active_upd_meta).
+Local Abbreviation set_hd_set_hd := U.Mal_aslot__G3.Mal_aslot_T.set_hd_set_hd.
+Local Abbreviation len_set_hd := U.Mal_aslot__G3.Mal_aslot_T.len_set_hd.
+Local Abbreviation keys_set_hd := U.Mal_aslot__G3.Mal_aslot_T.keys_set_hd.
+Local Abbreviation st_active_upd_meta := U.Mal_aslot__G3.Mal_aslot_T.st_active_upd_meta.
 Local Abbreviation am_next_mam := (§30§ U.Mal_aslot__G3.Mal_aslot_T.am_next_mam).
 Local Abbreviation am_prev_mam := (§30§ U.Mal_aslot__G3.Mal_aslot_T.am_prev_mam).
 Local Abbreviation nonhead_avail0 := (§31§ U.Mal_aslot__G3.Mal_aslot_T.nonhead_avail0).
 Local Abbreviation xraw_upd_meta_ptr := (§30§ U.Mal_aslot__G3.Mal_aslot_T.xraw_upd_meta_ptr).
-Local Abbreviation ta_post_of := (@U.Mal_aslot__G3.Mal_aslot_T.ta_post_of s X U sc HI Hsc).
-Local Abbreviation loc_ctx := (@U.Mal_aslot__G3.Mal_aslot_T.loc_ctx s L X U rd0 wok0 vm HMI).
-Local Abbreviation in_meta_locs_range := (@U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho bnc gd Hsc m0 Hbnc Hgd).
-Local Abbreviation e_size := (@U.Mal_aslot__G9.Mal_aslot_L.e_size).
-Local Abbreviation e_span0 := (@U.Mal_aslot__G9.Mal_aslot_L.e_span0).
-Local Abbreviation e_a60 := (@U.Mal_aslot__G9.Mal_aslot_L.e_a60).
-Local Abbreviation e_a40 := (@U.Mal_aslot__G9.Mal_aslot_L.e_a40).
-Local Abbreviation e_byteS := (@U.Mal_aslot__G9.Mal_aslot_L.e_byteS).
-Local Abbreviation e_byteL := (@U.Mal_aslot__G9.Mal_aslot_L.e_byteL).
-Local Abbreviation e_maskG := (@U.Mal_aslot__G9.Mal_aslot_L.e_maskG).
-Local Abbreviation e_freedG := (@U.Mal_aslot__G9.Mal_aslot_L.e_freedG).
+Local Abbreviation ta_post_of := (U.Mal_aslot__G3.Mal_aslot_T.ta_post_of s X U sc HI Hsc).
+Local Abbreviation loc_ctx := (U.Mal_aslot__G3.Mal_aslot_T.loc_ctx s L X U rd0 wok0 vm HMI).
+Local Abbreviation in_meta_locs_range := (U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho bnc gd Hsc m0 Hbnc Hgd).
+Local Abbreviation e_size := U.Mal_aslot__G9.Mal_aslot_L.e_size.
+Local Abbreviation e_span0 := U.Mal_aslot__G9.Mal_aslot_L.e_span0.
+Local Abbreviation e_a60 := U.Mal_aslot__G9.Mal_aslot_L.e_a60.
+Local Abbreviation e_a40 := U.Mal_aslot__G9.Mal_aslot_L.e_a40.
+Local Abbreviation e_byteS := U.Mal_aslot__G9.Mal_aslot_L.e_byteS.
+Local Abbreviation e_byteL := U.Mal_aslot__G9.Mal_aslot_L.e_byteL.
+Local Abbreviation e_maskG := U.Mal_aslot__G9.Mal_aslot_L.e_maskG.
+Local Abbreviation e_freedG := U.Mal_aslot__G9.Mal_aslot_L.e_freedG.
 Local Abbreviation size_range := (§51§ U.Mal_aslot__G9.Mal_aslot_L.size_range).
-Local Abbreviation aidx_range := (@U.Mal_aslot__G9.Mal_aslot_L.aidx_range s sc rho byM0 byA byB byC byP bnc gd Hsc m0 Hbytes Hbnc Hgd).
+Local Abbreviation aidx_range := (U.Mal_aslot__G9.Mal_aslot_L.aidx_range s sc rho byM0 byA byB byC byP bnc gd Hsc m0 Hbytes Hbnc Hgd).
 Local Notation "§52§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hspanv Hsp) (at level 10, h__ global).
 Local Abbreviation ze_byteS := (§52§ U.Mal_aslot__G9.Mal_aslot_L.ze_byteS).
 Local Abbreviation ze_byteL := (§35§ U.Mal_aslot__G9.Mal_aslot_L.ze_byteL).
 Local Abbreviation ze_maskG := (§33§ U.Mal_aslot__G9.Mal_aslot_L.ze_maskG).
 Local Abbreviation ze_freedG := (§35§ U.Mal_aslot__G9.Mal_aslot_L.ze_freedG).
-Local Abbreviation e_last1 := (@U.Mal_aslot__G9.Mal_aslot_L.e_last1).
+Local Abbreviation e_last1 := U.Mal_aslot__G9.Mal_aslot_L.e_last1.
 Local Notation "§53§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hspanv Hsp mW K) (at level 10, h__ global).
 Local Abbreviation cnt_lt_of := (§53§ U.Mal_aslot__G9.Mal_aslot_L.cnt_lt_of).
 Local Abbreviation cnt_ge_of := (§53§ U.Mal_aslot__G9.Mal_aslot_L.cnt_ge_of).
 Local Abbreviation eq0_of := (§42§ U.Mal_aslot__G9.Mal_aslot_L.eq0_of).
 Local Abbreviation span_cnt_ge2 := (§51§ U.Mal_aslot__G9.Mal_aslot_L.span_cnt_ge2).
-Local Abbreviation rename_chk := (@U.Mal_aslot__G9.Mal_aslot_L.rename_chk).
-Local Abbreviation setsB := (@U.Mal_aslot__G9.Mal_aslot_L.setsB).
-Local Abbreviation setsX := (@U.Mal_aslot__G9.Mal_aslot_L.setsX).
-Local Abbreviation LINV := (@U.Mal_aslot__G9.Mal_aslot_L.LINV sc).
+Local Abbreviation rename_chk := U.Mal_aslot__G9.Mal_aslot_L.rename_chk.
+Local Abbreviation setsB := U.Mal_aslot__G9.Mal_aslot_L.setsB.
+Local Abbreviation setsX := U.Mal_aslot__G9.Mal_aslot_L.setsX.
+Local Abbreviation LINV := (U.Mal_aslot__G9.Mal_aslot_L.LINV sc).
 Local Notation "§54§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth mW Hbnc_val Kc RF GF TR RR K HK) (at level 10, h__ global).
 Local Abbreviation span_loop_sound := (§54§ U.Mal_aslot__G9.Mal_aslot_L.span_loop_sound).
-Local Abbreviation setsA := (@U.Mal_aslot__G9.Mal_aslot_L.setsA).
+Local Abbreviation setsA := U.Mal_aslot__G9.Mal_aslot_L.setsA.
 Local Notation "§55§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hsp mW K) (at level 10, h__ global).
 Local Abbreviation loop_entry := (§55§ U.Mal_aslot__G9.Mal_aslot_L.loop_entry).
 
@@ -1912,7 +1945,19 @@ S0S31S9aA1S75Vs;S9Vm0;A1A2S35S9aS9dVam0;A1A2A3"). Proof using HI Hhd Hsc. exact 
 Definition CLS : Prop := ltac:(let t := type of (cls2 Hr) in exact t).
 Lemma HCLS : CLS. Proof using Hr Hsc Rg. exact (cls2 Hr). Qed.
 Ltac use_cls := pose proof HCLS as HH; unfold CLS in HH; decompose [and] HH; clear HH.
-Ltac ring_norm := use_cls; cbn [mptr] in *; unfold U.Mal_aslot__G1.Mal_aslot_I.pP, U.Mal_aslot__G1.Mal_aslot_I.pC, U.Mal_aslot__G1.Mal_aslot_I.pB, U.Mal_aslot__G1.Mal_aslot_I.pA in *.
+Ltac ring_norm :=
+  use_cls;
+  repeat first
+    [ progress change (mprev pM0) with pP
+    | progress change (mnext pB) with pC
+    | progress change (mnext pA) with pB
+    | progress change (mnext pM0) with pA
+    | match goal with
+      | back_A : mprev pA = pM0 |- context [mprev pA] => rewrite back_A
+      | eq_P : pP = pA |- context [pP] => rewrite eq_P
+      | eq_C : pC = pA |- context [pC] => rewrite eq_C
+      | eq_B : pB = pM0 |- context [pB] => rewrite eq_B
+      end ].
 Ltac solve_link := ring_norm; first [reflexivity | assumption | symmetry; assumption | congruence].
 Ltac solve_neq := ring_norm; first [assumption | apply not_eq_sym; assumption | congruence].
 
@@ -2741,52 +2786,71 @@ End T2.
 
 Theorem variant_D2ns : ltac2:(tb__ "0|0|
 VTR;Z0S181Sb8VK;S130VrhoW;A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVpart HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Hsv RR Rg am0.
-  pose proof (aidx_range MA_) as AR. pose proof last_R as LR. pose proof cnt1_ge as CG. pose proof size_range as [SR _].
-  destruct (span_facts sc (am_aidx (mam MA_)) Hsc ltac:(lia) HVpart) as [EX LE]. fold cnt1 in LE.
-
-  apply (tr_seq _ (fun w => exists rho0, (agrees rhoW rho0 /\ LINV (span0_of sc (am_aidx (mam MA_))) (am_aidx (mam MA_) + 2) rho0) /\ SymSoundR.SP segsU K SL_D2ns rho0 w)).
-  { apply (seg_run 300 SA_D2ns LA_D2ns _ rhoW eq_refl eq_refl runA_D2ns (agrees_refl rhoW)).
-    intros LfA rhoA w HinA HagA HSPA.
-    rewrite (single_leaf LA_D2ns _ SA_D2ns LfA LA_D2ns_shape HinA) in HSPA. change (lfs LA_D2ns 0 SA_D2ns) with LA_D2nss in HSPA.
-    destruct (loop_entry MA_ LA_D2nss SL_D2ns (fst DL_D2ns) swf_SL sd_A dA_ok keysA setsA_vars setsA_hi varsA inA no1A rhoA w HagA HSPA) as (Hag0 & HINV0 & HSP0).
-    exists (setp rhoA (setsA (fst DL_D2ns))). split; [split; assumption | exact HSP0]. }
-
-  apply tr_ex. intros rho0. apply tr_pure. intros [Hag0 HINV0].
-  apply (tr_seq _ (POST SX_D2ns)).
-  { apply (span_loop_sound MA_ SL_D2ns L0 L1 SX_D2ns LL_D2ns (fst DX_D2ns) runL_D2ns LL_eq SL_len SL_next SL_regs ren_chk L0_same L0_5 L0_14 L0_16 T0f T1f L1_14
-             swf_SX sd_X dX_ok keysX setsX_vars setsX_hi varsX xeX 300%nat _ _ rho0 Hag0 HINV0).
-    - unfold span0_of, UNIT. nia.
-    - lia.
-    - cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
-    - unfold span0_of, UNIT. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. nia.
-    - exact EX.
-    - rewrite Hsv. reflexivity. }
-
-  apply from_POST. intros rhoX HagX.
-  apply (tr_seq _ (fun w => (span_cnt am1_A = spanv /\ POST ST0_D2ns w) \/ (span_cnt am1_A = am_last (mam MA_) + 1 /\ POST ST2_D2ns w))).
-  { apply (seg_run 300 SX_D2ns LX_D2ns _ rhoX SX_len SX_next runX_D2ns HagX).
-    intros Lf rhoY w Hin HagY HSPY.
-    destruct (leaf4 LX_D2ns _ _ _ _ SA_D2ns Lf LX_D2ns_shape Hin) as [EL|[EL|[EL|EL]]]; rewrite EL in HSPY.
-    - assert (CS : span_cnt am1_A = spanv) by (rewrite Hsv; apply cnt_S; rewrite <- Hsv; exact (cnt_lt_of MA_ rhoY _ w HagY HSPY fX0)).
-      left. split; [exact CS|]. exists rhoY. split; [exact HagY|].
-      apply (linkT (lfs LX_D2ns 0 SA_D2ns) ST0_D2ns (e_maskG MA_ (EB0 MA_)) (snd DT0_D2ns) rhoY _ swf_ST0 sd_0 HagY); try assumption.
-      + reflexivity.
-      + reflexivity. + exact (ME0 CS). + exact nf_incl0. + exact ST0_vars. + exact ST0_sup. + exact ZF_ST0.
-    - exfalso. assert (CS : span_cnt am1_A = spanv) by (rewrite Hsv; apply cnt_S; rewrite <- Hsv; exact (cnt_lt_of MA_ rhoY _ w HagY HSPY fX1b)).
-      pose proof (eq0_of (e_maskG MA_ (EB0 MA_)) rhoY _ w HagY HSPY fX1 eq_refl eq_refl) as Z0.
-      rewrite (ME0 CS) in Z0. apply HVmask3. rewrite <- Hmv. apply (proj1 (sx32_zero_iff maskv ltac:(pose proof Hmaskv; lia))). exact Z0.
-    - assert (CS : span_cnt am1_A = am_last (mam MA_) + 1) by (apply cnt_L; rewrite <- Hsv; exact (cnt_ge_of MA_ rhoY _ w HagY HSPY fX2)).
-      right. split; [exact CS|]. exists rhoY. split; [exact HagY|].
-      apply (linkT (lfs LX_D2ns 2 SA_D2ns) ST2_D2ns (e_maskG MA_ (EB2 MA_)) (snd DT2_D2ns) rhoY _ swf_ST2 sd_2 HagY); try assumption.
-      + reflexivity.
-      + reflexivity. + exact (ME2 CS). + exact nf_incl2. + exact ST2_vars. + exact ST2_sup. + exact ZF_ST2.
-    - exfalso. assert (CS : span_cnt am1_A = am_last (mam MA_) + 1) by (apply cnt_L; rewrite <- Hsv; exact (cnt_ge_of MA_ rhoY _ w HagY HSPY fX3b)).
-      pose proof (eq0_of (e_maskG MA_ (EB2 MA_)) rhoY _ w HagY HSPY fX3 eq_refl eq_refl) as Z0.
-      rewrite (ME2 CS) in Z0. apply HVmask3. rewrite <- Hmv. apply (proj1 (sx32_zero_iff maskv ltac:(pose proof Hmaskv; lia))). exact Z0. }
-  apply tr_disj.
-  - apply tr_pure. intros CS. apply from_POST. intros rhoA HagA. exact (T0_ok CS rhoA HagA).
-  - apply tr_pure. intros CS. apply from_POST. intros rhoA HagA. exact (T2_ok CS rhoA HagA).
+Proof using s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rest Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc RF GF TR RR K HK tr md EmW Evm HKc Hsm_pre Hsc_rho Hreq_rho Hr HVa0 HVf0 HVskip HVact HVpart Hmv Hsv.
+  pose proof (aidx_range MA_) as aidxA_bd.
+  pose proof size_range as size_bd.
+  pose proof Hmaskv as mask_bd.
+  destruct (span_facts sc (am_aidx (mam MA_)) Hsc aidxA_bd HVpart) as [exits_ok _].
+  set (span_init := span0_of sc (am_aidx (mam MA_))).
+  set (cnt_init := am_aidx (mam MA_) + 2).
+  assert (exit_to_post : forall rhoX, agrees rhoW rhoX ->
+            TR 0 (SymSoundR.SP segsU K SX_D2ns rhoX) (HITP X U (mkMA s L) Kc rho)).
+  { intros rhoX ag_X.
+    destruct (Z_lt_le_dec cnt1 (am_last (mam MA_) + 1)) as [loop_short | loop_long].
+    - assert (cnt_eq : span_cnt am1_A = spanv) by (rewrite Hsv; exact (cnt_S loop_short)).
+      apply (tr_seq _ (POST ST0_D2ns)).
+      + apply (seg_run 300 SX_D2ns LX_D2ns _ rhoX SX_len SX_next runX_D2ns ag_X).
+        intros leafX rho2 w leafX_in ag_2 sp_2.
+        destruct (leaf4 LX_D2ns _ _ _ _ SA_D2ns leafX LX_D2ns_shape leafX_in) as [at_k | [at_k | [at_k | at_k]]];
+          rewrite at_k in sp_2.
+        * exists rho2. split; [exact ag_2|].
+          exact (linkT _ ST0_D2ns _ _ rho2 w swf_ST0 sd_0 ag_2 eq_refl eq_refl (ME0 cnt_eq)
+                   nf_incl0 ST0_vars ST0_sup ZF_ST0 sp_2).
+        * exfalso. pose proof (eq0_of _ rho2 _ w ag_2 sp_2 fX1 eq_refl eq_refl) as mask_zero.
+          rewrite (ME0 cnt_eq) in mask_zero.
+          apply (ZBits.sx32_zero_iff maskv ltac:(lia)) in mask_zero. lia.
+        * exfalso. pose proof (cnt_ge_of MA_ rho2 _ w ag_2 sp_2 fX2). lia.
+        * exfalso. pose proof (cnt_ge_of MA_ rho2 _ w ag_2 sp_2 fX3b). lia.
+      + apply from_POST. intros rhoA ag_A. exact (T0_ok cnt_eq rhoA ag_A).
+    - pose proof (cnt_L loop_long) as cnt_eq.
+      apply (tr_seq _ (POST ST2_D2ns)).
+      + apply (seg_run 300 SX_D2ns LX_D2ns _ rhoX SX_len SX_next runX_D2ns ag_X).
+        intros leafX rho2 w leafX_in ag_2 sp_2.
+        destruct (leaf4 LX_D2ns _ _ _ _ SA_D2ns leafX LX_D2ns_shape leafX_in) as [at_k | [at_k | [at_k | at_k]]];
+          rewrite at_k in sp_2.
+        * exfalso. pose proof (cnt_lt_of MA_ rho2 _ w ag_2 sp_2 fX0). lia.
+        * exfalso. pose proof (cnt_lt_of MA_ rho2 _ w ag_2 sp_2 fX1b). lia.
+        * exists rho2. split; [exact ag_2|].
+          exact (linkT _ ST2_D2ns _ _ rho2 w swf_ST2 sd_2 ag_2 eq_refl eq_refl (ME2 cnt_eq)
+                   nf_incl2 ST2_vars ST2_sup ZF_ST2 sp_2).
+        * exfalso. pose proof (eq0_of _ rho2 _ w ag_2 sp_2 fX3 eq_refl eq_refl) as mask_zero.
+          rewrite (ME2 cnt_eq) in mask_zero.
+          apply (ZBits.sx32_zero_iff maskv ltac:(lia)) in mask_zero. lia.
+      + apply from_POST. intros rhoA ag_A. exact (T2_ok cnt_eq rhoA ag_A). }
+  refine (tr_seq _ (fun w => exists rhoL : valuation,
+            (agrees rhoW rhoL /\ LINV span_init cnt_init rhoL) /\ SymSoundR.SP segsU K SL_D2ns rhoL w) _ _ _).
+  - apply (seg_run 300 SA_D2ns LA_D2ns _ rhoW eq_refl eq_refl runA_D2ns (agrees_refl rhoW)).
+    intros leafA rhoE w leafA_in ag_E sp_E.
+    rewrite (single_leaf LA_D2ns _ SA_D2ns leafA LA_D2ns_shape leafA_in) in sp_E.
+    change (lfs LA_D2ns 0 SA_D2ns) with LA_D2nss in sp_E.
+    destruct (loop_entry MA_ LA_D2nss SL_D2ns (fst DL_D2ns) swf_SL sd_A dA_ok keysA setsA_vars setsA_hi varsA inA no1A
+                rhoE w ag_E sp_E) as (ag_L & inv_L & sp_L).
+    exists (setp rhoE (setsA (fst DL_D2ns))). split; [split|]; assumption.
+  - apply (tr_ex valuation (fun rhoL w =>
+             (agrees rhoW rhoL /\ LINV span_init cnt_init rhoL) /\ SymSoundR.SP segsU K SL_D2ns rhoL w)).
+    intros rhoL.
+    apply (tr_pure (agrees rhoW rhoL /\ LINV span_init cnt_init rhoL) (SymSoundR.SP segsU K SL_D2ns rhoL)).
+    intros [ag_L inv_L].
+    apply (tr_seq _ (POST SX_D2ns)); [| apply from_POST; exact exit_to_post].
+    apply (span_loop_sound MA_ SL_D2ns L0 L1 SX_D2ns LL_D2ns (fst DX_D2ns) runL_D2ns LL_eq SL_len SL_next SL_regs
+             ren_chk L0_same L0_5 L0_14 L0_16 T0f T1f L1_14 swf_SX sd_X dX_ok keysX setsX_vars setsX_hi varsX xeX
+             300 span_init cnt_init rhoL ag_L inv_L).
+    + subst span_init. unfold span0_of, UNIT. nia.
+    + subst cnt_init. lia.
+    + subst cnt_init. cbn [Z.of_nat Pos.of_succ_nat]. lia.
+    + subst span_init. unfold span0_of, UNIT. cbn [Z.of_nat Pos.of_succ_nat]. nia.
+    + exact exits_ok.
+    + rewrite Hsv. reflexivity.
 Qed.
 
 End VD2ns.
@@ -2834,17 +2898,17 @@ S0S31S98A1S74Vs;Vsc;A2S35S98Vm0;A2A3").
 Variable rest : list sptr.
 Hypothesis Rg : ltac2:(tb__ "0|0|
 S7eS7dVX;Vs;Vsc;A3S35S98Vm0;A2S2bS98Vm0;Vrest;A3A3").
-Local Abbreviation pM0 := (@U.Mal_aslot__G1.Mal_aslot_I.pM0 m0).
+Local Abbreviation pM0 := (U.Mal_aslot__G1.Mal_aslot_I.pM0 m0).
 Local Notation "§56§ h__" := (h__ s m0) (at level 10, h__ global).
 Local Abbreviation pA := (§56§ U.Mal_aslot__G1.Mal_aslot_I.pA).
 Local Abbreviation pB := (§56§ U.Mal_aslot__G1.Mal_aslot_I.pB).
 Local Abbreviation pC := (§56§ U.Mal_aslot__G1.Mal_aslot_I.pC).
 Local Abbreviation pP := (§56§ U.Mal_aslot__G1.Mal_aslot_I.pP).
 Local Abbreviation mptr := (§56§ U.Mal_aslot__G1.Mal_aslot_I.mptr).
-Local Abbreviation mbyte := (@U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
+Local Abbreviation mbyte := (U.Mal_aslot__G1.Mal_aslot_I.mbyte byM0 byA byB byC byP).
 Local Abbreviation mam := (§56§ U.Mal_aslot__G1.Mal_aslot_I.mam).
-Local Abbreviation rcls := (@U.Mal_aslot__G1.Mal_aslot_I.rcls rest).
-Local Abbreviation cls1 := (@U.Mal_aslot__G1.Mal_aslot_I.cls1 s X sc Hsc m0 rest Rg).
+Local Abbreviation rcls := (U.Mal_aslot__G1.Mal_aslot_I.rcls rest).
+Local Abbreviation cls1 := (U.Mal_aslot__G1.Mal_aslot_I.cls1 s X sc Hsc m0 rest Rg).
 Local Notation "§57§ h__" := (h__ s X U sc HI Hsc m0 Hhd) (at level 10, h__ global).
 Local Abbreviation mam_used := (§57§ U.Mal_aslot__G1.Mal_aslot_I.mam_used).
 Variables (rd0 : word -> option byte) (wok0 : word -> bool) (vm : VmMaps).
@@ -2856,18 +2920,18 @@ Hypothesis Hbnc : 0 <= bnc < 256.
 Hypothesis Hgd : 0 <= gd < 2 ^ 64.
 Hypothesis Hmaskv : 0 < maskv < 2 ^ 32.
 Hypothesis Hspanv : 0 <= spanv <= 300.
-Local Abbreviation zA := (@U.Mal_aslot__G1.Mal_aslot_I.zA L).
-Local Abbreviation mem_R := (@U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd).
+Local Abbreviation zA := (U.Mal_aslot__G1.Mal_aslot_I.zA L).
+Local Abbreviation mem_R := (U.Mal_aslot__G1.Mal_aslot_I.mem_R s L X U sc bnc gd HI Hsc m0 Hhd rd0 wok0 vm HMI Hbnc Hgd).
 Local Notation "§58§ h__" := (h__ s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv m0) (at level 10, h__ global).
 Local Abbreviation rho1 := (§58§ U.Mal_aslot__G1.Mal_aslot_I.rho1).
 Local Abbreviation zr1 := (§58§ U.Mal_aslot__G1.Mal_aslot_I.zr1).
 Local Abbreviation zl1 := (§58§ U.Mal_aslot__G1.Mal_aslot_I.zl1).
 Local Abbreviation ze_lit := (§58§ U.Mal_aslot__G1.Mal_aslot_I.ze_lit).
-Local Abbreviation vptr := (@U.Mal_aslot__G1.Mal_aslot_I.vptr).
-Local Abbreviation vmem := (@U.Mal_aslot__G1.Mal_aslot_I.vmem).
-Local Abbreviation vavail := (@U.Mal_aslot__G1.Mal_aslot_I.vavail).
-Local Abbreviation vfreed := (@U.Mal_aslot__G1.Mal_aslot_I.vfreed).
-Local Abbreviation vbits := (@U.Mal_aslot__G1.Mal_aslot_I.vbits).
+Local Abbreviation vptr := U.Mal_aslot__G1.Mal_aslot_I.vptr.
+Local Abbreviation vmem := U.Mal_aslot__G1.Mal_aslot_I.vmem.
+Local Abbreviation vavail := U.Mal_aslot__G1.Mal_aslot_I.vavail.
+Local Abbreviation vfreed := U.Mal_aslot__G1.Mal_aslot_I.vfreed.
+Local Abbreviation vbits := U.Mal_aslot__G1.Mal_aslot_I.vbits.
 Local Notation "§59§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI Hsc m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd) (at level 10, h__ global).
 Local Abbreviation ze_ptr := (§59§ U.Mal_aslot__G1.Mal_aslot_I.ze_ptr).
 Local Abbreviation ze_mem := (§59§ U.Mal_aslot__G1.Mal_aslot_I.ze_mem).
@@ -2880,8 +2944,8 @@ Hypothesis Hdepth : ltac2:(tb__ "0|1|
 S1S84S174Z40Sc0Q40S49Vrho;PfA2A2A2M0S8aS186Z0A1A1A2S84S8aS8cZ2Z28A2A1G0A2A2").
 Hypothesis Hsp_high : ltac2:(tb__ "0|1|
 S84S15eVL;A1S85Sc0Q40M0S49Vrho;PaA2A2S174Z40Sc0G0S49Vrho;PfA2A2A2A2A2").
-Local Abbreviation F_base5 := (@U.Mal_aslot__G1.Mal_aslot_I.F_base5).
-Local Abbreviation ZF_base5 := (@U.Mal_aslot__G1.Mal_aslot_I.ZF_base5 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hsp Hdepth Hsp_high).
+Local Abbreviation F_base5 := U.Mal_aslot__G1.Mal_aslot_I.F_base5.
+Local Abbreviation ZF_base5 := (U.Mal_aslot__G1.Mal_aslot_I.ZF_base5 s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd Hsp Hdepth Hsp_high).
 Local Abbreviation zf_ptr_ne0 := (§59§ U.Mal_aslot__G1.Mal_aslot_I.zf_ptr_ne0).
 Local Abbreviation zf_avail_eq0 := (§59§ U.Mal_aslot__G1.Mal_aslot_I.zf_avail_eq0).
 Local Abbreviation zf_freed_eq0 := (§59§ U.Mal_aslot__G1.Mal_aslot_I.zf_freed_eq0).
@@ -2904,14 +2968,14 @@ Hypothesis Hgd_holds : ltac2:(tb__ "0|0|
 S15dS15bVrd0;SbfQ40A1S2eL_;A2S15cS15aA1U8Vgd;A4").
 Let bv0 : byteview := ltac2:(tb__ "0|0|
 S15bS13dSb8VmW;A2S13eSb8VmW;A2A2").
-Local Abbreviation O_stk := (@U.Mal_aslot__G1.Mal_aslot_I.O_stk).
-Local Abbreviation optrZ := (@U.Mal_aslot__G1.Mal_aslot_I.optrZ L).
-Local Abbreviation obj_of := (@U.Mal_aslot__G1.Mal_aslot_I.obj_of).
+Local Abbreviation O_stk := U.Mal_aslot__G1.Mal_aslot_I.O_stk.
+Local Abbreviation optrZ := (U.Mal_aslot__G1.Mal_aslot_I.optrZ L).
+Local Abbreviation obj_of := U.Mal_aslot__G1.Mal_aslot_I.obj_of.
 Local Abbreviation od_ok_at := (§58§ U.Mal_aslot__G1.Mal_aslot_I.od_ok_at).
 Local Abbreviation od_ok := (§58§ U.Mal_aslot__G1.Mal_aslot_I.od_ok).
 Local Notation "§60§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds) (at level 10, h__ global).
 Local Abbreviation od_hold := (§60§ U.Mal_aslot__G1.Mal_aslot_I.od_hold).
-Local Abbreviation od_range := (@U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
+Local Abbreviation od_range := (U.Mal_aslot__G1.Mal_aslot_I.od_range s L sc m0).
 Local Abbreviation od_pairwise := (§56§ U.Mal_aslot__G1.Mal_aslot_I.od_pairwise).
 Local Notation "§61§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds) (at level 10, h__ global).
 Local Abbreviation carve := (§61§ U.Mal_aslot__G1.Mal_aslot_I.carve).
@@ -2930,21 +2994,21 @@ Variable K : ltac2:(tb__ "0|0|
 S2cS114A1S115OF_;F_;").
 Hypothesis HK : implK Kc K.
 Let rhoW : valuation := rho1 mW.
-Local Abbreviation seg_run := (@U.Mal_aslot__G2.Mal_aslot_W.seg_run s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd mW Kc RF GF TR RR K HK).
-Local Abbreviation od_chg_ok := (@U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
-Local Abbreviation od_sem := (@U.Mal_aslot__G2.Mal_aslot_W.od_sem).
-Local Abbreviation objs_matchb := (@U.Mal_aslot__G2.Mal_aslot_W.objs_matchb).
-Local Abbreviation oStkF := (@U.Mal_aslot__G2.Mal_aslot_W.oStkF).
+Local Abbreviation seg_run := (U.Mal_aslot__G2.Mal_aslot_W.seg_run s L sc req rho byM0 byA byB byC byP bnc gd maskv spanv Hsc m0 Hbnc Hgd mW Kc RF GF TR RR K HK).
+Local Abbreviation od_chg_ok := (U.Mal_aslot__G2.Mal_aslot_W.od_chg_ok sc).
+Local Abbreviation od_sem := U.Mal_aslot__G2.Mal_aslot_W.od_sem.
+Local Abbreviation objs_matchb := U.Mal_aslot__G2.Mal_aslot_W.objs_matchb.
+Local Abbreviation oStkF := U.Mal_aslot__G2.Mal_aslot_W.oStkF.
 Local Notation "§62§ h__" := (h__ s X U HI) (at level 10, h__ global).
 Local Abbreviation ND := (§62§ U.Mal_aslot__G3.Mal_aslot_T.ND).
 Local Abbreviation active_len := (§62§ U.Mal_aslot__G3.Mal_aslot_T.active_len).
-Local Abbreviation active_hd_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.active_hd_set_hd sc rho bnc gd Hsc Hbnc Hgd Hsp).
-Local Abbreviation xraw_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.xraw_set_hd X).
-Local Abbreviation keys_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.keys_set_hd).
+Local Abbreviation active_hd_set_hd := (U.Mal_aslot__G3.Mal_aslot_T.active_hd_set_hd sc rho bnc gd Hsc Hbnc Hgd Hsp).
+Local Abbreviation xraw_set_hd := (U.Mal_aslot__G3.Mal_aslot_T.xraw_set_hd X).
+Local Abbreviation keys_set_hd := U.Mal_aslot__G3.Mal_aslot_T.keys_set_hd.
 Local Abbreviation am_next_mam := (§57§ U.Mal_aslot__G3.Mal_aslot_T.am_next_mam).
 Local Abbreviation xraw_upd_meta_ptr := (§57§ U.Mal_aslot__G3.Mal_aslot_T.xraw_upd_meta_ptr).
-Local Abbreviation loc_ctx := (@U.Mal_aslot__G3.Mal_aslot_T.loc_ctx s L X U rd0 wok0 vm HMI).
-Local Abbreviation in_meta_locs_range := (@U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho bnc gd Hsc m0 Hbnc Hgd).
+Local Abbreviation loc_ctx := (U.Mal_aslot__G3.Mal_aslot_T.loc_ctx s L X U rd0 wok0 vm HMI).
+Local Abbreviation in_meta_locs_range := (U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho bnc gd Hsc m0 Hbnc Hgd).
 Local Notation "§63§ h__" := (h__ s L X U sc req rho byM0 byA byB byC byP bnc gd maskv spanv HI HXr Hsc Hreq m0 Hhd rest Rg rd0 wok0 vm HMI Hbytes Hbnc Hgd Hmaskv Hspanv Hsp Hdepth Hsp_high mW Erd Ewok ms Hrom Hm_sct Hm_ctz Hbytes_rd Hbnc_rd Hgd_holds Hbnc_val Kc) (at level 10, h__ global).
 Local Abbreviation post_G := (§63§ U.Mal_aslot__G10.Mal_aslot_G.post_G).
 
@@ -2982,7 +3046,19 @@ S0S31S9aA1S75Vs;S9Vm0;A1A2S35S9aS9dVam0;A1A2A3"). Proof using HI Hhd Hsc. exact 
 Definition CLS : Prop := ltac:(let t := type of (cls1 Hr) in exact t).
 Lemma HCLS : CLS. Proof using Hr Hsc Rg. exact (cls1 Hr). Qed.
 Ltac use_cls := pose proof HCLS as HH; unfold CLS in HH; decompose [and] HH; clear HH.
-Ltac ring_norm := use_cls; cbn [mptr] in *; unfold U.Mal_aslot__G1.Mal_aslot_I.pP, U.Mal_aslot__G1.Mal_aslot_I.pC, U.Mal_aslot__G1.Mal_aslot_I.pB, U.Mal_aslot__G1.Mal_aslot_I.pA in *.
+Ltac ring_norm :=
+  use_cls;
+  repeat first
+    [ progress change (mnext pM0) with pA
+    | progress change (mnext pA) with pB
+    | progress change (mnext pB) with pC
+    | progress change (mprev pM0) with pP
+    | match goal with
+      | eq_P : pP = pM0 |- context [pP] => rewrite eq_P
+      | eq_C : pC = pM0 |- context [pC] => rewrite eq_C
+      | eq_B : pB = pM0 |- context [pB] => rewrite eq_B
+      | eq_A : pA = pM0 |- context [pA] => rewrite eq_A
+      end ].
 Ltac solve_link := ring_norm; first [reflexivity | assumption | symmetry; assumption | congruence].
 Ltac solve_neq := ring_norm; first [assumption | apply not_eq_sym; assumption | congruence].
 
@@ -3157,67 +3233,67 @@ Hypothesis HXr : xraw X s.
 Hypothesis Hsc : 0 <= sc < 48.
 Hypothesis Hreq : ltac2:(tb__ "0|0|
 S1S84Z0Vreq;A2S84S85Vreq;Sa8A2Sa4Vsc;A1A2A2").
-Local Abbreviation mbyte := (@U.Mal_aslot__G1.Mal_aslot_I.mbyte 0 0 0 0 0).
+Local Abbreviation mbyte := (U.Mal_aslot__G1.Mal_aslot_I.mbyte 0 0 0 0 0).
 Variables (rd0 : word -> option byte) (wok0 : word -> bool) (vm : VmMaps).
 Hypothesis HMI : ltac2:(tb__ "0|0|
 S199S15aVX;S36S2fS98S3eA2A1VU;S156Vs;VL;A2Vrd0;Vwok0;Vvm;A8").
-Local Abbreviation Hctx := (@U.Mal_aslot__G1.Mal_aslot_I.Hctx s L X U rd0 wok0 vm HMI).
+Local Abbreviation Hctx := (U.Mal_aslot__G1.Mal_aslot_I.Hctx s L X U rd0 wok0 vm HMI).
 Hypothesis Hgd : 0 <= gd < 2 ^ 64.
-Local Abbreviation member_val := (@U.Mal_aslot__G1.Mal_aslot_I.member_val s L 0 0 0 0 0 m0d).
-Local Abbreviation rw1v := (@U.Mal_aslot__G1.Mal_aslot_I.rw1v s L sc req 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation rw1 := (@U.Mal_aslot__G1.Mal_aslot_I.rw1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation rho1 := (@U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation rw1_low := (@U.Mal_aslot__G1.Mal_aslot_I.rw1_low s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation zr1 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zl1 := (@U.Mal_aslot__G1.Mal_aslot_I.zl1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zr1_zl1_any := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_zl1_any s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zl1_1 := (@U.Mal_aslot__G1.Mal_aslot_I.zl1_1 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation zl1_4 := (@U.Mal_aslot__G1.Mal_aslot_I.zl1_4 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zr1_v := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_v s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zr1_12 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_12 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation zr1_13 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_13 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd).
-Local Abbreviation zr1_170 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_170 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation zr1_171 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_171 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zr1_173 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_173 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation zr1_174 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_174 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation rw1v_member := (@U.Mal_aslot__G1.Mal_aslot_I.rw1v_member s L sc req 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation ze_var := (@U.Mal_aslot__G1.Mal_aslot_I.ze_var s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze_v := (@U.Mal_aslot__G1.Mal_aslot_I.ze_v s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze_lit := (@U.Mal_aslot__G1.Mal_aslot_I.ze_lit s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze_alu := (@U.Mal_aslot__G1.Mal_aslot_I.ze_alu s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze_aluw := (@U.Mal_aslot__G1.Mal_aslot_I.ze_aluw s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze_mul := (@U.Mal_aslot__G1.Mal_aslot_I.ze_mul s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze_ext := (@U.Mal_aslot__G1.Mal_aslot_I.ze_ext s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze_lbytes := (@U.Mal_aslot__G1.Mal_aslot_I.ze_lbytes s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ze12 := (@U.Mal_aslot__G1.Mal_aslot_I.ze12 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation ze13 := (@U.Mal_aslot__G1.Mal_aslot_I.ze13 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd).
-Local Abbreviation ze170 := (@U.Mal_aslot__G1.Mal_aslot_I.ze170 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation ze171 := (@U.Mal_aslot__G1.Mal_aslot_I.ze171 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zr1_172 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_172 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd spanv0_ok).
-Local Abbreviation ze172 := (@U.Mal_aslot__G1.Mal_aslot_I.ze172 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd spanv0_ok).
-Local Abbreviation ze173 := (@U.Mal_aslot__G1.Mal_aslot_I.ze173 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation ze174 := (@U.Mal_aslot__G1.Mal_aslot_I.ze174 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation e_actoff := (@U.Mal_aslot__G1.Mal_aslot_I.e_actoff).
-Local Abbreviation e_acthi := (@U.Mal_aslot__G1.Mal_aslot_I.e_acthi).
-Local Abbreviation ze_actoff := (@U.Mal_aslot__G1.Mal_aslot_I.ze_actoff s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation ze_acthi := (@U.Mal_aslot__G1.Mal_aslot_I.ze_acthi s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation mod_mod_le := (@U.Mal_aslot__G1.Mal_aslot_I.mod_mod_le sc 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation ze_lowbit_sx := (@U.Mal_aslot__G1.Mal_aslot_I.ze_lowbit_sx s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation sx32_lowbit_nz := (@U.Mal_aslot__G1.Mal_aslot_I.sx32_lowbit_nz sc 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation ze_dbidx_sx := (@U.Mal_aslot__G1.Mal_aslot_I.ze_dbidx_sx s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation member_val := (U.Mal_aslot__G1.Mal_aslot_I.member_val s L 0 0 0 0 0 m0d).
+Local Abbreviation rw1v := (U.Mal_aslot__G1.Mal_aslot_I.rw1v s L sc req 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation rw1 := (U.Mal_aslot__G1.Mal_aslot_I.rw1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation rho1 := (U.Mal_aslot__G1.Mal_aslot_I.rho1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation rw1_low := (U.Mal_aslot__G1.Mal_aslot_I.rw1_low s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation zr1 := (U.Mal_aslot__G1.Mal_aslot_I.zr1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zl1 := (U.Mal_aslot__G1.Mal_aslot_I.zl1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zr1_zl1_any := (U.Mal_aslot__G1.Mal_aslot_I.zr1_zl1_any s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zl1_1 := (U.Mal_aslot__G1.Mal_aslot_I.zl1_1 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation zl1_4 := (U.Mal_aslot__G1.Mal_aslot_I.zl1_4 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zr1_v := (U.Mal_aslot__G1.Mal_aslot_I.zr1_v s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zr1_12 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_12 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation zr1_13 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_13 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd).
+Local Abbreviation zr1_170 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_170 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation zr1_171 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_171 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zr1_173 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_173 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation zr1_174 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_174 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation rw1v_member := (U.Mal_aslot__G1.Mal_aslot_I.rw1v_member s L sc req 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation ze_var := (U.Mal_aslot__G1.Mal_aslot_I.ze_var s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze_v := (U.Mal_aslot__G1.Mal_aslot_I.ze_v s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze_lit := (U.Mal_aslot__G1.Mal_aslot_I.ze_lit s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze_alu := (U.Mal_aslot__G1.Mal_aslot_I.ze_alu s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze_aluw := (U.Mal_aslot__G1.Mal_aslot_I.ze_aluw s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze_mul := (U.Mal_aslot__G1.Mal_aslot_I.ze_mul s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze_ext := (U.Mal_aslot__G1.Mal_aslot_I.ze_ext s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze_lbytes := (U.Mal_aslot__G1.Mal_aslot_I.ze_lbytes s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ze12 := (U.Mal_aslot__G1.Mal_aslot_I.ze12 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation ze13 := (U.Mal_aslot__G1.Mal_aslot_I.ze13 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd).
+Local Abbreviation ze170 := (U.Mal_aslot__G1.Mal_aslot_I.ze170 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation ze171 := (U.Mal_aslot__G1.Mal_aslot_I.ze171 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zr1_172 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_172 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd spanv0_ok).
+Local Abbreviation ze172 := (U.Mal_aslot__G1.Mal_aslot_I.ze172 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd spanv0_ok).
+Local Abbreviation ze173 := (U.Mal_aslot__G1.Mal_aslot_I.ze173 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation ze174 := (U.Mal_aslot__G1.Mal_aslot_I.ze174 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation e_actoff := U.Mal_aslot__G1.Mal_aslot_I.e_actoff.
+Local Abbreviation e_acthi := U.Mal_aslot__G1.Mal_aslot_I.e_acthi.
+Local Abbreviation ze_actoff := (U.Mal_aslot__G1.Mal_aslot_I.ze_actoff s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation ze_acthi := (U.Mal_aslot__G1.Mal_aslot_I.ze_acthi s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation mod_mod_le := (U.Mal_aslot__G1.Mal_aslot_I.mod_mod_le sc 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation ze_lowbit_sx := (U.Mal_aslot__G1.Mal_aslot_I.ze_lowbit_sx s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation sx32_lowbit_nz := (U.Mal_aslot__G1.Mal_aslot_I.sx32_lowbit_nz sc 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation ze_dbidx_sx := (U.Mal_aslot__G1.Mal_aslot_I.ze_dbidx_sx s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
 Hypothesis Hsp : ltac2:(tb__ "0|1|
 S1S84Z1000Sc0Q40S49Vrho;PaA2A2M0A2S0S3eS89G0Z10A2Z0A3A2").
 Hypothesis Hdepth : ltac2:(tb__ "0|1|
 S1S84S174Z40Sc0Q40S49Vrho;PfA2A2A2M0S8aS186Z0A1A1A2S84S8aS8cZ2Z28A2A1G0A2A2").
 Hypothesis Hsp_high : ltac2:(tb__ "0|1|
 S84S15eVL;A1S85Sc0Q40M0S49Vrho;PaA2A2S174Z40Sc0G0S49Vrho;PfA2A2A2A2A2").
-Local Abbreviation zr1_10 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_10 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation zr1_15 := (@U.Mal_aslot__G1.Mal_aslot_I.zr1_15 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation sp_sum := (@U.Mal_aslot__G1.Mal_aslot_I.sp_sum sc rho 0 gd Hsc bnc0_ok Hgd Hsp Hdepth Hsp_high).
-Local Abbreviation F_base5 := (@U.Mal_aslot__G1.Mal_aslot_I.F_base5).
-Local Abbreviation ZF_base5 := (@U.Mal_aslot__G1.Mal_aslot_I.ZF_base5 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd Hsp Hdepth Hsp_high).
-Local Abbreviation ZF_T := (@U.Mal_aslot__G1.Mal_aslot_I.ZF_T s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd maskv1_ok Hsp).
-Local Abbreviation facts_hold := (@U.Mal_aslot__G1.Mal_aslot_I.facts_hold s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zr1_10 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_10 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation zr1_15 := (U.Mal_aslot__G1.Mal_aslot_I.zr1_15 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation sp_sum := (U.Mal_aslot__G1.Mal_aslot_I.sp_sum L sc rho _ gd Hsc _ Hgd Hsp Hdepth Hsp_high).
+Local Abbreviation F_base5 := U.Mal_aslot__G1.Mal_aslot_I.F_base5.
+Local Abbreviation ZF_base5 := (U.Mal_aslot__G1.Mal_aslot_I.ZF_base5 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd Hsp Hdepth Hsp_high).
+Local Abbreviation ZF_T := (U.Mal_aslot__G1.Mal_aslot_I.ZF_T s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd maskv1_ok Hsp).
+Local Abbreviation facts_hold := (U.Mal_aslot__G1.Mal_aslot_I.facts_hold s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
 Variable mW : word -> option byte.
 Hypothesis Erd : ltac2:(tb__ "0|0|
 S0SbfQ40A1S31SbfQ8A1A1F_;Vrd0;S13dSb8VmW;A2A3").
@@ -3233,39 +3309,39 @@ Hypothesis Hgd_holds : ltac2:(tb__ "0|0|
 S15dS15bVrd0;SbfQ40A1S2eL_;A2S15cS15aA1U8Vgd;A4").
 Let bv0 : byteview := ltac2:(tb__ "0|0|
 S15bS13dSb8VmW;A2S13eSb8VmW;A2A2").
-Local Abbreviation cell_rw0 := (@U.Mal_aslot__G1.Mal_aslot_I.cell_rw0 s L X U sc rho 0 gd Hsc rd0 wok0 vm HMI bnc0_ok Hgd Hsp mW Erd Ewok).
-Local Abbreviation ev1 := (@U.Mal_aslot__G1.Mal_aslot_I.ev1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation ev1u := (@U.Mal_aslot__G1.Mal_aslot_I.ev1u s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation cell_view0 := (@U.Mal_aslot__G1.Mal_aslot_I.cell_view0 s L X U sc req rho 0 0 0 0 0 0 gd 1 0 m0d rd0 wok0 vm HMI mW Erd Ewok).
-Local Abbreviation soff_of_ev := (@U.Mal_aslot__G1.Mal_aslot_I.soff_of_ev s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
-Local Abbreviation O_stk := (@U.Mal_aslot__G1.Mal_aslot_I.O_stk).
-Local Abbreviation O_got := (@U.Mal_aslot__G1.Mal_aslot_I.O_got).
-Local Abbreviation O_guard := (@U.Mal_aslot__G1.Mal_aslot_I.O_guard).
-Local Abbreviation O_act := (@U.Mal_aslot__G1.Mal_aslot_I.O_act).
-Local Abbreviation O_sct := (@U.Mal_aslot__G1.Mal_aslot_I.O_sct).
-Local Abbreviation O_ctz := (@U.Mal_aslot__G1.Mal_aslot_I.O_ctz).
-Local Abbreviation hold_got := (@U.Mal_aslot__G1.Mal_aslot_I.hold_got s L X U sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d rd0 wok0 vm HMI bnc0_ok Hgd Hsp mW Erd Ewok ms Hrom).
-Local Abbreviation hold_guard := (@U.Mal_aslot__G1.Mal_aslot_I.hold_guard s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d rd0 bnc0_ok Hgd Hsp mW Erd ms Hrom Hgd_holds).
-Local Abbreviation sctab_image := (@U.Mal_aslot__G1.Mal_aslot_I.sctab_image s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
-Local Abbreviation ctztab_image := (@U.Mal_aslot__G1.Mal_aslot_I.ctztab_image s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
-Local Abbreviation hold_sct := (@U.Mal_aslot__G1.Mal_aslot_I.hold_sct s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW ms Hrom Hm_sct).
-Local Abbreviation hold_ctz := (@U.Mal_aslot__G1.Mal_aslot_I.hold_ctz s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW ms Hrom Hm_ctz).
-Local Abbreviation ctx_owned := (@U.Mal_aslot__G1.Mal_aslot_I.ctx_owned s L X U sc rho 0 gd HI HXr Hsc rd0 wok0 vm HMI bnc0_ok Hgd Hsp).
-Local Abbreviation obj_of := (@U.Mal_aslot__G1.Mal_aslot_I.obj_of).
-Local Abbreviation od_ok_at := (@U.Mal_aslot__G1.Mal_aslot_I.od_ok_at s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation od_ok := (@U.Mal_aslot__G1.Mal_aslot_I.od_ok s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation soff1_lit := (@U.Mal_aslot__G1.Mal_aslot_I.soff1_lit s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation rng_lit := (@U.Mal_aslot__G1.Mal_aslot_I.rng_lit s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
-Local Abbreviation sp0 := (@U.Mal_aslot__G1.Mal_aslot_I.sp0 rho).
-Local Abbreviation D0 := (@U.Mal_aslot__G1.Mal_aslot_I.D0 rho).
-Local Abbreviation ev_sp := (@U.Mal_aslot__G1.Mal_aslot_I.ev_sp s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation ev_v15 := (@U.Mal_aslot__G1.Mal_aslot_I.ev_v15 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation rng_stk := (@U.Mal_aslot__G1.Mal_aslot_I.rng_stk s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
-Local Abbreviation ze_ctz := (@U.Mal_aslot__G1.Mal_aslot_I.ze_ctz s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd Hsp).
-Local Abbreviation od_ok_got := (@U.Mal_aslot__G1.Mal_aslot_I.od_ok_got s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation od_ok_guard := (@U.Mal_aslot__G1.Mal_aslot_I.od_ok_guard s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation od_ok_sct := (@U.Mal_aslot__G1.Mal_aslot_I.od_ok_sct s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation od_ok_ctz := (@U.Mal_aslot__G1.Mal_aslot_I.od_ok_ctz s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation cell_rw0 := (U.Mal_aslot__G1.Mal_aslot_I.cell_rw0 s L X U sc rho 0 gd Hsc rd0 wok0 vm HMI bnc0_ok Hgd Hsp mW Erd Ewok).
+Local Abbreviation ev1 := (U.Mal_aslot__G1.Mal_aslot_I.ev1 s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation ev1u := (U.Mal_aslot__G1.Mal_aslot_I.ev1u s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation cell_view0 := (U.Mal_aslot__G1.Mal_aslot_I.cell_view0 s L X U sc req rho 0 0 0 0 0 0 gd 1 0 m0d rd0 wok0 vm HMI mW Erd Ewok).
+Local Abbreviation soff_of_ev := (U.Mal_aslot__G1.Mal_aslot_I.soff_of_ev s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
+Local Abbreviation O_stk := U.Mal_aslot__G1.Mal_aslot_I.O_stk.
+Local Abbreviation O_got := U.Mal_aslot__G1.Mal_aslot_I.O_got.
+Local Abbreviation O_guard := U.Mal_aslot__G1.Mal_aslot_I.O_guard.
+Local Abbreviation O_act := U.Mal_aslot__G1.Mal_aslot_I.O_act.
+Local Abbreviation O_sct := U.Mal_aslot__G1.Mal_aslot_I.O_sct.
+Local Abbreviation O_ctz := U.Mal_aslot__G1.Mal_aslot_I.O_ctz.
+Local Abbreviation hold_got := (U.Mal_aslot__G1.Mal_aslot_I.hold_got s L X U sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d rd0 wok0 vm HMI bnc0_ok Hgd Hsp mW Erd Ewok ms Hrom).
+Local Abbreviation hold_guard := (U.Mal_aslot__G1.Mal_aslot_I.hold_guard s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d rd0 bnc0_ok Hgd Hsp mW Erd ms Hrom Hgd_holds).
+Local Abbreviation sctab_image := (U.Mal_aslot__G1.Mal_aslot_I.sctab_image s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
+Local Abbreviation ctztab_image := (U.Mal_aslot__G1.Mal_aslot_I.ctztab_image s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
+Local Abbreviation hold_sct := (U.Mal_aslot__G1.Mal_aslot_I.hold_sct s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW ms Hrom Hm_sct).
+Local Abbreviation hold_ctz := (U.Mal_aslot__G1.Mal_aslot_I.hold_ctz s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW ms Hrom Hm_ctz).
+Local Abbreviation ctx_owned := (U.Mal_aslot__G1.Mal_aslot_I.ctx_owned s L X U sc rho 0 gd HI HXr Hsc rd0 wok0 vm HMI bnc0_ok Hgd Hsp).
+Local Abbreviation obj_of := U.Mal_aslot__G1.Mal_aslot_I.obj_of.
+Local Abbreviation od_ok_at := (U.Mal_aslot__G1.Mal_aslot_I.od_ok_at s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation od_ok := (U.Mal_aslot__G1.Mal_aslot_I.od_ok s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation soff1_lit := (U.Mal_aslot__G1.Mal_aslot_I.soff1_lit s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation rng_lit := (U.Mal_aslot__G1.Mal_aslot_I.rng_lit s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
+Local Abbreviation sp0 := (U.Mal_aslot__G1.Mal_aslot_I.sp0 rho).
+Local Abbreviation D0 := (U.Mal_aslot__G1.Mal_aslot_I.D0 rho).
+Local Abbreviation ev_sp := (U.Mal_aslot__G1.Mal_aslot_I.ev_sp s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation ev_v15 := (U.Mal_aslot__G1.Mal_aslot_I.ev_v15 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation rng_stk := (U.Mal_aslot__G1.Mal_aslot_I.rng_stk s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
+Local Abbreviation ze_ctz := (U.Mal_aslot__G1.Mal_aslot_I.ze_ctz s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd Hsp).
+Local Abbreviation od_ok_got := (U.Mal_aslot__G1.Mal_aslot_I.od_ok_got s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation od_ok_guard := (U.Mal_aslot__G1.Mal_aslot_I.od_ok_guard s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation od_ok_sct := (U.Mal_aslot__G1.Mal_aslot_I.od_ok_sct s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation od_ok_ctz := (U.Mal_aslot__G1.Mal_aslot_I.od_ok_ctz s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
 Variables (Kc : list event -> Model -> Prop) (RF GF : Prop) (TR : Z -> assn -> assn -> Prop).
 Hypothesis RR : ltac2:(tb__ "0|0|
 S19aSb8VKc;VRF;VGF;VTR;A5").
@@ -3273,58 +3349,58 @@ Variable K : ltac2:(tb__ "0|0|
 S2cS114A1S115OF_;F_;").
 Hypothesis HK : implK Kc K.
 Let rhoW : valuation := rho1 mW.
-Local Abbreviation EV := (@U.Mal_aslot__G2.Mal_aslot_W.EV s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation EVu := (@U.Mal_aslot__G2.Mal_aslot_W.EVu s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation HOLDS := (@U.Mal_aslot__G2.Mal_aslot_W.HOLDS s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation rw_agrees := (@U.Mal_aslot__G2.Mal_aslot_W.rw_agrees s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation seg_run := (@U.Mal_aslot__G2.Mal_aslot_W.seg_run s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW Kc RF GF TR RR K HK).
-Local Abbreviation POST := (@U.Mal_aslot__G2.Mal_aslot_W.POST s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
-Local Abbreviation from_POST := (@U.Mal_aslot__G2.Mal_aslot_W.from_POST s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW Kc RF GF TR RR K).
-Local Abbreviation leaf_fact := (@U.Mal_aslot__G2.Mal_aslot_W.leaf_fact s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
-Local Abbreviation ZF_holds := (@U.Mal_aslot__G2.Mal_aslot_W.ZF_holds s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation agrees_setp := (@U.Mal_aslot__G2.Mal_aslot_W.agrees_setp s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation linkp := (@U.Mal_aslot__G2.Mal_aslot_W.linkp s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
-Local Abbreviation soff_litX := (@U.Mal_aslot__G2.Mal_aslot_W.soff_litX sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation soff_semX := (@U.Mal_aslot__G2.Mal_aslot_W.soff_semX s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
-Local Abbreviation in_od_ranges_dec := (@U.Mal_aslot__G2.Mal_aslot_W.in_od_ranges_dec s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
-Local Abbreviation oStkF := (@U.Mal_aslot__G2.Mal_aslot_W.oStkF).
-Local Abbreviation rmF := (@U.Mal_aslot__G2.Mal_aslot_W.rmF s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation HfrF := (@U.Mal_aslot__G2.Mal_aslot_W.HfrF s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
-Local Abbreviation touched_dec := (@U.Mal_aslot__G2.Mal_aslot_W.touched_dec s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
-Local Abbreviation rw'_low := (@U.Mal_aslot__G2.Mal_aslot_W.rw'_low sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation agree_vals_rho' := (@U.Mal_aslot__G2.Mal_aslot_W.agree_vals_rho' sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation rwF_low := (@U.Mal_aslot__G2.Mal_aslot_W.rwF_low s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
-Local Abbreviation pre_reg_cs := (@U.Mal_aslot__G2.Mal_aslot_W.pre_reg_cs sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation reg_sv_ok := (@U.Mal_aslot__G2.Mal_aslot_W.reg_sv_ok sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation freg_sv_ok := (@U.Mal_aslot__G2.Mal_aslot_W.freg_sv_ok sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation negw_sll2_bits := (@U.Mal_aslot__G3.Mal_aslot_T.negw_sll2_bits sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
-Local Abbreviation ze_avT := (@U.Mal_aslot__G3.Mal_aslot_T.ze_avT s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd maskv1_ok Hsp).
-Local Abbreviation ze_bncdec := (@U.Mal_aslot__G3.Mal_aslot_T.ze_bncdec s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
-Local Abbreviation zfact_of := (@U.Mal_aslot__G3.Mal_aslot_T.zfact_of s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
-Local Abbreviation bnc_zero_of := (@U.Mal_aslot__G3.Mal_aslot_T.bnc_zero_of s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW K).
-Local Abbreviation bnc_nz_of := (@U.Mal_aslot__G3.Mal_aslot_T.bnc_nz_of s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW K).
-Local Abbreviation zf_T171 := (@U.Mal_aslot__G3.Mal_aslot_T.zf_T171 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd maskv1_ok Hsp).
-Local Abbreviation linkT := (@U.Mal_aslot__G3.Mal_aslot_T.linkT s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
-Local Abbreviation smatch_rename := (@U.Mal_aslot__G3.Mal_aslot_T.smatch_rename sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation active_hd_set_hd := (@U.Mal_aslot__G3.Mal_aslot_T.active_hd_set_hd sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
-Local Abbreviation loc_meta := (@U.Mal_aslot__G3.Mal_aslot_T.loc_meta s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
-Local Abbreviation in_meta_locs_range := (@U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
-Local Abbreviation size_range := (@U.Mal_aslot__G9.Mal_aslot_L.size_range sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
-Local Abbreviation lor_low5 := (@U.Mal_aslot__G9.Mal_aslot_L.lor_low5 sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
-Local Abbreviation ze_onesw_gen := (@U.Mal_aslot__G9.Mal_aslot_L.ze_onesw_gen s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
-Local Abbreviation eq0_of := (@U.Mal_aslot__G9.Mal_aslot_L.eq0_of s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
-Local Abbreviation span_cnt_ge2 := (@U.Mal_aslot__G9.Mal_aslot_L.span_cnt_ge2 sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
-Local Abbreviation regs_okb_sound := (@U.Mal_aslot__G9.Mal_aslot_L.regs_okb_sound sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
-Local Abbreviation rename_link := (@U.Mal_aslot__G9.Mal_aslot_L.rename_link sc rho 0 gd Hsc bnc0_ok Hgd Hsp K).
-Local Abbreviation seg_runX := (@U.Mal_aslot__G9.Mal_aslot_L.seg_runX s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW Kc RF GF TR RR K HK).
-Local Abbreviation ev_addw := (@U.Mal_aslot__G9.Mal_aslot_L.ev_addw s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd Hsp mW).
-Local Abbreviation exit_edge := (@U.Mal_aslot__G9.Mal_aslot_L.exit_edge s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd spanv0_ok Hsp mW K).
-Local Abbreviation HdsF_fixed := (@U.Mal_aslot__G10.Mal_aslot_G.HdsF_fixed s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW ms).
-Local Abbreviation rwG_low := (@U.Mal_aslot__G10.Mal_aslot_G.rwG_low sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation agree_vals_rhoG := (@U.Mal_aslot__G10.Mal_aslot_G.agree_vals_rhoG sc rho 0 gd Hsc bnc0_ok Hgd).
-Local Abbreviation rwF_low_all := (@U.Mal_aslot__G10.Mal_aslot_G.rwF_low_all s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd Hsp mW).
-Local Abbreviation rhoG_F := (@U.Mal_aslot__G10.Mal_aslot_G.rhoG_F s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd Hsp mW).
-Local Abbreviation obj_G_transfer := (@U.Mal_aslot__G10.Mal_aslot_G.obj_G_transfer s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd Hsp mW).
+Local Abbreviation EV := (U.Mal_aslot__G2.Mal_aslot_W.EV s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation EVu := (U.Mal_aslot__G2.Mal_aslot_W.EVu s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation HOLDS := (U.Mal_aslot__G2.Mal_aslot_W.HOLDS s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation rw_agrees := (U.Mal_aslot__G2.Mal_aslot_W.rw_agrees s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation seg_run := (U.Mal_aslot__G2.Mal_aslot_W.seg_run s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW Kc RF GF TR RR K HK).
+Local Abbreviation POST := (U.Mal_aslot__G2.Mal_aslot_W.POST s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
+Local Abbreviation from_POST := (U.Mal_aslot__G2.Mal_aslot_W.from_POST s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW Kc RF GF TR RR K).
+Local Abbreviation leaf_fact := (U.Mal_aslot__G2.Mal_aslot_W.leaf_fact s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
+Local Abbreviation ZF_holds := (U.Mal_aslot__G2.Mal_aslot_W.ZF_holds s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation agrees_setp := (U.Mal_aslot__G2.Mal_aslot_W.agrees_setp s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation linkp := (U.Mal_aslot__G2.Mal_aslot_W.linkp s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
+Local Abbreviation soff_litX := (U.Mal_aslot__G2.Mal_aslot_W.soff_litX sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation soff_semX := (U.Mal_aslot__G2.Mal_aslot_W.soff_semX s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
+Local Abbreviation in_od_ranges_dec := (U.Mal_aslot__G2.Mal_aslot_W.in_od_ranges_dec s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
+Local Abbreviation oStkF := U.Mal_aslot__G2.Mal_aslot_W.oStkF.
+Local Abbreviation rmF := (U.Mal_aslot__G2.Mal_aslot_W.rmF s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation HfrF := (U.Mal_aslot__G2.Mal_aslot_W.HfrF s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW).
+Local Abbreviation touched_dec := (U.Mal_aslot__G2.Mal_aslot_W.touched_dec s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
+Local Abbreviation rw'_low := (U.Mal_aslot__G2.Mal_aslot_W.rw'_low sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation agree_vals_rho' := (U.Mal_aslot__G2.Mal_aslot_W.agree_vals_rho' sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation rwF_low := (U.Mal_aslot__G2.Mal_aslot_W.rwF_low s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW).
+Local Abbreviation pre_reg_cs := (U.Mal_aslot__G2.Mal_aslot_W.pre_reg_cs sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation reg_sv_ok := (U.Mal_aslot__G2.Mal_aslot_W.reg_sv_ok sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation freg_sv_ok := (U.Mal_aslot__G2.Mal_aslot_W.freg_sv_ok sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation negw_sll2_bits := (U.Mal_aslot__G3.Mal_aslot_T.negw_sll2_bits sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
+Local Abbreviation ze_avT := (U.Mal_aslot__G3.Mal_aslot_T.ze_avT s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd maskv1_ok Hsp).
+Local Abbreviation ze_bncdec := (U.Mal_aslot__G3.Mal_aslot_T.ze_bncdec s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd).
+Local Abbreviation zfact_of := (U.Mal_aslot__G3.Mal_aslot_T.zfact_of s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
+Local Abbreviation bnc_zero_of := (U.Mal_aslot__G3.Mal_aslot_T.bnc_zero_of s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW K).
+Local Abbreviation bnc_nz_of := (U.Mal_aslot__G3.Mal_aslot_T.bnc_nz_of s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW K).
+Local Abbreviation zf_T171 := (U.Mal_aslot__G3.Mal_aslot_T.zf_T171 s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd maskv1_ok Hsp).
+Local Abbreviation linkT := (U.Mal_aslot__G3.Mal_aslot_T.linkT s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
+Local Abbreviation smatch_rename := (U.Mal_aslot__G3.Mal_aslot_T.smatch_rename sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation active_hd_set_hd := (U.Mal_aslot__G3.Mal_aslot_T.active_hd_set_hd sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
+Local Abbreviation loc_meta := (U.Mal_aslot__G3.Mal_aslot_T.loc_meta s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
+Local Abbreviation in_meta_locs_range := (U.Mal_aslot__G3.Mal_aslot_T.in_meta_locs_range s L sc rho 0 gd Hsc m0d bnc0_ok Hgd).
+Local Abbreviation size_range := (U.Mal_aslot__G9.Mal_aslot_L.size_range sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
+Local Abbreviation lor_low5 := (U.Mal_aslot__G9.Mal_aslot_L.lor_low5 sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
+Local Abbreviation ze_onesw_gen := (U.Mal_aslot__G9.Mal_aslot_L.ze_onesw_gen s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d).
+Local Abbreviation eq0_of := (U.Mal_aslot__G9.Mal_aslot_L.eq0_of s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW K).
+Local Abbreviation span_cnt_ge2 := (U.Mal_aslot__G9.Mal_aslot_L.span_cnt_ge2 sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
+Local Abbreviation regs_okb_sound := (U.Mal_aslot__G9.Mal_aslot_L.regs_okb_sound sc rho 0 gd Hsc bnc0_ok Hgd Hsp).
+Local Abbreviation rename_link := (U.Mal_aslot__G9.Mal_aslot_L.rename_link sc rho 0 gd Hsc bnc0_ok Hgd Hsp K).
+Local Abbreviation seg_runX := (U.Mal_aslot__G9.Mal_aslot_L.seg_runX s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd mW Kc RF GF TR RR K HK).
+Local Abbreviation ev_addw := (U.Mal_aslot__G9.Mal_aslot_L.ev_addw s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd Hsp mW).
+Local Abbreviation exit_edge := (U.Mal_aslot__G9.Mal_aslot_L.exit_edge s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc m0d bnc0_ok Hgd spanv0_ok Hsp mW K).
+Local Abbreviation HdsF_fixed := (Mal_aslot_G.HdsF_fixed s L sc req rho 0 0 0 0 0 0 gd 1 0 m0d mW ms).
+Local Abbreviation rwG_low := (Mal_aslot_G.rwG_low sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation agree_vals_rhoG := (Mal_aslot_G.agree_vals_rhoG sc rho 0 gd Hsc bnc0_ok Hgd).
+Local Abbreviation rwF_low_all := (Mal_aslot_G.rwF_low_all s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd Hsp mW).
+Local Abbreviation rhoG_F := (Mal_aslot_G.rhoG_F s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd Hsp mW).
+Local Abbreviation obj_G_transfer := (Mal_aslot_G.obj_G_transfer s L sc req rho 0 0 0 0 0 0 gd 1 0 Hsc Hreq m0d bnc0_ok Hgd Hsp mW).
 
 Ltac drop_sp := try clear Hsp_high; try clear Hdepth; try clear Hsp.
 
@@ -3501,114 +3577,140 @@ Qed.
 
 Theorem smatch_N : ltac2:(tb__ "0|0|
 S4fSb8S1abS190S33S2cS114A1S154Vtr;S155VmsF;Vmd;A2A4A4").
-Proof using EmW Erd Evm Ewok HMI HagF Hdepth Hgd Hgd_holds HhdN Hm_ctz Hm_sct Hreq Hreq_rho Hsc Hsc_rho HsmF Hsm_pre Hsp Htier. try clear Hsp_high.
-  pose proof HsmF as (Hswf & Hpc & Hpend & Hhalt & HromX & HroX & Hr & Hf & Hc & Hv & Hm & Hfa).
-  cbn [fst snd cfg_ms cfg_model] in *.
+Proof using EmW Erd Evm Ewok HMI HagF Hdepth Hgd Hgd_holds HhdN Hm_ctz Hm_sct Hreq Hreq_rho Hsc Hsc_rho HsmF Hsm_pre Hsp Htier.
+  try clear Hsp_high.
+  pose proof HsmF as (wf_F & pc_F & pend_F & idle_F & rom_F & ro_F & regs_F & fregs_F & fcsr_F & resv_F & mem_F & facts_F).
+  cbn [fst snd cfg_ms cfg_model] in pc_F, pend_F, idle_F, rom_F, ro_F, regs_F, fregs_F, fcsr_F, resv_F, mem_F.
+  destruct mem_F as (holds_F & disj_F & frame_F).
+  rewrite LN_objs in holds_F, disj_F.
+  assert (same_range : forall o, In o [oStkG; oGot; oGuard; oAct0] -> obj_range rhoN o = obj_range rhoF o).
+  { intros o o_in. apply (obj_range_agree_vars_nl fG rhoF rhoN); [exact rhoN_F | |];
+      destruct o_in as [<- | [<- | [<- | [<- | []]]]]; vm_compute; reflexivity. }
+  assert (high_reg : forall k, 10 <= k <= 12 -> eval rhoN (reg_sv SG k) = eval rhoF (reg_sv LN k)).
+  { intros k k_bd.
+    assert (sg_k : reg_sv SG k = SVar (Z.to_pos (200 + k))).
+    { assert (k = 10 \/ k = 11 \/ k = 12) as [-> | [-> | ->]] by lia; reflexivity. }
+    rewrite sg_k. cbn [eval rhoN rw]. unfold rwN. rewrite Z2Pos.id by lia.
+    replace (200 + k <? 100) with false by (symmetry; apply Z.ltb_ge; lia).
+    replace ((200 <=? 200 + k) && (200 + k <? 232))%bool with true
+      by (symmetry; apply andb_true_intro; split; [apply Z.leb_le | apply Z.ltb_lt]; lia).
+    replace (200 + k - 200) with k by lia. reflexivity. }
+  assert (tab_none : forall z, 67788 <= z < 67916 -> mW (Z_to_bv 64 z) = None).
+  { intros z z_bd. destruct (Z_lt_le_dec z 67820) as [low_z | high_z].
+    - replace z with (67788 + (z - 67788)) by lia. apply Hm_ctz. lia.
+    - replace z with (67820 + (z - 67820)) by lia. apply Hm_sct. lia. }
+  assert (tab_ro : forall z, 67788 <= z < 67916 -> ro_addr segsU (Z_to_bv 64 z) = true).
+  { intros z z_bd. replace z with (67788 + (z - 67788)) by lia. apply ro_tables_P. lia. }
   unfold smatch. cbn [fst snd cfg_ms cfg_model].
   split; [vm_compute; reflexivity|].
-  split; [rewrite Hpc, LN_pc; reflexivity|].
-  split; [exact Hpend|]. split; [exact Hhalt|]. split; [exact HromX|]. split; [exact HroX|].
+  split; [rewrite pc_F, LN_pc; reflexivity|].
+  split; [exact pend_F|]. split; [exact idle_F|]. split; [exact rom_F|]. split; [exact ro_F|].
   split.
-  { intros r Hr0. rewrite (Hr r Hr0).
-    assert (UR : 0 <= bv_unsigned r < 32) by (pose proof (urange_n 5 r) as U0; cbn in U0; lia).
-    assert (Hin : In (bv_unsigned r) (map Z.of_nat (seq 1 31))) by (apply in_map_iff; exists (Z.to_nat (bv_unsigned r)); split; [lia|]; apply in_seq; lia).
-    pose proof (proj1 (forallb_forall _ _) LN_regs _ Hin) as P1. pose proof (proj1 (forallb_forall _ _) SG_regs_vars _ Hin) as P2. cbn beta in P1, P2.
-    destruct (existsb (Z.eqb (bv_unsigned r)) [10; 11; 12]) eqn:E3.
-    - cbn [existsb orb] in E3.
-      assert (E : reg_sv SG (bv_unsigned r) = SVar (Z.to_pos (200 + bv_unsigned r)) /\ 10 <= bv_unsigned r <= 12).
-      { destruct (Z.eqb_spec (bv_unsigned r) 10) as [->|]; [split; [reflexivity|lia]|].
-        destruct (Z.eqb_spec (bv_unsigned r) 11) as [->|]; [split; [reflexivity|lia]|].
-        destruct (Z.eqb_spec (bv_unsigned r) 12) as [->|]; [split; [reflexivity|lia]|]. cbn in E3. discriminate. }
-      destruct E as [-> Rr]. cbn [eval rhoN rw]. unfold rwN.
-      replace (Z.pos (Z.to_pos (200 + bv_unsigned r)) <? 100) with false by (symmetry; apply Z.ltb_ge; lia).
-      replace ((200 <=? Z.pos (Z.to_pos (200 + bv_unsigned r))) && (Z.pos (Z.to_pos (200 + bv_unsigned r)) <? 232))%bool with true
-        by (symmetry; apply andb_true_intro; split; [apply Z.leb_le | apply Z.ltb_lt]; lia).
-      replace (Z.pos (Z.to_pos (200 + bv_unsigned r)) - 200) with (bv_unsigned r) by lia. reflexivity.
-    - cbn [orb] in P1, P2. apply sv_eqb_sound in P1. rewrite P1. apply andb_prop in P2 as [P2 P3].
-      apply (eval_agree_vars_nl fG rhoF rhoN); [apply rhoN_F | exact P2 | exact P3]. }
+  { intros r r_nz. rewrite (regs_F r r_nz).
+    pose proof (urange_n 5 r) as r_bd. cbn in r_bd.
+    destruct (Z.eq_dec (bv_unsigned r) 10) as [is_r | not10];
+      [rewrite is_r; symmetry; apply high_reg; lia|].
+    destruct (Z.eq_dec (bv_unsigned r) 11) as [is_r | not11];
+      [rewrite is_r; symmetry; apply high_reg; lia|].
+    destruct (Z.eq_dec (bv_unsigned r) 12) as [is_r | not12];
+      [rewrite is_r; symmetry; apply high_reg; lia|].
+    assert (r_seq : In (bv_unsigned r) (map Z.of_nat (seq 1 31))).
+    { apply in_map_iff. exists (Z.to_nat (bv_unsigned r)). split; [lia | apply in_seq; lia]. }
+    pose proof (proj1 (forallb_forall _ _) LN_regs _ r_seq) as same_reg.
+    pose proof (proj1 (forallb_forall _ _) SG_regs_vars _ r_seq) as vars_reg.
+    cbn beta in same_reg, vars_reg. cbn [existsb] in same_reg, vars_reg.
+    rewrite (proj2 (Z.eqb_neq _ _) not10), (proj2 (Z.eqb_neq _ _) not11), (proj2 (Z.eqb_neq _ _) not12) in same_reg, vars_reg.
+    cbn [orb] in same_reg, vars_reg.
+    apply sv_eqb_sound in same_reg. rewrite same_reg.
+    apply andb_prop in vars_reg as [vars_fG nolist_r].
+    exact (eval_agree_vars_nl fG rhoF rhoN _ rhoN_F vars_fG nolist_r). }
   split.
-  { intros r. rewrite (Hf r). unfold freg_sv. rewrite LN_fregs. change (ss_fregs SG) with pre_fregs.
-    assert (UR : 0 <= bv_unsigned r < 32) by (pose proof (urange_n 5 r) as U0; cbn in U0; lia).
-    destruct (freg_sv_ok (bv_unsigned r) ltac:(lia)) as (vv & _ & E2 & Hvv). rewrite E2.
-    cbn [eval rhoN rw]. rewrite rwN_low by lia. apply rwF_lowN. lia. }
-  split. { rewrite LN_fcsr in Hc. exact Hc. }
-  split. { unfold resv_match in *. rewrite LN_resv in Hv. cbn [ss_resv SG]. exact Hv. }
+  { intros r. rewrite (fregs_F r). unfold freg_sv. rewrite LN_fregs. change (ss_fregs SG) with pre_fregs.
+    pose proof (urange_n 5 r) as r_bd. cbn in r_bd.
+    destruct (freg_sv_ok (bv_unsigned r) ltac:(lia)) as (vv & _ & nth_vv & vv_bd).
+    rewrite nth_vv. cbn [eval rhoN rw]. rewrite rwN_low by lia. apply rwF_lowN. lia. }
+  split; [rewrite LN_fcsr in fcsr_F; exact fcsr_F|].
+  split; [unfold resv_match in resv_F |- *; rewrite LN_resv in resv_F; exact resv_F|].
   split.
-  { destruct Hm as (Hall & Hpd & Hfrm). rewrite LN_objs in Hall, Hpd, Hfrm.
-    assert (TRF : forall o, In o [oStkG; oGot; oGuard; oAct0] -> obj_holds segsU rhoF msF o -> obj_holds segsU rhoN msF o).
-    { intros o Ho HO. eapply (obj_holds_agree_vars_nl segsU fG rhoF rhoN); [apply rhoN_F | | | exact HO]; destruct Ho as [<-|[<-|[<-|[<-|[]]]]]; vm_compute; reflexivity. }
-    split; [|split].
-    - constructor. { apply TRF; [cbn; tauto|]. apply (proj1 (Forall_forall _ _) Hall). left. reflexivity. }
-      constructor. { apply TRF; [cbn; tauto|]. apply (proj1 (Forall_forall _ _) Hall). right. left. reflexivity. }
-      constructor. { apply TRF; [cbn; tauto|]. apply (proj1 (Forall_forall _ _) Hall). right. right. left. reflexivity. }
-      constructor. { apply TRF; [cbn; tauto|]. apply (proj1 (Forall_forall _ _) Hall). right. right. right. left. reflexivity. }
+  { split; [|split].
+    - apply Forall_cons_iff in holds_F as [h_stk holds_F].
+      apply Forall_cons_iff in holds_F as [h_got holds_F].
+      apply Forall_cons_iff in holds_F as [h_grd holds_F].
+      apply Forall_cons_iff in holds_F as [h_act _].
+      constructor; [exact (obj_holds_agree_vars_nl segsU fG rhoF rhoN msF oStkG rhoN_F eq_refl eq_refl h_stk)|].
+      constructor; [exact (obj_holds_agree_vars_nl segsU fG rhoF rhoN msF oGot rhoN_F eq_refl eq_refl h_got)|].
+      constructor; [exact (obj_holds_agree_vars_nl segsU fG rhoF rhoN msF oGuard rhoN_F eq_refl eq_refl h_grd)|].
+      constructor; [exact (obj_holds_agree_vars_nl segsU fG rhoF rhoN msF oAct0 rhoN_F eq_refl eq_refl h_act)|].
       constructor.
-    - assert (RG : forall o, In o [oStkG; oGot; oGuard; oAct0] -> obj_range rhoN o = obj_range rhoF o).
-      { intros o Ho. apply (obj_range_agree_vars_nl fG rhoF rhoN); [apply rhoN_F | |]; destruct Ho as [<-|[<-|[<-|[<-|[]]]]]; vm_compute; reflexivity. }
-      apply pairwise_disjoint_pdr. erewrite map_ext_in by exact RG.
-      apply pairwise_disjoint_pdr in Hpd. cbn [map] in Hpd.
-      change [oStkG; oGot; oGuard; oAct0] with [oStkF stkcG; O_got; O_guard; O_act (SLit 0)]. cbn [map]. exact (pdr_prefix4 _ _ _ _ _ Hpd).
-    - intros a Ha. cbn [rm rhoN]. rewrite <- EmW.
-      destruct (in_ranges_dec rhoF [O_sct; O_ctz] a) as [IN|OUT].
-      +
-        destruct IN as (o & Ho & Ra). pose proof Hsc.
-        assert (RGF : forall o', In o' [O_sct; O_ctz] -> obj_range rhoF o' = obj_range rhoW o').
-        { intros o' Ho'. apply (obj_range_agree_vars below200 rhoW rhoF); [intros u Hu; symmetry; exact (proj1 HagF u Hu) | intros l; symmetry; exact (proj1 (proj2 HagF) l) |].
-          destruct Ho' as [<-|[<-|[]]]; vm_compute; reflexivity. }
-        rewrite (RGF o Ho) in Ra. pose proof (urange_n 64 a) as UA. change (2 ^ Z.of_N 64) with (2 ^ 64) in UA.
-        pose proof rngN_sct as R4. pose proof rngN_ctz as R5. unfold rhoW in Ra, R4, R5.
-        destruct Ho as [<-|[<-|[]]].
-        * rewrite R4 in Ra. cbn [fst snd] in Ra.
-          rewrite <- (Z_to_bv_bv_unsigned 64 a). replace (bv_unsigned a) with (67820 + (bv_unsigned a - 67820)) by lia.
-          rewrite Hm_sct by lia. apply HroX. replace (67820 + (bv_unsigned a - 67820)) with (67788 + (bv_unsigned a - 67788)) by lia. apply ro_tables_P. lia.
-        * rewrite R5 in Ra. cbn [fst snd] in Ra.
-          rewrite <- (Z_to_bv_bv_unsigned 64 a). replace (bv_unsigned a) with (67788 + (bv_unsigned a - 67788)) by lia.
-          rewrite Hm_ctz by lia. apply HroX. apply ro_tables_P. lia.
-      + etransitivity; [apply Hfrm | rewrite (proj2 (proj2 HagF)); reflexivity].
-        apply Forall_cons_iff in Ha as [HaS Ha]. apply Forall_cons_iff in Ha as [HaG Ha]. apply Forall_cons_iff in Ha as [HaD Ha]. apply Forall_cons_iff in Ha as [HaA _].
-        assert (RG' : forall o, In o [oStkG; oGot; oGuard; oAct0] -> obj_range rhoN o = obj_range rhoF o).
-        { intros o Ho. apply (obj_range_agree_vars_nl fG rhoF rhoN); [apply rhoN_F | |]; destruct Ho as [<-|[<-|[<-|[<-|[]]]]]; vm_compute; reflexivity. }
-        cbn zeta in HaS, HaG, HaD, HaA.
-        rewrite (RG' oStkG ltac:(cbn; tauto)) in HaS. rewrite (RG' oGot ltac:(cbn; tauto)) in HaG. rewrite (RG' oGuard ltac:(cbn; tauto)) in HaD. rewrite (RG' oAct0 ltac:(cbn; tauto)) in HaA.
-        change (oStkF stkcG) with oStkG. change O_got with oGot. change O_guard with oGuard. change (O_act (SLit 0)) with oAct0.
-        constructor; [exact HaS|]. constructor; [exact HaG|]. constructor; [exact HaD|]. constructor; [exact HaA|].
-        apply Forall_forall. intros o Ho. cbn zeta. intros R. apply OUT. exists o. split; [exact Ho | exact R]. }
-
-  unfold SG. cbn [ss_facts]. unfold factsG.
-  assert (AGR : forall f, sprop_below NF f = true -> SymState.holds rho f -> SymState.holds rhoN f).
-  { intros f Hb Hh. exact (proj1 (holds_agree_vals NF rho rhoN f agree_vals_rhoN Hb) Hh). }
-  pose proof Hsm_pre as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HF0). cbn [ss_facts Pre_as] in HF0.
+    - apply pairwise_disjoint_pdr. erewrite map_ext_in by exact same_range.
+      apply pairwise_disjoint_pdr in disj_F. cbn [map] in disj_F |- *.
+      exact (pdr_prefix4 _ _ _ _ _ disj_F).
+    - intros a out_N. cbn [rm rhoN].
+      assert (out_4 : outside_all rhoF [oStkG; oGot; oGuard; oAct0] a).
+      { unfold outside_all in out_N |- *. apply Forall_forall. intros o o_in.
+        rewrite <- (same_range o o_in). exact (proj1 (Forall_forall _ _) out_N o o_in). }
+      destruct (SymFrame.in_ranges_dec rhoF [O_sct; O_ctz] a) as [in_tab | out_tab].
+      + destruct in_tab as (o & o_in & lo_a & a_hi).
+        assert (tab_bd : 67788 <= bv_unsigned a < 67916).
+        { destruct o_in as [<- | [<- | []]].
+          - rewrite (rngN_sct : obj_range rhoF O_sct = _) in lo_a, a_hi. cbn [fst snd] in lo_a, a_hi. lia.
+          - rewrite (rngN_ctz : obj_range rhoF O_ctz = _) in lo_a, a_hi. cbn [fst snd] in lo_a, a_hi. lia. }
+        rewrite <- (Z_to_bv_bv_unsigned 64 a), <- EmW.
+        rewrite (ro_F _ (tab_ro _ tab_bd)). symmetry. exact (tab_none _ tab_bd).
+      + apply (HfrF tr md msF rhoF EmW HagF LN stkcG [O_got; O_guard; O_act (SLit 0); O_sct; O_ctz] dsN
+                 LN_objs eq_refl HsmF a).
+        unfold outside_all in out_4 |- *.
+        change (oStkF stkcG :: NREL dsN) with ([oStkG; oGot; oGuard; oAct0] ++ [O_sct; O_ctz]).
+        apply Forall_app. split; [exact out_4|].
+        apply Forall_forall. intros o o_in in_o. apply out_tab. exists o. split; [exact o_in | exact in_o]. }
+  change (ss_facts SG) with factsG. unfold factsG.
+  pose proof Hsm_pre as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & pre_facts).
+  cbn [ss_facts Pre_as] in pre_facts.
   apply Forall_app. split.
-  - apply Forall_forall. intros f Hf0. apply AGR; [|exact (proj1 (Forall_forall _ _) HF0 f Hf0)].
-    cbn in Hf0. decompose [or] Hf0; subst; try reflexivity; contradiction.
-  - constructor; [|constructor]. cbn [SymState.holds eval rhoN rw]. rewrite rwN_low by lia. rewrite (u64 47) by lia. pose proof Hsc. lia.
+  - apply Forall_forall. intros f f_in.
+    refine (proj1 (holds_agree_vals NF rho rhoN f agree_vals_rhoN _) (proj1 (Forall_forall _ _) pre_facts f f_in)).
+    cbn in f_in. decompose [or] f_in; subst; try reflexivity; contradiction.
+  - constructor; [|constructor]. cbn [SymState.holds eval rhoN rw]. rewrite rwN_low by lia.
+    rewrite (u64 47) by lia. pose proof Hsc. lia.
 Qed.
 
 Theorem post_N : ltac2:(tb__ "0|0|
 S191VX;VU;S156Vs;VL;A2VKc;Vrho;S33S2cS114A1S154Vtr;S155VmsF;Vmd;A2A4A6").
 Proof using EmW Erd Evm Ewok HKc' HMI HXr HagF Hdepth Hgd Hgd_holds HhdN HinitN Hm_ctz Hm_sct Hreq Hreq_rho Hsc Hsc_rho HsmF Hsm_pre Hsp Hsp_high Htier Htp.
+  assert (r173 : rwN 173 = rw rhoF 173) by reflexivity.
+  assert (r174 : rwN 174 = rw rhoF 174) by reflexivity.
   unfold GX. cbn [ma_s ma_L]. rewrite Hsc_rho.
-  exists (mkMA s L), rhoN. cbn [ma_s ma_L].
-  split; [exact agree_vals_rhoN|]. split; [reflexivity|]. split; [intros; reflexivity|]. split; [apply ub_same_refl|].
+  exists (mkMA s L), rhoN.
+  split; [exact agree_vals_rhoN|].
+  split; [reflexivity|].
+  split; [intros c _ _; reflexivity|].
+  split.
+  { exists nil. split; [rewrite app_nil_r; reflexivity|].
+    split; [intros q [] | intros g _; reflexivity]. }
   split; [intros a _ _ _ _ _; reflexivity|].
   split; [exact HhdN|].
-  split. { cbn [rw rhoN]. unfold rwN. cbn. rewrite (rw_agrees rhoF 173%positive HagF eq_refl). apply bv_eq. change (bv_unsigned (rw1 173%positive)) with (zr1 173%positive). rewrite zr1_173, u64; [reflexivity|]. cbn. lia. }
-  split. { unfold try_avail. rewrite (TryAvailPost.bind_eq _ _ s _ s (TryAvailPost.get_head_eq s sc)), HhdN. reflexivity. }
+  split.
+  { cbn [rw rhoN]. rewrite r173, (rw_agrees rhoF 173%positive HagF eq_refl). apply bv_eq.
+    change (bv_unsigned (rw1 173%positive)) with (zr1 173%positive). rewrite zr1_173.
+    symmetry. apply u64. cbn. lia. }
+  split.
+  { unfold active_hd in HhdN. unfold try_avail, get_head. cbn. rewrite HhdN. reflexivity. }
   split; [reflexivity|].
-  split. { cbn [rw rhoN]. unfold rwN. cbn. rewrite (rw_agrees rhoF 174%positive HagF eq_refl). change (bv_unsigned (rw1 174%positive)) with (zr1 174%positive). rewrite zr1_174.
-           rewrite <- EmW. pose proof Hgd_holds as HG. rewrite Erd in HG. exact HG. }
+  split.
+  { cbn [rw rhoN]. rewrite r174, (rw_agrees rhoF 174%positive HagF eq_refl).
+    change (bv_unsigned (rw1 174%positive)) with (zr1 174%positive). rewrite zr1_174, <- EmW.
+    rewrite Erd in Hgd_holds. exact Hgd_holds. }
   split; [exact smatch_N|].
-  unfold J_as_pre. cbn [w_tr w_cfg cfg_model fst snd ma_s].
-  split. { unfold MInvIR. cbn [rm rhoN]. rewrite <- EmW, <- Evm. pose proof HMI as H. rewrite Erd, Ewok in H. exact H. }
+  unfold J_as_pre. cbn [w_tr w_cfg cfg_model fst snd ma_s ma_L].
+  split.
+  { unfold MInvIR. cbn [rm rhoN]. rewrite <- EmW, <- Evm. rewrite Erd, Ewok in HMI. exact HMI. }
   split; [exact HXr|]. split; [exact HKc'|].
-  cbn [rw rhoN]. rewrite !rwN_low by (unfold V_DEPTH; lia). rewrite Hsc_rho, Hreq_rho. pose proof Hsc. pose proof Hreq.
-  split; [repeat split; try lia; try exact Htier|].
-  split. { unfold tp_ok. cbn [rw rhoN]. rewrite rwN_low by lia. exact Htp. }
-
-  split. { intros Hinit. destruct (HinitN Hinit) as [HA HM]. split; [|exact HM].
-  apply (auxv_init_mono segsU C_U L rho rhoN); [reflexivity | | exact HA].
-  cbn [rw rhoN]. rewrite rwN_low by lia. lia. }
-
+  cbn [rw rhoN]. rewrite !rwN_low by (unfold V_DEPTH; lia). rewrite Hsc_rho, Hreq_rho.
+  pose proof Hsc as sc_bd. pose proof Hreq as req_bd.
+  split; [repeat split; try lia; exact Htier|].
+  split; [unfold tp_ok; cbn [rw rhoN]; rewrite rwN_low by lia; exact Htp|].
+  split.
+  { intros init_no. destruct (HinitN init_no) as [aux_ok metas_nil]. split; [exact aux_ok | exact metas_nil]. }
   unfold top_high, V_DEPTH. cbn [ma_L rw rhoN]. rewrite !rwN_low by lia. exact Hsp_high.
 Qed.
 End PostN.

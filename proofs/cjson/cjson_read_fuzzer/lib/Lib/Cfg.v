@@ -14,37 +14,52 @@ Abbreviation ACFG := (alloc_only_cfg false).
 Lemma acfg_family_off_in : forall i,
   injected_family_off ACFG i = true -> In (bv_unsigned (in_sysno i)) alloc_mark_sysnos.
 Proof.
-  intros i H. unfold injected_family_off in H.
-  destruct (injected_arm (bv_unsigned (in_sysno i))) as [a|] eqn:E; [|discriminate H].
-  destruct (ia_family a) eqn:Ef; cbn in H; try discriminate H.
-  exact (alloc_family_dispatched _ a E Ef).
+  intros i fam_off.
+  unfold injected_family_off in fam_off.
+  destruct (injected_arm (bv_unsigned (in_sysno i))) as [arm|] eqn:arm_found;
+    [|discriminate fam_off].
+  refine (alloc_family_dispatched _ arm arm_found _).
+  revert fam_off. case (ia_family arm); cbn; intro flag;
+    first [reflexivity | discriminate flag].
 Qed.
 
 Lemma acfg_family_on_notin : forall i,
   ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos -> injected_family_off ACFG i = false.
 Proof.
-  intros i Hn. destruct (injected_family_off ACFG i) eqn:E; [|reflexivity].
-  exfalso. apply Hn. apply acfg_family_off_in. exact E.
+  intros i outside. apply not_true_is_false.
+  intro fam_off. exact (outside (acfg_family_off_in i fam_off)).
 Qed.
 
 Lemma acfg_nonspurious : forall i m eff,
   ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos ->
   ~ spurious_refusal_cfg ACFG i m eff.
 Proof.
-  intros i m eff Hn. apply spurious_refusal_family_on. apply acfg_family_on_notin. exact Hn.
+  intros i m eff outside.
+  exact (spurious_refusal_family_on ACFG i m eff (acfg_family_on_notin i outside)).
 Qed.
 
-Definition alloc_no_b (n : Z) : bool := existsb (Z.eqb n) alloc_mark_sysnos.
+Definition alloc_no_b (n : Z) : bool :=
+  existsb (fun s => Z.eqb s n) alloc_mark_sysnos.
 
 Lemma alloc_no_b_In : forall n, alloc_no_b n = true <-> In n alloc_mark_sysnos.
 Proof.
-  intros n. unfold alloc_no_b. rewrite existsb_exists. split.
-  - intros (x & Hin & Heq). apply Z.eqb_eq in Heq. subst x. exact Hin.
-  - intros Hin. exists n. split; [exact Hin | apply Z.eqb_refl].
+  intros n. unfold alloc_no_b.
+  generalize alloc_mark_sysnos as table.
+  induction table as [|s rest step]; cbn [existsb In].
+  - split; [intro absurd; discriminate absurd | intros []].
+  - destruct (Z.eqb_spec s n) as [same | differ]; cbn [orb].
+    + split; [intros _; left; exact same | intros _; reflexivity].
+    + split.
+      * intro later. right. apply step. exact later.
+      * intros [clash | later]; [contradiction (differ clash) | apply step; exact later].
 Qed.
 
 Lemma alloc_no_b_false : forall n, alloc_no_b n = false -> ~ In n alloc_mark_sysnos.
-Proof. intros n H Hin. apply alloc_no_b_In in Hin. congruence. Qed.
+Proof.
+  intros n says_no listed.
+  apply alloc_no_b_In in listed.
+  rewrite says_no in listed. discriminate listed.
+Qed.
 
 Lemma refusal_spurious_of_grant : forall cfg i m eff eff' m' evs',
   injected_family_off cfg i = true ->
@@ -53,28 +68,34 @@ Lemma refusal_spurious_of_grant : forall cfg i m eff eff' m' evs',
   refusal_b i m (eff_ret eff') = false ->
   spurious_refusal_cfg cfg i m eff.
 Proof.
-  intros cfg i m eff eff' m' evs' Hoff Hr Hs' Hnr.
-  split; [exact Hoff|]. split; [exact Hr|]. exists eff', m', evs'. split; assumption.
+  intros cfg i m eff eff' m' evs' fam_off refused granted_spec granted.
+  refine (conj fam_off (conj refused _)).
+  exists eff', m', evs'. exact (conj granted_spec granted).
 Qed.
 
 Lemma refusal_b_222 : forall i m r, bv_unsigned (in_sysno i) = 222%Z ->
   refusal_b i m r = ret_in_errnos mmap_errnos r.
-Proof. intros i m r E. unfold refusal_b. rewrite E. reflexivity. Qed.
+Proof. intros i m r is_mmap. unfold refusal_b. rewrite is_mmap. reflexivity. Qed.
 Lemma refusal_b_226 : forall i m r, bv_unsigned (in_sysno i) = 226%Z ->
   refusal_b i m r = ret_in_errnos mprotect_errnos r.
-Proof. intros i m r E. unfold refusal_b. rewrite E. reflexivity. Qed.
+Proof. intros i m r is_mprotect. unfold refusal_b. rewrite is_mprotect. reflexivity. Qed.
 Lemma refusal_b_214 : forall i m r, bv_unsigned (in_sysno i) = 214%Z ->
   refusal_b i m r = brk_refusal_b m (in_arg i 0) r.
-Proof. intros i m r E. unfold refusal_b. rewrite E. reflexivity. Qed.
+Proof. intros i m r is_brk. unfold refusal_b. rewrite is_brk. reflexivity. Qed.
 
 Lemma acfg_family_off_alloc : forall i, bv_unsigned (in_sysno i) = 214%Z \/ bv_unsigned (in_sysno i) = 216%Z
   \/ bv_unsigned (in_sysno i) = 222%Z \/ bv_unsigned (in_sysno i) = 226%Z ->
   injected_family_off ACFG i = true.
-Proof. intros i H. unfold injected_family_off. destruct H as [E|[E|[E|E]]]; rewrite E; reflexivity. Qed.
+Proof.
+  intros i which. unfold injected_family_off.
+  destruct which as [no | [no | [no | no]]]; rewrite no; reflexivity.
+Qed.
 
 Lemma ret_in_errnos_ENOMEM : forall r,
   ret_in_errnos [ENOMEM] r = bv_eqb r (errno_ret ENOMEM).
-Proof. intros r. cbn. rewrite orb_false_r. reflexivity. Qed.
+Proof.
+  intros r. cbn [ret_in_errnos existsb]. apply orb_false_r.
+Qed.
 
 Lemma ret_in_errnos_errno : forall es e, In e es -> ret_in_errnos es (errno_ret e) = true.
 Proof.
@@ -92,12 +113,30 @@ Lemma sstep_cfg_of_sstep : forall cfg ms mo evs X,
      ~ spurious_refusal_cfg cfg (sys_input segs ms x8) mo eff) ->
   sstep_cfg segs cfg (mkCfg ms mo) evs X.
 Proof.
-  intros cfg ms mo evs X Hss Hns.
-  inversion Hss; subst;
-    [ eapply sstep_cfg_instr | eapply sstep_cfg_instr_fault | eapply sstep_cfg_instr_unmodeled
-    | eapply sstep_cfg_syscall | eapply sstep_cfg_syscall_materialization_fault
-    | eapply sstep_cfg_exit | eapply sstep_cfg_killed | eapply sstep_cfg_syscall_unmodeled ];
-    eauto.
+  intros cfg ms mo evs X run filter.
+  remember (mkCfg ms mo) as here eqn:here_is.
+  revert here_is.
+  destruct run as
+    [ ms0 m0 ms1 m1 live idle acct
+    | ms0 m0 live idle acct
+    | ms0 m0 live idle acct
+    | ms0 m0 n8 eff m1 m2 out live pend spec alive mat
+    | ms0 m0 n8 eff m1 out live pend spec alive mat
+    | ms0 m0 n8 eff m1 out code live pend spec stopped unkilled
+    | ms0 m0 n8 eff m1 out sig live pend spec killed
+    | ms0 m0 n8 live pend spec ];
+    intros [= -> ->].
+  - exact (sstep_cfg_instr segs cfg ms mo ms1 m1 live idle acct).
+  - exact (sstep_cfg_instr_fault segs cfg ms mo live idle acct).
+  - exact (sstep_cfg_instr_unmodeled segs cfg ms mo live idle acct).
+  - exact (sstep_cfg_syscall segs cfg ms mo n8 eff m1 m2 out live pend spec
+             (filter n8 eff m1 out pend spec alive) alive mat).
+  - exact (sstep_cfg_syscall_materialization_fault segs cfg ms mo n8 eff m1 out
+             live pend spec (filter n8 eff m1 out pend spec alive) alive mat).
+  - exact (sstep_cfg_exit segs cfg ms mo n8 eff m1 out code live pend spec
+             stopped unkilled).
+  - exact (sstep_cfg_killed segs cfg ms mo n8 eff m1 out sig live pend spec killed).
+  - exact (sstep_cfg_syscall_unmodeled segs cfg ms mo n8 live pend spec).
 Qed.
 
 Lemma sstep_cfg_of_sstep_nonalloc : forall ms mo x8 evs X,
@@ -114,8 +153,10 @@ Lemma sstep_cfg_of_sstep_no : forall ms mo x8 n evs X,
   ms_svc_pending ms = Some x8 -> bv_unsigned x8 = n -> alloc_no_b n = false ->
   sstep segs (mkCfg ms mo) evs X -> sstep_cfg segs ACFG (mkCfg ms mo) evs X.
 Proof.
-  intros ms mo x8 n evs X Hsvc Hno Hb. apply (sstep_cfg_of_sstep_nonalloc ms mo x8 evs X Hsvc).
-  rewrite Hno. apply alloc_no_b_false. exact Hb.
+  intros ms mo x8 n evs X pend number says_no run.
+  pose proof (alloc_no_b_false n says_no) as off_list.
+  rewrite <- number in off_list.
+  exact (sstep_cfg_of_sstep_nonalloc ms mo x8 evs X pend off_list run).
 Qed.
 
 Lemma sstep_cfg_halted_none : forall cfg c e st,
@@ -125,21 +166,26 @@ Proof. intros cfg c e st H; inversion H; subst; cbn; assumption. Qed.
 Lemma star_cfg_halted_nil : forall cfg c tr c',
   m_halted (cfg_model c) <> None -> star_cfg segs cfg c tr c' -> tr = [] /\ c' = c.
 Proof.
-  intros cfg c tr c' Hh Hstar. inversion Hstar as [|c1 evs c2 tr2 c3 Hss Hstar2]; subst.
+  intros cfg c tr c' stopped path.
+  revert stopped.
+  destruct path as [c0 | c1 evs c2 rest c3 first _]; intro stopped.
   - split; reflexivity.
-  - exfalso. apply Hh. eapply sstep_cfg_halted_none. exact Hss.
+  - contradiction (stopped (sstep_cfg_halted_none _ _ _ _ first)).
 Qed.
 
 Lemma star_cfg_one : forall cfg c evs c',
   sstep_cfg segs cfg c evs (SNext c') -> star_cfg segs cfg c evs c'.
 Proof.
-  intros cfg c evs c' H. rewrite <- (app_nil_r evs).
-  econstructor; eauto using star_cfg_refl.
+  intros cfg c evs c' once.
+  pose proof (star_cfg_step segs cfg c evs c' [] c' once (star_cfg_refl segs cfg c'))
+    as chain.
+  rewrite app_nil_r in chain. exact chain.
 Qed.
 
 Lemma obs_trace_cfg_nil : forall cfg c0, obs_trace_cfg segs cfg c0 [].
 Proof.
-  intros cfg c0. exists [], c0. split; [apply star_cfg_refl | apply is_prefix_nil].
+  intros cfg c0. exists [], c0.
+  exact (conj (star_cfg_refl segs cfg c0) (is_prefix_nil [])).
 Qed.
 
 Lemma sstep_cfg_sys_inv : forall cfg ms model x8 evs st,
@@ -163,41 +209,58 @@ Lemma sstep_cfg_sys_inv : forall cfg ms model x8 evs st,
       /\ evs = evs0 ++ [KillEv sig (m_fs model')] /\ st = SNext (mkCfg ms model'))
   \/ (syscall_spec (sys_input segs ms x8) model Unmodeled /\ evs = [] /\ st = SError).
 Proof.
-  intros cfg ms model x8 evs st Hsvc Hss.
-  inversion Hss; subst;
-    try match goal with H : ms_svc_pending ms = None |- _ => rewrite Hsvc in H; discriminate H end;
-    match goal with H : ms_svc_pending ms = Some ?x |- _ => rewrite Hsvc in H; injection H as <- end.
-  - left. eexists _, _, _. repeat (split; [eassumption|]).
-    match goal with H : materialize_model_accesses _ _ = Some _ |- _ => rewrite H end. split; reflexivity.
-  - left. eexists _, _, _. repeat (split; [eassumption|]).
-    match goal with H : materialize_model_accesses _ _ = None |- _ => rewrite H end. split; reflexivity.
-  - right; left. eexists _, _, _, _. repeat (split; [eassumption|]). split; reflexivity.
-  - right; right; left. eexists _, _, _, _. repeat (split; [eassumption|]). split; reflexivity.
-  - right; right; right. split; [assumption|]. split; reflexivity.
+  intros cfg ms model x8 evs st pend step.
+  remember (mkCfg ms model) as here eqn:here_is.
+  revert here_is.
+  destruct step as
+    [ ms0 m0 ms1 m1 live idle acct
+    | ms0 m0 live idle acct
+    | ms0 m0 live idle acct
+    | ms0 m0 n8 eff m1 m2 out live pend0 spec fine alive mat
+    | ms0 m0 n8 eff m1 out live pend0 spec fine alive mat
+    | ms0 m0 n8 eff m1 out code live pend0 spec stopped unkilled
+    | ms0 m0 n8 eff m1 out sig live pend0 spec killed
+    | ms0 m0 n8 live pend0 spec ];
+    intros [= -> ->].
+  1-3: rewrite pend in idle; discriminate idle.
+  all: rewrite pend in pend0; injection pend0 as <-.
+  5: right; right; right; exact (conj spec (conj eq_refl eq_refl)).
+  3: right; left; exists eff, m1, out, code;
+     exact (conj spec (conj stopped (conj unkilled (conj eq_refl eq_refl)))).
+  3: right; right; left; exists eff, m1, out, sig;
+     exact (conj spec (conj killed (conj eq_refl eq_refl))).
+  all: left; exists eff, m1, out;
+       refine (conj spec (conj fine (conj alive _)));
+       rewrite mat; split; reflexivity.
 Qed.
 
 Lemma nsp_no : forall ms x8 n m eff,
   bv_unsigned x8 = n -> alloc_no_b n = false ->
   ~ spurious_refusal_cfg ACFG (sys_input segs ms x8) m eff.
 Proof.
-  intros ms x8 n m eff Hno Hb. apply acfg_nonspurious.
-  change (in_sysno (sys_input segs ms x8)) with x8. rewrite Hno. apply alloc_no_b_false. exact Hb.
+  intros ms x8 n m eff number says_no.
+  subst n.
+  exact (acfg_nonspurious (sys_input segs ms x8) m eff (alloc_no_b_false _ says_no)).
 Qed.
 
 Lemma nsp_forced : forall cfg i m eff,
   (forall eff' m' evs', syscall_spec i m (Ok eff' m' evs') -> refusal_b i m (eff_ret eff') = true) ->
   ~ spurious_refusal_cfg cfg i m eff.
 Proof.
-  intros cfg i m eff Hall (_ & _ & (eff' & m' & evs' & Hs & Hnr)).
-  rewrite (Hall _ _ _ Hs) in Hnr. discriminate Hnr.
+  intros cfg i m eff all_refused [_ [_ [eff' [m' [evs' [spec' granted]]]]]].
+  pose proof (all_refused eff' m' evs' spec') as refused.
+  rewrite granted in refused. discriminate refused.
 Qed.
 
 Lemma nsp_det : forall cfg i m eff,
   (forall eff' m' evs', syscall_spec i m (Ok eff' m' evs') -> eff_ret eff' = eff_ret eff) ->
   ~ spurious_refusal_cfg cfg i m eff.
 Proof.
-  intros cfg i m eff Hall (_ & Hr & (eff' & m' & evs' & Hs & Hnr)).
-  rewrite (Hall _ _ _ Hs), Hr in Hnr. discriminate Hnr.
+  intros cfg i m eff same_ret.
+  destruct (refusal_b i m (eff_ret eff)) eqn:verdict.
+  - apply nsp_forced. intros eff' m' evs' spec'.
+    rewrite (same_ret eff' m' evs' spec'). exact verdict.
+  - exact (spurious_refusal_not_refusal cfg i m eff verdict).
 Qed.
 
 Lemma cfg_mat_nil : forall m, materialize_model_accesses m [] = Some m.
@@ -222,39 +285,55 @@ Lemma node_chk_grant_cfg : forall ms model x8 (I : Type)
   /\ (forall e st, sstep_cfg segs ACFG (mkCfg ms model) e st ->
         exists i, e = evs i /\ st = SNext (mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i))).
 Proof.
-  intros ms model x8 I effs ms' evs i0 Hh Hsvc Hoff Hok Hnr Hinv Href Hnu Hh' Hacc.
-  assert (WIT : exists eff' m' evs', syscall_spec (sys_input segs ms x8) model (Ok eff' m' evs')
-                                    /\ refusal_b (sys_input segs ms x8) model (eff_ret eff') = false).
-  { exists (effs i0), (ms' i0), (evs i0). split; [apply check_syscall_ok_iff; apply Hok | apply Hnr]. }
-  assert (LISTED : forall eff m' ev, syscall_spec (sys_input segs ms x8) model (Ok eff m' ev) ->
-            ~ spurious_refusal_cfg ACFG (sys_input segs ms x8) model eff ->
-            exists i, eff = effs i /\ m' = ms' i /\ ev = evs i).
-  { intros eff m' ev Hs Hns. apply check_syscall_ok_iff in Hs.
-    destruct (refusal_b (sys_input segs ms x8) model (eff_ret eff)) eqn:Hr.
-    - exfalso. apply Hns. split; [exact Hoff | split; [exact Hr | exact WIT]].
-    - exact (Hinv eff m' ev Hs Hr). }
-  assert (NOHALT : forall eff m' ev, syscall_spec (sys_input segs ms x8) model (Ok eff m' ev) -> m_halted m' = None).
-  { intros eff m' ev Hs. apply check_syscall_ok_iff in Hs.
-    destruct (refusal_b (sys_input segs ms x8) model (eff_ret eff)) eqn:Hr.
-    - exact (Href eff m' ev Hs Hr).
-    - destruct (Hinv eff m' ev Hs Hr) as (i & -> & -> & ->). apply Hh'. }
+  intros ms model x8 I effs ms' evs i0 live pend fam_off checked grants
+    grants_listed refusals_live never_unmodeled outcomes_live no_access.
   split.
-  - intros i. apply (sstep_cfg_syscall segs ACFG ms model x8 (effs i) (ms' i) (ms' i) (evs i) Hh Hsvc).
-    + apply check_syscall_ok_iff. exact (Hok i).
-    + apply spurious_refusal_not_refusal. exact (Hnr i).
-    + exact (Hh' i).
-    + rewrite (Hacc i). apply cfg_mat_nil.
-  - intros e st Hss.
-    destruct (sstep_cfg_sys_inv ACFG ms model x8 e st Hsvc Hss)
-      as [(eff & m' & ev & Hs & Hns & Hh2 & Hm)
-         | [(eff & m' & ev & code & Hs & Hc & _ & _ & _)
-         | [(eff & m' & ev & sig & Hs & Hk & _ & _) | (Hs & _ & _)]]].
-    + destruct (LISTED _ _ _ Hs Hns) as (i & -> & -> & ->).
-      rewrite (Hacc i), cfg_mat_nil in Hm. cbv beta iota in Hm. destruct Hm as [-> ->].
-      exists i. split; reflexivity.
-    + exfalso. rewrite (NOHALT _ _ _ Hs) in Hc. discriminate Hc.
-    + exfalso. rewrite (m_killed_of_m_halted_none _ (NOHALT _ _ _ Hs)) in Hk. discriminate Hk.
-    + exfalso. apply (Hnu (mkEffect (Z_to_bv 64 0) [] [])). apply check_syscall_err_iff. exact Hs.
+  - intros i.
+    pose proof (check_syscall_sound_ok _ _ _ _ _ (checked i)) as spec_i.
+    pose proof (spurious_refusal_not_refusal ACFG _ model (effs i) (grants i)) as fine_i.
+    pose proof (cfg_mat_nil (ms' i)) as settles_i.
+    rewrite <- (no_access i) in settles_i.
+    exact (sstep_cfg_syscall segs ACFG ms model x8 (effs i) (ms' i) (ms' i) (evs i)
+             live pend spec_i fine_i (outcomes_live i) settles_i).
+  - intros e st step.
+    remember (mkCfg ms model) as here eqn:here_is.
+    revert here_is.
+    destruct step as
+      [ ms0 m0 ms1 m1 was_live idle acct
+      | ms0 m0 was_live idle acct
+      | ms0 m0 was_live idle acct
+      | ms0 m0 n8 eff m1 m2 out was_live pend0 spec fine alive mat
+      | ms0 m0 n8 eff m1 out was_live pend0 spec fine alive mat
+      | ms0 m0 n8 eff m1 out code was_live pend0 spec stopped unkilled
+      | ms0 m0 n8 eff m1 out sig was_live pend0 spec killed
+      | ms0 m0 n8 was_live pend0 spec ];
+      intros [= -> ->].
+    1-3: congruence.
+    all: assert (same_no : n8 = x8) by congruence; subst n8.
+    5: exfalso; apply (never_unmodeled (effs i0));
+       apply check_syscall_complete_unmodeled; exact spec.
+    3-4: exfalso;
+         assert (running : m_halted m1 = None)
+           by (generalize (refusals_live eff m1 out (check_syscall_complete_ok _ _ _ _ _ spec))
+                          (grants_listed eff m1 out (check_syscall_complete_ok _ _ _ _ _ spec));
+               case (refusal_b (sys_input segs ms x8) model (eff_ret eff));
+               [ intros when_refused _; exact (when_refused eq_refl)
+               | intros _ when_granted;
+                 destruct (when_granted eq_refl) as (i & _ & -> & _);
+                 exact (outcomes_live i) ]);
+         pose proof (m_killed_of_m_halted_none m1 running) as calm;
+         congruence.
+    1-2: assert (granted : refusal_b (sys_input segs ms x8) model (eff_ret eff) = false)
+           by (apply not_true_is_false; intro refused; apply fine;
+               exact (refusal_spurious_of_grant ACFG _ model eff (effs i0) (ms' i0) (evs i0)
+                        fam_off refused (check_syscall_sound_ok _ _ _ _ _ (checked i0))
+                        (grants i0)));
+         destruct (grants_listed eff m1 out (check_syscall_complete_ok _ _ _ _ _ spec) granted)
+           as (i & -> & -> & ->);
+         pose proof (cfg_mat_nil (ms' i)) as settles;
+         rewrite <- (no_access i) in settles.
+    + exists i. split; [reflexivity | congruence].
+    + congruence.
 Qed.
 
 End StepLift.

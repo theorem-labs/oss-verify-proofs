@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -19,26 +19,39 @@ Ltac2 gd_tbl_P_fuzz_top () : Init.string Init.list := ["Corelib.Init.Logic.and";
 Lemma U_layout_facts sp0 : ltac2:(CDefT.buildp (gd_tbl_P_fuzz_top ()) "(0.(1.$2.(3.(4.O1.))+3?:98.)(0.(5.(4.O1.)$6.+8.)(0.(7.=(8.(4.O1.)))(0.(7.(8.(4.O1.))+2710.)(0.Pa,$2.P,(9.(4.O1.)R1.)(:.(4.O1.)R2.)(0.(0.(7.(;.(4.O1.))(<.(4.O1.)))(7.(=.(4.O1.))(>.(4.O1.))))(7.(=.(4.O1.))(?.(4.O1.)))))))))")
 (* [comment removed for export] *).
 Proof.
-  split; [reflexivity|]. split.
-  { unfold const_at, U_MEMSET_FUNC. cbn [hl_data_lo hl_data_hi hl_written U_layout]. unfold U_written. split; [lia|]. split; [lia|]. intros a Ha. lia. }
-  split; [cbn; lia|]. split; [cbn; lia|]. split; [exact U_static_written|]. split; [cbn; lia|].
-  pose proof (@alloc_ceiling_lo (U_layout sp0)) as ACLO. change (hl_data_hi (U_layout sp0)) with 0x7e000. lia.
+  pose proof (hl_ceil_lo (U_layout sp0)) as ceil_floor.
+  unfold alloc_ceiling.
+  refine (conj eq_refl _).
+  refine (conj _ (conj _ (conj _ (conj U_static_written _)))).
+  - unfold const_at, U_MEMSET_FUNC; cbn [U_layout hl_data_lo hl_data_hi hl_written].
+    refine (conj _ (conj _ _)); [lia | lia |].
+    intros addr in_range; unfold U_written; lia.
+  - cbn; lia.
+  - cbn; lia.
+  - revert ceil_floor; cbn [U_layout hl_img_lo hl_img_hi hl_data_lo hl_data_hi].
+    intro ceil_floor; lia.
 Qed.
 
 Lemma U_layout_facts2 sp0 : hl_calloc (U_layout sp0) = 0x3f960 /\ const_at (U_layout sp0) U_OID_MD_ALG_TBL 440.
 Proof.
-  split; [reflexivity|].
-  unfold const_at, U_OID_MD_ALG_TBL. cbn [hl_data_lo hl_data_hi hl_written U_layout]. unfold U_written. split; [lia|]. split; [lia|]. intros a Ha. lia.
+  split; [reflexivity |].
+  unfold const_at, U_OID_MD_ALG_TBL; cbn [U_layout hl_data_lo hl_data_hi hl_written].
+  split; [lia | split; [lia |]].
+  intros addr in_range written; unfold U_written in written; lia.
 Qed.
 
 Lemma U_layout_facts3 sp0 : const_at (U_layout sp0) U_OID_SIG_ALG_TBL 560.
 Proof.
-  unfold const_at, U_OID_SIG_ALG_TBL. cbn [hl_data_lo hl_data_hi hl_written U_layout]. unfold U_written. split; [lia|]. split; [lia|]. intros a Ha. lia.
+  unfold const_at, U_OID_SIG_ALG_TBL; cbn [U_layout hl_data_lo hl_data_hi hl_written].
+  split; [lia | split; [lia |]].
+  intros addr in_range written; unfold U_written in written; lia.
 Qed.
 
 Lemma U_layout_facts4 sp0 : const_at (U_layout sp0) U_OID_X509_EXT_TBL 320.
 Proof.
-  unfold const_at, U_OID_X509_EXT_TBL. cbn [hl_data_lo hl_data_hi hl_written U_layout]. unfold U_written. split; [lia|]. split; [lia|]. intros a Ha. lia.
+  unfold const_at, U_OID_X509_EXT_TBL; cbn [U_layout hl_data_lo hl_data_hi hl_written].
+  split; [lia | split; [lia |]].
+  intros addr in_range written; unfold U_written in written; lia.
 Qed.
 
 Section Top.
@@ -50,17 +63,31 @@ Section Top.
 
   #[using="PK PKFREE PKPARSE"] Theorem fuzz_entry_top : fuzz_entry_stmt usegs (U_layout sp0) (U_HI sp0) SI 0x1d6ec.
   Proof.
-    ddestruct (U_layout_facts sp0) as (F1 & F2 & F3 & F4 & F5 & F6 & F7). destruct (U_layout_facts2 sp0) as [F8 F9]. pose proof (U_layout_facts3 sp0) as F10.
-    pose proof (U_asn1_get_alg_spec (U_layout sp0) (U_platform_zeroize_spec (U_layout sp0))) as GETALG.
-    pose proof (U_x509_crt_ext_spec (U_layout sp0) (U_HI sp0) F1 F8 (U_layout_facts4 sp0) F3 F5 F6 F7 U_x509_basic_spec U_x509_skid_spec
-                  (U_x509_akid_spec (U_layout sp0) (U_HI sp0) F8 F1 F3) (U_x509_policies_spec (U_layout sp0) (U_HI sp0) F8 F3)) as CRTEXT.
-    pose proof (U_x509_crt_parse_spec (U_layout sp0) (U_HI sp0) PK SI F1 F8 F2 F9 F10 F3 F5 F6 F7 (U_heap_nodup sp0) PKFREE PKPARSE
-                  U_x509_get_dates_spec U_x509_get_uid_spec CRTEXT) as CRTPARSE.
-    apply (fuzz_entry sp0 (option (p7_own * p7_junk)) (pkcs7_at usegs PK) SI).
-    - exact (U_pkcs7_parse_der_spec (U_layout sp0) (U_HI sp0) PK SI F1 F8 F2 F9 F3 F4 F5 F6 F7 (U_heap_nodup sp0) PKFREE GETALG
-               (U_pkcs7_getcerts_spec (U_layout sp0) (U_HI sp0) PK SI F3 F6 F7 CRTPARSE)
-               (U_pkcs7_getsigners_spec (U_layout sp0) (U_HI sp0) F1 F8 F2 F3 F5 F6 F7 (U_heap_nodup sp0) GETALG)).
-    - exact (U_pkcs7_free_spec (U_layout sp0) (U_HI sp0) PK F1 F2 F3 F4 F5 F6 F7 (U_heap_nodup sp0) PKFREE).
+    pose proof (U_heap_nodup sp0) as heap_nodup.
+    destruct (U_layout_facts sp0)
+      as (free_at & memset_const & stack_nonneg & stack_cap & static_written & data_in_img & data_ceil).
+    destruct (U_layout_facts2 sp0) as (calloc_at & mdtbl_const).
+    pose proof (U_layout_facts3 sp0) as sigtbl_const.
+    pose proof (U_layout_facts4 sp0) as exttbl_const.
+    pose proof (U_asn1_get_alg_spec (U_layout sp0) (U_platform_zeroize_spec (U_layout sp0))) as getalg.
+    pose proof (U_x509_crt_ext_spec (U_layout sp0) (U_HI sp0) free_at calloc_at exttbl_const
+                  stack_nonneg static_written data_in_img data_ceil
+                  U_x509_basic_spec U_x509_skid_spec
+                  (U_x509_akid_spec (U_layout sp0) (U_HI sp0) eq_refl eq_refl stack_nonneg)
+                  (U_x509_policies_spec (U_layout sp0) (U_HI sp0) eq_refl stack_nonneg)) as crtext.
+    pose proof (U_x509_crt_parse_spec (U_layout sp0) (U_HI sp0) PK SI free_at calloc_at memset_const
+                  mdtbl_const sigtbl_const stack_nonneg static_written data_in_img data_ceil heap_nodup
+                  PKFREE PKPARSE U_x509_get_dates_spec U_x509_get_uid_spec crtext) as crtparse.
+    pose proof (U_pkcs7_getcerts_spec (U_layout sp0) (U_HI sp0) PK SI stack_nonneg data_in_img data_ceil
+                  crtparse) as getcerts.
+    pose proof (U_pkcs7_getsigners_spec (U_layout sp0) (U_HI sp0) free_at calloc_at memset_const
+                  stack_nonneg static_written data_in_img data_ceil heap_nodup getalg) as getsigners.
+    pose proof (U_pkcs7_free_spec (U_layout sp0) (U_HI sp0) PK free_at memset_const stack_nonneg
+                  stack_cap static_written data_in_img data_ceil heap_nodup PKFREE) as free_ok.
+    pose proof (U_pkcs7_parse_der_spec (U_layout sp0) (U_HI sp0) PK SI free_at calloc_at memset_const
+                  mdtbl_const stack_nonneg stack_cap static_written data_in_img data_ceil heap_nodup
+                  PKFREE getalg getcerts getsigners) as parse_ok.
+    exact (fuzz_entry sp0 _ (pkcs7_at usegs PK) SI parse_ok free_ok).
   Qed.
 End Top.
 

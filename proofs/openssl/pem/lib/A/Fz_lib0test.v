@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -16,74 +16,21 @@ Open Scope Z_scope.
 
 (* [comment removed for export] *)
 Definition LIB0_TAB : list (Z * list cell) :=
-  [(0x5a9f40, [C8 (Z_to_bv 64 0x1fbf20)]);
-   (0x5a9f60, [C8 (Z_to_bv 64 0x1fc320)]);
-   (0x5a9f80, [C8 (Z_to_bv 64 0x1fc430)]);
-   (0x5a9fc0, [C8 (Z_to_bv 64 0x1c1918)]);
-   (0xb9f7c0, [C1 (Z_to_bv 8 0)]);
-   (0xb9f200, [C1 (Z_to_bv 8 0)]);
-   (0xb9f2a0, [C8 (Z_to_bv 64 0)]);
-   (0xb9f2c0, [C4 (Z_to_bv 64 0)]);
-   (0xb9f2e0, [C4 (Z_to_bv 64 0)]);
-   (0xb9f300, [C4 (Z_to_bv 64 0)]);
-   (0xb9f320, [C4 (Z_to_bv 64 0)]);
-   (0xb9f220, [C8 (Z_to_bv 64 0)]);
-   (0xb9f240, [C8 (Z_to_bv 64 0)]);
-   (0xb9f260, [C4 (Z_to_bv 64 0)]);
-   (0xb9f1c0, [C1 (Z_to_bv 8 0)]);
-   (0x5a9f20, [C4 (Z_to_bv 64 0xffffffff); C4 (Z_to_bv 64 0xffffffff)]);
-   (0xb9f4a0, [C4 (Z_to_bv 64 0)]);
-   (0xb9f4c0, [C4 (Z_to_bv 64 0)]);
-   (0xb9f4e0, [C8 (Z_to_bv 64 0)]);
-   (0xb9f500, [C4 (Z_to_bv 64 0)]);
-   (0xb9f520, [C4 (Z_to_bv 64 0)]);
-   (0xb9f540, [C1 (Z_to_bv 8 0)]);
-   (0xb9f820, [C4 (Z_to_bv 64 0)]);
-   (0xb9f7e0, [C8 (Z_to_bv 64 0)]);
-   (0xb9f800, [C8 (Z_to_bv 64 0)]);
-   (0xb9f840, [C4 (Z_to_bv 64 0)]);
-   (0xb9f740, [C4 (Z_to_bv 64 0)]);
-   (0xb9f720, [C4 (Z_to_bv 64 0)]);
-   (0xb9f760, [C4 (Z_to_bv 64 0)]);
-   (0xb9f780, [C4 (Z_to_bv 64 0)]);
-   (0xb9f7a0, [C4 (Z_to_bv 64 0)]);
-   (0xb9f560, [C1 (Z_to_bv 8 0)]);
-   (0xb9f580, [C8 (Z_to_bv 64 0)]);
-   (0xb9f588, [C8 (Z_to_bv 64 0)]);
-   (0xb9f5f0, [C8 (Z_to_bv 64 0)]);
-   (0xb9f628, [C8 (Z_to_bv 64 0)]);
-   (0xb9f630, [C8 (Z_to_bv 64 0)]);
-   (0xb9f638, [C8 (Z_to_bv 64 0)]);
-   (0xb9f640, [C8 (Z_to_bv 64 0)]);
-   (0xb9f648, [C8 (Z_to_bv 64 0)]);
-   (0xb9f650, [C8 (Z_to_bv 64 0)]);
-   (0xb9f658, [C8 (Z_to_bv 64 0)]);
-   (0xb9f660, [C8 (Z_to_bv 64 0)]);
-   (0xb9f668, [C8 (Z_to_bv 64 0)]);
-   (0xb9f670, [C8 (Z_to_bv 64 0)]);
-   (0xb9f678, [C8 (Z_to_bv 64 0)]);
-   (0xb9f680, [C8 (Z_to_bv 64 0)]);
-   (0xb9f688, [C8 (Z_to_bv 64 0)]);
-   (0xb9f690, [C8 (Z_to_bv 64 0)]);
-   (0xb9f698, [C8 (Z_to_bv 64 0)]);
-   (0xb9f6a0, [C8 (Z_to_bv 64 0)]);
-   (0xb9f6a8, [C8 (Z_to_bv 64 0)]);
-   (0xb9f6b0, [C8 (Z_to_bv 64 0)]);
-   (0xb9f6b8, [C8 (Z_to_bv 64 0)]);
-   (0xb9f860, [C1 (Z_to_bv 8 0)])].
+  ltac:(let statics := eval cbv delta [lib0_statics] in lib0_statics in
+        lazymatch statics with
+        | fun _ => Forall _ ?rows => exact rows
+        end).
 
 Lemma lib0_statics_of_tab : forall m : mem, Forall (fun p => rw_cells asegs m (fst p) (snd p)) LIB0_TAB -> lib0_statics m.
 Proof.
-  intros m H. unfold LIB0_TAB in H.
-  repeat (apply Forall_cons_iff in H; destruct H as [? H]; cbn [fst snd] in * ).
-  unfold lib0_statics. repeat (split; [assumption|]). assumption.
+  intros mm rows_hold.
+  unfold lib0_statics.
+  exact rows_hold.
 Qed.
 
 Lemma lib0_statics_tab : forall m : mem, lib0_statics m -> Forall (fun p => rw_cells asegs m (fst p) (snd p)) LIB0_TAB.
 Proof.
-  intros m H. unfold lib0_statics in H. unfold LIB0_TAB.
-  repeat match goal with K : _ /\ _ |- _ => destruct K end.
-  repeat (apply Forall_cons; [cbn [fst snd]; assumption|]). apply Forall_nil.
+  intro mm. unfold LIB0_TAB. intro statics_hold. assumption.
 Qed.
 
 (* [comment removed for export] *)
@@ -102,18 +49,29 @@ Definition TEST_A (ch : acs) : bool := (forallb (fun p => hs_rw_cells ch (fst p)
 (* [comment removed for export] *)
 Lemma seg_rw_c8 : forall (m : mem) a, seg_rw_ok asegs a 8 = true -> exists v, rw_cells asegs m a [C8 v].
 Proof.
-  intros m a H. destruct (seg_rw_ok_sound asegs a 8 H m) as [W S]. destruct (stk_bytes asegs m a 8 S) as (bs & L & B).
-  destruct (cells_c8_of asegs m a bs L B) as [v C]. exists v. split; [exact C| exact W].
+  intros mm base window_ok.
+  destruct (seg_rw_ok_sound asegs base 8 window_ok mm) as [span_wr _].
+  destruct (I_lkit.wr_at_rw_CB mm base 8 span_wr ltac:(lia)) as [raw [[raw_wf raw_at] _]].
+  cbn [cells_wf cell_wf cells_bytes cbytes] in raw_wf, raw_at.
+  rewrite app_nil_r in raw_at.
+  destruct (cells_c8_of asegs mm base raw (proj1 raw_wf) raw_at) as [v v_at].
+  exists v. split; [exact v_at | exact span_wr].
 Qed.
 Lemma seg_rw_c4 : forall (m : mem) a, seg_rw_ok asegs a 4 = true -> exists v, rw_cells asegs m a [C4 v].
 Proof.
-  intros m a H. destruct (seg_rw_ok_sound asegs a 4 H m) as [W S]. destruct (stk_bytes asegs m a 4 S) as (bs & L & B).
-  destruct (cells_c4_of asegs m a bs L B) as [v C]. exists v. split; [exact C| exact W].
+  intros mm base window_ok.
+  destruct (seg_rw_ok_sound asegs base 4 window_ok mm) as [span_wr _].
+  destruct (I_lkit.wr_at_rw_CB mm base 4 span_wr ltac:(lia)) as [raw [[raw_wf raw_at] _]].
+  cbn [cells_wf cell_wf cells_bytes cbytes] in raw_wf, raw_at.
+  rewrite app_nil_r in raw_at.
+  destruct (cells_c4_of asegs mm base raw (proj1 raw_wf) raw_at) as [v v_at].
+  exists v. split; [exact v_at | exact span_wr].
 Qed.
 Lemma seg_rw_c1 : forall (m : mem) a, seg_rw_ok asegs a 1 = true -> exists v, rw_cells asegs m a [C1 v].
 Proof.
-  intros m a H. destruct (seg_rw_ok_sound asegs a 1 H m) as [W S]. destruct (stk_bytes asegs m a 1 S) as (bs & L & B).
-  destruct (cells_c1_of asegs m a bs L B) as [v C]. exists v. split; [exact C| exact W].
+  intros mm base window_ok.
+  apply wr_at_rw_C1.
+  exact (proj1 (seg_rw_ok_sound asegs base 1 window_ok mm)).
 Qed.
 
 Theorem lib0_at_main_A : lib0_at_main TEST_A LIB0_A.
@@ -147,8 +105,13 @@ Qed.
 Lemma in_rangesI : forall (l : list (Z * Z)) lo hi x, In (lo, hi) l -> lo <= x < hi -> in_ranges l x.
 Proof. intros l lo hi x H R. exists lo, hi. exact (conj H R). Qed.
 Local Ltac inD lo hi := apply (in_rangesI LIB_D lo hi); [unfold LIB_D; repeat first [left; reflexivity | right] | lia].
-Local Ltac inLIBD := first [ inD 0x5a9f20 0x5a9f28 | inD 0x5a9f40 0x5a9f48 | inD 0x5a9f60 0x5a9f68 | inD 0x5a9f80 0x5a9f88 | inD 0x5a9fc0 0x5a9fc8
-  | inD 0xb9f1c0 0xb9f1e0 | inD 0xb9f200 0xb9f848 | inD 0xb9f860 0xb9f861 | inD 0xba3e5a 0xba3e5b | inD 0xba3e90 0xba3e98 | inD 0xbc4e58 0xbc5270 | inD 0xbc52a0 0xbc5698 ].
+Local Ltac inLIBD :=
+  let rec try_ranges spans :=
+    lazymatch spans with
+    | (?lo, ?hi) :: ?later => first [inD lo hi | try_ranges later]
+    end in
+  let spans := eval cbv delta [LIB_D] in LIB_D in
+  try_ranges spans.
 Local Ltac keepD AG := eapply rw_cells_agree_nw; [eassumption| intros a Ha; cbv beta in Ha; cbn [cells_size csize Nat.add] in Ha; apply AG; inLIBD].
 
 Theorem lib0_local_A : lib0_local_d LIB0_A.

@@ -12,27 +12,26 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
-Definition ls_ok (nS : nat) (fmts : list Z) (L : SSP.ls_addrs) : bool := @PFSpec.ls_ok v23_reloc nS fmts L.
+Definition ls_ok (nS : nat) (fmts : list Z) (L : SSP.ls_addrs) : bool :=
+  @PFSpec.ls_ok v23_reloc nS fmts L.
 Definition ls_ok1 (L : SSP.ls_addrs) : bool := ls_ok 1 (SSP.ls_fmts1 L) L.
 Definition ls_ok2 (L : SSP.ls_addrs) : bool := ls_ok 2 (SSP.ls_fmts2 L) L.
 
 Section Contracts.
 Context {fx : FPState}.
-#[local] Existing Instance v23_reloc.
-#[local] Existing Instance v23_code.
-#[local] Existing Instance v23_sites.
-#[local] Existing Instance v23_data.
-#[local] Existing Instance v23_img.
-#[local] Existing Instance v23_rw.
-#[local] Existing Instance v23_pf.
 
-(* [comment removed for export] *)
+  #[local] Existing Instances v23_reloc v23_data.
+  #[local] Existing Instances v23_code v23_sites v23_img v23_rw v23_pf.
+
 Theorem lept_stderr_s1_contract : forall L, ls_ok1 L = true -> SSP.sum_contract SEGS (SSP.spec_lept_stderr_s1 L).
-Proof.
-exact PFSpec.lept_stderr_s1_contract. Qed.
+  Proof.
+    intros addrs fmts_checked.
+    exact (PFSpec.lept_stderr_s1_contract addrs fmts_checked).
+  Qed.
 
-(* [comment removed for export] *)
 Theorem lept_stderr_s2_contract : forall L, ls_ok2 L = true -> SSP.sum_contract SEGS (SSP.spec_lept_stderr_s2 L).
-Proof.
-exact PFSpec.lept_stderr_s2_contract. Qed.
+  Proof.
+    intros addrs fmts_checked.
+    exact (PFSpec.lept_stderr_s2_contract addrs fmts_checked).
+  Qed.
 End Contracts.

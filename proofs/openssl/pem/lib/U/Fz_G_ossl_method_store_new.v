@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -30,853 +30,741 @@ Section WithCeiling0. Context {CE__ : Ceiling} {RN__ : RunRnd}.
 Definition FZ_G_ossl_method_store_new : Z := 0xec964.
 Definition ossl_method_store_new_STACK : Z := 80 + LOCK_NEW_STACK.
 
-Definition ossl_method_store_new_res (a0 : word) (LBall : list block) (L : @clist bptr) : word -> list block -> @clist bptr -> mem -> Prop :=
-  fun v LBall' L' m' => exists q1_1 A1_1 q2_1 A2_1 q3_1 A3_1 q4_1 A4_1 q5_1 A5_1 q6_1 A6_1 q7_1 A7_1 q8_1 A8_1 q9_1 A9_1 q10_1 A10_1 q11_1 A11_1 q12_1 A12_1 q13_1 A13_1 q14_1 A14_1 q15_1 A15_1,
-       v = (Z_to_bv 64 A1_1)
-    /\ LBall' = (q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall /\ L' = (q15_1, 40) :: (q14_1, 40) :: (q13_1, 40) :: (q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L
-    /\ rblock_range A1_1 24 /\ rblock_range A2_1 384 /\ rblock_range A3_1 32 /\ rblock_range A4_1 40 /\ rblock_range A5_1 40 /\ rblock_range A6_1 32 /\ rblock_range A7_1 40 /\ rblock_range A8_1 40 /\ rblock_range A9_1 32 /\ rblock_range A10_1 40 /\ rblock_range A11_1 40 /\ rblock_range A12_1 32 /\ rblock_range A13_1 40 /\ rblock_range A14_1 40 /\ rblock_range A15_1 40
-    /\ rw_cells usegs m' A1_1 [C8 a0; C8 (Z_to_bv 64 A2_1); C8 (Z_to_bv 64 A15_1)]
-    /\ rw_cells usegs m' A14_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A13_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A12_1 [CB 32 (repeat (Z_to_bv 8 0) 32)]
-    /\ rw_cells usegs m' A11_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A10_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A9_1 [CB 32 (repeat (Z_to_bv 8 0) 32)]
-    /\ rw_cells usegs m' A8_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A7_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A6_1 [CB 32 (repeat (Z_to_bv 8 0) 32)]
-    /\ rw_cells usegs m' A5_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A4_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)]
-    /\ rw_cells usegs m' A3_1 [CB 32 (repeat (Z_to_bv 8 0) 32)]
-    /\ rw_cells usegs m' A2_1 [C8 (Z_to_bv 64 A3_1); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 A4_1); C8 (Z_to_bv 64 A5_1); C8 (Z_to_bv 64 A6_1); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 A7_1); C8 (Z_to_bv 64 A8_1); C8 (Z_to_bv 64 A9_1); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 A10_1); C8 (Z_to_bv 64 A11_1); C8 (Z_to_bv 64 A12_1); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 A13_1); C8 (Z_to_bv 64 A14_1)]
-    /\ rw_cells usegs m' A15_1 [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 0)].
+Definition ossl_method_store_new_res (a0 : word) (LBall : list block) (L : @clist bptr)
+  : word -> list block -> @clist bptr -> mem -> Prop :=
+  fun v LBall' L' m' =>
+    exists (qs : bptr) (As : Z) (qh : bptr) (Ah : Z)
+           (qa0 : bptr) (Aa0 : Z) (qx0 : bptr) (Ax0 : Z) (qy0 : bptr) (Ay0 : Z)
+           (qa1 : bptr) (Aa1 : Z) (qx1 : bptr) (Ax1 : Z) (qy1 : bptr) (Ay1 : Z)
+           (qa2 : bptr) (Aa2 : Z) (qx2 : bptr) (Ax2 : Z) (qy2 : bptr) (Ay2 : Z)
+           (qa3 : bptr) (Aa3 : Z) (qx3 : bptr) (Ax3 : Z) (qy3 : bptr) (Ay3 : Z)
+           (qb : bptr) (Ab : Z),
+      v = Z_to_bv 64 As /\
+      LBall' = (qb, Ab, 40) :: (qy3, Ay3, 40) :: (qx3, Ax3, 40) :: (qa3, Aa3, 32)
+               :: (qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32)
+               :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32)
+               :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32)
+               :: (qh, Ah, 384) :: (qs, As, 24) :: LBall /\
+      L' = (qb, 40) :: (qy3, 40) :: (qx3, 40) :: (qa3, 32)
+           :: (qy2, 40) :: (qx2, 40) :: (qa2, 32)
+           :: (qy1, 40) :: (qx1, 40) :: (qa1, 32)
+           :: (qy0, 40) :: (qx0, 40) :: (qa0, 32)
+           :: (qh, 384) :: (qs, 24) :: L /\
+      rblock_range As 24 /\ rblock_range Ah 384 /\
+      rblock_range Aa0 32 /\ rblock_range Ax0 40 /\ rblock_range Ay0 40 /\
+      rblock_range Aa1 32 /\ rblock_range Ax1 40 /\ rblock_range Ay1 40 /\
+      rblock_range Aa2 32 /\ rblock_range Ax2 40 /\ rblock_range Ay2 40 /\
+      rblock_range Aa3 32 /\ rblock_range Ax3 40 /\ rblock_range Ay3 40 /\
+      rblock_range Ab 40 /\
+      rw_cells usegs m' As [C8 a0; C8 (Z_to_bv 64 Ah); C8 (Z_to_bv 64 Ab)] /\
+      rw_cells usegs m' Ay3 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Ax3 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Aa3 [CB (Z.to_nat 32) (repeat (Z_to_bv 8 0) (Z.to_nat 32))] /\
+      rw_cells usegs m' Ay2 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Ax2 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Aa2 [CB (Z.to_nat 32) (repeat (Z_to_bv 8 0) (Z.to_nat 32))] /\
+      rw_cells usegs m' Ay1 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Ax1 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Aa1 [CB (Z.to_nat 32) (repeat (Z_to_bv 8 0) (Z.to_nat 32))] /\
+      rw_cells usegs m' Ay0 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Ax0 (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)) /\
+      rw_cells usegs m' Aa0 [CB (Z.to_nat 32) (repeat (Z_to_bv 8 0) (Z.to_nat 32))] /\
+      rw_cells usegs m' Ah
+        [C8 (Z_to_bv 64 Aa0); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 Ax0); C8 (Z_to_bv 64 Ay0);
+         C8 (Z_to_bv 64 Aa1); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 Ax1); C8 (Z_to_bv 64 Ay1);
+         C8 (Z_to_bv 64 Aa2); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 Ax2); C8 (Z_to_bv 64 Ay2);
+         C8 (Z_to_bv 64 Aa3); CB 72 (repeat (Z_to_bv 8 0) 72); C8 (Z_to_bv 64 Ax3); C8 (Z_to_bv 64 Ay3)] /\
+      rw_cells usegs m' Ab (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0)).
 
 Definition ossl_method_store_new_stmt : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
-         (F : bvmap 5 word) (fc : bv 32) (m : mem) (st : PState) (LBall LB : list block) (L : @clist bptr) (f : nat) (lo B : Z),
-  (15 <= f)%nat -> croom L (wA 24 + wA 384 + wA 32 + wA 40 + wA 40 + wA 32 + wA 40 + wA 40 + wA 32 + wA 40 + wA 40 + wA 32 + wA 40 + wA 40 + wA 40) (wB 24 + wB 384 + wB 32 + wB 40 + wB 40 + wB 32 + wB 40 + wB 40 + wB 32 + wB 40 + wB 40 + wB 32 + wB 40 + wB 40 + wB 40) (wBig 24 + wBig 384 + wBig 32 + wBig 40 + wBig 40 + wBig 32 + wBig 40 + wBig 40 + wBig 32 + wBig 40 + wBig 40 + wBig 32 + wBig 40 + wBig 40 + wBig 40) ->
-  cstate st LBall LB L m sp tp lo B -> lo <= bv_unsigned sp - ossl_method_store_new_STACK ->
-  climpl f L st (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
-                    F (Z_to_bv 64 FZ_G_ossl_method_store_new) fc None m (seg_rom usegs))
-         (cpost ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc st LBall LB L f m lo B (fun _ => False) []%Z 15
-                (wA 24 + wA 384 + wA 32 + wA 40 + wA 40 + wA 32 + wA 40 + wA 40 + wA 32 + wA 40 + wA 40 + wA 32 + wA 40 + wA 40 + wA 40) (wB 24 + wB 384 + wB 32 + wB 40 + wB 40 + wB 32 + wB 40 + wB 40 + wB 32 + wB 40 + wB 40 + wB 32 + wB 40 + wB 40 + wB 40) (wBig 24 + wBig 384 + wBig 32 + wBig 40 + wBig 40 + wBig 32 + wBig 40 + wBig 40 + wBig 32 + wBig 40 + wBig 40 + wBig 32 + wBig 40 + wBig 40 + wBig 40) (ossl_method_store_new_res a0 LBall L)).
+         (F : bvmap 5 word) (fc : bv 32) (m : mem) (st : PState) (LBall LB : list block) (L : @clist bptr)
+         (f : nat) (lo B : Z),
+    (15 <= f)%nat ->
+    croom L 14 1 8576 ->
+    cstate st LBall LB L m sp tp lo B ->
+    lo <= bv_unsigned sp - ossl_method_store_new_STACK ->
+    climpl f L st
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 FZ_G_ossl_method_store_new) fc None m (seg_rom usegs))
+      (cpost ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc st LBall LB L f m lo B
+             (fun _ : bptr => False) [] 15 14 1 8576 (ossl_method_store_new_res a0 LBall L)).
 
 Theorem ossl_method_store_new_spec : crypto_zalloc_stmt -> ossl_method_store_new_stmt.
-Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros HB_crypto_zalloc_stmt ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m st LBall LB L f lo B
-         Hf ROOM CST SLO.
-  pose proof CST as (HP & _ & (errv & _ & HB & ST & LO & _ & MI & _) & _ & _ & _ & GLO).
-  unfold ossl_method_store_new_STACK, LOCK_NEW_STACK, SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK, FZ_G_ossl_method_store_new, GLOBALS_TOP in *. unfold ceil_window in *.
+Proof.
+  intros ZAL.
+  pose proof (crypto_calloc_spec ZAL) as CAL.
+  pose proof (T_sa_new_spec ZAL) as SAN.
+  pose proof (T_lock_new_spec ZAL) as LKN.
+  unfold ossl_method_store_new_stmt.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m st LBall LB L f lo B FUEL ROOM CST0 SLO.
+  unfold ossl_method_store_new_STACK, LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK in SLO.
+  pose proof CST0 as (HP0 & OWN0 & (errv & _ & SPB & ST & ALC & _ & MI & _) & _ & _ & _ & GTOP).
+  unfold GLOBALS_TOP in GTOP.
   pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
-  pose proof (w_bounds 24 ltac:(lia)) as WB24.
-  pose proof (w_bounds 32 ltac:(lia)) as WB32.
-  pose proof (w_bounds 40 ltac:(lia)) as WB40.
-  pose proof (w_bounds 384 ltac:(lia)) as WB384.
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp)]%Z m) as MU0. pose proof (wmono_refl usegs m) as WM0.
-  cprefix. step. carve_frame 80%nat ST. do 10 ths. do 7 step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma0 end.
-  assert (CSTa0 : cstate st LBall LB L ma0 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ m ma0 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST| exact MU0| exact WM0| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_nil].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa0 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st LBall L ma0).
-  { eapply cframe_seg; [apply cframe_refl| exact MU0| exact WM0| exact HP| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_nil]. }
-  (* [comment removed for export] *)
+  assert (SPfU : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -80)) = bv_unsigned sp + -80) by (rewrite unsigned_lit by lia; lia).
+  unfold FZ_G_ossl_method_store_new.
+  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp)] m) as MUf. pose proof (wmono_refl usegs m) as WMf.
+  apply climpl_from_evt.
+  step.
+  carve_frame 80%nat ST.
+  do 17 step.
+  apply evt_done; cbv beta.
+  rename m1 into mF.
+  assert (CSf : cstate st LBall LB L mF (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m mF _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST0| exact MUf| exact WMf| exact MI| | lia| lia| | | lia].
+    - apply Forall_cons; [apply cwin_stack; lia| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. split; [lia| exact I].
+    - rewrite SPfU. exact ST. }
+  assert (FRf : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st LBall L mF).
+  { eapply cframe_seg; [apply cframe_refl| exact MUf| exact WMf| exact HP0| lia|].
+    apply Forall_cons; [apply cseg_ok_stack; lia| apply Forall_nil]. }
+  clear MUf WMf.
   eapply climpl_seq.
-  { eapply HB_crypto_zalloc_stmt with (n := 24); [wp_lia| eapply croom_weaken; [exact ROOM| wp_lia..]| wp_lia| exact CSTa0| rewrite unsigned_lit by wp_lia; unfold CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia| reflexivity]. }
-  intros f1 L1 st1 ms1 (v1 & mb1 & LB1 & RET1 & FU1 & GR1 & CST1 & FRM1 & (q1_1 & A1_1 & -> & -> & -> & RNG_A1_1 & BC1_0)).
-  destruct RET1 as (u0_1 & u1_1 & u2_1 & b1_1 & b2_1 & b3_1 & b4_1 & b5_1 & b6_1 & b7_1 & u3_1 & u4_1 & u5_1 & u6_1 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM1 as (CFR1 & _).
-  lazymatch goal with FRh : rw_cells _ ma0 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR1 FRh ltac:(wp_lia)) as FRs1 end.
-  pose proof CST1 as (HP1 & _ & (errv1 & _ & _ & ST1 & _ & _ & MI1 & _) & _).
-  rewrite unsigned_lit in ST1 by wp_lia.
-  pose proof RNG_A1_1 as (P0_A1_1 & P16_A1_1 & _ & PC_A1_1 & PIMG_A1_1). wp_box1 P16_A1_1. wp_box1 PIMG_A1_1.
-  assert (FUc1 : (f <= f1 + 1)%nat) by (clear - FU1; lia). clear FU1.
-  change (Z.to_nat 24) with 24%nat in *.
-  assert (IN_A1_1_1 : In (q1_1, A1_1, 24) ((q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST1) as [ND1 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A1_1, A1_1 + 24)]%Z mb1) as MU1. pose proof (wmono_refl usegs mb1) as WM1.
-  wp_clear_aps.
-  cprefix. step. wp_brF. step. step. step. wp_brF. ths. do 6 step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma1 end.
-  assert (CSTa1 : cstate st1 ((q1_1, A1_1, 24) :: LBall) LB ((q1_1, 24) :: L) ma1 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb1 ma1 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST1| exact MU1| exact WM1| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q1_1, A1_1, 24)); [exact IN_A1_1_1| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa1 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st1 ((q1_1, A1_1, 24) :: LBall) ((q1_1, 24) :: L) ma1).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa0| exact FRM1| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU1| exact WM1| exact HP1| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q1_1, A1_1, 24)); [exact IN_A1_1_1| exact (t_fresh_notin (fun _ => False) LBall (q1_1, A1_1, 24) (t_nodup_prefix blk_id [(q1_1, A1_1, 24)] LBall (q1_1, A1_1, 24) ND1 ltac:(left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply ZAL with (n := 24); [lia| eapply croom_weaken; [exact ROOM| wp_wnorm; lia..]| lia| exact CSf| rewrite SPfU; unfold CZ_STACK, CM_STACK, RMALLOC_STACK; lia| reflexivity]. }
+  (* call 1: zalloc *)
+  intros f1 L1 st1 ms1 (v1 & m1 & LB1 & RET1 & FU1 & GR1 & CST1 & FRM1 & (qs & As & -> & -> & -> & RNGs & CELLs)).
+  destruct RET1 as (r1_0 & r1_1 & r1_2 & r1_3 & r1_4 & r1_5 & r1_6 & r1_7 & r1_8 & r1_9 & r1_10 & r1_11 & r1_12 & r1_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM1.
+  change (Z.to_nat (24)) with 24%nat in CELLs.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FRf FRM1 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM1) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM1 FRf CSf MI ST HP0. rename SFn into SF.
+  assert (FUc : (f <= f1 + 1)%nat) by lia. clear FU1.
+  assert (GRc : cgrow L ((qs, 24) :: L) 1 0 0) by (eapply cgrow_weaken; [exact GR1| wp_wnorm; lia..]). clear GR1.
+  pose proof RNGs as (P0s & ALs & _ & PCs & IMGs). wp_box1 IMGs.
+  pose proof CST1 as (HP & _ & (errv1 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(As, As + 24)] m1) as MU. pose proof (wmono_refl usegs m1) as WM.
+  apply climpl_from_evt.
+  step. wp_brF. step. step. step. wp_brF. step. do 6 step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw1 end.
+  assert (CSa : cstate st1 ((qs, As, 24) :: LBall) LB ((qs, 24) :: L) mw1 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m1 mw1 _ _ tp lo B (bv_unsigned sp)); [exact CST1| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qs, As, 24)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGs. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st1 ((qs, As, 24) :: LBall) ((qs, 24) :: L) mw1).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qs, As, 24)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qs, As, 24)] LBall (qs, As, 24)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST1))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST1. rename SFa into SF.
+  (* call 2: calloc *)
   eapply climpl_seq.
-  { eapply (crypto_calloc_spec HB_crypto_zalloc_stmt) with (num := 4) (sz := 96); [wp_lia| change (4 * 96) with 384; eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GR1)| wp_lia..]| wp_lia| wp_lia| wp_lia| exact CSTa1| rewrite unsigned_lit by wp_lia; unfold CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia| reflexivity| reflexivity]. }
-  intros f2 L2 st2 ms2 (v2 & mb2 & LB2 & RET2 & FU2 & GR2 & CST2 & FRM2 & (q2_1 & A2_1 & -> & -> & -> & RNG_A2_1 & BC2_0)).
-  change (4 * 96) with 384 in *.
-  destruct RET2 as (u0_2 & u1_2 & u2_2 & b1_2 & b2_2 & b3_2 & b4_2 & b5_2 & b6_2 & b7_2 & u3_2 & u4_2 & u5_2 & u6_2 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM2 as (CFR2 & _).
-  lazymatch goal with FRh : rw_cells _ ma1 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR2 FRh ltac:(wp_lia)) as FRs2 end.
-  repeat match goal with Hb : rw_cells _ ma1 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR2 Hb IN_A1_1_1 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST2 as (HP2 & _ & (errv2 & _ & _ & ST2 & _ & _ & MI2 & _) & _).
-  rewrite unsigned_lit in ST2 by wp_lia.
-  pose proof RNG_A2_1 as (P0_A2_1 & P16_A2_1 & _ & PC_A2_1 & PIMG_A2_1). wp_box1 P16_A2_1. wp_box1 PIMG_A2_1.
-  assert (FUc2 : (f <= f2 + 2)%nat) by (clear - FU2 FUc1; lia). clear FU2.
-  change (Z.to_nat 384) with 384%nat in *.
-  assert (IN_A2_1_2 : In (q2_1, A2_1, 384) ((q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A1_1_2 : In (q1_1, A1_1, 24) ((q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST2) as [ND2 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp)]%Z mb2) as MU2. pose proof (wmono_refl usegs mb2) as WM2.
-  wp_clear_aps.
-  cprefix. step. wp_brF. do 8 step.
-  chere.
-  assert (CSTa2 : cstate st2 ((q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q2_1, 384) :: (q1_1, 24) :: L) mb2 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb2 mb2 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST2| exact MU2| exact WM2| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_nil].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa2 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st2 ((q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q2_1, 384) :: (q1_1, 24) :: L) mb2).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa1| exact FRM2| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU2| exact WM2| exact HP2| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_nil]. }
-  (* [comment removed for export] *)
+  { eapply CAL with (num := 4) (sz := 96); [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| lia| lia| lia| exact CSa| rewrite SPfU; unfold CZ_STACK, CM_STACK, RMALLOC_STACK; lia| reflexivity| reflexivity]. }
+  intros f2 L2 st2 ms2 (v2 & m2 & LB2 & RET2 & FU2 & GR2 & CST2 & FRM2 & (qh & Ah & -> & -> & -> & RNGh & CELLh)).
+  destruct RET2 as (r2_0 & r2_1 & r2_2 & r2_3 & r2_4 & r2_5 & r2_6 & r2_7 & r2_8 & r2_9 & r2_10 & r2_11 & r2_12 & r2_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM2.
+  change (Z.to_nat (4 * 96)) with 384%nat in CELLh.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM2 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM2) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM2 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f2 + 2)%nat) by lia. clear FU2 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qh, 4 * 96) :: (qs, 24) :: L) 1 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR2)| wp_wnorm; lia..]).
+  clear GRc GR2. rename GRn into GRc.
+  pose proof RNGh as (P0h & ALh & _ & PCh & IMGh). wp_box1 IMGh.
+  assert (APsh : wp_apbox (As + 24 <= Ah \/ Ah + 384 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST2| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST2| wp_in_lit]]. }
+  pose proof CST2 as (HP & _ & (errv2 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  apply climpl_from_evt.
+  step. wp_brF. do 8 step.
+  apply evt_done; cbv beta.
+  (* call 3: sa *)
   eapply climpl_seq.
-  { eapply (T_sa_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2))| wp_lia..]| exact CSTa2| rewrite unsigned_lit by wp_lia; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f3 L3 st3 ms3 (v3 & mb3 & LB3 & RET3 & FU3 & GR3 & CST3 & FRM3 & (q3_1 & A3_1 & -> & -> & -> & RNG_A3_1 & BC3_0)).
-  destruct RET3 as (u0_3 & u1_3 & u2_3 & b1_3 & b2_3 & b3_3 & b4_3 & b5_3 & b6_3 & b7_3 & u3_3 & u4_3 & u5_3 & u6_3 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM3 as (CFR3 & _).
-  lazymatch goal with FRh : rw_cells _ mb2 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR3 FRh ltac:(wp_lia)) as FRs3 end.
-  repeat match goal with Hb : rw_cells _ mb2 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR3 Hb IN_A1_1_2 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ mb2 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR3 Hb IN_A2_1_2 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST3 as (HP3 & _ & (errv3 & _ & _ & ST3 & _ & _ & MI3 & _) & _).
-  rewrite unsigned_lit in ST3 by wp_lia.
-  pose proof RNG_A3_1 as (P0_A3_1 & P16_A3_1 & _ & PC_A3_1 & PIMG_A3_1). wp_box1 P16_A3_1. wp_box1 PIMG_A3_1.
-  assert (FUc3 : (f <= f3 + 3)%nat) by (clear - FU3 FUc2; lia). clear FU3.
-  change (Z.to_nat 32) with 32%nat in *.
-  assert (IN_A3_1_3 : In (q3_1, A3_1, 32) ((q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A2_1_3 : In (q2_1, A2_1, 384) ((q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A1_1_3 : In (q1_1, A1_1, 24) ((q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST3) as [ND3 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb3) as MU3. pose proof (wmono_refl usegs mb3) as WM3.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST3 IN_A2_1_3 IN_A1_1_3 (wp_nodup_apart [(q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 1%nat 2%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND3 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s3.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST3 IN_A2_1_3 IN_A3_1_3 (wp_nodup_apart [(q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 1%nat 0%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND3 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s3.
-  wp_box_aps.
-  cprefix. step. wp_brF. step. wp_brF. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma3 end.
-  assert (CSTa3 : cstate st3 ((q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma3 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb3 ma3 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST3| exact MU3| exact WM3| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_3| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa3 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st3 ((q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma3).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa2| exact FRM3| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU3| exact WM3| exact HP3| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_3| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND3 ltac:(do 1 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply SAN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CST2| rewrite SPfU; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f3 L3 st3 ms3 (v3 & m3 & LB3 & RET3 & FU3 & GR3 & CST3 & FRM3 & (qa0 & Aa0 & -> & -> & -> & RNGa0 & CELLa0)).
+  destruct RET3 as (r3_0 & r3_1 & r3_2 & r3_3 & r3_4 & r3_5 & r3_6 & r3_7 & r3_8 & r3_9 & r3_10 & r3_11 & r3_12 & r3_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM3.
+  change (Z.to_nat (32)) with 32%nat in CELLa0.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM3 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM3) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM3 SF CST2 HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f3 + 3)%nat) by lia. clear FU3 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 2 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR3)| wp_wnorm; lia..]).
+  clear GRc GR3. rename GRn into GRc.
+  pose proof RNGa0 as (P0a0 & _ & _ & PCa0 & IMGa0). wp_box1 IMGa0.
+  assert (APsa0 : wp_apbox (As + 24 <= Aa0 \/ Aa0 + 32 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST3| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST3| wp_in_lit]]. }
+  assert (APha0 : wp_apbox (Ah + 384 <= Aa0 \/ Aa0 + 32 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST3| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST3| wp_in_lit]]. }
+  pose proof CST3 as (HP & _ & (errv3 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m3) as MU. pose proof (wmono_refl usegs m3) as WM.
+  apply climpl_from_evt.
+  step. wp_brF. step. wp_brF. step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw3 end.
+  assert (CSa : cstate st3 ((qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw3 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m3 mw3 _ _ tp lo B (bv_unsigned sp)); [exact CST3| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st3 ((qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw3).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST3))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST3. rename SFa into SF.
+  (* call 4: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3))| wp_lia..]| exact CSTa3| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f4 L4 st4 ms4 (v4 & mb4 & LB4 & RET4 & FU4 & GR4 & CST4 & FRM4 & (q4_1 & A4_1 & -> & -> & -> & RNG_A4_1 & BC4_0)).
-  destruct RET4 as (u0_4 & u1_4 & u2_4 & b1_4 & b2_4 & b3_4 & b4_4 & b5_4 & b6_4 & b7_4 & u3_4 & u4_4 & u5_4 & u6_4 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM4 as (CFR4 & _).
-  lazymatch goal with FRh : rw_cells _ ma3 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR4 FRh ltac:(wp_lia)) as FRs4 end.
-  repeat match goal with Hb : rw_cells _ ma3 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR4 Hb IN_A1_1_3 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma3 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR4 Hb IN_A2_1_3 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma3 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR4 Hb IN_A3_1_3 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST4 as (HP4 & _ & (errv4 & _ & _ & ST4 & _ & _ & MI4 & _) & _).
-  rewrite unsigned_lit in ST4 by wp_lia.
-  pose proof RNG_A4_1 as (P0_A4_1 & P16_A4_1 & _ & PC_A4_1 & PIMG_A4_1). wp_box1 P16_A4_1. wp_box1 PIMG_A4_1.
-  assert (FUc4 : (f <= f4 + 4)%nat) by (clear - FU4 FUc3; lia). clear FU4.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A4_1_4 : In (q4_1, A4_1, 40) ((q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A3_1_4 : In (q3_1, A3_1, 32) ((q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A2_1_4 : In (q2_1, A2_1, 384) ((q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A1_1_4 : In (q1_1, A1_1, 24) ((q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST4) as [ND4 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb4) as MU4. pose proof (wmono_refl usegs mb4) as WM4.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST4 IN_A2_1_4 IN_A1_1_4 (wp_nodup_apart [(q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 2%nat 3%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND4 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s4.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST4 IN_A2_1_4 IN_A3_1_4 (wp_nodup_apart [(q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 2%nat 1%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND4 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s4.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST4 IN_A2_1_4 IN_A4_1_4 (wp_nodup_apart [(q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 2%nat 0%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND4 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s4.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma4 end.
-  assert (CSTa4 : cstate st4 ((q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma4 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb4 ma4 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST4| exact MU4| exact WM4| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_4| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa4 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st4 ((q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma4).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa3| exact FRM4| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU4| exact WM4| exact HP4| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_4| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND4 ltac:(do 2 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f4 L4 st4 ms4 (v4 & m4 & LB4 & RET4 & FU4 & GR4 & CST4 & FRM4 & (qx0 & Ax0 & -> & -> & -> & RNGx0 & CELLx0)).
+  destruct RET4 as (r4_0 & r4_1 & r4_2 & r4_3 & r4_4 & r4_5 & r4_6 & r4_7 & r4_8 & r4_9 & r4_10 & r4_11 & r4_12 & r4_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM4.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM4 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM4) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM4 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f4 + 4)%nat) by lia. clear FU4 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 3 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR4)| wp_wnorm; lia..]).
+  clear GRc GR4. rename GRn into GRc.
+  pose proof RNGx0 as (P0x0 & _ & _ & PCx0 & IMGx0). wp_box1 IMGx0.
+  assert (APsx0 : wp_apbox (As + 24 <= Ax0 \/ Ax0 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST4| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST4| wp_in_lit]]. }
+  assert (APhx0 : wp_apbox (Ah + 384 <= Ax0 \/ Ax0 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST4| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST4| wp_in_lit]]. }
+  pose proof CST4 as (HP & _ & (errv4 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m4) as MU. pose proof (wmono_refl usegs m4) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw4 end.
+  assert (CSa : cstate st4 ((qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw4 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m4 mw4 _ _ tp lo B (bv_unsigned sp)); [exact CST4| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st4 ((qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw4).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST4))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST4. rename SFa into SF.
+  (* call 5: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4))| wp_lia..]| exact CSTa4| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f5 L5 st5 ms5 (v5 & mb5 & LB5 & RET5 & FU5 & GR5 & CST5 & FRM5 & (q5_1 & A5_1 & -> & -> & -> & RNG_A5_1 & BC5_0)).
-  destruct RET5 as (u0_5 & u1_5 & u2_5 & b1_5 & b2_5 & b3_5 & b4_5 & b5_5 & b6_5 & b7_5 & u3_5 & u4_5 & u5_5 & u6_5 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM5 as (CFR5 & _).
-  lazymatch goal with FRh : rw_cells _ ma4 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR5 FRh ltac:(wp_lia)) as FRs5 end.
-  repeat match goal with Hb : rw_cells _ ma4 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR5 Hb IN_A1_1_4 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma4 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR5 Hb IN_A2_1_4 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma4 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR5 Hb IN_A3_1_4 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma4 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR5 Hb IN_A4_1_4 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST5 as (HP5 & _ & (errv5 & _ & _ & ST5 & _ & _ & MI5 & _) & _).
-  rewrite unsigned_lit in ST5 by wp_lia.
-  pose proof RNG_A5_1 as (P0_A5_1 & P16_A5_1 & _ & PC_A5_1 & PIMG_A5_1). wp_box1 P16_A5_1. wp_box1 PIMG_A5_1.
-  assert (FUc5 : (f <= f5 + 5)%nat) by (clear - FU5 FUc4; lia). clear FU5.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A5_1_5 : In (q5_1, A5_1, 40) ((q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A4_1_5 : In (q4_1, A4_1, 40) ((q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A3_1_5 : In (q3_1, A3_1, 32) ((q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A2_1_5 : In (q2_1, A2_1, 384) ((q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A1_1_5 : In (q1_1, A1_1, 24) ((q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST5) as [ND5 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb5) as MU5. pose proof (wmono_refl usegs mb5) as WM5.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST5 IN_A2_1_5 IN_A1_1_5 (wp_nodup_apart [(q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 3%nat 4%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND5 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s5.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST5 IN_A2_1_5 IN_A3_1_5 (wp_nodup_apart [(q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 3%nat 2%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND5 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s5.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST5 IN_A2_1_5 IN_A4_1_5 (wp_nodup_apart [(q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 3%nat 1%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND5 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s5.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST5 IN_A2_1_5 IN_A5_1_5 (wp_nodup_apart [(q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 3%nat 0%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND5 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s5.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step. step. wp_brF. step. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma5 end.
-  assert (CSTa5 : cstate st5 ((q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma5 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb5 ma5 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST5| exact MU5| exact WM5| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_5| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa5 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st5 ((q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma5).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa4| exact FRM5| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU5| exact WM5| exact HP5| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_5| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND5 ltac:(do 3 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f5 L5 st5 ms5 (v5 & m5 & LB5 & RET5 & FU5 & GR5 & CST5 & FRM5 & (qy0 & Ay0 & -> & -> & -> & RNGy0 & CELLy0)).
+  destruct RET5 as (r5_0 & r5_1 & r5_2 & r5_3 & r5_4 & r5_5 & r5_6 & r5_7 & r5_8 & r5_9 & r5_10 & r5_11 & r5_12 & r5_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM5.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM5 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM5) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM5 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f5 + 5)%nat) by lia. clear FU5 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 4 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR5)| wp_wnorm; lia..]).
+  clear GRc GR5. rename GRn into GRc.
+  pose proof RNGy0 as (P0y0 & _ & _ & PCy0 & IMGy0). wp_box1 IMGy0.
+  assert (APsy0 : wp_apbox (As + 24 <= Ay0 \/ Ay0 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST5| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST5| wp_in_lit]]. }
+  assert (APhy0 : wp_apbox (Ah + 384 <= Ay0 \/ Ay0 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST5| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST5| wp_in_lit]]. }
+  pose proof CST5 as (HP & _ & (errv5 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m5) as MU. pose proof (wmono_refl usegs m5) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step. step. wp_brF. step. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw5 end.
+  assert (CSa : cstate st5 ((qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw5 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m5 mw5 _ _ tp lo B (bv_unsigned sp)); [exact CST5| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st5 ((qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw5).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST5))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST5. rename SFa into SF.
+  (* call 6: sa *)
   eapply climpl_seq.
-  { eapply (T_sa_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5))| wp_lia..]| exact CSTa5| rewrite unsigned_lit by wp_lia; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f6 L6 st6 ms6 (v6 & mb6 & LB6 & RET6 & FU6 & GR6 & CST6 & FRM6 & (q6_1 & A6_1 & -> & -> & -> & RNG_A6_1 & BC6_0)).
-  destruct RET6 as (u0_6 & u1_6 & u2_6 & b1_6 & b2_6 & b3_6 & b4_6 & b5_6 & b6_6 & b7_6 & u3_6 & u4_6 & u5_6 & u6_6 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM6 as (CFR6 & _).
-  lazymatch goal with FRh : rw_cells _ ma5 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR6 FRh ltac:(wp_lia)) as FRs6 end.
-  repeat match goal with Hb : rw_cells _ ma5 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR6 Hb IN_A1_1_5 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma5 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR6 Hb IN_A2_1_5 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma5 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR6 Hb IN_A3_1_5 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma5 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR6 Hb IN_A4_1_5 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma5 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR6 Hb IN_A5_1_5 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST6 as (HP6 & _ & (errv6 & _ & _ & ST6 & _ & _ & MI6 & _) & _).
-  rewrite unsigned_lit in ST6 by wp_lia.
-  pose proof RNG_A6_1 as (P0_A6_1 & P16_A6_1 & _ & PC_A6_1 & PIMG_A6_1). wp_box1 P16_A6_1. wp_box1 PIMG_A6_1.
-  assert (FUc6 : (f <= f6 + 6)%nat) by (clear - FU6 FUc5; lia). clear FU6.
-  change (Z.to_nat 32) with 32%nat in *.
-  assert (IN_A6_1_6 : In (q6_1, A6_1, 32) ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A5_1_6 : In (q5_1, A5_1, 40) ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A4_1_6 : In (q4_1, A4_1, 40) ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A3_1_6 : In (q3_1, A3_1, 32) ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A2_1_6 : In (q2_1, A2_1, 384) ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A1_1_6 : In (q1_1, A1_1, 24) ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST6) as [ND6 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb6) as MU6. pose proof (wmono_refl usegs mb6) as WM6.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST6 IN_A2_1_6 IN_A1_1_6 (wp_nodup_apart [(q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 4%nat 5%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND6 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s6.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST6 IN_A2_1_6 IN_A3_1_6 (wp_nodup_apart [(q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 4%nat 3%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND6 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s6.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST6 IN_A2_1_6 IN_A4_1_6 (wp_nodup_apart [(q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 4%nat 2%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND6 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s6.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST6 IN_A2_1_6 IN_A5_1_6 (wp_nodup_apart [(q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 4%nat 1%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND6 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s6.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST6 IN_A2_1_6 IN_A6_1_6 (wp_nodup_apart [(q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 4%nat 0%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND6 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s6.
-  wp_box_aps.
-  cprefix. step. wp_brF. step. wp_brF. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma6 end.
-  assert (CSTa6 : cstate st6 ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma6 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb6 ma6 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST6| exact MU6| exact WM6| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_6| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa6 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st6 ((q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma6).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa5| exact FRM6| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU6| exact WM6| exact HP6| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_6| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND6 ltac:(do 4 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply SAN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f6 L6 st6 ms6 (v6 & m6 & LB6 & RET6 & FU6 & GR6 & CST6 & FRM6 & (qa1 & Aa1 & -> & -> & -> & RNGa1 & CELLa1)).
+  destruct RET6 as (r6_0 & r6_1 & r6_2 & r6_3 & r6_4 & r6_5 & r6_6 & r6_7 & r6_8 & r6_9 & r6_10 & r6_11 & r6_12 & r6_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM6.
+  change (Z.to_nat (32)) with 32%nat in CELLa1.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM6 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM6) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM6 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f6 + 6)%nat) by lia. clear FU6 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 5 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR6)| wp_wnorm; lia..]).
+  clear GRc GR6. rename GRn into GRc.
+  pose proof RNGa1 as (P0a1 & _ & _ & PCa1 & IMGa1). wp_box1 IMGa1.
+  assert (APsa1 : wp_apbox (As + 24 <= Aa1 \/ Aa1 + 32 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST6| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST6| wp_in_lit]]. }
+  assert (APha1 : wp_apbox (Ah + 384 <= Aa1 \/ Aa1 + 32 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST6| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST6| wp_in_lit]]. }
+  pose proof CST6 as (HP & _ & (errv6 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m6) as MU. pose proof (wmono_refl usegs m6) as WM.
+  apply climpl_from_evt.
+  step. wp_brF. step. wp_brF. step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw6 end.
+  assert (CSa : cstate st6 ((qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw6 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m6 mw6 _ _ tp lo B (bv_unsigned sp)); [exact CST6| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st6 ((qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw6).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST6))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST6. rename SFa into SF.
+  (* call 7: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6))| wp_lia..]| exact CSTa6| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f7 L7 st7 ms7 (v7 & mb7 & LB7 & RET7 & FU7 & GR7 & CST7 & FRM7 & (q7_1 & A7_1 & -> & -> & -> & RNG_A7_1 & BC7_0)).
-  destruct RET7 as (u0_7 & u1_7 & u2_7 & b1_7 & b2_7 & b3_7 & b4_7 & b5_7 & b6_7 & b7_7 & u3_7 & u4_7 & u5_7 & u6_7 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM7 as (CFR7 & _).
-  lazymatch goal with FRh : rw_cells _ ma6 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR7 FRh ltac:(wp_lia)) as FRs7 end.
-  repeat match goal with Hb : rw_cells _ ma6 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR7 Hb IN_A1_1_6 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma6 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR7 Hb IN_A2_1_6 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma6 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR7 Hb IN_A3_1_6 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma6 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR7 Hb IN_A4_1_6 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma6 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR7 Hb IN_A5_1_6 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma6 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR7 Hb IN_A6_1_6 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST7 as (HP7 & _ & (errv7 & _ & _ & ST7 & _ & _ & MI7 & _) & _).
-  rewrite unsigned_lit in ST7 by wp_lia.
-  pose proof RNG_A7_1 as (P0_A7_1 & P16_A7_1 & _ & PC_A7_1 & PIMG_A7_1). wp_box1 P16_A7_1. wp_box1 PIMG_A7_1.
-  assert (FUc7 : (f <= f7 + 7)%nat) by (clear - FU7 FUc6; lia). clear FU7.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A7_1_7 : In (q7_1, A7_1, 40) ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A6_1_7 : In (q6_1, A6_1, 32) ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A5_1_7 : In (q5_1, A5_1, 40) ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A4_1_7 : In (q4_1, A4_1, 40) ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A3_1_7 : In (q3_1, A3_1, 32) ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A2_1_7 : In (q2_1, A2_1, 384) ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A1_1_7 : In (q1_1, A1_1, 24) ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST7) as [ND7 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb7) as MU7. pose proof (wmono_refl usegs mb7) as WM7.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST7 IN_A2_1_7 IN_A1_1_7 (wp_nodup_apart [(q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 5%nat 6%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND7 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s7.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST7 IN_A2_1_7 IN_A3_1_7 (wp_nodup_apart [(q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 5%nat 4%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND7 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s7.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST7 IN_A2_1_7 IN_A4_1_7 (wp_nodup_apart [(q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 5%nat 3%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND7 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s7.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST7 IN_A2_1_7 IN_A5_1_7 (wp_nodup_apart [(q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 5%nat 2%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND7 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s7.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST7 IN_A2_1_7 IN_A6_1_7 (wp_nodup_apart [(q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 5%nat 1%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND7 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s7.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST7 IN_A2_1_7 IN_A7_1_7 (wp_nodup_apart [(q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 5%nat 0%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND7 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s7.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma7 end.
-  assert (CSTa7 : cstate st7 ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma7 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb7 ma7 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST7| exact MU7| exact WM7| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_7| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa7 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st7 ((q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma7).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa6| exact FRM7| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU7| exact WM7| exact HP7| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_7| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND7 ltac:(do 5 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f7 L7 st7 ms7 (v7 & m7 & LB7 & RET7 & FU7 & GR7 & CST7 & FRM7 & (qx1 & Ax1 & -> & -> & -> & RNGx1 & CELLx1)).
+  destruct RET7 as (r7_0 & r7_1 & r7_2 & r7_3 & r7_4 & r7_5 & r7_6 & r7_7 & r7_8 & r7_9 & r7_10 & r7_11 & r7_12 & r7_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM7.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM7 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM7) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM7 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f7 + 7)%nat) by lia. clear FU7 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 6 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR7)| wp_wnorm; lia..]).
+  clear GRc GR7. rename GRn into GRc.
+  pose proof RNGx1 as (P0x1 & _ & _ & PCx1 & IMGx1). wp_box1 IMGx1.
+  assert (APsx1 : wp_apbox (As + 24 <= Ax1 \/ Ax1 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST7| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST7| wp_in_lit]]. }
+  assert (APhx1 : wp_apbox (Ah + 384 <= Ax1 \/ Ax1 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST7| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST7| wp_in_lit]]. }
+  pose proof CST7 as (HP & _ & (errv7 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m7) as MU. pose proof (wmono_refl usegs m7) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw7 end.
+  assert (CSa : cstate st7 ((qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw7 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m7 mw7 _ _ tp lo B (bv_unsigned sp)); [exact CST7| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st7 ((qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw7).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST7))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST7. rename SFa into SF.
+  (* call 8: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7))| wp_lia..]| exact CSTa7| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f8 L8 st8 ms8 (v8 & mb8 & LB8 & RET8 & FU8 & GR8 & CST8 & FRM8 & (q8_1 & A8_1 & -> & -> & -> & RNG_A8_1 & BC8_0)).
-  destruct RET8 as (u0_8 & u1_8 & u2_8 & b1_8 & b2_8 & b3_8 & b4_8 & b5_8 & b6_8 & b7_8 & u3_8 & u4_8 & u5_8 & u6_8 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM8 as (CFR8 & _).
-  lazymatch goal with FRh : rw_cells _ ma7 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR8 FRh ltac:(wp_lia)) as FRs8 end.
-  repeat match goal with Hb : rw_cells _ ma7 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR8 Hb IN_A1_1_7 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma7 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR8 Hb IN_A2_1_7 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma7 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR8 Hb IN_A3_1_7 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma7 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR8 Hb IN_A4_1_7 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma7 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR8 Hb IN_A5_1_7 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma7 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR8 Hb IN_A6_1_7 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma7 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR8 Hb IN_A7_1_7 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST8 as (HP8 & _ & (errv8 & _ & _ & ST8 & _ & _ & MI8 & _) & _).
-  rewrite unsigned_lit in ST8 by wp_lia.
-  pose proof RNG_A8_1 as (P0_A8_1 & P16_A8_1 & _ & PC_A8_1 & PIMG_A8_1). wp_box1 P16_A8_1. wp_box1 PIMG_A8_1.
-  assert (FUc8 : (f <= f8 + 8)%nat) by (clear - FU8 FUc7; lia). clear FU8.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A8_1_8 : In (q8_1, A8_1, 40) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A7_1_8 : In (q7_1, A7_1, 40) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A6_1_8 : In (q6_1, A6_1, 32) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A5_1_8 : In (q5_1, A5_1, 40) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A4_1_8 : In (q4_1, A4_1, 40) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A3_1_8 : In (q3_1, A3_1, 32) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A2_1_8 : In (q2_1, A2_1, 384) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A1_1_8 : In (q1_1, A1_1, 24) ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST8) as [ND8 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb8) as MU8. pose proof (wmono_refl usegs mb8) as WM8.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST8 IN_A2_1_8 IN_A1_1_8 (wp_nodup_apart [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 6%nat 7%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND8 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s8.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST8 IN_A2_1_8 IN_A3_1_8 (wp_nodup_apart [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 6%nat 5%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND8 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s8.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST8 IN_A2_1_8 IN_A4_1_8 (wp_nodup_apart [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 6%nat 4%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND8 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s8.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST8 IN_A2_1_8 IN_A5_1_8 (wp_nodup_apart [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 6%nat 3%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND8 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s8.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST8 IN_A2_1_8 IN_A6_1_8 (wp_nodup_apart [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 6%nat 2%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND8 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s8.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST8 IN_A2_1_8 IN_A7_1_8 (wp_nodup_apart [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 6%nat 1%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND8 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s8.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q8_1 A8_1 40 CST8 IN_A2_1_8 IN_A8_1_8 (wp_nodup_apart [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 6%nat 0%nat (q2_1, A2_1, 384) (q8_1, A8_1, 40) ND8 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A8_1_s8.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step. step. wp_brF. step. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma8 end.
-  assert (CSTa8 : cstate st8 ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma8 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb8 ma8 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST8| exact MU8| exact WM8| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_8| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa8 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st8 ((q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma8).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa7| exact FRM8| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU8| exact WM8| exact HP8| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_8| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND8 ltac:(do 6 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f8 L8 st8 ms8 (v8 & m8 & LB8 & RET8 & FU8 & GR8 & CST8 & FRM8 & (qy1 & Ay1 & -> & -> & -> & RNGy1 & CELLy1)).
+  destruct RET8 as (r8_0 & r8_1 & r8_2 & r8_3 & r8_4 & r8_5 & r8_6 & r8_7 & r8_8 & r8_9 & r8_10 & r8_11 & r8_12 & r8_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM8.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM8 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM8) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM8 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f8 + 8)%nat) by lia. clear FU8 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 7 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR8)| wp_wnorm; lia..]).
+  clear GRc GR8. rename GRn into GRc.
+  pose proof RNGy1 as (P0y1 & _ & _ & PCy1 & IMGy1). wp_box1 IMGy1.
+  assert (APsy1 : wp_apbox (As + 24 <= Ay1 \/ Ay1 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST8| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST8| wp_in_lit]]. }
+  assert (APhy1 : wp_apbox (Ah + 384 <= Ay1 \/ Ay1 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST8| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST8| wp_in_lit]]. }
+  pose proof CST8 as (HP & _ & (errv8 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m8) as MU. pose proof (wmono_refl usegs m8) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step. step. wp_brF. step. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw8 end.
+  assert (CSa : cstate st8 ((qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw8 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m8 mw8 _ _ tp lo B (bv_unsigned sp)); [exact CST8| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st8 ((qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw8).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST8))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST8. rename SFa into SF.
+  (* call 9: sa *)
   eapply climpl_seq.
-  { eapply (T_sa_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8))| wp_lia..]| exact CSTa8| rewrite unsigned_lit by wp_lia; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f9 L9 st9 ms9 (v9 & mb9 & LB9 & RET9 & FU9 & GR9 & CST9 & FRM9 & (q9_1 & A9_1 & -> & -> & -> & RNG_A9_1 & BC9_0)).
-  destruct RET9 as (u0_9 & u1_9 & u2_9 & b1_9 & b2_9 & b3_9 & b4_9 & b5_9 & b6_9 & b7_9 & u3_9 & u4_9 & u5_9 & u6_9 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM9 as (CFR9 & _).
-  lazymatch goal with FRh : rw_cells _ ma8 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR9 FRh ltac:(wp_lia)) as FRs9 end.
-  repeat match goal with Hb : rw_cells _ ma8 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR9 Hb IN_A1_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma8 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR9 Hb IN_A2_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma8 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR9 Hb IN_A3_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma8 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR9 Hb IN_A4_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma8 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR9 Hb IN_A5_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma8 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR9 Hb IN_A6_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma8 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR9 Hb IN_A7_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma8 A8_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q8_1, A8_1, 40) CFR9 Hb IN_A8_1_8 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST9 as (HP9 & _ & (errv9 & _ & _ & ST9 & _ & _ & MI9 & _) & _).
-  rewrite unsigned_lit in ST9 by wp_lia.
-  pose proof RNG_A9_1 as (P0_A9_1 & P16_A9_1 & _ & PC_A9_1 & PIMG_A9_1). wp_box1 P16_A9_1. wp_box1 PIMG_A9_1.
-  assert (FUc9 : (f <= f9 + 9)%nat) by (clear - FU9 FUc8; lia). clear FU9.
-  change (Z.to_nat 32) with 32%nat in *.
-  assert (IN_A9_1_9 : In (q9_1, A9_1, 32) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A8_1_9 : In (q8_1, A8_1, 40) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A7_1_9 : In (q7_1, A7_1, 40) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A6_1_9 : In (q6_1, A6_1, 32) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A5_1_9 : In (q5_1, A5_1, 40) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A4_1_9 : In (q4_1, A4_1, 40) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A3_1_9 : In (q3_1, A3_1, 32) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A2_1_9 : In (q2_1, A2_1, 384) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  assert (IN_A1_1_9 : In (q1_1, A1_1, 24) ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 8 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST9) as [ND9 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb9) as MU9. pose proof (wmono_refl usegs mb9) as WM9.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST9 IN_A2_1_9 IN_A1_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 8%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s9.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST9 IN_A2_1_9 IN_A3_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 6%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s9.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST9 IN_A2_1_9 IN_A4_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 5%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s9.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST9 IN_A2_1_9 IN_A5_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 4%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s9.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST9 IN_A2_1_9 IN_A6_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 3%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s9.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST9 IN_A2_1_9 IN_A7_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 2%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s9.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q8_1 A8_1 40 CST9 IN_A2_1_9 IN_A8_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 1%nat (q2_1, A2_1, 384) (q8_1, A8_1, 40) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A8_1_s9.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q9_1 A9_1 32 CST9 IN_A2_1_9 IN_A9_1_9 (wp_nodup_apart [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 7%nat 0%nat (q2_1, A2_1, 384) (q9_1, A9_1, 32) ND9 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A9_1_s9.
-  wp_box_aps.
-  cprefix. step. wp_brF. step. wp_brF. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma9 end.
-  assert (CSTa9 : cstate st9 ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma9 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb9 ma9 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST9| exact MU9| exact WM9| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_9| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa9 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st9 ((q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma9).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa8| exact FRM9| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU9| exact WM9| exact HP9| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_9| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND9 ltac:(do 7 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply SAN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f9 L9 st9 ms9 (v9 & m9 & LB9 & RET9 & FU9 & GR9 & CST9 & FRM9 & (qa2 & Aa2 & -> & -> & -> & RNGa2 & CELLa2)).
+  destruct RET9 as (r9_0 & r9_1 & r9_2 & r9_3 & r9_4 & r9_5 & r9_6 & r9_7 & r9_8 & r9_9 & r9_10 & r9_11 & r9_12 & r9_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM9.
+  change (Z.to_nat (32)) with 32%nat in CELLa2.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM9 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM9) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM9 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f9 + 9)%nat) by lia. clear FU9 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 8 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR9)| wp_wnorm; lia..]).
+  clear GRc GR9. rename GRn into GRc.
+  pose proof RNGa2 as (P0a2 & _ & _ & PCa2 & IMGa2). wp_box1 IMGa2.
+  assert (APsa2 : wp_apbox (As + 24 <= Aa2 \/ Aa2 + 32 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST9| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST9| wp_in_lit]]. }
+  assert (APha2 : wp_apbox (Ah + 384 <= Aa2 \/ Aa2 + 32 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST9| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST9| wp_in_lit]]. }
+  pose proof CST9 as (HP & _ & (errv9 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m9) as MU. pose proof (wmono_refl usegs m9) as WM.
+  apply climpl_from_evt.
+  step. wp_brF. step. wp_brF. step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw9 end.
+  assert (CSa : cstate st9 ((qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw9 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m9 mw9 _ _ tp lo B (bv_unsigned sp)); [exact CST9| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st9 ((qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw9).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST9))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST9. rename SFa into SF.
+  (* call 10: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8) GR9))| wp_lia..]| exact CSTa9| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f10 L10 st10 ms10 (v10 & mb10 & LB10 & RET10 & FU10 & GR10 & CST10 & FRM10 & (q10_1 & A10_1 & -> & -> & -> & RNG_A10_1 & BC10_0)).
-  destruct RET10 as (u0_10 & u1_10 & u2_10 & b1_10 & b2_10 & b3_10 & b4_10 & b5_10 & b6_10 & b7_10 & u3_10 & u4_10 & u5_10 & u6_10 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM10 as (CFR10 & _).
-  lazymatch goal with FRh : rw_cells _ ma9 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR10 FRh ltac:(wp_lia)) as FRs10 end.
-  repeat match goal with Hb : rw_cells _ ma9 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR10 Hb IN_A1_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR10 Hb IN_A2_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR10 Hb IN_A3_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR10 Hb IN_A4_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR10 Hb IN_A5_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR10 Hb IN_A6_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR10 Hb IN_A7_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A8_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q8_1, A8_1, 40) CFR10 Hb IN_A8_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma9 A9_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q9_1, A9_1, 32) CFR10 Hb IN_A9_1_9 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST10 as (HP10 & _ & (errv10 & _ & _ & ST10 & _ & _ & MI10 & _) & _).
-  rewrite unsigned_lit in ST10 by wp_lia.
-  pose proof RNG_A10_1 as (P0_A10_1 & P16_A10_1 & _ & PC_A10_1 & PIMG_A10_1). wp_box1 P16_A10_1. wp_box1 PIMG_A10_1.
-  assert (FUc10 : (f <= f10 + 10)%nat) by (clear - FU10 FUc9; lia). clear FU10.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A10_1_10 : In (q10_1, A10_1, 40) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A9_1_10 : In (q9_1, A9_1, 32) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A8_1_10 : In (q8_1, A8_1, 40) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A7_1_10 : In (q7_1, A7_1, 40) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A6_1_10 : In (q6_1, A6_1, 32) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A5_1_10 : In (q5_1, A5_1, 40) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A4_1_10 : In (q4_1, A4_1, 40) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A3_1_10 : In (q3_1, A3_1, 32) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  assert (IN_A2_1_10 : In (q2_1, A2_1, 384) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 8 right; left; reflexivity).
-  assert (IN_A1_1_10 : In (q1_1, A1_1, 24) ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 9 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST10) as [ND10 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb10) as MU10. pose proof (wmono_refl usegs mb10) as WM10.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST10 IN_A2_1_10 IN_A1_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 9%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST10 IN_A2_1_10 IN_A3_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 7%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST10 IN_A2_1_10 IN_A4_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 6%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST10 IN_A2_1_10 IN_A5_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 5%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST10 IN_A2_1_10 IN_A6_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 4%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST10 IN_A2_1_10 IN_A7_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 3%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q8_1 A8_1 40 CST10 IN_A2_1_10 IN_A8_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 2%nat (q2_1, A2_1, 384) (q8_1, A8_1, 40) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A8_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q9_1 A9_1 32 CST10 IN_A2_1_10 IN_A9_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 1%nat (q2_1, A2_1, 384) (q9_1, A9_1, 32) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A9_1_s10.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q10_1 A10_1 40 CST10 IN_A2_1_10 IN_A10_1_10 (wp_nodup_apart [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 8%nat 0%nat (q2_1, A2_1, 384) (q10_1, A10_1, 40) ND10 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A10_1_s10.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma10 end.
-  assert (CSTa10 : cstate st10 ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma10 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb10 ma10 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST10| exact MU10| exact WM10| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_10| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa10 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st10 ((q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma10).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa9| exact FRM10| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU10| exact WM10| exact HP10| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_10| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND10 ltac:(do 8 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f10 L10 st10 ms10 (v10 & m10 & LB10 & RET10 & FU10 & GR10 & CST10 & FRM10 & (qx2 & Ax2 & -> & -> & -> & RNGx2 & CELLx2)).
+  destruct RET10 as (r10_0 & r10_1 & r10_2 & r10_3 & r10_4 & r10_5 & r10_6 & r10_7 & r10_8 & r10_9 & r10_10 & r10_11 & r10_12 & r10_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM10.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM10 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM10) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM10 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f10 + 10)%nat) by lia. clear FU10 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 9 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR10)| wp_wnorm; lia..]).
+  clear GRc GR10. rename GRn into GRc.
+  pose proof RNGx2 as (P0x2 & _ & _ & PCx2 & IMGx2). wp_box1 IMGx2.
+  assert (APsx2 : wp_apbox (As + 24 <= Ax2 \/ Ax2 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST10| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST10| wp_in_lit]]. }
+  assert (APhx2 : wp_apbox (Ah + 384 <= Ax2 \/ Ax2 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST10| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST10| wp_in_lit]]. }
+  pose proof CST10 as (HP & _ & (errv10 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m10) as MU. pose proof (wmono_refl usegs m10) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw10 end.
+  assert (CSa : cstate st10 ((qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw10 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m10 mw10 _ _ tp lo B (bv_unsigned sp)); [exact CST10| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st10 ((qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw10).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qx2, Ax2, 40); (qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST10))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST10. rename SFa into SF.
+  (* call 11: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8) GR9) GR10))| wp_lia..]| exact CSTa10| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f11 L11 st11 ms11 (v11 & mb11 & LB11 & RET11 & FU11 & GR11 & CST11 & FRM11 & (q11_1 & A11_1 & -> & -> & -> & RNG_A11_1 & BC11_0)).
-  destruct RET11 as (u0_11 & u1_11 & u2_11 & b1_11 & b2_11 & b3_11 & b4_11 & b5_11 & b6_11 & b7_11 & u3_11 & u4_11 & u5_11 & u6_11 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM11 as (CFR11 & _).
-  lazymatch goal with FRh : rw_cells _ ma10 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR11 FRh ltac:(wp_lia)) as FRs11 end.
-  repeat match goal with Hb : rw_cells _ ma10 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR11 Hb IN_A1_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR11 Hb IN_A2_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR11 Hb IN_A3_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR11 Hb IN_A4_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR11 Hb IN_A5_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR11 Hb IN_A6_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR11 Hb IN_A7_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A8_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q8_1, A8_1, 40) CFR11 Hb IN_A8_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A9_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q9_1, A9_1, 32) CFR11 Hb IN_A9_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma10 A10_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q10_1, A10_1, 40) CFR11 Hb IN_A10_1_10 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST11 as (HP11 & _ & (errv11 & _ & _ & ST11 & _ & _ & MI11 & _) & _).
-  rewrite unsigned_lit in ST11 by wp_lia.
-  pose proof RNG_A11_1 as (P0_A11_1 & P16_A11_1 & _ & PC_A11_1 & PIMG_A11_1). wp_box1 P16_A11_1. wp_box1 PIMG_A11_1.
-  assert (FUc11 : (f <= f11 + 11)%nat) by (clear - FU11 FUc10; lia). clear FU11.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A11_1_11 : In (q11_1, A11_1, 40) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A10_1_11 : In (q10_1, A10_1, 40) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A9_1_11 : In (q9_1, A9_1, 32) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A8_1_11 : In (q8_1, A8_1, 40) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A7_1_11 : In (q7_1, A7_1, 40) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A6_1_11 : In (q6_1, A6_1, 32) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A5_1_11 : In (q5_1, A5_1, 40) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A4_1_11 : In (q4_1, A4_1, 40) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  assert (IN_A3_1_11 : In (q3_1, A3_1, 32) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 8 right; left; reflexivity).
-  assert (IN_A2_1_11 : In (q2_1, A2_1, 384) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 9 right; left; reflexivity).
-  assert (IN_A1_1_11 : In (q1_1, A1_1, 24) ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 10 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST11) as [ND11 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb11) as MU11. pose proof (wmono_refl usegs mb11) as WM11.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST11 IN_A2_1_11 IN_A1_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 10%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST11 IN_A2_1_11 IN_A3_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 8%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST11 IN_A2_1_11 IN_A4_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 7%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST11 IN_A2_1_11 IN_A5_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 6%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST11 IN_A2_1_11 IN_A6_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 5%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST11 IN_A2_1_11 IN_A7_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 4%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q8_1 A8_1 40 CST11 IN_A2_1_11 IN_A8_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 3%nat (q2_1, A2_1, 384) (q8_1, A8_1, 40) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A8_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q9_1 A9_1 32 CST11 IN_A2_1_11 IN_A9_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 2%nat (q2_1, A2_1, 384) (q9_1, A9_1, 32) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A9_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q10_1 A10_1 40 CST11 IN_A2_1_11 IN_A10_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 1%nat (q2_1, A2_1, 384) (q10_1, A10_1, 40) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A10_1_s11.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q11_1 A11_1 40 CST11 IN_A2_1_11 IN_A11_1_11 (wp_nodup_apart [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 9%nat 0%nat (q2_1, A2_1, 384) (q11_1, A11_1, 40) ND11 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A11_1_s11.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step. step. wp_brF. step. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma11 end.
-  assert (CSTa11 : cstate st11 ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma11 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb11 ma11 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST11| exact MU11| exact WM11| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_11| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa11 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st11 ((q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma11).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa10| exact FRM11| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU11| exact WM11| exact HP11| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_11| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND11 ltac:(do 9 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f11 L11 st11 ms11 (v11 & m11 & LB11 & RET11 & FU11 & GR11 & CST11 & FRM11 & (qy2 & Ay2 & -> & -> & -> & RNGy2 & CELLy2)).
+  destruct RET11 as (r11_0 & r11_1 & r11_2 & r11_3 & r11_4 & r11_5 & r11_6 & r11_7 & r11_8 & r11_9 & r11_10 & r11_11 & r11_12 & r11_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM11.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM11 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM11) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM11 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f11 + 11)%nat) by lia. clear FU11 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 10 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR11)| wp_wnorm; lia..]).
+  clear GRc GR11. rename GRn into GRc.
+  pose proof RNGy2 as (P0y2 & _ & _ & PCy2 & IMGy2). wp_box1 IMGy2.
+  assert (APsy2 : wp_apbox (As + 24 <= Ay2 \/ Ay2 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST11| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST11| wp_in_lit]]. }
+  assert (APhy2 : wp_apbox (Ah + 384 <= Ay2 \/ Ay2 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST11| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST11| wp_in_lit]]. }
+  pose proof CST11 as (HP & _ & (errv11 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m11) as MU. pose proof (wmono_refl usegs m11) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step. step. wp_brF. step. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw11 end.
+  assert (CSa : cstate st11 ((qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw11 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m11 mw11 _ _ tp lo B (bv_unsigned sp)); [exact CST11| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st11 ((qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw11).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qy2, Ay2, 40); (qx2, Ax2, 40); (qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST11))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST11. rename SFa into SF.
+  (* call 12: sa *)
   eapply climpl_seq.
-  { eapply (T_sa_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8) GR9) GR10) GR11))| wp_lia..]| exact CSTa11| rewrite unsigned_lit by wp_lia; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f12 L12 st12 ms12 (v12 & mb12 & LB12 & RET12 & FU12 & GR12 & CST12 & FRM12 & (q12_1 & A12_1 & -> & -> & -> & RNG_A12_1 & BC12_0)).
-  destruct RET12 as (u0_12 & u1_12 & u2_12 & b1_12 & b2_12 & b3_12 & b4_12 & b5_12 & b6_12 & b7_12 & u3_12 & u4_12 & u5_12 & u6_12 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM12 as (CFR12 & _).
-  lazymatch goal with FRh : rw_cells _ ma11 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR12 FRh ltac:(wp_lia)) as FRs12 end.
-  repeat match goal with Hb : rw_cells _ ma11 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR12 Hb IN_A1_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR12 Hb IN_A2_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR12 Hb IN_A3_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR12 Hb IN_A4_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR12 Hb IN_A5_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR12 Hb IN_A6_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR12 Hb IN_A7_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A8_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q8_1, A8_1, 40) CFR12 Hb IN_A8_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A9_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q9_1, A9_1, 32) CFR12 Hb IN_A9_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A10_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q10_1, A10_1, 40) CFR12 Hb IN_A10_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma11 A11_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q11_1, A11_1, 40) CFR12 Hb IN_A11_1_11 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST12 as (HP12 & _ & (errv12 & _ & _ & ST12 & _ & _ & MI12 & _) & _).
-  rewrite unsigned_lit in ST12 by wp_lia.
-  pose proof RNG_A12_1 as (P0_A12_1 & P16_A12_1 & _ & PC_A12_1 & PIMG_A12_1). wp_box1 P16_A12_1. wp_box1 PIMG_A12_1.
-  assert (FUc12 : (f <= f12 + 12)%nat) by (clear - FU12 FUc11; lia). clear FU12.
-  change (Z.to_nat 32) with 32%nat in *.
-  assert (IN_A12_1_12 : In (q12_1, A12_1, 32) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A11_1_12 : In (q11_1, A11_1, 40) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A10_1_12 : In (q10_1, A10_1, 40) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A9_1_12 : In (q9_1, A9_1, 32) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A8_1_12 : In (q8_1, A8_1, 40) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A7_1_12 : In (q7_1, A7_1, 40) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A6_1_12 : In (q6_1, A6_1, 32) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A5_1_12 : In (q5_1, A5_1, 40) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  assert (IN_A4_1_12 : In (q4_1, A4_1, 40) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 8 right; left; reflexivity).
-  assert (IN_A3_1_12 : In (q3_1, A3_1, 32) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 9 right; left; reflexivity).
-  assert (IN_A2_1_12 : In (q2_1, A2_1, 384) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 10 right; left; reflexivity).
-  assert (IN_A1_1_12 : In (q1_1, A1_1, 24) ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 11 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST12) as [ND12 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb12) as MU12. pose proof (wmono_refl usegs mb12) as WM12.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST12 IN_A2_1_12 IN_A1_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 11%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST12 IN_A2_1_12 IN_A3_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 9%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST12 IN_A2_1_12 IN_A4_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 8%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST12 IN_A2_1_12 IN_A5_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 7%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST12 IN_A2_1_12 IN_A6_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 6%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST12 IN_A2_1_12 IN_A7_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 5%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q8_1 A8_1 40 CST12 IN_A2_1_12 IN_A8_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 4%nat (q2_1, A2_1, 384) (q8_1, A8_1, 40) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A8_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q9_1 A9_1 32 CST12 IN_A2_1_12 IN_A9_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 3%nat (q2_1, A2_1, 384) (q9_1, A9_1, 32) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A9_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q10_1 A10_1 40 CST12 IN_A2_1_12 IN_A10_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 2%nat (q2_1, A2_1, 384) (q10_1, A10_1, 40) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A10_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q11_1 A11_1 40 CST12 IN_A2_1_12 IN_A11_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 1%nat (q2_1, A2_1, 384) (q11_1, A11_1, 40) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A11_1_s12.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q12_1 A12_1 32 CST12 IN_A2_1_12 IN_A12_1_12 (wp_nodup_apart [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 10%nat 0%nat (q2_1, A2_1, 384) (q12_1, A12_1, 32) ND12 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A12_1_s12.
-  wp_box_aps.
-  cprefix. step. wp_brF. step. wp_brF. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma12 end.
-  assert (CSTa12 : cstate st12 ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma12 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb12 ma12 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST12| exact MU12| exact WM12| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_12| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa12 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st12 ((q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma12).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa11| exact FRM12| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU12| exact WM12| exact HP12| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_12| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND12 ltac:(do 10 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply SAN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold SA_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f12 L12 st12 ms12 (v12 & m12 & LB12 & RET12 & FU12 & GR12 & CST12 & FRM12 & (qa3 & Aa3 & -> & -> & -> & RNGa3 & CELLa3)).
+  destruct RET12 as (r12_0 & r12_1 & r12_2 & r12_3 & r12_4 & r12_5 & r12_6 & r12_7 & r12_8 & r12_9 & r12_10 & r12_11 & r12_12 & r12_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM12.
+  change (Z.to_nat (32)) with 32%nat in CELLa3.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM12 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM12) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM12 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f12 + 12)%nat) by lia. clear FU12 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 11 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR12)| wp_wnorm; lia..]).
+  clear GRc GR12. rename GRn into GRc.
+  pose proof RNGa3 as (P0a3 & _ & _ & PCa3 & IMGa3). wp_box1 IMGa3.
+  assert (APsa3 : wp_apbox (As + 24 <= Aa3 \/ Aa3 + 32 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST12| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST12| wp_in_lit]]. }
+  assert (APha3 : wp_apbox (Ah + 384 <= Aa3 \/ Aa3 + 32 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST12| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST12| wp_in_lit]]. }
+  pose proof CST12 as (HP & _ & (errv12 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m12) as MU. pose proof (wmono_refl usegs m12) as WM.
+  apply climpl_from_evt.
+  step. wp_brF. step. wp_brF. step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw12 end.
+  assert (CSa : cstate st12 ((qa3, Aa3, 32) :: (qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw12 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m12 mw12 _ _ tp lo B (bv_unsigned sp)); [exact CST12| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st12 ((qa3, Aa3, 32) :: (qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw12).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qa3, Aa3, 32); (qy2, Ay2, 40); (qx2, Ax2, 40); (qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST12))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST12. rename SFa into SF.
+  (* call 13: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8) GR9) GR10) GR11) GR12))| wp_lia..]| exact CSTa12| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f13 L13 st13 ms13 (v13 & mb13 & LB13 & RET13 & FU13 & GR13 & CST13 & FRM13 & (q13_1 & A13_1 & -> & -> & -> & RNG_A13_1 & BC13_0)).
-  destruct RET13 as (u0_13 & u1_13 & u2_13 & b1_13 & b2_13 & b3_13 & b4_13 & b5_13 & b6_13 & b7_13 & u3_13 & u4_13 & u5_13 & u6_13 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM13 as (CFR13 & _).
-  lazymatch goal with FRh : rw_cells _ ma12 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR13 FRh ltac:(wp_lia)) as FRs13 end.
-  repeat match goal with Hb : rw_cells _ ma12 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR13 Hb IN_A1_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR13 Hb IN_A2_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR13 Hb IN_A3_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR13 Hb IN_A4_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR13 Hb IN_A5_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR13 Hb IN_A6_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR13 Hb IN_A7_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A8_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q8_1, A8_1, 40) CFR13 Hb IN_A8_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A9_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q9_1, A9_1, 32) CFR13 Hb IN_A9_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A10_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q10_1, A10_1, 40) CFR13 Hb IN_A10_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A11_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q11_1, A11_1, 40) CFR13 Hb IN_A11_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma12 A12_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q12_1, A12_1, 32) CFR13 Hb IN_A12_1_12 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST13 as (HP13 & _ & (errv13 & _ & _ & ST13 & _ & _ & MI13 & _) & _).
-  rewrite unsigned_lit in ST13 by wp_lia.
-  pose proof RNG_A13_1 as (P0_A13_1 & P16_A13_1 & _ & PC_A13_1 & PIMG_A13_1). wp_box1 P16_A13_1. wp_box1 PIMG_A13_1.
-  assert (FUc13 : (f <= f13 + 13)%nat) by (clear - FU13 FUc12; lia). clear FU13.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A13_1_13 : In (q13_1, A13_1, 40) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A12_1_13 : In (q12_1, A12_1, 32) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A11_1_13 : In (q11_1, A11_1, 40) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A10_1_13 : In (q10_1, A10_1, 40) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A9_1_13 : In (q9_1, A9_1, 32) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A8_1_13 : In (q8_1, A8_1, 40) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A7_1_13 : In (q7_1, A7_1, 40) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A6_1_13 : In (q6_1, A6_1, 32) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  assert (IN_A5_1_13 : In (q5_1, A5_1, 40) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 8 right; left; reflexivity).
-  assert (IN_A4_1_13 : In (q4_1, A4_1, 40) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 9 right; left; reflexivity).
-  assert (IN_A3_1_13 : In (q3_1, A3_1, 32) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 10 right; left; reflexivity).
-  assert (IN_A2_1_13 : In (q2_1, A2_1, 384) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 11 right; left; reflexivity).
-  assert (IN_A1_1_13 : In (q1_1, A1_1, 24) ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 12 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST13) as [ND13 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384)]%Z mb13) as MU13. pose proof (wmono_refl usegs mb13) as WM13.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST13 IN_A2_1_13 IN_A1_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 12%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST13 IN_A2_1_13 IN_A3_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 10%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST13 IN_A2_1_13 IN_A4_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 9%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST13 IN_A2_1_13 IN_A5_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 8%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST13 IN_A2_1_13 IN_A6_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 7%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST13 IN_A2_1_13 IN_A7_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 6%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q8_1 A8_1 40 CST13 IN_A2_1_13 IN_A8_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 5%nat (q2_1, A2_1, 384) (q8_1, A8_1, 40) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A8_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q9_1 A9_1 32 CST13 IN_A2_1_13 IN_A9_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 4%nat (q2_1, A2_1, 384) (q9_1, A9_1, 32) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A9_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q10_1 A10_1 40 CST13 IN_A2_1_13 IN_A10_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 3%nat (q2_1, A2_1, 384) (q10_1, A10_1, 40) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A10_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q11_1 A11_1 40 CST13 IN_A2_1_13 IN_A11_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 2%nat (q2_1, A2_1, 384) (q11_1, A11_1, 40) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A11_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q12_1 A12_1 32 CST13 IN_A2_1_13 IN_A12_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 1%nat (q2_1, A2_1, 384) (q12_1, A12_1, 32) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A12_1_s13.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q13_1 A13_1 40 CST13 IN_A2_1_13 IN_A13_1_13 (wp_nodup_apart [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 11%nat 0%nat (q2_1, A2_1, 384) (q13_1, A13_1, 40) ND13 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A13_1_s13.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma13 end.
-  assert (CSTa13 : cstate st13 ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q13_1, 40) :: (q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma13 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb13 ma13 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST13| exact MU13| exact WM13| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_13| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa13 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st13 ((q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q13_1, 40) :: (q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma13).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa12| exact FRM13| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU13| exact WM13| exact HP13| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_13| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND13 ltac:(do 11 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f13 L13 st13 ms13 (v13 & m13 & LB13 & RET13 & FU13 & GR13 & CST13 & FRM13 & (qx3 & Ax3 & -> & -> & -> & RNGx3 & CELLx3)).
+  destruct RET13 as (r13_0 & r13_1 & r13_2 & r13_3 & r13_4 & r13_5 & r13_6 & r13_7 & r13_8 & r13_9 & r13_10 & r13_11 & r13_12 & r13_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM13.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM13 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM13) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM13 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f13 + 13)%nat) by lia. clear FU13 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qx3, 40) :: (qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 12 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR13)| wp_wnorm; lia..]).
+  clear GRc GR13. rename GRn into GRc.
+  pose proof RNGx3 as (P0x3 & _ & _ & PCx3 & IMGx3). wp_box1 IMGx3.
+  assert (APsx3 : wp_apbox (As + 24 <= Ax3 \/ Ax3 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST13| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST13| wp_in_lit]]. }
+  assert (APhx3 : wp_apbox (Ah + 384 <= Ax3 \/ Ax3 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST13| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST13| wp_in_lit]]. }
+  pose proof CST13 as (HP & _ & (errv13 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384)] m13) as MU. pose proof (wmono_refl usegs m13) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw13 end.
+  assert (CSa : cstate st13 ((qx3, Ax3, 40) :: (qa3, Aa3, 32) :: (qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qx3, 40) :: (qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw13 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m13 mw13 _ _ tp lo B (bv_unsigned sp)); [exact CST13| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st13 ((qx3, Ax3, 40) :: (qa3, Aa3, 32) :: (qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qx3, 40) :: (qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw13).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qx3, Ax3, 40); (qa3, Aa3, 32); (qy2, Ay2, 40); (qx2, Ax2, 40); (qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST13))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST13. rename SFa into SF.
+  (* call 14: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8) GR9) GR10) GR11) GR12) GR13))| wp_lia..]| exact CSTa13| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f14 L14 st14 ms14 (v14 & mb14 & LB14 & RET14 & FU14 & GR14 & CST14 & FRM14 & (q14_1 & A14_1 & -> & -> & -> & RNG_A14_1 & BC14_0)).
-  destruct RET14 as (u0_14 & u1_14 & u2_14 & b1_14 & b2_14 & b3_14 & b4_14 & b5_14 & b6_14 & b7_14 & u3_14 & u4_14 & u5_14 & u6_14 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM14 as (CFR14 & _).
-  lazymatch goal with FRh : rw_cells _ ma13 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR14 FRh ltac:(wp_lia)) as FRs14 end.
-  repeat match goal with Hb : rw_cells _ ma13 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR14 Hb IN_A1_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR14 Hb IN_A2_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR14 Hb IN_A3_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR14 Hb IN_A4_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR14 Hb IN_A5_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR14 Hb IN_A6_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR14 Hb IN_A7_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A8_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q8_1, A8_1, 40) CFR14 Hb IN_A8_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A9_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q9_1, A9_1, 32) CFR14 Hb IN_A9_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A10_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q10_1, A10_1, 40) CFR14 Hb IN_A10_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A11_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q11_1, A11_1, 40) CFR14 Hb IN_A11_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A12_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q12_1, A12_1, 32) CFR14 Hb IN_A12_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma13 A13_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q13_1, A13_1, 40) CFR14 Hb IN_A13_1_13 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST14 as (HP14 & _ & (errv14 & _ & _ & ST14 & _ & _ & MI14 & _) & _).
-  rewrite unsigned_lit in ST14 by wp_lia.
-  pose proof RNG_A14_1 as (P0_A14_1 & P16_A14_1 & _ & PC_A14_1 & PIMG_A14_1). wp_box1 P16_A14_1. wp_box1 PIMG_A14_1.
-  assert (FUc14 : (f <= f14 + 14)%nat) by (clear - FU14 FUc13; lia). clear FU14.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A14_1_14 : In (q14_1, A14_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A13_1_14 : In (q13_1, A13_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A12_1_14 : In (q12_1, A12_1, 32) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A11_1_14 : In (q11_1, A11_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A10_1_14 : In (q10_1, A10_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A9_1_14 : In (q9_1, A9_1, 32) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A8_1_14 : In (q8_1, A8_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A7_1_14 : In (q7_1, A7_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  assert (IN_A6_1_14 : In (q6_1, A6_1, 32) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 8 right; left; reflexivity).
-  assert (IN_A5_1_14 : In (q5_1, A5_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 9 right; left; reflexivity).
-  assert (IN_A4_1_14 : In (q4_1, A4_1, 40) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 10 right; left; reflexivity).
-  assert (IN_A3_1_14 : In (q3_1, A3_1, 32) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 11 right; left; reflexivity).
-  assert (IN_A2_1_14 : In (q2_1, A2_1, 384) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 12 right; left; reflexivity).
-  assert (IN_A1_1_14 : In (q1_1, A1_1, 24) ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 13 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST14) as [ND14 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A2_1, A2_1 + 384); (A1_1, A1_1 + 24)]%Z mb14) as MU14. pose proof (wmono_refl usegs mb14) as WM14.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q1_1 A1_1 24 CST14 IN_A2_1_14 IN_A1_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 13%nat (q2_1, A2_1, 384) (q1_1, A1_1, 24) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A1_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q3_1 A3_1 32 CST14 IN_A2_1_14 IN_A3_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 11%nat (q2_1, A2_1, 384) (q3_1, A3_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A3_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q4_1 A4_1 40 CST14 IN_A2_1_14 IN_A4_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 10%nat (q2_1, A2_1, 384) (q4_1, A4_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A4_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q5_1 A5_1 40 CST14 IN_A2_1_14 IN_A5_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 9%nat (q2_1, A2_1, 384) (q5_1, A5_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A5_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q6_1 A6_1 32 CST14 IN_A2_1_14 IN_A6_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 8%nat (q2_1, A2_1, 384) (q6_1, A6_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A6_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q7_1 A7_1 40 CST14 IN_A2_1_14 IN_A7_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 7%nat (q2_1, A2_1, 384) (q7_1, A7_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A7_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q8_1 A8_1 40 CST14 IN_A2_1_14 IN_A8_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 6%nat (q2_1, A2_1, 384) (q8_1, A8_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A8_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q9_1 A9_1 32 CST14 IN_A2_1_14 IN_A9_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 5%nat (q2_1, A2_1, 384) (q9_1, A9_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A9_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q10_1 A10_1 40 CST14 IN_A2_1_14 IN_A10_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 4%nat (q2_1, A2_1, 384) (q10_1, A10_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A10_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q11_1 A11_1 40 CST14 IN_A2_1_14 IN_A11_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 3%nat (q2_1, A2_1, 384) (q11_1, A11_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A11_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q12_1 A12_1 32 CST14 IN_A2_1_14 IN_A12_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 2%nat (q2_1, A2_1, 384) (q12_1, A12_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A12_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q13_1 A13_1 40 CST14 IN_A2_1_14 IN_A13_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 1%nat (q2_1, A2_1, 384) (q13_1, A13_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A13_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q2_1 A2_1 384 q14_1 A14_1 40 CST14 IN_A2_1_14 IN_A14_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 12%nat 0%nat (q2_1, A2_1, 384) (q14_1, A14_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A2_1_A14_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q2_1 A2_1 384 CST14 IN_A1_1_14 IN_A2_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 12%nat (q1_1, A1_1, 24) (q2_1, A2_1, 384) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A2_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q3_1 A3_1 32 CST14 IN_A1_1_14 IN_A3_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 11%nat (q1_1, A1_1, 24) (q3_1, A3_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A3_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q4_1 A4_1 40 CST14 IN_A1_1_14 IN_A4_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 10%nat (q1_1, A1_1, 24) (q4_1, A4_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A4_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q5_1 A5_1 40 CST14 IN_A1_1_14 IN_A5_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 9%nat (q1_1, A1_1, 24) (q5_1, A5_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A5_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q6_1 A6_1 32 CST14 IN_A1_1_14 IN_A6_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 8%nat (q1_1, A1_1, 24) (q6_1, A6_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A6_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q7_1 A7_1 40 CST14 IN_A1_1_14 IN_A7_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 7%nat (q1_1, A1_1, 24) (q7_1, A7_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A7_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q8_1 A8_1 40 CST14 IN_A1_1_14 IN_A8_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 6%nat (q1_1, A1_1, 24) (q8_1, A8_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A8_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q9_1 A9_1 32 CST14 IN_A1_1_14 IN_A9_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 5%nat (q1_1, A1_1, 24) (q9_1, A9_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A9_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q10_1 A10_1 40 CST14 IN_A1_1_14 IN_A10_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 4%nat (q1_1, A1_1, 24) (q10_1, A10_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A10_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q11_1 A11_1 40 CST14 IN_A1_1_14 IN_A11_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 3%nat (q1_1, A1_1, 24) (q11_1, A11_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A11_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q12_1 A12_1 32 CST14 IN_A1_1_14 IN_A12_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 2%nat (q1_1, A1_1, 24) (q12_1, A12_1, 32) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A12_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q13_1 A13_1 40 CST14 IN_A1_1_14 IN_A13_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 1%nat (q1_1, A1_1, 24) (q13_1, A13_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A13_1_s14.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q14_1 A14_1 40 CST14 IN_A1_1_14 IN_A14_1_14 (wp_nodup_apart [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 13%nat 0%nat (q1_1, A1_1, 24) (q14_1, A14_1, 40) ND14 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A14_1_s14.
-  wp_box_aps.
-  cprefix. step. ths. step. wp_brF. step. step. wp_brT. ths. step. wp_brF. step.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into ma14 end.
-  assert (CSTa14 : cstate st14 ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q14_1, 40) :: (q13_1, 40) :: (q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma14 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb14 ma14 _ (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B (bv_unsigned sp)); [exact CST14| exact MU14| exact WM14| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_14| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q1_1, A1_1, 24)); [exact IN_A1_1_14| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - rewrite unsigned_lit by wp_lia. wp_lia. }
-  assert (FRa14 : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st14 ((q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q14_1, 40) :: (q13_1, 40) :: (q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) ma14).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa13| exact FRM14| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU14| exact WM14| exact HP14| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q2_1, A2_1, 384)); [exact IN_A2_1_14| exact (t_fresh_notin (fun _ => False) LBall (q2_1, A2_1, 384) (t_nodup_prefix blk_id [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q2_1, A2_1, 384) ND14 ltac:(do 12 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q1_1, A1_1, 24)); [exact IN_A1_1_14| exact (t_fresh_notin (fun _ => False) LBall (q1_1, A1_1, 24) (t_nodup_prefix blk_id [(q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q1_1, A1_1, 24) ND14 ltac:(do 13 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]]. }
-  (* [comment removed for export] *)
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f14 L14 st14 ms14 (v14 & m14 & LB14 & RET14 & FU14 & GR14 & CST14 & FRM14 & (qy3 & Ay3 & -> & -> & -> & RNGy3 & CELLy3)).
+  destruct RET14 as (r14_0 & r14_1 & r14_2 & r14_3 & r14_4 & r14_5 & r14_6 & r14_7 & r14_8 & r14_9 & r14_10 & r14_11 & r14_12 & r14_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM14.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM14 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM14) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM14 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f14 + 14)%nat) by lia. clear FU14 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qy3, 40) :: (qx3, 40) :: (qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 13 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR14)| wp_wnorm; lia..]).
+  clear GRc GR14. rename GRn into GRc.
+  pose proof RNGy3 as (P0y3 & _ & _ & PCy3 & IMGy3). wp_box1 IMGy3.
+  assert (APsy3 : wp_apbox (As + 24 <= Ay3 \/ Ay3 + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST14| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST14| wp_in_lit]]. }
+  assert (APhy3 : wp_apbox (Ah + 384 <= Ay3 \/ Ay3 + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST14| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST14| wp_in_lit]]. }
+  pose proof CST14 as (HP & _ & (errv14 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(Ah, Ah + 384); (As, As + 24)] m14) as MU. pose proof (wmono_refl usegs m14) as WM.
+  apply climpl_from_evt.
+  step. step. step. wp_brF. step. step. wp_brT. step. step. wp_brF. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mw14 end.
+  assert (CSa : cstate st14 ((qy3, Ay3, 40) :: (qx3, Ax3, 40) :: (qa3, Aa3, 32) :: (qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) LB ((qy3, 40) :: (qx3, 40) :: (qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw14 (Z_to_bv 64 (bv_unsigned sp + -80)) tp lo B).
+  { eapply (cstate_seg _ _ _ _ _ m14 mw14 _ _ tp lo B (bv_unsigned sp)); [exact CST14| exact MU| exact WM| exact MI| | lia| lia| | rewrite SPfU; exact ST| rewrite SPfU; lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_cons; [eapply cwin_block with (b := (qs, As, 24)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil]].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGh, IMGs. repeat split; lia. }
+  assert (SFa : cframe (fun _ : bptr => False) [] (bv_unsigned sp) st LBall L m st14 ((qy3, Ay3, 40) :: (qx3, Ax3, 40) :: (qa3, Aa3, 32) :: (qy2, Ay2, 40) :: (qx2, Ax2, 40) :: (qa2, Aa2, 32) :: (qy1, Ay1, 40) :: (qx1, Ax1, 40) :: (qa1, Aa1, 32) :: (qy0, Ay0, 40) :: (qx0, Ax0, 40) :: (qa0, Aa0, 32) :: (qh, Ah, 4 * 96) :: (qs, As, 24) :: LBall) ((qy3, 40) :: (qx3, 40) :: (qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) mw14).
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qh, Ah, 4 * 96)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qy3, Ay3, 40); (qx3, Ax3, 40); (qa3, Aa3, 32); (qy2, Ay2, 40); (qx2, Ax2, 40); (qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qh, Ah, 4 * 96)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST14))| wp_in_lit]. }
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qs, As, 24)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qy3, Ay3, 40); (qx3, Ax3, 40); (qa3, Aa3, 32); (qy2, Ay2, 40); (qx2, Ax2, 40); (qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qs, As, 24)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST14))| wp_in_lit]. }
+    apply Forall_nil. }
+  clear SF MU WM CST14. rename SFa into SF.
+  (* call 15: lock *)
   eapply climpl_seq.
-  { eapply (T_lock_new_spec HB_crypto_zalloc_stmt); [wp_lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8) GR9) GR10) GR11) GR12) GR13) GR14))| wp_lia..]| exact CSTa14| rewrite unsigned_lit by wp_lia; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; wp_lia]. }
-  intros f15 L15 st15 ms15 (v15 & mb15 & LB15 & RET15 & FU15 & GR15 & CST15 & FRM15 & (q15_1 & A15_1 & -> & -> & -> & RNG_A15_1 & BC15_0)).
-  destruct RET15 as (u0_15 & u1_15 & u2_15 & b1_15 & b2_15 & b3_15 & b4_15 & b5_15 & b6_15 & b7_15 & u3_15 & u4_15 & u5_15 & u6_15 & ->).
-  cret_lit. rewrite unsigned_lit in * by wp_lia.
-  pose proof FRM15 as (CFR15 & _).
-  lazymatch goal with FRh : rw_cells _ ma14 (bv_unsigned sp + -80) _ |- _ => pose proof (cfr_cells_stack _ _ _ _ _ _ _ _ CFR15 FRh ltac:(wp_lia)) as FRs15 end.
-  repeat match goal with Hb : rw_cells _ ma14 A1_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q1_1, A1_1, 24) CFR15 Hb IN_A1_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A2_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q2_1, A2_1, 384) CFR15 Hb IN_A2_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A3_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q3_1, A3_1, 32) CFR15 Hb IN_A3_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A4_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q4_1, A4_1, 40) CFR15 Hb IN_A4_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A5_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q5_1, A5_1, 40) CFR15 Hb IN_A5_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A6_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q6_1, A6_1, 32) CFR15 Hb IN_A6_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A7_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q7_1, A7_1, 40) CFR15 Hb IN_A7_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A8_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q8_1, A8_1, 40) CFR15 Hb IN_A8_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A9_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q9_1, A9_1, 32) CFR15 Hb IN_A9_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A10_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q10_1, A10_1, 40) CFR15 Hb IN_A10_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A11_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q11_1, A11_1, 40) CFR15 Hb IN_A11_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A12_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q12_1, A12_1, 32) CFR15 Hb IN_A12_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A13_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q13_1, A13_1, 40) CFR15 Hb IN_A13_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  repeat match goal with Hb : rw_cells _ ma14 A14_1 _ |- _ => let Hn := fresh "BK" in pose proof (cfr_cells_block _ _ _ _ _ _ _ _ (q14_1, A14_1, 40) CFR15 Hb IN_A14_1_14 ltac:(intros X; exact X) ltac:(unfold blk_addr; cbn [fst snd]; wp_lia) ltac:(unfold blk_addr, blk_size; cbn [fst snd cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; wp_lia)) as Hn; clear Hb end.
-  pose proof CST15 as (HP15 & _ & (errv15 & _ & _ & ST15 & _ & _ & MI15 & _) & _).
-  rewrite unsigned_lit in ST15 by wp_lia.
-  pose proof RNG_A15_1 as (P0_A15_1 & P16_A15_1 & _ & PC_A15_1 & PIMG_A15_1). wp_box1 P16_A15_1. wp_box1 PIMG_A15_1.
-  assert (FUc15 : (f <= f15 + 15)%nat) by (clear - FU15 FUc14; lia). clear FU15.
-  unfold mutex_cells in *.
-  change (Z.to_nat 40) with 40%nat in *.
-  assert (IN_A15_1_15 : In (q15_1, A15_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (left; reflexivity).
-  assert (IN_A14_1_15 : In (q14_1, A14_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 1 right; left; reflexivity).
-  assert (IN_A13_1_15 : In (q13_1, A13_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 2 right; left; reflexivity).
-  assert (IN_A12_1_15 : In (q12_1, A12_1, 32) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 3 right; left; reflexivity).
-  assert (IN_A11_1_15 : In (q11_1, A11_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 4 right; left; reflexivity).
-  assert (IN_A10_1_15 : In (q10_1, A10_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 5 right; left; reflexivity).
-  assert (IN_A9_1_15 : In (q9_1, A9_1, 32) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 6 right; left; reflexivity).
-  assert (IN_A8_1_15 : In (q8_1, A8_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 7 right; left; reflexivity).
-  assert (IN_A7_1_15 : In (q7_1, A7_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 8 right; left; reflexivity).
-  assert (IN_A6_1_15 : In (q6_1, A6_1, 32) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 9 right; left; reflexivity).
-  assert (IN_A5_1_15 : In (q5_1, A5_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 10 right; left; reflexivity).
-  assert (IN_A4_1_15 : In (q4_1, A4_1, 40) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 11 right; left; reflexivity).
-  assert (IN_A3_1_15 : In (q3_1, A3_1, 32) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 12 right; left; reflexivity).
-  assert (IN_A2_1_15 : In (q2_1, A2_1, 384) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 13 right; left; reflexivity).
-  assert (IN_A1_1_15 : In (q1_1, A1_1, 24) ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall)) by (do 14 right; left; reflexivity).
-  destruct (cstate_nodup _ _ _ _ _ _ _ _ _ CST15) as [ND15 _].
-  (* [comment removed for export] *)
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp); (A1_1, A1_1 + 24)]%Z mb15) as MU15. pose proof (wmono_refl usegs mb15) as WM15.
-  wp_clear_aps.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q2_1 A2_1 384 CST15 IN_A1_1_15 IN_A2_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 13%nat (q1_1, A1_1, 24) (q2_1, A2_1, 384) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A2_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q3_1 A3_1 32 CST15 IN_A1_1_15 IN_A3_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 12%nat (q1_1, A1_1, 24) (q3_1, A3_1, 32) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A3_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q4_1 A4_1 40 CST15 IN_A1_1_15 IN_A4_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 11%nat (q1_1, A1_1, 24) (q4_1, A4_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A4_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q5_1 A5_1 40 CST15 IN_A1_1_15 IN_A5_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 10%nat (q1_1, A1_1, 24) (q5_1, A5_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A5_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q6_1 A6_1 32 CST15 IN_A1_1_15 IN_A6_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 9%nat (q1_1, A1_1, 24) (q6_1, A6_1, 32) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A6_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q7_1 A7_1 40 CST15 IN_A1_1_15 IN_A7_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 8%nat (q1_1, A1_1, 24) (q7_1, A7_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A7_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q8_1 A8_1 40 CST15 IN_A1_1_15 IN_A8_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 7%nat (q1_1, A1_1, 24) (q8_1, A8_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A8_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q9_1 A9_1 32 CST15 IN_A1_1_15 IN_A9_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 6%nat (q1_1, A1_1, 24) (q9_1, A9_1, 32) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A9_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q10_1 A10_1 40 CST15 IN_A1_1_15 IN_A10_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 5%nat (q1_1, A1_1, 24) (q10_1, A10_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A10_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q11_1 A11_1 40 CST15 IN_A1_1_15 IN_A11_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 4%nat (q1_1, A1_1, 24) (q11_1, A11_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A11_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q12_1 A12_1 32 CST15 IN_A1_1_15 IN_A12_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 3%nat (q1_1, A1_1, 24) (q12_1, A12_1, 32) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A12_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q13_1 A13_1 40 CST15 IN_A1_1_15 IN_A13_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 2%nat (q1_1, A1_1, 24) (q13_1, A13_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A13_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q14_1 A14_1 40 CST15 IN_A1_1_15 IN_A14_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 1%nat (q1_1, A1_1, 24) (q14_1, A14_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A14_1_s15.
-  pose proof (cstate_apart _ _ _ _ _ _ _ _ _ q1_1 A1_1 24 q15_1 A15_1 40 CST15 IN_A1_1_15 IN_A15_1_15 (wp_nodup_apart [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall 14%nat 0%nat (q1_1, A1_1, 24) (q15_1, A15_1, 40) ND15 eq_refl eq_refl ltac:(discriminate))) as AP_A1_1_A15_1_s15.
-  wp_box_aps.
-  cprefix. ths. step. wp_brT. do 13 step.
-  lazymatch goal with FRh : rw_cells _ _ (bv_unsigned sp + -80) _, STh : stk _ _ _ _ |- _ => release_frame FRh STh (bv_unsigned sp) end.
-  chere.
-  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mz end.
-  assert (CSTz : cstate st15 ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) LB ((q15_1, 40) :: (q14_1, 40) :: (q13_1, 40) :: (q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) mz sp tp lo B).
-  { eapply (cstate_seg _ _ _ _ _ mb15 mz _ sp tp lo B (bv_unsigned sp)); [exact CST15| exact MU15| exact WM15| wp_mi| | wp_lia| wp_lia| | wp_stk|].
-    - apply Forall_cons; [apply cwin_stack; wp_lia| apply Forall_cons; [apply (cwin_block _ _ _ (q1_1, A1_1, 24)); [exact IN_A1_1_15| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]].
-    - cbn [disjoint_from]. unfold LX_FLAGS. tslia.
-    - exact HB. }
-  assert (FRz : cframe (fun _ => False) []%Z (bv_unsigned sp) st LBall L m st15 ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall) ((q15_1, 40) :: (q14_1, 40) :: (q13_1, 40) :: (q12_1, 32) :: (q11_1, 40) :: (q10_1, 40) :: (q9_1, 32) :: (q8_1, 40) :: (q7_1, 40) :: (q6_1, 32) :: (q5_1, 40) :: (q4_1, 40) :: (q3_1, 32) :: (q2_1, 384) :: (q1_1, 24) :: L) mz).
-  { eapply cframe_seg; [eapply cframe_call; [exact FRa14| exact FRM15| wp_lia| intros a X; first [destruct X | exact X | cbn [rin_ivs fst snd] in *; wp_lia]| intros q0 _ X; exact X]| exact MU15| exact WM15| exact HP15| wp_lia|].
-    apply Forall_cons; [apply cseg_ok_stack; wp_lia| apply Forall_cons; [apply (cseg_ok_block _ _ _ _ _ (q1_1, A1_1, 24)); [exact IN_A1_1_15| exact (t_fresh_notin (fun _ => False) LBall (q1_1, A1_1, 24) (t_nodup_prefix blk_id [(q15_1, A15_1, 40); (q14_1, A14_1, 40); (q13_1, A13_1, 40); (q12_1, A12_1, 32); (q11_1, A11_1, 40); (q10_1, A10_1, 40); (q9_1, A9_1, 32); (q8_1, A8_1, 40); (q7_1, A7_1, 40); (q6_1, A6_1, 32); (q5_1, A5_1, 40); (q4_1, A4_1, 40); (q3_1, A3_1, 32); (q2_1, A2_1, 384); (q1_1, A1_1, 24)] LBall (q1_1, A1_1, 24) ND15 ltac:(do 14 right; left; reflexivity)))| |]; unfold blk_addr, blk_size; cbn [fst snd]; wp_lia| apply Forall_nil]]. }
+  { eapply LKN; [lia| eapply croom_weaken; [exact (croom_grow _ _ _ _ _ _ _ _ ROOM GRc)| wp_wnorm; lia..]| exact CSa| rewrite SPfU; unfold LOCK_NEW_STACK, CZ_STACK, CM_STACK, RMALLOC_STACK; lia]. }
+  intros f15 L15 st15 ms15 (v15 & m15 & LB15 & RET15 & FU15 & GR15 & CST15 & FRM15 & (qb & Ab & -> & -> & -> & RNGb & CELLb)).
+  destruct RET15 as (r15_0 & r15_1 & r15_2 & r15_3 & r15_4 & r15_5 & r15_6 & r15_7 & r15_8 & r15_9 & r15_10 & r15_11 & r15_12 & r15_13 & ->).
+  cret_lit.
+  rewrite SPfU in FRM15.
+  pose proof (cframe_call _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ SF FRM15 ltac:(lia) (fun a X => X) (fun q _ X => X)) as SFn.
+  pose proof (proj1 FRM15) as CF.
+  repeat match goal with
+  | H : rw_cells usegs ?mo (bv_unsigned sp + -80) _, CF : cfr _ _ _ _ ?mo ?mn |- _ =>
+      apply (cfr_cells_stack _ _ _ _ _ _ _ _ CF) in H; [| lia]
+  | H : rw_cells usegs ?mo ?A _, CF : cfr _ _ _ ?LBo ?mo ?mn |- _ =>
+      lazymatch LBo with context [(?q, A, ?n)] =>
+        apply (cfr_cells_block _ _ _ _ _ _ _ _ (q, A, n) CF) in H; [| wp_in_lit| intros X; exact X| cbn; lia| cbn; lia] end
+  end.
+  clear CF FRM15 SF CSa HP MI ST. rename SFn into SF.
+  assert (FUn : (f <= f15 + 15)%nat) by lia. clear FU15 FUc. rename FUn into FUc.
+  assert (GRn : cgrow L ((qb, 40) :: (qy3, 40) :: (qx3, 40) :: (qa3, 32) :: (qy2, 40) :: (qx2, 40) :: (qa2, 32) :: (qy1, 40) :: (qx1, 40) :: (qa1, 32) :: (qy0, 40) :: (qx0, 40) :: (qa0, 32) :: (qh, 4 * 96) :: (qs, 24) :: L) 14 1 8576) by (eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ GRc GR15)| wp_wnorm; lia..]).
+  clear GRc GR15. rename GRn into GRc.
+  pose proof RNGb as (P0b & _ & _ & PCb & IMGb). wp_box1 IMGb.
+  assert (APsb : wp_apbox (As + 24 <= Ab \/ Ab + 40 <= As)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST15| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST15| wp_in_lit]]. }
+  assert (APhb : wp_apbox (Ah + 384 <= Ab \/ Ab + 40 <= Ah)).
+  { unfold wp_apbox. eapply cstate_apart; [exact CST15| wp_in_lit| left; reflexivity| eapply cstate_head_fresh; [exact CST15| wp_in_lit]]. }
+  pose proof CST15 as (HP & _ & (errv15 & _ & _ & ST & _ & _ & MI & _) & _).
+  rewrite unsigned_lit in ST by lia.
+  pose proof (munch_refl [(As, As + 24)] m15) as MU. pose proof (wmono_refl usegs m15) as WM.
+  apply climpl_from_evt.
+  step. step. wp_brT. step. do 10 step. step. step.
+  apply evt_done; cbv beta.
+  lazymatch goal with |- climpl _ _ _ (MS _ _ _ _ _ ?mc _) _ => rename mc into mE end.
+  assert (STE : stk usegs mE lo (bv_unsigned sp)).
+  { pose proof (stk_release _ _ _ _ _ ST FR ltac:(lia)) as STR. cbn [cells_size csize Nat.add] in STR.
+    replace (bv_unsigned sp) with (bv_unsigned sp + -80 + Z.of_nat 80) by lia. exact STR. }
   apply climpl_done.
-  exists (Z_to_bv 64 A1_1), mz, ((q15_1, A15_1, 40) :: (q14_1, A14_1, 40) :: (q13_1, A13_1, 40) :: (q12_1, A12_1, 32) :: (q11_1, A11_1, 40) :: (q10_1, A10_1, 40) :: (q9_1, A9_1, 32) :: (q8_1, A8_1, 40) :: (q7_1, A7_1, 40) :: (q6_1, A6_1, 32) :: (q5_1, A5_1, 40) :: (q4_1, A4_1, 40) :: (q3_1, A3_1, 32) :: (q2_1, A2_1, 384) :: (q1_1, A1_1, 24) :: LBall).
-  split; [unfold cret; do 14 eexists; reflexivity|]. split; [wp_lia|].
-  split; [eapply cgrow_weaken; [exact (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ (cgrow_trans _ _ _ _ _ _ _ _ _ GR1 GR2) GR3) GR4) GR5) GR6) GR7) GR8) GR9) GR10) GR11) GR12) GR13) GR14) GR15)| wp_lia..]|].
-  split; [exact CSTz|]. split; [exact FRz|].
-  exists q1_1, A1_1, q2_1, A2_1, q3_1, A3_1, q4_1, A4_1, q5_1, A5_1, q6_1, A6_1, q7_1, A7_1, q8_1, A8_1, q9_1, A9_1, q10_1, A10_1, q11_1, A11_1, q12_1, A12_1, q13_1, A13_1, q14_1, A14_1, q15_1, A15_1.
+  exists (Z_to_bv 64 As), mE. eexists.
+  split; [do 14 eexists; reflexivity|].
+  split; [lia|].
+  split; [exact GRc|].
+  split.
+  { eapply (cstate_seg _ _ _ _ _ m15 mE _ sp tp lo B (bv_unsigned sp)); [exact CST15| exact MU| exact WM| exact MI| | lia| lia| | exact STE| lia].
+    - apply Forall_cons; [eapply cwin_block with (b := (qs, As, 24)); [wp_in_lit| cbn; lia| cbn; lia]| apply Forall_nil].
+    - cbn [disjoint_from]. unfold LX_FLAGS. unfold wp_box in IMGs. repeat split; lia. }
+  split.
+  { eapply cframe_seg; [exact SF| exact MU| exact WM| exact HP| lia|].
+    apply Forall_cons; [eapply cseg_ok_block with (b := (qs, As, 24)); [wp_in_lit| | cbn; lia| cbn; lia]|].
+    { apply (t_fresh_notin (fun _ : bptr => False) LBall).
+      apply (t_nodup_prefix blk_id [(qb, Ab, 40); (qy3, Ay3, 40); (qx3, Ax3, 40); (qa3, Aa3, 32); (qy2, Ay2, 40); (qx2, Ax2, 40); (qa2, Aa2, 32); (qy1, Ay1, 40); (qx1, Ax1, 40); (qa1, Aa1, 32); (qy0, Ay0, 40); (qx0, Ax0, 40); (qa0, Aa0, 32); (qh, Ah, 4 * 96); (qs, As, 24)] LBall (qs, As, 24)); [exact (proj1 (cstate_nodup _ _ _ _ _ _ _ _ _ CST15))| wp_in_lit]. }
+    apply Forall_nil. }
+  unfold ossl_method_store_new_res.
+  exists qs, As, qh, Ah, qa0, Aa0, qx0, Ax0, qy0, Ay0, qa1, Aa1, qx1, Ax1, qy1, Ay1, qa2, Aa2, qx2, Ax2, qy2, Ay2, qa3, Aa3, qx3, Ax3, qy3, Ay3, qb, Ab.
   split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
-  split; [exact RNG_A1_1|]. split; [exact RNG_A2_1|]. split; [exact RNG_A3_1|]. split; [exact RNG_A4_1|]. split; [exact RNG_A5_1|]. split; [exact RNG_A6_1|]. split; [exact RNG_A7_1|]. split; [exact RNG_A8_1|]. split; [exact RNG_A9_1|]. split; [exact RNG_A10_1|]. split; [exact RNG_A11_1|]. split; [exact RNG_A12_1|]. split; [exact RNG_A13_1|]. split; [exact RNG_A14_1|]. split; [exact RNG_A15_1|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. split; [wp_cells|]. wp_cells.
+  repeat (split; [assumption|]).
+  assumption.
 Qed.
 End WithCeiling0.

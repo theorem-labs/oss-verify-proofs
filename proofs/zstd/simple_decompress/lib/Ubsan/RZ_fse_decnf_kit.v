@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From OssFuzzTheorems.Proofs.zstd.simple_decompress.lib.Spec Require Import FseNCount FseLemmas ZdFrame ZdHufFse.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -11,38 +11,50 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
-Definition FDU (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra0 : word) (m : fmem) (SPV lo DST cap WK wksz SRCI DT : Z) (srci : list byte) (tb : list Z)
-    (out : list byte) (m1 : fmem) : Prop :=
-  u8arr usegs m1 DST out /\ Z.of_nat (length out) = cap
+Definition FDU (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra0 : word) (m : fmem) (SPV lo DST cap WK wksz SRCI DT : Z)
+    (srci : list byte) (tb : list Z) (out : list byte) (m1 : fmem) : Prop :=
+  u8arr usegs m1 DST out
+  /\ zlen out = cap
   /\ stk usegs m1 WK (WK + wksz)
   /\ bytes_at usegs m1 SRCI srci
   /\ bytes_at usegs m1 (DT + 4) (map (Z_to_bv 8) tb)
   /\ stk usegs m1 lo (SPV + -192)
-  /\ (exists j0 msv tlw, rw_cells usegs m1 (SPV + -192) [CB 8 j0; C4 msv; C4 tlw])
-  /\ (exists a b, rw_cells usegs m1 (SPV + -176) [C8 a; C8 b])
-  /\ (exists a b, rw_cells usegs m1 (SPV + -160) [C8 a; C8 b])
-  /\ (exists c b pad p s l, rw_cells usegs m1 (SPV + -144) [C8 c; C4 b; CB 4 pad; C8 p; C8 s; C8 l])
-  /\ rw_cells usegs m1 (SPV + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra0]
-  /\ mem_inv usegs m1 /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1 /\ wmono usegs m m1.
+  /\ (exists (gap : list byte) (msv_slot tlog_slot : word),
+        rw_cells usegs m1 (SPV + -192) [CB 8 gap; C4 msv_slot; C4 tlog_slot])
+  /\ (exists state_w table_w : word, rw_cells usegs m1 (SPV + -176) [C8 state_w; C8 table_w])
+  /\ (exists state_w table_w : word, rw_cells usegs m1 (SPV + -160) [C8 state_w; C8 table_w])
+  /\ (exists (bits_w used_w : word) (gap : list byte) (cur_w start_w lim_w : word),
+        rw_cells usegs m1 (SPV + -144) [C8 bits_w; C4 used_w; CB 4 gap; C8 cur_w; C8 start_w; C8 lim_w])
+  /\ rw_cells usegs m1 (SPV + -104)
+       [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra0]
+  /\ mem_inv usegs m1
+  /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1
+  /\ wmono usegs m m1.
 Ltac open_fdu I := destruct I as (OUT & OLEN & WKS & SRCB & CELB & STK & (fj0 & fmsv & ftlw & F0) & (f2a & f2b & FS2) & (f1a & f1b & FS1)
                                   & (fbc & fbb & fbpad & fbp & fbs & fbl & FBD) & FSAV & MI & MU & WM).
 Ltac close_fdu := unfold FDU; split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; [eassumption|];
                   split; [do 3 eexists; eassumption|]; split; [do 2 eexists; eassumption|]; split; [do 2 eexists; eassumption|];
                   split; [do 6 eexists; eassumption|]; split; [eassumption|]; split; [eassumption|]; split; eassumption.
 
-Definition FDCU (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra0 : word) (m : fmem) (SPV lo DST cap WK wksz SRCI DT : Z) (srci : list byte) (tb : list Z)
-    (out : list byte) (st1 st2 : Z) (cont : word) (bc : Z) (pad : list byte) (ptr : Z) (m1 : fmem) : Prop :=
-  u8arr usegs m1 DST out /\ Z.of_nat (length out) = cap
+Definition FDCU (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra0 : word) (m : fmem) (SPV lo DST cap WK wksz SRCI DT : Z)
+    (srci : list byte) (tb : list Z) (out : list byte) (st1 st2 : Z) (cont : word) (bc : Z) (pad : list byte) (ptr : Z)
+    (m1 : fmem) : Prop :=
+  u8arr usegs m1 DST out
+  /\ zlen out = cap
   /\ stk usegs m1 WK (WK + wksz)
   /\ bytes_at usegs m1 SRCI srci
   /\ bytes_at usegs m1 (DT + 4) (map (Z_to_bv 8) tb)
   /\ stk usegs m1 lo (SPV + -192)
-  /\ (exists j0 msv tlw, rw_cells usegs m1 (SPV + -192) [CB 8 j0; C4 msv; C4 tlw])
+  /\ (exists (gap : list byte) (msv_slot tlog_slot : word),
+        rw_cells usegs m1 (SPV + -192) [CB 8 gap; C4 msv_slot; C4 tlog_slot])
   /\ rw_cells usegs m1 (SPV + -176) [C8 (Z_to_bv 64 st2); C8 (Z_to_bv 64 (DT + 4))]
   /\ rw_cells usegs m1 (SPV + -160) [C8 (Z_to_bv 64 st1); C8 (Z_to_bv 64 (DT + 4))]
   /\ rw_cells usegs m1 (SPV + -144) (bitd_cells cont (Z_to_bv 64 bc) pad ptr SRCI)
-  /\ rw_cells usegs m1 (SPV + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra0]
-  /\ mem_inv usegs m1 /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1 /\ wmono usegs m m1.
+  /\ rw_cells usegs m1 (SPV + -104)
+       [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra0]
+  /\ mem_inv usegs m1
+  /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1
+  /\ wmono usegs m m1.
 Ltac open_fdcu I := destruct I as (OUT & OLEN & WKS & SRCB & CELB & STK & (fj0 & fmsv & ftlw & F0) & FS2 & FS1 & FBD & FSAV & MI & MU & WM);
                     unfold bitd_cells in FBD.
 
@@ -74,17 +86,26 @@ Lemma fc_hi_rd : forall m A (tb : list Z) st a, bytes_at usegs m A (map (Z_to_bv
   0 <= Znth (4 * st + 2) tb < 256 -> 0 <= Znth (4 * st + 3) tb < 256 -> a = wa (A + (4 * st + 2)) ->
   ov_read_bytes usegs m a 2 = Some (le2 (Z_to_bv 64 (fc_hi tb st))).
 Proof.
-  intros m A tb st a B HS HL B0 B1 ->.
-  rewrite (bytes_at_read usegs m A _ (4 * st + 2) 2 B) by (rewrite ?length_map; lia). f_equal.
-  rewrite (le2_Z (fc_hi tb st) (fc_hi tb st) eq_refl). unfold ZdSeqTable.zle2, fc_hi, fc_sy, fc_nb.
-  replace ((Znth (4 * st + 2) tb + 256 * Znth (4 * st + 3) tb) mod 256) with (Znth (4 * st + 2) tb) by (Z.div_mod_to_equations; lia).
-  replace (((Znth (4 * st + 2) tb + 256 * Znth (4 * st + 3) tb) / 256) mod 256) with (Znth (4 * st + 3) tb) by (Z.div_mod_to_equations; lia).
-  rewrite skipn_map, firstn_map.
-  unfold Znth. replace (Z.to_nat (4 * st + 3)) with (S (Z.to_nat (4 * st + 2))) by lia.
-  assert (LT : (S (Z.to_nat (4 * st + 2)) < length tb)%nat) by lia.
-  revert LT. generalize (Z.to_nat (4 * st + 2)). clear. intros k. revert tb. induction k as [|k IH]; intros tb LT.
-  - destruct tb as [|x [|y t]]; cbn [length] in LT; try lia. reflexivity.
-  - destruct tb as [|x t]; cbn [length] in LT; [lia|]. cbn [skipn nth]. apply IH. lia.
+  intros m A tb st a tb_cells st_nonneg tb_room sy_byte nb_byte a_at.
+  set (k := Z.to_nat (4 * st + 2)).
+  assert (sy_slot : nth_error tb k = Some (fc_sy tb st)).
+  { unfold fc_sy, Znth. apply nth_error_nth'. unfold k. lia. }
+  assert (nb_slot : nth_error tb (S k) = Some (fc_nb tb st)).
+  { unfold fc_nb, Znth. replace (Z.to_nat (4 * st + 3)) with (S k) by (unfold k; lia).
+    apply nth_error_nth'. unfold k. lia. }
+  assert (window : firstn 2 (skipn k tb) = [fc_sy tb st; fc_nb tb st]).
+  { rewrite <- (firstn_skipn_step tb k 1 _ sy_slot), <- (firstn_skipn_step tb (S k) 0 _ nb_slot). reflexivity. }
+  set (hw := fc_sy tb st + 256 * fc_nb tb st).
+  assert (hw_low : hw mod 256 = fc_sy tb st).
+  { unfold hw. rewrite Z.mul_comm, Z_mod_plus_full. apply Z.mod_small. unfold fc_sy. lia. }
+  assert (hw_high : hw ≫ 8 = fc_nb tb st).
+  { unfold hw. rewrite Z.shiftr_div_pow2 by lia. change (2 ^ 8) with 256.
+    rewrite Z.mul_comm, Z_div_plus_full by lia. rewrite Z.div_small by (unfold fc_sy; lia). reflexivity. }
+  assert (hw_word : bv_unsigned (Z_to_bv 64 hw) = hw) by (apply unsigned_lit; unfold hw, fc_sy, fc_nb; lia).
+  rewrite a_at, (bytes_at_read usegs m A _ (4 * st + 2) 2 tb_cells) by (rewrite ?length_map; lia).
+  change (Z.to_nat (4 * st + 2)) with k. rewrite skipn_map, firstn_map, window.
+  unfold le2, fc_hi. fold hw. rewrite hw_word. cbn [Z_to_le_bytes map].
+  rewrite hw_high, (Z_to_bv8_mod hw), hw_low. reflexivity.
 Qed.
 
 Ltac ldhi CELB DT tb st :=
@@ -111,53 +132,65 @@ Lemma fc_hi_shr : forall h nx, 0 <= nx < 65536 -> (h * 65536 + nx) / 65536 = h.
 Proof. intros h nx H. symmetry. apply Z.div_unique with (r := nx); [left; lia | lia]. Qed.
 Lemma lxor_range : forall a b, 0 <= a < 18446744073709551616 -> 0 <= b < 18446744073709551616 -> 0 <= Z.lxor a b < 18446744073709551616.
 Proof.
-  intros a b Ha Hb. split; [apply Z.lxor_nonneg; lia|].
-  destruct (Z.eq_dec (Z.lxor a b) 0) as [E|NE]; [lia|].
-  assert (P : 0 < Z.lxor a b) by (pose proof (proj2 (Z.lxor_nonneg a b) ltac:(lia)); lia).
-  change 18446744073709551616 with (2^64). apply (proj2 (Z.log2_lt_pow2 _ 64 P)).
-  pose proof (Z.log2_lxor a b ltac:(lia) ltac:(lia)) as L.
-  assert (La : Z.log2 a < 64) by (destruct (Z.eq_dec a 0) as [->|]; [simpl; lia | apply (proj1 (Z.log2_lt_pow2 a 64 ltac:(lia))); lia]).
-  assert (Lb : Z.log2 b < 64) by (destruct (Z.eq_dec b 0) as [->|]; [simpl; lia | apply (proj1 (Z.log2_lt_pow2 b 64 ltac:(lia))); lia]).
-  lia.
+  intros a b. change 18446744073709551616 with (2 ^ 64). exact (Z_lxor_range a b).
 Qed.
 Lemma lxor_ltb1 : forall a b, 0 <= a -> 0 <= b -> a <> b -> (Z.lxor a b <? 1) = false.
 Proof.
-  intros a b Ha Hb NE. apply Z.ltb_ge. destruct (Z.eq_dec (Z.lxor a b) 0) as [E|NZ].
-  - exfalso. apply NE. apply Z.lxor_eq. exact E.
-  - pose proof (proj2 (Z.lxor_nonneg a b) ltac:(lia)). lia.
+  intros a b a_nn b_nn a_ne_b.
+  assert (x_nz : Z.lxor a b <> 0) by (rewrite Z.lxor_eq_0_iff; exact a_ne_b).
+  assert (x_nn : 0 <= Z.lxor a b) by (apply Z.lxor_nonneg; tauto).
+  apply Z.ltb_ge. lia.
 Qed.
 
 Ltac znorm_step :=
   match goal with
-  | |- context [Z.lxor ?a ?b mod 18446744073709551616] => rewrite (Z.mod_small (Z.lxor a b) 18446744073709551616) by (apply lxor_range; lia)
-  | |- context [Z.lxor ?a ?b <? 1] => rewrite (lxor_ltb1 a b) by lia
-  | |- context [Z.land ?x 7] => rewrite (land_7 x)
-  | |- context [(?x * ?c) / ?c] => is_Zlit_zb c; rewrite (Z.div_mul x c) by lia
-  | |- context [Z.shiftl ?x ?k] => is_Zlit_zb k; rewrite (Z.shiftl_mul_pow2 x k) by lia;
-        let v := eval vm_compute in (2^k) in change (2^k) with v
-  | |- context [Z.shiftr ?x ?k] => is_Zlit_zb k; rewrite (Z.shiftr_div_pow2 x k) by lia;
-        let v := eval vm_compute in (2^k) in change (2^k) with v
-  | |- context [?x mod 18446744073709551616] => rewrite (Z.mod_small x 18446744073709551616) by lia
-  | |- context [?x / ?d] => is_Zlit_zb d; rewrite (Z.div_small x d) by lia
-  | |- context [?a <? ?b] =>
-        first [ replace (a <? b) with true by (symmetry; apply Z.ltb_lt; lia)
-              | replace (a <? b) with false by (symmetry; apply Z.ltb_ge; lia) ]
-  | |- context [?a =? ?b] =>
-        first [ replace (a =? b) with true by (symmetry; apply Z.eqb_eq; lia)
-              | replace (a =? b) with false by (symmetry; apply Z.eqb_neq; lia) ]
-  | |- context [Z.b2z true] => change (Z.b2z true) with 1
-  | |- context [Z.b2z false] => change (Z.b2z false) with 0
+  | |- context [?x ≪ ?k] =>
+      is_Zlit_zb k;
+      let p := eval vm_compute in (2 ^ k) in
+      replace (x ≪ k) with (x * p) by (rewrite Z.shiftl_mul_pow2 by lia; reflexivity)
+  | |- context [?x ≫ ?k] =>
+      is_Zlit_zb k;
+      let p := eval vm_compute in (2 ^ k) in
+      replace (x ≫ k) with (x / p) by (rewrite Z.shiftr_div_pow2 by lia; reflexivity)
   | |- context [fc_hi ?tb ?st * 65536 / 16777216] => rewrite (fc_hi_nb tb st) by lia
   | |- context [Z.lor (?h * 65536) ?nx] => rewrite (fc_hi_lor h nx) by lia
   | |- context [Z.land (?h * 65536 + ?nx) 65535] => rewrite (fc_hi_land h nx) by lia
   | |- context [(?h * 65536 + ?nx) / 65536] => rewrite (fc_hi_shr h nx) by lia
-  | |- context [Z.lxor ?a ?b] => let v := eval vm_compute in (Z.lxor a b) in is_Zlit_zb v; change (Z.lxor a b) with v
-  | |- context [bv_swrap 32 ?z] => rewrite (swrap32_small z) by lia
+  | |- context [Z.lxor ?a ?b <? 1] => rewrite (lxor_ltb1 a b) by lia
+  | |- context [Z.lxor ?a ?b mod 18446744073709551616] =>
+      rewrite (Z.mod_small (Z.lxor a b) 18446744073709551616) by (apply lxor_range; lia)
+  | |- context [Z.lxor ?a ?b] =>
+      assert_fails (idtac; match constr:(Z.lxor a b) with context [?y] => is_var y end);
+      let v := eval vm_compute in (Z.lxor a b) in change (Z.lxor a b) with v
+  | |- context [?a mod ?b] =>
+      assert_fails (idtac; match constr:(a mod b) with context [?y] => is_var y end);
+      let v := eval vm_compute in (a mod b) in change (a mod b) with v
+  | |- context [?e mod 18446744073709551616] => rewrite (Z.mod_small e 18446744073709551616) by lia
+  | |- context [bv_swrap 32 ?e] => rewrite (swrap32_small e) by lia
+  | |- context [Z.land ?x ?c] =>
+      is_Zlit_zb c;
+      let n := eval vm_compute in (Z.log2 (c + 1)) in
+      let p := eval vm_compute in (2 ^ n) in
+      let q := eval vm_compute in (c + 1) in
+      constr_eq p q;
+      replace (Z.land x c) with (x mod p) by (change c with (Z.ones n); rewrite Z.land_ones by lia; reflexivity)
+  | |- context [?e / ?c] => is_Zlit_zb c; rewrite (Z.div_small e c) by lia
+  | |- context [?a <? ?b] =>
+      first [ rewrite (proj2 (Z.ltb_ge a b)) by lia | rewrite (proj2 (Z.ltb_lt a b)) by lia ]
+  | |- context [Z.b2z false] => change (Z.b2z false) with 0
+  | |- context [Z.b2z true] => change (Z.b2z true) with 1
   end.
 Ltac znorm := repeat znorm_step.
-Ltac close_fdcu := unfold FDCU, bitd_cells; split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; [eassumption|];
-                   split; [eassumption|]; split; [eassumption|]; split; [do 3 eexists; eassumption|]; split; [eassumption|];
-                   split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; eassumption.
+Ltac close_fdcu :=
+  let rec fill :=
+    lazymatch goal with
+    | |- _ /\ _ => refine (conj _ _); [fill | fill]
+    | |- exists _, _ => eexists; fill
+    | |- _ => eassumption
+    end in
+  lazymatch goal with
+  | |- FDCU _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ => unfold FDCU, bitd_cells; fill
+  end.
 Ltac zn := zstep; znorm.
 Ltac zbr :=
   lazymatch goal with

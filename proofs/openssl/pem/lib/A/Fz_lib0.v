@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
@@ -15,34 +15,23 @@ Notation z64 := (Z_to_bv 64 0) (only parsing).
 
 (* [comment removed for export] *)
 Definition lib0_statics (m : mem) : Prop :=
-  (* [comment removed for export] *)
-  rw_cells asegs m 0x5a9f40 [C8 (Z_to_bv 64 0x1fbf20)] /\ rw_cells asegs m 0x5a9f60 [C8 (Z_to_bv 64 0x1fc320)]
-  /\ rw_cells asegs m 0x5a9f80 [C8 (Z_to_bv 64 0x1fc430)] /\ rw_cells asegs m 0x5a9fc0 [C8 (Z_to_bv 64 0x1c1918)]
-  /\ rw_cells asegs m 0xb9f7c0 [C1 (Z_to_bv 8 0)]
-  (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xb9f200 [C1 (Z_to_bv 8 0)] /\ rw_cells asegs m 0xb9f2a0 [C8 z64]
-  /\ rw_cells asegs m 0xb9f2c0 [C4 z64] /\ rw_cells asegs m 0xb9f2e0 [C4 z64]
-  /\ rw_cells asegs m 0xb9f300 [C4 z64] /\ rw_cells asegs m 0xb9f320 [C4 z64]
-  /\ rw_cells asegs m 0xb9f220 [C8 z64] /\ rw_cells asegs m 0xb9f240 [C8 z64]
-  /\ rw_cells asegs m 0xb9f260 [C4 z64] /\ rw_cells asegs m 0xb9f1c0 [C1 (Z_to_bv 8 0)]
-  (* [comment removed for export] *)
-  /\ rw_cells asegs m 0x5a9f20 [C4 (Z_to_bv 64 0xffffffff); C4 (Z_to_bv 64 0xffffffff)]
-  /\ rw_cells asegs m 0xb9f4a0 [C4 z64] /\ rw_cells asegs m 0xb9f4c0 [C4 z64] /\ rw_cells asegs m 0xb9f4e0 [C8 z64]
-  (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xb9f500 [C4 z64] /\ rw_cells asegs m 0xb9f520 [C4 z64] /\ rw_cells asegs m 0xb9f540 [C1 (Z_to_bv 8 0)]
-  (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xb9f820 [C4 z64] /\ rw_cells asegs m 0xb9f7e0 [C8 z64] /\ rw_cells asegs m 0xb9f800 [C8 z64] /\ rw_cells asegs m 0xb9f840 [C4 z64]
-  (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xb9f740 [C4 z64] /\ rw_cells asegs m 0xb9f720 [C4 z64] /\ rw_cells asegs m 0xb9f760 [C4 z64]
-  /\ rw_cells asegs m 0xb9f780 [C4 z64] /\ rw_cells asegs m 0xb9f7a0 [C4 z64] /\ rw_cells asegs m 0xb9f560 [C1 (Z_to_bv 8 0)]
-  /\ rw_cells asegs m 0xb9f580 [C8 z64] /\ rw_cells asegs m 0xb9f588 [C8 z64] /\ rw_cells asegs m 0xb9f5f0 [C8 z64]
-  /\ rw_cells asegs m 0xb9f628 [C8 z64] /\ rw_cells asegs m 0xb9f630 [C8 z64] /\ rw_cells asegs m 0xb9f638 [C8 z64] /\ rw_cells asegs m 0xb9f640 [C8 z64]
-  /\ rw_cells asegs m 0xb9f648 [C8 z64] /\ rw_cells asegs m 0xb9f650 [C8 z64] /\ rw_cells asegs m 0xb9f658 [C8 z64] /\ rw_cells asegs m 0xb9f660 [C8 z64]
-  /\ rw_cells asegs m 0xb9f668 [C8 z64] /\ rw_cells asegs m 0xb9f670 [C8 z64] /\ rw_cells asegs m 0xb9f678 [C8 z64] /\ rw_cells asegs m 0xb9f680 [C8 z64]
-  /\ rw_cells asegs m 0xb9f688 [C8 z64] /\ rw_cells asegs m 0xb9f690 [C8 z64] /\ rw_cells asegs m 0xb9f698 [C8 z64] /\ rw_cells asegs m 0xb9f6a0 [C8 z64]
-  /\ rw_cells asegs m 0xb9f6a8 [C8 z64] /\ rw_cells asegs m 0xb9f6b0 [C8 z64] /\ rw_cells asegs m 0xb9f6b8 [C8 z64]
-  (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xb9f860 [C1 (Z_to_bv 8 0)].
+  Forall (fun row => rw_cells asegs m (fst row) (snd row))
+    [ (0xb9f860, [C1 (Z_to_bv 8 0)]);
+      (0xb9f840, [C4 z64]); (0xb9f820, [C4 z64]); (0xb9f800, [C8 z64]); (0xb9f7e0, [C8 z64]);
+      (0xb9f7c0, [C1 (Z_to_bv 8 0)]);
+      (0xb9f7a0, [C4 z64]); (0xb9f780, [C4 z64]); (0xb9f760, [C4 z64]); (0xb9f740, [C4 z64]); (0xb9f720, [C4 z64]);
+      (0xb9f580, [CB 328 (repeat (Z_to_bv 8 0) 328)]); (0xb9f560, [C1 (Z_to_bv 8 0)]);
+      (0xb9f540, [C1 (Z_to_bv 8 0)]); (0xb9f520, [C4 z64]); (0xb9f500, [C4 z64]);
+      (0xb9f4e0, [C8 z64]); (0xb9f4c0, [C4 z64]); (0xb9f4a0, [C4 z64]);
+      (0xb9f480, [C4 z64]); (0xb9f460, [C4 z64]); (0xb9f440, [C8 z64]); (0xb9f420, [C4 z64]); (0xb9f400, [C4 z64]);
+      (0xb9f3e0, [C1 (Z_to_bv 8 0)]); (0xb9f3c0, [C4 z64]); (0xb9f3a0, [C1 (Z_to_bv 8 0)]); (0xb9f380, [C4 z64]);
+      (0xb9f360, [C1 (Z_to_bv 8 0)]); (0xb9f340, [C4 z64]); (0xb9f320, [C4 z64]); (0xb9f300, [C4 z64]);
+      (0xb9f2e0, [C4 z64]); (0xb9f2c0, [C4 z64]); (0xb9f2a0, [C8 z64]); (0xb9f280, [C1 (Z_to_bv 8 0)]);
+      (0xb9f260, [C4 z64]); (0xb9f240, [C8 z64]); (0xb9f220, [C8 z64]); (0xb9f200, [C1 (Z_to_bv 8 0)]);
+      (0xb9f1c0, [C1 (Z_to_bv 8 0)]);
+      (0x5a9fc0, [C8 (Z_to_bv 64 0x1c1918)]); (0x5a9f80, [C8 (Z_to_bv 64 0x1fc430)]);
+      (0x5a9f60, [C8 (Z_to_bv 64 0x1fc320)]); (0x5a9f40, [C8 (Z_to_bv 64 0x1fbf20)]);
+      (0x5a9f20, [C4 (Z_to_bv 64 0xffffffff); C4 (Z_to_bv 64 0xffffffff)]) ].
 
 (* [comment removed for export] *)
 Definition lib0_keys (m : mem) : Prop :=

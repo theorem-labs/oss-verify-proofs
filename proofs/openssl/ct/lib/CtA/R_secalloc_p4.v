@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -61,10 +61,9 @@ Local Ltac zidle_end MUz WMz :=
     lazymatch type of MUz with munch _ ?m _ =>
       try unfold zidle in *; transport_after_call segs m mm MUz WMz; clear MUz WMz end end.
 (* [comment removed for export] *)
-Local Ltac zidle_end_m m :=
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-    lazymatch goal with MU : munch _ m mm, WM : wmono _ m mm |- _ =>
-      unfold zidle in *; transport_after_call ctasegs m mm MU WM end end.
+Local Ltac zidle_end_m MUz :=
+  lazymatch type of MUz with munch _ ?m0 ?m1 =>
+    lazymatch goal with WMz : wmono _ m0 m1 |- _ => zidle_end MUz WMz end end.
 Open Scope bv_scope.
 Notation mem := (word -> option byte).
 Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
@@ -121,10 +120,10 @@ Qed.
 (* [comment removed for export] *)
 Definition secalloc_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (W : list (Z * Z)) (res lo : Z) (m : mem) (K : mem -> Prop) : machine_state -> Prop :=
-  fun ms' => exists (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (m' : mem),
-    ms' = MS (mkR ra sp gp tp t0' t1' t2' s0 s1 (Z_to_bv 64 res) a1' a2' a3' a4' a5' a6' a7' s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
-                  t3' t4' t5' t6') F (ret_pc ra) fc None m' (seg_rom ctasegs)
-    /\ munch W m m' /\ wmono ctasegs m m' /\ mem_inv ctasegs m' /\ stk ctasegs m' lo (bv_unsigned sp) /\ K m'.
+  fun fin => exists (u0 u1 u2 r1 r2 r3 r4 r5 r6 r7 u3 u4 u5 u6 : word) (mf : mem),
+    fin = MS (mkR ra sp gp tp u0 u1 u2 s0 s1 (Z_to_bv 64 res) r1 r2 r3 r4 r5 r6 r7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
+                  u3 u4 u5 u6) F (ret_pc ra) fc None mf (seg_rom ctasegs)
+    /\ munch W m mf /\ wmono ctasegs m mf /\ mem_inv ctasegs mf /\ stk ctasegs mf lo (bv_unsigned sp) /\ K mf.
 
 (* [comment removed for export] *)
 Definition sa_W4 (PAB n P : Z) : list (Z * Z) :=
@@ -133,9 +132,12 @@ Definition sa_W4 (PAB n P : Z) : list (Z * Z) :=
 
 (* [comment removed for export] *)
 Definition sa_K4 (PAB nres n P : Z) (ws : list word) (m : mem) : Prop :=
-  rw_cells ctasegs m (P + 24) [C8 (Z_to_bv 64 n)] /\ u64arr ctasegs m PAB (upd ws (Z.to_nat n) (Z_to_bv 64 P))
-  /\ rw_cells ctasegs m i_sec_nres [C8 (Z_to_bv 64 nres); C8 (Z_to_bv 64 (n + 1))] /\ sec_junk m
-  /\ rw_cells ctasegs m i_sec_mutex [C1 (Z_to_bv 8 0)] /\ sec_pad m.
+  rw_cells ctasegs m (P + 24)%Z [C8 (Z_to_bv 64 n)]
+  /\ u64arr ctasegs m PAB (upd ws (Z.to_nat n) (Z_to_bv 64 P))
+  /\ rw_cells ctasegs m i_sec_nres [C8 (Z_to_bv 64 nres); C8 (Z_to_bv 64 (n + 1)%Z)]
+  /\ sec_junk m
+  /\ rw_cells ctasegs m i_sec_mutex [C1 (Z_to_bv 8 0)]
+  /\ sec_pad m.
 
 (* [comment removed for export] *)
 Lemma sa_p4b : forall (ra t0 t1 t2 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 t3 t4 t5 t6 sp gp tp s10 s11 : word)
@@ -163,57 +165,48 @@ Lemma sa_p4b : forall (ra t0 t1 t2 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 t3 t4 
              (Z_to_bv 64 (sa_msz SZ)) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
         F (Z_to_bv 64 0x1a0b00) fc None m1 (seg_rom ctasegs)).
 Proof.
-  intros until bl. intros HSZ Hk GP GA Hn FR ST HLOH HLO HSP CH NR SJ1 Hbl SJ2 SJ3 LW ARR HI MU WM MI.
-  pose proof (sa_msz_facts SZ ltac:(lia)) as [MS1 MS2].
-  destruct GP as (GP1 & GP2 & GP3 & GP4). destruct GA as (GA1 & GA2 & GA3 & GA4).
-  unfold img_hull_lo, img_hull_hi, kHighShadowEnd in *.
-  change i_sec_chunks with 6744608%Z in CH. change i_sec_nres with 6744648%Z in NR. change i_sec_mutex with 6745216%Z in LW.
-  change i_sec_sorted with 6744664%Z in SJ1. change i_sec_bylog with 6744704%Z in SJ2. change i_gstat_alloc with 6745240%Z in SJ3.
+  intros ra t0 t1 t2 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 t3 t4 t5 t6 sp gp tp s10 s11 F fc
+    rac s0c s1c s2c s3c s4c s5c s6c s7c s8c s9c j m m1 P SZ PAB nres n k lo ws b jj w1 w2 w3 w4 ga gm bl
+    sz_ok k_ok obj_p obj_pab n_ok frame stack lo_hi lo_sp sp_top chunks nres_c sorted bl_len bylog gstat mutex arr hidx
+    foot mono inv.
+  apply lockw_to1 in mutex.
+  unfold gobj in obj_p, obj_pab. unfold kHighShadowEnd, img_hull_lo, img_hull_hi in *.
+  pose proof (sa_msz_facts SZ ltac:(lia)) as msz_ok.
   change SEC with 6744600%Z. change GSTAT with 6745224%Z.
-  unfold sa_W4 in MU.
-  change i_sec_nres with 6744648%Z in MU. change i_sec_sorted with 6744664%Z in MU. change i_sec_bylog with 6744704%Z in MU.
-  change i_gstat_alloc with 6745240%Z in MU. change i_sec_mutex with 6745216%Z in MU.
-  hide_disj.
-  zhide.
-  zstep. zstep.
-  replace (6744600 + k ≪ 3)%Z with (6744600 + 8 * k)%Z by (rewrite Z.shiftl_mul_pow2 by lia; lia).
-  destruct (nth_error bl (Z.to_nat k)) as [wb|] eqn:Hwb; [| apply nth_error_None in Hwb; lia].
-  pose proof (u64arr_read ctasegs m1 6744704 bl k wb (Z_to_bv 64 (6744600 + 8 * k + 104)) SJ2 Hwb ltac:(lia)
-                ltac:(unfold wa; f_equal; lia)) as RD.
-  zstep. clear RD.
+  change i_sec_chunks with 6744608%Z in chunks. change i_sec_nres with 6744648%Z in nres_c.
+  change i_sec_sorted with 6744664%Z in sorted. change i_sec_bylog with 6744704%Z in bylog.
+  change i_gstat_alloc with 6745240%Z in gstat. change i_sec_mutex with 6745216%Z in mutex.
+  unfold sa_W4, i_sec_nres, i_sec_sorted, i_sec_bylog, i_gstat_alloc, i_sec_mutex, INST, g_instance in foot.
+  destruct (nth_error bl (Z.to_nat k)) as [cnt|] eqn:cnt_at; [| apply nth_error_None in cnt_at; lia].
+  assert (bylog_rd : ov_read_bytes ctasegs m1 (Z_to_bv 64 (6744600 + Z.shiftl k 3 + 104)%Z) 8 = Some (le8 cnt)).
+  { apply (u64arr_read ctasegs m1 6744704 bl k cnt _ bylog cnt_at); [lia|].
+    rewrite Z.shiftl_mul_pow2 by lia. unfold wa. f_equal. lia. }
+  assert (al_a : amo_aligned AD (Z_to_bv 64 6745240) = true) by (vm_compute; reflexivity).
+  assert (al_m : amo_aligned AD (Z_to_bv 64 6745248) = true) by (vm_compute; reflexivity).
+  zstep. zstep. zstep. clear bylog_rd. zstep. zstep.
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
+    assert (bylog_ok : store_ok ctasegs mc (Z_to_bv 64 (6744600 + Z.shiftl k 3 + 104)%Z) 8 = true)
+      by (apply (u64arr_store_ok ctasegs mc 6744704 bl k _ bylog); [lia|];
+          rewrite Z.shiftl_mul_pow2 by lia; unfold wa; f_equal; lia) end.
   zstep.
-  unfold hide in GA4, GP4.
-  zstep.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-    match goal with SJ2' : u64arr ctasegs mm 6744704 _ |- _ =>
-      pose proof (u64arr_store_ok ctasegs mm 6744704 _ k (Z_to_bv 64 (6744600 + 8 * k + 104)) SJ2' ltac:(lia)
-                    ltac:(unfold wa; f_equal; lia)) as SO;
-      zstep;
-      replace (6744600 + 8 * k + 104)%Z with (6744704 + 8 * k)%Z in * by lia;
-      pose proof (u64arr_write ctasegs mm 6744704 _ k (Z_to_bv 64 (bv_unsigned wb + 1)) SJ2' ltac:(lia)) as SJ2n; clear SJ2' end end.
-  store_done.
-  zstep.
-  assert (AMO1 : amo_aligned AD (Z_to_bv 64 6745240) = true) by (vm_compute; reflexivity).
-  amo_step AMO1.
-  zstep.
-  assert (AMO2 : amo_aligned AD (Z_to_bv 64 6745248) = true) by (vm_compute; reflexivity).
-  amo_step AMO2.
-  zstep.
-  apply lockw_to1 in LW. change i_sec_mutex with 6745216%Z in LW.
-  zstep; fix_lit_store.
-  do 12 zstep.
-  zstep.
-  release_frame FR ST (bv_unsigned sp + 96)%Z.
-  change 6745216%Z with i_sec_mutex in LW. apply lockw_split in LW. destruct LW as [MX PAD].
-  apply evt_done. unfold secalloc_post. do 15 eexists.
-  split; [reflexivity|].
-  split; [exact MU|]. split; [exact WM|]. split; [assumption|].
-  split; [rewrite unsigned_lit by (pose proof (bv_unsigned_in_range 64 sp); unfold bv_modulus in *; cbn [Z.of_N] in *; lia);
-          exact ST|].
-  unfold sa_K4. split; [exact HI|]. split; [exact ARR|]. split; [exact NR|].
-  split; [|split; [exact MX| exact PAD]].
-  unfold sec_junk. split; [do 6 eexists; exact SJ1|]. split; [eexists; split; [| exact SJ2n]; rewrite upd_length; exact Hbl|].
-  do 2 eexists. exact SJ3.
+  replace (Z_to_bv 64 (6744600 + Z.shiftl k 3 + 104)%Z) with (wa (6744704 + 8 * k)%Z) in *
+    by (rewrite Z.shiftl_mul_pow2 by lia; unfold wa; f_equal; lia).
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem ?mc _ _) _) =>
+    pose proof (u64arr_write ctasegs mc 6744704 bl k (Z_to_bv 64 (bv_unsigned cnt + 1)%Z) bylog ltac:(lia)) as bylog' end.
+  clear bylog. store_done.
+  zstep. zstep. zstep. zstep. zstep. zstep.
+  fix_lit_store.
+  do 13 zstep.
+  release_frame frame stack (bv_unsigned sp + 96)%Z.
+  destruct (lockw_split _ _ mutex) as [lock_free pad_ok].
+  apply evt_done. hnf. do 15 eexists. split; [reflexivity|].
+  split; [exact foot|]. split; [exact mono|]. split; [exact inv|].
+  split; [rewrite unsigned_lit by lia; exact stack|].
+  unfold sa_K4, sec_junk.
+  refine (conj hidx (conj arr (conj nres_c (conj _ (conj lock_free pad_ok))))).
+  split; [exists b, jj, w1, w2, w3, a2; exact sorted|].
+  split; [eexists; split; [|exact bylog']; rewrite upd_length; exact bl_len|].
+  eexists _, _; exact gstat.
 Qed.
 
 Lemma sa_p4 : forall (ra t0 t1 t2 a1 a2 a4 a5 a6 a7 s4 s6 s7 t3 t4 t5 t6 sp gp tp s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
@@ -238,46 +231,33 @@ Lemma sa_p4 : forall (ra t0 t1 t2 a1 a2 a4 a5 a6 a7 s4 s6 s7 t3 t4 t5 t6 sp gp t
              s10 s11 t3 t4 t5 t6)
         F (Z_to_bv 64 0x1a0ab8) fc None m (seg_rom ctasegs)).
 Proof.
-  intros until ws. intros HSZ HP Hk GP GA APA Hn FR ST HLOH HLO HSP CH NR SJ LW ARR HI MI.
-  pose proof (sa_msz_facts SZ ltac:(lia)) as [MS1 MS2].
-  pose proof GP as GP0. pose proof GA as GA0. apply box in GP0, GA0.
-  destruct GP as (GP1 & GP2 & GP3 & GP4). destruct GA as (GA1 & GA2 & GA3 & GA4).
-  unfold sapart, img_hull_lo, img_hull_hi, kHighShadowEnd in *.
-  destruct SJ as ((b & jj & w1 & w2 & w3 & w4 & SJ1) & (bl & Hbl & SJ2) & (ga & gm & SJ3)).
-  change i_sec_chunks with 6744608%Z in CH. change i_sec_nres with 6744648%Z in NR. change i_sec_mutex with 6745216%Z in LW.
-  change i_sec_sorted with 6744664%Z in SJ1. change i_sec_bylog with 6744704%Z in SJ2. change i_gstat_alloc with 6745240%Z in SJ3.
+  intros ra t0 t1 t2 a1 a2 a4 a5 a6 a7 s4 s6 s7 t3 t4 t5 t6 sp gp tp s10 s11 F fc
+    rac s0c s1c s2c s3c s4c s5c s6c s7c s8c s9c j m P SZ PAB nres n k lo ws
+    sz_ok p_page k_ok obj_p obj_pab apart n_ok frame stack lo_hi lo_sp sp_top chunks nres_c junk mutex arr hidx inv.
+  destruct junk as ((b & jb & w1 & w2 & w3 & w4 & sorted) & (bl & bl_len & bylog) & (ga & gm & gstat)).
+  pose proof (munch_refl (sa_W4 PAB n P) m) as foot. pose proof (wmono_refl ctasegs m) as mono.
+  pose proof obj_p as geo_p. pose proof obj_pab as geo_pab. pose proof lo_hi as lo_lit.
+  unfold gobj, img_hull_lo, img_hull_hi in geo_p, geo_pab. unfold kHighShadowEnd in lo_lit. unfold sapart in apart.
+  pose proof (sa_msz_facts SZ ltac:(lia)) as msz_ok.
   change SEC with 6744600%Z. change GSTAT with 6745224%Z.
-  pose proof (munch_refl (sa_W4 PAB n P) m) as MU. unfold sa_W4 in MU.
-  change i_sec_nres with 6744648%Z in MU. change i_sec_sorted with 6744664%Z in MU. change i_sec_bylog with 6744704%Z in MU.
-  change i_gstat_alloc with 6745240%Z in MU. change i_sec_mutex with 6745216%Z in MU.
-  pose proof (wmono_refl ctasegs m) as WM.
-  hide_disj.
-  zhide.
+  change i_sec_chunks with 6744608%Z in chunks. change i_sec_nres with 6744648%Z in nres_c.
+  change i_sec_sorted with 6744664%Z in sorted. change i_sec_bylog with 6744704%Z in bylog.
+  change i_gstat_alloc with 6745240%Z in gstat. change i_sec_mutex with 6745216%Z in mutex.
+  unfold sa_W4, i_sec_nres, i_sec_sorted, i_sec_bylog, i_gstat_alloc, i_sec_mutex, INST, g_instance in foot.
+  zstep. zstep. rewrite lxor63_k by lia. zstep. zstep. zstep.
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
+    assert (slot_ok : store_ok ctasegs mc (Z_to_bv 64 (PAB + Z.shiftl n 3)%Z) 8 = true)
+      by (apply (u64arr_store_ok ctasegs mc PAB ws n _ arr); [lia|];
+          rewrite Z.shiftl_mul_pow2 by lia; unfold wa; f_equal; lia) end.
   zstep.
-  zstep.
-  rewrite (lxor63_k k Hk).
-  unfold hide in GP4, APA.
-  zstep.
-  hide_disj.
-  zstep. zstep.
-  replace (PAB + n ≪ 3)%Z with (PAB + 8 * n)%Z by (rewrite Z.shiftl_mul_pow2 by lia; lia).
-  unfold hide in APA, GA4.
-  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-    pose proof (u64arr_store_ok ctasegs mm PAB ws n (Z_to_bv 64 (PAB + 8 * n)) ARR ltac:(lia) ltac:(unfold wa; f_equal; lia)) as SO;
-    zstep;
-    pose proof (u64arr_write ctasegs mm PAB ws n (Z_to_bv 64 P) ARR ltac:(lia)) as ARR'; clear ARR end.
-  store_done.
-  hide_disj.
-  do 6 zstep.
-  unfold hide in GA4, GP4.
-  zstep.
-  zstep; fix_lit_store.
-  zstep. zstep.
-  hide_disj.
-  zstep.
-  apply unbox in GP0, GA0.
-  if_cases C.
-  - eapply sa_p4b; try eassumption.
-  - zstep. eapply sa_p4b; try eassumption.
+  replace (Z_to_bv 64 (PAB + Z.shiftl n 3)%Z) with (wa (PAB + 8 * n)%Z) in *
+    by (rewrite Z.shiftl_mul_pow2 by lia; unfold wa; f_equal; lia).
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem ?mc _ _) _) =>
+    pose proof (u64arr_write ctasegs mc PAB ws n (Z_to_bv 64 P) arr ltac:(lia)) as arr' end.
+  clear arr. store_done.
+  do 7 zstep. zstep. fix_lit_store. zstep. zstep. zstep.
+  if_cases wrap_lt; cbv iota; [| zstep].
+  all: change (Z_to_bv 64 6745224) with (Z_to_bv 64 GSTAT); change (Z_to_bv 64 6744600) with (Z_to_bv 64 SEC).
+  all: eapply sa_p4b; eassumption.
 Qed.
 

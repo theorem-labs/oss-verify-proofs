@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -25,8 +25,8 @@ Section Crt.
 
   #[using="HFREE HLS SW DIMG HND CA_MSF CA_RSA CA_EC"] Lemma U_pk_free_spec2 : pk_free_stmt2 usegs L HI (PKC_inst usegs U_RSA_INFO U_EC_INFOS MT) U_PK_FREE.
   Proof.
-    unfold pk_free_stmt2. intros.
-    eapply (U_pk_free_spec L HI MT HFREE HLS SW DIMG HND CA_MSF CA_RSA CA_EC); eassumption.
+    pose proof (U_pk_free_spec L HI MT HFREE HLS SW DIMG HND CA_MSF CA_RSA CA_EC) as Hc.
+    exact Hc.
   Qed.
 
   End Crt.

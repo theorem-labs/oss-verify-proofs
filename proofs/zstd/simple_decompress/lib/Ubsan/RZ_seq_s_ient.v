@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -88,40 +88,28 @@ Lemma seqs_prologue_frame : forall (m : fmem) A j (s11 s10 s9 s8 s7 s6 s5 s4 s3 
   exists w_c0 w_c8 w_c16 w_c24 w_c32 w_c40 w_c48 w_c56 w_c64 w_c72 w_c80 w_c88 w_c96 w_c104 w_c112 w_c120 w_c128 w_c136 w_c144 w_c152 w_c160 w_c168 w_c176 w_c184 w_c192 w_c200 jpad jseq,
     rw_cells usegs m A [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144; C8 w_c152; C8 w_c160; C8 w_c168; C8 w_c176; C8 w_c184; C8 w_c192; C8 w_c200; CB 24 jseq; CB 104 (le8 s11 ++ le8 s10 ++ le8 s9 ++ le8 s8 ++ le8 s7 ++ le8 s6 ++ le8 s5 ++ le8 s4 ++ le8 s3 ++ le8 s2 ++ le8 s1 ++ le8 s0 ++ le8 ra)].
 Proof.
-  intros m A j s11 s10 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ra FR.
-  change (rw_cells usegs m A ([CB 232 j] ++ [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] ++ [])) in FR.
-  apply rw_cells_merge in FR. cbn [cells_size csize Nat.add cells_bytes cbytes] in FR. rewrite !app_nil_r in FR.
-  change (rw_cells usegs m A ([] ++ CB 232 j :: [CB 104 (le8 s11 ++ le8 s10 ++ le8 s9 ++ le8 s8 ++ le8 s7 ++ le8 s6 ++ le8 s5 ++ le8 s4 ++ le8 s3 ++ le8 s2 ++ le8 s1 ++ le8 s0 ++ le8 ra)])) in FR.
-  apply (rw_cells_split_CB usegs m A [] 232 j _ [8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 4; 4; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 24]%nat) in FR; [|reflexivity].
-  cbn [mk_CB_cells app] in FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [] _ _ FR) as (w_c0 & FR0) end; cbn [app] in FR0; clear FR; rename FR0 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0] _ _ FR) as (w_c8 & FR1) end; cbn [app] in FR1; clear FR; rename FR1 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8] _ _ FR) as (w_c16 & FR2) end; cbn [app] in FR2; clear FR; rename FR2 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16] _ _ FR) as (w_c24 & FR3) end; cbn [app] in FR3; clear FR; rename FR3 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24] _ _ FR) as (w_c32 & FR4) end; cbn [app] in FR4; clear FR; rename FR4 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32] _ _ FR) as (w_c40 & FR5) end; cbn [app] in FR5; clear FR; rename FR5 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40] _ _ FR) as (w_c48 & FR6) end; cbn [app] in FR6; clear FR; rename FR6 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48] _ _ FR) as (w_c56 & FR7) end; cbn [app] in FR7; clear FR; rename FR7 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56] _ _ FR) as (w_c64 & FR8) end; cbn [app] in FR8; clear FR; rename FR8 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64] _ _ FR) as (w_c72 & FR9) end; cbn [app] in FR9; clear FR; rename FR9 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72] _ _ FR) as (w_c80 & FR10) end; cbn [app] in FR10; clear FR; rename FR10 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80] _ _ FR) as (w_c88 & FR11) end; cbn [app] in FR11; clear FR; rename FR11 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb4_as_c4 mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88] _ _ FR) as (w_c96 & FR12) end; cbn [app] in FR12; clear FR; rename FR12 into FR.
-  lazymatch type of FR with rw_cells _ _ _ ?cs => lazymatch cs with context [CB 4 ?jp :: CB 8 _ :: _] => set (jpad := jp) in FR; clearbody jpad end end.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad] _ _ FR) as (w_c104 & FR13) end; cbn [app] in FR13; clear FR; rename FR13 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104] _ _ FR) as (w_c112 & FR14) end; cbn [app] in FR14; clear FR; rename FR14 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112] _ _ FR) as (w_c120 & FR15) end; cbn [app] in FR15; clear FR; rename FR15 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120] _ _ FR) as (w_c128 & FR16) end; cbn [app] in FR16; clear FR; rename FR16 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128] _ _ FR) as (w_c136 & FR17) end; cbn [app] in FR17; clear FR; rename FR17 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136] _ _ FR) as (w_c144 & FR18) end; cbn [app] in FR18; clear FR; rename FR18 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144] _ _ FR) as (w_c152 & FR19) end; cbn [app] in FR19; clear FR; rename FR19 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144; C8 w_c152] _ _ FR) as (w_c160 & FR20) end; cbn [app] in FR20; clear FR; rename FR20 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144; C8 w_c152; C8 w_c160] _ _ FR) as (w_c168 & FR21) end; cbn [app] in FR21; clear FR; rename FR21 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144; C8 w_c152; C8 w_c160; C8 w_c168] _ _ FR) as (w_c176 & FR22) end; cbn [app] in FR22; clear FR; rename FR22 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144; C8 w_c152; C8 w_c160; C8 w_c168; C8 w_c176] _ _ FR) as (w_c184 & FR23) end; cbn [app] in FR23; clear FR; rename FR23 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144; C8 w_c152; C8 w_c160; C8 w_c168; C8 w_c176; C8 w_c184] _ _ FR) as (w_c192 & FR24) end; cbn [app] in FR24; clear FR; rename FR24 into FR.
-  lazymatch type of FR with rw_cells _ ?mm ?AA _ => destruct (cb8_as_c8 usegs mm AA [C8 w_c0; C8 w_c8; C8 w_c16; C8 w_c24; C8 w_c32; C8 w_c40; C8 w_c48; C8 w_c56; C8 w_c64; C8 w_c72; C8 w_c80; C8 w_c88; C4 w_c96; CB 4 jpad; C8 w_c104; C8 w_c112; C8 w_c120; C8 w_c128; C8 w_c136; C8 w_c144; C8 w_c152; C8 w_c160; C8 w_c168; C8 w_c176; C8 w_c184; C8 w_c192] _ _ FR) as (w_c200 & FR25) end; cbn [app] in FR25; clear FR; rename FR25 into FR.
-  do 28 eexists. exact FR.
+  intros m A j s11 s10 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ra Frame.
+  lazymatch type of Frame with
+  | rw_cells _ _ _ (?locals :: ?saved) => pose proof (rw_cells_merge usegs m A [locals] saved [] Frame) as Folded
+  end.
+  cbn [app cells_size csize cells_bytes cbytes Nat.add] in Folded. rewrite app_nil_r in Folded.
+  pose proof (rw_cells_split_CB usegs m A [] 232 j _ (repeat 8 12 ++ [4; 4] ++ repeat 8 13 ++ [24])%nat Folded eq_refl) as Carved.
+  cbn [app repeat mk_CB_cells] in Carved. clear Folded Frame.
+  let rec lead n cs :=
+    lazymatch cs with
+    | CB n _ :: _ => constr:(@nil cell)
+    | ?c :: ?rest => let p := lead n rest in constr:(c :: p)
+    end in
+  lazymatch type of Carved with
+  | rw_cells _ _ _ ?cs => let p := lead 4%nat cs in apply (cb4_as_c4 m A p) in Carved
+  end;
+  destruct Carved as [w96 Carved]; cbn [app] in Carved;
+  repeat lazymatch type of Carved with
+    | rw_cells _ _ _ ?cs =>
+        let p := lead 8%nat cs in
+        apply (cb8_as_c8 usegs m A p) in Carved; destruct Carved as [? Carved]; cbn [app] in Carved
+    end.
+  do 28 eexists. exact Carved.
 Qed.
 
 Ltac seqs_cb8_pre cs :=
@@ -135,15 +123,17 @@ Lemma seqs_prologue_frame384 : forall (m : fmem) A j (s11 s10 s9 s8 s7 s6 s5 s4 
   exists c0 c8 c16 c24 c32 c40 c48 c56 c64 c72 c80 c88 c96 c104 c112 c120 c128 jbd u176 u184 u192 u200 u208 u216 c224 c232 c240 c248 jseq,
     rw_cells usegs m A [C8 c0; C8 c8; C8 c16; C8 c24; C8 c32; C8 c40; C8 c48; C8 c56; C8 c64; C8 c72; C8 c80; C8 c88; C8 c96; C8 c104; C8 c112; C8 c120; C8 c128; CB 40 jbd; C8 u176; C8 u184; C8 u192; C8 u200; C8 u208; C8 u216; C8 c224; C8 c232; C8 c240; C8 c248; CB 24 jseq; CB 104 (le8 s11 ++ le8 s10 ++ le8 s9 ++ le8 s8 ++ le8 s7 ++ le8 s6 ++ le8 s5 ++ le8 s4 ++ le8 s3 ++ le8 s2 ++ le8 s1 ++ le8 s0 ++ le8 ra)].
 Proof.
-  intros m A j s11 s10 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ra FR.
-  change (rw_cells usegs m A ([CB 280 j] ++ [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] ++ [])) in FR.
-  apply rw_cells_merge in FR. cbn [cells_size csize Nat.add cells_bytes cbytes] in FR. rewrite !app_nil_r in FR.
-  change (rw_cells usegs m A ([] ++ CB 280 j :: [CB 104 (le8 s11 ++ le8 s10 ++ le8 s9 ++ le8 s8 ++ le8 s7 ++ le8 s6 ++ le8 s5 ++ le8 s4 ++ le8 s3 ++ le8 s2 ++ le8 s1 ++ le8 s0 ++ le8 ra)])) in FR.
-  apply (rw_cells_split_CB usegs m A [] 280 j _ [8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 40; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 24]%nat) in FR; [|reflexivity].
-  cbn [mk_CB_cells app] in FR.
-  repeat lazymatch type of FR with rw_cells _ ?mm ?AA ?cs =>
-    let pre := seqs_cb8_pre cs in
-    let w := fresh "w" in let FR' := fresh "FR" in
-    destruct (cb8_as_c8 usegs mm AA pre _ _ FR) as (w & FR'); cbn [app] in FR'; clear FR; rename FR' into FR end.
-  do 29 eexists. exact FR.
+  intros m A j s11 s10 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ra Frame.
+  lazymatch type of Frame with
+  | rw_cells _ _ _ (?locals :: ?saved) => pose proof (rw_cells_merge usegs m A [locals] saved [] Frame) as Folded
+  end.
+  cbn [app cells_size csize cells_bytes cbytes Nat.add] in Folded. rewrite app_nil_r in Folded.
+  pose proof (rw_cells_split_CB usegs m A [] 280 j _ (repeat 8 17 ++ [40] ++ repeat 8 10 ++ [24])%nat Folded eq_refl) as Carved.
+  cbn [app repeat mk_CB_cells] in Carved. clear Folded Frame.
+  repeat lazymatch type of Carved with
+    | rw_cells _ _ _ ?cs =>
+        let p := seqs_cb8_pre cs in
+        apply (cb8_as_c8 usegs m A p) in Carved; destruct Carved as [? Carved]; cbn [app] in Carved
+    end.
+  do 29 eexists. exact Carved.
 Qed.

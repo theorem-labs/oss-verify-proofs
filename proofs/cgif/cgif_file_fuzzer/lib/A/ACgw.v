@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 From OssFuzzTheorems.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -178,266 +178,129 @@ af_regs_ret B regs regs1 g -> bv_unsigned (getr regs1 23) mod 2 ^ 32 = v ->
 SRr SEGS Wc (mkCfg (mkst regs1 (Z_to_bv 64 (BASE + AF_RETC)) memc (seg_rom SEGS)) mdc)
 (af_post B ly S W regs mem md g s N img fattr lpa nlp rest EV_ADDFRAME).
 Definition ss_880 (ih : Z) : sstate :=
-(mkSS 2004
-[SLit 0; SOff 1 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 5 0; SOff 6 0; SOff 7 0; SOff 32 88; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 88) (SLit 3)) (SOff 38 0); SLit 6; SOff 46 0; SOff 253 0; SOff 13 0; SOff 14 0; SOff 46 0;
-SOff 16 0; SOff 17 0; SOff 32 0; SOff 19 0; SOff 20 0; SOff 21 0; SOff 38 0; SExt true 32 (SOff 37 0); SOff 24 0; SOff 25 0; SOff 26 0; SOff 27 0; SOff 28 0; SOff 29 0; SOff 30 0; SOff 31 0]
-[{| r_base := Some 2%nat; r_lo := -224; r_hi := -104; r_wlo := -224; r_whi := -104; r_chunks := [] |};
-{|
-r_base := Some 2%nat;
-r_lo := -104;
-r_hi := 0;
-r_wlo := -104;
-r_whi := 0;
-r_chunks :=
-[{| c_off := -104; YP09.c_val := CVal 8 (SOff 27 0) |}; {| c_off := -96; YP09.c_val := CVal 8 (SOff 26 0) |}; {| c_off := -88; YP09.c_val := CVal 8 (SOff 25 0) |}; {| c_off := -80; YP09.c_val := CVal 8 (SOff 24 0) |};
-{| c_off := -72; YP09.c_val := CVal 8 (SOff 23 0) |}; {| c_off := -64; YP09.c_val := CVal 8 (SOff 22 0) |}; {| c_off := -56; YP09.c_val := CVal 8 (SOff 21 0) |}; {| c_off := -48; YP09.c_val := CVal 8 (SOff 20 0) |};
-{| c_off := -40; YP09.c_val := CVal 8 (SOff 19 0) |}; {| c_off := -32; YP09.c_val := CVal 8 (SOff 18 0) |}; {| c_off := -24; YP09.c_val := CVal 8 (SOff 9 0) |}; {| c_off := -16; YP09.c_val := CVal 8 (SOff 8 0) |};
-{| c_off := -8; YP09.c_val := CVal 8 (SOff 1 0) |}]
-|}; {| r_base := Some 241%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 253 0) |}] |};
-{| r_base := Some 253%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 38 0) |}] |};
-{|
-r_base := Some 32%nat;
-r_lo := 0;
-r_hi := 96;
-r_wlo := 88;
-r_whi := 92;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 33 0) |}; {| c_off := 8; YP09.c_val := CVal 8 (SOff 34 0) |}; {| c_off := 16; YP09.c_val := CVal 8 (SOff 35 0) |}; {| c_off := 24; YP09.c_val := CVal 8 (SOff 39 0) |};
-{| c_off := 40; YP09.c_val := CVal 4 (SOff 40 0) |}; {| c_off := 44; YP09.c_val := CVal 4 (SOff 41 0) |}; {| c_off := 48; YP09.c_val := CVal 2 (SOff 42 0) |}; {| c_off := 50; YP09.c_val := CVal 2 (SOff 43 0) |};
-{| c_off := 52; YP09.c_val := CVal 2 (SOff 44 0) |}; {| c_off := 54; YP09.c_val := CVal 2 (SOff 45 0) |}; {| c_off := 56; YP09.c_val := CVal 8 (SLit hw) |}; {| c_off := 64; YP09.c_val := CVal 8 (SLit 0) |};
-{| c_off := 72; YP09.c_val := CVal 8 (SOff 36 0) |}; {| c_off := 80; YP09.c_val := CVal 8 (SLit 0) |}; {| c_off := 88; YP09.c_val := CVal 4 (SOff 37 0) |};
-{| c_off := 92; YP09.c_val := CVal 4 (SLit ih) |}]
-|};
-{|
-r_base := Some 46%nat;
-r_lo := 0;
-r_hi := 32;
-r_wlo := 0;
-r_whi := 0;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 47 0) |}; {| c_off := 8; YP09.c_val := CVal 8 (SOff 48 0) |}; {| c_off := 16; YP09.c_val := CVal 4 (SOff 49 0) |}; {| c_off := 20; YP09.c_val := CVal 4 (SOff 50 0) |};
-{| c_off := 24; YP09.c_val := CVal 2 (SOff 51 0) |}; {| c_off := 26; YP09.c_val := CVal 2 (SOff 52 0) |}; {| c_off := 28; YP09.c_val := CVal 1 (SOff 53 0) |}]
-|}]
+mkSS 0x7d4
+[SLit 0; SOff 1 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 5 0; SOff 6 0; SOff 7 0; SOff 32 88; shq 32 88;
+SLit 6; SOff 46 0; SOff 253 0; SOff 13 0; SOff 14 0; SOff 46 0; SOff 16 0; SOff 17 0; SOff 32 0; SOff 19 0;
+SOff 20 0; SOff 21 0; SOff 38 0; SExt true 32 (SOff 37 0); SOff 24 0; SOff 25 0; SOff 26 0; SOff 27 0; SOff 28 0; SOff 29 0;
+SOff 30 0; SOff 31 0]
+[YP09.mkRegion (Some 2%nat) (-224) (-104) (-224) (-104) [];
+YP09.mkRegion (Some 2%nat) (-104) 0 (-104) 0
+[YP09.mkChunk (-104) (CVal 8 (SOff 27 0)); YP09.mkChunk (-96) (CVal 8 (SOff 26 0)); YP09.mkChunk (-88) (CVal 8 (SOff 25 0));
+YP09.mkChunk (-80) (CVal 8 (SOff 24 0)); YP09.mkChunk (-72) (CVal 8 (SOff 23 0)); YP09.mkChunk (-64) (CVal 8 (SOff 22 0));
+YP09.mkChunk (-56) (CVal 8 (SOff 21 0)); YP09.mkChunk (-48) (CVal 8 (SOff 20 0)); YP09.mkChunk (-40) (CVal 8 (SOff 19 0));
+YP09.mkChunk (-32) (CVal 8 (SOff 18 0)); YP09.mkChunk (-24) (CVal 8 (SOff 9 0)); YP09.mkChunk (-16) (CVal 8 (SOff 8 0));
+YP09.mkChunk (-8) (CVal 8 (SOff 1 0))];
+YP09.mkRegion (Some 241%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 253 0))];
+YP09.mkRegion (Some 253%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 38 0))];
+YP09.mkRegion (Some 32%nat) 0 96 88 92
+[YP09.mkChunk 0 (CVal 8 (SOff 33 0)); YP09.mkChunk 8 (CVal 8 (SOff 34 0)); YP09.mkChunk 16 (CVal 8 (SOff 35 0)); YP09.mkChunk 24 (CVal 8 (SOff 39 0));
+YP09.mkChunk 40 (CVal 4 (SOff 40 0)); YP09.mkChunk 44 (CVal 4 (SOff 41 0)); YP09.mkChunk 48 (CVal 2 (SOff 42 0)); YP09.mkChunk 50 (CVal 2 (SOff 43 0));
+YP09.mkChunk 52 (CVal 2 (SOff 44 0)); YP09.mkChunk 54 (CVal 2 (SOff 45 0)); YP09.mkChunk 56 (CVal 8 (SLit hw)); YP09.mkChunk 64 (CVal 8 (SLit 0));
+YP09.mkChunk 72 (CVal 8 (SOff 36 0)); YP09.mkChunk 80 (CVal 8 (SLit 0)); YP09.mkChunk 88 (CVal 4 (SOff 37 0)); YP09.mkChunk 92 (CVal 4 (SLit ih))];
+YP09.mkRegion (Some 46%nat) 0 32 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 47 0)); YP09.mkChunk 8 (CVal 8 (SOff 48 0)); YP09.mkChunk 16 (CVal 4 (SOff 49 0)); YP09.mkChunk 20 (CVal 4 (SOff 50 0));
+YP09.mkChunk 24 (CVal 2 (SOff 51 0)); YP09.mkChunk 26 (CVal 2 (SOff 52 0)); YP09.mkChunk 28 (CVal 1 (SOff 53 0))]]
 None
-{|
-f_atoms :=
-[(2%nat, {| af_lo := 70368744177664; af_hi := 140737488355328; af_al2 := 4 |}); (32%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 4 |}); (38%nat, {| af_lo := 2147450880; af_hi := 2147450880; af_al2 := 0 |});
-(46%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 3 |})];
-f_conds := [];
-f_alias := []
-|}).
+(mkFacts [(2%nat, mkAF (2 ^ 46) (2 ^ 47) 4); (32%nat, mkAF 4096 0x7fffff800000 4);
+(38%nat, mkAF SB SB 0); (46%nat, mkAF 4096 0x7fffff800000 3)] [] []).
 Definition af_sites (B : asyms) : list (list Z) :=
-[[pc_free_ra0 (as_code B); BASE + 0x10a0]; [pc_free_ra0 (as_code B); BASE + 0x10f0]; [pc_free_ra0 (as_code B); BASE + 0x10f8];
-[pc_malloc_ra0 (as_code B); BASE + 0xc2c]; [pc_malloc_ra0 (as_code B); BASE + 0xdd8]; [pc_malloc_ra0 (as_code B); BASE + 0xe58];
-[pc_free_ra0 (as_code B); BASE + 0x2ad0]; [pc_free_ra0 (as_code B); BASE + 0x2b08]; [pc_free_ra0 (as_code B); BASE + 0xbbc]].
+[[pc_malloc_ra0 (as_code B); BASE + 0xc2c]; [pc_malloc_ra0 (as_code B); BASE + 0xdd8]; [pc_malloc_ra0 (as_code B); BASE + 0xe58];
+[pc_free_ra0 (as_code B); BASE + 0xbbc]; [pc_free_ra0 (as_code B); BASE + 0x2ad0]; [pc_free_ra0 (as_code B); BASE + 0x2b08];
+[pc_free_ra0 (as_code B); BASE + 0x10a0]; [pc_free_ra0 (as_code B); BASE + 0x10f0]; [pc_free_ra0 (as_code B); BASE + 0x10f8]].
 Definition ss_OK (ih : Z) : sstate :=
-(mkSS 2224
-[SLit 0; SOff 1 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 32 40; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 40) (SLit 3)) (SOff 38 0); SOff 7 0; SOff 32 88; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 88) (SLit 3)) (SOff 38 0); SOff 46 16; SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 4); SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 1); SOff 67 0; SAlu ALU_AND (SExt false 32 (SOff 40 0)) (SLit 4); SOff 46 0; SExt false 32 (SOff 40 0); SAlu ALU_ADD (SAlu ALU_SRL (SOff 46 16) (SLit 3)) (SOff 38 0); SOff 32 0; SOff 19 0; SOff 20 0; SOff 21 0; SOff 38 0; SExt true 32 (SOff 37 0); SOff 24 0; SOff 25 0; SOff 26 0; SOff 27 0; SOff 28 0; SOff 29 0; SOff 30 0; SOff 31 0]
-[{|
-r_base := Some 2%nat;
-r_lo := -224;
-r_hi := -104;
-r_wlo := -224;
-r_whi := -104;
-r_chunks := []
-|};
-{|
-r_base := Some 2%nat;
-r_lo := -104;
-r_hi := 0;
-r_wlo := -104;
-r_whi := 0;
-r_chunks :=
-[{| c_off := -104; YP09.c_val := CVal 8 (SOff 27 0) |};
-{| c_off := -96; YP09.c_val := CVal 8 (SOff 26 0) |};
-{| c_off := -88; YP09.c_val := CVal 8 (SOff 25 0) |};
-{| c_off := -80; YP09.c_val := CVal 8 (SOff 24 0) |};
-{| c_off := -72; YP09.c_val := CVal 8 (SOff 23 0) |};
-{| c_off := -64; YP09.c_val := CVal 8 (SOff 22 0) |};
-{| c_off := -56; YP09.c_val := CVal 8 (SOff 21 0) |};
-{| c_off := -48; YP09.c_val := CVal 8 (SOff 20 0) |};
-{| c_off := -40; YP09.c_val := CVal 8 (SOff 19 0) |};
-{| c_off := -32; YP09.c_val := CVal 8 (SOff 18 0) |};
-{| c_off := -24; YP09.c_val := CVal 8 (SOff 9 0) |};
-{| c_off := -16; YP09.c_val := CVal 8 (SOff 8 0) |};
-{| c_off := -8; YP09.c_val := CVal 8 (SOff 1 0) |}]
-|};
-{| r_base := Some 241%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 253 0) |}] |};
-{| r_base := Some 253%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 38 0) |}] |};
-{|
-r_base := Some 32%nat;
-r_lo := 0;
-r_hi := 96;
-r_wlo := 88;
-r_whi := 92;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 33 0) |};
-{| c_off := 8; YP09.c_val := CVal 8 (SOff 34 0) |};
-{| c_off := 16; YP09.c_val := CVal 8 (SOff 35 0) |};
-{| c_off := 24; YP09.c_val := CVal 8 (SOff 39 0) |};
-{| c_off := 40; YP09.c_val := CVal 4 (SOff 40 0) |};
-{| c_off := 44; YP09.c_val := CVal 4 (SOff 41 0) |};
-{| c_off := 48; YP09.c_val := CVal 2 (SOff 42 0) |};
-{| c_off := 50; YP09.c_val := CVal 2 (SOff 43 0) |};
-{| c_off := 52; YP09.c_val := CVal 2 (SOff 44 0) |};
-{| c_off := 54; YP09.c_val := CVal 2 (SOff 45 0) |};
-{| c_off := 56; YP09.c_val := CVal 8 (SLit hw) |};
-{| c_off := 64; YP09.c_val := CVal 8 (SLit 0) |};
-{| c_off := 72; YP09.c_val := CVal 8 (SOff 36 0) |};
-{| c_off := 80; YP09.c_val := CVal 8 (SLit 0) |};
-{| c_off := 88; YP09.c_val := CVal 4 (SOff 37 0) |};
-{|
-c_off := 92;
-YP09.c_val :=
-CVal 4
-(SLit
-ih)
-|}]
-|};
-{|
-r_base := Some 46%nat;
-r_lo := 0;
-r_hi := 32;
-r_wlo := 0;
-r_whi := 0;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 47 0) |};
-{| c_off := 8; YP09.c_val := CVal 8 (SOff 48 0) |};
-{| c_off := 16; YP09.c_val := CVal 4 (SOff 49 0) |};
-{| c_off := 20; YP09.c_val := CVal 4 (SOff 50 0) |};
-{| c_off := 24; YP09.c_val := CVal 2 (SOff 51 0) |};
-{| c_off := 26; YP09.c_val := CVal 2 (SOff 52 0) |};
-{| c_off := 28; YP09.c_val := CVal 1 (SOff 53 0) |}]
-|}]
+mkSS AF_OK
+[SLit 0; SOff 1 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 32 40; shq 32 40; SOff 7 0; SOff 32 88; shq 32 88;
+SOff 46 16; SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 4); SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 1); SOff 67 0; SAlu ALU_AND (SExt false 32 (SOff 40 0)) (SLit 4); SOff 46 0; SExt false 32 (SOff 40 0); shq 46 16; SOff 32 0; SOff 19 0;
+SOff 20 0; SOff 21 0; SOff 38 0; SExt true 32 (SOff 37 0); SOff 24 0; SOff 25 0; SOff 26 0; SOff 27 0; SOff 28 0; SOff 29 0;
+SOff 30 0; SOff 31 0]
+[YP09.mkRegion (Some 2%nat) (-224) (-104) (-224) (-104) [];
+YP09.mkRegion (Some 2%nat) (-104) 0 (-104) 0
+[YP09.mkChunk (-104) (CVal 8 (SOff 27 0)); YP09.mkChunk (-96) (CVal 8 (SOff 26 0)); YP09.mkChunk (-88) (CVal 8 (SOff 25 0));
+YP09.mkChunk (-80) (CVal 8 (SOff 24 0)); YP09.mkChunk (-72) (CVal 8 (SOff 23 0)); YP09.mkChunk (-64) (CVal 8 (SOff 22 0));
+YP09.mkChunk (-56) (CVal 8 (SOff 21 0)); YP09.mkChunk (-48) (CVal 8 (SOff 20 0)); YP09.mkChunk (-40) (CVal 8 (SOff 19 0));
+YP09.mkChunk (-32) (CVal 8 (SOff 18 0)); YP09.mkChunk (-24) (CVal 8 (SOff 9 0)); YP09.mkChunk (-16) (CVal 8 (SOff 8 0));
+YP09.mkChunk (-8) (CVal 8 (SOff 1 0))];
+YP09.mkRegion (Some 241%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 253 0))];
+YP09.mkRegion (Some 253%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 38 0))];
+YP09.mkRegion (Some 32%nat) 0 96 88 92
+[YP09.mkChunk 0 (CVal 8 (SOff 33 0)); YP09.mkChunk 8 (CVal 8 (SOff 34 0)); YP09.mkChunk 16 (CVal 8 (SOff 35 0)); YP09.mkChunk 24 (CVal 8 (SOff 39 0));
+YP09.mkChunk 40 (CVal 4 (SOff 40 0)); YP09.mkChunk 44 (CVal 4 (SOff 41 0)); YP09.mkChunk 48 (CVal 2 (SOff 42 0)); YP09.mkChunk 50 (CVal 2 (SOff 43 0));
+YP09.mkChunk 52 (CVal 2 (SOff 44 0)); YP09.mkChunk 54 (CVal 2 (SOff 45 0)); YP09.mkChunk 56 (CVal 8 (SLit hw)); YP09.mkChunk 64 (CVal 8 (SLit 0));
+YP09.mkChunk 72 (CVal 8 (SOff 36 0)); YP09.mkChunk 80 (CVal 8 (SLit 0)); YP09.mkChunk 88 (CVal 4 (SOff 37 0)); YP09.mkChunk 92 (CVal 4 (SLit ih))];
+YP09.mkRegion (Some 46%nat) 0 32 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 47 0)); YP09.mkChunk 8 (CVal 8 (SOff 48 0)); YP09.mkChunk 16 (CVal 4 (SOff 49 0)); YP09.mkChunk 20 (CVal 4 (SOff 50 0));
+YP09.mkChunk 24 (CVal 2 (SOff 51 0)); YP09.mkChunk 26 (CVal 2 (SOff 52 0)); YP09.mkChunk 28 (CVal 1 (SOff 53 0))]]
 None
-{|
-f_atoms :=
-[(2%nat,
-{| af_lo := 70368744177664; af_hi := 140737488355328; af_al2 := 4 |});
-(32%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 4 |});
-(38%nat, {| af_lo := 2147450880; af_hi := 2147450880; af_al2 := 0 |});
-(46%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 3 |})];
-f_conds := [];
-f_alias := []
-|}).
+(mkFacts [(2%nat, mkAF (2 ^ 46) (2 ^ 47) 4); (32%nat, mkAF 4096 0x7fffff800000 4);
+(38%nat, mkAF SB SB 0); (46%nat, mkAF 4096 0x7fffff800000 3)] [] []).
 Definition ss_B (ih ho : Z) (hd : nat) : sstate :=
-(mkSS 2328
-[SLit 0; SOff 1 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 32 40; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 40) (SLit 3)) (SOff 38 0); SOff 7 0; SOff 32 88; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 88) (SLit 3)) (SOff 38 0); SOff 46 24;
-SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 4); SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 1); SOff hd 0; SOff 512 0; SOff 46 0; SExt false 32 (SOff 40 0); SAlu ALU_ADD (SAlu ALU_SRL (SOff 46 16) (SLit 3)) (SOff 38 0);
-SOff 32 0; SOff 19 0; SOff 20 0; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 ho) (SLit 3)) (SOff 38 0); SOff 38 0; SOff 32 ho; SLit ih; SOff 25 0; SOff 26 0; SOff 27 0; SOff 28 0; SOff 29 0; SOff 30 0; SOff 31 0]
-[{|
-r_base := Some 2%nat;
-r_lo := -224;
-r_hi := -104;
-r_wlo := -224;
-r_whi := -104;
-r_chunks :=
-[{| c_off := -112; YP09.c_val := CVal 8 (SOff hd 0) |}; {| c_off := -120; YP09.c_val := CVal 8 (SOff 46 0) |}; {| c_off := -128; YP09.c_val := CVal 8 (SOff 46 24) |}; {| c_off := -152; YP09.c_val := CVal 8 (SLit ho) |};
-{| c_off := -184; YP09.c_val := CVal 8 (SOff 32 92) |}; {| c_off := -192; YP09.c_val := CVal 8 (SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 92) (SLit 3)) (SOff 38 0)) |}; {| c_off := -160; YP09.c_val := CVal 8 (SOff 67 0) |};
-{| c_off := -136; YP09.c_val := CVal 8 (SOff 46 16) |}; {| c_off := -144; YP09.c_val := CVal 8 (SAlu ALU_ADD (SAlu ALU_SRL (SOff 46 16) (SLit 3)) (SOff 38 0)) |}; {| c_off := -168; YP09.c_val := CVal 8 (SOff 32 40) |};
-{| c_off := -176; YP09.c_val := CVal 8 (SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 40) (SLit 3)) (SOff 38 0)) |}]
-|};
-{|
-r_base := Some 2%nat;
-r_lo := -104;
-r_hi := 0;
-r_wlo := -104;
-r_whi := 0;
-r_chunks :=
-[{| c_off := -104; YP09.c_val := CVal 8 (SOff 27 0) |}; {| c_off := -96; YP09.c_val := CVal 8 (SOff 26 0) |}; {| c_off := -88; YP09.c_val := CVal 8 (SOff 25 0) |}; {| c_off := -80; YP09.c_val := CVal 8 (SOff 24 0) |};
-{| c_off := -72; YP09.c_val := CVal 8 (SOff 23 0) |}; {| c_off := -64; YP09.c_val := CVal 8 (SOff 22 0) |}; {| c_off := -56; YP09.c_val := CVal 8 (SOff 21 0) |}; {| c_off := -48; YP09.c_val := CVal 8 (SOff 20 0) |};
-{| c_off := -40; YP09.c_val := CVal 8 (SOff 19 0) |}; {| c_off := -32; YP09.c_val := CVal 8 (SOff 18 0) |}; {| c_off := -24; YP09.c_val := CVal 8 (SOff 9 0) |}; {| c_off := -16; YP09.c_val := CVal 8 (SOff 8 0) |};
-{| c_off := -8; YP09.c_val := CVal 8 (SOff 1 0) |}]
-|}; {| r_base := Some 241%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 253 0) |}] |};
-{| r_base := Some 253%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 38 0) |}] |};
-{|
-r_base := Some 32%nat;
-r_lo := 0;
-r_hi := 96;
-r_wlo := 88;
-r_whi := 92;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 33 0) |}; {| c_off := 8; YP09.c_val := CVal 8 (SOff 34 0) |}; {| c_off := 16; YP09.c_val := CVal 8 (SOff 35 0) |}; {| c_off := 24; YP09.c_val := CVal 8 (SOff 39 0) |};
-{| c_off := 40; YP09.c_val := CVal 4 (SOff 40 0) |}; {| c_off := 44; YP09.c_val := CVal 4 (SOff 41 0) |}; {| c_off := 48; YP09.c_val := CVal 2 (SOff 42 0) |}; {| c_off := 50; YP09.c_val := CVal 2 (SOff 43 0) |};
-{| c_off := 52; YP09.c_val := CVal 2 (SOff 44 0) |}; {| c_off := 54; YP09.c_val := CVal 2 (SOff 45 0) |}; {| c_off := 56; YP09.c_val := CVal 8 (SLit hw) |}; {| c_off := 64; YP09.c_val := CVal 8 (SLit 0) |};
-{| c_off := 72; YP09.c_val := CVal 8 (SOff 36 0) |}; {| c_off := 80; YP09.c_val := CVal 8 (SLit 0) |}; {| c_off := 88; YP09.c_val := CVal 4 (SOff 37 0) |}; {| c_off := 92; YP09.c_val := CVal 4 (SLit ih) |}]
-|};
-{|
-r_base := Some 46%nat;
-r_lo := 0;
-r_hi := 32;
-r_wlo := 0;
-r_whi := 0;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 47 0) |}; {| c_off := 8; YP09.c_val := CVal 8 (SOff 48 0) |}; {| c_off := 16; YP09.c_val := CVal 4 (SOff 49 0) |}; {| c_off := 20; YP09.c_val := CVal 4 (SOff 50 0) |};
-{| c_off := 24; YP09.c_val := CVal 2 (SOff 51 0) |}; {| c_off := 26; YP09.c_val := CVal 2 (SOff 52 0) |}; {| c_off := 28; YP09.c_val := CVal 1 (SOff 53 0) |}]
-|}]
+mkSS AF_B
+[SLit 0; SOff 1 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 32 40; shq 32 40; SOff 7 0; SOff 32 88; shq 32 88;
+SOff 46 24; SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 4); SAlu ALU_AND (SExt false 32 (SOff 49 0)) (SLit 1); SOff hd 0; SOff 512 0; SOff 46 0; SExt false 32 (SOff 40 0); shq 46 16; SOff 32 0; SOff 19 0;
+SOff 20 0; shq 32 ho; SOff 38 0; SOff 32 ho; SLit ih; SOff 25 0; SOff 26 0; SOff 27 0; SOff 28 0; SOff 29 0;
+SOff 30 0; SOff 31 0]
+[YP09.mkRegion (Some 2%nat) (-224) (-104) (-224) (-104)
+[YP09.mkChunk (-192) (CVal 8 (shq 32 92)); YP09.mkChunk (-184) (CVal 8 (SOff 32 92)); YP09.mkChunk (-176) (CVal 8 (shq 32 40));
+YP09.mkChunk (-168) (CVal 8 (SOff 32 40)); YP09.mkChunk (-160) (CVal 8 (SOff 67 0)); YP09.mkChunk (-152) (CVal 8 (SLit ho));
+YP09.mkChunk (-144) (CVal 8 (shq 46 16)); YP09.mkChunk (-136) (CVal 8 (SOff 46 16)); YP09.mkChunk (-128) (CVal 8 (SOff 46 24));
+YP09.mkChunk (-120) (CVal 8 (SOff 46 0)); YP09.mkChunk (-112) (CVal 8 (SOff hd 0))];
+YP09.mkRegion (Some 2%nat) (-104) 0 (-104) 0
+[YP09.mkChunk (-104) (CVal 8 (SOff 27 0)); YP09.mkChunk (-96) (CVal 8 (SOff 26 0)); YP09.mkChunk (-88) (CVal 8 (SOff 25 0));
+YP09.mkChunk (-80) (CVal 8 (SOff 24 0)); YP09.mkChunk (-72) (CVal 8 (SOff 23 0)); YP09.mkChunk (-64) (CVal 8 (SOff 22 0));
+YP09.mkChunk (-56) (CVal 8 (SOff 21 0)); YP09.mkChunk (-48) (CVal 8 (SOff 20 0)); YP09.mkChunk (-40) (CVal 8 (SOff 19 0));
+YP09.mkChunk (-32) (CVal 8 (SOff 18 0)); YP09.mkChunk (-24) (CVal 8 (SOff 9 0)); YP09.mkChunk (-16) (CVal 8 (SOff 8 0));
+YP09.mkChunk (-8) (CVal 8 (SOff 1 0))];
+YP09.mkRegion (Some 241%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 253 0))];
+YP09.mkRegion (Some 253%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 38 0))];
+YP09.mkRegion (Some 32%nat) 0 96 88 92
+[YP09.mkChunk 0 (CVal 8 (SOff 33 0)); YP09.mkChunk 8 (CVal 8 (SOff 34 0)); YP09.mkChunk 16 (CVal 8 (SOff 35 0)); YP09.mkChunk 24 (CVal 8 (SOff 39 0));
+YP09.mkChunk 40 (CVal 4 (SOff 40 0)); YP09.mkChunk 44 (CVal 4 (SOff 41 0)); YP09.mkChunk 48 (CVal 2 (SOff 42 0)); YP09.mkChunk 50 (CVal 2 (SOff 43 0));
+YP09.mkChunk 52 (CVal 2 (SOff 44 0)); YP09.mkChunk 54 (CVal 2 (SOff 45 0)); YP09.mkChunk 56 (CVal 8 (SLit hw)); YP09.mkChunk 64 (CVal 8 (SLit 0));
+YP09.mkChunk 72 (CVal 8 (SOff 36 0)); YP09.mkChunk 80 (CVal 8 (SLit 0)); YP09.mkChunk 88 (CVal 4 (SOff 37 0)); YP09.mkChunk 92 (CVal 4 (SLit ih))];
+YP09.mkRegion (Some 46%nat) 0 32 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 47 0)); YP09.mkChunk 8 (CVal 8 (SOff 48 0)); YP09.mkChunk 16 (CVal 4 (SOff 49 0)); YP09.mkChunk 20 (CVal 4 (SOff 50 0));
+YP09.mkChunk 24 (CVal 2 (SOff 51 0)); YP09.mkChunk 26 (CVal 2 (SOff 52 0)); YP09.mkChunk 28 (CVal 1 (SOff 53 0))]]
 None
-{|
-f_atoms :=
-[(2%nat, {| af_lo := 70368744177664; af_hi := 140737488355328; af_al2 := 4 |}); (32%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 4 |}); (38%nat, {| af_lo := 2147450880; af_hi := 2147450880; af_al2 := 0 |});
-(46%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 3 |})];
-f_conds := [];
-f_alias := []
-|}).
+(mkFacts [(2%nat, mkAF (2 ^ 46) (2 ^ 47) 4); (32%nat, mkAF 4096 0x7fffff800000 4);
+(38%nat, mkAF SB SB 0); (46%nat, mkAF 4096 0x7fffff800000 3)] [] []).
 Definition ss_C (ih ho : Z) (hd : nat) : sstate :=
-(mkSS 2864
-[SLit 0; SOff 644 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 645 0; SOff 646 0; SOff 647 0; SOff 32 88; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 88) (SLit 3)) (SOff 38 0); SOff 648 0; SOff 649 0; SOff 650 0; SOff 651 0; SOff 652 0; SOff 653 0; SOff 654 0; SOff 655 0; SOff 32 0; SOff 656 0; SOff 657 0; SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 ho) (SLit 3)) (SOff 38 0); SOff 38 0; SOff 32 ho; SLit ih; SOff 658 0; SOff 659 0; SOff 660 0; SOff 661 0; SOff 662 0; SOff 663 0; SOff 664 0]
-[{|
-r_base := Some 2%nat;
-r_lo := -224;
-r_hi := -104;
-r_wlo := -224;
-r_whi := -104;
-r_chunks :=
-[{| c_off := -112; YP09.c_val := CVal 8 (SOff hd 0) |}; {| c_off := -120; YP09.c_val := CVal 8 (SOff 46 0) |}; {| c_off := -128; YP09.c_val := CVal 8 (SOff 46 24) |}; {| c_off := -152; YP09.c_val := CVal 8 (SLit ho) |};
-{| c_off := -184; YP09.c_val := CVal 8 (SOff 32 92) |}; {| c_off := -192; YP09.c_val := CVal 8 (SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 92) (SLit 3)) (SOff 38 0)) |}; {| c_off := -160; YP09.c_val := CVal 8 (SOff 67 0) |};
-{| c_off := -136; YP09.c_val := CVal 8 (SOff 46 16) |}; {| c_off := -144; YP09.c_val := CVal 8 (SAlu ALU_ADD (SAlu ALU_SRL (SOff 46 16) (SLit 3)) (SOff 38 0)) |}; {| c_off := -168; YP09.c_val := CVal 8 (SOff 32 40) |};
-{| c_off := -176; YP09.c_val := CVal 8 (SAlu ALU_ADD (SAlu ALU_SRL (SOff 32 40) (SLit 3)) (SOff 38 0)) |}]
-|};
-{|
-r_base := Some 2%nat;
-r_lo := -104;
-r_hi := 0;
-r_wlo := -104;
-r_whi := 0;
-r_chunks :=
-[{| c_off := -104; YP09.c_val := CVal 8 (SOff 27 0) |}; {| c_off := -96; YP09.c_val := CVal 8 (SOff 26 0) |}; {| c_off := -88; YP09.c_val := CVal 8 (SOff 25 0) |}; {| c_off := -80; YP09.c_val := CVal 8 (SOff 24 0) |};
-{| c_off := -72; YP09.c_val := CVal 8 (SOff 23 0) |}; {| c_off := -64; YP09.c_val := CVal 8 (SOff 22 0) |}; {| c_off := -56; YP09.c_val := CVal 8 (SOff 21 0) |}; {| c_off := -48; YP09.c_val := CVal 8 (SOff 20 0) |};
-{| c_off := -40; YP09.c_val := CVal 8 (SOff 19 0) |}; {| c_off := -32; YP09.c_val := CVal 8 (SOff 18 0) |}; {| c_off := -24; YP09.c_val := CVal 8 (SOff 9 0) |}; {| c_off := -16; YP09.c_val := CVal 8 (SOff 8 0) |};
-{| c_off := -8; YP09.c_val := CVal 8 (SOff 1 0) |}]
-|}; {| r_base := Some 241%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 253 0) |}] |};
-{| r_base := Some 253%nat; r_lo := 0; r_hi := 8; r_wlo := 0; r_whi := 0; r_chunks := [{| c_off := 0; YP09.c_val := CVal 8 (SOff 38 0) |}] |};
-{|
-r_base := Some 32%nat;
-r_lo := 0;
-r_hi := 96;
-r_wlo := 88;
-r_whi := 92;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 33 0) |}; {| c_off := 8; YP09.c_val := CVal 8 (SOff 34 0) |}; {| c_off := 16; YP09.c_val := CVal 8 (SOff 35 0) |}; {| c_off := 24; YP09.c_val := CVal 8 (SOff 39 0) |};
-{| c_off := 40; YP09.c_val := CVal 4 (SOff 40 0) |}; {| c_off := 44; YP09.c_val := CVal 4 (SOff 41 0) |}; {| c_off := 48; YP09.c_val := CVal 2 (SOff 42 0) |}; {| c_off := 50; YP09.c_val := CVal 2 (SOff 43 0) |};
-{| c_off := 52; YP09.c_val := CVal 2 (SOff 44 0) |}; {| c_off := 54; YP09.c_val := CVal 2 (SOff 45 0) |}; {| c_off := 56; YP09.c_val := CVal 8 (SLit hw) |}; {| c_off := 64; YP09.c_val := CVal 8 (SLit 0) |};
-{| c_off := 72; YP09.c_val := CVal 8 (SOff 36 0) |}; {| c_off := 80; YP09.c_val := CVal 8 (SLit 0) |}; {| c_off := 88; YP09.c_val := CVal 4 (SOff 37 0) |}; {| c_off := 92; YP09.c_val := CVal 4 (SLit ih) |}]
-|};
-{|
-r_base := Some 46%nat;
-r_lo := 0;
-r_hi := 32;
-r_wlo := 0;
-r_whi := 0;
-r_chunks :=
-[{| c_off := 0; YP09.c_val := CVal 8 (SOff 47 0) |}; {| c_off := 8; YP09.c_val := CVal 8 (SOff 48 0) |}; {| c_off := 16; YP09.c_val := CVal 4 (SOff 49 0) |}; {| c_off := 20; YP09.c_val := CVal 4 (SOff 50 0) |};
-{| c_off := 24; YP09.c_val := CVal 2 (SOff 51 0) |}; {| c_off := 26; YP09.c_val := CVal 2 (SOff 52 0) |}; {| c_off := 28; YP09.c_val := CVal 1 (SOff 53 0) |}]
-|}]
+mkSS AF_C
+[SLit 0; SOff 644 0; SOff 2 (-224); SOff 3 0; SOff 4 0; SOff 645 0; SOff 646 0; SOff 647 0; SOff 32 88; shq 32 88;
+SOff 648 0; SOff 649 0; SOff 650 0; SOff 651 0; SOff 652 0; SOff 653 0; SOff 654 0; SOff 655 0; SOff 32 0; SOff 656 0;
+SOff 657 0; shq 32 ho; SOff 38 0; SOff 32 ho; SLit ih; SOff 658 0; SOff 659 0; SOff 660 0; SOff 661 0; SOff 662 0;
+SOff 663 0; SOff 664 0]
+[YP09.mkRegion (Some 2%nat) (-224) (-104) (-224) (-104)
+[YP09.mkChunk (-192) (CVal 8 (shq 32 92)); YP09.mkChunk (-184) (CVal 8 (SOff 32 92)); YP09.mkChunk (-176) (CVal 8 (shq 32 40));
+YP09.mkChunk (-168) (CVal 8 (SOff 32 40)); YP09.mkChunk (-160) (CVal 8 (SOff 67 0)); YP09.mkChunk (-152) (CVal 8 (SLit ho));
+YP09.mkChunk (-144) (CVal 8 (shq 46 16)); YP09.mkChunk (-136) (CVal 8 (SOff 46 16)); YP09.mkChunk (-128) (CVal 8 (SOff 46 24));
+YP09.mkChunk (-120) (CVal 8 (SOff 46 0)); YP09.mkChunk (-112) (CVal 8 (SOff hd 0))];
+YP09.mkRegion (Some 2%nat) (-104) 0 (-104) 0
+[YP09.mkChunk (-104) (CVal 8 (SOff 27 0)); YP09.mkChunk (-96) (CVal 8 (SOff 26 0)); YP09.mkChunk (-88) (CVal 8 (SOff 25 0));
+YP09.mkChunk (-80) (CVal 8 (SOff 24 0)); YP09.mkChunk (-72) (CVal 8 (SOff 23 0)); YP09.mkChunk (-64) (CVal 8 (SOff 22 0));
+YP09.mkChunk (-56) (CVal 8 (SOff 21 0)); YP09.mkChunk (-48) (CVal 8 (SOff 20 0)); YP09.mkChunk (-40) (CVal 8 (SOff 19 0));
+YP09.mkChunk (-32) (CVal 8 (SOff 18 0)); YP09.mkChunk (-24) (CVal 8 (SOff 9 0)); YP09.mkChunk (-16) (CVal 8 (SOff 8 0));
+YP09.mkChunk (-8) (CVal 8 (SOff 1 0))];
+YP09.mkRegion (Some 241%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 253 0))];
+YP09.mkRegion (Some 253%nat) 0 8 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 38 0))];
+YP09.mkRegion (Some 32%nat) 0 96 88 92
+[YP09.mkChunk 0 (CVal 8 (SOff 33 0)); YP09.mkChunk 8 (CVal 8 (SOff 34 0)); YP09.mkChunk 16 (CVal 8 (SOff 35 0)); YP09.mkChunk 24 (CVal 8 (SOff 39 0));
+YP09.mkChunk 40 (CVal 4 (SOff 40 0)); YP09.mkChunk 44 (CVal 4 (SOff 41 0)); YP09.mkChunk 48 (CVal 2 (SOff 42 0)); YP09.mkChunk 50 (CVal 2 (SOff 43 0));
+YP09.mkChunk 52 (CVal 2 (SOff 44 0)); YP09.mkChunk 54 (CVal 2 (SOff 45 0)); YP09.mkChunk 56 (CVal 8 (SLit hw)); YP09.mkChunk 64 (CVal 8 (SLit 0));
+YP09.mkChunk 72 (CVal 8 (SOff 36 0)); YP09.mkChunk 80 (CVal 8 (SLit 0)); YP09.mkChunk 88 (CVal 4 (SOff 37 0)); YP09.mkChunk 92 (CVal 4 (SLit ih))];
+YP09.mkRegion (Some 46%nat) 0 32 0 0
+[YP09.mkChunk 0 (CVal 8 (SOff 47 0)); YP09.mkChunk 8 (CVal 8 (SOff 48 0)); YP09.mkChunk 16 (CVal 4 (SOff 49 0)); YP09.mkChunk 20 (CVal 4 (SOff 50 0));
+YP09.mkChunk 24 (CVal 2 (SOff 51 0)); YP09.mkChunk 26 (CVal 2 (SOff 52 0)); YP09.mkChunk 28 (CVal 1 (SOff 53 0))]]
 None
-{|
-f_atoms :=
-[(2%nat, {| af_lo := 70368744177664; af_hi := 140737488355328; af_al2 := 4 |}); (32%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 4 |}); (38%nat, {| af_lo := 2147450880; af_hi := 2147450880; af_al2 := 0 |});
-(46%nat, {| af_lo := 4096; af_hi := 140737479966720; af_al2 := 3 |})];
-f_conds := [];
-f_alias := []
-|}).
+(mkFacts [(2%nat, mkAF (2 ^ 46) (2 ^ 47) 4); (32%nat, mkAF 4096 0x7fffff800000 4);
+(38%nat, mkAF SB SB 0); (46%nat, mkAF 4096 0x7fffff800000 3)] [] []).
 Definition af_deads_C : list (bv 5) := [1; 5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 19; 20; 25; 26; 27; 28; 29; 30; 31]%bv.
 Definition af_pre (B : asyms) ly S W (regs : bvmap 5 word) mem md (g cfp : Z) (s : cgif_st) (N fattr : Z) (E : env) (ms1 : machine_state) md1 : Prop :=
 ajournal SEGS B TADDFRAME_STK (spZ regs) (FPa g s N) ly S W mem md [] ly S W (ms_mem ms1) md1 0 /\
@@ -475,30 +338,33 @@ st_ok_pi SEGS VAL E (ss_OK (cg_ihead s)) (restrict (w_H W) ms1) ->
 sh_ok SEGS Bxa af_SH E (mrestrict (w_H W) (ms_mem ms1)) ->
 SRr SEGS W (mkCfg ms1 md1) (af_post B ly S W regs mem md g s N img fattr lpa nlp rest EV_ADDFRAME).
 Definition af_locs (m : word -> option byte) (sp0 g cfp a4v : Z) : Prop :=
-val_mem SEGS m (sp0 - 224 + 104) 8 cfp /\ val_mem SEGS m (sp0 - 224 + 96) 8 (cfp + 24) /\
-val_mem SEGS m (sp0 - 224 + 88) 8 (cfp + 16) /\ val_mem SEGS m (sp0 - 224 + 56) 8 (g + 40) /\
-val_mem SEGS m (sp0 - 224 + 40) 8 (g + 92) /\ val_mem SEGS m (sp0 - 224 + 32) 8 (SB + (g + 92) / 8) /\
-val_mem SEGS m (sp0 - 224 + 48) 8 (SB + (g + 40) / 8) /\ val_mem SEGS m (sp0 - 224 + 64) 8 a4v /\
-val_mem SEGS m (sp0 - 224 + 80) 8 (SB + (cfp + 16) / 8).
+val_mem SEGS m (sp0 - 224 + 32) 8 (SB + (g + 92) / 8) /\ val_mem SEGS m (sp0 - 224 + 40) 8 (g + 92) /\
+val_mem SEGS m (sp0 - 224 + 48) 8 (SB + (g + 40) / 8) /\ val_mem SEGS m (sp0 - 224 + 56) 8 (g + 40) /\
+val_mem SEGS m (sp0 - 224 + 64) 8 a4v /\
+val_mem SEGS m (sp0 - 224 + 80) 8 (SB + (cfp + 16) / 8) /\ val_mem SEGS m (sp0 - 224 + 88) 8 (cfp + 16) /\
+val_mem SEGS m (sp0 - 224 + 96) 8 (cfp + 24) /\ val_mem SEGS m (sp0 - 224 + 104) 8 cfp.
 Definition af_lcD : list YP09.chunk :=
-[YP09.mkChunk 104 (CVal 8 (SOff 46 0)); YP09.mkChunk 96 (CVal 8 (SOff 46 24)); YP09.mkChunk 88 (CVal 8 (SOff 46 16));
-YP09.mkChunk 56 (CVal 8 (SOff 32 40)); YP09.mkChunk 40 (CVal 8 (SOff 32 92)); YP09.mkChunk 32 (CVal 8 (shq 32 92));
-YP09.mkChunk 48 (CVal 8 (shq 32 40)); YP09.mkChunk 64 (CVal 8 (SOff 67 0)); YP09.mkChunk 80 (CVal 8 (shq 46 16))].
+[YP09.mkChunk 32 (CVal 8 (shq 32 92)); YP09.mkChunk 40 (CVal 8 (SOff 32 92));
+YP09.mkChunk 48 (CVal 8 (shq 32 40)); YP09.mkChunk 56 (CVal 8 (SOff 32 40));
+YP09.mkChunk 64 (CVal 8 (SOff 67 0));
+YP09.mkChunk 80 (CVal 8 (shq 46 16)); YP09.mkChunk 88 (CVal 8 (SOff 46 16));
+YP09.mkChunk 96 (CVal 8 (SOff 46 24)); YP09.mkChunk 104 (CVal 8 (SOff 46 0))].
 Definition af_locsE (m : word -> option byte) (sp0 g cfp a4v : Z) : Prop :=
-val_mem SEGS m (sp0 - 224 + 104) 8 cfp /\
-val_mem SEGS m (sp0 - 224 + 88) 8 (cfp + 16) /\ val_mem SEGS m (sp0 - 224 + 56) 8 (g + 40) /\
-val_mem SEGS m (sp0 - 224 + 40) 8 (g + 92) /\ val_mem SEGS m (sp0 - 224 + 32) 8 (SB + (g + 92) / 8) /\
-val_mem SEGS m (sp0 - 224 + 48) 8 (SB + (g + 40) / 8) /\ val_mem SEGS m (sp0 - 224 + 64) 8 a4v /\
-val_mem SEGS m (sp0 - 224 + 80) 8 (SB + (cfp + 16) / 8).
+val_mem SEGS m (sp0 - 224 + 32) 8 (SB + (g + 92) / 8) /\ val_mem SEGS m (sp0 - 224 + 40) 8 (g + 92) /\
+val_mem SEGS m (sp0 - 224 + 48) 8 (SB + (g + 40) / 8) /\ val_mem SEGS m (sp0 - 224 + 56) 8 (g + 40) /\
+val_mem SEGS m (sp0 - 224 + 64) 8 a4v /\
+val_mem SEGS m (sp0 - 224 + 80) 8 (SB + (cfp + 16) / 8) /\ val_mem SEGS m (sp0 - 224 + 88) 8 (cfp + 16) /\
+val_mem SEGS m (sp0 - 224 + 104) 8 cfp.
 Definition af_lcE : list YP09.chunk :=
-[YP09.mkChunk 104 (CVal 8 (SOff 46 0)); YP09.mkChunk 88 (CVal 8 (SOff 46 16));
-YP09.mkChunk 56 (CVal 8 (SOff 32 40)); YP09.mkChunk 40 (CVal 8 (SOff 32 92)); YP09.mkChunk 32 (CVal 8 (shq 32 92));
-YP09.mkChunk 48 (CVal 8 (shq 32 40)); YP09.mkChunk 64 (CVal 8 (SOff 67 0)); YP09.mkChunk 80 (CVal 8 (shq 46 16))].
+[YP09.mkChunk 32 (CVal 8 (shq 32 92)); YP09.mkChunk 40 (CVal 8 (SOff 32 92));
+YP09.mkChunk 48 (CVal 8 (shq 32 40)); YP09.mkChunk 56 (CVal 8 (SOff 32 40));
+YP09.mkChunk 64 (CVal 8 (SOff 67 0));
+YP09.mkChunk 80 (CVal 8 (shq 46 16)); YP09.mkChunk 88 (CVal 8 (SOff 46 16));
+YP09.mkChunk 104 (CVal 8 (SOff 46 0))].
 Definition af_locsD3 (m : word -> option byte) (sp0 g cfp a4v nw : Z) : Prop :=
 af_locsE m sp0 g cfp a4v /\
 val_mem SEGS m (sp0 - 224 + 8) 8 (SB + (cfp + 0) / 8) /\ val_mem SEGS m (sp0 - 224 + 16) 8 (SB + (nw + 0) / 8) /\
-val_mem SEGS m (sp0 - 224 + 24) 8 (SB + (cfp + 26) / 8) /\
-val_mem SEGS m (sp0 - 224 + 112) 8 (SB + (nw + 8) / 8).
+val_mem SEGS m (sp0 - 224 + 24) 8 (SB + (cfp + 26) / 8) /\ val_mem SEGS m (sp0 - 224 + 112) 8 (SB + (nw + 8) / 8).
 Definition af_locsD2 (m : word -> option byte) (sp0 g cfp a4v nw : Z) : Prop :=
 af_locsD3 m sp0 g cfp a4v nw /\
 val_mem SEGS m (sp0 - 224 + 72) 8 (cfp + 26) /\ val_mem SEGS m (sp0 - 224 + 96) 8 (nw + 8).

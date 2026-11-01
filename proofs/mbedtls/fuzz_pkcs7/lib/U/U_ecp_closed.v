@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -31,7 +31,7 @@ Section C.
   Hypothesis CRP_P256K1 : const_at L U_ecp_mod_p256k1.RP 8.
 
   Let ROIMG' : forall a, 0 <= a < 2^64 -> ro_addr usegs (wa a) = true -> hl_img_lo L <= a < hl_img_hi L :=
-    fun a H1 H2 => ROIMG a H2 H1.
+    fun a in_word is_ro => ROIMG a is_ro in_word.
 
   Ltac layout := first [ exact HFREE | exact HCALLOC | exact HLS | exact SW | exact DIMG | exact HND | exact ROIMG | exact ROIMG' | exact IMGC
                        | exact CRP_P192K1 | exact CRP_P224K1 | exact CRP_P256K1 | reflexivity ].
@@ -39,63 +39,71 @@ Section C.
   (* [comment removed for export] *)
   Ltac leaf :=
     lazymatch goal with
-    | |- mpi_lset_stmt _ _ _ _ _ => eapply U_mpi_lset_spec; layout
-    | |- mpi_shift_l_stmt _ _ _ _ _ => eapply U_mpi_shift_l_spec; layout
-    | |- mpi_mod_mpi_stmt _ _ _ _ _ => eapply U_mpi_mod_mpi_spec; layout
-    | |- mpi_shrink_stmt _ _ _ _ _ => eapply U_mpi_shrink_spec; layout
+    | |- ecp_point_read_binary_stmt _ _ _ _ _ _ _ _ => apply U_ecp_point_read_binary_spec; leaf
+    | |- ecp_check_pubkey_stmt _ _ _ _ _ _ _ _ _ => apply U_ecp_check_pubkey_spec; leaf
+    | |- ecp_derive_y_stmt _ _ _ _ _ _ _ _ => apply U_ecp_derive_y_spec; leaf
+    | |- ecp_sw_rhs_stmt _ _ _ _ _ _ _ _ => apply U_ecp_sw_rhs_spec; leaf
+    | |- ecp_mul_mod_stmt _ _ _ _ _ _ _ _ => apply U_ecp_mul_mod_proof.U_ecp_mul_mod_spec; leaf
+    | |- modp_table_ok _ _ _ _ _ => apply U_modp_table_ok; leaf
+    | |- mpi_exp_mod_stmt_n _ _ _ _ _ => apply U_mpi_exp_mod_spec; leaf
+    | |- mpi_get_mont_r2_stmt _ _ _ _ _ => apply U_mpi_get_mont_r2_spec; leaf
+    | |- add_sub_mpi_stmt_e ?sg ?ly ?hi ?ent ?ms => change (add_sub_mpi_stmt sg ly hi ent ms); leaf
+    | |- add_sub_mpi_stmt _ _ _ _ _ => apply U_add_sub_mpi_spec_closed; leaf
+    | |- mpi_mul_mpi_stmt _ _ _ _ _ => apply U_mpi_mul_mpi_spec; leaf
+    | |- mpi_mod_mpi_stmt _ _ _ _ _ => apply U_mpi_mod_mpi_spec; leaf
+    | |- mpi_add_mpi_stmt _ _ _ _ _ => apply U_mpi_add_mpi_spec; leaf
+    | |- mpi_sub_mpi_stmt _ _ _ _ _ => apply U_mpi_sub_mpi_spec; leaf
+    | |- mpi_sub_abs_stmt _ _ _ _ _ => apply U_mpi_sub_abs_spec; leaf
+    | |- mpi_add_int_stmt _ _ _ _ _ => apply U_mpi_add_int_spec; leaf
+    | |- mpi_sub_int_stmt _ _ _ _ _ => apply U_mpi_sub_int_spec; leaf
+    | |- mpi_shift_l_stmt _ _ _ _ _ => apply U_mpi_shift_l_spec; leaf
+    | |- mpi_lset_stmt _ _ _ _ _ => apply U_mpi_lset_spec; leaf
+    | |- mpi_grow_stmt _ _ _ _ _ => apply U_mpi_grow_spec; leaf
+    | |- mpi_shrink_stmt _ _ _ _ _ => apply U_mpi_shrink_spec; leaf
+    | |- mpi_copy_stmt _ _ _ _ _ => apply U_mpi_copy_spec; leaf
+    | |- mpi_free_stmt _ _ _ _ _ => apply U_mpi_free_spec; leaf
+    | |- zeroize_and_free_stmt _ _ _ _ _ => apply U_zeroize_and_free_spec; leaf
+    | |- mpi_read_binary_stmt _ _ _ _ _ => apply U_mpi_read_binary_spec; leaf
+    | |- mpi_read_binary_le_stmt _ _ _ _ _ => apply U_mpi_read_binary_le_spec; leaf
+    | |- mpi_cmp_int_stmt _ _ => exact (@U_mpi_cmp_int_spec L)
+    | |- mpi_cmp_mpi_stmt _ _ => exact U_mpi_cmp_mpi_spec
+    | |- mpi_cmp_mpi_stmt_o _ _ => exact U_mpi_cmp_mpi_spec_o
+    | |- mpi_get_bit_stmt _ _ => exact U_mpi_get_bit_spec
+    | |- mpi_set_bit0_stmt _ _ => exact U_mpi_set_bit0_spec
+    | |- mpi_shift_r_stmt _ _ => exact U_mpi_shift_r_spec
+    | |- mpi_size_stmt _ _ => exact U_mpi_size_spec
+    | |- mpi_init_stmt _ _ => exact U_mpi_init_spec
     | |- mpi_core_bitlen_stmt _ _ => exact U_mpi_core_bitlen_spec
     | |- mpi_core_bitlen_z_stmt _ _ => exact U_mpi_core_bitlen_z_spec
     | |- mpi_core_exp_mod_working_limbs_stmt _ _ => exact U_mpi_core_exp_mod_working_limbs_spec
-    | |- zeroize_and_free_stmt _ _ _ _ _ => eapply U_zeroize_and_free_spec; layout
-    | |- mpi_copy_stmt _ _ _ _ _ => eapply U_mpi_copy_spec; layout
-    | |- mpi_cmp_mpi_stmt _ _ => exact U_mpi_cmp_mpi_spec
-    | |- mpi_cmp_mpi_stmt_o _ _ => exact U_mpi_cmp_mpi_spec_o
-    | |- mpi_cmp_int_stmt _ _ => exact U_mpi_cmp_int_spec
-    | |- mpi_grow_stmt _ _ _ _ _ => eapply U_mpi_grow_spec; layout
     | |- mpi_core_montmul_init_stmt _ _ => exact U_mpi_core_montmul_init_spec
     | |- mpi_core_to_mont_rep_stmt _ _ => exact U_mpi_core_to_mont_rep_spec
     | |- mpi_core_exp_mod_stmt _ _ => exact U_mpi_core_exp_mod_spec
     | |- mpi_core_from_mont_rep_stmt _ _ => exact U_mpi_core_from_mont_rep_spec
     | |- mpi_core_check_zero_ct_stmt _ _ => exact U_mpi_core_check_zero_ct_spec
-    | |- add_sub_mpi_stmt_e _ _ _ _ _ => exact (U_add_sub_mpi_spec_closed L HI HFREE HCALLOC HLS SW DIMG HND ROIMG')
-    | |- mpi_mul_mpi_stmt _ _ _ _ _ => eapply U_mpi_mul_mpi_spec; layout
-    | |- mpi_add_mpi_stmt _ _ _ _ _ => eapply U_mpi_add_mpi_spec; layout
-    | |- mpi_sub_mpi_stmt _ _ _ _ _ => eapply U_mpi_sub_mpi_spec; layout
-    | |- mpi_add_int_stmt _ _ _ _ _ => eapply U_mpi_add_int_spec; layout
-    | |- mpi_sub_int_stmt _ _ _ _ _ => eapply U_mpi_sub_int_spec; layout
-    | |- mpi_sub_abs_stmt _ _ _ _ _ => eapply U_mpi_sub_abs_spec; layout
-    | |- mpi_get_bit_stmt _ _ => exact U_mpi_get_bit_spec
-    | |- mpi_init_stmt _ _ => exact U_mpi_init_spec
-    | |- mpi_free_stmt _ _ _ _ _ => eapply U_mpi_free_spec; layout
-    | |- mpi_shift_r_stmt _ _ => exact U_mpi_shift_r_spec
-    | |- mpi_size_stmt _ _ => exact U_mpi_size_spec
-    | |- mpi_read_binary_stmt _ _ _ _ _ => eapply U_mpi_read_binary_spec; layout
-    | |- mpi_read_binary_le_stmt _ _ _ _ _ => eapply U_mpi_read_binary_le_spec; layout
-    | |- mpi_set_bit0_stmt _ _ => exact U_mpi_set_bit0_spec
-    | |- modp_table_ok _ _ _ _ _ => eapply U_modp_table_ok; layout
     | |- _ => layout
     end.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC ROIMG'"] Theorem U_mpi_get_mont_r2_closed : mpi_get_mont_r2_stmt usegs L HI U_MPI_GET_MONT_R2 U_MEMSET_FUNC.
-  Proof. eapply U_mpi_get_mont_r2_spec; leaf. Qed.
+  Proof. leaf. Qed.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC ROIMG'"] Theorem U_mpi_exp_mod_closed : mpi_exp_mod_stmt_n usegs L HI U_MPI_EXP_MOD U_MEMSET_FUNC.
-  Proof. eapply U_mpi_exp_mod_spec; first [ exact U_mpi_get_mont_r2_closed | leaf ]. Qed.
+  Proof. leaf. Qed.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC CRP_P192K1 CRP_P224K1 CRP_P256K1 ROIMG'"] Theorem U_ecp_mul_mod_closed : ecp_mul_mod_stmt usegs L HI U_MT U_ECP_MUL_MOD U_MEMSET_FUNC 380840 ECP_MUL_MOD_STACK.
   Proof. eapply U_ecp_mul_mod_proof.U_ecp_mul_mod_spec; leaf. Qed.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC CRP_P192K1 CRP_P224K1 CRP_P256K1 ROIMG'"] Theorem U_ecp_sw_rhs_closed : ecp_sw_rhs_stmt usegs L HI U_MT U_ECP_SW_RHS U_MEMSET_FUNC 380840 ECP_SW_RHS_STACK.
-  Proof. eapply U_ecp_sw_rhs_spec; first [ exact U_ecp_mul_mod_closed | leaf ]. Qed.
+  Proof. leaf. Qed.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC CRP_P192K1 CRP_P224K1 CRP_P256K1 ROIMG'"] Theorem U_ecp_derive_y_closed : ecp_derive_y_stmt usegs L HI U_MT U_ECP_DERIVE_Y U_MEMSET_FUNC 380840 ECP_DERIVE_Y_STACK.
-  Proof. eapply U_ecp_derive_y_spec; first [ exact U_ecp_sw_rhs_closed | exact U_mpi_exp_mod_closed | leaf ]. Qed.
+  Proof. leaf. Qed.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC CRP_P192K1 CRP_P224K1 CRP_P256K1 ROIMG'"] Theorem U_ecp_check_pubkey_closed : ltac2:(CDefT.buildp (gd_tbl_P_ecp_closed ()) "(0.$1.VL,VHI,$2.$3.$4.+5<?:8.$5.$6.)")
 (* [comment removed for export] *).
-  Proof. eapply U_ecp_check_pubkey_spec; first [ exact U_ecp_mul_mod_closed | exact U_ecp_sw_rhs_closed | leaf ]. Qed.
+  Proof. leaf. Qed.
 
   #[using="HFREE HCALLOC HLS SW DIMG HND ROIMG IMGC CRP_P192K1 CRP_P224K1 CRP_P256K1 ROIMG'"] Theorem U_ecp_point_read_binary_closed : ltac2:(CDefT.buildp (gd_tbl_P_ecp_closed ()) "(7.$1.VL,VHI,$2.$8.$4.+5<?:8.$9.)")
 (* [comment removed for export] *).
-  Proof. eapply U_ecp_point_read_binary_spec; first [ exact U_ecp_derive_y_closed | leaf ]. Qed.
+  Proof. leaf. Qed.
 End C.

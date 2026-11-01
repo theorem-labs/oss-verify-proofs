@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -29,57 +29,71 @@ From OssFuzzTheorems.Proofs.openssl.pem.lib.A Require Export X_ax.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition XENV_FPA : list (Z * Z) :=
-  [(0xba3e48, 0xba3e4c); (0xbc3f40, 0xbc3f70); (0xbc4060, 0xbc4070); (0xbc4160, 0xbc4164); (0xbc4180, 0xbc4188);
-   (0xbc45e8, 0xbc45f0); (0x5aa850, 0x5aa858); (0x5aaa30, 0x5aaa38); (0x5aa858, 0x5aa948); (0x5aaa60, 0x669488); (0x6694d0, 0x6694d1);
-   (ODR_LO, ODR_HI); (0xb9f1e0, 0xb9f1e1); (0xb9f194, 0xb9f195)].
+  [(0xba3e48, 0xba3e4c); (0xbc3f40, 0xbc3f70); (0xbc4060, 0xbc4070); (0xb9f194, 0xb9f195); (0xbc4160, 0xbc4164);
+   (0xbc4180, 0xbc4188); (0xbc45e8, 0xbc45f0); (0x5aa850, 0x5aa858); (0x5aaa30, 0x5aaa38); (0x5aa858, 0x5aa940);
+   (0x5aa940, 0x5aa948); (0x5aaa60, 0x669460); (0x669480, 0x669488); (0x6694d0, 0x6694d1); (0xb9faa0, 0xba356d);
+   (0xb9f1e0, 0xb9f1e1)].
 
 Definition XENVA (k : bool) (m : mem) : Prop :=
-  (exists tid : Z, 1 <= tid < 2^31 /\ rw_cells asegs m 0xba3e48 [C4 (Z_to_bv 64 tid)])        (* [comment removed for export] *)
-  /\ (exists (fin : byte) (p1 p2 : list byte), AXA k fin p1 p2 m)                                  (* [comment removed for export] *)
-  /\ rw_cells asegs m AX_INCB [C1 (Z_to_bv 8 0)]                                                   (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xbc4160 [C4 (Z_to_bv 64 0)]                                                (* [comment removed for export] *)
-  /\ (exists (cdt thr sec : byte) (tm1 : word),
-        rw_cells asegs m 0xbc4180 [C1 cdt; C1 thr; C1 sec; C1 (Z_to_bv 8 0); C4 tm1])             (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xbc45e8 [C8 (Z_to_bv 64 0)]                                                (* [comment removed for export] *)
-  /\ rw_cells asegs m 0x5aa850 [C8 (Z_to_bv 64 0x5aa768)]                                           (* [comment removed for export] *)
-  /\ rw_cells asegs m 0x5aaa30 [C8 (Z_to_bv 64 0x5aa948)]                                           (* [comment removed for export] *)
-  /\ stdin_file m /\ rw_cells asegs m 0x5aa940 [C8 (Z_to_bv 64 0x5aa858)]                           (* [comment removed for export] *)
-  /\ gtab_at m                                                                                   (* [comment removed for export] *)
-  /\ (exists v : word, bv_unsigned v <> 0 /\ rw_cells asegs m 0x669480 [C8 v])                    (* [comment removed for export] *)
-  /\ rw_cells asegs m 0x6694d0 [C1 (Z_to_bv 8 0)]                                                  (* [comment removed for export] *)
-  /\ stk asegs m ODR_LO ODR_HI                                                                   (* [comment removed for export] *)
-  /\ rw_cells asegs m 0xb9f1e0 [C1 (Z_to_bv 8 0)].                 (* [comment removed for export] *)
+  (exists tid : Z, 1 <= tid < 2^31 /\ rw_cells asegs m 0xba3e48 [C4 (Z_to_bv 64 tid)])
+  /\ (exists fin p1 p2, AXA k fin p1 p2 m)
+  /\ rw_cells asegs m AX_INCB [C1 (Z_to_bv 8 0)]
+  /\ rw_cells asegs m 0xbc4160 [C4 (Z_to_bv 64 0)]
+  /\ (exists (cdt thr sec : byte) (tm1 : word), rw_cells asegs m 0xbc4180 [C1 cdt; C1 thr; C1 sec; C1 (Z_to_bv 8 0); C4 tm1])
+  /\ rw_cells asegs m 0xbc45e8 [C8 (Z_to_bv 64 0)]
+  /\ rw_cells asegs m 0x5aa850 [C8 (Z_to_bv 64 RSTDERR)]
+  /\ rw_cells asegs m 0x5aaa30 [C8 (Z_to_bv 64 RSTDOUT)]
+  /\ stdin_file m
+  /\ rw_cells asegs m 0x5aa940 [C8 (Z_to_bv 64 RSTDIN)]
+  /\ gtab_at m
+  /\ (exists flag : word, bv_unsigned flag <> 0 /\ rw_cells asegs m 0x669480 [C8 flag])
+  /\ rw_cells asegs m 0x6694d0 [C1 (Z_to_bv 8 0)]
+  /\ stk asegs m ODR_LO ODR_HI
+  /\ rw_cells asegs m 0xb9f1e0 [C1 (Z_to_bv 8 0)].
 
 Lemma in_XENV_FPA : forall lo hi x, In (lo, hi) XENV_FPA -> lo <= x < hi -> in_ranges XENV_FPA x.
 Proof. intros lo hi x H1 H2. exists lo, hi. split; assumption. Qed.
 
 Lemma XENV_locA : forall k, fp_local XENV_FPA (XENVA k).
 Proof.
-  intros k m m' (TID & ATX & INCB & EXL & LIBC & OFL & SEU & SOU & SIN & SINU & GDS & FLG & CPL & ODR & BI) AG.
-  assert (R : forall lo hi cs A, In (lo, hi) XENV_FPA -> lo <= A -> A + Z.of_nat (cells_size cs) <= hi ->
-            rw_cells asegs m A cs -> rw_cells asegs m' A cs).
-  { intros lo hi cs A Hin H1 H2 H. apply (rw_cells_agree_nw asegs m m' _ _ H).
-    intros a Ha. apply AG. apply (in_XENV_FPA lo hi); [exact Hin| lia]. }
-  split; [destruct TID as (t & Ht & C); exists t; split; [exact Ht| apply (R 0xba3e48 0xba3e4c); [cbn; tauto| lia| cbn; lia| exact C]]|].
-  split; [destruct ATX as (f & p1 & p2 & C1' & C2'); exists f, p1, p2; split;
-          [apply (R 0xbc3f40 0xbc3f70); [cbn; tauto| lia| | exact C1']; unfold ax_cells; cbn [cells_size csize]; lia
-          |apply (R 0xbc4060 0xbc4070); [cbn; tauto| lia| cbn; lia| exact C2']]|].
-  split; [apply (R 0xb9f194 0xb9f195); [cbn; tauto| unfold AX_INCB; lia| cbn; unfold AX_INCB; lia| exact INCB]|].
-  split; [apply (R 0xbc4160 0xbc4164); [cbn; tauto| lia| cbn; lia| exact EXL]|].
-  split; [destruct LIBC as (c1 & c2 & c3 & t & C); exists c1, c2, c3, t; apply (R 0xbc4180 0xbc4188); [cbn; tauto| lia| cbn; lia| exact C]|].
-  split; [apply (R 0xbc45e8 0xbc45f0); [cbn; tauto| lia| cbn; lia| exact OFL]|].
-  split; [apply (R 0x5aa850 0x5aa858); [cbn; tauto| lia| cbn; lia| exact SEU]|].
-  split; [apply (R 0x5aaa30 0x5aaa38); [cbn; tauto| lia| cbn; lia| exact SOU]|].
-  split; [destruct SIN as (j0 & j1 & j2 & j3 & j4 & C); exists j0, j1, j2, j3, j4; apply (R 0x5aa858 0x5aa948); [cbn; tauto| lia| | exact C];
-          destruct C as [[Hw _] _]; cbn in Hw; cbn [cells_size csize]; lia|].
-  split; [apply (R 0x5aa858 0x5aa948); [cbn; tauto| lia| cbn; lia| exact SINU]|].
-  split; [apply (gtab_at_agree m m' GDS); intros a Ha; apply AG; apply (in_XENV_FPA 0x5aaa60 0x669488); [cbn; tauto|];
-          unfold GT_LO, GT_HI in Ha; lia|].
-  split; [destruct FLG as (v & Hv & C); exists v; split; [exact Hv| apply (R 0x5aaa60 0x669488); [cbn; tauto| lia| cbn; lia| exact C]]|].
-  split; [apply (R 0x6694d0 0x6694d1); [cbn; tauto| lia| cbn; lia| exact CPL]|].
-  split.
-  - apply (stk_agree_nw asegs m m' _ _ ODR). intros a Ha. apply AG. apply (in_XENV_FPA ODR_LO ODR_HI); [cbn; tauto| exact Ha].
-  - apply (R 0xb9f1e0 0xb9f1e1); [cbn; tauto| lia| cbn; lia| exact BI].
+  intros k m m' Env Same.
+  pose (covered := fun A B => existsb (fun r => (fst r <=? A) && (B <=? snd r)) XENV_FPA).
+  assert (Win : forall A B, covered A B = true -> agree_on (fun x => A <= x < B) m m').
+  { intros A B Cov a InAB. cbv beta in InAB. unfold covered in Cov. cbv beta in Cov.
+    apply existsb_exists in Cov as ([lo hi] & Mem & Fit). cbn [fst snd] in Fit.
+    apply Same. apply (in_XENV_FPA lo hi); [exact Mem | lia]. }
+  assert (Carry : forall A cs, rw_cells asegs m A cs -> covered A (A + Z.of_nat (cells_size cs)) = true ->
+                  rw_cells asegs m' A cs).
+  { intros A cs Cells Ok. exact (rw_cells_agree_nw asegs m m' A cs Cells (Win _ _ Ok)). }
+  destruct Env as ((tid & TidOk & TidAt) & (fin & p1 & p2 & AtxAt & AuxAt) & IncbAt & LockAt
+                   & (cdt & thr & sec & tm1 & LibcAt) & OflAt & ErrPtrAt & OutPtrAt
+                   & (j0 & j1 & j2 & j3 & j4 & InFileAt) & InPtrAt & GlobAt & (flag & RegNz & RegAt)
+                   & DoneAt & OdrAt & ClosedAt).
+  pose proof (Carry _ _ TidAt eq_refl) as TidNow.
+  pose proof (Carry _ _ AtxAt eq_refl) as AtxNow.
+  pose proof (Carry _ _ AuxAt eq_refl) as AuxNow.
+  pose proof (Carry _ _ LockAt eq_refl) as LockNow.
+  pose proof (Carry _ _ IncbAt eq_refl) as IncbNow.
+  pose proof (Carry _ _ LibcAt eq_refl) as LibcNow.
+  pose proof (Carry _ _ OflAt eq_refl) as OflNow.
+  pose proof (Carry _ _ InPtrAt eq_refl) as InPtrNow.
+  pose proof (Carry _ _ InFileAt eq_refl) as InFileNow.
+  pose proof (Carry _ _ OutPtrAt eq_refl) as OutPtrNow.
+  pose proof (Carry _ _ ErrPtrAt eq_refl) as ErrPtrNow.
+  pose proof (gtab_at_agree m m' GlobAt (Win GT_LO GT_HI eq_refl)) as GlobNow.
+  pose proof (Carry _ _ RegAt eq_refl) as RegNow.
+  pose proof (Carry _ _ DoneAt eq_refl) as DoneNow.
+  pose proof (stk_agree_nw asegs m m' ODR_LO ODR_HI OdrAt (Win ODR_LO ODR_HI eq_refl)) as OdrNow.
+  pose proof (Carry _ _ ClosedAt eq_refl) as ClosedNow.
+  exact (conj (ex_intro _ tid (conj TidOk TidNow))
+        (conj (ex_intro _ fin (ex_intro _ p1 (ex_intro _ p2 (conj AtxNow AuxNow))))
+        (conj IncbNow (conj LockNow
+        (conj (ex_intro _ cdt (ex_intro _ thr (ex_intro _ sec (ex_intro _ tm1 LibcNow))))
+        (conj OflNow (conj ErrPtrNow (conj OutPtrNow
+        (conj (ex_intro _ j0 (ex_intro _ j1 (ex_intro _ j2 (ex_intro _ j3 (ex_intro _ j4 InFileNow)))))
+        (conj InPtrNow (conj GlobNow
+        (conj (ex_intro _ flag (conj RegNz RegNow))
+        (conj DoneNow (conj OdrNow ClosedNow)))))))))))))).
 Qed.
 
 (* [comment removed for export] *)
@@ -91,7 +105,7 @@ Lemma XENVA_libc : forall k m, XENVA k m ->
 Proof. intros k m (_ & _ & _ & _ & H & _). exact H. Qed.
 
 Lemma XENVA_incb : forall k m, XENVA k m -> rw_cells asegs m AX_INCB [C1 (Z_to_bv 8 0)].
-Proof. intros k m (_ & _ & H & _). exact H. Qed.
+Proof. intros k m Env. exact (proj1 (proj2 (proj2 Env))). Qed.
 
 Lemma XENVA_repack : forall k k' m m', XENVA k m ->
   agree_on (fun x => in_ranges XENV_FPA x /\ ~ (0xbc3f40 <= x < 0xbc3f70) /\ ~ (0xbc4060 <= x < 0xbc4070) /\ x <> AX_INCB) m m' ->
@@ -99,32 +113,46 @@ Lemma XENVA_repack : forall k k' m m', XENVA k m ->
   rw_cells asegs m' AX_INCB [C1 (Z_to_bv 8 0)] ->
   XENVA k' m'.
 Proof.
-  intros k k' m m' (TID & _ & _ & EXL & LIBC & OFL & SEU & SOU & SIN & SINU & GDS & FLG & CPL & ODR & BI) AG ATX' INCB'.
-  unfold AX_INCB in AG.
-  assert (R : forall lo hi cs A, In (lo, hi) XENV_FPA -> lo <= A -> A + Z.of_nat (cells_size cs) <= hi ->
-            (hi <= 0xbc3f40 \/ 0xbc3f70 <= lo) -> (hi <= 0xbc4060 \/ 0xbc4070 <= lo) -> (hi <= 0xb9f194 \/ 0xb9f195 <= lo) ->
-            rw_cells asegs m A cs -> rw_cells asegs m' A cs).
-  { intros lo hi cs A Hin H1 H2 D1 D2 D3 H. apply (rw_cells_agree_nw asegs m m' _ _ H).
-    intros a Ha. apply AG. split; [apply (in_XENV_FPA lo hi); [exact Hin| lia]| lia]. }
-  split; [destruct TID as (t & Ht & C); exists t; split; [exact Ht| apply (R 0xba3e48 0xba3e4c); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact C]]|].
-  split; [exact ATX'|].
-  split; [exact INCB'|].
-  split; [apply (R 0xbc4160 0xbc4164); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact EXL]|].
-  split; [destruct LIBC as (c1 & c2 & c3 & t & C); exists c1, c2, c3, t; apply (R 0xbc4180 0xbc4188); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact C]|].
-  split; [apply (R 0xbc45e8 0xbc45f0); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact OFL]|].
-  split; [apply (R 0x5aa850 0x5aa858); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact SEU]|].
-  split; [apply (R 0x5aaa30 0x5aaa38); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact SOU]|].
-  split; [destruct SIN as (j0 & j1 & j2 & j3 & j4 & C); exists j0, j1, j2, j3, j4; apply (R 0x5aa858 0x5aa948); [cbn; tauto| lia| | lia| lia| lia| exact C];
-          destruct C as [[Hw _] _]; cbn in Hw; cbn [cells_size csize]; lia|].
-  split; [apply (R 0x5aa858 0x5aa948); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact SINU]|].
-  split; [apply (gtab_at_agree m m' GDS); intros a Ha; apply AG; unfold GT_LO, GT_HI in Ha;
-          split; [apply (in_XENV_FPA 0x5aaa60 0x669488); [cbn; tauto| lia]| lia]|].
-  split; [destruct FLG as (v & Hv & C); exists v; split; [exact Hv| apply (R 0x5aaa60 0x669488); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact C]]|].
-  split; [apply (R 0x6694d0 0x6694d1); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact CPL]|].
-  split.
-  - apply (stk_agree_nw asegs m m' _ _ ODR). intros a Ha. apply AG.
-    split; [apply (in_XENV_FPA ODR_LO ODR_HI); [cbn; tauto| exact Ha]| lia].
-  - apply (R 0xb9f1e0 0xb9f1e1); [cbn; tauto| lia| cbn; lia| lia| lia| lia| exact BI].
+  intros k k' m m' Env Keep AxNow IncbNow.
+  pose (apart := fun A B => existsb (fun r => (fst r <=? A) && (B <=? snd r)) XENV_FPA
+                            && ((B <=? 0xbc3f40) || (0xbc3f70 <=? A)) && ((B <=? 0xbc4060) || (0xbc4070 <=? A))
+                            && ((B <=? AX_INCB) || (AX_INCB <? A))).
+  assert (Win : forall A B, apart A B = true -> agree_on (fun x => A <= x < B) m m').
+  { intros A B Ok a InAB. cbv beta in InAB. unfold apart in Ok. cbv beta in Ok.
+    apply andb_prop in Ok as [Ok AwayIncb]. apply andb_prop in Ok as [Ok AwayAux].
+    apply andb_prop in Ok as [Cov AwayAtx].
+    apply existsb_exists in Cov as ([lo hi] & Mem & Fit). cbn [fst snd] in Fit.
+    apply Keep. unfold AX_INCB in *.
+    split; [apply (in_XENV_FPA lo hi); [exact Mem | lia] | lia]. }
+  assert (Carry : forall A cs, rw_cells asegs m A cs -> apart A (A + Z.of_nat (cells_size cs)) = true ->
+                  rw_cells asegs m' A cs).
+  { intros A cs Cells Ok. exact (rw_cells_agree_nw asegs m m' A cs Cells (Win _ _ Ok)). }
+  destruct AxNow as (fin & p1 & p2 & AxCells).
+  destruct Env as ((tid & TidOk & TidAt) & _ & _ & LockAt & (cdt & thr & sec & tm1 & LibcAt) & OflAt & ErrPtrAt
+                   & OutPtrAt & (j0 & j1 & j2 & j3 & j4 & InFileAt) & InPtrAt & GlobAt & (flag & RegNz & RegAt)
+                   & DoneAt & OdrAt & ClosedAt).
+  pose proof (stk_agree_nw asegs m m' ODR_LO ODR_HI OdrAt (Win ODR_LO ODR_HI eq_refl)) as OdrNow.
+  pose proof (gtab_at_agree m m' GlobAt (Win GT_LO GT_HI eq_refl)) as GlobNow.
+  pose proof (Carry _ _ ClosedAt eq_refl) as ClosedNow.
+  pose proof (Carry _ _ DoneAt eq_refl) as DoneNow.
+  pose proof (Carry _ _ RegAt eq_refl) as RegNow.
+  pose proof (Carry _ _ ErrPtrAt eq_refl) as ErrPtrNow.
+  pose proof (Carry _ _ OutPtrAt eq_refl) as OutPtrNow.
+  pose proof (Carry _ _ InFileAt eq_refl) as InFileNow.
+  pose proof (Carry _ _ InPtrAt eq_refl) as InPtrNow.
+  pose proof (Carry _ _ OflAt eq_refl) as OflNow.
+  pose proof (Carry _ _ LibcAt eq_refl) as LibcNow.
+  pose proof (Carry _ _ LockAt eq_refl) as LockNow.
+  pose proof (Carry _ _ TidAt eq_refl) as TidNow.
+  exact (conj (ex_intro _ tid (conj TidOk TidNow))
+        (conj (ex_intro _ fin (ex_intro _ p1 (ex_intro _ p2 AxCells)))
+        (conj IncbNow (conj LockNow
+        (conj (ex_intro _ cdt (ex_intro _ thr (ex_intro _ sec (ex_intro _ tm1 LibcNow))))
+        (conj OflNow (conj ErrPtrNow (conj OutPtrNow
+        (conj (ex_intro _ j0 (ex_intro _ j1 (ex_intro _ j2 (ex_intro _ j3 (ex_intro _ j4 InFileNow)))))
+        (conj InPtrNow (conj GlobNow
+        (conj (ex_intro _ flag (conj RegNz RegNow))
+        (conj DoneNow (conj OdrNow ClosedNow)))))))))))))).
 Qed.
 
 Lemma XENVA_upd : forall k m m', XENVA k m ->
@@ -161,36 +189,37 @@ Qed.
 (* [comment removed for export] *)
 
 Definition seg_rw1 (z : Z) : bool :=
-  match find_segment asegs z 1 with
-  | Some s => (seg_writable s && seg_readable s &&
-               match segment_byte_at (seg_bytes s) (Z.to_N (z - Z.of_N (seg_base s))) with Some _ => true | None => false end)%bool
-  | None => false
+  match wview asegs (fun _ => None) (wa z), seg_rom asegs (wa z) with
+  | Some _, Some _ => true
+  | _, _ => false
   end.
 Lemma seg_rw1_b9f000 : seg_rw1 0xb9f1c0 = true.
-Proof. vm_compute. reflexivity. Qed.
+Proof. exact (eq_refl true <: seg_rw1 0xb9f1c0 = true). Qed.
 Lemma seg_rw1_sound : forall m z, 0 <= z < 2 ^ 64 -> seg_rw1 z = true ->
   wview asegs m (wa z) <> None /\ exists b, mrd asegs m (wa z) = Some b.
 Proof.
-  intros m z Hz H. unfold seg_rw1 in H.
-  destruct (find_segment asegs z 1) as [s|] eqn:F; [|discriminate].
-  apply andb_prop in H as [H Hb]. apply andb_prop in H as [Hw Hr].
-  destruct (segment_byte_at (seg_bytes s) (Z.to_N (z - Z.of_N (seg_base s)))) as [bb|] eqn:Hby; [|discriminate].
-  assert (Hu : bv_unsigned (wa z) = z) by (apply wa_unsigned; exact Hz).
-  unfold wview, mrd. destruct (m (wa z)) as [b0|].
-  - split; [discriminate| exists b0; reflexivity].
-  - match goal with |- context [find_segment asegs ?x 1] => assert (Ex : x = z) by exact Hu; rewrite Ex end.
-    rewrite F, Hw, Hby. split; [discriminate|].
-    exists bb. unfold OssFuzzTheorems.Proofs.openssl.pem.lib.Common.PropExec.seg_rom, memory_read. change (Z.of_N 1) with 1.
-    match goal with |- context [find_segment asegs ?x 1] => assert (Ex2 : x = z) by exact Hu; rewrite Ex2 end.
-    rewrite F, Hr. change (N.to_nat 1) with 1%nat. cbn [segment_read_bytes]. rewrite Hby. reflexivity.
+  intros m z _. unfold seg_rw1.
+  destruct (wview asegs (fun _ => None) (wa z)) as [w0|] eqn:Bare; [|intros Bad; discriminate Bad].
+  destruct (seg_rom asegs (wa z)) as [r0|] eqn:Img; [|intros Bad; discriminate Bad].
+  intros _.
+  destruct (m (wa z)) as [cur|] eqn:Cur.
+  - unfold wview, mrd. rewrite Cur. split; [discriminate | exists cur; reflexivity].
+  - assert (ViewEq : wview asegs m (wa z) = wview asegs (fun _ => None) (wa z))
+      by (unfold wview; rewrite Cur; reflexivity).
+    split.
+    + rewrite ViewEq, Bare. discriminate.
+    + exists r0. unfold mrd. rewrite Cur. exact Img.
 Qed.
 Lemma base_inited_any : forall m, exists b : byte, rw_cells asegs m 0xb9f1c0 [C1 b].
 Proof.
-  intros m. destruct (seg_rw1_sound m 0xb9f1c0 ltac:(lia) seg_rw1_b9f000) as (W & b & R).
-  exists b. split.
-  - split; [exact (conj I I)|]. split; [lia|]. split; [cbn; lia|].
-    intros i Hi. cbn in Hi. destruct i; [| lia]. cbn [nth_error cells_bytes]. rewrite Z.add_0_r. exact R.
-  - split; [lia|]. split; [cbn; lia|]. intros i Hi. cbn in Hi. replace (0xb9f1c0 + i) with 0xb9f1c0 by lia. exact W.
+  intros m.
+  destruct (seg_rw1_sound m 0xb9f1c0 ltac:(lia) seg_rw1_b9f000) as [Wr [b0 Rd]].
+  exists b0. split; [split|].
+  - exact (conj I I).
+  - split; [lia|]. split; [cbn; lia|].
+    intros i Below. cbn in Below. assert (Zero : i = 0%nat) by lia. subst i. exact Rd.
+  - split; [lia|]. split; [cbn; lia|].
+    intros i Below. cbn in Below. assert (Zero : i = 0) by lia. subst i. exact Wr.
 Qed.
 
 (* [comment removed for export] *)
@@ -199,21 +228,20 @@ Qed.
 
 Definition xit_rt (m : mem) : Prop :=
   ro_cells asegs m 0x52e860 [C8 (Z_to_bv 64 0x1f34cc); C8 (Z_to_bv 64 0x199adc); C8 (Z_to_bv 64 0x1f34fc)]
-                                                     (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x5a6548 [C8 (Z_to_bv 64 0x52e878); C8 (Z_to_bv 64 0x52e860)]  (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x5a4588 [C8 (Z_to_bv 64 0x51af44); C8 (Z_to_bv 64 0)]       (* [comment removed for export] *)
-  /\ (exists d : word, ro_cells asegs m 0x5a75c0 [C8 d])                            (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x5a6500 [C8 (Z_to_bv 64 0x5aaa60); C8 (Z_to_bv 64 0x669460)]  (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x5a4598 [C8 (Z_to_bv 64 0x6fc5e0)]                           (* [comment removed for export] *)
+  /\ ro_cells asegs m 0x5a6548 [C8 (Z_to_bv 64 0x52e878); C8 (Z_to_bv 64 0x52e860)]
+  /\ ro_cells asegs m 0x5a4588 [C8 (Z_to_bv 64 0x51af44); C8 (Z_to_bv 64 0)]
+  /\ (exists dso : word, ro_cells asegs m 0x5a75c0 [C8 dso])
+  /\ ro_cells asegs m 0x5a6500 [C8 (Z_to_bv 64 0x5aaa60); C8 (Z_to_bv 64 0x669460)]
+  /\ ro_cells asegs m 0x5a4598 [C8 (Z_to_bv 64 0x6fc5e0)]
   /\ ro_cells asegs m 0x5a45a8 [C8 (Z_to_bv 64 0x6fe668); C8 (Z_to_bv 64 0x66a338); C8 (Z_to_bv 64 0x66cb38);
-                               C8 (Z_to_bv 64 0x66d828); C8 (Z_to_bv 64 0x66d830); C8 (Z_to_bv 64 0x66d820);
-                               C8 (Z_to_bv 64 0x5a77f0)]                            (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x66a350 [C4 (Z_to_bv 64 1)]                                  (* [comment removed for export] *)
-  /\ rw_cells asegs m 0x66a3f0 [C8 (Z_to_bv 64 0)]                                  (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x66cb38 [C8 (Z_to_bv 64 0x7fff8000)]                         (* [comment removed for export] *)
-  /\ rw_cells asegs m 0x66d818 [C1 (Z_to_bv 8 1)]                                   (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x66c39c [C1 (Z_to_bv 8 1)]                                   (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x6fe6e0 [C8 (Z_to_bv 64 0xffffffffffffffff)]                         (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x5a77f0 [C8 (Z_to_bv 64 0x526914)]                            (* [comment removed for export] *)
-  /\ ro_cells asegs m 0x6fe9e0 [C1 (Z_to_bv 8 0)]                                  (* [comment removed for export] *)
-  /\ stk asegs m SHW_LO SHW_HI.                                                  (* [comment removed for export] *)
+                                C8 (Z_to_bv 64 0x66d828); C8 (Z_to_bv 64 0x66d830); C8 (Z_to_bv 64 0x66d820);
+                                C8 (Z_to_bv 64 0x5a77f0)]
+  /\ ro_cells asegs m 0x66a350 [C4 (Z_to_bv 64 1)]
+  /\ rw_cells asegs m 0x66a3f0 [C8 (Z_to_bv 64 0)]
+  /\ ro_cells asegs m 0x66cb38 [C8 (Z_to_bv 64 0x7fff8000)]
+  /\ rw_cells asegs m 0x66d818 [C1 (Z_to_bv 8 1)]
+  /\ ro_cells asegs m 0x66c39c [C1 (Z_to_bv 8 1)]
+  /\ ro_cells asegs m 0x6fe6e0 [C8 (Z_to_bv 64 0xffffffffffffffff)]
+  /\ ro_cells asegs m 0x5a77f0 [C8 (Z_to_bv 64 0x526914)]
+  /\ ro_cells asegs m 0x6fe9e0 [C1 (Z_to_bv 8 0)]
+  /\ stk asegs m SHW_LO SHW_HI.

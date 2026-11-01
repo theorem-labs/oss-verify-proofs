@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -28,15 +28,19 @@ Lemma CB_join3 : forall (m : mem) D (a b : nat) j1 (v : word) j3,
   rw_cells asegs m D [CB a j1] -> rw_cells asegs m (D + Z.of_nat a) [C8 v] -> rw_cells asegs m (D + Z.of_nat a + 8) [CB b j3] ->
   rw_cells asegs m D [CB (a + 8 + b)%nat (j1 ++ cbytes (C8 v) ++ j3)].
 Proof.
-  intros m D a b j1 v j3 H1 H2 H3.
-  pose proof (proj1 (proj1 H1)) as W1. pose proof (proj1 (proj1 H3)) as W3. cbn in W1, W3. destruct W1 as [W1 _]. destruct W3 as [W3 _].
-  assert (H : rw_cells asegs m D ([CB a j1] ++ [C8 v] ++ [CB b j3])).
-  { apply rw_cells_app. split; [exact H1|]. apply rw_cells_app. cbn [cells_size csize Nat.add].
-    split; [replace (D + Z.of_nat (a + 0)) with (D + Z.of_nat a) by lia; exact H2|].
-    replace (D + Z.of_nat (a + 0) + Z.of_nat 8) with (D + Z.of_nat a + 8) by lia. exact H3. }
-  cbn [app] in H. eapply rw_cells_recast; [exact H| |].
-  - cbn. rewrite !length_app. cbn. repeat split; try exact I. rewrite W1, W3. lia.
-  - cbn. rewrite !app_nil_r. reflexivity.
+  intros m D a b j1 v j3 FRONT WORD BACK.
+  pose proof (StrFun.rw_cells_CB_length _ _ _ _ _ FRONT) as LEN_FRONT.
+  pose proof (StrFun.rw_cells_CB_length _ _ _ _ _ BACK) as LEN_BACK.
+  assert (TAIL2 : rw_cells asegs m (D + Z.of_nat a) [C8 v; CB b j3]).
+  { apply (proj2 (rw_cells_app m (D + Z.of_nat a) [C8 v] [CB b j3])). split; [exact WORD | exact BACK]. }
+  assert (ALL3 : rw_cells asegs m D ([CB a j1] ++ [C8 v; CB b j3])).
+  { apply (proj2 (rw_cells_app m D [CB a j1] [C8 v; CB b j3])). split; [exact FRONT|].
+    cbn [cells_size csize]. rewrite Nat.add_0_r. exact TAIL2. }
+  cbn [app] in ALL3.
+  refine (th_cells_congr asegs m D _ _ _ _ _ ALL3).
+  - cbn [cells_bytes cbytes]. rewrite !app_nil_r. reflexivity.
+  - cbn [cells_size csize]. lia.
+  - cbn [cells_wf cell_wf]. split; [| exact I]. rewrite !length_app, length_le8. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -53,17 +57,26 @@ Lemma skp_w0g : forall (ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5
        /\ stk asegs m' lo (bv_unsigned sp) /\ rw_cells asegs m' A (sk_cells (Z_to_bv 64 num) pad data srt nalloc comp cmpt freet copyt))
     (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 A) val a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 e_sk_push) fc None m (seg_rom asegs)).
 Proof.
-  intros until copyt. intros AHI AAL ALO NUM HC ACC UT SHC ST LO0 LO HTOP MI. unfold e_sk_push, e_sk_insert, sk_cells, g_shadow_memory_dynamic_address, SHB in *.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 16, bv_unsigned sp)]%Z m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  th_frame 16%nat [8; 8]%nat ST.
-  do 4 zstep.
-  zstep. if_cases K0; zify_cond K0. { exfalso. rewrite ?unsigned_lit in K0 by lia. lia. }
-  do 3 zstep. do 2 zstep. zstep. zstep. th_if_lit.
-  zstep. rewrite (t_sx32_small num) by lia.
-  do 2 zstep. th_release FR (bv_unsigned sp). do 2 zstep.
-  finish.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 val F fc m lo A num pad data srt nalloc comp cmpt freet copyt
+    ObjHigh ObjAlign ObjBelowLo NumRange ObjCells ObjPoison Pristine ShadowBase Stack LoHigh LoRoom SpTop Inv.
+  assert (ObjNonNull : bv_eqb (Z_to_bv 64 A) (Z_to_bv 64 0) = false).
+  { unfold bv_eqb. rewrite (unsigned_lit A) by lia. change (bv_unsigned (Z_to_bv 64 0)) with 0. apply Z.eqb_neq. lia. }
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. pose proof (Z_to_bv_bv_unsigned sp) as SpBack.
+  revert Stack LoRoom SpTop SpRange SpBack. generalize (bv_unsigned sp) as SP. intros SP Stack LoRoom SpTop SpRange SpBack. subst sp.
+  change (bv_modulus 64) with (2 ^ 64) in SpRange.
+  unfold sk_cells in ObjCells. unfold SHB, g_shadow_memory_dynamic_address in ShadowBase. unfold e_sk_push, e_sk_insert.
+  pose proof (wmono_refl asegs m) as Grows. pose proof (munch_refl [(SP - 16, SP)] m) as Touched.
+  assert (ShadowFp : sh_fp [(SP - 16, SP)]) by sh_fp_lia.
+  assert (PristineFp : ut_fp [(SP - 16, SP)]) by ut_fp_lia.
+  carve_frame 16%nat Stack.
+  do 5 zstep. rewrite ObjNonNull. cbv iota.
+  do 6 zstep. zstep. zsh. th_if_lit.
+  do 5 zstep. rewrite (t_sx32_small num) by lia.
+  assert (Unwound : stk asegs m1 lo SP).
+  { pose proof (stk_release asegs m1 lo (SP + -16) [C8 s0; C8 ra] Stack FR ltac:(lia)) as Back.
+    cbn [cells_size csize Nat.add] in Back. replace SP with (SP + -16 + Z.of_nat 16) by lia. exact Back. }
+  apply evt_done. exists a4, m1. split; [reflexivity|].
+  split; [exact Touched|]. split; [exact Grows|]. split; [exact Inv|]. split; [exact Unwound| exact ObjCells].
 Qed.
 
 (* [comment removed for export] *)
@@ -82,19 +95,27 @@ Lemma ski_w0g : forall (ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6
       /\ stk asegs m' lo (bv_unsigned sp + -112) /\ rw_cells asegs m' A (sk_cells (Z_to_bv 64 num) pad data srt nalloc comp cmpt freet copyt))
     (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 A) val (Z_to_bv 64 loc) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 e_sk_insert) fc None m (seg_rom asegs)).
 Proof.
-  intros until copyt. intros AHI AAL ALO NUM HC ACC UT SHC ST LO0 LO HTOP MI. unfold e_sk_insert, e_sk_reserve, sk_cells, g_shadow_memory_dynamic_address, SHB, SITE_ski_reserve in *.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp)]%Z m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  th_frame 112%nat [8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8; 8]%nat ST.
-  do 15 zstep.
-  zstep. if_cases K1; zify_cond K1. { exfalso. rewrite ?unsigned_lit in K1 by lia. lia. }
-  zstep.                                                    (* [comment removed for export] *)
-  do 2 zstep. do 3 zstep. do 2 zstep. zstep. zstep. th_if_lit.
-  zstep. rewrite (t_sx32_small num) by lia. do 2 zstep.
-  zstep. if_cases K2; zify_cond K2. 2:{ exfalso. rewrite ?unsigned_lit in K2 by lia. lia. }
-  do 3 zstep. zstep.
-  apply evt_done. do 2 eexists. split; [cbv delta [mkR]; reflexivity|]. split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [eassumption|]. split; assumption.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 val F fc m lo A num loc pad data srt nalloc comp cmpt freet copyt
+    ObjHigh ObjAlign ObjBelowLo NumRange ObjCells ObjPoison Pristine ShadowBase Stack LoHigh LoRoom SpTop Inv.
+  assert (ObjNonNull : bv_eqb (Z_to_bv 64 A) (Z_to_bv 64 0) = false).
+  { unfold bv_eqb. rewrite (unsigned_lit A) by lia. change (bv_unsigned (Z_to_bv 64 0)) with 0. apply Z.eqb_neq. lia. }
+  assert (NumNotMax : bv_eqb (Z_to_bv 64 num) (Z_to_bv 64 2147483647) = false).
+  { unfold bv_eqb. rewrite (unsigned_lit num) by lia. change (bv_unsigned (Z_to_bv 64 2147483647)) with 2147483647. apply Z.eqb_neq. lia. }
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. pose proof (Z_to_bv_bv_unsigned sp) as SpBack.
+  revert Stack LoRoom SpTop SpRange SpBack. generalize (bv_unsigned sp) as SP. intros SP Stack LoRoom SpTop SpRange SpBack. subst sp.
+  change (bv_modulus 64) with (2 ^ 64) in SpRange.
+  unfold sk_cells in ObjCells. unfold SHB, g_shadow_memory_dynamic_address in ShadowBase. unfold e_sk_insert, e_sk_reserve, SITE_ski_reserve.
+  pose proof (wmono_refl asegs m) as Grows. pose proof (munch_refl [(SP - 112, SP)] m) as Touched.
+  assert (ShadowFp : sh_fp [(SP - 112, SP)]) by sh_fp_lia.
+  assert (PristineFp : ut_fp [(SP - 112, SP)]) by ut_fp_lia.
+  carve_frame 112%nat Stack.
+  do 16 zstep. rewrite ObjNonNull. cbv iota.
+  do 3 zstep. do 6 zstep. zstep. zsh. th_if_lit.
+  zstep. rewrite (t_sx32_small num) by lia. zstep. zstep.
+  zstep. rewrite NumNotMax. change (negb false) with true. cbv iota.
+  do 4 zstep.
+  apply evt_done. eexists. exists m0. split; [reflexivity|].
+  split; [exact Touched|]. split; [exact Grows|]. split; [exact Inv|]. split; [exact FR|]. split; [exact Stack| exact ObjCells].
 Qed.
 
 (* [comment removed for export] *)
@@ -111,35 +132,46 @@ Lemma skr_room : forall (ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s
        /\ rw_cells asegs m' A (sk_cells (Z_to_bv 64 num) pad (Z_to_bv 64 D) srt (Z_to_bv 64 nalloc) z64 cmpt freet copyt))
     (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 A) (Z_to_bv 64 1) z64 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 e_sk_reserve) fc None m (seg_rom asegs)).
 Proof.
-  intros until copyt. intros AHI AAL ALO HC ACC NUM NA NAL D0 DR UT SHC ST LO0 LO HTOP MI.
-  unfold e_sk_reserve, sk_cells, g_shadow_memory_dynamic_address, SHB in *.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp)]%Z m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  th_frame 80%nat [8; 8; 8; 8; 8; 8; 8; 8; 8; 8]%nat ST.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo A D num nalloc pad srt cmpt freet copyt
+    ObjHigh ObjAlign ObjBelowLo ObjCells ObjPoison NumPos NumRoom NallocRange DataNonZero DataRange Pristine ShadowBase Stack LoHigh LoRoom SpTop Inv.
+  assert (FlipLow : Z.lxor num 2147483647 = 2147483647 - num).
+  { change 2147483647 with (Z.ones 31). rewrite <- Z.ldiff_ones_l_low.
+    - symmetry. apply Z.sub_nocarry_ldiff. rewrite Z.ldiff_ones_r by lia. rewrite Z.shiftr_div_pow2 by lia.
+      rewrite Z.div_small by lia. reflexivity.
+    - lia.
+    - apply (proj1 (Z.log2_lt_pow2 num 31 ltac:(lia))). lia. }
+  assert (BelowLimit : bv_ltu (Z_to_bv 64 (Z.lxor num 2147483647)) (Z_to_bv 64 1) = false).
+  { unfold bv_ltu. rewrite FlipLow, unsigned_lit by lia. change (bv_unsigned (Z_to_bv 64 1)) with 1. apply Z.ltb_ge. lia. }
+  assert (DataNotNull : bv_eqb (Z_to_bv 64 D) (Z_to_bv 64 0) = false).
+  { unfold bv_eqb. rewrite (unsigned_lit D) by lia. change (bv_unsigned (Z_to_bv 64 0)) with 0. apply Z.eqb_neq. exact DataNonZero. }
+  pose proof (SGS (num + 1) ltac:(lia)) as SgnNext. pose proof (SGS nalloc ltac:(lia)) as SgnCap.
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. pose proof (Z_to_bv_bv_unsigned sp) as SpBack.
+  revert Stack LoRoom SpTop SpRange SpBack. generalize (bv_unsigned sp) as SP. intros SP Stack LoRoom SpTop SpRange SpBack. subst sp.
+  change (bv_modulus 64) with (2 ^ 64) in SpRange.
+  unfold sk_cells in ObjCells. unfold SHB, g_shadow_memory_dynamic_address in ShadowBase. unfold e_sk_reserve.
+  pose proof (wmono_refl asegs m) as Grows. pose proof (munch_refl [(SP - 80, SP)] m) as Touched.
+  assert (ShadowFp : sh_fp [(SP - 80, SP)]) by sh_fp_lia.
+  assert (PristineFp : ut_fp [(SP - 80, SP)]) by ut_fp_lia.
+  carve_frame 80%nat Stack.
   do 11 zstep.
-  do 3 zstep.                                                             (* [comment removed for export] *)
-  do 4 zstep. zstep. th_if_lit.
-  zstep. rewrite (t_sx32_small num) by lia.
-  (* [comment removed for export] *)
-  do 3 zstep. zstep. rewrite ?Z.add_0_r, ?ubs_sw32 by lia.
-  assert (XL : Z.lxor num 2147483647 = 2147483647 - num).
-  { change 2147483647 with (Z.ones 31).
-    assert (LL : Z.log2 num < 31) by (destruct (Z.eq_dec num 0) as [->|]; [cbn; lia | apply Z.log2_lt_pow2; lia]).
-    rewrite <- Z.ldiff_ones_l_low; [| lia | exact LL]. symmetry. apply Z.sub_nocarry_ldiff. apply Z.ldiff_ones_r_low; [lia | exact LL]. }
-  if_cases K2; zify_cond K2; [| exfalso; rewrite ?SGS, ?unsigned_lit, ?ubs_sw32, ?XL in K2 by lia; clear - K2 NUM NA NAL; lia]. clear K2.
-  (* [comment removed for export] *)
-  zstep. rewrite ?ubs_sw32 by lia.
-  zstep. zstep.
-  if_cases K4; zify_cond K4; rewrite ?SGS, ?unsigned_lit in K4 by lia; [| zstep].
-  all: do 4 zstep; zstep; th_if_lit; zstep.
-  all: zstep; if_cases K5; zify_cond K5; [exfalso; rewrite ?unsigned_lit in K5 by lia; exact (D0 K5)|].
-  all: do 4 zstep; zstep; th_if_lit; zstep; rewrite (t_sx32_small nalloc) by lia.
+  do 7 zstep. zstep. th_if_lit.
+  zstep. rewrite (t_sx32_small num) by lia. do 4 zstep.
+  rewrite BelowLimit. change (negb false) with true. cbv iota.
+  zstep. rewrite (SWR (num + 1)) by lia. zstep.
+  zstep. if_cases MinFour; zify_cond MinFour.
+  2: zstep.
+  all: do 5 zstep; th_if_lit.
+  all: do 2 zstep; rewrite DataNotNull; cbv iota.
+  all: do 5 zstep; th_if_lit.
+  all: zstep; rewrite (t_sx32_small nalloc) by lia.
   all: zstep; th_if_lit.
-  all: zstep; if_cases K6; zify_cond K6; rewrite ?SGS, ?unsigned_lit in K6 by lia; [| exfalso; clear - K6 K4 NA NAL NUM; lia].
-  all: zstep; do 9 zstep.
-  all: th_release FR (bv_unsigned sp); do 2 zstep.
-  all: apply evt_done; do 6 eexists; split; [cbv delta [mkR]; reflexivity|]; split; [exact MU|]; split; [exact WM|]; split; [assumption|]; split; assumption.
+  all: zstep; if_cases RoomOk; zify_cond RoomOk; [| exfalso; lia].
+  all: do 12 zstep.
+  all: assert (Unwound : stk asegs m0 lo SP);
+    [ pose proof (stk_release asegs m0 lo (SP + -80) _ Stack FR ltac:(lia)) as Back;
+      cbn [cells_size csize Nat.add] in Back; replace SP with (SP + -80 + Z.of_nat 80) by lia; exact Back |].
+  all: apply evt_done; do 5 eexists; exists m0; split; [reflexivity|].
+  all: split; [exact Touched|]; split; [exact Grows|]; split; [exact Inv|]; split; [exact Unwound| exact ObjCells].
 Qed.
 (* [comment removed for export] *)
 Lemma ski_w1g : forall (sp gp tp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s3 s5 s6 s9 s10 s11 t3 t4 t5 t6 val : word) (F : bvmap 5 word) (fc : bv 32) (m : mem)
@@ -163,68 +195,63 @@ Lemma ski_w1g : forall (sp gp tp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s3 s5 s6 s9 s10 s
            (Z_to_bv 64 num) s3 val s5 s6 (Z_to_bv 64 (Z.shiftr A 3 + SHB)) (Z_to_bv 64 SHB) s9 s10 s11 t3 t4 t5 t6)
         F (Z_to_bv 64 SITE_ski_reserve) fc None m (seg_rom asegs)).
 Proof.
-  intros until s11v. intros AHI AAL ALO HC ACC NUM NA NAL S01 DHI DAL DLO DC ACCD DISJ UT SHC FR ST LO0 LO HTOP MI.
-  unfold sk_cells, g_shadow_memory_dynamic_address, SHB, SITE_ski_reserve in *.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (bv_unsigned_in_range 64 val) as RV. unfold bv_modulus in RV. cbn in RV.
-  pose proof (munch_refl [(A, A + 4); (A + 16, A + 20); (D, D + 8 * nalloc)]%Z m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  cl_eu (bv_unsigned sp) (-112) EU1.
-  pose proof (proj1 (proj1 (proj1 DC))) as JL. cbn in JL.
+  intros sp gp tp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s3 s5 s6 s9 s10 s11 t3 t4 t5 t6 val F fc m lo A D num nalloc s01 pad cmpt freet copyt j junk
+    rav s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v
+    ObjHigh ObjAlign ObjBelowLo ObjCells ObjPoison NumPos NumRoom NallocRange SortedFlag
+    ArrHigh ArrAlign ArrBelowLo ArrCells ArrPoison Apart Pristine ShadowBase Saved Stack LoHigh LoRoom SpTop Inv.
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. pose proof (Z_to_bv_bv_unsigned sp) as SpBack.
+  revert Saved Stack LoRoom SpTop SpRange SpBack. generalize (bv_unsigned sp) as SP. intros SP Saved Stack LoRoom SpTop SpRange SpBack. subst sp.
+  change (bv_modulus 64) with (2 ^ 64) in SpRange.
+  apply (rw_cells_split_CB asegs m D [] _ junk [] [Z.to_nat (8 * num); 8%nat; (Z.to_nat (8 * nalloc) - Z.to_nat (8 * num) - 8)%nat]) in ArrCells;
+    [| cbn [sum_nat]; lia].
+  cbn [mk_CB_cells app] in ArrCells.
+  apply (proj1 (rw_cells_app m D [_] _)) in ArrCells. destruct ArrCells as [ArrLead ArrRest].
+  apply (proj1 (rw_cells_app m _ [_] _)) in ArrRest. destruct ArrRest as [ArrSlot ArrTrail].
+  cbn [cells_size csize Nat.add] in ArrSlot, ArrTrail.
+  replace (D + Z.of_nat (Z.to_nat (8 * num) + 0)) with (D + 8 * num) in ArrSlot, ArrTrail by lia.
+  change (Z.of_nat 8) with 8 in ArrTrail.
+  unfold sk_cells in ObjCells. unfold SHB, SITE_ski_reserve. unfold g_shadow_memory_dynamic_address in ShadowBase.
+  pose proof (wmono_refl asegs m) as Grows. pose proof (munch_refl [(A, A + 4); (A + 16, A + 20); (D, D + 8 * nalloc)] m) as Touched.
+  assert (ShadowFp : sh_fp [(A, A + 4); (A + 16, A + 20); (D, D + 8 * nalloc)]) by sh_fp_lia.
+  pose proof (zb_lxor_pow2_small num 63 ltac:(lia) ltac:(lia)) as SignedNum. change (2 ^ 63) with 9223372036854775808 in SignedNum.
+  assert (PastSign : (num + 9223372036854775808 <? 9223372036854775808) = false) by (apply Z.ltb_ge; lia).
+  assert (Shift8 : num ≪ 3 = 8 * num) by (rewrite Z.shiftl_mul_pow2 by lia; lia).
+  pose proof (SGS num ltac:(lia)) as SgnNum.
   zstep. th_if_lit.
-  zstep. zsh. zstep. th_if_lit.
-  do 3 zstep. zstep. zstep. th_if_lit.
-  zstep. rewrite (t_sx32_small num) by lia. zstep.
-  do 4 zstep.
-  change 9223372036854775808 with (2 ^ 63). rewrite !zb_lxor_sign by lia. rewrite (Z.mod_small (num + 2 ^ 63)) by lia.
-  replace (num + 2 ^ 63 <? 2 ^ 63) with false by (symmetry; apply Z.ltb_ge; lia). rewrite Z.ltb_irrefl. cbn [Z.b2z Z.lxor Z.lor].
-  zstep. th_if_lit.
-  (* [comment removed for export] *)
-  zstep. zstep. rewrite (Z.shiftl_mul_pow2 num 3) by lia. change (2 ^ 3) with 8.
-  remember (D + num * 8) as cb eqn:ECB.
-  assert (ACB : acc asegs m cb 8) by (apply (acc_sub asegs m D (8 * nalloc) cb 8 ACCD); subst cb; lia).
-  assert (CBAL : cb mod 8 = 0) by (subst cb; clear - DAL; Z.div_mod_to_equations; lia).
-  apply (rw_cells_split_CB asegs m D [] (Z.to_nat (8 * nalloc)) junk [] [Z.to_nat (8 * num); 8; Z.to_nat (8 * nalloc - 8 * num - 8)]%nat) in DC; [| cbn [sum_nat]; lia]. cbn [mk_CB_cells app] in DC.
-  lazymatch type of DC with rw_cells _ _ _ [?c1; ?c2; ?c3] => change [c1; c2; c3] with ([c1] ++ [c2] ++ [c3]) in DC end.
-  apply (proj1 (rw_cells_app m _ _ _)) in DC. destruct DC as [D1 DCr]. apply (proj1 (rw_cells_app m _ _ _)) in DCr. destruct DCr as [D2 D3].
-  cbn [cells_size csize Nat.add] in D2, D3.
-  replace (D + Z.of_nat (Z.to_nat (8 * num) + 0)) with cb in D2 by lia. replace (D + Z.of_nat (Z.to_nat (8 * num) + 0) + Z.of_nat 8) with (cb + 8) in D3 by lia.
-  (* [comment removed for export] *)
+  zstep. zstep. th_if_lit.
+  do 4 zstep. zstep. th_if_lit.
+  zstep. rewrite (t_sx32_small num) by lia.
+  zstep. do 5 zstep.
+  rewrite SignedNum, Z.ltb_irrefl, PastSign. th_if_lit.
+  do 2 zstep. rewrite Shift8.
+  remember (D + 8 * num) as Slot eqn:SlotAt.
   do 3 zstep. zstep. th_if_lit.
   zstep.
-  zstep. zstep.
-  (* [comment removed for export] *)
-  zstep. zsh. zstep. th_if_lit.
+  do 2 zstep. zstep. zstep. th_if_lit.
   zstep. rewrite (t_sx32_small num) by lia.
-  rewrite ?(SWR (num + 1)) by lia.
-  do 5 zstep. zstep. zsh. zstep. try th_if_lit.
-  zstep. rewrite (t_sx32_small s01) by lia.
-  assert (JOIN : forall mx, rw_cells asegs mx D [CB (Z.to_nat (8 * num)) (firstn (Z.to_nat (8 * num)) junk)] -> rw_cells asegs mx cb [C8 val] ->
-                  rw_cells asegs mx (cb + 8) [CB (Z.to_nat (8 * nalloc - 8 * num - 8)) (firstn (Z.to_nat (8 * nalloc - 8 * num - 8)) (skipn 8 (skipn (Z.to_nat (8 * num)) junk)))] ->
-                  exists junk', rw_cells asegs mx D [CB (Z.to_nat (8 * nalloc)) junk']).
-  { intros mx X1 X2 X3. eexists.
-    replace (Z.to_nat (8 * nalloc)) with (Z.to_nat (8 * num) + 8 + Z.to_nat (8 * nalloc - 8 * num - 8))%nat by lia.
-    eapply (CB_join3 mx D _ _ _ val _ X1); [rewrite Z2Nat.id by lia; replace (D + 8 * num) with cb by lia; exact X2|].
-    rewrite Z2Nat.id by lia. replace (D + 8 * num + 8) with (cb + 8) by lia. exact X3. }
-  destruct S01 as [-> | ->].
-  - zstep. th_if_lit.
-    zstep. zsh. zstep. try th_if_lit.
-    zstep. rewrite (t_sx32_small (num + 1)) by lia.
-    do 13 zstep. th_release FR (bv_unsigned sp). do 2 zstep.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => destruct (JOIN mm ltac:(eassumption) ltac:(eassumption) ltac:(eassumption)) as [junk' DJ] end.
-    apply evt_done; do 6 eexists; split; [cbv delta [mkR]; reflexivity|]; split; [eassumption|]; split; [eassumption|]; split; [assumption|]; split; [assumption|]. split; [assumption| exact DJ].
-  - zstep. th_if_lit.
-    zstep. if_cases K7; zify_cond K7.
-    { exfalso. rewrite ?SGS in K7 by lia. apply andb_false_iff in K7. destruct K7 as [K7|K7]; apply Z.ltb_ge in K7; clear - K7 NUM NA NAL; lia. }
-    zstep. zstep. zstep. zstep. zstep. th_if_lit.
-    zstep. zstep. th_if_lit.
-    zstep. zsh. zstep. try th_if_lit.
-    zstep. th_fix_lit_store.
-    zstep. zsh. zstep. try th_if_lit.
-    zstep. rewrite (t_sx32_small (num + 1)) by lia.
-    do 13 zstep. th_release FR (bv_unsigned sp). do 2 zstep.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => destruct (JOIN mm ltac:(eassumption) ltac:(eassumption) ltac:(eassumption)) as [junk' DJ] end.
-    apply evt_done; do 6 eexists; split; [cbv delta [mkR]; reflexivity|]; split; [eassumption|]; split; [eassumption|]; split; [assumption|]; split; [assumption|]. split; [assumption| exact DJ].
+  do 3 zstep.
+  zstep.
+  do 2 zstep. zstep. th_if_lit.
+  zstep. destruct SortedFlag as [-> | ->]; rewrite t_sx32_small by lia.
+  all: zstep; th_if_lit.
+  2: zstep; if_cases HasMany; zify_cond HasMany; [exfalso; lia |].
+  2: do 4 zstep; zstep; th_if_lit.
+  2: do 2 zstep; th_if_lit.
+  2: do 2 zstep; th_if_lit.
+  2: zstep.
+  all: zstep; zstep; th_if_lit.
+  all: zstep; rewrite (t_sx32_small (num + 1)) by lia.
+  all: do 15 zstep.
+  all: lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mf _) =>
+         pose proof (stk_release asegs mf lo (SP + -112) _ Stack Saved ltac:(lia)) as Back;
+         rename mf into mfin end.
+  all: cbn [cells_size csize Nat.add] in Back; replace (SP + -112 + Z.of_nat 112) with SP in Back by lia.
+  all: subst Slot.
+  all: rewrite <- (Z2Nat.id (8 * num)) in ArrSlot, ArrTrail at 1 by lia.
+  all: pose proof (CB_join3 mfin D _ _ _ val _ ArrLead ArrSlot ArrTrail) as Whole.
+  all: replace (Z.to_nat (8 * num) + 8 + (Z.to_nat (8 * nalloc) - Z.to_nat (8 * num) - 8))%nat with (Z.to_nat (8 * nalloc)) in Whole by lia.
+  all: apply evt_done; do 5 eexists; exists mfin; split; [reflexivity|].
+  all: split; [exact Touched|]; split; [exact Grows|]; split; [exact Inv|]; split; [exact Back|]; split; [exact ObjCells| exact Whole].
 Qed.
 (* [comment removed for export] *)
 Lemma skr_grow_w0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem)
@@ -244,30 +271,33 @@ Lemma skr_grow_w0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s
        /\ stk asegs m' lo (bv_unsigned sp + -80) /\ rw_cells asegs m' A (sk_cells (Z_to_bv 64 4) pad (Z_to_bv 64 D) srt (Z_to_bv 64 4) z64 cmpt freet copyt))
     (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 A) (Z_to_bv 64 1) z64 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 e_sk_reserve) fc None m (seg_rom asegs)).
 Proof.
-  intros until copyt. intros AHI AAL ALO HC ACC D0 DR UT SHC ST LO0 LO HTOP MI.
-  unfold e_sk_reserve, sk_cells, g_shadow_memory_dynamic_address, SHB, SITE_skr_realloc, SK_FILE, e_CRYPTO_realloc_array in *.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp)]%Z m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  th_frame 80%nat [8; 8; 8; 8; 8; 8; 8; 8; 8; 8]%nat ST.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo A D pad srt cmpt freet copyt
+    ObjHigh ObjAlign ObjBelowLo ObjCells ObjPoison DataNonZero DataRange Pristine ShadowBase Stack LoHigh LoRoom SpTop Inv.
+  assert (DataNotNull : bv_eqb (Z_to_bv 64 D) (Z_to_bv 64 0) = false).
+  { unfold bv_eqb. rewrite (unsigned_lit D) by lia. change (bv_unsigned (Z_to_bv 64 0)) with 0. apply Z.eqb_neq. exact DataNonZero. }
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. pose proof (Z_to_bv_bv_unsigned sp) as SpBack.
+  revert Stack LoRoom SpTop SpRange SpBack. generalize (bv_unsigned sp) as SP. intros SP Stack LoRoom SpTop SpRange SpBack. subst sp.
+  change (bv_modulus 64) with (2 ^ 64) in SpRange.
+  unfold sk_cells in ObjCells. unfold SHB, g_shadow_memory_dynamic_address in ShadowBase. unfold e_sk_reserve.
+  pose proof (wmono_refl asegs m) as Grows. pose proof (munch_refl [(SP - 80, SP)] m) as Touched.
+  assert (ShadowFp : sh_fp [(SP - 80, SP)]) by sh_fp_lia.
+  assert (PristineFp : ut_fp [(SP - 80, SP)]) by ut_fp_lia.
+  carve_frame 80%nat Stack.
   do 11 zstep.
-  do 3 zstep.
-  do 4 zstep. zstep. th_if_lit.
+  do 7 zstep. zstep. th_if_lit.
+  zstep. rewrite (t_sx32_small 4) by lia. do 4 zstep. th_if_lit.
+  do 3 zstep. th_if_lit.
+  do 5 zstep. th_if_lit.
+  do 2 zstep. rewrite DataNotNull. cbv iota.
+  do 5 zstep. th_if_lit.
   zstep. rewrite (t_sx32_small 4) by lia.
-  (* [comment removed for export] *)
-  do 3 zstep. zstep. th_if_lit.
-  zstep.
-  zstep. zstep. th_if_lit.
-  do 4 zstep. zstep. th_if_lit. zstep.
-  zstep. if_cases K5; zify_cond K5; [exfalso; rewrite ?unsigned_lit in K5 by lia; exact (D0 K5)|].
-  do 4 zstep. zstep. th_if_lit. zstep. rewrite (t_sx32_small 4) by lia.
   zstep. th_if_lit.
   zstep. th_if_lit.
-  (* [comment removed for export] *)
-  do 9 zstep. zstep. th_if_lit.
-  do 6 zstep. zstep. th_if_lit.
-  do 5 zstep. zstep.
-  apply evt_done. do 2 eexists. split; [cbv delta [mkR]; reflexivity|]. split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [eassumption|]. split; assumption.
+  do 10 zstep. th_if_lit.
+  do 7 zstep. th_if_lit.
+  do 6 zstep.
+  apply evt_done. eexists. exists m0. split; [reflexivity|].
+  split; [exact Touched|]. split; [exact Grows|]. split; [exact Inv|]. split; [exact FR|]. split; [exact Stack| exact ObjCells].
 Qed.
 
 (* [comment removed for export] *)
@@ -289,16 +319,25 @@ Lemma skr_grow_w1 : forall (sp gp tp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s8 s9 s10 s11
             s8 s9 s10 s11 t3 t4 t5 t6)
         F (Z_to_bv 64 SITE_skr_realloc) fc None m (seg_rom asegs)).
 Proof.
-  intros until s7v. intros AHI AAL ALO HC ACC QR UT SHC FR ST LO0 LO HTOP MI. unfold sk_cells, g_shadow_memory_dynamic_address, SHB, SITE_skr_realloc in *.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-  pose proof (munch_refl [(A + 8, A + 16); (A + 20, A + 24)]%Z m) as MU. pose proof (wmono_refl asegs m) as WM.
-  lazymatch type of MU with munch ?W _ _ => assert (HWU : ut_fp W) by ut_fp_lia; assert (HWS : sh_fp W) by sh_fp_lia end.
-  cl_eu (bv_unsigned sp) (-80) EU1.
-  zstep. if_cases K1; zify_cond K1. { exfalso. rewrite ?unsigned_lit in K1 by lia. lia. }
-  zstep. zsh. zstep. th_if_lit.
+  intros sp gp tp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo A D q pad srt cmpt freet copyt j rav s0v s1v s2v s3v s4v s5v s6v s7v
+    ObjHigh ObjAlign ObjBelowLo ObjCells ObjPoison NewRange Pristine ShadowBase Saved Stack LoHigh LoRoom SpTop Inv.
+  assert (NewNotNull : bv_eqb (Z_to_bv 64 q) (Z_to_bv 64 0) = false).
+  { unfold bv_eqb. rewrite (unsigned_lit q) by lia. change (bv_unsigned (Z_to_bv 64 0)) with 0. apply Z.eqb_neq. lia. }
+  pose proof (bv_unsigned_in_range 64 sp) as SpRange. pose proof (Z_to_bv_bv_unsigned sp) as SpBack.
+  revert Saved Stack LoRoom SpTop SpRange SpBack. generalize (bv_unsigned sp) as SP. intros SP Saved Stack LoRoom SpTop SpRange SpBack. subst sp.
+  change (bv_modulus 64) with (2 ^ 64) in SpRange.
+  unfold sk_cells in ObjCells. unfold SITE_skr_realloc, SHB. unfold g_shadow_memory_dynamic_address in ShadowBase.
+  pose proof (wmono_refl asegs m) as Grows. pose proof (munch_refl [(A + 8, A + 16); (A + 20, A + 24)] m) as Touched.
+  assert (ShadowFp : sh_fp [(A + 8, A + 16); (A + 20, A + 24)]) by sh_fp_lia.
+  zstep. rewrite NewNotNull. cbv iota.
+  zstep. zstep. th_if_lit.
   zstep.
-  zstep. zsh. zstep. th_if_lit.
-  zstep. th_fix_lit_store.
-  zstep. do 9 zstep. th_release FR (bv_unsigned sp). do 2 zstep.
-  apply evt_done. do 2 eexists. split; [cbv delta [mkR]; reflexivity|]. split; [eassumption|]. split; [eassumption|]. split; [assumption|]. split; assumption.
+  zstep. zstep. th_if_lit.
+  zstep.
+  do 12 zstep.
+  assert (Unwound : stk asegs m1 lo SP).
+  { pose proof (stk_release asegs m1 lo (SP + -80) _ Stack Saved ltac:(lia)) as Back.
+    cbn [cells_size csize Nat.add] in Back. replace SP with (SP + -80 + Z.of_nat 80) by lia. exact Back. }
+  apply evt_done. eexists. exists m1. split; [reflexivity|].
+  split; [exact Touched|]. split; [exact Grows|]. split; [exact Inv|]. split; [exact Unwound| exact ObjCells].
 Qed.

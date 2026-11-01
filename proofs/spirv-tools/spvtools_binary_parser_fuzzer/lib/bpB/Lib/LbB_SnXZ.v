@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -43,79 +43,84 @@ Section SnXZ.
       /\ munch [(fp, fp + 1)] m M' /\ wmono asegs m M' /\ mem_inv asegs M'
       /\ (forall lo hi, stk asegs m lo hi -> stk asegs M' lo hi)
       /\ mrd asegs M' (wa fp) = Some (b8 0).
-  Proof.
-    intros until r. intros FL0 FH PL0 PH SPL SPH DJ CSF CFP WP MI.
-    remember (mkR x1 x2 gp tp x5 x6 x7 (Z_to_bv 64 SP) x9 x10
-                 x11 x12 x13 x14 x15 x16 x17 (Z_to_bv 64 ff) x19 (Z_to_bv 64 r) x21
-                 x22 x23 x24 x25 x26 x27
-                 x28 x29 x30 x31) as R eqn:HR0.
-    pose (E := Eseed R [Z_to_bv 64 ff; Z_to_bv 64 fp; Z_to_bv 64 SP; s8'; s7'; s6'; s5'; s4'; s3'; s2'; s1'; s0'; ra']).
-    assert (HR : regs_ok E (srs sr_id [(8%bv, EVar 34); (18%bv, EVar 32)]) R).
-    { apply regs_ok_srs; [apply regs_ok_seed|]. repeat constructor; cbn [fst snd]; try (intros X; discriminate X); subst R; evs;
-        try reflexivity. }
-    assert (EF : bv_unsigned (edenot E (EVar 32)) = ff) by (evs; rewrite u64_of_Z by lia; reflexivity).
-    assert (EP : bv_unsigned (edenot E (EVar 34)) = SP) by (evs; rewrite u64_of_Z by lia; reflexivity).
-    assert (EQ : bv_unsigned (edenot E (EVar 33)) = fp) by (evs; rewrite u64_of_Z by lia; reflexivity).
-    assert (HK : know_ok asegs E m
-       [ KWord (SA (EVar 32) 1016) 8 (EVar 33);
-         KWord (SA (EVar 34) (-80)) 8 (EVar 35); KWord (SA (EVar 34) (-72)) 8 (EVar 36); KWord (SA (EVar 34) (-64)) 8 (EVar 37);
-         KWord (SA (EVar 34) (-56)) 8 (EVar 38); KWord (SA (EVar 34) (-48)) 8 (EVar 39); KWord (SA (EVar 34) (-40)) 8 (EVar 40);
-         KWord (SA (EVar 34) (-32)) 8 (EVar 41); KWord (SA (EVar 34) (-24)) 8 (EVar 42); KWord (SA (EVar 34) (-16)) 8 (EVar 43);
-         KWord (SA (EVar 34) (-8)) 8 (EVar 44);
-         KWr (SA (EVar 33) 0) (ELit 1);
-         KRange (EVar 32) 0 (2 ^ 47 - 1024); KRange (EVar 34) (2 ^ 45) (2 ^ 47); KRange (EVar 33) 0 (2 ^ 47 - 1);
-         KDisj (SA (EVar 34) (-80)) (ELit 80) (SA (EVar 33) 0) (ELit 1) ]).
-    { unfold know_ok.
-      apply Forall_cons.
-      { eapply (kword_of_rw_cells asegs E m (ff + 1016) _ 0%nat (C8 (Z_to_bv 64 fp))); [exact CFP | reflexivity | reflexivity | lia
-          | unfold estart; cbn [a_base a_off]; rewrite EF; lia | lia | lia | evs; reflexivity]. }
-      apply Forall_cons. { kword_cell CSF 0%nat (C8 s8'). }
-      apply Forall_cons. { kword_cell CSF 8%nat (C8 s7'). }
-      apply Forall_cons. { kword_cell CSF 16%nat (C8 s6'). }
-      apply Forall_cons. { kword_cell CSF 24%nat (C8 s5'). }
-      apply Forall_cons. { kword_cell CSF 32%nat (C8 s4'). }
-      apply Forall_cons. { kword_cell CSF 40%nat (C8 s3'). }
-      apply Forall_cons. { kword_cell CSF 48%nat (C8 s2'). }
-      apply Forall_cons. { kword_cell CSF 56%nat (C8 s1'). }
-      apply Forall_cons. { kword_cell CSF 64%nat (C8 s0'). }
-      apply Forall_cons. { kword_cell CSF 72%nat (C8 ra'). }
-      apply Forall_cons. { eapply kwr_of_wr_at; [exact WP | unfold estart; cbn [a_base a_off]; rewrite EQ; lia
-                                  | unfold estart, elenZ; cbn [a_base a_off]; rewrite EQ; evs; rewrite u64_of_Z by lia; lia | unfold elenZ; evs; rewrite u64_of_Z by lia; lia]. }
-      apply Forall_cons. { cbn [kentry_ok]. rewrite EF. lia. }
-      apply Forall_cons. { cbn [kentry_ok]. rewrite EP. lia. }
-      apply Forall_cons. { cbn [kentry_ok]. rewrite EQ. lia. }
-      apply Forall_cons; [cbn [kentry_ok]; unfold estart, elenZ; cbn [a_base a_off]; rewrite ?EF, ?EP, ?EQ; evs;
-                          rewrite ?u64_of_Z by lia; lia|].
-      apply Forall_nil. }
-    unfold SX_SF_RA.
-    xrun_at (PropExec.mkFP F fc) asegs R 0xf9ad4 m ro HR HK 60%nat [SX_RET] (SCR [] [] []) 50%N.
-    { first [apply Forall_nil | split_scs].
-      all: cbn [sc_denot]; unfold flat, estart, elenZ; cbn [a_base a_off]; rewrite ?EF, ?EP, ?EQ; evs; rewrite ?u64_of_Z by lia; lia. }
-    clear HK.
-    lazymatch type of Hlf with log_flat _ ?lg =>
-      lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) =>
-        change mm with (mem_denot E m lg) in Hms; set (M1 := mem_denot E m lg) in Hms end end.
-    exists R', M1. split; [exact Hms|].
-    assert (HF : rfull R) by (rewrite HR0; apply rfull_mkR).
-    pose proof (msteps_full asegs _ _ Hms HF) as HF1; cbn [ms_regs] in HF1.
-    readback HR' HF1 HR0 HRe.
-    rreg HR' 1%bv L1. rreg HR' 2%bv L2. rreg HR' 8%bv L8. rreg HR' 9%bv L9. rreg HR' 10%bv L10.
-    rreg HR' 18%bv L18. rreg HR' 19%bv L19. rreg HR' 20%bv L20. rreg HR' 21%bv L21. rreg HR' 22%bv L22. rreg HR' 23%bv L23.
-    rreg HR' 24%bv L24.
-    assert (L2' : getr R' 2 = Z_to_bv 64 SP) by (rewrite L2; evs; rewrite ?w_add, ?w_addm, ?v_addi_Z by lia; first [reflexivity | f_equal; lia]).
-    assert (L10' : getr R' 10 = Z_to_bv 64 r) by (rewrite L10; first [reflexivity | rewrite HR0; reflexivity | evs; reflexivity]).
-    split; [rewrite HRe at 1; rewrite L1, L2', L8, L9, L10', L18, L19, L20, L21, L22, L23, L24; subst R; reflexivity|].
-    split.
-    { subst M1. apply munch_mem_denot; [exact Hlf|].
-      repeat (apply Forall_cons; [cbn [e_addr e_width]; unfold estart; cbn [a_base a_off]; rewrite EQ;
-                                  cbn [inside Z.of_nat Pos.of_succ_nat Pos.succ]; lia|]).
-      apply Forall_nil. }
-    split; [subst M1; apply wmono_mem_denot|].
-    split; [exact (msteps_mem_inv asegs _ _ Hms MI)|].
-    split; [intros lo' hi' SK; subst M1; apply stk_mem_denot; exact SK|].
-    assert (FLB : rw_cells asegs M1 fp [C1 (b8 0)]).
-    { subst M1. eapply (rw_cells_log_nth _ m _ 0%nat); [exact Hlf | reflexivity | apply Forall_nil
-        | unfold estart; cbn [a_base a_off]; rewrite EQ; lia | exact WP | reflexivity | exact I | reflexivity]. }
-    destruct FLB as [[_ (_ & _ & B)] _]. specialize (B 0%nat ltac:(cbn; lia)). rewrite Z.add_0_r in B. exact B.
-  Qed.
+Proof using.
+  intros x1 x2 x5 x6 x7 x9 x10 x11 x12 x13 x14 x15 x16 x17 x19 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31
+         gp tp ra' s0' s1' s2' s3' s4' s5' s6' s7' s8' F fc m ro ff fp SP r
+         ff_ge0 ff_top fp_ge0 fp_top sp_bot sp_top fp_clear frame_rw flag_rw fp_wr m_inv.
+  (* The register file on entry, and an environment whose variables 32.. carry the values the run loads:
+     the flag pointer kept at ff + 1016, then ra and s0 .. s8 from the frame. *)
+  set (R0 := mkR x1 x2 gp tp x5 x6 x7 (Z_to_bv 64 SP) x9 x10 x11 x12 x13 x14 x15 x16 x17
+               (Z_to_bv 64 ff) x19 (Z_to_bv 64 r) x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31).
+  set (Env0 := Eseed R0 [Z_to_bv 64 fp; ra'; s0'; s1'; s2'; s3'; s4'; s5'; s6'; s7'; s8']).
+  assert (sp_val : bv_unsigned (ev Env0 8) = SP).
+  { change (ev Env0 8) with (Z_to_bv 64 SP). apply u64_of_Z. lia. }
+  assert (fp_val : bv_unsigned (ev Env0 32) = fp).
+  { change (ev Env0 32) with (Z_to_bv 64 fp). apply u64_of_Z. lia. }
+  assert (ff_val : bv_unsigned (ev Env0 18) = ff).
+  { change (ev Env0 18) with (Z_to_bv 64 ff). apply u64_of_Z. lia. }
+  (* The frame reads, the flag read and the store at fp that the run raises, proved from the premises first;
+     the run's other side conditions are arithmetic, closed by lia inside `side`. *)
+  assert (frame_read : forall (o : Z) (j : N),
+            cell_at [C8 s8'; C8 s7'; C8 s6'; C8 s5'; C8 s4'; C8 s3'; C8 s2'; C8 s1'; C8 s0'; C8 ra'] (Z.to_nat (o + 80))
+              = Some (C8 (ev Env0 j)) ->
+            -80 <= o <= -8 ->
+            sc_denot asegs m Env0 (SCReadBase (SA (EVar 8) o) 8 false (EVar j))).
+  { intros o j slot o_rng. cbn [sc_denot]. exists (le8 (ev Env0 j)). split.
+    - pose proof (cells_at_read asegs m (SP - 80) _ _ _ (proj1 frame_rw) slot) as slot_bytes.
+      rewrite ov_rdn in slot_bytes. cbn [csize cbytes] in slot_bytes.
+      unfold adenot. cbn [edenot a_base a_off]. change (ev Env0 8) with (Z_to_bv 64 SP).
+      rewrite v_addi_Z by lia. rewrite Z2Nat.id in slot_bytes by lia. unfold wa in slot_bytes.
+      replace (SP + o) with (SP - 80 + (o + 80)) by lia. exact slot_bytes.
+    - unfold extz, le8. rewrite SeqExec.bytes_le_to_Z_8. apply Z_to_bv_bv_unsigned. }
+  assert (flag_read : sc_denot asegs m Env0 (SCReadBase (SA (EVar 18) 1016) 8 false (EVar 32))).
+  { cbn [sc_denot]. exists (le8 (Z_to_bv 64 fp)). split.
+    - pose proof (cells_at_read asegs m (ff + 1016) [C8 (Z_to_bv 64 fp)] 0 _ (proj1 flag_rw) eq_refl) as flag_bytes.
+      rewrite ov_rdn in flag_bytes. cbn [csize cbytes Z.of_nat] in flag_bytes.
+      unfold adenot. cbn [edenot a_base a_off]. change (ev Env0 18) with (Z_to_bv 64 ff).
+      rewrite v_addi_Z by lia. rewrite Z.add_0_r in flag_bytes. exact flag_bytes.
+    - unfold extz, le8. rewrite SeqExec.bytes_le_to_Z_8, Z_to_bv_bv_unsigned. reflexivity. }
+  assert (fp_store : sc_denot asegs m Env0 (SCStoreOk (SA (EVar 32) 0) 1)).
+  { cbn [sc_denot]. unfold adenot. cbn [edenot a_base a_off]. change (ev Env0 32) with (Z_to_bv 64 fp).
+    rewrite v_addi_Z by lia. exact (wr_at_store_ok asegs m fp 1 0 1 fp_wr ltac:(lia) ltac:(lia)). }
+  (* Run the segment symbolically from SX_SF_RA to the return at SX_RET. *)
+  destruct (sym_exec asegs 40 true [SX_RET] scr_nil (SS SX_SF_RA sr_id [] [] 32) []) as [[fin scs] scr_end] eqn:run_eq.
+  pose proof run_eq as run_val. vm_compute in run_val. injection run_val as fin_eq scs_eq _.
+  assert (side : scs_denot asegs m Env0 scs).
+  { rewrite <- scs_eq. unfold scs_denot.
+    repeat first [apply Forall_nil | apply Forall_cons].
+    all: lazymatch goal with
+         | |- sc_denot _ _ _ (SCReadBase (SA (EVar 8) _) _ _ _) => apply frame_read; [reflexivity | lia]
+         | |- sc_denot _ _ _ (SCReadBase (SA (EVar 18) _) _ _ _) => exact flag_read
+         | |- sc_denot _ _ _ (SCStoreOk _ _) => exact fp_store
+         | |- _ => cbn [sc_denot]; unfold flat, estart, elenZ; cbn [edenot a_base a_off];
+                   rewrite ?sp_val, ?fp_val, ?ff_val, ?u64_of_Z by lia; lia
+         end. }
+  destruct (@run_sound (PropExec.mkFP F fc) asegs 40 [SX_RET] scr_nil SX_SF_RA sr_id [] 32 fin scs scr_end Env0 m ro R0
+              run_eq (regs_ok_seed R0 _) (Forall_nil _) side) as (R' & regs_fin & log_ok & steps).
+  rewrite <- fin_eq in regs_fin, log_ok, steps. cbn [s_regs s_log s_pc] in regs_fin, log_ok, steps.
+  rewrite !mkst_MS in steps.
+  set (M1 := mem_denot Env0 m [SE (SA (EVar 32) 0) 1 (ELit 0)]) in steps.
+  (* What the final memory holds: the one byte at fp is zero, nothing else moved. *)
+  assert (fp_zero : mrd asegs M1 (wa fp) = Some (b8 0)).
+  { unfold mrd, M1. cbn [mem_denot]. unfold adenot. cbn [edenot a_base a_off].
+    change (ev Env0 32) with (Z_to_bv 64 fp).
+    rewrite v_addi_Z, Z.add_0_r, word_to_le_bytes_1 by lia. unfold wa.
+    rewrite (wbytes_hit_byte [Z_to_bv 8 0] m (Z_to_bv 64 fp) fp (Z_to_bv 8 0)); [reflexivity | | |];
+      cbn [length Z.of_nat]; rewrite ?u64_of_Z by lia.
+    - lia.
+    - lia.
+    - rewrite Z.sub_diag. reflexivity. }
+  assert (only_fp : munch [(fp, fp + 1)] m M1).
+  { apply munch_mem_denot; [exact log_ok|].
+    constructor; [|constructor]. cbn [inside e_addr e_width]. left.
+    unfold estart. cbn [edenot a_base a_off]. rewrite fp_val. lia. }
+  pose proof (msteps_mem_inv asegs _ _ steps m_inv) as inv_end.
+  (* The register file at SX_RET, read back from the symbolic registers. *)
+  assert (full0 : rfull R0) by (unfold R0; apply rfull_mkR).
+  pose proof (msteps_full asegs _ _ steps full0) as full_end.
+  exists R', M1.
+  refine (conj steps (conj _ (conj only_fp (conj (wmono_mem_denot _ _ _)
+            (conj inv_end (conj (fun lo hi stk_m => stk_mem_denot _ _ _ lo hi stk_m) fp_zero)))))).
+  rewrite (rfull_eq R' full_end). f_equal; rewrite regs_fin; reflexivity.
+Qed.
 End SnXZ.

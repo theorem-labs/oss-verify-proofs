@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
@@ -58,24 +58,23 @@ Definition io_ro : list (Z * list cell) :=
   ; (0x16afd0, [C8 (Z_to_bv 64 0x6a66e8)])     ].
 
 Definition io_acc : list (Z * Z) :=
-  [ (0x10dd9, 10)
-  ; (0x14ffe, 4)
+  [ (0x696280, 16)
   ; (0x16390, 17)
   ; (0x16380, 128)
+  ; (0x21d40, 128)
   ; (0x1ae0b, 33)
   ; (0x1f5f2, 21)
   ; (0x1f607, 23)
-  ; (0x21d40, 128)
+  ; (0x14ffe, 4)
   ; (0x22e7d, 7)
-  ; (0x22e7d, 7)
+  ; (0x10dd9, 10)
   ; (0x350b0, 16)
-  ; (0x696280, 16)
   ; (0x13f46, 19)
-  ; (0x14a56, 1)
   ; (0x17e6d, 3)
+  ; (0x20c56, 3)
   ; (0x1a564, 3)
   ; (0x1ffdd, 3)
-  ; (0x20c56, 3)     ].
+  ; (0x14a56, 1) ].
 
 Definition io_consts (m : mem) : Prop :=
   Forall (fun p => rw_cells asegs m (fst p) (snd p)) io_rw

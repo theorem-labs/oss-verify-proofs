@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From OssFuzzTheorems.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -121,29 +121,29 @@ Section Exit.
     ((2147468856 <=? a) && (a + n <=? 2147469104) || (2147612664 <=? a) && (a + n <=? 2147612852)) = true ->
     L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n.
   Proof.
-    intros LB LK cr A M model a n D Hb. pose proof (di_inv _ _ _ _ _ _ _ _ _ _ D) as HH.
-    apply L5Core.L5C.writable_of_defined; [|rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in Hb; lia | rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in Hb; lia].
-    intros i Hi. set (x := a + i).
-    assert (Hx : 2147468856 <= x < 2147469104 \/ 2147612664 <= x < 2147612852) by (unfold x; rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in Hb; lia).
-    assert (DEF : M (Z_to_bv 64 x) <> None).
-    { apply (aic_shadow_defined _ _ _ _ _ ICok _ _ _ _ _ _ _ HH x). left. unfold LOWSH_LO, LOWSH_HI. lia. }
-    assert (VIS : ahid A model (Z_to_bv 64 x) = false).
-    { unfold ahid, mkH. apply andb_false_intro2. apply negb_false_iff.
-      pose proof (aic_globals _ _ _ _ _ ICok _ _ _ _ _ _ _ HH) as G. rewrite (aicl_globals IL ILY) in G.
-      destruct Hx as [Hx|Hx].
-      - pose proof (proj2 (Forall_inv G)) as SA. cbn [fst snd] in SA.
-        specialize (SA 2147468856 ltac:(unfold in_shadow_of, S, SB; cbn; lia)).
-        replace (page_base (Z_to_bv 64 x)) with (page_base (Z_to_bv 64 2147468856)); [exact SA|].
-        unfold page_base, page_base_of. rewrite !u64_lit by lia. f_equal. unfold page_size.
-        Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
-      - destruct (aic_img_shadow _ _ _ _ _ ICok _ _ _ _ _ _ _ HH 0x13c580 16) as (_ & SA);
-          [rewrite (dla_img_lo _ _ _ _ DL); lia | rewrite (dla_img_hi _ _ _ _ DL); lia | lia
-          | rewrite (aicl_poison IL ILY); repeat (apply Forall_cons; [cbn [fst snd]; lia|]); apply Forall_nil |].
-        specialize (SA 2147612848 ltac:(unfold in_shadow_of, S, SB; cbn; lia)).
-        replace (page_base (Z_to_bv 64 x)) with (page_base (Z_to_bv 64 2147612848)); [exact SA|].
-        unfold page_base, page_base_of. rewrite !u64_lit by lia. f_equal. unfold page_size. lia.
-        Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
-    unfold mrestrict. rewrite VIS. exact DEF.
+    intros LB LK cr A M model a n Dv Win.
+    pose proof (di_inv _ _ _ _ _ _ _ _ _ _ Dv) as Inv.
+    pose proof (aic_img_shadow _ _ _ _ _ ICok LB [] LK cr A M (vml_of model) Inv) as ImSh.
+    rewrite (dla_img_lo _ _ _ _ DL), (dla_img_hi _ _ _ _ DL), (aicl_poison _ ILY) in ImSh.
+    destruct (ImSh 145792 8 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(constructor; [cbn; lia | constructor; [cbn; lia | constructor]])) as (_ & AlLo).
+    destruct (ImSh 1295744 8 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(constructor; [cbn; lia | constructor; [cbn; lia | constructor]])) as (_ & AlHi).
+    assert (PgLo : page_allowedb A (page_base (Z_to_bv 64 2147469104)) = true)
+      by (apply AlLo; unfold in_shadow_of; split; apply Z.leb_le; vm_compute; reflexivity).
+    assert (PgHi : page_allowedb A (page_base (Z_to_bv 64 2147612848)) = true)
+      by (apply AlHi; unfold in_shadow_of; split; apply Z.leb_le; vm_compute; reflexivity).
+    assert (SamePg : forall q x y, 0 <= q -> q * 4096 <= x < q * 4096 + 4096 -> q * 4096 <= y < q * 4096 + 4096 -> x < 2 ^ 64 -> y < 2 ^ 64 ->
+              page_base (Z_to_bv 64 x) = page_base (Z_to_bv 64 y)).
+    { intros q x y Q0 Rx Ry Bx By. unfold page_base, page_base_of, page_size. rewrite !u64_lit by lia.
+      rewrite <- (Z.div_unique x 4096 q (x - q * 4096)) by lia. rewrite <- (Z.div_unique y 4096 q (y - q * 4096)) by lia. reflexivity. }
+    pose proof (aic_shadow_defined _ _ _ _ _ ICok LB [] LK cr A M (vml_of model) Inv) as ShDef.
+    assert (VisX : forall x y, page_base (Z_to_bv 64 x) = page_base (Z_to_bv 64 y) -> page_allowedb A (page_base (Z_to_bv 64 y)) = true ->
+              2147450880 <= x < 2415882240 -> mrestrict (ahid A model) M (Z_to_bv 64 x) <> None).
+    { intros x y Pxy Ay Rx. unfold mrestrict, ahid, mkH. rewrite Pxy, Ay. cbn [negb]. rewrite andb_false_r.
+      apply ShDef. left. unfold LOWSH_LO, LOWSH_HI. exact Rx. }
+    destruct (orb_prop _ _ Win) as [Wb|Wb]; apply andb_prop in Wb as (Wa & Wn); apply Z.leb_le in Wa, Wn;
+      apply L5Core.L5C.writable_of_defined; try lia; intros i Ri.
+    - apply (VisX _ 2147469104); [apply (SamePg 524284); lia | exact PgLo | lia].
+    - apply (VisX _ 2147612848); [apply (SamePg 524319); lia | exact PgHi | lia].
   Qed.
 
   (* [comment removed for export] *)
@@ -156,17 +156,21 @@ Section Exit.
 
   (* [comment removed for export] *)
   Definition exit_pre (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
-    let MV := mrestrict (ahid A model) M in
-    dinvA LB LK cr A M model /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
-    /\ (forall i, 65536 <= i < 1282048 -> MV (Z_to_bv 64 i) = None)
-    /\ exitA tid MV.
+    dinvA LB LK cr A M model
+    /\ usp - 4096 <= S
+    /\ S <= usp
+    /\ S mod 16 = 0
+    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
+    /\ L5Defs.L5.img_clear (mrestrict (ahid A model) M) 65536 1282048
+    /\ exitA tid (mrestrict (ahid A model) M).
   Definition exit_preE (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
-    let MV := mrestrict (ahid A model) M in
-    dinvA LB LK cr A M model /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
-    /\ (forall i, 65536 <= i < 1282048 -> MV (Z_to_bv 64 i) = None)
-    /\ exitE tid MV.
+    dinvA LB LK cr A M model
+    /\ usp - 4096 <= S
+    /\ S <= usp
+    /\ S mod 16 = 0
+    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
+    /\ L5Defs.L5.img_clear (mrestrict (ahid A model) M) 65536 1282048
+    /\ exitE tid (mrestrict (ahid A model) M).
 
   #[using="L C IL HIok ICok ILY Hsp DL Hex"] Lemma exit_run_0 : forall LB LK cr A M (model : Model) R (S st tid : Z),
     exit_pre LB LK cr A M model S tid ->
@@ -176,109 +180,60 @@ Section Exit.
     stdoutA 0 MV -> stdoutXA MV ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x118878) M rom) model) (t_exit (Z_to_bv 64 st) (m_fs model)).
   Proof.
-    intros LB LK cr A M model R S st tid (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst G1 G2 G4 G10 SO SOX.
-    pose proof Hsp as Hsp'. destruct SO as (_ & _ & _ & SOwpos & SOwbase & SOlock & _). destruct SOX as (_ & _ & _ & SOrpos & SOrend).
-    set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | _ => 0 end).
-    assert (HS64 : 0 <= V 2%nat < 2 ^ 64) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HT64 : 0 <= V 44%nat < 2 ^ 64) by (cbn [V]; clear - HTr; lia).
-    assert (HSr : 140735332552704 <= V 2%nat <= 140737488355328) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HSa : AS0DRVP_dpX.aligned (V 2%nat) 16) by (cbn [V]; exact HS16).
-    assert (CWR : L5Defs.L5.writable ASEGS MV (V 2%nat - 320) 320).
-    { cbn [V]. intros d k Hd Hk. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (CDF : L5Defs.L5.defined MV (V 2%nat - 320) 320).
-    { cbn [V]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hi; lia. }
-    assert (WSG : forall a (n : nat), wseg_ok ASEGS (Z_to_bv 64 a) n = true -> (0 <=? a) && (a + Z.of_nat n <=? 2 ^ 63) = true -> L5Defs.L5.writable ASEGS MV a (Z.of_nat n)).
-    { intros a n W Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. exact (wsg_writable MV a n W B1 B2). }
-    assert (SHW : forall a n, ((2147468856 <=? a) && (a + n <=? 2147469104) || (2147612664 <=? a) && (a + n <=? 2147612852)) = true -> L5Defs.L5.writable ASEGS MV a n)
-      by (intros a n Hb; exact (sh_writable _ _ _ _ _ _ a n D Hb)).
-    assert (STC : forall (i : nat) a n v, nth_error EX_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (ex_cell_vis _ _ _ _ _ _ a n v D (nth_error_In _ _ Hn))).
-    assert (STC1 : forall (i : nat) a v, nth_error EX_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (STC i a 1 v Hn). }
-    assert (XCC : forall (i : nat) a n v, nth_error XC_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (cells_at_nth MV XC_CELLS i a n v XC Hn)).
-    assert (XCC1 : forall (i : nat) a v, nth_error XC_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (XCC i a 1 v Hn). }
-    assert (DSC : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (0x13bfc0 <=? a) && (a + Z.of_nat n <=? 0x13c580) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. apply (img_cell MV a n bs Hr); [lia | lia|]. intros i Hi. apply DESC. lia. }
-    destruct (AS0DRVP_dpX.dpX_conc fx R MV V HS64 HT64
-           G1 G2 G4 HSr HSa CWR
-           CDF IMGc (WSG 1295744 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1295824 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1299696 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896976 1%nat ltac:(vm_compute; reflexivity) eq_refl)
-           (WSG 6896984 4%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896992 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6897520 4%nat ltac:(vm_compute; reflexivity) eq_refl) (SHW 2147468856 1 eq_refl) (SHW 2147468857 1 eq_refl) (SHW 2147468858 1 eq_refl)
-           (SHW 2147468859 1 eq_refl) (SHW 2147468868 1 eq_refl) (SHW 2147468869 1 eq_refl) (SHW 2147468870 1 eq_refl) (SHW 2147468871 1 eq_refl) (SHW 2147468872 1 eq_refl)
-           (SHW 2147468872 4 eq_refl) (SHW 2147468873 1 eq_refl) (SHW 2147468874 1 eq_refl) (SHW 2147468875 1 eq_refl) (SHW 2147468876 4 eq_refl) (SHW 2147468880 1 eq_refl)
-           (SHW 2147468880 4 eq_refl) (SHW 2147468881 1 eq_refl) (SHW 2147468882 1 eq_refl) (SHW 2147468883 1 eq_refl) (SHW 2147468896 1 eq_refl) (SHW 2147468897 1 eq_refl)
-           (SHW 2147468898 1 eq_refl) (SHW 2147468899 1 eq_refl) (SHW 2147468900 1 eq_refl) (SHW 2147468901 1 eq_refl) (SHW 2147468902 1 eq_refl) (SHW 2147468903 1 eq_refl)
-           (SHW 2147468904 1 eq_refl) (SHW 2147468905 1 eq_refl) (SHW 2147468906 1 eq_refl) (SHW 2147468907 1 eq_refl) (SHW 2147468908 1 eq_refl) (SHW 2147468909 1 eq_refl)
-           (SHW 2147468910 1 eq_refl) (SHW 2147468911 1 eq_refl) (SHW 2147468912 1 eq_refl) (SHW 2147468912 4 eq_refl) (SHW 2147468913 1 eq_refl) (SHW 2147468914 1 eq_refl)
-           (SHW 2147468915 1 eq_refl) (SHW 2147468916 4 eq_refl) (SHW 2147468920 1 eq_refl) (SHW 2147468920 4 eq_refl) (SHW 2147468921 1 eq_refl) (SHW 2147468922 1 eq_refl)
-           (SHW 2147468923 1 eq_refl) (SHW 2147468924 1 eq_refl) (SHW 2147468924 4 eq_refl) (SHW 2147468925 1 eq_refl) (SHW 2147468926 1 eq_refl) (SHW 2147468927 1 eq_refl)
-           (SHW 2147468928 4 eq_refl) (SHW 2147468932 1 eq_refl) (SHW 2147468932 4 eq_refl) (SHW 2147468933 1 eq_refl) (SHW 2147468934 1 eq_refl) (SHW 2147468935 1 eq_refl)
-           (SHW 2147468936 1 eq_refl) (SHW 2147468936 4 eq_refl) (SHW 2147468937 1 eq_refl) (SHW 2147468938 1 eq_refl) (SHW 2147468939 1 eq_refl) (SHW 2147468940 4 eq_refl)
-           (SHW 2147468944 4 eq_refl) (SHW 2147468948 1 eq_refl) (SHW 2147468948 4 eq_refl) (SHW 2147468949 1 eq_refl) (SHW 2147468950 1 eq_refl) (SHW 2147468951 1 eq_refl)
-           (SHW 2147468952 1 eq_refl) (SHW 2147468952 4 eq_refl) (SHW 2147468953 1 eq_refl) (SHW 2147468954 1 eq_refl) (SHW 2147468955 1 eq_refl) (SHW 2147468956 4 eq_refl)
-           (SHW 2147468960 1 eq_refl) (SHW 2147468960 4 eq_refl) (SHW 2147468961 1 eq_refl) (SHW 2147468962 1 eq_refl) (SHW 2147468963 1 eq_refl) (SHW 2147468964 1 eq_refl)
-           (SHW 2147468965 1 eq_refl) (SHW 2147468966 1 eq_refl) (SHW 2147468967 1 eq_refl) (SHW 2147468968 1 eq_refl) (SHW 2147468969 1 eq_refl) (SHW 2147468970 1 eq_refl)
-           (SHW 2147468971 1 eq_refl) (SHW 2147468972 1 eq_refl) (SHW 2147468973 1 eq_refl) (SHW 2147468974 1 eq_refl) (SHW 2147468975 1 eq_refl) (SHW 2147468976 1 eq_refl)
-           (SHW 2147468977 1 eq_refl) (SHW 2147468978 1 eq_refl) (SHW 2147468979 1 eq_refl) (SHW 2147468980 1 eq_refl) (SHW 2147468981 1 eq_refl) (SHW 2147468982 1 eq_refl)
-           (SHW 2147468983 1 eq_refl) (SHW 2147468984 1 eq_refl) (SHW 2147468985 1 eq_refl) (SHW 2147468986 1 eq_refl) (SHW 2147468987 1 eq_refl) (SHW 2147468988 1 eq_refl)
-           (SHW 2147468989 1 eq_refl) (SHW 2147468990 1 eq_refl) (SHW 2147468991 1 eq_refl) (SHW 2147468992 1 eq_refl) (SHW 2147468993 1 eq_refl) (SHW 2147468994 1 eq_refl)
-           (SHW 2147468995 1 eq_refl) (SHW 2147468996 1 eq_refl) (SHW 2147468997 1 eq_refl) (SHW 2147468998 1 eq_refl) (SHW 2147468999 1 eq_refl) (SHW 2147469000 1 eq_refl)
-           (SHW 2147469001 1 eq_refl) (SHW 2147469002 1 eq_refl) (SHW 2147469003 1 eq_refl) (SHW 2147469004 1 eq_refl) (SHW 2147469005 1 eq_refl) (SHW 2147469006 1 eq_refl)
-           (SHW 2147469007 1 eq_refl) (SHW 2147469008 1 eq_refl) (SHW 2147469009 1 eq_refl) (SHW 2147469010 1 eq_refl) (SHW 2147469011 1 eq_refl) (SHW 2147469012 1 eq_refl)
-           (SHW 2147469013 1 eq_refl) (SHW 2147469014 1 eq_refl) (SHW 2147469015 1 eq_refl) (SHW 2147469016 1 eq_refl) (SHW 2147469017 1 eq_refl) (SHW 2147469018 1 eq_refl)
-           (SHW 2147469019 1 eq_refl) (SHW 2147469020 1 eq_refl) (SHW 2147469020 4 eq_refl) (SHW 2147469021 1 eq_refl) (SHW 2147469022 1 eq_refl) (SHW 2147469023 1 eq_refl)
-           (SHW 2147469024 4 eq_refl) (SHW 2147469028 1 eq_refl) (SHW 2147469028 4 eq_refl) (SHW 2147469029 1 eq_refl) (SHW 2147469030 1 eq_refl) (SHW 2147469031 1 eq_refl)
-           (SHW 2147469032 1 eq_refl) (SHW 2147469033 1 eq_refl) (SHW 2147469034 1 eq_refl) (SHW 2147469035 1 eq_refl) (SHW 2147469036 1 eq_refl) (SHW 2147469037 1 eq_refl)
-           (SHW 2147469038 1 eq_refl) (SHW 2147469039 1 eq_refl) (SHW 2147469072 1 eq_refl) (SHW 2147469072 4 eq_refl) (SHW 2147469073 1 eq_refl) (SHW 2147469074 1 eq_refl)
-           (SHW 2147469075 1 eq_refl) (SHW 2147469076 4 eq_refl) (SHW 2147469080 1 eq_refl) (SHW 2147469080 4 eq_refl) (SHW 2147469081 1 eq_refl) (SHW 2147469082 1 eq_refl)
-           (SHW 2147469083 1 eq_refl) (SHW 2147469084 1 eq_refl) (SHW 2147469085 1 eq_refl) (SHW 2147469086 1 eq_refl) (SHW 2147469087 1 eq_refl) (SHW 2147469088 1 eq_refl)
-           (SHW 2147469089 1 eq_refl) (SHW 2147469090 1 eq_refl) (SHW 2147469091 1 eq_refl) (SHW 2147469092 1 eq_refl) (SHW 2147469092 4 eq_refl) (SHW 2147469093 1 eq_refl)
-           (SHW 2147469094 1 eq_refl) (SHW 2147469095 1 eq_refl) (SHW 2147469096 4 eq_refl) (SHW 2147469100 1 eq_refl) (SHW 2147469100 4 eq_refl) (SHW 2147469101 1 eq_refl)
-           (SHW 2147469102 1 eq_refl) (SHW 2147469103 1 eq_refl) 
-           
-           (SHW 2147612664 184 eq_refl) (SHW 2147612664 1 eq_refl) (SHW 2147612664 4 eq_refl) (SHW 2147612665 1 eq_refl)
-           (SHW 2147612666 1 eq_refl) (SHW 2147612667 1 eq_refl) (SHW 2147612668 4 eq_refl) (SHW 2147612672 4 eq_refl) (SHW 2147612676 4 eq_refl) (SHW 2147612680 4 eq_refl)
-           (SHW 2147612684 4 eq_refl) (SHW 2147612688 4 eq_refl) (SHW 2147612692 8 eq_refl) (SHW 2147612700 8 eq_refl) (SHW 2147612708 8 eq_refl) (SHW 2147612716 8 eq_refl)
-           (SHW 2147612724 8 eq_refl) (SHW 2147612732 8 eq_refl) (SHW 2147612740 8 eq_refl) (SHW 2147612748 8 eq_refl) (SHW 2147612756 8 eq_refl) (SHW 2147612764 8 eq_refl)
-           (SHW 2147612772 8 eq_refl) (SHW 2147612780 8 eq_refl) (SHW 2147612788 8 eq_refl) (SHW 2147612796 8 eq_refl) (SHW 2147612804 8 eq_refl) (SHW 2147612812 8 eq_refl)
-           (SHW 2147612820 8 eq_refl) (SHW 2147612828 4 eq_refl) (SHW 2147612828 8 eq_refl) (SHW 2147612832 4 eq_refl) (SHW 2147612836 4 eq_refl) (SHW 2147612836 8 eq_refl)
-           (SHW 2147612840 4 eq_refl) (SHW 2147612844 4 eq_refl) (SHW 2147612844 8 eq_refl) 
-           TIDC HTr (XCC 0%nat 6897520 4 0 eq_refl)
-           (XCC1 1%nat 6897555 0 eq_refl eq_refl) (XCC 2%nat 6896992 8 6897000 eq_refl) (XCC 3%nat 6896984 4 2 eq_refl) (XCC 22%nat 6897016 8 1148964 eq_refl) (XCC 23%nat 6897272 8 687916 eq_refl) (XCC 6%nat 6896980 4 0 eq_refl)
-           (XCC1 24%nat 6759060 0 eq_refl eq_refl) (XCC 4%nat 6897008 8 1148964 eq_refl) (XCC 5%nat 6897264 8 619876 eq_refl) (STC1 10%nat 1907424 0 eq_refl eq_refl) (XCC 7%nat 6897000 8 0 eq_refl) (STC1 3%nat 1295824 0 eq_refl eq_refl)
-           (STC 0%nat 1282768 8 1282768 eq_refl) (STC 2%nat 1295744 8 1 eq_refl) (STC 4%nat 1299536 4 1 eq_refl) (STC 5%nat 1299696 8 0 eq_refl) (STC1 8%nat 1313048 1 eq_refl eq_refl) (STC 7%nat 1309752 8 2147450880 eq_refl)
-           (DSC 1294272 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143808)) ltac:(img_rd) eq_refl) (DSC 1294288 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (STC1 6%nat 1307804 1 eq_refl eq_refl) (DSC 1294288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (STC 9%nat 1906656 8 18446744073709551615 eq_refl) (STC 1%nat 1283280 8 1219844 eq_refl)
-           (DSC 1294328 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294336 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143904)) ltac:(img_rd) eq_refl) (DSC 1294352 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294392 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294400 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143936)) ltac:(img_rd) eq_refl)
-           (DSC 1294416 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294456 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294464 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144128)) ltac:(img_rd) eq_refl) (DSC 1294480 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl)
-           (DSC 1294520 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294528 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144160)) ltac:(img_rd) eq_refl) (DSC 1294544 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294584 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294592 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144224)) ltac:(img_rd) eq_refl)
-           (DSC 1294608 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294648 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294656 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144256)) ltac:(img_rd) eq_refl) (DSC 1294672 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl)
-           (DSC 1294712 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294720 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144352)) ltac:(img_rd) eq_refl) (DSC 1294736 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294776 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294784 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144448)) ltac:(img_rd) eq_refl)
-           (DSC 1294800 1%nat [Z_to_bv 8 128] ltac:(img_rd) eq_refl) (DSC 1294800 8%nat (word_to_le_bytes 8 (Z_to_bv 64 128)) ltac:(img_rd) eq_refl) (DSC 1294840 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294848 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144576)) ltac:(img_rd) eq_refl) (DSC 1294864 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294864 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl)
-           (DSC 1294904 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294912 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144672)) ltac:(img_rd) eq_refl) (DSC 1294928 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294928 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294968 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294976 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144736)) ltac:(img_rd) eq_refl)
-           (DSC 1294992 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294992 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295032 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295040 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144800)) ltac:(img_rd) eq_refl) (DSC 1295056 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295056 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl)
-           (DSC 1295096 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295104 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144864)) ltac:(img_rd) eq_refl) (DSC 1295120 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295120 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295160 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295168 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144928)) ltac:(img_rd) eq_refl)
-           (DSC 1295184 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295184 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295224 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295232 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144992)) ltac:(img_rd) eq_refl) (DSC 1295248 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295248 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl)
-           (DSC 1295288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295296 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145056)) ltac:(img_rd) eq_refl) (DSC 1295312 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295312 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295360 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145120)) ltac:(img_rd) eq_refl)
-           (DSC 1295376 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295376 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295424 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145216)) ltac:(img_rd) eq_refl) (DSC 1295440 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295440 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl)
-           (DSC 1295480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295488 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145536)) ltac:(img_rd) eq_refl) (DSC 1295504 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295504 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295552 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145632)) ltac:(img_rd) eq_refl)
-           (DSC 1295568 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1295568 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295616 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145664)) ltac:(img_rd) eq_refl) (DSC 1295632 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1295632 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl)
-           (DSC 1295672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295680 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145696)) ltac:(img_rd) eq_refl) (DSC 1295696 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295696 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) 
-           (XCC 8%nat 6898952 8 0 eq_refl) (XCC 9%nat 1294224 8 1293992 eq_refl) (XCC 10%nat 1294132 4 4294967295 eq_refl)
-           (XCC 11%nat 1294032 8 0 eq_refl) (XCC 12%nat 1294048 8 0 eq_refl) (XCC 13%nat 1294000 8 0 eq_refl) (XCC 14%nat 1294008 8 0 eq_refl) (XCC 15%nat 1293984 8 1293752 eq_refl) SOlock
-           SOwpos SOwbase SOrpos SOrend (XCC 16%nat 1293744 8 1293512 eq_refl) (XCC 17%nat 1293652 4 4294967295 eq_refl)
-           (XCC 18%nat 1293552 8 0 eq_refl) (XCC 19%nat 1293568 8 0 eq_refl) (XCC 20%nat 1293520 8 0 eq_refl) (XCC 21%nat 1293528 8 0 eq_refl)) as
-      (fx1 & R1 & MV1 & XGR & _ & _ & XMS & XKS & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Xr17 & _).
-    unfold V in XMS; cbn beta iota in XMS.
-    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as LZ. pose proof LZ as (_ & _ & _ & _ & Hh).
-    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x118588) MV1 model _ LZ XMS).
-    intros M' model' MI' SBM' _.
-    rewrite <- (proj2 (sbm_fds model model' SBM')).
-    apply (rz_exit_at_lit_lz ASEGS scfg R1 (Z_to_bv 64 0x118588) M' rom model' ECALLW st fetch_exitA is_ecall_ECALLW).
-    - rewrite (sbm_halted_eq _ _ SBM'). exact Hh.
-    - left. exact Xr17.
-    - eapply eq_trans; [exact (XKS 10%nat ltac:(unfold AS0DRVP_dpX.KS_dpX; cbn [In]; repeat first [left; reflexivity | right]))|]. exact G10.
-    - exact Hst.
+    intros LB LK cr A M model R S st tid Pre MV Rst G1 G2 G4 G10 SO SX.
+    destruct Pre as (Dv & SLo & SHi & S16 & Wstk & Img & (Cells & Tid & TidR & ImgNone)).
+    destruct SO as (So1 & So2 & So3 & So4 & So5 & So6 & So7 & SoW1 & SoW2 & SoLn).
+    destruct SX as (Sx1 & Sx2 & Sx3 & Sx4 & Sx5).
+    pose (V := fun j : nat => match j with 44%nat => tid | _ => S end).
+    pose proof (AS0DRVP_dpX.dpX_conc fx R MV V) as Run. unfold V in Run. cbv beta iota in Run. clear V.
+    repeat lazymatch type of Run with
+    | ?P -> _ =>
+      let Pf := fresh "Pf" in
+      assert (Pf : P);
+      [ lazymatch goal with
+        | |- getr _ _ = _ => first [exact G1 | exact G2 | exact G4]
+        | |- _ <= _ < _ => lia
+        | |- _ <= _ <= _ => lia
+        | |- AS0DRVP_dpX.aligned _ _ => exact S16
+        | |- L5Defs.L5.img_clear _ _ _ => exact Img
+        | |- L5Defs.L5.defined _ ?a ?n => intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+        | |- L5Defs.L5.writable _ _ ?a ?n =>
+          let hi := eval vm_compute in (2147468856 <=? a) in
+          lazymatch hi with
+          | true => apply (sh_writable LB LK cr A M model a n Dv); vm_compute; reflexivity
+          | false => let k := eval vm_compute in (Z.to_nat n) in apply (wsg_writable MV a k); [vm_compute; reflexivity | lia | lia]
+          | _ => apply Wstk; lia
+          end
+        | |- _ =>
+          unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+          lazymatch goal with
+          | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+            first
+              [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+              | let z := eval vm_compute in (Z.of_nat n) in
+                let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                first
+                  [ exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS]; repeat first [left; reflexivity | right]))
+                  | exact (ex_cell_vis LB LK cr A M model a z v Dv ltac:(cbn [In EX_CELLS]; repeat first [left; reflexivity | right])) ]
+              | apply (img_cell MV a n); [img_rd | lia | cbn; lia | intros i Ri; apply ImgNone; cbn in Ri; lia] ]
+          end
+        end
+      | specialize (Run Pf); clear Pf ]
+    end.
+    lazymatch type of Run with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+    destruct Run as (fx' & R' & M' & Grow & FrW & FrZ & Steps & Keep & Outs).
+    assert (A7 : getr R' (Z_to_bv 5 (Z.of_nat 17)) = Z_to_bv 64 94).
+    { let rec dig T := lazymatch type of T with
+        | getr _ (Z_to_bv 5 (Z.of_nat 17)) = _ /\ _ => exact (proj1 T)
+        | _ /\ _ => dig constr:(proj2 T)
+        end in dig Outs. }
+    apply (msteps_vis_fx scfg (ahid A model) A fx fx' R (Z_to_bv 64 0x118878) M R' (Z_to_bv 64 0x118588) M' model _
+             (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 LB LK cr A M model Dv) Steps).
+    intros M1 model1 MI1 SB1 VE1.
+    rewrite <- (proj2 (sbm_fds model model1 SB1)).
+    apply (rz_exit_at_lit_lz ASEGS scfg R' _ M1 _ model1 ECALLW st fetch_exitA is_ecall_ECALLW); [| left; exact A7 | | exact Rst].
+    - rewrite (sbm_halted_eq _ _ SB1). exact (di_halt _ _ _ _ _ _ _ _ _ _ Dv).
+    - exact (eq_trans (Keep 10%nat ltac:(cbn [In AS0DRVP_dpX.KS_dpX]; repeat first [left; reflexivity | right])) G10).
   Qed.
 
   (* [comment removed for export] *)
@@ -296,108 +251,59 @@ Section Exit.
     stdoutPA MV ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x118878) M rom) model) (t_exit (Z_to_bv 64 st) (m_fs model)).
   Proof.
-    intros LB LK cr A M model R S st tid (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst G2 G4 G10 SOP.
-    pose proof Hsp as Hsp'. destruct SOP as (SOlock & SOwpos & SOwbase & SOrpos & SOrend).
-    set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | _ => 0 end).
-    assert (HS64 : 0 <= V 2%nat < 2 ^ 64) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HT64 : 0 <= V 44%nat < 2 ^ 64) by (cbn [V]; clear - HTr; lia).
-    assert (HSr : 140735332552704 <= V 2%nat <= 140737488355328) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HSa : AS0DRVP_dpXe.aligned (V 2%nat) 16) by (cbn [V]; exact HS16).
-    assert (CWR : L5Defs.L5.writable ASEGS MV (V 2%nat - 320) 320).
-    { cbn [V]. intros d k Hd Hk. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (CDF : L5Defs.L5.defined MV (V 2%nat - 320) 320).
-    { cbn [V]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hi; lia. }
-    assert (WSG : forall a (n : nat), wseg_ok ASEGS (Z_to_bv 64 a) n = true -> (0 <=? a) && (a + Z.of_nat n <=? 2 ^ 63) = true -> L5Defs.L5.writable ASEGS MV a (Z.of_nat n)).
-    { intros a n W Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. exact (wsg_writable MV a n W B1 B2). }
-    assert (SHW : forall a n, ((2147468856 <=? a) && (a + n <=? 2147469104) || (2147612664 <=? a) && (a + n <=? 2147612852)) = true -> L5Defs.L5.writable ASEGS MV a n)
-      by (intros a n Hb; exact (sh_writable _ _ _ _ _ _ a n D Hb)).
-    assert (STC : forall (i : nat) a n v, nth_error EX_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (ex_cell_vis _ _ _ _ _ _ a n v D (nth_error_In _ _ Hn))).
-    assert (STC1 : forall (i : nat) a v, nth_error EX_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (STC i a 1 v Hn). }
-    assert (XCC : forall (i : nat) a n v, nth_error XC_CELLS_E i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (cells_at_nth MV XC_CELLS_E i a n v XC Hn)).
-    assert (XCC1 : forall (i : nat) a v, nth_error XC_CELLS_E i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (XCC i a 1 v Hn). }
-    assert (DSC : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (0x13bfc0 <=? a) && (a + Z.of_nat n <=? 0x13c580) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. apply (img_cell MV a n bs Hr); [lia | lia|]. intros i Hi. apply DESC. lia. }
-    destruct (AS0DRVP_dpXe.dpXe_conc fx R MV V HS64 HT64
-           G2 G4 HSr HSa CWR CDF
-           IMGc (WSG 1295744 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1295824 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1299696 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896976 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896984 4%nat ltac:(vm_compute; reflexivity) eq_refl)
-           (WSG 6896992 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6897520 4%nat ltac:(vm_compute; reflexivity) eq_refl) (SHW 2147468856 1 eq_refl) (SHW 2147468857 1 eq_refl) (SHW 2147468858 1 eq_refl) (SHW 2147468859 1 eq_refl)
-           (SHW 2147468868 1 eq_refl) (SHW 2147468869 1 eq_refl) (SHW 2147468870 1 eq_refl) (SHW 2147468871 1 eq_refl) (SHW 2147468872 1 eq_refl) (SHW 2147468872 4 eq_refl)
-           (SHW 2147468873 1 eq_refl) (SHW 2147468874 1 eq_refl) (SHW 2147468875 1 eq_refl) (SHW 2147468876 4 eq_refl) (SHW 2147468880 1 eq_refl) (SHW 2147468880 4 eq_refl)
-           (SHW 2147468881 1 eq_refl) (SHW 2147468882 1 eq_refl) (SHW 2147468883 1 eq_refl) (SHW 2147468896 1 eq_refl) (SHW 2147468897 1 eq_refl) (SHW 2147468898 1 eq_refl)
-           (SHW 2147468899 1 eq_refl) (SHW 2147468900 1 eq_refl) (SHW 2147468901 1 eq_refl) (SHW 2147468902 1 eq_refl) (SHW 2147468903 1 eq_refl) (SHW 2147468904 1 eq_refl)
-           (SHW 2147468905 1 eq_refl) (SHW 2147468906 1 eq_refl) (SHW 2147468907 1 eq_refl) (SHW 2147468908 1 eq_refl) (SHW 2147468909 1 eq_refl) (SHW 2147468910 1 eq_refl)
-           (SHW 2147468911 1 eq_refl) (SHW 2147468912 1 eq_refl) (SHW 2147468912 4 eq_refl) (SHW 2147468913 1 eq_refl) (SHW 2147468914 1 eq_refl) (SHW 2147468915 1 eq_refl)
-           (SHW 2147468916 4 eq_refl) (SHW 2147468920 1 eq_refl) (SHW 2147468920 4 eq_refl) (SHW 2147468921 1 eq_refl) (SHW 2147468922 1 eq_refl) (SHW 2147468923 1 eq_refl)
-           (SHW 2147468924 1 eq_refl) (SHW 2147468924 4 eq_refl) (SHW 2147468925 1 eq_refl) (SHW 2147468926 1 eq_refl) (SHW 2147468927 1 eq_refl) (SHW 2147468928 4 eq_refl)
-           (SHW 2147468932 1 eq_refl) (SHW 2147468932 4 eq_refl) (SHW 2147468933 1 eq_refl) (SHW 2147468934 1 eq_refl) (SHW 2147468935 1 eq_refl) (SHW 2147468936 1 eq_refl)
-           (SHW 2147468936 4 eq_refl) (SHW 2147468937 1 eq_refl) (SHW 2147468938 1 eq_refl) (SHW 2147468939 1 eq_refl) (SHW 2147468940 4 eq_refl) (SHW 2147468944 4 eq_refl)
-           (SHW 2147468948 1 eq_refl) (SHW 2147468948 4 eq_refl) (SHW 2147468949 1 eq_refl) (SHW 2147468950 1 eq_refl) (SHW 2147468951 1 eq_refl) (SHW 2147468952 1 eq_refl)
-           (SHW 2147468952 4 eq_refl) (SHW 2147468953 1 eq_refl) (SHW 2147468954 1 eq_refl) (SHW 2147468955 1 eq_refl) (SHW 2147468956 4 eq_refl) (SHW 2147468960 1 eq_refl)
-           (SHW 2147468960 4 eq_refl) (SHW 2147468961 1 eq_refl) (SHW 2147468962 1 eq_refl) (SHW 2147468963 1 eq_refl) (SHW 2147468964 1 eq_refl) (SHW 2147468965 1 eq_refl)
-           (SHW 2147468966 1 eq_refl) (SHW 2147468967 1 eq_refl) (SHW 2147468968 1 eq_refl) (SHW 2147468969 1 eq_refl) (SHW 2147468970 1 eq_refl) (SHW 2147468971 1 eq_refl)
-           (SHW 2147468972 1 eq_refl) (SHW 2147468973 1 eq_refl) (SHW 2147468974 1 eq_refl) (SHW 2147468975 1 eq_refl) (SHW 2147468976 1 eq_refl) (SHW 2147468977 1 eq_refl)
-           (SHW 2147468978 1 eq_refl) (SHW 2147468979 1 eq_refl) (SHW 2147468980 1 eq_refl) (SHW 2147468981 1 eq_refl) (SHW 2147468982 1 eq_refl) (SHW 2147468983 1 eq_refl)
-           (SHW 2147468984 1 eq_refl) (SHW 2147468985 1 eq_refl) (SHW 2147468986 1 eq_refl) (SHW 2147468987 1 eq_refl) (SHW 2147468988 1 eq_refl) (SHW 2147468989 1 eq_refl)
-           (SHW 2147468990 1 eq_refl) (SHW 2147468991 1 eq_refl) (SHW 2147468992 1 eq_refl) (SHW 2147468993 1 eq_refl) (SHW 2147468994 1 eq_refl) (SHW 2147468995 1 eq_refl)
-           (SHW 2147468996 1 eq_refl) (SHW 2147468997 1 eq_refl) (SHW 2147468998 1 eq_refl) (SHW 2147468999 1 eq_refl) (SHW 2147469000 1 eq_refl) (SHW 2147469001 1 eq_refl)
-           (SHW 2147469002 1 eq_refl) (SHW 2147469003 1 eq_refl) (SHW 2147469004 1 eq_refl) (SHW 2147469005 1 eq_refl) (SHW 2147469006 1 eq_refl) (SHW 2147469007 1 eq_refl)
-           (SHW 2147469008 1 eq_refl) (SHW 2147469009 1 eq_refl) (SHW 2147469010 1 eq_refl) (SHW 2147469011 1 eq_refl) (SHW 2147469012 1 eq_refl) (SHW 2147469013 1 eq_refl)
-           (SHW 2147469014 1 eq_refl) (SHW 2147469015 1 eq_refl) (SHW 2147469016 1 eq_refl) (SHW 2147469017 1 eq_refl) (SHW 2147469018 1 eq_refl) (SHW 2147469019 1 eq_refl)
-           (SHW 2147469020 1 eq_refl) (SHW 2147469020 4 eq_refl) (SHW 2147469021 1 eq_refl) (SHW 2147469022 1 eq_refl) (SHW 2147469023 1 eq_refl) (SHW 2147469024 4 eq_refl)
-           (SHW 2147469028 1 eq_refl) (SHW 2147469028 4 eq_refl) (SHW 2147469029 1 eq_refl) (SHW 2147469030 1 eq_refl) (SHW 2147469031 1 eq_refl) (SHW 2147469032 1 eq_refl)
-           (SHW 2147469033 1 eq_refl) (SHW 2147469034 1 eq_refl) (SHW 2147469035 1 eq_refl) (SHW 2147469036 1 eq_refl) (SHW 2147469037 1 eq_refl) (SHW 2147469038 1 eq_refl)
-           (SHW 2147469039 1 eq_refl) (SHW 2147469072 1 eq_refl) (SHW 2147469072 4 eq_refl) (SHW 2147469073 1 eq_refl) (SHW 2147469074 1 eq_refl) (SHW 2147469075 1 eq_refl)
-           (SHW 2147469076 4 eq_refl) (SHW 2147469080 1 eq_refl) (SHW 2147469080 4 eq_refl) (SHW 2147469081 1 eq_refl) (SHW 2147469082 1 eq_refl) (SHW 2147469083 1 eq_refl)
-           (SHW 2147469084 1 eq_refl) (SHW 2147469085 1 eq_refl) (SHW 2147469086 1 eq_refl) (SHW 2147469087 1 eq_refl) (SHW 2147469088 1 eq_refl) (SHW 2147469089 1 eq_refl)
-           (SHW 2147469090 1 eq_refl) (SHW 2147469091 1 eq_refl) (SHW 2147469092 1 eq_refl) (SHW 2147469092 4 eq_refl) (SHW 2147469093 1 eq_refl) (SHW 2147469094 1 eq_refl)
-           (SHW 2147469095 1 eq_refl) (SHW 2147469096 4 eq_refl) (SHW 2147469100 1 eq_refl) (SHW 2147469100 4 eq_refl) (SHW 2147469101 1 eq_refl) (SHW 2147469102 1 eq_refl)
-           (SHW 2147469103 1 eq_refl) 
-           
-           (SHW 2147612664 184 eq_refl) (SHW 2147612664 1 eq_refl) (SHW 2147612664 4 eq_refl) (SHW 2147612665 1 eq_refl) (SHW 2147612666 1 eq_refl)
-           (SHW 2147612667 1 eq_refl) (SHW 2147612668 4 eq_refl) (SHW 2147612672 4 eq_refl) (SHW 2147612676 4 eq_refl) (SHW 2147612680 4 eq_refl) (SHW 2147612684 4 eq_refl)
-           (SHW 2147612688 4 eq_refl) (SHW 2147612692 8 eq_refl) (SHW 2147612700 8 eq_refl) (SHW 2147612708 8 eq_refl) (SHW 2147612716 8 eq_refl) (SHW 2147612724 8 eq_refl)
-           (SHW 2147612732 8 eq_refl) (SHW 2147612740 8 eq_refl) (SHW 2147612748 8 eq_refl) (SHW 2147612756 8 eq_refl) (SHW 2147612764 8 eq_refl) (SHW 2147612772 8 eq_refl)
-           (SHW 2147612780 8 eq_refl) (SHW 2147612788 8 eq_refl) (SHW 2147612796 8 eq_refl) (SHW 2147612804 8 eq_refl) (SHW 2147612812 8 eq_refl) (SHW 2147612820 8 eq_refl)
-           (SHW 2147612828 4 eq_refl) (SHW 2147612828 8 eq_refl) (SHW 2147612832 4 eq_refl) (SHW 2147612836 4 eq_refl) (SHW 2147612836 8 eq_refl) (SHW 2147612840 4 eq_refl)
-           (SHW 2147612844 4 eq_refl) (SHW 2147612844 8 eq_refl) 
-           TIDC HTr (XCC 0%nat 6897520 4 0 eq_refl) (XCC1 1%nat 6897555 0 eq_refl eq_refl)
-           (XCC 2%nat 6896992 8 6897000 eq_refl) (XCC 3%nat 6896984 4 1 eq_refl) (XCC 4%nat 6897008 8 1148964 eq_refl) (XCC 5%nat 6897264 8 619876 eq_refl) (XCC 6%nat 6896980 4 0 eq_refl) (STC1 10%nat 1907424 0 eq_refl eq_refl)
-           (XCC 7%nat 6897000 8 0 eq_refl) (STC1 3%nat 1295824 0 eq_refl eq_refl) (STC 0%nat 1282768 8 1282768 eq_refl) (STC 2%nat 1295744 8 1 eq_refl) (STC 4%nat 1299536 4 1 eq_refl) (STC 5%nat 1299696 8 0 eq_refl)
-           (STC1 8%nat 1313048 1 eq_refl eq_refl) (STC 7%nat 1309752 8 2147450880 eq_refl) (DSC 1294272 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143808)) ltac:(img_rd) eq_refl) (DSC 1294288 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (STC1 6%nat 1307804 1 eq_refl eq_refl) (DSC 1294288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl)
-           (STC 9%nat 1906656 8 18446744073709551615 eq_refl) (STC 1%nat 1283280 8 1219844 eq_refl) (DSC 1294328 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294336 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143904)) ltac:(img_rd) eq_refl) (DSC 1294352 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl)
-           (DSC 1294392 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294400 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143936)) ltac:(img_rd) eq_refl) (DSC 1294416 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294456 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294464 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144128)) ltac:(img_rd) eq_refl)
-           (DSC 1294480 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294520 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294528 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144160)) ltac:(img_rd) eq_refl) (DSC 1294544 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl)
-           (DSC 1294584 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294592 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144224)) ltac:(img_rd) eq_refl) (DSC 1294608 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294648 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294656 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144256)) ltac:(img_rd) eq_refl)
-           (DSC 1294672 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294712 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294720 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144352)) ltac:(img_rd) eq_refl) (DSC 1294736 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl)
-           (DSC 1294776 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294784 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144448)) ltac:(img_rd) eq_refl) (DSC 1294800 1%nat [Z_to_bv 8 128] ltac:(img_rd) eq_refl) (DSC 1294800 8%nat (word_to_le_bytes 8 (Z_to_bv 64 128)) ltac:(img_rd) eq_refl) (DSC 1294840 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294848 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144576)) ltac:(img_rd) eq_refl)
-           (DSC 1294864 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294864 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294904 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294912 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144672)) ltac:(img_rd) eq_refl) (DSC 1294928 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294928 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl)
-           (DSC 1294968 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294976 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144736)) ltac:(img_rd) eq_refl) (DSC 1294992 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294992 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295032 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295040 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144800)) ltac:(img_rd) eq_refl)
-           (DSC 1295056 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295056 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295096 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295104 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144864)) ltac:(img_rd) eq_refl) (DSC 1295120 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295120 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl)
-           (DSC 1295160 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295168 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144928)) ltac:(img_rd) eq_refl) (DSC 1295184 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295184 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295224 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295232 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144992)) ltac:(img_rd) eq_refl)
-           (DSC 1295248 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295248 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295296 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145056)) ltac:(img_rd) eq_refl) (DSC 1295312 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295312 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl)
-           (DSC 1295352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295360 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145120)) ltac:(img_rd) eq_refl) (DSC 1295376 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295376 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295424 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145216)) ltac:(img_rd) eq_refl)
-           (DSC 1295440 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295440 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295488 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145536)) ltac:(img_rd) eq_refl) (DSC 1295504 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295504 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl)
-           (DSC 1295544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295552 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145632)) ltac:(img_rd) eq_refl) (DSC 1295568 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1295568 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295616 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145664)) ltac:(img_rd) eq_refl)
-           (DSC 1295632 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1295632 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295680 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145696)) ltac:(img_rd) eq_refl) (DSC 1295696 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295696 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl)
-           (DSC 1295736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (XCC 8%nat 6898952 8 0 eq_refl)
-           (XCC 9%nat 1294224 8 1293992 eq_refl) (XCC 10%nat 1294132 4 4294967295 eq_refl) (XCC 11%nat 1294032 8 0 eq_refl) (XCC 12%nat 1294048 8 0 eq_refl) (XCC 13%nat 1294000 8 0 eq_refl) (XCC 14%nat 1294008 8 0 eq_refl)
-           (XCC 15%nat 1293984 8 1293752 eq_refl) SOlock SOwpos SOwbase SOrpos SOrend
-           (XCC 16%nat 1293744 8 1293512 eq_refl) (XCC 17%nat 1293652 4 4294967295 eq_refl) (XCC 18%nat 1293552 8 0 eq_refl) (XCC 19%nat 1293568 8 0 eq_refl) (XCC 20%nat 1293520 8 0 eq_refl) (XCC 21%nat 1293528 8 0 eq_refl)) as
-      (fx1 & R1 & MV1 & XGR & _ & _ & XMS & XKS & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Xr17 & _).
-    unfold V in XMS; cbn beta iota in XMS.
-    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as LZ. pose proof LZ as (_ & _ & _ & _ & Hh).
-    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x118588) MV1 model _ LZ XMS).
-    intros M' model' MI' SBM' _.
-    rewrite <- (proj2 (sbm_fds model model' SBM')).
-    apply (rz_exit_at_lit_lz ASEGS scfg R1 (Z_to_bv 64 0x118588) M' rom model' ECALLW st fetch_exitA is_ecall_ECALLW).
-    - rewrite (sbm_halted_eq _ _ SBM'). exact Hh.
-    - left. exact Xr17.
-    - eapply eq_trans; [exact (XKS 10%nat ltac:(unfold AS0DRVP_dpXe.KS_dpXe; cbn [In]; repeat first [left; reflexivity | right]))|]. exact G10.
-    - exact Hst.
+    intros LB LK cr A M model R S st tid Pre MV Rst G2 G4 G10 SP.
+    destruct Pre as (Dv & SLo & SHi & S16 & Wstk & Img & (Cells & Tid & TidR & ImgNone)).
+    destruct SP as (P1 & P2 & P3 & P4 & P5).
+    pose (V := fun j : nat => match j with 44%nat => tid | _ => S end).
+    pose proof (AS0DRVP_dpXe.dpXe_conc fx R MV V) as Run. unfold V in Run. cbv beta iota in Run. clear V.
+    repeat lazymatch type of Run with
+    | ?P -> _ =>
+      let Pf := fresh "Pf" in
+      assert (Pf : P);
+      [ lazymatch goal with
+        | |- getr _ _ = _ => first [exact G2 | exact G4]
+        | |- _ <= _ < _ => lia
+        | |- _ <= _ <= _ => lia
+        | |- AS0DRVP_dpXe.aligned _ _ => exact S16
+        | |- L5Defs.L5.img_clear _ _ _ => exact Img
+        | |- L5Defs.L5.defined _ ?a ?n => intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+        | |- L5Defs.L5.writable _ _ ?a ?n =>
+          let hi := eval vm_compute in (2147468856 <=? a) in
+          lazymatch hi with
+          | true => apply (sh_writable LB LK cr A M model a n Dv); vm_compute; reflexivity
+          | false => let k := eval vm_compute in (Z.to_nat n) in apply (wsg_writable MV a k); [vm_compute; reflexivity | lia | lia]
+          | _ => apply Wstk; lia
+          end
+        | |- _ =>
+          unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+          lazymatch goal with
+          | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+            first
+              [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+              | let z := eval vm_compute in (Z.of_nat n) in
+                let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                first
+                  [ exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS_E]; repeat first [left; reflexivity | right]))
+                  | exact (ex_cell_vis LB LK cr A M model a z v Dv ltac:(cbn [In EX_CELLS]; repeat first [left; reflexivity | right])) ]
+              | apply (img_cell MV a n); [img_rd | lia | cbn; lia | intros i Ri; apply ImgNone; cbn in Ri; lia] ]
+          end
+        end
+      | specialize (Run Pf); clear Pf ]
+    end.
+    lazymatch type of Run with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+    destruct Run as (fx' & R' & M' & Grow & FrW & FrZ & Steps & Keep & Outs).
+    assert (A7 : getr R' (Z_to_bv 5 (Z.of_nat 17)) = Z_to_bv 64 94).
+    { let rec dig T := lazymatch type of T with
+        | getr _ (Z_to_bv 5 (Z.of_nat 17)) = _ /\ _ => exact (proj1 T)
+        | _ /\ _ => dig constr:(proj2 T)
+        end in dig Outs. }
+    apply (msteps_vis_fx scfg (ahid A model) A fx fx' R (Z_to_bv 64 0x118878) M R' (Z_to_bv 64 0x118588) M' model _
+             (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 LB LK cr A M model Dv) Steps).
+    intros M1 model1 MI1 SB1 VE1.
+    rewrite <- (proj2 (sbm_fds model model1 SB1)).
+    apply (rz_exit_at_lit_lz ASEGS scfg R' _ M1 _ model1 ECALLW st fetch_exitA is_ecall_ECALLW); [| left; exact A7 | | exact Rst].
+    - rewrite (sbm_halted_eq _ _ SB1). exact (di_halt _ _ _ _ _ _ _ _ _ _ Dv).
+    - exact (eq_trans (Keep 10%nat ltac:(cbn [In AS0DRVP_dpXe.KS_dpXe]; repeat first [left; reflexivity | right])) G10).
   Qed.
 
 
@@ -411,217 +317,167 @@ Section Exit.
     fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x118878) M rom) model) (t_emit (W 1 (zero_lines 1%nat)) (t_exit (Z_to_bv 64 st) (m_fs model))).
   Proof.
-    intros LB LK cr A M model R S st tid canz (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst Hcan G1 G2 G4 G10 CANc SO SOX FD1.
-    pose proof Hsp as Hsp'. destruct SO as (_ & SObufsz & _ & SOwpos & SOwbase & SOlock & _ & FW & BW & BC). destruct SOX as (SOwrite & SOfd & SObuf & SOrpos & SOrend).
-    set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | 40%nat => canz | _ => 0 end).
-    assert (HS64 : 0 <= V 2%nat < 2 ^ 64) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HT64 : 0 <= V 44%nat < 2 ^ 64) by (cbn [V]; clear - HTr; lia).
-    assert (HSr : 140735332552704 <= V 2%nat <= 140737488355328) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HSa : AS0DRVP_dpX2_pre.aligned (V 2%nat) 16) by (cbn [V]; exact HS16).
-    assert (CWR : L5Defs.L5.writable ASEGS MV (V 2%nat - 320) 320).
-    { cbn [V]. intros d k Hd Hk. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (CDF : L5Defs.L5.defined MV (V 2%nat - 320) 320).
-    { cbn [V]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hi; lia. }
-    assert (WSG : forall a (n : nat), wseg_ok ASEGS (Z_to_bv 64 a) n = true -> (0 <=? a) && (a + Z.of_nat n <=? 2 ^ 63) = true -> L5Defs.L5.writable ASEGS MV a (Z.of_nat n)).
-    { intros a n W Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. exact (wsg_writable MV a n W B1 B2). }
-    assert (SHW : forall a n, ((2147468856 <=? a) && (a + n <=? 2147469104) || (2147612664 <=? a) && (a + n <=? 2147612852)) = true -> L5Defs.L5.writable ASEGS MV a n)
-      by (intros a n Hb; exact (sh_writable _ _ _ _ _ _ a n D Hb)).
-    assert (STC : forall (i : nat) a n v, nth_error EX_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (ex_cell_vis _ _ _ _ _ _ a n v D (nth_error_In _ _ Hn))).
-    assert (STC1 : forall (i : nat) a v, nth_error EX_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (STC i a 1 v Hn). }
-    assert (XCC : forall (i : nat) a n v, nth_error XC_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (cells_at_nth MV XC_CELLS i a n v XC Hn)).
-    assert (XCC1 : forall (i : nat) a v, nth_error XC_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (XCC i a 1 v Hn). }
-    assert (DSC : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (0x13bfc0 <=? a) && (a + Z.of_nat n <=? 0x13c580) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. apply (img_cell MV a n bs Hr); [lia | lia|]. intros i Hi. apply DESC. lia. }
-    (* [comment removed for export] *)
-    destruct (AS0DRVP_dpX2_pre.dpX2_pre_conc fx R MV V HS64 Hcan
-           HT64 G1 G2 G4 HSr HSa
-           CWR CDF IMGc (WSG 1295744 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1295824 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1299696 8%nat ltac:(vm_compute; reflexivity) eq_refl)
-           (WSG 6896976 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896984 4%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896992 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6897520 4%nat ltac:(vm_compute; reflexivity) eq_refl) (SHW 2147468856 1 eq_refl) (SHW 2147468857 1 eq_refl)
-           (SHW 2147468858 1 eq_refl) (SHW 2147468859 1 eq_refl) (SHW 2147468868 1 eq_refl) (SHW 2147468869 1 eq_refl) (SHW 2147468870 1 eq_refl) (SHW 2147468871 1 eq_refl)
-           (SHW 2147468872 1 eq_refl) (SHW 2147468872 4 eq_refl) (SHW 2147468873 1 eq_refl) (SHW 2147468874 1 eq_refl) (SHW 2147468875 1 eq_refl) (SHW 2147468876 4 eq_refl)
-           (SHW 2147468880 1 eq_refl) (SHW 2147468880 4 eq_refl) (SHW 2147468881 1 eq_refl) (SHW 2147468882 1 eq_refl) (SHW 2147468883 1 eq_refl) (SHW 2147468896 1 eq_refl)
-           (SHW 2147468897 1 eq_refl) (SHW 2147468898 1 eq_refl) (SHW 2147468899 1 eq_refl) (SHW 2147468900 1 eq_refl) (SHW 2147468901 1 eq_refl) (SHW 2147468902 1 eq_refl)
-           (SHW 2147468903 1 eq_refl) (SHW 2147468904 1 eq_refl) (SHW 2147468905 1 eq_refl) (SHW 2147468906 1 eq_refl) (SHW 2147468907 1 eq_refl) (SHW 2147468908 1 eq_refl)
-           (SHW 2147468909 1 eq_refl) (SHW 2147468910 1 eq_refl) (SHW 2147468911 1 eq_refl) (SHW 2147468912 1 eq_refl) (SHW 2147468912 4 eq_refl) (SHW 2147468913 1 eq_refl)
-           (SHW 2147468914 1 eq_refl) (SHW 2147468915 1 eq_refl) (SHW 2147468916 4 eq_refl) (SHW 2147468920 1 eq_refl) (SHW 2147468920 4 eq_refl) (SHW 2147468921 1 eq_refl)
-           (SHW 2147468922 1 eq_refl) (SHW 2147468923 1 eq_refl) (SHW 2147468924 1 eq_refl) (SHW 2147468924 4 eq_refl) (SHW 2147468925 1 eq_refl) (SHW 2147468926 1 eq_refl)
-           (SHW 2147468927 1 eq_refl) (SHW 2147468928 4 eq_refl) (SHW 2147468932 1 eq_refl) (SHW 2147468932 4 eq_refl) (SHW 2147468933 1 eq_refl) (SHW 2147468934 1 eq_refl)
-           (SHW 2147468935 1 eq_refl) (SHW 2147468936 1 eq_refl) (SHW 2147468936 4 eq_refl) (SHW 2147468937 1 eq_refl) (SHW 2147468938 1 eq_refl) (SHW 2147468939 1 eq_refl)
-           (SHW 2147468940 4 eq_refl) (SHW 2147468944 4 eq_refl) (SHW 2147468948 1 eq_refl) (SHW 2147468948 4 eq_refl) (SHW 2147468949 1 eq_refl) (SHW 2147468950 1 eq_refl)
-           (SHW 2147468951 1 eq_refl) (SHW 2147468952 1 eq_refl) (SHW 2147468952 4 eq_refl) (SHW 2147468953 1 eq_refl) (SHW 2147468954 1 eq_refl) (SHW 2147468955 1 eq_refl)
-           (SHW 2147468956 4 eq_refl) (SHW 2147468960 1 eq_refl) (SHW 2147468960 4 eq_refl) (SHW 2147468961 1 eq_refl) (SHW 2147468962 1 eq_refl) (SHW 2147468963 1 eq_refl)
-           (SHW 2147468964 1 eq_refl) (SHW 2147468965 1 eq_refl) (SHW 2147468966 1 eq_refl) (SHW 2147468967 1 eq_refl) (SHW 2147468968 1 eq_refl) (SHW 2147468969 1 eq_refl)
-           (SHW 2147468970 1 eq_refl) (SHW 2147468971 1 eq_refl) (SHW 2147468972 1 eq_refl) (SHW 2147468973 1 eq_refl) (SHW 2147468974 1 eq_refl) (SHW 2147468975 1 eq_refl)
-           (SHW 2147468976 1 eq_refl) (SHW 2147468977 1 eq_refl) (SHW 2147468978 1 eq_refl) (SHW 2147468979 1 eq_refl) (SHW 2147468980 1 eq_refl) (SHW 2147468981 1 eq_refl)
-           (SHW 2147468982 1 eq_refl) (SHW 2147468983 1 eq_refl) (SHW 2147468984 1 eq_refl) (SHW 2147468985 1 eq_refl) (SHW 2147468986 1 eq_refl) (SHW 2147468987 1 eq_refl)
-           (SHW 2147468988 1 eq_refl) (SHW 2147468989 1 eq_refl) (SHW 2147468990 1 eq_refl) (SHW 2147468991 1 eq_refl) (SHW 2147468992 1 eq_refl) (SHW 2147468993 1 eq_refl)
-           (SHW 2147468994 1 eq_refl) (SHW 2147468995 1 eq_refl) (SHW 2147468996 1 eq_refl) (SHW 2147468997 1 eq_refl) (SHW 2147468998 1 eq_refl) (SHW 2147468999 1 eq_refl)
-           (SHW 2147469000 1 eq_refl) (SHW 2147469001 1 eq_refl) (SHW 2147469002 1 eq_refl) (SHW 2147469003 1 eq_refl) (SHW 2147469004 1 eq_refl) (SHW 2147469005 1 eq_refl)
-           (SHW 2147469006 1 eq_refl) (SHW 2147469007 1 eq_refl) (SHW 2147469008 1 eq_refl) (SHW 2147469009 1 eq_refl) (SHW 2147469010 1 eq_refl) (SHW 2147469011 1 eq_refl)
-           (SHW 2147469012 1 eq_refl) (SHW 2147469013 1 eq_refl) (SHW 2147469014 1 eq_refl) (SHW 2147469015 1 eq_refl) (SHW 2147469016 1 eq_refl) (SHW 2147469017 1 eq_refl)
-           (SHW 2147469018 1 eq_refl) (SHW 2147469019 1 eq_refl) (SHW 2147469020 1 eq_refl) (SHW 2147469020 4 eq_refl) (SHW 2147469021 1 eq_refl) (SHW 2147469022 1 eq_refl)
-           (SHW 2147469023 1 eq_refl) (SHW 2147469024 4 eq_refl) (SHW 2147469028 1 eq_refl) (SHW 2147469028 4 eq_refl) (SHW 2147469029 1 eq_refl) (SHW 2147469030 1 eq_refl)
-           (SHW 2147469031 1 eq_refl) (SHW 2147469032 1 eq_refl) (SHW 2147469033 1 eq_refl) (SHW 2147469034 1 eq_refl) (SHW 2147469035 1 eq_refl) (SHW 2147469036 1 eq_refl)
-           (SHW 2147469037 1 eq_refl) (SHW 2147469038 1 eq_refl) (SHW 2147469039 1 eq_refl) (SHW 2147469072 1 eq_refl) (SHW 2147469072 4 eq_refl) (SHW 2147469073 1 eq_refl)
-           (SHW 2147469074 1 eq_refl) (SHW 2147469075 1 eq_refl) (SHW 2147469076 4 eq_refl) (SHW 2147469080 1 eq_refl) (SHW 2147469080 4 eq_refl) (SHW 2147469081 1 eq_refl)
-           (SHW 2147469082 1 eq_refl) (SHW 2147469083 1 eq_refl) (SHW 2147469084 1 eq_refl) (SHW 2147469085 1 eq_refl) (SHW 2147469086 1 eq_refl) (SHW 2147469087 1 eq_refl)
-           (SHW 2147469088 1 eq_refl) (SHW 2147469089 1 eq_refl) (SHW 2147469090 1 eq_refl) (SHW 2147469091 1 eq_refl) (SHW 2147469092 1 eq_refl) (SHW 2147469092 4 eq_refl)
-           (SHW 2147469093 1 eq_refl) (SHW 2147469094 1 eq_refl) (SHW 2147469095 1 eq_refl) (SHW 2147469096 4 eq_refl) (SHW 2147469100 1 eq_refl) (SHW 2147469100 4 eq_refl)
-           (SHW 2147469101 1 eq_refl) (SHW 2147469102 1 eq_refl) (SHW 2147469103 1 eq_refl) 
-           
-           (SHW 2147612664 184 eq_refl) (SHW 2147612664 1 eq_refl) (SHW 2147612664 4 eq_refl)
-           (SHW 2147612665 1 eq_refl) (SHW 2147612666 1 eq_refl) (SHW 2147612667 1 eq_refl) (SHW 2147612668 4 eq_refl) (SHW 2147612672 4 eq_refl) (SHW 2147612676 4 eq_refl)
-           (SHW 2147612680 4 eq_refl) (SHW 2147612684 4 eq_refl) (SHW 2147612688 4 eq_refl) (SHW 2147612692 8 eq_refl) (SHW 2147612700 8 eq_refl) (SHW 2147612708 8 eq_refl)
-           (SHW 2147612716 8 eq_refl) (SHW 2147612724 8 eq_refl) (SHW 2147612732 8 eq_refl) (SHW 2147612740 8 eq_refl) (SHW 2147612748 8 eq_refl) (SHW 2147612756 8 eq_refl)
-           (SHW 2147612764 8 eq_refl) (SHW 2147612772 8 eq_refl) (SHW 2147612780 8 eq_refl) (SHW 2147612788 8 eq_refl) (SHW 2147612796 8 eq_refl) (SHW 2147612804 8 eq_refl)
-           (SHW 2147612812 8 eq_refl) (SHW 2147612820 8 eq_refl) (SHW 2147612828 4 eq_refl) (SHW 2147612828 8 eq_refl) (SHW 2147612832 4 eq_refl) (SHW 2147612836 4 eq_refl)
-           (SHW 2147612836 8 eq_refl) (SHW 2147612840 4 eq_refl) (SHW 2147612844 4 eq_refl) (SHW 2147612844 8 eq_refl) 
-           TIDC HTr
-           (XCC 0%nat 6897520 4 0 eq_refl) (XCC1 1%nat 6897555 0 eq_refl eq_refl) (XCC 2%nat 6896992 8 6897000 eq_refl) (XCC 3%nat 6896984 4 2 eq_refl) (XCC 22%nat 6897016 8 1148964 eq_refl) (XCC 23%nat 6897272 8 687916 eq_refl)
-           (XCC 6%nat 6896980 4 0 eq_refl) (XCC1 24%nat 6759060 0 eq_refl eq_refl) (XCC 4%nat 6897008 8 1148964 eq_refl) (XCC 5%nat 6897264 8 619876 eq_refl) (STC1 10%nat 1907424 0 eq_refl eq_refl) (XCC 7%nat 6897000 8 0 eq_refl)
-           (STC1 3%nat 1295824 0 eq_refl eq_refl) (STC 0%nat 1282768 8 1282768 eq_refl) (STC 2%nat 1295744 8 1 eq_refl) (STC 4%nat 1299536 4 1 eq_refl) (STC 5%nat 1299696 8 0 eq_refl) (STC1 8%nat 1313048 1 eq_refl eq_refl)
-           (STC 7%nat 1309752 8 2147450880 eq_refl) (DSC 1294272 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143808)) ltac:(img_rd) eq_refl) (DSC 1294288 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (STC1 6%nat 1307804 1 eq_refl eq_refl) (DSC 1294288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (STC 9%nat 1906656 8 18446744073709551615 eq_refl)
-           (STC 1%nat 1283280 8 1219844 eq_refl) (DSC 1294328 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294336 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143904)) ltac:(img_rd) eq_refl) (DSC 1294352 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294392 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294400 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143936)) ltac:(img_rd) eq_refl) (DSC 1294416 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294456 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294464 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144128)) ltac:(img_rd) eq_refl) (DSC 1294480 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl)
-           (DSC 1294480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294520 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294528 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144160)) ltac:(img_rd) eq_refl) (DSC 1294544 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294584 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294592 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144224)) ltac:(img_rd) eq_refl) (DSC 1294608 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294648 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294656 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144256)) ltac:(img_rd) eq_refl) (DSC 1294672 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl)
-           (DSC 1294672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294712 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294720 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144352)) ltac:(img_rd) eq_refl) (DSC 1294736 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294776 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294784 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144448)) ltac:(img_rd) eq_refl) (DSC 1294800 1%nat [Z_to_bv 8 128] ltac:(img_rd) eq_refl) (DSC 1294800 8%nat (word_to_le_bytes 8 (Z_to_bv 64 128)) ltac:(img_rd) eq_refl) (DSC 1294840 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294848 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144576)) ltac:(img_rd) eq_refl) (DSC 1294864 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl)
-           (DSC 1294864 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294904 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294912 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144672)) ltac:(img_rd) eq_refl) (DSC 1294928 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294928 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294968 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294976 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144736)) ltac:(img_rd) eq_refl) (DSC 1294992 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294992 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295032 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295040 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144800)) ltac:(img_rd) eq_refl) (DSC 1295056 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295056 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295096 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295104 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144864)) ltac:(img_rd) eq_refl) (DSC 1295120 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295120 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295160 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295168 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144928)) ltac:(img_rd) eq_refl) (DSC 1295184 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295184 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295224 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295232 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144992)) ltac:(img_rd) eq_refl) (DSC 1295248 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295248 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295296 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145056)) ltac:(img_rd) eq_refl) (DSC 1295312 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295312 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295360 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145120)) ltac:(img_rd) eq_refl) (DSC 1295376 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295376 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295424 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145216)) ltac:(img_rd) eq_refl) (DSC 1295440 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295440 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295488 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145536)) ltac:(img_rd) eq_refl) (DSC 1295504 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295504 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295552 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145632)) ltac:(img_rd) eq_refl) (DSC 1295568 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1295568 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295616 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145664)) ltac:(img_rd) eq_refl) (DSC 1295632 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl)
-           (DSC 1295632 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295680 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145696)) ltac:(img_rd) eq_refl) (DSC 1295696 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295696 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (XCC 8%nat 6898952 8 0 eq_refl) (XCC 9%nat 1294224 8 1293992 eq_refl)
-           (XCC 10%nat 1294132 4 4294967295 eq_refl) (XCC 11%nat 1294032 8 0 eq_refl) (XCC 12%nat 1294048 8 0 eq_refl) (XCC 13%nat 1294000 8 0 eq_refl) (XCC 14%nat 1294008 8 0 eq_refl) (XCC 15%nat 1293984 8 1293752 eq_refl)
-           SOlock SOwpos SOwbase SOwrite CANc SOfd) as
-      (fx1 & R1 & MV1 & XGR & _ & XFRZ & XMS & _ & _ & Xr2 & _ & _ & _ & Xr8 & Xr9 & Xr10 & Xr11 & Xr12 & _ & _ & _ & _ & Xr17 & Xr18 & Xr19 & Xr21 & Xr22 & _ & Xm112 & Xm120 & Xm128 & Xm136 & Xm104 & Xm96 & Xm88 & Xm80 & Xm72 & Xm64 & Xm56 & Xm48 & Xm40 & Xm32 & Xm24 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _).
-    unfold V in XFRZ, XMS; cbn beta iota in XFRZ, XMS. cbn [V] in *.
-    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as LZ. pose proof LZ as (HH & HL & HA & HM & Hh).
-    (* [comment removed for export] *)
-    set (good := fun i : Z => i < 1295744 \/ 1299704 <= i < 6896976 \/ 6897000 <= i < 6897520 \/ 6897524 <= i < 2147450880).
-    assert (FRX : forall i, 0 <= i -> good i -> MV1 (Z_to_bv 64 i) = MV (Z_to_bv 64 i)).
-    { intros i Hi Hg. apply XFRZ; [unfold good in Hg; clear - Hi Hg; lia | ..]; (intros X; unfold good in Hg; clear - Hsp' HS1 HS2 Hi Hg X; lia). }
-    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x120258) MV1 model _ LZ XMS).
-    intros M1 model1 MI1 SBM1 VIS1.
-    assert (LITX : forall a (n : nat) bs, rdn ASEGS MV (Z_to_bv 64 a) n = Some bs ->
-              (0 <=? a) && ((a + Z.of_nat n <=? 1295744) || ((1299704 <=? a) && (a + Z.of_nat n <=? 6896976)) || ((6897524 <=? a) && (a + Z.of_nat n <=? 2147450880))) = true ->
-              rdn ASEGS MV1 (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in B2.
-      apply (rdn_tr MV MV1 a n bs Hr B1); [lia|]. intros i Hi. apply FRX; [lia|]. unfold good. clear - B1 B2 Hi. lia. }
-    (* [comment removed for export] *)
-    assert (DATA : rdn ASEGS MV1 (Z_to_bv 64 6898976) (Z.to_nat (2 * 1)) = Some (zero_lines 1%nat)).
-    { apply (LITX 6898976 (Z.to_nat (2 * 1))); [|reflexivity]. change (Z.to_nat (2 * 1)) with (2 * 1%nat)%nat.
-            destruct (BC 0 ltac:(lia)) as (B0a & B0b). cbn [zero_lines].
-      apply rdn_cons1; [lia | exact B0a|]. apply rdn_cons1; [lia | exact B0b|]. reflexivity. }
-    (* [comment removed for export] *)
-    set (q := S - 136) in *.
-    assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear - Hsp' HS1 HS2; lia).
-    assert (Hf : 0 <= 1293752 /\ (1293752 + 124 <= q \/ q + 32 + 16 <= 1293752 + 120) /\ 1293752 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
-    assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
-    { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-    assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
-    unfold W. rewrite <- (app_nil_r (zero_lines 1%nat)).
-    apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1293752 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
-             (2 * 1%nat)%nat true R1 M1 model1 q 2 6898976 (2 * 1) 0 0 (zero_lines 1%nat) []).
-    { cbn. lia. }
-    { exact (sbm_lazy_eq _ _ SBM1). }
-    { exact MI1. }
-    { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
-    { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
-    { unfold wv_regs. repeat split; assumption. }
-    { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
-      split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
-      split; [replace (Z_to_bv 64 q) with (Z_to_bv 64 (q + 0)) by (f_equal; lia); apply (WIN1 q 32); [unfold q; clear - Hsp' HS1 HS2; lia | unfold q; clear - Hsp' HS1 HS2; lia | lia | cbn; lia]|].
-      split; [unfold wv_buf; split; [lia|]; split; [lia|]; split; [lia|]; split; [right; left; unfold q; clear - Hsp' HS1 HS2; lia|]; split; [exact DATA|];
-              intros x Hx; apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); lia|].
-      split; [intros X; discriminate X|]. intros _.
-      split; [replace (q + 16) with (S - 120) by (unfold q; ring); exact Xm120|].
-      split; [replace (q + 24) with (S - 112) by (unfold q; ring); exact Xm112|].
+    intros LB LK cr A M model R S st tid canz Pre MV Rst Rcz G1 G2 G4 G10 Cz SO SX FD1.
+    destruct Pre as (Dv & SLo & SHi & S16 & Wstk & Img & (Cells & Tid & TidR & ImgNone)).
+    destruct SO as (So1 & So2 & So3 & So4 & So5 & So6 & So7 & SoW1 & SoW2 & SoLn).
+    destruct SX as (Sx1 & Sx2 & Sx3 & Sx4 & Sx5).
+    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 LB LK cr A M model Dv) as LZ.
+    pose (V := fun j : nat => match j with 40%nat => canz | 44%nat => tid | _ => S end).
+    pose proof (AS0DRVP_dpX2_pre.dpX2_pre_conc fx R MV V) as Run. unfold V in Run. cbv beta iota in Run. clear V.
+    repeat lazymatch type of Run with
+    | ?P -> _ =>
+      let Pf := fresh "Pf" in
+      assert (Pf : P);
+      [ lazymatch goal with
+        | |- getr _ _ = _ => first [exact G1 | exact G2 | exact G4]
+        | |- _ <= _ < _ => lia
+        | |- _ <= _ <= _ => lia
+        | |- AS0DRVP_dpX2_pre.aligned _ _ => exact S16
+        | |- L5Defs.L5.img_clear _ _ _ => exact Img
+        | |- L5Defs.L5.defined _ ?a ?n => intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+        | |- L5Defs.L5.writable _ _ ?a ?n =>
+          let hi := eval vm_compute in (2147468856 <=? a) in
+          lazymatch hi with
+          | true => apply (sh_writable LB LK cr A M model a n Dv); vm_compute; reflexivity
+          | false => let k := eval vm_compute in (Z.to_nat n) in apply (wsg_writable MV a k); [vm_compute; reflexivity | lia | lia]
+          | _ => apply Wstk; lia
+          end
+        | |- _ =>
+          unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+          lazymatch goal with
+          | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+            first
+              [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+              | let z := eval vm_compute in (Z.of_nat n) in
+                let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                first
+                  [ exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS]; repeat first [left; reflexivity | right]))
+                  | exact (ex_cell_vis LB LK cr A M model a z v Dv ltac:(cbn [In EX_CELLS]; repeat first [left; reflexivity | right])) ]
+              | apply (img_cell MV a n); [img_rd | lia | cbn; lia | intros i Ri; apply ImgNone; cbn in Ri; lia] ]
+          end
+        end
+      | specialize (Run Pf); clear Pf ]
+    end.
+    lazymatch type of Run with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+    destruct Run as (fx1 & R1 & M1' & Grow1 & FrW1 & FrZ1 & Steps1 & Keep1 & Outs1).
+    repeat lazymatch type of Outs1 with _ /\ _ => let o := fresh "Oc" in destruct Outs1 as [o Outs1] end.
+    assert (Safe1 : forall i, 0 <= i < 1295744 \/ 6896960 <= i < 6896976 \/ 6898976 <= i < 6900000 ->
+                    M1' (Z_to_bv 64 i) = MV (Z_to_bv 64 i)) by (intros i Zi; apply FrZ1; lia).
+    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x120258) M1' model _ LZ Steps1).
+    intros M1 model1 MI1 SB1 VE1.
+    pose proof LZ as (HoS & Lcov & Awf & _ & _).
+    pose proof (lzinv_sbm ASEGS (ahid A model) A model model1 LZ MI1 SB1) as LZ1.
+    change (W 1 (zero_lines 1)) with (map (WriteEv (Z_to_bv 64 1)) ([Z_to_bv 8 48; Z_to_bv 8 10] ++ [])).
+    apply (@wv_loop fx1 scfg (ahid A model) A HoS (m_vm_lazy model) Lcov Awf 1293752 1 ltac:(lia) (S - 136) (S - 104) ltac:(lia) ltac:(lia)
+             (fun x Rx => nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M model x Dv ltac:(lia) ltac:(right; lia))
+             (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _) 2%nat true R1 M1 model1 (S - 136) 2 6898976 2 0 0 [Z_to_bv 8 48; Z_to_bv 8 10] []).
+    - apply Nat.le_refl.
+    - exact (sbm_lazy_eq _ _ SB1).
+    - exact MI1.
+    - exact (proj2 (proj2 (proj2 (proj2 LZ1)))).
+    - rewrite (sbm_fds' _ _ SB1). exact FD1.
+    - unfold wv_regs. repeat split; match goal with Oc : getr R1 _ = _ |- _ => exact Oc end.
+    - rewrite VE1. unfold wv_iov.
+      pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (Wstk (S - 136) 32 ltac:(lia) ltac:(lia)) 0 32%nat ltac:(lia) ltac:(cbn; lia)) as W32.
+      rewrite Z.add_0_r in W32.
+      split; [lia|]. split; [lia|]. split; [right; reflexivity|].
+      split; [match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 136) _ |- _ => exact Oc end|].
+      split; [replace (S - 136 + 8) with (S - 128) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 128) _ |- _ => exact Oc end|].
+      split; [exact W32|].
+      split.
+      { unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [right; left; lia|]. split.
+        - repeat (apply rdn_cons1; [lia | |];
+            [ lazymatch goal with |- rdn _ _ (Z_to_bv 64 ?a) 1 = _ =>
+                let off := eval vm_compute in (a - 6898976) in
+                let i := eval vm_compute in (off / 2) in
+                let p := eval vm_compute in (off mod 2) in
+                apply (rdn_tr MV M1' a 1);
+                [ lazymatch p with 0 => exact (proj1 (SoLn i ltac:(lia))) | _ => exact (proj2 (SoLn i ltac:(lia))) end
+                | lia | cbn; lia | intros x Rx; apply Safe1; cbn in Rx; lia ]
+              end | ]).
+          reflexivity.
+        - intros x Rx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M model x Dv); lia. }
+      split; [intros C1; discriminate C1|].
+      intros _.
+      split; [replace (S - 136 + 16) with (S - 120) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 120) _ |- _ => exact Oc end|].
+      split; [replace (S - 136 + 24) with (S - 112) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 112) _ |- _ => exact Oc end|].
       split; [|lia].
-      unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [left; reflexivity|]. split; [reflexivity|]. intros x Hx. lia. }
-    { lia. }
-    { rewrite VIS1. exact (LITX _ _ _ SOfd eq_refl). }
-    (* [comment removed for export] *)
-    intros R3 M3 model3 MI3 SBM3 KR3 _ FRV3 _ GRV3. rewrite VIS1 in FRV3, GRV3.
-    set (MV3 := mrestrict (ahid A model) M3) in *.
-    assert (LIT3 : forall a (n : nat) bs, rdn ASEGS MV (Z_to_bv 64 a) n = Some bs ->
-              (0 <=? a) && ((a + Z.of_nat n <=? 1295744) || ((1299704 <=? a) && (a + Z.of_nat n <=? 6896976)) || ((6897524 <=? a) && (a + Z.of_nat n <=? 2147450880))) = true ->
-              rdn ASEGS MV3 (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. pose proof (LITX a n bs Hr Hb) as Y. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in B2.
-      apply (rdn_tr MV1 MV3 a n bs Y B1); [lia|]. intros i Hi. apply FRV3; [lia|]. unfold q. clear - Hsp' HS1 HS2 B1 B2 Hi. lia. }
-    assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n = Some bs ->
-              (off + k =? 144) && (Z.of_nat n <=? k) && (k <=? 104) = true -> rdn ASEGS MV3 (Z_to_bv 64 (S - 144 + off)) n = Some bs).
-    { intros off k n bs Hr Hb. apply andb_prop in Hb as (Hb & Hb3). apply andb_prop in Hb as (Hb1 & Hb2).
-      apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
-      apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
-      intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-    assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
-    assert (FW3 : forall a n, 1293752 <= a -> a + n <= 1293752 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
-    assert (IMG3 : forall i, 65536 <= i < 1282048 -> MV3 (Z_to_bv 64 i) = None).
-    { intros i Hi. rewrite FRV3; [rewrite FRX; [apply IMGc; exact Hi | lia | unfold good; lia] | lia | unfold q; clear - Hsp' HS1 HS2 Hi; lia]. }
-    set (VD := fun n : nat => match n with
-               | 2%nat => S - 144 | 40%nat => canz
-               | 9%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 9))) | 10%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 10)))
-               | 18%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 18))) | 19%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 19)))
-               | 20%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 20))) | 21%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 21)))
-               | 22%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 22)))
-               | 110%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 10))) | 118%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 18)))
-               | 119%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 19))) | 120%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 20)))
-               | 122%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 22)))
-               | _ => 0 end).
-    assert (Dg2 : getr R3 (Z_to_bv 5 (Z.of_nat 2)) = Z_to_bv 64 (VD 2%nat)) by (eapply eq_trans; [exact (KR3 2%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr2]).
-    assert (Dg8 : getr R3 (Z_to_bv 5 (Z.of_nat 8)) = Z_to_bv 64 0) by (eapply eq_trans; [exact (KR3 8%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr8]).
-    assert (Dg9 : getr R3 (Z_to_bv 5 (Z.of_nat 9)) = Z_to_bv 64 1293752) by (eapply eq_trans; [exact (KR3 9%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr9]).
-    assert (Dg21 : getr R3 (Z_to_bv 5 (Z.of_nat 21)) = Z_to_bv 64 6896960) by (eapply eq_trans; [exact (KR3 21%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr21]).
-    assert (Dg10 : getr R3 (Z_to_bv 5 (Z.of_nat 10)) = Z_to_bv 64 (VD 110%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg18 : getr R3 (Z_to_bv 5 (Z.of_nat 18)) = Z_to_bv 64 (VD 118%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg19 : getr R3 (Z_to_bv 5 (Z.of_nat 19)) = Z_to_bv 64 (VD 119%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg20 : getr R3 (Z_to_bv 5 (Z.of_nat 20)) = Z_to_bv 64 (VD 120%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg22 : getr R3 (Z_to_bv 5 (Z.of_nat 22)) = Z_to_bv 64 (VD 122%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (HD64 : 0 <= VD 2%nat < 2 ^ 64) by (cbn [VD]; clear - Hsp' HS1 HS2; lia).
-    assert (HDr : 140735332552704 <= VD 2%nat <= 140737488355328) by (cbn [VD]; clear - Hsp' HS1 HS2; lia).
-    assert (HDa : AS0DRVP_dpXd_2.aligned (VD 2%nat) 16).
-    { cbn [VD]. unfold AS0DRVP_dpXd_2.aligned. clear - HS16. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
-      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
-    assert (DWR : L5Defs.L5.writable ASEGS MV3 (VD 2%nat - 16) 16).
-    { cbn [VD]. intros d k Hd Hk. apply (WIN3 (S - 144 - 16) 16); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (DDF : L5Defs.L5.defined MV3 (VD 2%nat - 16) 16).
-    { cbn [VD]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN3 (S - 144 - 16) 16); clear - Hsp' HS1 HS2 Hi; lia. }
-    destruct (AS0DRVP_dpXd_2.dpXd_2_conc fx1 R3 MV3 VD HD64 (u64_range _)
-           (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _)
-           Hcan (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _)
-           Dg2 Dg8 Dg9 Dg10 Dg18 Dg19
-           Dg20 Dg21 Dg22 HDr HDa DWR
-           DDF IMG3 (fun d k Hd Hk => FW3 1293784 8 ltac:(lia) ltac:(lia) d k Hd Hk) (fun d k Hd Hk => FW3 1293792 8 ltac:(lia) ltac:(lia) d k Hd Hk) (fun d k Hd Hk => FW3 1293808 8 ltac:(lia) ltac:(lia) d k Hd Hk) (LIT3 1293840 8%nat _ SObuf eq_refl)
-           (LIT3 1293848 8%nat _ SObufsz eq_refl) (LIT3 6896960 8%nat _ CANc eq_refl) (cellS 40 104 _ _ Xm104 eq_refl) (cellS 104 40 _ _ Xm40 eq_refl) (cellS 96 48 _ _ Xm48 eq_refl) (cellS 88 56 _ _ Xm56 eq_refl)
-           (cellS 80 64 _ _ Xm64 eq_refl) (cellS 72 72 _ _ Xm72 eq_refl) (cellS 64 80 _ _ Xm80 eq_refl) (cellS 56 88 _ _ Xm88 eq_refl) (cellS 48 96 _ _ Xm96 eq_refl) (LIT3 1293760 8%nat _ SOrpos eq_refl)
-           (LIT3 1293768 8%nat _ SOrend eq_refl) (LIT3 1293744 8%nat _ (XCC 16%nat 1293744 8 1293512 eq_refl) eq_refl) (LIT3 1293652 4%nat _ (XCC 17%nat 1293652 4 4294967295 eq_refl) eq_refl) (LIT3 1293552 8%nat _ (XCC 18%nat 1293552 8 0 eq_refl) eq_refl) (LIT3 1293568 8%nat _ (XCC 19%nat 1293568 8 0 eq_refl) eq_refl) (LIT3 1293520 8%nat _ (XCC 20%nat 1293520 8 0 eq_refl) eq_refl)
-           (LIT3 1293528 8%nat _ (XCC 21%nat 1293528 8 0 eq_refl) eq_refl) (cellS 120 24 _ _ Xm24 eq_refl) (cellS 112 32 _ _ Xm32 eq_refl)) as
-      (fx2 & R4 & MV4 & _ & _ & _ & DMS & _ & _ & _ & _ & _ & Dr10 & _ & _ & Dr17 & _).
-    unfold VD in DMS; cbn beta iota in DMS.
-    assert (LZ3 : lzinv ASEGS (ahid A model) A model3).
-    { apply (lzinv_sbm ASEGS (ahid A model) A model model3 LZ MI3). exact (same_but_materialized_trans _ _ _ SBM1 SBM3). }
-    apply (msteps_vis_fx scfg (ahid A model) A fx1 fx2 R3 (Z_to_bv 64 0x120264) M3 R4 (Z_to_bv 64 0x118588) MV4 model3 _ LZ3 DMS).
-    intros M5 model5 MI5 SBM5 _.
-    pose proof (same_but_materialized_trans _ _ _ (same_but_materialized_trans _ _ _ SBM1 SBM3) SBM5) as SBMT.
-    rewrite <- (proj2 (sbm_fds model model5 SBMT)).
-    apply (rz_exit_at_lit_lz ASEGS scfg R4 (Z_to_bv 64 0x118588) M5 rom model5 ECALLW st fetch_exitA is_ecall_ECALLW).
-    - rewrite (sbm_halted_eq _ _ SBMT). exact Hh.
-    - left. exact Dr17.
-    - eapply eq_trans; [exact Dr10|]. cbn [VD]. rewrite Z_to_bv_bv_unsigned. exact G10.
-    - exact Hst.
+      unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [left; reflexivity|]. split; [reflexivity | intros x Rx; lia].
+    - lia.
+    - rewrite VE1. apply (rdn_tr MV M1' 1293872 4); [exact Sx2 | lia | cbn; lia | intros i Ri; apply Safe1; cbn in Ri; lia].
+    - intros R2 M2 model2 MI2 SB2 KR2 FrM2 FrV2 GrM2 GrV2.
+      rewrite VE1 in FrV2, GrV2.
+      pose proof (lzinv_sbm ASEGS (ahid A model) A model1 model2 LZ1 MI2 SB2) as LZ2.
+      pose proof (mem_grows_trans _ _ _ Grow1 GrV2) as GrowV.
+      pose (Vd := fun j : nat => match j with
+        | 2%nat => S - 144
+        | 9%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 9)))
+        | 10%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 10)))
+        | 18%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 18)))
+        | 19%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 19)))
+        | 20%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 20)))
+        | 21%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 21)))
+        | 22%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 22)))
+        | 40%nat => canz
+        | 110%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 10)))
+        | 118%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 18)))
+        | 119%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 19)))
+        | 120%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 20)))
+        | 122%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 22)))
+        | _ => 0 end).
+      pose proof (AS0DRVP_dpXd_2.dpXd_2_conc fx1 R2 (mrestrict (ahid A model) M2) Vd) as Run2. unfold Vd in Run2. cbv beta iota in Run2. clear Vd.
+      repeat lazymatch type of Run2 with
+      | ?P -> _ =>
+        let Pf := fresh "Pf" in
+        assert (Pf : P);
+        [ lazymatch goal with
+          | |- 0 <= bv_unsigned _ < _ => apply u64_range
+          | |- _ <= _ < _ => lia
+          | |- _ <= _ <= _ => lia
+          | |- getr _ _ = _ =>
+            first
+              [ rewrite Z_to_bv_bv_unsigned; reflexivity
+              | etransitivity; [apply KR2; cbn [In WV_KEEP]; repeat first [left; apply bv_eq; reflexivity | right] |];
+                match goal with Oc : getr R1 _ = _ |- _ => exact Oc end ]
+          | |- AS0DRVP_dpXd_2.aligned _ _ => unfold AS0DRVP_dpXd_2.aligned; rewrite Zminus_mod, S16; reflexivity
+          | |- L5Defs.L5.img_clear _ _ _ => intros i Ri; rewrite FrV2, Safe1 by lia; exact (Img i Ri)
+          | |- L5Defs.L5.defined _ ?a ?n =>
+            apply (L5Defs.L5.defined_grows MV _ _ _ GrowV); intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+          | |- L5Defs.L5.writable _ _ ?a ?n =>
+            apply (L5Defs.L5.writable_grows ASEGS MV _ _ _ GrowV); first [apply Wstk; lia | intros d k Rd Rk; apply (SoW1 a n); lia]
+          | |- _ =>
+            unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+            lazymatch goal with
+            | |- rdn _ _ (Z_to_bv 64 (S - 144 + ?k)) _ = _ =>
+              let k' := eval vm_compute in (144 - k) in
+              replace (S - 144 + k) with (S - k') by lia;
+              apply rdn_tr with (M := M1');
+              [ match goal with Oc : L5Defs.L5.u64_at _ M1' (S - k') _ |- _ => exact Oc end
+              | lia | cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia
+              | intros i Ri; cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in Ri; apply FrV2; lia ]
+            | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+              apply rdn_tr with (M := M1'); [| lia | cbn; lia | intros i Ri; cbn in Ri; apply FrV2; lia];
+              apply rdn_tr with (M := MV); [| lia | cbn; lia | intros i Ri; cbn in Ri; apply Safe1; lia];
+              first
+                [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+                | let z := eval vm_compute in (Z.of_nat n) in
+                  let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                  exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS]; repeat first [left; reflexivity | right])) ]
+            end
+          end
+        | specialize (Run2 Pf); clear Pf ]
+      end.
+      lazymatch type of Run2 with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+      destruct Run2 as (fx3 & R3 & M3' & Grow3 & FrW3 & FrZ3 & (Steps3 & Keep3 & Outs3)).
+      repeat lazymatch type of Outs3 with _ /\ _ => let o := fresh "Od" in destruct Outs3 as [o Outs3] end.
+      apply (msteps_vis_fx scfg (ahid A model) A fx1 fx3 R2 (Z_to_bv 64 0x120264) M2 R3 (Z_to_bv 64 0x118588) M3' model2 _ LZ2 Steps3).
+      intros M3 model3 MI3 SB3 VE3.
+      pose proof (lzinv_sbm ASEGS (ahid A model) A model2 model3 LZ2 MI3 SB3) as LZ3.
+      rewrite <- (proj2 (sbm_fds _ _ SB1)), <- (proj2 (sbm_fds _ _ SB2)), <- (proj2 (sbm_fds _ _ SB3)).
+      apply (rz_exit_at_lit_lz ASEGS scfg R3 _ M3 _ model3 ECALLW st fetch_exitA is_ecall_ECALLW); [| left | | exact Rst].
+      + exact (proj2 (proj2 (proj2 (proj2 LZ3)))).
+      + match goal with Od : getr R3 (Z_to_bv 5 (Z.of_nat 17)) = _ |- _ => exact Od end.
+      + match goal with Od : getr R3 (Z_to_bv 5 (Z.of_nat 10)) = _ |- _ => rewrite Z_to_bv_bv_unsigned in Od; exact (eq_trans Od G10) end.
   Qed.
 
 
@@ -635,217 +491,167 @@ Section Exit.
     fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x118878) M rom) model) (t_emit (W 1 (zero_lines 2%nat)) (t_exit (Z_to_bv 64 st) (m_fs model))).
   Proof.
-    intros LB LK cr A M model R S st tid canz (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst Hcan G1 G2 G4 G10 CANc SO SOX FD1.
-    pose proof Hsp as Hsp'. destruct SO as (_ & SObufsz & _ & SOwpos & SOwbase & SOlock & _ & FW & BW & BC). destruct SOX as (SOwrite & SOfd & SObuf & SOrpos & SOrend).
-    set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | 40%nat => canz | _ => 0 end).
-    assert (HS64 : 0 <= V 2%nat < 2 ^ 64) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HT64 : 0 <= V 44%nat < 2 ^ 64) by (cbn [V]; clear - HTr; lia).
-    assert (HSr : 140735332552704 <= V 2%nat <= 140737488355328) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HSa : AS0DRVP_dpX3_pre.aligned (V 2%nat) 16) by (cbn [V]; exact HS16).
-    assert (CWR : L5Defs.L5.writable ASEGS MV (V 2%nat - 320) 320).
-    { cbn [V]. intros d k Hd Hk. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (CDF : L5Defs.L5.defined MV (V 2%nat - 320) 320).
-    { cbn [V]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hi; lia. }
-    assert (WSG : forall a (n : nat), wseg_ok ASEGS (Z_to_bv 64 a) n = true -> (0 <=? a) && (a + Z.of_nat n <=? 2 ^ 63) = true -> L5Defs.L5.writable ASEGS MV a (Z.of_nat n)).
-    { intros a n W Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. exact (wsg_writable MV a n W B1 B2). }
-    assert (SHW : forall a n, ((2147468856 <=? a) && (a + n <=? 2147469104) || (2147612664 <=? a) && (a + n <=? 2147612852)) = true -> L5Defs.L5.writable ASEGS MV a n)
-      by (intros a n Hb; exact (sh_writable _ _ _ _ _ _ a n D Hb)).
-    assert (STC : forall (i : nat) a n v, nth_error EX_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (ex_cell_vis _ _ _ _ _ _ a n v D (nth_error_In _ _ Hn))).
-    assert (STC1 : forall (i : nat) a v, nth_error EX_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (STC i a 1 v Hn). }
-    assert (XCC : forall (i : nat) a n v, nth_error XC_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (cells_at_nth MV XC_CELLS i a n v XC Hn)).
-    assert (XCC1 : forall (i : nat) a v, nth_error XC_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (XCC i a 1 v Hn). }
-    assert (DSC : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (0x13bfc0 <=? a) && (a + Z.of_nat n <=? 0x13c580) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. apply (img_cell MV a n bs Hr); [lia | lia|]. intros i Hi. apply DESC. lia. }
-    (* [comment removed for export] *)
-    destruct (AS0DRVP_dpX3_pre.dpX3_pre_conc fx R MV V HS64 Hcan
-           HT64 G1 G2 G4 HSr HSa
-           CWR CDF IMGc (WSG 1295744 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1295824 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1299696 8%nat ltac:(vm_compute; reflexivity) eq_refl)
-           (WSG 6896976 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896984 4%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896992 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6897520 4%nat ltac:(vm_compute; reflexivity) eq_refl) (SHW 2147468856 1 eq_refl) (SHW 2147468857 1 eq_refl)
-           (SHW 2147468858 1 eq_refl) (SHW 2147468859 1 eq_refl) (SHW 2147468868 1 eq_refl) (SHW 2147468869 1 eq_refl) (SHW 2147468870 1 eq_refl) (SHW 2147468871 1 eq_refl)
-           (SHW 2147468872 1 eq_refl) (SHW 2147468872 4 eq_refl) (SHW 2147468873 1 eq_refl) (SHW 2147468874 1 eq_refl) (SHW 2147468875 1 eq_refl) (SHW 2147468876 4 eq_refl)
-           (SHW 2147468880 1 eq_refl) (SHW 2147468880 4 eq_refl) (SHW 2147468881 1 eq_refl) (SHW 2147468882 1 eq_refl) (SHW 2147468883 1 eq_refl) (SHW 2147468896 1 eq_refl)
-           (SHW 2147468897 1 eq_refl) (SHW 2147468898 1 eq_refl) (SHW 2147468899 1 eq_refl) (SHW 2147468900 1 eq_refl) (SHW 2147468901 1 eq_refl) (SHW 2147468902 1 eq_refl)
-           (SHW 2147468903 1 eq_refl) (SHW 2147468904 1 eq_refl) (SHW 2147468905 1 eq_refl) (SHW 2147468906 1 eq_refl) (SHW 2147468907 1 eq_refl) (SHW 2147468908 1 eq_refl)
-           (SHW 2147468909 1 eq_refl) (SHW 2147468910 1 eq_refl) (SHW 2147468911 1 eq_refl) (SHW 2147468912 1 eq_refl) (SHW 2147468912 4 eq_refl) (SHW 2147468913 1 eq_refl)
-           (SHW 2147468914 1 eq_refl) (SHW 2147468915 1 eq_refl) (SHW 2147468916 4 eq_refl) (SHW 2147468920 1 eq_refl) (SHW 2147468920 4 eq_refl) (SHW 2147468921 1 eq_refl)
-           (SHW 2147468922 1 eq_refl) (SHW 2147468923 1 eq_refl) (SHW 2147468924 1 eq_refl) (SHW 2147468924 4 eq_refl) (SHW 2147468925 1 eq_refl) (SHW 2147468926 1 eq_refl)
-           (SHW 2147468927 1 eq_refl) (SHW 2147468928 4 eq_refl) (SHW 2147468932 1 eq_refl) (SHW 2147468932 4 eq_refl) (SHW 2147468933 1 eq_refl) (SHW 2147468934 1 eq_refl)
-           (SHW 2147468935 1 eq_refl) (SHW 2147468936 1 eq_refl) (SHW 2147468936 4 eq_refl) (SHW 2147468937 1 eq_refl) (SHW 2147468938 1 eq_refl) (SHW 2147468939 1 eq_refl)
-           (SHW 2147468940 4 eq_refl) (SHW 2147468944 4 eq_refl) (SHW 2147468948 1 eq_refl) (SHW 2147468948 4 eq_refl) (SHW 2147468949 1 eq_refl) (SHW 2147468950 1 eq_refl)
-           (SHW 2147468951 1 eq_refl) (SHW 2147468952 1 eq_refl) (SHW 2147468952 4 eq_refl) (SHW 2147468953 1 eq_refl) (SHW 2147468954 1 eq_refl) (SHW 2147468955 1 eq_refl)
-           (SHW 2147468956 4 eq_refl) (SHW 2147468960 1 eq_refl) (SHW 2147468960 4 eq_refl) (SHW 2147468961 1 eq_refl) (SHW 2147468962 1 eq_refl) (SHW 2147468963 1 eq_refl)
-           (SHW 2147468964 1 eq_refl) (SHW 2147468965 1 eq_refl) (SHW 2147468966 1 eq_refl) (SHW 2147468967 1 eq_refl) (SHW 2147468968 1 eq_refl) (SHW 2147468969 1 eq_refl)
-           (SHW 2147468970 1 eq_refl) (SHW 2147468971 1 eq_refl) (SHW 2147468972 1 eq_refl) (SHW 2147468973 1 eq_refl) (SHW 2147468974 1 eq_refl) (SHW 2147468975 1 eq_refl)
-           (SHW 2147468976 1 eq_refl) (SHW 2147468977 1 eq_refl) (SHW 2147468978 1 eq_refl) (SHW 2147468979 1 eq_refl) (SHW 2147468980 1 eq_refl) (SHW 2147468981 1 eq_refl)
-           (SHW 2147468982 1 eq_refl) (SHW 2147468983 1 eq_refl) (SHW 2147468984 1 eq_refl) (SHW 2147468985 1 eq_refl) (SHW 2147468986 1 eq_refl) (SHW 2147468987 1 eq_refl)
-           (SHW 2147468988 1 eq_refl) (SHW 2147468989 1 eq_refl) (SHW 2147468990 1 eq_refl) (SHW 2147468991 1 eq_refl) (SHW 2147468992 1 eq_refl) (SHW 2147468993 1 eq_refl)
-           (SHW 2147468994 1 eq_refl) (SHW 2147468995 1 eq_refl) (SHW 2147468996 1 eq_refl) (SHW 2147468997 1 eq_refl) (SHW 2147468998 1 eq_refl) (SHW 2147468999 1 eq_refl)
-           (SHW 2147469000 1 eq_refl) (SHW 2147469001 1 eq_refl) (SHW 2147469002 1 eq_refl) (SHW 2147469003 1 eq_refl) (SHW 2147469004 1 eq_refl) (SHW 2147469005 1 eq_refl)
-           (SHW 2147469006 1 eq_refl) (SHW 2147469007 1 eq_refl) (SHW 2147469008 1 eq_refl) (SHW 2147469009 1 eq_refl) (SHW 2147469010 1 eq_refl) (SHW 2147469011 1 eq_refl)
-           (SHW 2147469012 1 eq_refl) (SHW 2147469013 1 eq_refl) (SHW 2147469014 1 eq_refl) (SHW 2147469015 1 eq_refl) (SHW 2147469016 1 eq_refl) (SHW 2147469017 1 eq_refl)
-           (SHW 2147469018 1 eq_refl) (SHW 2147469019 1 eq_refl) (SHW 2147469020 1 eq_refl) (SHW 2147469020 4 eq_refl) (SHW 2147469021 1 eq_refl) (SHW 2147469022 1 eq_refl)
-           (SHW 2147469023 1 eq_refl) (SHW 2147469024 4 eq_refl) (SHW 2147469028 1 eq_refl) (SHW 2147469028 4 eq_refl) (SHW 2147469029 1 eq_refl) (SHW 2147469030 1 eq_refl)
-           (SHW 2147469031 1 eq_refl) (SHW 2147469032 1 eq_refl) (SHW 2147469033 1 eq_refl) (SHW 2147469034 1 eq_refl) (SHW 2147469035 1 eq_refl) (SHW 2147469036 1 eq_refl)
-           (SHW 2147469037 1 eq_refl) (SHW 2147469038 1 eq_refl) (SHW 2147469039 1 eq_refl) (SHW 2147469072 1 eq_refl) (SHW 2147469072 4 eq_refl) (SHW 2147469073 1 eq_refl)
-           (SHW 2147469074 1 eq_refl) (SHW 2147469075 1 eq_refl) (SHW 2147469076 4 eq_refl) (SHW 2147469080 1 eq_refl) (SHW 2147469080 4 eq_refl) (SHW 2147469081 1 eq_refl)
-           (SHW 2147469082 1 eq_refl) (SHW 2147469083 1 eq_refl) (SHW 2147469084 1 eq_refl) (SHW 2147469085 1 eq_refl) (SHW 2147469086 1 eq_refl) (SHW 2147469087 1 eq_refl)
-           (SHW 2147469088 1 eq_refl) (SHW 2147469089 1 eq_refl) (SHW 2147469090 1 eq_refl) (SHW 2147469091 1 eq_refl) (SHW 2147469092 1 eq_refl) (SHW 2147469092 4 eq_refl)
-           (SHW 2147469093 1 eq_refl) (SHW 2147469094 1 eq_refl) (SHW 2147469095 1 eq_refl) (SHW 2147469096 4 eq_refl) (SHW 2147469100 1 eq_refl) (SHW 2147469100 4 eq_refl)
-           (SHW 2147469101 1 eq_refl) (SHW 2147469102 1 eq_refl) (SHW 2147469103 1 eq_refl) 
-           
-           (SHW 2147612664 184 eq_refl) (SHW 2147612664 1 eq_refl) (SHW 2147612664 4 eq_refl)
-           (SHW 2147612665 1 eq_refl) (SHW 2147612666 1 eq_refl) (SHW 2147612667 1 eq_refl) (SHW 2147612668 4 eq_refl) (SHW 2147612672 4 eq_refl) (SHW 2147612676 4 eq_refl)
-           (SHW 2147612680 4 eq_refl) (SHW 2147612684 4 eq_refl) (SHW 2147612688 4 eq_refl) (SHW 2147612692 8 eq_refl) (SHW 2147612700 8 eq_refl) (SHW 2147612708 8 eq_refl)
-           (SHW 2147612716 8 eq_refl) (SHW 2147612724 8 eq_refl) (SHW 2147612732 8 eq_refl) (SHW 2147612740 8 eq_refl) (SHW 2147612748 8 eq_refl) (SHW 2147612756 8 eq_refl)
-           (SHW 2147612764 8 eq_refl) (SHW 2147612772 8 eq_refl) (SHW 2147612780 8 eq_refl) (SHW 2147612788 8 eq_refl) (SHW 2147612796 8 eq_refl) (SHW 2147612804 8 eq_refl)
-           (SHW 2147612812 8 eq_refl) (SHW 2147612820 8 eq_refl) (SHW 2147612828 4 eq_refl) (SHW 2147612828 8 eq_refl) (SHW 2147612832 4 eq_refl) (SHW 2147612836 4 eq_refl)
-           (SHW 2147612836 8 eq_refl) (SHW 2147612840 4 eq_refl) (SHW 2147612844 4 eq_refl) (SHW 2147612844 8 eq_refl) 
-           TIDC HTr
-           (XCC 0%nat 6897520 4 0 eq_refl) (XCC1 1%nat 6897555 0 eq_refl eq_refl) (XCC 2%nat 6896992 8 6897000 eq_refl) (XCC 3%nat 6896984 4 2 eq_refl) (XCC 22%nat 6897016 8 1148964 eq_refl) (XCC 23%nat 6897272 8 687916 eq_refl)
-           (XCC 6%nat 6896980 4 0 eq_refl) (XCC1 24%nat 6759060 0 eq_refl eq_refl) (XCC 4%nat 6897008 8 1148964 eq_refl) (XCC 5%nat 6897264 8 619876 eq_refl) (STC1 10%nat 1907424 0 eq_refl eq_refl) (XCC 7%nat 6897000 8 0 eq_refl)
-           (STC1 3%nat 1295824 0 eq_refl eq_refl) (STC 0%nat 1282768 8 1282768 eq_refl) (STC 2%nat 1295744 8 1 eq_refl) (STC 4%nat 1299536 4 1 eq_refl) (STC 5%nat 1299696 8 0 eq_refl) (STC1 8%nat 1313048 1 eq_refl eq_refl)
-           (STC 7%nat 1309752 8 2147450880 eq_refl) (DSC 1294272 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143808)) ltac:(img_rd) eq_refl) (DSC 1294288 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (STC1 6%nat 1307804 1 eq_refl eq_refl) (DSC 1294288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (STC 9%nat 1906656 8 18446744073709551615 eq_refl)
-           (STC 1%nat 1283280 8 1219844 eq_refl) (DSC 1294328 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294336 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143904)) ltac:(img_rd) eq_refl) (DSC 1294352 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294392 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294400 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143936)) ltac:(img_rd) eq_refl) (DSC 1294416 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294456 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294464 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144128)) ltac:(img_rd) eq_refl) (DSC 1294480 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl)
-           (DSC 1294480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294520 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294528 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144160)) ltac:(img_rd) eq_refl) (DSC 1294544 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294584 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294592 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144224)) ltac:(img_rd) eq_refl) (DSC 1294608 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294648 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294656 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144256)) ltac:(img_rd) eq_refl) (DSC 1294672 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl)
-           (DSC 1294672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294712 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294720 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144352)) ltac:(img_rd) eq_refl) (DSC 1294736 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294776 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294784 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144448)) ltac:(img_rd) eq_refl) (DSC 1294800 1%nat [Z_to_bv 8 128] ltac:(img_rd) eq_refl) (DSC 1294800 8%nat (word_to_le_bytes 8 (Z_to_bv 64 128)) ltac:(img_rd) eq_refl) (DSC 1294840 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294848 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144576)) ltac:(img_rd) eq_refl) (DSC 1294864 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl)
-           (DSC 1294864 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294904 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294912 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144672)) ltac:(img_rd) eq_refl) (DSC 1294928 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294928 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294968 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294976 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144736)) ltac:(img_rd) eq_refl) (DSC 1294992 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294992 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295032 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295040 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144800)) ltac:(img_rd) eq_refl) (DSC 1295056 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295056 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295096 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295104 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144864)) ltac:(img_rd) eq_refl) (DSC 1295120 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295120 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295160 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295168 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144928)) ltac:(img_rd) eq_refl) (DSC 1295184 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295184 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295224 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295232 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144992)) ltac:(img_rd) eq_refl) (DSC 1295248 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295248 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295296 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145056)) ltac:(img_rd) eq_refl) (DSC 1295312 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295312 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295360 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145120)) ltac:(img_rd) eq_refl) (DSC 1295376 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295376 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295424 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145216)) ltac:(img_rd) eq_refl) (DSC 1295440 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295440 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295488 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145536)) ltac:(img_rd) eq_refl) (DSC 1295504 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295504 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295552 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145632)) ltac:(img_rd) eq_refl) (DSC 1295568 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1295568 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295616 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145664)) ltac:(img_rd) eq_refl) (DSC 1295632 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl)
-           (DSC 1295632 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295680 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145696)) ltac:(img_rd) eq_refl) (DSC 1295696 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295696 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (XCC 8%nat 6898952 8 0 eq_refl) (XCC 9%nat 1294224 8 1293992 eq_refl)
-           (XCC 10%nat 1294132 4 4294967295 eq_refl) (XCC 11%nat 1294032 8 0 eq_refl) (XCC 12%nat 1294048 8 0 eq_refl) (XCC 13%nat 1294000 8 0 eq_refl) (XCC 14%nat 1294008 8 0 eq_refl) (XCC 15%nat 1293984 8 1293752 eq_refl)
-           SOlock SOwpos SOwbase SOwrite CANc SOfd) as
-      (fx1 & R1 & MV1 & XGR & _ & XFRZ & XMS & _ & _ & Xr2 & _ & _ & _ & Xr8 & Xr9 & Xr10 & Xr11 & Xr12 & _ & _ & _ & _ & Xr17 & Xr18 & Xr19 & Xr21 & Xr22 & _ & Xm112 & Xm120 & Xm128 & Xm136 & Xm104 & Xm96 & Xm88 & Xm80 & Xm72 & Xm64 & Xm56 & Xm48 & Xm40 & Xm32 & Xm24 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _).
-    unfold V in XFRZ, XMS; cbn beta iota in XFRZ, XMS. cbn [V] in *.
-    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as LZ. pose proof LZ as (HH & HL & HA & HM & Hh).
-    (* [comment removed for export] *)
-    set (good := fun i : Z => i < 1295744 \/ 1299704 <= i < 6896976 \/ 6897000 <= i < 6897520 \/ 6897524 <= i < 2147450880).
-    assert (FRX : forall i, 0 <= i -> good i -> MV1 (Z_to_bv 64 i) = MV (Z_to_bv 64 i)).
-    { intros i Hi Hg. apply XFRZ; [unfold good in Hg; clear - Hi Hg; lia | ..]; (intros X; unfold good in Hg; clear - Hsp' HS1 HS2 Hi Hg X; lia). }
-    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x120258) MV1 model _ LZ XMS).
-    intros M1 model1 MI1 SBM1 VIS1.
-    assert (LITX : forall a (n : nat) bs, rdn ASEGS MV (Z_to_bv 64 a) n = Some bs ->
-              (0 <=? a) && ((a + Z.of_nat n <=? 1295744) || ((1299704 <=? a) && (a + Z.of_nat n <=? 6896976)) || ((6897524 <=? a) && (a + Z.of_nat n <=? 2147450880))) = true ->
-              rdn ASEGS MV1 (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in B2.
-      apply (rdn_tr MV MV1 a n bs Hr B1); [lia|]. intros i Hi. apply FRX; [lia|]. unfold good. clear - B1 B2 Hi. lia. }
-    (* [comment removed for export] *)
-    assert (DATA : rdn ASEGS MV1 (Z_to_bv 64 6898976) (Z.to_nat (2 * 2)) = Some (zero_lines 2%nat)).
-    { apply (LITX 6898976 (Z.to_nat (2 * 2))); [|reflexivity]. change (Z.to_nat (2 * 2)) with (2 * 2%nat)%nat.
-            destruct (BC 0 ltac:(lia)) as (B0a & B0b). destruct (BC 1 ltac:(lia)) as (B1a & B1b). cbn [zero_lines].
-      apply rdn_cons1; [lia | exact B0a|]. apply rdn_cons1; [lia | exact B0b|]. apply rdn_cons1; [lia | exact B1a|]. apply rdn_cons1; [lia | exact B1b|]. reflexivity. }
-    (* [comment removed for export] *)
-    set (q := S - 136) in *.
-    assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear - Hsp' HS1 HS2; lia).
-    assert (Hf : 0 <= 1293752 /\ (1293752 + 124 <= q \/ q + 32 + 16 <= 1293752 + 120) /\ 1293752 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
-    assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
-    { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-    assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
-    unfold W. rewrite <- (app_nil_r (zero_lines 2%nat)).
-    apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1293752 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
-             (2 * 2%nat)%nat true R1 M1 model1 q 2 6898976 (2 * 2) 0 0 (zero_lines 2%nat) []).
-    { cbn. lia. }
-    { exact (sbm_lazy_eq _ _ SBM1). }
-    { exact MI1. }
-    { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
-    { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
-    { unfold wv_regs. repeat split; assumption. }
-    { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
-      split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
-      split; [replace (Z_to_bv 64 q) with (Z_to_bv 64 (q + 0)) by (f_equal; lia); apply (WIN1 q 32); [unfold q; clear - Hsp' HS1 HS2; lia | unfold q; clear - Hsp' HS1 HS2; lia | lia | cbn; lia]|].
-      split; [unfold wv_buf; split; [lia|]; split; [lia|]; split; [lia|]; split; [right; left; unfold q; clear - Hsp' HS1 HS2; lia|]; split; [exact DATA|];
-              intros x Hx; apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); lia|].
-      split; [intros X; discriminate X|]. intros _.
-      split; [replace (q + 16) with (S - 120) by (unfold q; ring); exact Xm120|].
-      split; [replace (q + 24) with (S - 112) by (unfold q; ring); exact Xm112|].
+    intros LB LK cr A M model R S st tid canz Pre MV Rst Rcz G1 G2 G4 G10 Cz SO SX FD1.
+    destruct Pre as (Dv & SLo & SHi & S16 & Wstk & Img & (Cells & Tid & TidR & ImgNone)).
+    destruct SO as (So1 & So2 & So3 & So4 & So5 & So6 & So7 & SoW1 & SoW2 & SoLn).
+    destruct SX as (Sx1 & Sx2 & Sx3 & Sx4 & Sx5).
+    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 LB LK cr A M model Dv) as LZ.
+    pose (V := fun j : nat => match j with 40%nat => canz | 44%nat => tid | _ => S end).
+    pose proof (AS0DRVP_dpX3_pre.dpX3_pre_conc fx R MV V) as Run. unfold V in Run. cbv beta iota in Run. clear V.
+    repeat lazymatch type of Run with
+    | ?P -> _ =>
+      let Pf := fresh "Pf" in
+      assert (Pf : P);
+      [ lazymatch goal with
+        | |- getr _ _ = _ => first [exact G1 | exact G2 | exact G4]
+        | |- _ <= _ < _ => lia
+        | |- _ <= _ <= _ => lia
+        | |- AS0DRVP_dpX3_pre.aligned _ _ => exact S16
+        | |- L5Defs.L5.img_clear _ _ _ => exact Img
+        | |- L5Defs.L5.defined _ ?a ?n => intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+        | |- L5Defs.L5.writable _ _ ?a ?n =>
+          let hi := eval vm_compute in (2147468856 <=? a) in
+          lazymatch hi with
+          | true => apply (sh_writable LB LK cr A M model a n Dv); vm_compute; reflexivity
+          | false => let k := eval vm_compute in (Z.to_nat n) in apply (wsg_writable MV a k); [vm_compute; reflexivity | lia | lia]
+          | _ => apply Wstk; lia
+          end
+        | |- _ =>
+          unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+          lazymatch goal with
+          | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+            first
+              [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+              | let z := eval vm_compute in (Z.of_nat n) in
+                let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                first
+                  [ exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS]; repeat first [left; reflexivity | right]))
+                  | exact (ex_cell_vis LB LK cr A M model a z v Dv ltac:(cbn [In EX_CELLS]; repeat first [left; reflexivity | right])) ]
+              | apply (img_cell MV a n); [img_rd | lia | cbn; lia | intros i Ri; apply ImgNone; cbn in Ri; lia] ]
+          end
+        end
+      | specialize (Run Pf); clear Pf ]
+    end.
+    lazymatch type of Run with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+    destruct Run as (fx1 & R1 & M1' & Grow1 & FrW1 & FrZ1 & Steps1 & Keep1 & Outs1).
+    repeat lazymatch type of Outs1 with _ /\ _ => let o := fresh "Oc" in destruct Outs1 as [o Outs1] end.
+    assert (Safe1 : forall i, 0 <= i < 1295744 \/ 6896960 <= i < 6896976 \/ 6898976 <= i < 6900000 ->
+                    M1' (Z_to_bv 64 i) = MV (Z_to_bv 64 i)) by (intros i Zi; apply FrZ1; lia).
+    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x120258) M1' model _ LZ Steps1).
+    intros M1 model1 MI1 SB1 VE1.
+    pose proof LZ as (HoS & Lcov & Awf & _ & _).
+    pose proof (lzinv_sbm ASEGS (ahid A model) A model model1 LZ MI1 SB1) as LZ1.
+    change (W 1 (zero_lines 2)) with (map (WriteEv (Z_to_bv 64 1)) ([Z_to_bv 8 48; Z_to_bv 8 10; Z_to_bv 8 48; Z_to_bv 8 10] ++ [])).
+    apply (@wv_loop fx1 scfg (ahid A model) A HoS (m_vm_lazy model) Lcov Awf 1293752 1 ltac:(lia) (S - 136) (S - 104) ltac:(lia) ltac:(lia)
+             (fun x Rx => nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M model x Dv ltac:(lia) ltac:(right; lia))
+             (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _) 4%nat true R1 M1 model1 (S - 136) 2 6898976 4 0 0 [Z_to_bv 8 48; Z_to_bv 8 10; Z_to_bv 8 48; Z_to_bv 8 10] []).
+    - apply Nat.le_refl.
+    - exact (sbm_lazy_eq _ _ SB1).
+    - exact MI1.
+    - exact (proj2 (proj2 (proj2 (proj2 LZ1)))).
+    - rewrite (sbm_fds' _ _ SB1). exact FD1.
+    - unfold wv_regs. repeat split; match goal with Oc : getr R1 _ = _ |- _ => exact Oc end.
+    - rewrite VE1. unfold wv_iov.
+      pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (Wstk (S - 136) 32 ltac:(lia) ltac:(lia)) 0 32%nat ltac:(lia) ltac:(cbn; lia)) as W32.
+      rewrite Z.add_0_r in W32.
+      split; [lia|]. split; [lia|]. split; [right; reflexivity|].
+      split; [match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 136) _ |- _ => exact Oc end|].
+      split; [replace (S - 136 + 8) with (S - 128) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 128) _ |- _ => exact Oc end|].
+      split; [exact W32|].
+      split.
+      { unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [right; left; lia|]. split.
+        - repeat (apply rdn_cons1; [lia | |];
+            [ lazymatch goal with |- rdn _ _ (Z_to_bv 64 ?a) 1 = _ =>
+                let off := eval vm_compute in (a - 6898976) in
+                let i := eval vm_compute in (off / 2) in
+                let p := eval vm_compute in (off mod 2) in
+                apply (rdn_tr MV M1' a 1);
+                [ lazymatch p with 0 => exact (proj1 (SoLn i ltac:(lia))) | _ => exact (proj2 (SoLn i ltac:(lia))) end
+                | lia | cbn; lia | intros x Rx; apply Safe1; cbn in Rx; lia ]
+              end | ]).
+          reflexivity.
+        - intros x Rx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M model x Dv); lia. }
+      split; [intros C1; discriminate C1|].
+      intros _.
+      split; [replace (S - 136 + 16) with (S - 120) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 120) _ |- _ => exact Oc end|].
+      split; [replace (S - 136 + 24) with (S - 112) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 112) _ |- _ => exact Oc end|].
       split; [|lia].
-      unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [left; reflexivity|]. split; [reflexivity|]. intros x Hx. lia. }
-    { lia. }
-    { rewrite VIS1. exact (LITX _ _ _ SOfd eq_refl). }
-    (* [comment removed for export] *)
-    intros R3 M3 model3 MI3 SBM3 KR3 _ FRV3 _ GRV3. rewrite VIS1 in FRV3, GRV3.
-    set (MV3 := mrestrict (ahid A model) M3) in *.
-    assert (LIT3 : forall a (n : nat) bs, rdn ASEGS MV (Z_to_bv 64 a) n = Some bs ->
-              (0 <=? a) && ((a + Z.of_nat n <=? 1295744) || ((1299704 <=? a) && (a + Z.of_nat n <=? 6896976)) || ((6897524 <=? a) && (a + Z.of_nat n <=? 2147450880))) = true ->
-              rdn ASEGS MV3 (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. pose proof (LITX a n bs Hr Hb) as Y. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in B2.
-      apply (rdn_tr MV1 MV3 a n bs Y B1); [lia|]. intros i Hi. apply FRV3; [lia|]. unfold q. clear - Hsp' HS1 HS2 B1 B2 Hi. lia. }
-    assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n = Some bs ->
-              (off + k =? 144) && (Z.of_nat n <=? k) && (k <=? 104) = true -> rdn ASEGS MV3 (Z_to_bv 64 (S - 144 + off)) n = Some bs).
-    { intros off k n bs Hr Hb. apply andb_prop in Hb as (Hb & Hb3). apply andb_prop in Hb as (Hb1 & Hb2).
-      apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
-      apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
-      intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-    assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
-    assert (FW3 : forall a n, 1293752 <= a -> a + n <= 1293752 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
-    assert (IMG3 : forall i, 65536 <= i < 1282048 -> MV3 (Z_to_bv 64 i) = None).
-    { intros i Hi. rewrite FRV3; [rewrite FRX; [apply IMGc; exact Hi | lia | unfold good; lia] | lia | unfold q; clear - Hsp' HS1 HS2 Hi; lia]. }
-    set (VD := fun n : nat => match n with
-               | 2%nat => S - 144 | 40%nat => canz
-               | 9%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 9))) | 10%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 10)))
-               | 18%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 18))) | 19%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 19)))
-               | 20%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 20))) | 21%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 21)))
-               | 22%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 22)))
-               | 110%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 10))) | 118%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 18)))
-               | 119%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 19))) | 120%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 20)))
-               | 122%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 22)))
-               | _ => 0 end).
-    assert (Dg2 : getr R3 (Z_to_bv 5 (Z.of_nat 2)) = Z_to_bv 64 (VD 2%nat)) by (eapply eq_trans; [exact (KR3 2%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr2]).
-    assert (Dg8 : getr R3 (Z_to_bv 5 (Z.of_nat 8)) = Z_to_bv 64 0) by (eapply eq_trans; [exact (KR3 8%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr8]).
-    assert (Dg9 : getr R3 (Z_to_bv 5 (Z.of_nat 9)) = Z_to_bv 64 1293752) by (eapply eq_trans; [exact (KR3 9%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr9]).
-    assert (Dg21 : getr R3 (Z_to_bv 5 (Z.of_nat 21)) = Z_to_bv 64 6896960) by (eapply eq_trans; [exact (KR3 21%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr21]).
-    assert (Dg10 : getr R3 (Z_to_bv 5 (Z.of_nat 10)) = Z_to_bv 64 (VD 110%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg18 : getr R3 (Z_to_bv 5 (Z.of_nat 18)) = Z_to_bv 64 (VD 118%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg19 : getr R3 (Z_to_bv 5 (Z.of_nat 19)) = Z_to_bv 64 (VD 119%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg20 : getr R3 (Z_to_bv 5 (Z.of_nat 20)) = Z_to_bv 64 (VD 120%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg22 : getr R3 (Z_to_bv 5 (Z.of_nat 22)) = Z_to_bv 64 (VD 122%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (HD64 : 0 <= VD 2%nat < 2 ^ 64) by (cbn [VD]; clear - Hsp' HS1 HS2; lia).
-    assert (HDr : 140735332552704 <= VD 2%nat <= 140737488355328) by (cbn [VD]; clear - Hsp' HS1 HS2; lia).
-    assert (HDa : AS0DRVP_dpXd_3.aligned (VD 2%nat) 16).
-    { cbn [VD]. unfold AS0DRVP_dpXd_3.aligned. clear - HS16. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
-      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
-    assert (DWR : L5Defs.L5.writable ASEGS MV3 (VD 2%nat - 16) 16).
-    { cbn [VD]. intros d k Hd Hk. apply (WIN3 (S - 144 - 16) 16); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (DDF : L5Defs.L5.defined MV3 (VD 2%nat - 16) 16).
-    { cbn [VD]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN3 (S - 144 - 16) 16); clear - Hsp' HS1 HS2 Hi; lia. }
-    destruct (AS0DRVP_dpXd_3.dpXd_3_conc fx1 R3 MV3 VD HD64 (u64_range _)
-           (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _)
-           Hcan (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _)
-           Dg2 Dg8 Dg9 Dg10 Dg18 Dg19
-           Dg20 Dg21 Dg22 HDr HDa DWR
-           DDF IMG3 (fun d k Hd Hk => FW3 1293784 8 ltac:(lia) ltac:(lia) d k Hd Hk) (fun d k Hd Hk => FW3 1293792 8 ltac:(lia) ltac:(lia) d k Hd Hk) (fun d k Hd Hk => FW3 1293808 8 ltac:(lia) ltac:(lia) d k Hd Hk) (LIT3 1293840 8%nat _ SObuf eq_refl)
-           (LIT3 1293848 8%nat _ SObufsz eq_refl) (LIT3 6896960 8%nat _ CANc eq_refl) (cellS 40 104 _ _ Xm104 eq_refl) (cellS 104 40 _ _ Xm40 eq_refl) (cellS 96 48 _ _ Xm48 eq_refl) (cellS 88 56 _ _ Xm56 eq_refl)
-           (cellS 80 64 _ _ Xm64 eq_refl) (cellS 72 72 _ _ Xm72 eq_refl) (cellS 64 80 _ _ Xm80 eq_refl) (cellS 56 88 _ _ Xm88 eq_refl) (cellS 48 96 _ _ Xm96 eq_refl) (LIT3 1293760 8%nat _ SOrpos eq_refl)
-           (LIT3 1293768 8%nat _ SOrend eq_refl) (LIT3 1293744 8%nat _ (XCC 16%nat 1293744 8 1293512 eq_refl) eq_refl) (LIT3 1293652 4%nat _ (XCC 17%nat 1293652 4 4294967295 eq_refl) eq_refl) (LIT3 1293552 8%nat _ (XCC 18%nat 1293552 8 0 eq_refl) eq_refl) (LIT3 1293568 8%nat _ (XCC 19%nat 1293568 8 0 eq_refl) eq_refl) (LIT3 1293520 8%nat _ (XCC 20%nat 1293520 8 0 eq_refl) eq_refl)
-           (LIT3 1293528 8%nat _ (XCC 21%nat 1293528 8 0 eq_refl) eq_refl) (cellS 120 24 _ _ Xm24 eq_refl) (cellS 112 32 _ _ Xm32 eq_refl)) as
-      (fx2 & R4 & MV4 & _ & _ & _ & DMS & _ & _ & _ & _ & _ & Dr10 & _ & _ & Dr17 & _).
-    unfold VD in DMS; cbn beta iota in DMS.
-    assert (LZ3 : lzinv ASEGS (ahid A model) A model3).
-    { apply (lzinv_sbm ASEGS (ahid A model) A model model3 LZ MI3). exact (same_but_materialized_trans _ _ _ SBM1 SBM3). }
-    apply (msteps_vis_fx scfg (ahid A model) A fx1 fx2 R3 (Z_to_bv 64 0x120264) M3 R4 (Z_to_bv 64 0x118588) MV4 model3 _ LZ3 DMS).
-    intros M5 model5 MI5 SBM5 _.
-    pose proof (same_but_materialized_trans _ _ _ (same_but_materialized_trans _ _ _ SBM1 SBM3) SBM5) as SBMT.
-    rewrite <- (proj2 (sbm_fds model model5 SBMT)).
-    apply (rz_exit_at_lit_lz ASEGS scfg R4 (Z_to_bv 64 0x118588) M5 rom model5 ECALLW st fetch_exitA is_ecall_ECALLW).
-    - rewrite (sbm_halted_eq _ _ SBMT). exact Hh.
-    - left. exact Dr17.
-    - eapply eq_trans; [exact Dr10|]. cbn [VD]. rewrite Z_to_bv_bv_unsigned. exact G10.
-    - exact Hst.
+      unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [left; reflexivity|]. split; [reflexivity | intros x Rx; lia].
+    - lia.
+    - rewrite VE1. apply (rdn_tr MV M1' 1293872 4); [exact Sx2 | lia | cbn; lia | intros i Ri; apply Safe1; cbn in Ri; lia].
+    - intros R2 M2 model2 MI2 SB2 KR2 FrM2 FrV2 GrM2 GrV2.
+      rewrite VE1 in FrV2, GrV2.
+      pose proof (lzinv_sbm ASEGS (ahid A model) A model1 model2 LZ1 MI2 SB2) as LZ2.
+      pose proof (mem_grows_trans _ _ _ Grow1 GrV2) as GrowV.
+      pose (Vd := fun j : nat => match j with
+        | 2%nat => S - 144
+        | 9%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 9)))
+        | 10%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 10)))
+        | 18%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 18)))
+        | 19%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 19)))
+        | 20%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 20)))
+        | 21%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 21)))
+        | 22%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 22)))
+        | 40%nat => canz
+        | 110%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 10)))
+        | 118%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 18)))
+        | 119%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 19)))
+        | 120%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 20)))
+        | 122%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 22)))
+        | _ => 0 end).
+      pose proof (AS0DRVP_dpXd_3.dpXd_3_conc fx1 R2 (mrestrict (ahid A model) M2) Vd) as Run2. unfold Vd in Run2. cbv beta iota in Run2. clear Vd.
+      repeat lazymatch type of Run2 with
+      | ?P -> _ =>
+        let Pf := fresh "Pf" in
+        assert (Pf : P);
+        [ lazymatch goal with
+          | |- 0 <= bv_unsigned _ < _ => apply u64_range
+          | |- _ <= _ < _ => lia
+          | |- _ <= _ <= _ => lia
+          | |- getr _ _ = _ =>
+            first
+              [ rewrite Z_to_bv_bv_unsigned; reflexivity
+              | etransitivity; [apply KR2; cbn [In WV_KEEP]; repeat first [left; apply bv_eq; reflexivity | right] |];
+                match goal with Oc : getr R1 _ = _ |- _ => exact Oc end ]
+          | |- AS0DRVP_dpXd_3.aligned _ _ => unfold AS0DRVP_dpXd_3.aligned; rewrite Zminus_mod, S16; reflexivity
+          | |- L5Defs.L5.img_clear _ _ _ => intros i Ri; rewrite FrV2, Safe1 by lia; exact (Img i Ri)
+          | |- L5Defs.L5.defined _ ?a ?n =>
+            apply (L5Defs.L5.defined_grows MV _ _ _ GrowV); intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+          | |- L5Defs.L5.writable _ _ ?a ?n =>
+            apply (L5Defs.L5.writable_grows ASEGS MV _ _ _ GrowV); first [apply Wstk; lia | intros d k Rd Rk; apply (SoW1 a n); lia]
+          | |- _ =>
+            unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+            lazymatch goal with
+            | |- rdn _ _ (Z_to_bv 64 (S - 144 + ?k)) _ = _ =>
+              let k' := eval vm_compute in (144 - k) in
+              replace (S - 144 + k) with (S - k') by lia;
+              apply rdn_tr with (M := M1');
+              [ match goal with Oc : L5Defs.L5.u64_at _ M1' (S - k') _ |- _ => exact Oc end
+              | lia | cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia
+              | intros i Ri; cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in Ri; apply FrV2; lia ]
+            | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+              apply rdn_tr with (M := M1'); [| lia | cbn; lia | intros i Ri; cbn in Ri; apply FrV2; lia];
+              apply rdn_tr with (M := MV); [| lia | cbn; lia | intros i Ri; cbn in Ri; apply Safe1; lia];
+              first
+                [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+                | let z := eval vm_compute in (Z.of_nat n) in
+                  let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                  exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS]; repeat first [left; reflexivity | right])) ]
+            end
+          end
+        | specialize (Run2 Pf); clear Pf ]
+      end.
+      lazymatch type of Run2 with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+      destruct Run2 as (fx3 & R3 & M3' & Grow3 & FrW3 & FrZ3 & (Steps3 & Keep3 & Outs3)).
+      repeat lazymatch type of Outs3 with _ /\ _ => let o := fresh "Od" in destruct Outs3 as [o Outs3] end.
+      apply (msteps_vis_fx scfg (ahid A model) A fx1 fx3 R2 (Z_to_bv 64 0x120264) M2 R3 (Z_to_bv 64 0x118588) M3' model2 _ LZ2 Steps3).
+      intros M3 model3 MI3 SB3 VE3.
+      pose proof (lzinv_sbm ASEGS (ahid A model) A model2 model3 LZ2 MI3 SB3) as LZ3.
+      rewrite <- (proj2 (sbm_fds _ _ SB1)), <- (proj2 (sbm_fds _ _ SB2)), <- (proj2 (sbm_fds _ _ SB3)).
+      apply (rz_exit_at_lit_lz ASEGS scfg R3 _ M3 _ model3 ECALLW st fetch_exitA is_ecall_ECALLW); [| left | | exact Rst].
+      + exact (proj2 (proj2 (proj2 (proj2 LZ3)))).
+      + match goal with Od : getr R3 (Z_to_bv 5 (Z.of_nat 17)) = _ |- _ => exact Od end.
+      + match goal with Od : getr R3 (Z_to_bv 5 (Z.of_nat 10)) = _ |- _ => rewrite Z_to_bv_bv_unsigned in Od; exact (eq_trans Od G10) end.
   Qed.
 
 
@@ -859,217 +665,168 @@ Section Exit.
     fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x118878) M rom) model) (t_emit (W 1 (zero_lines 3%nat)) (t_exit (Z_to_bv 64 st) (m_fs model))).
   Proof.
-    intros LB LK cr A M model R S st tid canz (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst Hcan G1 G2 G4 G10 CANc SO SOX FD1.
-    pose proof Hsp as Hsp'. destruct SO as (_ & SObufsz & _ & SOwpos & SOwbase & SOlock & _ & FW & BW & BC). destruct SOX as (SOwrite & SOfd & SObuf & SOrpos & SOrend).
-    set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | 40%nat => canz | _ => 0 end).
-    assert (HS64 : 0 <= V 2%nat < 2 ^ 64) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HT64 : 0 <= V 44%nat < 2 ^ 64) by (cbn [V]; clear - HTr; lia).
-    assert (HSr : 140735332552704 <= V 2%nat <= 140737488355328) by (cbn [V]; clear - Hsp' HS1 HS2; lia).
-    assert (HSa : AS0DRVP_dpX4_pre.aligned (V 2%nat) 16) by (cbn [V]; exact HS16).
-    assert (CWR : L5Defs.L5.writable ASEGS MV (V 2%nat - 320) 320).
-    { cbn [V]. intros d k Hd Hk. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (CDF : L5Defs.L5.defined MV (V 2%nat - 320) 320).
-    { cbn [V]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN (S - 320) 320); clear - Hsp' HS1 HS2 Hi; lia. }
-    assert (WSG : forall a (n : nat), wseg_ok ASEGS (Z_to_bv 64 a) n = true -> (0 <=? a) && (a + Z.of_nat n <=? 2 ^ 63) = true -> L5Defs.L5.writable ASEGS MV a (Z.of_nat n)).
-    { intros a n W Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. exact (wsg_writable MV a n W B1 B2). }
-    assert (SHW : forall a n, ((2147468856 <=? a) && (a + n <=? 2147469104) || (2147612664 <=? a) && (a + n <=? 2147612852)) = true -> L5Defs.L5.writable ASEGS MV a n)
-      by (intros a n Hb; exact (sh_writable _ _ _ _ _ _ a n D Hb)).
-    assert (STC : forall (i : nat) a n v, nth_error EX_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (ex_cell_vis _ _ _ _ _ _ a n v D (nth_error_In _ _ Hn))).
-    assert (STC1 : forall (i : nat) a v, nth_error EX_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (STC i a 1 v Hn). }
-    assert (XCC : forall (i : nat) a n v, nth_error XC_CELLS i = Some (a, n, v) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
-      by (intros i a n v Hn; exact (cells_at_nth MV XC_CELLS i a n v XC Hn)).
-    assert (XCC1 : forall (i : nat) a v, nth_error XC_CELLS i = Some (a, 1, v) -> (0 <=? v) && (v <? 2 ^ 64) = true -> rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [Z_to_bv 8 v]).
-    { intros i a v Hn Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. apply Z.ltb_lt in B2. rewrite <- (ArtMem.art_bytes1 v (conj B1 B2)). exact (XCC i a 1 v Hn). }
-    assert (DSC : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (0x13bfc0 <=? a) && (a + Z.of_nat n <=? 0x13c580) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1, B2. apply (img_cell MV a n bs Hr); [lia | lia|]. intros i Hi. apply DESC. lia. }
-    (* [comment removed for export] *)
-    destruct (AS0DRVP_dpX4_pre.dpX4_pre_conc fx R MV V HS64 Hcan
-           HT64 G1 G2 G4 HSr HSa
-           CWR CDF IMGc (WSG 1295744 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1295824 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 1299696 8%nat ltac:(vm_compute; reflexivity) eq_refl)
-           (WSG 6896976 1%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896984 4%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6896992 8%nat ltac:(vm_compute; reflexivity) eq_refl) (WSG 6897520 4%nat ltac:(vm_compute; reflexivity) eq_refl) (SHW 2147468856 1 eq_refl) (SHW 2147468857 1 eq_refl)
-           (SHW 2147468858 1 eq_refl) (SHW 2147468859 1 eq_refl) (SHW 2147468868 1 eq_refl) (SHW 2147468869 1 eq_refl) (SHW 2147468870 1 eq_refl) (SHW 2147468871 1 eq_refl)
-           (SHW 2147468872 1 eq_refl) (SHW 2147468872 4 eq_refl) (SHW 2147468873 1 eq_refl) (SHW 2147468874 1 eq_refl) (SHW 2147468875 1 eq_refl) (SHW 2147468876 4 eq_refl)
-           (SHW 2147468880 1 eq_refl) (SHW 2147468880 4 eq_refl) (SHW 2147468881 1 eq_refl) (SHW 2147468882 1 eq_refl) (SHW 2147468883 1 eq_refl) (SHW 2147468896 1 eq_refl)
-           (SHW 2147468897 1 eq_refl) (SHW 2147468898 1 eq_refl) (SHW 2147468899 1 eq_refl) (SHW 2147468900 1 eq_refl) (SHW 2147468901 1 eq_refl) (SHW 2147468902 1 eq_refl)
-           (SHW 2147468903 1 eq_refl) (SHW 2147468904 1 eq_refl) (SHW 2147468905 1 eq_refl) (SHW 2147468906 1 eq_refl) (SHW 2147468907 1 eq_refl) (SHW 2147468908 1 eq_refl)
-           (SHW 2147468909 1 eq_refl) (SHW 2147468910 1 eq_refl) (SHW 2147468911 1 eq_refl) (SHW 2147468912 1 eq_refl) (SHW 2147468912 4 eq_refl) (SHW 2147468913 1 eq_refl)
-           (SHW 2147468914 1 eq_refl) (SHW 2147468915 1 eq_refl) (SHW 2147468916 4 eq_refl) (SHW 2147468920 1 eq_refl) (SHW 2147468920 4 eq_refl) (SHW 2147468921 1 eq_refl)
-           (SHW 2147468922 1 eq_refl) (SHW 2147468923 1 eq_refl) (SHW 2147468924 1 eq_refl) (SHW 2147468924 4 eq_refl) (SHW 2147468925 1 eq_refl) (SHW 2147468926 1 eq_refl)
-           (SHW 2147468927 1 eq_refl) (SHW 2147468928 4 eq_refl) (SHW 2147468932 1 eq_refl) (SHW 2147468932 4 eq_refl) (SHW 2147468933 1 eq_refl) (SHW 2147468934 1 eq_refl)
-           (SHW 2147468935 1 eq_refl) (SHW 2147468936 1 eq_refl) (SHW 2147468936 4 eq_refl) (SHW 2147468937 1 eq_refl) (SHW 2147468938 1 eq_refl) (SHW 2147468939 1 eq_refl)
-           (SHW 2147468940 4 eq_refl) (SHW 2147468944 4 eq_refl) (SHW 2147468948 1 eq_refl) (SHW 2147468948 4 eq_refl) (SHW 2147468949 1 eq_refl) (SHW 2147468950 1 eq_refl)
-           (SHW 2147468951 1 eq_refl) (SHW 2147468952 1 eq_refl) (SHW 2147468952 4 eq_refl) (SHW 2147468953 1 eq_refl) (SHW 2147468954 1 eq_refl) (SHW 2147468955 1 eq_refl)
-           (SHW 2147468956 4 eq_refl) (SHW 2147468960 1 eq_refl) (SHW 2147468960 4 eq_refl) (SHW 2147468961 1 eq_refl) (SHW 2147468962 1 eq_refl) (SHW 2147468963 1 eq_refl)
-           (SHW 2147468964 1 eq_refl) (SHW 2147468965 1 eq_refl) (SHW 2147468966 1 eq_refl) (SHW 2147468967 1 eq_refl) (SHW 2147468968 1 eq_refl) (SHW 2147468969 1 eq_refl)
-           (SHW 2147468970 1 eq_refl) (SHW 2147468971 1 eq_refl) (SHW 2147468972 1 eq_refl) (SHW 2147468973 1 eq_refl) (SHW 2147468974 1 eq_refl) (SHW 2147468975 1 eq_refl)
-           (SHW 2147468976 1 eq_refl) (SHW 2147468977 1 eq_refl) (SHW 2147468978 1 eq_refl) (SHW 2147468979 1 eq_refl) (SHW 2147468980 1 eq_refl) (SHW 2147468981 1 eq_refl)
-           (SHW 2147468982 1 eq_refl) (SHW 2147468983 1 eq_refl) (SHW 2147468984 1 eq_refl) (SHW 2147468985 1 eq_refl) (SHW 2147468986 1 eq_refl) (SHW 2147468987 1 eq_refl)
-           (SHW 2147468988 1 eq_refl) (SHW 2147468989 1 eq_refl) (SHW 2147468990 1 eq_refl) (SHW 2147468991 1 eq_refl) (SHW 2147468992 1 eq_refl) (SHW 2147468993 1 eq_refl)
-           (SHW 2147468994 1 eq_refl) (SHW 2147468995 1 eq_refl) (SHW 2147468996 1 eq_refl) (SHW 2147468997 1 eq_refl) (SHW 2147468998 1 eq_refl) (SHW 2147468999 1 eq_refl)
-           (SHW 2147469000 1 eq_refl) (SHW 2147469001 1 eq_refl) (SHW 2147469002 1 eq_refl) (SHW 2147469003 1 eq_refl) (SHW 2147469004 1 eq_refl) (SHW 2147469005 1 eq_refl)
-           (SHW 2147469006 1 eq_refl) (SHW 2147469007 1 eq_refl) (SHW 2147469008 1 eq_refl) (SHW 2147469009 1 eq_refl) (SHW 2147469010 1 eq_refl) (SHW 2147469011 1 eq_refl)
-           (SHW 2147469012 1 eq_refl) (SHW 2147469013 1 eq_refl) (SHW 2147469014 1 eq_refl) (SHW 2147469015 1 eq_refl) (SHW 2147469016 1 eq_refl) (SHW 2147469017 1 eq_refl)
-           (SHW 2147469018 1 eq_refl) (SHW 2147469019 1 eq_refl) (SHW 2147469020 1 eq_refl) (SHW 2147469020 4 eq_refl) (SHW 2147469021 1 eq_refl) (SHW 2147469022 1 eq_refl)
-           (SHW 2147469023 1 eq_refl) (SHW 2147469024 4 eq_refl) (SHW 2147469028 1 eq_refl) (SHW 2147469028 4 eq_refl) (SHW 2147469029 1 eq_refl) (SHW 2147469030 1 eq_refl)
-           (SHW 2147469031 1 eq_refl) (SHW 2147469032 1 eq_refl) (SHW 2147469033 1 eq_refl) (SHW 2147469034 1 eq_refl) (SHW 2147469035 1 eq_refl) (SHW 2147469036 1 eq_refl)
-           (SHW 2147469037 1 eq_refl) (SHW 2147469038 1 eq_refl) (SHW 2147469039 1 eq_refl) (SHW 2147469072 1 eq_refl) (SHW 2147469072 4 eq_refl) (SHW 2147469073 1 eq_refl)
-           (SHW 2147469074 1 eq_refl) (SHW 2147469075 1 eq_refl) (SHW 2147469076 4 eq_refl) (SHW 2147469080 1 eq_refl) (SHW 2147469080 4 eq_refl) (SHW 2147469081 1 eq_refl)
-           (SHW 2147469082 1 eq_refl) (SHW 2147469083 1 eq_refl) (SHW 2147469084 1 eq_refl) (SHW 2147469085 1 eq_refl) (SHW 2147469086 1 eq_refl) (SHW 2147469087 1 eq_refl)
-           (SHW 2147469088 1 eq_refl) (SHW 2147469089 1 eq_refl) (SHW 2147469090 1 eq_refl) (SHW 2147469091 1 eq_refl) (SHW 2147469092 1 eq_refl) (SHW 2147469092 4 eq_refl)
-           (SHW 2147469093 1 eq_refl) (SHW 2147469094 1 eq_refl) (SHW 2147469095 1 eq_refl) (SHW 2147469096 4 eq_refl) (SHW 2147469100 1 eq_refl) (SHW 2147469100 4 eq_refl)
-           (SHW 2147469101 1 eq_refl) (SHW 2147469102 1 eq_refl) (SHW 2147469103 1 eq_refl) 
-           
-           (SHW 2147612664 184 eq_refl) (SHW 2147612664 1 eq_refl) (SHW 2147612664 4 eq_refl)
-           (SHW 2147612665 1 eq_refl) (SHW 2147612666 1 eq_refl) (SHW 2147612667 1 eq_refl) (SHW 2147612668 4 eq_refl) (SHW 2147612672 4 eq_refl) (SHW 2147612676 4 eq_refl)
-           (SHW 2147612680 4 eq_refl) (SHW 2147612684 4 eq_refl) (SHW 2147612688 4 eq_refl) (SHW 2147612692 8 eq_refl) (SHW 2147612700 8 eq_refl) (SHW 2147612708 8 eq_refl)
-           (SHW 2147612716 8 eq_refl) (SHW 2147612724 8 eq_refl) (SHW 2147612732 8 eq_refl) (SHW 2147612740 8 eq_refl) (SHW 2147612748 8 eq_refl) (SHW 2147612756 8 eq_refl)
-           (SHW 2147612764 8 eq_refl) (SHW 2147612772 8 eq_refl) (SHW 2147612780 8 eq_refl) (SHW 2147612788 8 eq_refl) (SHW 2147612796 8 eq_refl) (SHW 2147612804 8 eq_refl)
-           (SHW 2147612812 8 eq_refl) (SHW 2147612820 8 eq_refl) (SHW 2147612828 4 eq_refl) (SHW 2147612828 8 eq_refl) (SHW 2147612832 4 eq_refl) (SHW 2147612836 4 eq_refl)
-           (SHW 2147612836 8 eq_refl) (SHW 2147612840 4 eq_refl) (SHW 2147612844 4 eq_refl) (SHW 2147612844 8 eq_refl) 
-           TIDC HTr
-           (XCC 0%nat 6897520 4 0 eq_refl) (XCC1 1%nat 6897555 0 eq_refl eq_refl) (XCC 2%nat 6896992 8 6897000 eq_refl) (XCC 3%nat 6896984 4 2 eq_refl) (XCC 22%nat 6897016 8 1148964 eq_refl) (XCC 23%nat 6897272 8 687916 eq_refl)
-           (XCC 6%nat 6896980 4 0 eq_refl) (XCC1 24%nat 6759060 0 eq_refl eq_refl) (XCC 4%nat 6897008 8 1148964 eq_refl) (XCC 5%nat 6897264 8 619876 eq_refl) (STC1 10%nat 1907424 0 eq_refl eq_refl) (XCC 7%nat 6897000 8 0 eq_refl)
-           (STC1 3%nat 1295824 0 eq_refl eq_refl) (STC 0%nat 1282768 8 1282768 eq_refl) (STC 2%nat 1295744 8 1 eq_refl) (STC 4%nat 1299536 4 1 eq_refl) (STC 5%nat 1299696 8 0 eq_refl) (STC1 8%nat 1313048 1 eq_refl eq_refl)
-           (STC 7%nat 1309752 8 2147450880 eq_refl) (DSC 1294272 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143808)) ltac:(img_rd) eq_refl) (DSC 1294288 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (STC1 6%nat 1307804 1 eq_refl eq_refl) (DSC 1294288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (STC 9%nat 1906656 8 18446744073709551615 eq_refl)
-           (STC 1%nat 1283280 8 1219844 eq_refl) (DSC 1294328 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294336 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143904)) ltac:(img_rd) eq_refl) (DSC 1294352 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294392 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294400 8%nat (word_to_le_bytes 8 (Z_to_bv 64 143936)) ltac:(img_rd) eq_refl) (DSC 1294416 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294456 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294464 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144128)) ltac:(img_rd) eq_refl) (DSC 1294480 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl)
-           (DSC 1294480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294520 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294528 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144160)) ltac:(img_rd) eq_refl) (DSC 1294544 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294584 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294592 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144224)) ltac:(img_rd) eq_refl) (DSC 1294608 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1294608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1294648 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294656 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144256)) ltac:(img_rd) eq_refl) (DSC 1294672 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl)
-           (DSC 1294672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294712 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294720 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144352)) ltac:(img_rd) eq_refl) (DSC 1294736 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1294736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294776 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294784 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144448)) ltac:(img_rd) eq_refl) (DSC 1294800 1%nat [Z_to_bv 8 128] ltac:(img_rd) eq_refl) (DSC 1294800 8%nat (word_to_le_bytes 8 (Z_to_bv 64 128)) ltac:(img_rd) eq_refl) (DSC 1294840 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294848 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144576)) ltac:(img_rd) eq_refl) (DSC 1294864 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl)
-           (DSC 1294864 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1294904 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1294912 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144672)) ltac:(img_rd) eq_refl) (DSC 1294928 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294928 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1294968 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1294976 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144736)) ltac:(img_rd) eq_refl) (DSC 1294992 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1294992 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295032 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295040 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144800)) ltac:(img_rd) eq_refl) (DSC 1295056 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295056 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295096 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295104 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144864)) ltac:(img_rd) eq_refl) (DSC 1295120 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295120 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295160 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295168 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144928)) ltac:(img_rd) eq_refl) (DSC 1295184 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295184 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295224 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295232 8%nat (word_to_le_bytes 8 (Z_to_bv 64 144992)) ltac:(img_rd) eq_refl) (DSC 1295248 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295248 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295288 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295296 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145056)) ltac:(img_rd) eq_refl) (DSC 1295312 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl) (DSC 1295312 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295352 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295360 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145120)) ltac:(img_rd) eq_refl) (DSC 1295376 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295376 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295416 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295424 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145216)) ltac:(img_rd) eq_refl) (DSC 1295440 1%nat [Z_to_bv 8 64] ltac:(img_rd) eq_refl)
-           (DSC 1295440 8%nat (word_to_le_bytes 8 (Z_to_bv 64 64)) ltac:(img_rd) eq_refl) (DSC 1295480 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295488 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145536)) ltac:(img_rd) eq_refl) (DSC 1295504 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295504 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295544 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (DSC 1295552 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145632)) ltac:(img_rd) eq_refl) (DSC 1295568 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl) (DSC 1295568 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295608 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295616 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145664)) ltac:(img_rd) eq_refl) (DSC 1295632 1%nat [Z_to_bv 8 32] ltac:(img_rd) eq_refl)
-           (DSC 1295632 8%nat (word_to_le_bytes 8 (Z_to_bv 64 32)) ltac:(img_rd) eq_refl) (DSC 1295672 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl) (DSC 1295680 8%nat (word_to_le_bytes 8 (Z_to_bv 64 145696)) ltac:(img_rd) eq_refl) (DSC 1295696 1%nat [Z_to_bv 8 96] ltac:(img_rd) eq_refl) (DSC 1295696 8%nat (word_to_le_bytes 8 (Z_to_bv 64 96)) ltac:(img_rd) eq_refl) (DSC 1295736 8%nat (word_to_le_bytes 8 (Z_to_bv 64 18446744073709551615)) ltac:(img_rd) eq_refl)
-           (XCC 8%nat 6898952 8 0 eq_refl) (XCC 9%nat 1294224 8 1293992 eq_refl)
-           (XCC 10%nat 1294132 4 4294967295 eq_refl) (XCC 11%nat 1294032 8 0 eq_refl) (XCC 12%nat 1294048 8 0 eq_refl) (XCC 13%nat 1294000 8 0 eq_refl) (XCC 14%nat 1294008 8 0 eq_refl) (XCC 15%nat 1293984 8 1293752 eq_refl)
-           SOlock SOwpos SOwbase SOwrite CANc SOfd) as
-      (fx1 & R1 & MV1 & XGR & _ & XFRZ & XMS & _ & _ & Xr2 & _ & _ & _ & Xr8 & Xr9 & Xr10 & Xr11 & Xr12 & _ & _ & _ & _ & Xr17 & Xr18 & Xr19 & Xr21 & Xr22 & _ & Xm112 & Xm120 & Xm128 & Xm136 & Xm104 & Xm96 & Xm88 & Xm80 & Xm72 & Xm64 & Xm56 & Xm48 & Xm40 & Xm32 & Xm24 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _).
-    unfold V in XFRZ, XMS; cbn beta iota in XFRZ, XMS. cbn [V] in *.
-    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as LZ. pose proof LZ as (HH & HL & HA & HM & Hh).
-    (* [comment removed for export] *)
-    set (good := fun i : Z => i < 1295744 \/ 1299704 <= i < 6896976 \/ 6897000 <= i < 6897520 \/ 6897524 <= i < 2147450880).
-    assert (FRX : forall i, 0 <= i -> good i -> MV1 (Z_to_bv 64 i) = MV (Z_to_bv 64 i)).
-    { intros i Hi Hg. apply XFRZ; [unfold good in Hg; clear - Hi Hg; lia | ..]; (intros X; unfold good in Hg; clear - Hsp' HS1 HS2 Hi Hg X; lia). }
-    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x120258) MV1 model _ LZ XMS).
-    intros M1 model1 MI1 SBM1 VIS1.
-    assert (LITX : forall a (n : nat) bs, rdn ASEGS MV (Z_to_bv 64 a) n = Some bs ->
-              (0 <=? a) && ((a + Z.of_nat n <=? 1295744) || ((1299704 <=? a) && (a + Z.of_nat n <=? 6896976)) || ((6897524 <=? a) && (a + Z.of_nat n <=? 2147450880))) = true ->
-              rdn ASEGS MV1 (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in B2.
-      apply (rdn_tr MV MV1 a n bs Hr B1); [lia|]. intros i Hi. apply FRX; [lia|]. unfold good. clear - B1 B2 Hi. lia. }
-    (* [comment removed for export] *)
-    assert (DATA : rdn ASEGS MV1 (Z_to_bv 64 6898976) (Z.to_nat (2 * 3)) = Some (zero_lines 3%nat)).
-    { apply (LITX 6898976 (Z.to_nat (2 * 3))); [|reflexivity]. change (Z.to_nat (2 * 3)) with (2 * 3%nat)%nat.
-            destruct (BC 0 ltac:(lia)) as (B0a & B0b). destruct (BC 1 ltac:(lia)) as (B1a & B1b). destruct (BC 2 ltac:(lia)) as (B2a & B2b). cbn [zero_lines].
-      apply rdn_cons1; [lia | exact B0a|]. apply rdn_cons1; [lia | exact B0b|]. apply rdn_cons1; [lia | exact B1a|]. apply rdn_cons1; [lia | exact B1b|]. apply rdn_cons1; [lia | exact B2a|]. apply rdn_cons1; [lia | exact B2b|]. reflexivity. }
-    (* [comment removed for export] *)
-    set (q := S - 136) in *.
-    assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear - Hsp' HS1 HS2; lia).
-    assert (Hf : 0 <= 1293752 /\ (1293752 + 124 <= q \/ q + 32 + 16 <= 1293752 + 120) /\ 1293752 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
-    assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
-    { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-    assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
-    unfold W. rewrite <- (app_nil_r (zero_lines 3%nat)).
-    apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1293752 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
-             (2 * 3%nat)%nat true R1 M1 model1 q 2 6898976 (2 * 3) 0 0 (zero_lines 3%nat) []).
-    { cbn. lia. }
-    { exact (sbm_lazy_eq _ _ SBM1). }
-    { exact MI1. }
-    { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
-    { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
-    { unfold wv_regs. repeat split; assumption. }
-    { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
-      split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
-      split; [replace (Z_to_bv 64 q) with (Z_to_bv 64 (q + 0)) by (f_equal; lia); apply (WIN1 q 32); [unfold q; clear - Hsp' HS1 HS2; lia | unfold q; clear - Hsp' HS1 HS2; lia | lia | cbn; lia]|].
-      split; [unfold wv_buf; split; [lia|]; split; [lia|]; split; [lia|]; split; [right; left; unfold q; clear - Hsp' HS1 HS2; lia|]; split; [exact DATA|];
-              intros x Hx; apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); lia|].
-      split; [intros X; discriminate X|]. intros _.
-      split; [replace (q + 16) with (S - 120) by (unfold q; ring); exact Xm120|].
-      split; [replace (q + 24) with (S - 112) by (unfold q; ring); exact Xm112|].
+    intros LB LK cr A M model R S st tid canz Pre MV Rst Rcz G1 G2 G4 G10 Cz SO SX FD1.
+    destruct Pre as (Dv & SLo & SHi & S16 & Wstk & Img & (Cells & Tid & TidR & ImgNone)).
+    destruct SO as (So1 & So2 & So3 & So4 & So5 & So6 & So7 & SoW1 & SoW2 & SoLn).
+    destruct SX as (Sx1 & Sx2 & Sx3 & Sx4 & Sx5).
+    pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 LB LK cr A M model Dv) as LZ.
+    pose (V := fun j : nat => match j with 40%nat => canz | 44%nat => tid | _ => S end).
+    pose proof (AS0DRVP_dpX4_pre.dpX4_pre_conc fx R MV V) as Run. unfold V in Run. cbv beta iota in Run. clear V.
+    repeat lazymatch type of Run with
+    | ?P -> _ =>
+      let Pf := fresh "Pf" in
+      assert (Pf : P);
+      [ lazymatch goal with
+        | |- getr _ _ = _ => first [exact G1 | exact G2 | exact G4]
+        | |- _ <= _ < _ => lia
+        | |- _ <= _ <= _ => lia
+        | |- AS0DRVP_dpX4_pre.aligned _ _ => exact S16
+        | |- L5Defs.L5.img_clear _ _ _ => exact Img
+        | |- L5Defs.L5.defined _ ?a ?n => intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+        | |- L5Defs.L5.writable _ _ ?a ?n =>
+          let hi := eval vm_compute in (2147468856 <=? a) in
+          lazymatch hi with
+          | true => apply (sh_writable LB LK cr A M model a n Dv); vm_compute; reflexivity
+          | false => let k := eval vm_compute in (Z.to_nat n) in apply (wsg_writable MV a k); [vm_compute; reflexivity | lia | lia]
+          | _ => apply Wstk; lia
+          end
+        | |- _ =>
+          unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+          lazymatch goal with
+          | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+            first
+              [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+              | let z := eval vm_compute in (Z.of_nat n) in
+                let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                first
+                  [ exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS]; repeat first [left; reflexivity | right]))
+                  | exact (ex_cell_vis LB LK cr A M model a z v Dv ltac:(cbn [In EX_CELLS]; repeat first [left; reflexivity | right])) ]
+              | apply (img_cell MV a n); [img_rd | lia | cbn; lia | intros i Ri; apply ImgNone; cbn in Ri; lia] ]
+          end
+        end
+      | specialize (Run Pf); clear Pf ]
+    end.
+    lazymatch type of Run with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+    destruct Run as (fx1 & R1 & M1' & Grow1 & FrW1 & FrZ1 & Steps1 & Keep1 & Outs1).
+    repeat lazymatch type of Outs1 with _ /\ _ => let o := fresh "Oc" in destruct Outs1 as [o Outs1] end.
+    assert (Safe1 : forall i, 0 <= i < 1295744 \/ 6896960 <= i < 6896976 \/ 6898976 <= i < 6900000 ->
+                    M1' (Z_to_bv 64 i) = MV (Z_to_bv 64 i)) by (intros i Zi; apply FrZ1; lia).
+    apply (msteps_vis_fx scfg (ahid A model) A fx fx1 R (Z_to_bv 64 0x118878) M R1 (Z_to_bv 64 0x120258) M1' model _ LZ Steps1).
+    intros M1 model1 MI1 SB1 VE1.
+    pose proof LZ as (HoS & Lcov & Awf & _ & _).
+    pose proof (lzinv_sbm ASEGS (ahid A model) A model model1 LZ MI1 SB1) as LZ1.
+    change (W 1 (zero_lines 3)) with (map (WriteEv (Z_to_bv 64 1)) ([Z_to_bv 8 48; Z_to_bv 8 10; Z_to_bv 8 48; Z_to_bv 8 10; Z_to_bv 8 48; Z_to_bv 8 10] ++ [])).
+    apply (@wv_loop fx1 scfg (ahid A model) A HoS (m_vm_lazy model) Lcov Awf 1293752 1 ltac:(lia) (S - 136) (S - 104) ltac:(lia) ltac:(lia)
+             (fun x Rx => nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M model x Dv ltac:(lia) ltac:(right; lia))
+             (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _) 6%nat true R1 M1 model1 (S - 136) 2 6898976 6 0 0
+             [Z_to_bv 8 48; Z_to_bv 8 10; Z_to_bv 8 48; Z_to_bv 8 10; Z_to_bv 8 48; Z_to_bv 8 10] []).
+    - apply Nat.le_refl.
+    - exact (sbm_lazy_eq _ _ SB1).
+    - exact MI1.
+    - exact (proj2 (proj2 (proj2 (proj2 LZ1)))).
+    - rewrite (sbm_fds' _ _ SB1). exact FD1.
+    - unfold wv_regs. repeat split; match goal with Oc : getr R1 _ = _ |- _ => exact Oc end.
+    - rewrite VE1. unfold wv_iov.
+      pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (Wstk (S - 136) 32 ltac:(lia) ltac:(lia)) 0 32%nat ltac:(lia) ltac:(cbn; lia)) as W32.
+      rewrite Z.add_0_r in W32.
+      split; [lia|]. split; [lia|]. split; [right; reflexivity|].
+      split; [match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 136) _ |- _ => exact Oc end|].
+      split; [replace (S - 136 + 8) with (S - 128) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 128) _ |- _ => exact Oc end|].
+      split; [exact W32|].
+      split.
+      { unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [right; left; lia|]. split.
+        - repeat (apply rdn_cons1; [lia | |];
+            [ lazymatch goal with |- rdn _ _ (Z_to_bv 64 ?a) 1 = _ =>
+                let off := eval vm_compute in (a - 6898976) in
+                let i := eval vm_compute in (off / 2) in
+                let p := eval vm_compute in (off mod 2) in
+                apply (rdn_tr MV M1' a 1);
+                [ lazymatch p with 0 => exact (proj1 (SoLn i ltac:(lia))) | _ => exact (proj2 (SoLn i ltac:(lia))) end
+                | lia | cbn; lia | intros x Rx; apply Safe1; cbn in Rx; lia ]
+              end | ]).
+          reflexivity.
+        - intros x Rx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M model x Dv); lia. }
+      split; [intros C1; discriminate C1|].
+      intros _.
+      split; [replace (S - 136 + 16) with (S - 120) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 120) _ |- _ => exact Oc end|].
+      split; [replace (S - 136 + 24) with (S - 112) by lia; match goal with Oc : L5Defs.L5.u64_at _ M1' (S - 112) _ |- _ => exact Oc end|].
       split; [|lia].
-      unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [left; reflexivity|]. split; [reflexivity|]. intros x Hx. lia. }
-    { lia. }
-    { rewrite VIS1. exact (LITX _ _ _ SOfd eq_refl). }
-    (* [comment removed for export] *)
-    intros R3 M3 model3 MI3 SBM3 KR3 _ FRV3 _ GRV3. rewrite VIS1 in FRV3, GRV3.
-    set (MV3 := mrestrict (ahid A model) M3) in *.
-    assert (LIT3 : forall a (n : nat) bs, rdn ASEGS MV (Z_to_bv 64 a) n = Some bs ->
-              (0 <=? a) && ((a + Z.of_nat n <=? 1295744) || ((1299704 <=? a) && (a + Z.of_nat n <=? 6896976)) || ((6897524 <=? a) && (a + Z.of_nat n <=? 2147450880))) = true ->
-              rdn ASEGS MV3 (Z_to_bv 64 a) n = Some bs).
-    { intros a n bs Hr Hb. pose proof (LITX a n bs Hr Hb) as Y. apply andb_prop in Hb as (B1 & B2). apply Z.leb_le in B1. rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in B2.
-      apply (rdn_tr MV1 MV3 a n bs Y B1); [lia|]. intros i Hi. apply FRV3; [lia|]. unfold q. clear - Hsp' HS1 HS2 B1 B2 Hi. lia. }
-    assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n = Some bs ->
-              (off + k =? 144) && (Z.of_nat n <=? k) && (k <=? 104) = true -> rdn ASEGS MV3 (Z_to_bv 64 (S - 144 + off)) n = Some bs).
-    { intros off k n bs Hr Hb. apply andb_prop in Hb as (Hb & Hb3). apply andb_prop in Hb as (Hb1 & Hb2).
-      apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
-      apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
-      intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-    assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
-    assert (FW3 : forall a n, 1293752 <= a -> a + n <= 1293752 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
-      by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
-    assert (IMG3 : forall i, 65536 <= i < 1282048 -> MV3 (Z_to_bv 64 i) = None).
-    { intros i Hi. rewrite FRV3; [rewrite FRX; [apply IMGc; exact Hi | lia | unfold good; lia] | lia | unfold q; clear - Hsp' HS1 HS2 Hi; lia]. }
-    set (VD := fun n : nat => match n with
-               | 2%nat => S - 144 | 40%nat => canz
-               | 9%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 9))) | 10%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 10)))
-               | 18%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 18))) | 19%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 19)))
-               | 20%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 20))) | 21%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 21)))
-               | 22%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 22)))
-               | 110%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 10))) | 118%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 18)))
-               | 119%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 19))) | 120%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 20)))
-               | 122%nat => bv_unsigned (getr R3 (Z_to_bv 5 (Z.of_nat 22)))
-               | _ => 0 end).
-    assert (Dg2 : getr R3 (Z_to_bv 5 (Z.of_nat 2)) = Z_to_bv 64 (VD 2%nat)) by (eapply eq_trans; [exact (KR3 2%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr2]).
-    assert (Dg8 : getr R3 (Z_to_bv 5 (Z.of_nat 8)) = Z_to_bv 64 0) by (eapply eq_trans; [exact (KR3 8%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr8]).
-    assert (Dg9 : getr R3 (Z_to_bv 5 (Z.of_nat 9)) = Z_to_bv 64 1293752) by (eapply eq_trans; [exact (KR3 9%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr9]).
-    assert (Dg21 : getr R3 (Z_to_bv 5 (Z.of_nat 21)) = Z_to_bv 64 6896960) by (eapply eq_trans; [exact (KR3 21%bv ltac:(unfold WV_KEEP; cbn [In]; tauto)) | exact Xr21]).
-    assert (Dg10 : getr R3 (Z_to_bv 5 (Z.of_nat 10)) = Z_to_bv 64 (VD 110%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg18 : getr R3 (Z_to_bv 5 (Z.of_nat 18)) = Z_to_bv 64 (VD 118%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg19 : getr R3 (Z_to_bv 5 (Z.of_nat 19)) = Z_to_bv 64 (VD 119%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg20 : getr R3 (Z_to_bv 5 (Z.of_nat 20)) = Z_to_bv 64 (VD 120%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Dg22 : getr R3 (Z_to_bv 5 (Z.of_nat 22)) = Z_to_bv 64 (VD 122%nat)) by (cbn [VD]; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (HD64 : 0 <= VD 2%nat < 2 ^ 64) by (cbn [VD]; clear - Hsp' HS1 HS2; lia).
-    assert (HDr : 140735332552704 <= VD 2%nat <= 140737488355328) by (cbn [VD]; clear - Hsp' HS1 HS2; lia).
-    assert (HDa : AS0DRVP_dpXd_4.aligned (VD 2%nat) 16).
-    { cbn [VD]. unfold AS0DRVP_dpXd_4.aligned. clear - HS16. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
-      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
-    assert (DWR : L5Defs.L5.writable ASEGS MV3 (VD 2%nat - 16) 16).
-    { cbn [VD]. intros d k Hd Hk. apply (WIN3 (S - 144 - 16) 16); clear - Hsp' HS1 HS2 Hd Hk; lia. }
-    assert (DDF : L5Defs.L5.defined MV3 (VD 2%nat - 16) 16).
-    { cbn [VD]. intros i Hi. apply (store_ok_defined sp0); [clear - Hsp' HS1 HS2 Hi; lia|]. apply (WIN3 (S - 144 - 16) 16); clear - Hsp' HS1 HS2 Hi; lia. }
-    destruct (AS0DRVP_dpXd_4.dpXd_4_conc fx1 R3 MV3 VD HD64 (u64_range _)
-           (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _)
-           Hcan (u64_range _) (u64_range _) (u64_range _) (u64_range _) (u64_range _)
-           Dg2 Dg8 Dg9 Dg10 Dg18 Dg19
-           Dg20 Dg21 Dg22 HDr HDa DWR
-           DDF IMG3 (fun d k Hd Hk => FW3 1293784 8 ltac:(lia) ltac:(lia) d k Hd Hk) (fun d k Hd Hk => FW3 1293792 8 ltac:(lia) ltac:(lia) d k Hd Hk) (fun d k Hd Hk => FW3 1293808 8 ltac:(lia) ltac:(lia) d k Hd Hk) (LIT3 1293840 8%nat _ SObuf eq_refl)
-           (LIT3 1293848 8%nat _ SObufsz eq_refl) (LIT3 6896960 8%nat _ CANc eq_refl) (cellS 40 104 _ _ Xm104 eq_refl) (cellS 104 40 _ _ Xm40 eq_refl) (cellS 96 48 _ _ Xm48 eq_refl) (cellS 88 56 _ _ Xm56 eq_refl)
-           (cellS 80 64 _ _ Xm64 eq_refl) (cellS 72 72 _ _ Xm72 eq_refl) (cellS 64 80 _ _ Xm80 eq_refl) (cellS 56 88 _ _ Xm88 eq_refl) (cellS 48 96 _ _ Xm96 eq_refl) (LIT3 1293760 8%nat _ SOrpos eq_refl)
-           (LIT3 1293768 8%nat _ SOrend eq_refl) (LIT3 1293744 8%nat _ (XCC 16%nat 1293744 8 1293512 eq_refl) eq_refl) (LIT3 1293652 4%nat _ (XCC 17%nat 1293652 4 4294967295 eq_refl) eq_refl) (LIT3 1293552 8%nat _ (XCC 18%nat 1293552 8 0 eq_refl) eq_refl) (LIT3 1293568 8%nat _ (XCC 19%nat 1293568 8 0 eq_refl) eq_refl) (LIT3 1293520 8%nat _ (XCC 20%nat 1293520 8 0 eq_refl) eq_refl)
-           (LIT3 1293528 8%nat _ (XCC 21%nat 1293528 8 0 eq_refl) eq_refl) (cellS 120 24 _ _ Xm24 eq_refl) (cellS 112 32 _ _ Xm32 eq_refl)) as
-      (fx2 & R4 & MV4 & _ & _ & _ & DMS & _ & _ & _ & _ & _ & Dr10 & _ & _ & Dr17 & _).
-    unfold VD in DMS; cbn beta iota in DMS.
-    assert (LZ3 : lzinv ASEGS (ahid A model) A model3).
-    { apply (lzinv_sbm ASEGS (ahid A model) A model model3 LZ MI3). exact (same_but_materialized_trans _ _ _ SBM1 SBM3). }
-    apply (msteps_vis_fx scfg (ahid A model) A fx1 fx2 R3 (Z_to_bv 64 0x120264) M3 R4 (Z_to_bv 64 0x118588) MV4 model3 _ LZ3 DMS).
-    intros M5 model5 MI5 SBM5 _.
-    pose proof (same_but_materialized_trans _ _ _ (same_but_materialized_trans _ _ _ SBM1 SBM3) SBM5) as SBMT.
-    rewrite <- (proj2 (sbm_fds model model5 SBMT)).
-    apply (rz_exit_at_lit_lz ASEGS scfg R4 (Z_to_bv 64 0x118588) M5 rom model5 ECALLW st fetch_exitA is_ecall_ECALLW).
-    - rewrite (sbm_halted_eq _ _ SBMT). exact Hh.
-    - left. exact Dr17.
-    - eapply eq_trans; [exact Dr10|]. cbn [VD]. rewrite Z_to_bv_bv_unsigned. exact G10.
-    - exact Hst.
+      unfold wv_buf. split; [lia|]. split; [lia|]. split; [lia|]. split; [left; reflexivity|]. split; [reflexivity | intros x Rx; lia].
+    - lia.
+    - rewrite VE1. apply (rdn_tr MV M1' 1293872 4); [exact Sx2 | lia | cbn; lia | intros i Ri; apply Safe1; cbn in Ri; lia].
+    - intros R2 M2 model2 MI2 SB2 KR2 FrM2 FrV2 GrM2 GrV2.
+      rewrite VE1 in FrV2, GrV2.
+      pose proof (lzinv_sbm ASEGS (ahid A model) A model1 model2 LZ1 MI2 SB2) as LZ2.
+      pose proof (mem_grows_trans _ _ _ Grow1 GrV2) as GrowV.
+      pose (Vd := fun j : nat => match j with
+        | 2%nat => S - 144
+        | 9%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 9)))
+        | 10%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 10)))
+        | 18%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 18)))
+        | 19%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 19)))
+        | 20%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 20)))
+        | 21%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 21)))
+        | 22%nat => bv_unsigned (getr R (Z_to_bv 5 (Z.of_nat 22)))
+        | 40%nat => canz
+        | 110%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 10)))
+        | 118%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 18)))
+        | 119%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 19)))
+        | 120%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 20)))
+        | 122%nat => bv_unsigned (getr R2 (Z_to_bv 5 (Z.of_nat 22)))
+        | _ => 0 end).
+      pose proof (AS0DRVP_dpXd_4.dpXd_4_conc fx1 R2 (mrestrict (ahid A model) M2) Vd) as Run2. unfold Vd in Run2. cbv beta iota in Run2. clear Vd.
+      repeat lazymatch type of Run2 with
+      | ?P -> _ =>
+        let Pf := fresh "Pf" in
+        assert (Pf : P);
+        [ lazymatch goal with
+          | |- 0 <= bv_unsigned _ < _ => apply u64_range
+          | |- _ <= _ < _ => lia
+          | |- _ <= _ <= _ => lia
+          | |- getr _ _ = _ =>
+            first
+              [ rewrite Z_to_bv_bv_unsigned; reflexivity
+              | etransitivity; [apply KR2; cbn [In WV_KEEP]; repeat first [left; apply bv_eq; reflexivity | right] |];
+                match goal with Oc : getr R1 _ = _ |- _ => exact Oc end ]
+          | |- AS0DRVP_dpXd_4.aligned _ _ => unfold AS0DRVP_dpXd_4.aligned; rewrite Zminus_mod, S16; reflexivity
+          | |- L5Defs.L5.img_clear _ _ _ => intros i Ri; rewrite FrV2, Safe1 by lia; exact (Img i Ri)
+          | |- L5Defs.L5.defined _ ?a ?n =>
+            apply (L5Defs.L5.defined_grows MV _ _ _ GrowV); intros i Ri; refine (store_ok_defined sp0 _ _ _ (Wstk a n _ _ i 1%nat _ _)); lia
+          | |- L5Defs.L5.writable _ _ ?a ?n =>
+            apply (L5Defs.L5.writable_grows ASEGS MV _ _ _ GrowV); first [apply Wstk; lia | intros d k Rd Rk; apply (SoW1 a n); lia]
+          | |- _ =>
+            unfold L5Defs.L5.u64_at, L5Defs.L5.u32_at, L5Defs.L5.u8_at;
+            lazymatch goal with
+            | |- rdn _ _ (Z_to_bv 64 (S - 144 + ?k)) _ = _ =>
+              let k' := eval vm_compute in (144 - k) in
+              replace (S - 144 + k) with (S - k') by lia;
+              apply rdn_tr with (M := M1');
+              [ match goal with Oc : L5Defs.L5.u64_at _ M1' (S - k') _ |- _ => exact Oc end
+              | lia | cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia
+              | intros i Ri; cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in Ri; apply FrV2; lia ]
+            | |- rdn _ _ (Z_to_bv 64 ?a) ?n = Some ?bs =>
+              apply rdn_tr with (M := M1'); [| lia | cbn; lia | intros i Ri; cbn in Ri; apply FrV2; lia];
+              apply rdn_tr with (M := MV); [| lia | cbn; lia | intros i Ri; cbn in Ri; apply Safe1; lia];
+              first
+                [ match goal with Hc : rdn _ _ (Z_to_bv 64 a) _ = _ |- _ => exact Hc end
+                | let z := eval vm_compute in (Z.of_nat n) in
+                  let v := lazymatch bs with word_to_le_bytes _ (Z_to_bv 64 ?w) => w | [Z_to_bv 8 ?w] => w end in
+                  exact (proj1 (Forall_forall _ _) Cells (a, z, v) ltac:(cbn [In XC_CELLS]; repeat first [left; reflexivity | right])) ]
+            end
+          end
+        | specialize (Run2 Pf); clear Pf ]
+      end.
+      lazymatch type of Run2 with ?P -> _ => fail 0 "premise left:" P | _ => idtac end.
+      destruct Run2 as (fx3 & R3 & M3' & Grow3 & FrW3 & FrZ3 & (Steps3 & Keep3 & Outs3)).
+      repeat lazymatch type of Outs3 with _ /\ _ => let o := fresh "Od" in destruct Outs3 as [o Outs3] end.
+      apply (msteps_vis_fx scfg (ahid A model) A fx1 fx3 R2 (Z_to_bv 64 0x120264) M2 R3 (Z_to_bv 64 0x118588) M3' model2 _ LZ2 Steps3).
+      intros M3 model3 MI3 SB3 VE3.
+      pose proof (lzinv_sbm ASEGS (ahid A model) A model2 model3 LZ2 MI3 SB3) as LZ3.
+      rewrite <- (proj2 (sbm_fds _ _ SB1)), <- (proj2 (sbm_fds _ _ SB2)), <- (proj2 (sbm_fds _ _ SB3)).
+      apply (rz_exit_at_lit_lz ASEGS scfg R3 _ M3 _ model3 ECALLW st fetch_exitA is_ecall_ECALLW); [| left | | exact Rst].
+      + exact (proj2 (proj2 (proj2 (proj2 LZ3)))).
+      + match goal with Od : getr R3 (Z_to_bv 5 (Z.of_nat 17)) = _ |- _ => exact Od end.
+      + match goal with Od : getr R3 (Z_to_bv 5 (Z.of_nat 10)) = _ |- _ => rewrite Z_to_bv_bv_unsigned in Od; exact (eq_trans Od G10) end.
   Qed.
 
 End Exit.

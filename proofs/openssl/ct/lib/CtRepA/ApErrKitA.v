@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
@@ -216,324 +216,358 @@ Qed.
 Lemma es_rd_fl : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_FLAGS + 4 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 4 = Some (le4 (nth i (g_fl g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_fl g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u32arr_read _ m (A + ESO_FLAGS) (g_fl g) (Z.of_nat i)); [exact Hfl | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (Ffl & _). destruct Len as (Nfl & _).
+  refine (u32arr_read ctasegs m _ _ (Z.of_nat i) _ a Ffl _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nfl. exact Iok.
 Qed.
 
 Lemma es_rd_ma : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_MARKS + 4 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 4 = Some (le4 (nth i (g_ma g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_ma g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u32arr_read _ m (A + ESO_MARKS) (g_ma g) (Z.of_nat i)); [exact Hma | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & Fma & _). destruct Len as (_ & Nma & _).
+  refine (u32arr_read ctasegs m _ _ (Z.of_nat i) _ a Fma _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nma. exact Iok.
 Qed.
 
 Lemma es_rd_bu : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_BUFFER + 8 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 8 = Some (le8 (nth i (g_bu g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_bu g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u64arr_read _ m (A + ESO_BUFFER) (g_bu g) (Z.of_nat i)); [exact Hbu | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & _ & Fbu & _). destruct Len as (_ & _ & Nbu & _).
+  refine (u64arr_read ctasegs m _ _ (Z.of_nat i) _ a Fbu _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nbu. exact Iok.
 Qed.
 
 Lemma es_rd_da : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_DATA + 8 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 8 = Some (le8 (nth i (g_da g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_da g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u64arr_read _ m (A + ESO_DATA) (g_da g) (Z.of_nat i)); [exact Hda | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & _ & _ & Fda & _). destruct Len as (_ & _ & _ & Nda & _).
+  refine (u64arr_read ctasegs m _ _ (Z.of_nat i) _ a Fda _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nda. exact Iok.
 Qed.
 
 Lemma es_rd_ds : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_DSIZE + 8 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 8 = Some (le8 (nth i (g_ds g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_ds g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u64arr_read _ m (A + ESO_DSIZE) (g_ds g) (Z.of_nat i)); [exact Hds | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & _ & _ & _ & Fds & _). destruct Len as (_ & _ & _ & _ & Nds & _).
+  refine (u64arr_read ctasegs m _ _ (Z.of_nat i) _ a Fds _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nds. exact Iok.
 Qed.
 
 Lemma es_rd_df : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_DFLAGS + 4 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 4 = Some (le4 (nth i (g_df g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_df g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u32arr_read _ m (A + ESO_DFLAGS) (g_df g) (Z.of_nat i)); [exact Hdf | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & _ & _ & _ & _ & Fdf & _). destruct Len as (_ & _ & _ & _ & _ & Ndf & _).
+  refine (u32arr_read ctasegs m _ _ (Z.of_nat i) _ a Fdf _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Ndf. exact Iok.
 Qed.
 
 Lemma es_rd_fi : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_FILE + 8 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 8 = Some (le8 (nth i (g_fi g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_fi g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u64arr_read _ m (A + ESO_FILE) (g_fi g) (Z.of_nat i)); [exact Hfi | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & _ & _ & _ & _ & _ & Ffi & _). destruct Len as (_ & _ & _ & _ & _ & _ & Nfi & _).
+  refine (u64arr_read ctasegs m _ _ (Z.of_nat i) _ a Ffi _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nfi. exact Iok.
 Qed.
 
 Lemma es_rd_li : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_LINE + 4 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 4 = Some (le4 (nth i (g_li g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_li g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u32arr_read _ m (A + ESO_LINE) (g_li g) (Z.of_nat i)); [exact Hli | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & _ & _ & _ & _ & _ & _ & Fli & _). destruct Len as (_ & _ & _ & _ & _ & _ & _ & Nli & _).
+  refine (u32arr_read ctasegs m _ _ (Z.of_nat i) _ a Fli _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nli. exact Iok.
 Qed.
 
 Lemma es_rd_fu : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_FUNC + 8 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 8 = Some (le8 (nth i (g_fu g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. eso.
-  destruct (nth_error_len (g_fu g) i ltac:(lia)) as (w & Hw & <-).
-  eapply (u64arr_read _ m (A + ESO_FUNC) (g_fu g) (Z.of_nat i)); [exact Hfu | rewrite Nat2Z.id; exact Hw | lia | reflexivity].
+  intros m A g i a Rep Len Iok Adr.
+  destruct Rep as (_ & _ & _ & _ & _ & _ & _ & _ & Ffu & _). destruct Len as (_ & _ & _ & _ & _ & _ & _ & _ & Nfu).
+  refine (u64arr_read ctasegs m _ _ (Z.of_nat i) _ a Ffu _ (Nat2Z.is_nonneg i) Adr).
+  rewrite Nat2Z.id. apply nth_error_nth'. rewrite Nfu. exact Iok.
 Qed.
 
 Lemma es_rd_top : forall m A g a, es_raw m A g -> a = wa (A + 896) -> ov_read_bytes ctasegs m a 4 = Some (le4 (wz (g_top g))).
 Proof.
-  intros m A g a H ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). eso.
-  apply (rw_cells_read_at _ m (A + 896) [C4 (wz (g_top g)); C4 (wz (g_bot g))] 0%nat (C4 (wz (g_top g))) 4); [exact HT | reflexivity | reflexivity | unfold wa; f_equal; lia].
+  intros m A g a Rep Adr.
+  destruct Rep as (_ & _ & _ & _ & _ & _ & _ & _ & _ & Ftb).
+  apply (rw_cells_read_at ctasegs m _ _ 0 (C4 (wz (g_top g))) 4 a Ftb eq_refl eq_refl).
+  rewrite Adr. unfold ESO_TOP. f_equal. lia.
 Qed.
 Lemma es_rd_bot : forall m A g a, es_raw m A g -> a = wa (A + 900) -> ov_read_bytes ctasegs m a 4 = Some (le4 (wz (g_bot g))).
 Proof.
-  intros m A g a H ->. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). eso.
-  apply (rw_cells_read_at _ m (A + 896) [C4 (wz (g_top g)); C4 (wz (g_bot g))] 4%nat (C4 (wz (g_bot g))) 4); [exact HT | reflexivity | reflexivity | unfold wa; f_equal; lia].
+  intros m A g a Rep Adr. subst a.
+  destruct Rep as (_ & _ & _ & _ & _ & _ & _ & _ & _ & Ftb).
+  apply (rw_cells_read_at ctasegs m _ _ 4 (C4 (wz (g_bot g))) 4 _ Ftb eq_refl eq_refl).
+  unfold ESO_TOP. f_equal. lia.
 Qed.
 
 Lemma es_wr_fl : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_FLAGS + 4 * Z.of_nat i)) 4 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_FLAGS + 4 * Z.of_nat i)) (le4 v)) A (set_g_fl (upd (g_fl g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u32arr_store_ok _ m (A + ESO_FLAGS) (g_fl g) (Z.of_nat i)); [exact Hfl | lia | reflexivity]. }
-  unfold es_raw, set_g_fl. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u32arr_write _ m (A + ESO_FLAGS) (g_fl g) (Z.of_nat i) v Hfl ltac:(lia)). }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le4; lia | rewrite length_le4; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_fl g))) by (rewrite Nfl; lia).
+  pose proof (u32arr_write ctasegs m _ _ _ v Ffl Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u32arr_store_ok ctasegs m _ _ _ _ Ffl Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_fl g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le4; lia ].
 Qed.
 
 Lemma es_wr_ma : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_MARKS + 4 * Z.of_nat i)) 4 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_MARKS + 4 * Z.of_nat i)) (le4 v)) A (set_g_ma (upd (g_ma g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u32arr_store_ok _ m (A + ESO_MARKS) (g_ma g) (Z.of_nat i)); [exact Hma | lia | reflexivity]. }
-  unfold es_raw, set_g_ma. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u32arr_write _ m (A + ESO_MARKS) (g_ma g) (Z.of_nat i) v Hma ltac:(lia)). }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le4; lia | rewrite length_le4; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_ma g))) by (rewrite Nma; lia).
+  pose proof (u32arr_write ctasegs m _ _ _ v Fma Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u32arr_store_ok ctasegs m _ _ _ _ Fma Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_ma g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le4; lia ].
 Qed.
 
 Lemma es_wr_bu : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_BUFFER + 8 * Z.of_nat i)) 8 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_BUFFER + 8 * Z.of_nat i)) (le8 v)) A (set_g_bu (upd (g_bu g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u64arr_store_ok _ m (A + ESO_BUFFER) (g_bu g) (Z.of_nat i)); [exact Hbu | lia | reflexivity]. }
-  unfold es_raw, set_g_bu. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u64arr_write _ m (A + ESO_BUFFER) (g_bu g) (Z.of_nat i) v Hbu ltac:(lia)). }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le8; lia | rewrite length_le8; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_bu g))) by (rewrite Nbu; lia).
+  pose proof (u64arr_write ctasegs m _ _ _ v Fbu Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u64arr_store_ok ctasegs m _ _ _ _ Fbu Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_bu g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le8; lia ].
 Qed.
 
 Lemma es_wr_da : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_DATA + 8 * Z.of_nat i)) 8 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_DATA + 8 * Z.of_nat i)) (le8 v)) A (set_g_da (upd (g_da g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u64arr_store_ok _ m (A + ESO_DATA) (g_da g) (Z.of_nat i)); [exact Hda | lia | reflexivity]. }
-  unfold es_raw, set_g_da. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u64arr_write _ m (A + ESO_DATA) (g_da g) (Z.of_nat i) v Hda ltac:(lia)). }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le8; lia | rewrite length_le8; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_da g))) by (rewrite Nda; lia).
+  pose proof (u64arr_write ctasegs m _ _ _ v Fda Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u64arr_store_ok ctasegs m _ _ _ _ Fda Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_da g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le8; lia ].
 Qed.
 
 Lemma es_wr_ds : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_DSIZE + 8 * Z.of_nat i)) 8 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_DSIZE + 8 * Z.of_nat i)) (le8 v)) A (set_g_ds (upd (g_ds g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u64arr_store_ok _ m (A + ESO_DSIZE) (g_ds g) (Z.of_nat i)); [exact Hds | lia | reflexivity]. }
-  unfold es_raw, set_g_ds. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u64arr_write _ m (A + ESO_DSIZE) (g_ds g) (Z.of_nat i) v Hds ltac:(lia)). }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le8; lia | rewrite length_le8; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_ds g))) by (rewrite Nds; lia).
+  pose proof (u64arr_write ctasegs m _ _ _ v Fds Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u64arr_store_ok ctasegs m _ _ _ _ Fds Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_ds g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le8; lia ].
 Qed.
 
 Lemma es_wr_df : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_DFLAGS + 4 * Z.of_nat i)) 4 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_DFLAGS + 4 * Z.of_nat i)) (le4 v)) A (set_g_df (upd (g_df g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u32arr_store_ok _ m (A + ESO_DFLAGS) (g_df g) (Z.of_nat i)); [exact Hdf | lia | reflexivity]. }
-  unfold es_raw, set_g_df. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u32arr_write _ m (A + ESO_DFLAGS) (g_df g) (Z.of_nat i) v Hdf ltac:(lia)). }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le4; lia | rewrite length_le4; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_df g))) by (rewrite Ndf; lia).
+  pose proof (u32arr_write ctasegs m _ _ _ v Fdf Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u32arr_store_ok ctasegs m _ _ _ _ Fdf Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_df g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le4; lia ].
 Qed.
 
 Lemma es_wr_fi : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_FILE + 8 * Z.of_nat i)) 8 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_FILE + 8 * Z.of_nat i)) (le8 v)) A (set_g_fi (upd (g_fi g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u64arr_store_ok _ m (A + ESO_FILE) (g_fi g) (Z.of_nat i)); [exact Hfi | lia | reflexivity]. }
-  unfold es_raw, set_g_fi. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u64arr_write _ m (A + ESO_FILE) (g_fi g) (Z.of_nat i) v Hfi ltac:(lia)). }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le8; lia | rewrite length_le8; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_fi g))) by (rewrite Nfi; lia).
+  pose proof (u64arr_write ctasegs m _ _ _ v Ffi Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u64arr_store_ok ctasegs m _ _ _ _ Ffi Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_fi g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le8; lia ].
 Qed.
 
 Lemma es_wr_li : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_LINE + 4 * Z.of_nat i)) 4 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_LINE + 4 * Z.of_nat i)) (le4 v)) A (set_g_li (upd (g_li g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u32arr_store_ok _ m (A + ESO_LINE) (g_li g) (Z.of_nat i)); [exact Hli | lia | reflexivity]. }
-  unfold es_raw, set_g_li. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u32arr_write _ m (A + ESO_LINE) (g_li g) (Z.of_nat i) v Hli ltac:(lia)). }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le4; lia | rewrite length_le4; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_li g))) by (rewrite Nli; lia).
+  pose proof (u32arr_write ctasegs m _ _ _ v Fli Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u32arr_store_ok ctasegs m _ _ _ _ Fli Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_li g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le4; lia ].
 Qed.
 
 Lemma es_wr_fu : forall m A g (i : nat) (v : word), es_raw m A g -> g_len g -> (i < ERR_NUM)%nat ->
   store_ok ctasegs m (wa (A + ESO_FUNC + 8 * Z.of_nat i)) 8 = true
   /\ es_raw (write_to_mem m (wa (A + ESO_FUNC + 8 * Z.of_nat i)) (le8 v)) A (set_g_fu (upd (g_fu g) i v) g).
 Proof.
-  intros m A g i v H HL Hi. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { eapply (u64arr_store_ok _ m (A + ESO_FUNC) (g_fu g) (Z.of_nat i)); [exact Hfu | lia | reflexivity]. }
-  unfold es_raw, set_g_fu. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { rewrite <- (Nat2Z.id i) at 2. exact (u64arr_write _ m (A + ESO_FUNC) (g_fu g) (Z.of_nat i) v Hfu ltac:(lia)). }
-  apply rw_cells_frame; [exact HT | lia | rewrite length_le8; lia | rewrite length_le8; cbn [cells_size csize Nat.add]; lia].
+  intros m A g i v Rep Len Iok.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  assert (Slot : 0 <= Z.of_nat i < Z.of_nat (length (g_fu g))) by (rewrite Nfu; lia).
+  pose proof (u64arr_write ctasegs m _ _ _ v Ffu Slot) as Put. rewrite Nat2Z.id in Put.
+  split; [exact (u64arr_store_ok ctasegs m _ _ _ _ Ffu Slot eq_refl) |].
+  unfold es_raw. cbn [set_g_fu g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      | |- rw_cells _ _ _ _ => apply rw_cells_frame
+      end; [assumption | idtac ..]; cbn [cells_size csize Nat.add]; rewrite ?length_le8; lia ].
 Qed.
 
 Lemma es_wr_top : forall m A g (t : Z), es_raw m A g -> g_len g ->
   store_ok ctasegs m (wa (A + 896)) 4 = true
   /\ es_raw (write_to_mem m (wa (A + 896)) (le4 (wz t))) A (set_g_top t g).
 Proof.
-  intros m A g t H HL. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { apply (rw_cells_store_ok_at _ m (A + 896) [C4 (wz (g_top g)); C4 (wz (g_bot g))] 0%nat (C4 (wz (g_top g))) 4); [exact HT | reflexivity | reflexivity | unfold wa; f_equal; lia]. }
-  unfold es_raw, set_g_top. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  pose proof (rw_cells_write _ m (A + 896) _ 0%nat _ (C4 (wz t)) HT eq_refl eq_refl I) as W. cbn [cell_upd cbytes Nat.eqb Nat.sub csize] in W.
-  replace (A + 896 + Z.of_nat 0) with (A + 896) in W by lia. exact W.
+  intros m A g t Rep Len.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb). eso.
+  split.
+  { apply (rw_cells_store_ok_at ctasegs m (A + 896) _ 0 (C4 (wz (g_top g))) 4 _ Ftb eq_refl eq_refl). f_equal. lia. }
+  pose proof (rw_cells_write ctasegs m (A + 896) _ 0 (C4 (wz (g_top g))) (C4 (wz t)) Ftb eq_refl eq_refl I) as Put.
+  cbn [cell_upd cbytes Nat.eqb] in Put. replace (A + 896 + Z.of_nat 0) with (A + 896) in Put by lia.
+  unfold es_raw. cbn [set_g_top g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      end; [assumption | idtac ..]; rewrite ?length_le4; lia ].
 Qed.
 
 Lemma es_wr_bot : forall m A g (t : Z), es_raw m A g -> g_len g ->
   store_ok ctasegs m (wa (A + 900)) 4 = true
   /\ es_raw (write_to_mem m (wa (A + 900)) (le4 (wz t))) A (set_g_bot t g).
 Proof.
-  intros m A g t H HL. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  split. { apply (rw_cells_store_ok_at _ m (A + 896) [C4 (wz (g_top g)); C4 (wz (g_bot g))] 4%nat (C4 (wz (g_bot g))) 4); [exact HT | reflexivity | reflexivity | unfold wa; f_equal; lia]. }
-  unfold es_raw, set_g_bot. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le4; lia | rewrite length_le4; lia]. }
-  pose proof (rw_cells_write _ m (A + 896) _ 4%nat _ (C4 (wz t)) HT eq_refl eq_refl I) as W. cbn [cell_upd cbytes Nat.eqb Nat.sub csize] in W.
-  replace (A + 896 + Z.of_nat 4) with (A + 900) in W by lia. exact W.
+  intros m A g t Rep Len.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb). eso.
+  pose proof (rw_cells_write ctasegs m (A + 896) _ 4 (C4 (wz (g_bot g))) (C4 (wz t)) Ftb eq_refl eq_refl I) as Put.
+  cbn [cell_upd cbytes csize Nat.eqb Nat.sub] in Put. replace (A + 896 + Z.of_nat 4) with (A + 900) in Put by lia.
+  split.
+  { apply (rw_cells_store_ok_at ctasegs m (A + 896) _ 4 (C4 (wz (g_bot g))) 4 _ Ftb eq_refl eq_refl). f_equal. lia. }
+  unfold es_raw. cbn [set_g_bot g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Put
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      end; [assumption | idtac ..]; rewrite ?length_le4; lia ].
 Qed.
 
 Lemma es_raw_transport : forall W m m' A g, es_raw m A g -> g_len g -> munch W m m' -> wmono ctasegs m m' ->
   disjoint_from W A 904 -> es_raw m' A g.
 Proof.
-  intros W m m' A g H HL MU WM HD. unfold es_raw in *. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL. destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9). eso.
-  assert (D : forall a n, A <= a -> a + n <= A + 904 -> disjoint_from W a n).
-  { intros a n Ha Hn. clear - HD Ha Hn. induction W as [|[lo hi] W IH]; cbn in *; [exact I|]. destruct HD as [HD1 HD2]. split; [lia | apply IH; exact HD2]. }
-  split. { eapply u32arr_transport; [exact Hfl | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u32arr_transport; [exact Hma | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u64arr_transport; [exact Hbu | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u64arr_transport; [exact Hda | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u64arr_transport; [exact Hds | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u32arr_transport; [exact Hdf | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u64arr_transport; [exact Hfi | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u32arr_transport; [exact Hli | exact MU | exact WM | apply D; lia]. }
-  split. { eapply u64arr_transport; [exact Hfu | exact MU | exact WM | apply D; lia]. }
-  eapply rw_cells_transport; [exact HT | exact MU | exact WM | apply D; cbn [cells_size csize Nat.add]; lia].
+  intros W m m' A g Rep Len Mu Mono Dj.
+  assert (Sub : forall o n, 0 <= o -> o + n <= 904 -> disjoint_from W (A + o) n).
+  { intros o n Lo Up. clear - Dj Lo Up. revert Dj.
+    induction W as [|[lo hi] W' Step]; cbn; intros Dj; [exact I |].
+    destruct Dj as [Gap Rest]. split; [lia | exact (Step Rest)]. }
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb).
+  unfold es_raw. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: lazymatch goal with
+       | |- u32arr _ _ _ _ => eapply u32arr_transport
+       | |- u64arr _ _ _ _ => eapply u64arr_transport
+       | |- rw_cells _ _ _ _ => eapply rw_cells_transport
+       end; [eassumption | exact Mu | exact Mono | apply Sub; cbn [cells_size csize Nat.add]; lia].
 Qed.
 
 Lemma es_raw_agree : forall P m m' A g, es_raw m A g -> g_len g -> agree_on P m m' -> (forall a, A <= a < A + 904 -> P a) -> es_raw m' A g.
@@ -558,46 +592,51 @@ Local Ltac eso := unfold ESO_FLAGS, ESO_MARKS, ESO_BUFFER, ESO_DATA, ESO_DSIZE, 
 Lemma es_rd_df1 : forall m A g (i : nat) a, es_raw m A g -> g_len g -> (i < ERR_NUM)%nat -> a = wa (A + ESO_DFLAGS + 4 * Z.of_nat i) ->
   ov_read_bytes ctasegs m a 1 = Some (le1 (nth i (g_df g) (wz 0))).
 Proof.
-  intros m A g i a H HL Hi ->. destruct H as (_ & _ & _ & _ & _ & [Hb _] & _). unfold g_len, ERR_NUM in *.
-  destruct (nth_error_len (g_df g) i ltac:(lia)) as (w & Hw & <-).
-  destruct (u32s_split _ _ _ Hw) as (pre & post & E & Hlen & Eu & Hlu).
-  replace (4 * Z.of_nat i) with (Z.of_nat (4 * i)) by lia.
-  rewrite (bytes_at_ov_read ctasegs m (A + ESO_DFLAGS) (u32s (g_df g)) (4 * i) 1 Hb).
-  2:{ rewrite Eu, !length_app, length_le4, Hlu. lia. }
-  rewrite Eu, skipn_app, skipn_all2, Hlu, Nat.sub_diag by lia. rewrite skipn_O, app_nil_l.
-  unfold le4, le1. cbn [Z_to_le_bytes firstn app]. reflexivity.
+  intros m A g i a Rep Len Iok Adr. subst a.
+  destruct Rep as (_ & _ & _ & _ & _ & [Bdf _] & _).
+  destruct Len as (_ & _ & _ & _ & _ & Ndf & _).
+  assert (Pick : nth_error (g_df g) i = Some (nth i (g_df g) (wz 0)))
+    by (apply nth_error_nth'; rewrite Ndf; exact Iok).
+  destruct (u32s_split _ _ _ Pick) as (pre & post & _ & _ & Cut & Bpre).
+  rewrite (bytes_at_read ctasegs m _ _ (4 * Z.of_nat i) 1 Bdf); [| lia | rewrite u32s_length, Ndf; lia].
+  rewrite Cut. replace (Z.to_nat (4 * Z.of_nat i)) with (length (u32s pre)) by lia.
+  rewrite drop_app_length, take_app_le by (rewrite length_le4; lia).
+  reflexivity.
 Qed.
 
 Lemma rw_cells_CB_of : forall m A cs, rw_cells ctasegs m A cs -> rw_cells ctasegs m A [CB (cells_size cs) (cells_bytes cs)].
 Proof.
-  intros m A cs [[W B] R]. split; [split|].
-  - cbn. split; [apply cells_bytes_length; exact W|exact I].
-  - cbn [cells_bytes cbytes]. rewrite app_nil_r. exact B.
-  - cbn [cells_size csize]. rewrite Nat.add_0_r. exact R.
+  intros m A cs Cells.
+  pose proof (cells_at_wf ctasegs m A cs (proj1 Cells)) as Wf.
+  rewrite <- (cells_bytes_length cs Wf).
+  apply rw_cells_of_u8arr.
+  destruct Cells as [[_ Bytes] Room].
+  split; [exact Bytes | rewrite cells_bytes_length by exact Wf; exact Room].
 Qed.
 
 Lemma es_wr_tb0 : forall m A g, es_raw m A g -> g_len g ->
   store_ok ctasegs m (wa (A + 896)) 8 = true
   /\ es_raw (write_to_mem m (wa (A + 896)) (le8 (wz 0))) A (set_g_bot 0 (set_g_top 0 g)).
 Proof.
-  intros m A g H HL. pose proof (es_raw_bound m A g H) as HB. destruct H as (Hfl & Hma & Hbu & Hda & Hds & Hdf & Hfi & Hli & Hfu & HT). unfold g_len in HL.
-  destruct HL as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9).
-  unfold ESO_FLAGS, ESO_MARKS, ESO_BUFFER, ESO_DATA, ESO_DSIZE, ESO_DFLAGS, ESO_FILE, ESO_LINE, ESO_FUNC, ESO_TOP, ERR_NUM in *.
-  pose proof (rw_cells_CB_of _ _ _ HT) as HT8. cbn [cells_size csize cells_bytes cbytes Nat.add] in HT8. rewrite app_nil_r in HT8.
-  split. { exact (rw_cells_store_ok_at _ m (A + 896) _ 0%nat _ 8 (wa (A + 896)) HT8 eq_refl eq_refl ltac:(unfold wa; f_equal; lia)). }
-  unfold es_raw, set_g_top, set_g_bot. cbn [g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot].
-  unfold ESO_FLAGS, ESO_MARKS, ESO_BUFFER, ESO_DATA, ESO_DSIZE, ESO_DFLAGS, ESO_FILE, ESO_LINE, ESO_FUNC, ESO_TOP.
-  split. { apply u32arr_frame; [exact Hfl | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hma | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hbu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hda | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hds | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hdf | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfi | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u32arr_frame; [exact Hli | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  split. { apply u64arr_frame; [exact Hfu | lia | rewrite length_le8; lia | rewrite length_le8; lia]. }
-  pose proof (rw_cells_write _ m (A + 896) _ 0%nat _ (C8 (wz 0)) HT8 eq_refl eq_refl I) as W. cbn [cell_upd cbytes Nat.eqb Nat.sub csize] in W.
-  replace (A + 896 + Z.of_nat 0) with (A + 896) in W by lia.
-  eapply rw_cells_recast; [exact W|cbn; tauto|vm_compute; reflexivity|reflexivity].
+  intros m A g Rep Len.
+  pose proof (es_raw_bound m A g Rep) as Span.
+  destruct Len as (Nfl & Nma & Nbu & Nda & Nds & Ndf & Nfi & Nli & Nfu).
+  destruct Rep as (Ffl & Fma & Fbu & Fda & Fds & Fdf & Ffi & Fli & Ffu & Ftb). eso.
+  pose proof (rw_cells_CB_of m (A + 896) _ Ftb) as Blob.
+  cbn [cells_size csize Nat.add] in Blob.
+  split.
+  { apply (rw_cells_store_ok_at ctasegs m (A + 896) _ 0 _ 8 _ Blob eq_refl eq_refl). f_equal. lia. }
+  pose proof (rw_cells_write ctasegs m (A + 896) _ 0 _ (CB 8 (le8 (wz 0))) Blob eq_refl eq_refl (length_le8 (wz 0))) as Put.
+  cbn [cell_upd cbytes Nat.eqb] in Put. replace (A + 896 + Z.of_nat 0) with (A + 896) in Put by lia.
+  assert (Pair : rw_cells ctasegs (write_to_mem m (wa (A + 896)) (le8 (wz 0))) (A + 896) [C4 (wz 0); C4 (wz 0)]).
+  { destruct Put as [[_ Pb] Pw]. split; [split; [exact (conj I (conj I I)) | exact Pb] | exact Pw]. }
+  unfold es_raw. cbn [set_g_bot set_g_top g_fl g_ma g_bu g_da g_ds g_df g_fi g_li g_fu g_top g_bot]. eso.
+  repeat match goal with |- _ /\ _ => split end.
+  all: first
+    [ exact Pair
+    | lazymatch goal with
+      | |- u32arr _ _ _ _ => apply u32arr_frame
+      | |- u64arr _ _ _ _ => apply u64arr_frame
+      end; [assumption | idtac ..]; rewrite ?length_le8; lia ].
 Qed.
 End EsRaw2.

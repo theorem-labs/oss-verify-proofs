@@ -14,84 +14,124 @@ Definition ACFG : SpuriousCfg := alloc_only_cfg false.
 
 Definition alloc_no_b (n : Z) : bool := existsb (Z.eqb n) alloc_mark_sysnos.
 
+(* Membership by [Z.eqb] in any list of integers, by recursion on the list. *)
+Lemma cr2_existsb_zeqb : forall (l : list Z) (n : Z), existsb (Z.eqb n) l = true <-> In n l.
+Proof.
+  intros vl vn. induction vl as [| vx vl k1]; cbn [existsb In].
+  - split; [discriminate | intros []].
+  - rewrite Bool.orb_true_iff, Z.eqb_eq, k1.
+    split; intros [k2 | k2]; [left; symmetry; exact k2 | right; exact k2
+                             | left; symmetry; exact k2 | right; exact k2].
+Qed.
+
 Lemma alloc_no_b_In : forall n, alloc_no_b n = true <-> In n alloc_mark_sysnos.
 Proof.
-  intros n. unfold alloc_no_b. rewrite existsb_exists. split.
-  - intros (x & Hin & Heq). apply Z.eqb_eq in Heq. subst x. exact Hin.
-  - intros Hin. exists n. split; [exact Hin | apply Z.eqb_refl].
+  intros vn. exact (cr2_existsb_zeqb alloc_mark_sysnos vn).
 Qed.
 
 Lemma alloc_no_b_false : forall n, alloc_no_b n = false -> ~ In n alloc_mark_sysnos.
-Proof. intros n H Hin. apply alloc_no_b_In in Hin. congruence. Qed.
+Proof.
+  intros vn k1 k2.
+  rewrite (proj2 (alloc_no_b_In vn) k2) in k1. discriminate k1.
+Qed.
 
 Lemma acfg_family_off_in : forall i,
   injected_family_off ACFG i = true -> In (bv_unsigned (in_sysno i)) alloc_mark_sysnos.
 Proof.
-  intros i H. unfold injected_family_off in H.
-  destruct (injected_arm (bv_unsigned (in_sysno i))) as [a|] eqn:E; [|discriminate H].
-  destruct (ia_family a) eqn:Ef; cbn in H; try discriminate H.
-  exact (alloc_family_dispatched _ a E Ef).
+  intros vi k1. unfold injected_family_off in k1.
+  destruct (injected_arm (bv_unsigned (in_sysno vi))) as [va |] eqn:k2; [| discriminate k1].
+  apply (alloc_family_dispatched _ va k2).
+  destruct (ia_family va); cbv in k1; first [reflexivity | discriminate k1].
 Qed.
 
 Lemma acfg_family_on_notin : forall i,
   ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos -> injected_family_off ACFG i = false.
 Proof.
-  intros i Hn. destruct (injected_family_off ACFG i) eqn:E; [|reflexivity].
-  exfalso. apply Hn. apply acfg_family_off_in. exact E.
+  intros vi k1. apply Bool.not_true_is_false.
+  intros k2. apply k1. exact (acfg_family_off_in vi k2).
 Qed.
 
 Lemma acfg_family_off_no : forall i n,
   bv_unsigned (in_sysno i) = n -> In n alloc_mark_sysnos -> injected_family_off ACFG i = true.
 Proof.
-  intros i n E Hin. unfold injected_family_off. rewrite E. cbn [alloc_mark_sysnos In] in Hin.
-  destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; reflexivity.
+  intros vi vn k1 k2. unfold injected_family_off. rewrite k1.
+  cbn [alloc_mark_sysnos In] in k2.
+  destruct k2 as [<- | [<- | [<- | [<- | []]]]]; reflexivity.
 Qed.
 
 Lemma acfg_nonspurious : forall i m eff,
   ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos ->
   ~ spurious_refusal_cfg ACFG i m eff.
 Proof.
-  intros i m eff Hn. apply spurious_refusal_family_on. apply acfg_family_on_notin. exact Hn.
+  intros vi vm veff k1. apply spurious_refusal_family_on.
+  apply acfg_family_on_notin. exact k1.
 Qed.
 
 Lemma acfg_nonspurious_b : forall i m eff,
   alloc_no_b (bv_unsigned (in_sysno i)) = false ->
   ~ spurious_refusal_cfg ACFG i m eff.
-Proof. intros i m eff H. apply acfg_nonspurious. apply alloc_no_b_false. exact H. Qed.
+Proof.
+  intros vi vm veff k1. apply acfg_nonspurious.
+  apply alloc_no_b_false. exact k1.
+Qed.
 
 Lemma ret_in_errnos_errno : forall es e, In e es -> ret_in_errnos es (errno_ret e) = true.
 Proof.
-  intros es e Hin. unfold ret_in_errnos. apply existsb_exists. exists e. split; [exact Hin|].
-  apply bv_eqb_eq. reflexivity.
+  intros ves ve k1. unfold ret_in_errnos. apply existsb_exists.
+  exists ve. split; [exact k1 | apply Z.eqb_refl].
 Qed.
 
 Lemma ret_in_errnos_ENOMEM : forall r,
   ret_in_errnos [ENOMEM] r = bv_eqb r (errno_ret ENOMEM).
-Proof. intros r. cbn. rewrite orb_false_r. reflexivity. Qed.
+Proof.
+  intros vr. unfold ret_in_errnos. cbn [existsb]. apply Bool.orb_false_r.
+Qed.
 
 Lemma page_aligned_not_ENOMEM : forall a : word,
   (bv_unsigned a mod page_size = 0)%Z -> bv_eqb a (errno_ret ENOMEM) = false.
 Proof.
-  intros a Hal. destruct (bv_eqb a (errno_ret ENOMEM)) eqn:E; [|reflexivity].
-  exfalso. apply bv_eqb_eq in E. subst a. vm_compute in Hal. discriminate Hal.
+  intros va k1. unfold bv_eqb. apply Z.eqb_neq. intros k2.
+  rewrite k2 in k1. vm_compute in k1. discriminate k1.
 Qed.
 
 Lemma ret_in_errnos_ENOMEM_aligned : forall a : word,
   (bv_unsigned a mod page_size = 0)%Z -> ret_in_errnos [ENOMEM] a = false.
-Proof. intros a H. rewrite ret_in_errnos_ENOMEM. apply page_aligned_not_ENOMEM. exact H. Qed.
+Proof.
+  intros va k1. rewrite ret_in_errnos_ENOMEM. exact (page_aligned_not_ENOMEM va k1).
+Qed.
+
+(* [refusal_b] read at a known syscall number. *)
+Lemma cr2_refusal_b_at : forall i m r n, bv_unsigned (in_sysno i) = n ->
+  refusal_b i m r =
+  if Z.eqb n 214 then brk_refusal_b m (in_arg i 0) r
+  else match injected_arm n with
+       | Some a => ret_in_errnos (ia_errnos a) r
+       | None => false
+       end.
+Proof.
+  intros vi vm vr vn k1. subst vn. reflexivity.
+Qed.
 
 Lemma refusal_b_222 : forall i m r, bv_unsigned (in_sysno i) = 222%Z ->
   refusal_b i m r = ret_in_errnos mmap_errnos r.
-Proof. intros i m r E. unfold refusal_b. rewrite E. reflexivity. Qed.
+Proof.
+  intros vi vm vr k1. rewrite (cr2_refusal_b_at vi vm vr 222 k1). reflexivity.
+Qed.
 Lemma refusal_b_226 : forall i m r, bv_unsigned (in_sysno i) = 226%Z ->
   refusal_b i m r = ret_in_errnos mprotect_errnos r.
-Proof. intros i m r E. unfold refusal_b. rewrite E. reflexivity. Qed.
+Proof.
+  intros vi vm vr k1. rewrite (cr2_refusal_b_at vi vm vr 226 k1). reflexivity.
+Qed.
 Lemma refusal_b_216 : forall i m r, bv_unsigned (in_sysno i) = 216%Z ->
   refusal_b i m r = ret_in_errnos mremap_errnos r.
-Proof. intros i m r E. unfold refusal_b. rewrite E. reflexivity. Qed.
+Proof.
+  intros vi vm vr k1. rewrite (cr2_refusal_b_at vi vm vr 216 k1). reflexivity.
+Qed.
 Lemma refusal_b_214 : forall i m r, bv_unsigned (in_sysno i) = 214%Z ->
   refusal_b i m r = brk_refusal_b m (in_arg i 0) r.
-Proof. intros i m r E. unfold refusal_b. rewrite E. reflexivity. Qed.
+Proof.
+  intros vi vm vr k1. rewrite (cr2_refusal_b_at vi vm vr 214 k1). reflexivity.
+Qed.
 
 Definition spec_step_ok (i : SyscallInput) (m : Model) (o : outcome SyscallEffect) : Prop :=
   match o with
@@ -103,37 +143,51 @@ Definition syscall_spec_acfg : Sys SyscallEffect :=
   fun i m o => syscall_spec i m o /\ spec_step_ok i m o.
 
 Lemma syscall_spec_acfg_spec : forall i m o, syscall_spec_acfg i m o -> syscall_spec i m o.
-Proof. intros i m o [H _]. exact H. Qed.
+Proof.
+  intros vi vm vo k1. exact (proj1 k1).
+Qed.
 
 Lemma syscall_spec_acfg_unmodeled : forall i m,
   syscall_spec_acfg i m Unmodeled <-> syscall_spec i m Unmodeled.
-Proof. intros i m. unfold syscall_spec_acfg. cbn. tauto. Qed.
+Proof.
+  intros vi vm. split.
+  - apply syscall_spec_acfg_spec.
+  - intros k1. exact (conj k1 I).
+Qed.
 
 Lemma syscall_spec_acfg_nonalloc : forall i m o,
   ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos ->
   syscall_spec_acfg i m o <-> syscall_spec i m o.
 Proof.
-  intros i m o Hn. unfold syscall_spec_acfg. split; [tauto|]. intros H. split; [exact H|].
-  destruct o as [eff m' evs|]; cbn; [|exact I]. intros _. apply acfg_nonspurious. exact Hn.
+  intros vi vm vo k1. split; [apply syscall_spec_acfg_spec |].
+  intros k2. split; [exact k2 |].
+  destruct vo as [veff vm' vevs |]; [| exact I].
+  intros _. exact (acfg_nonspurious vi vm veff k1).
 Qed.
 
 Lemma syscall_spec_acfg_nonalloc_b : forall i m o,
   alloc_no_b (bv_unsigned (in_sysno i)) = false ->
   syscall_spec_acfg i m o <-> syscall_spec i m o.
-Proof. intros i m o H. apply syscall_spec_acfg_nonalloc. apply alloc_no_b_false. exact H. Qed.
+Proof.
+  intros vi vm vo k1. apply syscall_spec_acfg_nonalloc.
+  exact (alloc_no_b_false _ k1).
+Qed.
 
 Lemma acfg_si_nonalloc : forall segs ms x8 m o,
   alloc_no_b (bv_unsigned x8) = false ->
   syscall_spec_acfg (sys_input segs ms x8) m o <-> syscall_spec (sys_input segs ms x8) m o.
-Proof. intros segs ms x8 m o H. apply syscall_spec_acfg_nonalloc_b. exact H. Qed.
+Proof.
+  intros vsegs vms vx8 vm vo k1.
+  exact (syscall_spec_acfg_nonalloc_b (sys_input vsegs vms vx8) vm vo k1).
+Qed.
 
 Lemma syscall_spec_acfg_nonrefusal : forall i m eff m' evs,
   syscall_spec i m (Ok eff m' evs) ->
   refusal_b i m (eff_ret eff) = false ->
   syscall_spec_acfg i m (Ok eff m' evs).
 Proof.
-  intros i m eff m' evs Hs Hnr. split; [exact Hs|]. cbn. intros _.
-  apply spurious_refusal_not_refusal. exact Hnr.
+  intros vi vm veff vm' vevs k1 k2. split; [exact k1 |].
+  intros _. exact (spurious_refusal_not_refusal ACFG vi vm veff k2).
 Qed.
 
 Lemma syscall_spec_acfg_forced : forall i m eff m' evs,
@@ -141,18 +195,21 @@ Lemma syscall_spec_acfg_forced : forall i m eff m' evs,
   (forall eff' m'' evs', syscall_spec i m (Ok eff' m'' evs') -> refusal_b i m (eff_ret eff') = true) ->
   syscall_spec_acfg i m (Ok eff m' evs).
 Proof.
-  intros i m eff m' evs Hs Hall. split; [exact Hs|]. cbn. intros _ (_ & _ & (eff' & m'' & evs' & Hs' & Hnr)).
-  rewrite (Hall _ _ _ Hs') in Hnr. discriminate Hnr.
+  intros vi vm veff vm' vevs k1 k2. split; [exact k1 |].
+  intros _ (_ & _ & veff2 & vm2 & vevs2 & k3 & k4).
+  rewrite (k2 veff2 vm2 vevs2 k3) in k4. discriminate k4.
 Qed.
 
 Lemma syscall_spec_acfg_det : forall i m eff m' evs,
   (forall o, syscall_spec i m o <-> o = Ok eff m' evs) ->
   forall o, syscall_spec_acfg i m o <-> o = Ok eff m' evs.
 Proof.
-  intros i m eff m' evs Hchar o. split.
-  - intros [Hs _]. apply Hchar. exact Hs.
-  - intros ->. split; [apply Hchar; reflexivity|]. cbn. intros _ (_ & Hr & (eff' & m'' & evs' & Hs' & Hnr)).
-    apply Hchar in Hs'. injection Hs' as -> -> ->. rewrite Hr in Hnr. discriminate Hnr.
+  intros vi vm veff vm' vevs k1 vo. split.
+  - intros k2. apply k1. exact (proj1 k2).
+  - intros k2. subst vo. split; [apply k1; reflexivity |].
+    intros _ (_ & k3 & veff2 & vm2 & vevs2 & k4 & k5).
+    apply k1 in k4. injection k4 as k6 k7 k8. subst veff2.
+    rewrite k3 in k5. discriminate k5.
 Qed.
 
 Lemma syscall_spec_acfg_uniform : forall i m o,
@@ -161,37 +218,41 @@ Lemma syscall_spec_acfg_uniform : forall i m o,
      refusal_b i m (eff_ret eff) = refusal_b i m (eff_ret eff')) ->
   syscall_spec_acfg i m o.
 Proof.
-  intros i m o Hs Hu. split; [exact Hs|]. destruct o as [eff m' evs|]; cbn; [|exact I].
-  intros _ (_ & Hr & (eff' & m'' & evs' & Hs' & Hnr)).
-  rewrite (Hu _ _ _ _ _ _ Hs Hs') in Hr. rewrite Hr in Hnr. discriminate Hnr.
+  intros vi vm vo k1 k2. split; [exact k1 |].
+  destruct vo as [veff vm' vevs |]; [| exact I].
+  intros _ (_ & k3 & veff2 & vm2 & vevs2 & k4 & k5).
+  rewrite (k2 _ _ _ _ _ _ k1 k4), k5 in k3. discriminate k3.
 Qed.
 
 Lemma syscall_spec_acfg_halted : forall i m eff m' evs,
   m_halted m' <> None ->
   syscall_spec_acfg i m (Ok eff m' evs) <-> syscall_spec i m (Ok eff m' evs).
 Proof.
-  intros i m eff m' evs Hh. unfold syscall_spec_acfg. split; [tauto|]. intros H. split; [exact H|].
-  cbn. intros Hn. contradiction.
+  intros vi vm veff vm' vevs k1. split; [apply syscall_spec_acfg_spec |].
+  intros k2. split; [exact k2 |].
+  intros k3. exfalso. exact (k1 k3).
 Qed.
 
 Lemma exists_nonspurious : forall cfg i m eff0 m0 evs0,
   syscall_spec i m (Ok eff0 m0 evs0) ->
   exists eff m' evs, syscall_spec i m (Ok eff m' evs) /\ ~ spurious_refusal_cfg cfg i m eff.
 Proof.
-  intros cfg i m eff0 m0 evs0 H0.
-  destruct (classic (exists eff' m' evs', syscall_spec i m (Ok eff' m' evs') /\ refusal_b i m (eff_ret eff') = false))
-    as [(eff' & m' & evs' & Hs & Hnr)|Hno].
-  - exists eff', m', evs'. split; [exact Hs|]. apply spurious_refusal_not_refusal. exact Hnr.
-  - exists eff0, m0, evs0. split; [exact H0|]. intros (_ & _ & Hex). exact (Hno Hex).
+  intros vcfg vi vm veff0 vm0 vevs0 k1.
+  destruct (classic (spurious_refusal_cfg vcfg vi vm veff0)) as [k2 | k2].
+  - (* the given outcome is filtered: its own witness is a non-refusal *)
+    destruct k2 as (_ & _ & veff & vm' & vevs & k3 & k4).
+    exists veff, vm', vevs.
+    exact (conj k3 (spurious_refusal_not_refusal vcfg vi vm veff k4)).
+  - exists veff0, vm0, vevs0. exact (conj k1 k2).
 Qed.
 
 Lemma exists_acfg : forall i m eff0 m0 evs0,
   syscall_spec i m (Ok eff0 m0 evs0) ->
   exists eff m' evs, syscall_spec_acfg i m (Ok eff m' evs).
 Proof.
-  intros i m eff0 m0 evs0 H0.
-  destruct (exists_nonspurious ACFG i m eff0 m0 evs0 H0) as (eff & m' & evs & Hs & Hn).
-  exists eff, m', evs. split; [exact Hs|]. cbn. intros _. exact Hn.
+  intros vi vm veff0 vm0 vevs0 k1.
+  destruct (exists_nonspurious ACFG vi vm veff0 vm0 vevs0 k1) as (veff & vm' & vevs & k2 & k3).
+  exists veff, vm', vevs. split; [exact k2 |]. intros _. exact k3.
 Qed.
 
 Lemma nonspurious_refusal_forced : forall i m eff,
@@ -200,9 +261,9 @@ Lemma nonspurious_refusal_forced : forall i m eff,
   refusal_b i m (eff_ret eff) = true ->
   forall eff' m' evs', syscall_spec i m (Ok eff' m' evs') -> refusal_b i m (eff_ret eff') = true.
 Proof.
-  intros i m eff Hns Hoff Hr eff' m' evs' Hs'.
-  destruct (refusal_b i m (eff_ret eff')) eqn:E; [reflexivity|]. exfalso.
-  apply Hns. split; [exact Hoff|]. split; [exact Hr|]. exists eff', m', evs'. split; assumption.
+  intros vi vm veff k1 k2 k3 veff2 vm2 vevs2 k4.
+  apply Bool.not_false_is_true. intros k5.
+  exact (k1 (conj k2 (conj k3 (ex_intro _ veff2 (ex_intro _ vm2 (ex_intro _ vevs2 (conj k4 k5))))))).
 Qed.
 
 Lemma acfg_refusal_forced : forall i m eff m' evs,
@@ -211,7 +272,8 @@ Lemma acfg_refusal_forced : forall i m eff m' evs,
   refusal_b i m (eff_ret eff) = true ->
   forall eff' m'' evs', syscall_spec i m (Ok eff' m'' evs') -> refusal_b i m (eff_ret eff') = true.
 Proof.
-  intros i m eff m' evs [_ Hok] Hh Hoff Hr. exact (nonspurious_refusal_forced i m eff (Hok Hh) Hoff Hr).
+  intros vi vm veff vm' vevs k1 k2 k3 k4.
+  exact (nonspurious_refusal_forced vi vm veff (proj2 k1 k2) k3 k4).
 Qed.
 
 Lemma acfg_char_split : forall i m (Ref Grant : outcome SyscallEffect -> Prop) (forced : bool),
@@ -224,22 +286,35 @@ Lemma acfg_char_split : forall i m (Ref Grant : outcome SyscallEffect -> Prop) (
   (forced = false -> exists o, Grant o) ->
   forall o, syscall_spec_acfg i m o <-> (forced = true /\ Ref o) \/ Grant o.
 Proof.
-  intros i m Ref Grant forced Hoff Hchar Hhalt HrefR HgrantR Hgf Hfg o. split.
-  - intros [Hs Hok]. destruct (proj1 (Hchar o) Hs) as [HR | HG]; [|right; exact HG].
-    destruct forced; [left; split; [reflexivity | exact HR]|]. exfalso.
-    destruct (HrefR o HR) as (eff & m' & evs & -> & Hr).
-    destruct (Hfg eq_refl) as [o' HG'].
-    destruct (HgrantR o' HG') as (eff' & m'' & evs' & -> & Hnr).
-    apply (Hok (Hhalt _ _ _ Hs)). split; [exact Hoff|]. split; [exact Hr|].
-    exists eff', m'', evs'. split; [apply Hchar; right; exact HG' | exact Hnr].
-  - intros [[Hf HR] | HG].
-    + destruct (HrefR o HR) as (eff & m' & evs & -> & Hr).
-      split; [apply Hchar; left; exact HR|]. cbn. intros _ (_ & _ & (eff' & m'' & evs' & Hs' & Hnr)).
-      destruct (proj1 (Hchar _) Hs') as [HR' | HG'].
-      * destruct (HrefR _ HR') as (? & ? & ? & Heq & Hr'). injection Heq as -> -> ->. congruence.
-      * rewrite (Hgf _ HG') in Hf. discriminate Hf.
-    + destruct (HgrantR o HG) as (eff & m' & evs & -> & Hnr).
-      split; [apply Hchar; right; exact HG|]. cbn. intros _. apply spurious_refusal_not_refusal. exact Hnr.
+  intros vi vm vRef vGrant vforced k1 k2 k3 k4 k5 k6 k7 vo.
+  destruct vforced.
+  - (* forced: there is no grant, so every admitted outcome is a refusal *)
+    assert (k8 : forall vp, ~ vGrant vp) by (intros vp k9; discriminate (k6 vp k9)).
+    assert (k10 : forall vp, syscall_spec vi vm vp -> vRef vp).
+    { intros vp k11. destruct (proj1 (k2 vp) k11) as [k12 | k12];
+        [exact k12 | destruct (k8 vp k12)]. }
+    split.
+    + intros k13. left. exact (conj eq_refl (k10 vo (proj1 k13))).
+    + intros [[_ k13] | k13]; [| destruct (k8 vo k13)].
+      destruct (k4 vo k13) as (veff & vm' & vevs & k14 & _). subst vo.
+      apply syscall_spec_acfg_forced; [apply k2; left; exact k13 |].
+      intros veff2 vm2 vevs2 k15.
+      destruct (k4 _ (k10 _ k15)) as (veff3 & vm3 & vevs3 & k16 & k17).
+      injection k16 as k18 k19 k20. subst veff3. exact k17.
+  - (* not forced: a grant exists, and it makes every refusal spurious *)
+    destruct (k7 eq_refl) as [vg k8].
+    destruct (k5 vg k8) as (veffg & vmg & vevsg & k9 & k10). subst vg.
+    assert (k11 : syscall_spec vi vm (Ok veffg vmg vevsg)) by (apply k2; right; exact k8).
+    split.
+    + intros k12. right.
+      destruct (proj1 (k2 vo) (proj1 k12)) as [k13 | k13]; [exfalso | exact k13].
+      destruct (k4 vo k13) as (veff & vm' & vevs & k14 & k15). subst vo.
+      apply (proj2 k12 (k3 _ _ _ (proj1 k12))).
+      split; [exact k1 |]. split; [exact k15 |].
+      exists veffg, vmg, vevsg. exact (conj k11 k10).
+    + intros [[k12 _] | k12]; [discriminate k12 |].
+      destruct (k5 vo k12) as (veff & vm' & vevs & k13 & k14). subst vo.
+      apply syscall_spec_acfg_nonrefusal; [apply k2; right; exact k12 | exact k14].
 Qed.
 
 Section WithSegs.
@@ -247,39 +322,47 @@ Variable segs : list Segment.
 
 Lemma sstep_cfg_halted_none : forall c e st,
   sstep_cfg segs ACFG c e st -> m_halted (cfg_model c) = None.
-Proof. intros c e st H; inversion H; subst; cbn; assumption. Qed.
+Proof.
+  intros vc ve vst k1. case k1; intros; cbn [cfg_model]; assumption.
+Qed.
 
 Lemma star_cfg_halted_nil : forall c tr c',
   m_halted (cfg_model c) <> None -> star_cfg segs ACFG c tr c' -> tr = [] /\ c' = c.
 Proof.
-  intros c tr c' Hh H. destruct H as [c | c1 evs c2 tr c3 Hss _]; [split; reflexivity|].
-  exfalso. apply Hh. exact (sstep_cfg_halted_none _ _ _ Hss).
+  intros vc vtr vc' k1 k2.
+  destruct k2 as [vd | vc1 vevs vc2 vtr2 vc3 k3 k4].
+  - split; reflexivity.
+  - exfalso. exact (k1 (sstep_cfg_halted_none vc1 vevs (SNext vc2) k3)).
 Qed.
 
 Lemma star_cfg_one : forall c evs c',
   sstep_cfg segs ACFG c evs (SNext c') -> star_cfg segs ACFG c evs c'.
 Proof.
-  intros c evs c' H. rewrite <- (app_nil_r evs).
-  econstructor; [exact H | apply star_cfg_refl].
+  intros vc vevs vc' k1. rewrite <- (app_nil_r vevs).
+  exact (star_cfg_step segs ACFG vc vevs vc' [] vc' k1 (star_cfg_refl segs ACFG vc')).
 Qed.
 
 Lemma star_cfg_trans : forall c1 t1 c2 t2 c3,
   star_cfg segs ACFG c1 t1 c2 -> star_cfg segs ACFG c2 t2 c3 -> star_cfg segs ACFG c1 (t1 ++ t2) c3.
 Proof.
-  intros c1 t1 c2 t2 c3 H1; revert t2 c3.
-  induction H1 as [c | c1 evs c2 tr c3 Hss Hs IH]; intros t2 c4 H2; [exact H2|].
-  rewrite <- app_assoc. econstructor; [exact Hss | apply IH; exact H2].
+  intros vc1 vt1 vc2 vt2 vc3 k1. induction k1 as [vd | va vevs vb vtr vd k2 k3 k4]; intros k5.
+  - exact k5.
+  - rewrite <- app_assoc. exact (star_cfg_step segs ACFG va vevs vb (vtr ++ vt2) vc3 k2 (k4 k5)).
 Qed.
 
 Lemma obs_trace_cfg_nil : forall c, obs_trace_cfg segs ACFG c [].
-Proof. intros c. exists [], c. split; [apply star_cfg_refl | apply is_prefix_nil]. Qed.
+Proof.
+  intros vc. exists [], vc. exact (conj (star_cfg_refl segs ACFG vc) I).
+Qed.
 
 Lemma star_cfg_inv (Inv : config -> Prop)
   (Hstep : forall c evs c', Inv c -> sstep_cfg segs ACFG c evs (SNext c') -> Inv c') :
   forall c tr c', Inv c -> star_cfg segs ACFG c tr c' -> Inv c'.
 Proof.
-  intros c tr c' HInv Hstar. induction Hstar; [exact HInv|].
-  apply IHHstar. eapply Hstep; eauto.
+  intros vc vtr vc' k1 k2. revert k1.
+  induction k2 as [vd | va vevs vb vtr2 vd k3 k4 k5]; intros k6.
+  - exact k6.
+  - exact (k5 (Hstep va vevs vb k6 k3)).
 Qed.
 
 Lemma inv_no_reaches_error_cfg (Inv : config -> Prop)
@@ -287,19 +370,49 @@ Lemma inv_no_reaches_error_cfg (Inv : config -> Prop)
   (Hnoerr : forall c evs, Inv c -> ~ sstep_cfg segs ACFG c evs SError) :
   forall c, Inv c -> ~ reaches_error_cfg segs ACFG c.
 Proof.
-  intros c HInv (tr & c' & evs & Hstar & Hss).
-  eapply Hnoerr; [| exact Hss].
-  eapply star_cfg_inv; eauto.
+  intros vc k1 (vtr & vd & vevs & k2 & k3).
+  exact (Hnoerr vd vevs (star_cfg_inv Inv Hstep vc vtr vd k1 k2) k3).
+Qed.
+
+(* Any unfiltered step is a filtered one once each syscall outcome it may
+   consume is known not to be a spurious refusal. *)
+Lemma cr2_sstep_lift : forall c e st,
+  sstep segs c e st ->
+  (forall x8 eff m' evs,
+     ms_svc_pending (cfg_ms c) = Some x8 ->
+     syscall_spec (sys_input segs (cfg_ms c) x8) (cfg_model c) (Ok eff m' evs) ->
+     m_halted m' = None ->
+     ~ spurious_refusal_cfg ACFG (sys_input segs (cfg_ms c) x8) (cfg_model c) eff) ->
+  sstep_cfg segs ACFG c e st.
+Proof.
+  intros vc ve vst k1.
+  destruct k1 as
+    [ vms vmodel vms' vmodel' k2 k3 k4
+    | vms vmodel k2 k3 k4
+    | vms vmodel k2 k3 k4
+    | vms vmodel vx8 veff vmodel' vmodel'' vevs k2 k3 k4 k5 k6
+    | vms vmodel vx8 veff vmodel' vevs k2 k3 k4 k5 k6
+    | vms vmodel vx8 veff vmodel' vevs vcode k2 k3 k4 k5 k6
+    | vms vmodel vx8 veff vmodel' vevs vsig k2 k3 k4 k5
+    | vms vmodel vx8 k2 k3 k4 ];
+    intros k9; cbn [cfg_ms cfg_model] in k9.
+  - exact (sstep_cfg_instr segs ACFG vms vmodel vms' vmodel' k2 k3 k4).
+  - exact (sstep_cfg_instr_fault segs ACFG vms vmodel k2 k3 k4).
+  - exact (sstep_cfg_instr_unmodeled segs ACFG vms vmodel k2 k3 k4).
+  - exact (sstep_cfg_syscall segs ACFG vms vmodel vx8 veff vmodel' vmodel'' vevs
+             k2 k3 k4 (k9 vx8 veff vmodel' vevs k3 k4 k5) k5 k6).
+  - exact (sstep_cfg_syscall_materialization_fault segs ACFG vms vmodel vx8 veff vmodel' vevs
+             k2 k3 k4 (k9 vx8 veff vmodel' vevs k3 k4 k5) k5 k6).
+  - exact (sstep_cfg_exit segs ACFG vms vmodel vx8 veff vmodel' vevs vcode k2 k3 k4 k5 k6).
+  - exact (sstep_cfg_killed segs ACFG vms vmodel vx8 veff vmodel' vevs vsig k2 k3 k4 k5).
+  - exact (sstep_cfg_syscall_unmodeled segs ACFG vms vmodel vx8 k2 k3 k4).
 Qed.
 
 Lemma sstep_cfg_of_instr : forall ms model e st,
   ms_svc_pending ms = None -> sstep segs (mkCfg ms model) e st -> sstep_cfg segs ACFG (mkCfg ms model) e st.
 Proof.
-  intros ms model e st Hsvc H. inversion H; subst;
-    try (match goal with H1 : ms_svc_pending ms = Some _ |- _ => rewrite Hsvc in H1; discriminate H1 end).
-  - eapply sstep_cfg_instr; eassumption.
-  - eapply sstep_cfg_instr_fault; eassumption.
-  - eapply sstep_cfg_instr_unmodeled; eassumption.
+  intros vms vmodel ve vst k1 k2. apply (cr2_sstep_lift _ _ _ k2).
+  intros vx8 veff vm' vevs k3. cbn [cfg_ms] in k3. rewrite k1 in k3. discriminate k3.
 Qed.
 
 Lemma sstep_cfg_of_nonalloc : forall ms model x8 e st,
@@ -307,15 +420,10 @@ Lemma sstep_cfg_of_nonalloc : forall ms model x8 e st,
   ~ In (bv_unsigned x8) alloc_mark_sysnos ->
   sstep segs (mkCfg ms model) e st -> sstep_cfg segs ACFG (mkCfg ms model) e st.
 Proof.
-  intros ms model x8 e st Hsvc Hn H. inversion H; subst;
-    try (match goal with H1 : ms_svc_pending ms = None |- _ => rewrite Hsvc in H1; discriminate H1 end);
-    match goal with H1 : ms_svc_pending ms = Some ?y |- _ =>
-      rewrite Hsvc in H1; injection H1; intro; subst y end.
-  - eapply sstep_cfg_syscall; try eassumption. apply acfg_nonspurious. exact Hn.
-  - eapply sstep_cfg_syscall_materialization_fault; try eassumption. apply acfg_nonspurious. exact Hn.
-  - eapply sstep_cfg_exit; eassumption.
-  - eapply sstep_cfg_killed; eassumption.
-  - eapply sstep_cfg_syscall_unmodeled; eassumption.
+  intros vms vmodel vx8 ve vst k1 k2 k3. apply (cr2_sstep_lift _ _ _ k3).
+  intros vy veff vm' vevs k4 _ _. cbn [cfg_ms cfg_model] in *.
+  rewrite k1 in k4. injection k4 as k5. subst vy.
+  exact (acfg_nonspurious (sys_input segs vms vx8) vmodel veff k2).
 Qed.
 
 Lemma sstep_cfg_of_acfg : forall ms model x8 e st,
@@ -325,19 +433,19 @@ Lemma sstep_cfg_of_acfg : forall ms model x8 e st,
      m_halted m' = None -> syscall_spec_acfg (sys_input segs ms x8) model (Ok eff m' evs)) ->
   sstep_cfg segs ACFG (mkCfg ms model) e st.
 Proof.
-  intros ms model x8 e st Hsvc H Hacfg. inversion H; subst;
-    try (match goal with H1 : ms_svc_pending ms = None |- _ => rewrite Hsvc in H1; discriminate H1 end);
-    match goal with H1 : ms_svc_pending ms = Some ?y |- _ =>
-      rewrite Hsvc in H1; injection H1; intro; subst y end.
-  - eapply sstep_cfg_syscall; try eassumption.
-    match goal with Hs : syscall_spec _ _ (Ok ?eff ?m' ?evs), Hh : m_halted ?m' = None |- _ =>
-      exact (proj2 (Hacfg _ _ _ Hs Hh) Hh) end.
-  - eapply sstep_cfg_syscall_materialization_fault; try eassumption.
-    match goal with Hs : syscall_spec _ _ (Ok ?eff ?m' ?evs), Hh : m_halted ?m' = None |- _ =>
-      exact (proj2 (Hacfg _ _ _ Hs Hh) Hh) end.
-  - eapply sstep_cfg_exit; eassumption.
-  - eapply sstep_cfg_killed; eassumption.
-  - eapply sstep_cfg_syscall_unmodeled; eassumption.
+  intros vms vmodel vx8 ve vst k1 k2 k3. apply (cr2_sstep_lift _ _ _ k2).
+  intros vy veff vm' vevs k4 k5 k6. cbn [cfg_ms cfg_model] in *.
+  rewrite k1 in k4. injection k4 as k7. subst vy.
+  exact (proj2 (k3 veff vm' vevs k5 k6) k6).
+Qed.
+
+(* An admitted, still-running outcome of the filtered spec is an outcome of
+   the spec that the filter keeps. *)
+Lemma cr2_acfg_running : forall i m eff m' evs,
+  syscall_spec_acfg i m (Ok eff m' evs) -> m_halted m' = None ->
+  syscall_spec i m (Ok eff m' evs) /\ ~ spurious_refusal_cfg ACFG i m eff.
+Proof.
+  intros vi vm veff vm' vevs [k1 k2] k3. exact (conj k1 (k2 k3)).
 Qed.
 
 Lemma sstep_cfg_syscall_acfg : forall ms model x8 eff model' model'' evs,
@@ -349,8 +457,9 @@ Lemma sstep_cfg_syscall_acfg : forall ms model x8 eff model' model'' evs,
   sstep_cfg segs ACFG (mkCfg ms model) evs
             (SNext (mkCfg (advance_past_svc (apply_effect ms eff)) model'')).
 Proof.
-  intros ms model x8 eff model' model'' evs Hh Hsvc [Hspec Hok] Hh' Hmat.
-  eapply sstep_cfg_syscall; try eassumption. exact (Hok Hh').
+  intros vms vmodel vx8 veff vmodel' vmodel'' vevs k1 k2 k3 k4 k5.
+  destruct (cr2_acfg_running _ _ _ _ _ k3 k4) as [k6 k7].
+  exact (sstep_cfg_syscall segs ACFG vms vmodel vx8 veff vmodel' vmodel'' vevs k1 k2 k6 k7 k4 k5).
 Qed.
 
 Lemma sstep_cfg_syscall_mf_acfg : forall ms model x8 eff model' evs,
@@ -361,8 +470,10 @@ Lemma sstep_cfg_syscall_mf_acfg : forall ms model x8 eff model' evs,
   materialize_model_accesses model' (syscall_effect_accesses eff) = None ->
   sstep_cfg segs ACFG (mkCfg ms model) [] SError.
 Proof.
-  intros ms model x8 eff model' evs Hh Hsvc [Hspec Hok] Hh' Hmat.
-  eapply sstep_cfg_syscall_materialization_fault; try eassumption. exact (Hok Hh').
+  intros vms vmodel vx8 veff vmodel' vevs k1 k2 k3 k4 k5.
+  destruct (cr2_acfg_running _ _ _ _ _ k3 k4) as [k6 k7].
+  exact (sstep_cfg_syscall_materialization_fault segs ACFG vms vmodel vx8 veff vmodel' vevs
+           k1 k2 k6 k7 k4 k5).
 Qed.
 
 Lemma sstep_cfg_sys_inv_acfg : forall ms model x8 evs st,
@@ -386,26 +497,38 @@ Lemma sstep_cfg_sys_inv_acfg : forall ms model x8 evs st,
       /\ evs = evs0 ++ [KillEv sig (m_fs model')] /\ st = SNext (mkCfg ms model'))
   \/ (syscall_spec_acfg i model Unmodeled /\ evs = [] /\ st = SError).
 Proof.
-  intros ms model x8 evs st Hsvc Hss. cbv zeta.
-  inversion Hss; subst;
-    try match goal with H : ms_svc_pending ms = None |- _ => rewrite Hsvc in H; discriminate H end;
-    match goal with H : ms_svc_pending ms = Some ?x |- _ => rewrite Hsvc in H; injection H as <- end.
-  - left. eexists _, _, _. split; [split; [eassumption | cbn; intros _; eassumption]|].
-    split; [eassumption|].
-    match goal with H : materialize_model_accesses _ _ = Some _ |- _ => rewrite H end. split; reflexivity.
-  - left. eexists _, _, _. split; [split; [eassumption | cbn; intros _; eassumption]|].
-    split; [eassumption|].
-    match goal with H : materialize_model_accesses _ _ = None |- _ => rewrite H end. split; reflexivity.
-  - right; left. eexists _, _, _, _. split.
-    + split; [eassumption|]. cbn.
-      match goal with H : m_halted ?m = Some _ |- m_halted ?m = None -> _ => intros Hn; rewrite H in Hn; discriminate Hn end.
-    + repeat (split; [eassumption|]). split; reflexivity.
-  - right; right; left. eexists _, _, _, _. split.
-    + split; [eassumption|]. cbn.
-      match goal with H : m_killed ?m = Some _ |- m_halted ?m = None -> _ =>
-        intros Hn; rewrite (m_killed_of_m_halted_none _ Hn) in H; discriminate H end.
-    + repeat (split; [eassumption|]). split; reflexivity.
-  - right; right; right. split; [split; [eassumption | exact I]|]. split; reflexivity.
+  intros vms vmodel vx8 vevs vst k1 k2. cbv zeta.
+  remember (mkCfg vms vmodel) as vc eqn:k3. revert k3.
+  destruct k2 as
+    [ vms2 vmodel2 vms' vmodel' k4 k5 k6
+    | vms2 vmodel2 k4 k5 k6
+    | vms2 vmodel2 k4 k5 k6
+    | vms2 vmodel2 vy veff vmodel' vmodel'' vevs2 k4 k5 k6 k7 k8 k9
+    | vms2 vmodel2 vy veff vmodel' vevs2 k4 k5 k6 k7 k8 k9
+    | vms2 vmodel2 vy veff vmodel' vevs2 vcode k4 k5 k6 k7 k8
+    | vms2 vmodel2 vy veff vmodel' vevs2 vsig k4 k5 k6 k7
+    | vms2 vmodel2 vy k4 k5 k6 ];
+    intros k10; injection k10 as k11 k12; subst vms2 vmodel2;
+    try (rewrite k1 in k5; discriminate k5);
+    rewrite k1 in k5; injection k5 as k13; subst vy.
+  - (* a kept outcome that materializes *)
+    left. exists veff, vmodel', vevs2.
+    split; [exact (conj k6 (fun _ => k7)) |]. split; [exact k8 |].
+    rewrite k9. split; reflexivity.
+  - (* a kept outcome whose materialization faults *)
+    left. exists veff, vmodel', vevs2.
+    split; [exact (conj k6 (fun _ => k7)) |]. split; [exact k8 |].
+    rewrite k9. split; reflexivity.
+  - (* exit: the outcome is halted, so the filter does not apply *)
+    right; left. exists veff, vmodel', vevs2, vcode.
+    split; [split; [exact k6 | intros k14; rewrite k7 in k14; discriminate k14] |].
+    repeat split; assumption.
+  - (* kill: a killed model is halted, so again the filter does not apply *)
+    right; right; left. exists veff, vmodel', vevs2, vsig.
+    split; [split; [exact k6 |] |].
+    + intros k14. rewrite (m_killed_of_m_halted_none vmodel' k14) in k7. discriminate k7.
+    + repeat split; assumption.
+  - right; right; right. split; [exact (conj k6 I) |]. split; reflexivity.
 Qed.
 
 End WithSegs.
@@ -433,6 +556,19 @@ Definition vm_find_base (h : VmMaps) (nZ : Z) : option word :=
 Definition vm_gap_available (h : VmMaps) (nZ : Z) : bool :=
   match vm_find_base h nZ with Some _ => true | None => false end.
 
+(* [vm_base_ok] read as the four facts it tests. *)
+Lemma cr2_vm_base_ok_iff : forall h nZ a,
+  vm_base_ok h nZ a = true <->
+  (bv_unsigned a mod page_size = 0)%Z
+  /\ (0 < bv_unsigned a)%Z
+  /\ (bv_unsigned a + nZ <= alloc_top h)%Z
+  /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
+Proof.
+  intros vh vnZ va. unfold vm_base_ok.
+  rewrite !Bool.andb_true_iff, Z.eqb_eq, Z.ltb_lt, Z.leb_le.
+  tauto.
+Qed.
+
 Lemma vm_base_ok_sound : forall h nZ a,
   vm_base_ok h nZ a = true ->
   (bv_unsigned a mod page_size = 0)%Z
@@ -440,12 +576,7 @@ Lemma vm_base_ok_sound : forall h nZ a,
   /\ (bv_unsigned a + nZ <= alloc_top h)%Z
   /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
-  intros h nZ a H. unfold vm_base_ok in H.
-  apply andb_true_iff in H as [H Hfree].
-  apply andb_true_iff in H as [H Htop].
-  apply andb_true_iff in H as [Halign Hpos].
-  apply Z.eqb_eq in Halign. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
-  repeat split; assumption.
+  intros vh vnZ va. apply cr2_vm_base_ok_iff.
 Qed.
 
 Lemma vm_find_base_sound : forall h nZ a,
@@ -455,26 +586,33 @@ Lemma vm_find_base_sound : forall h nZ a,
   /\ (bv_unsigned a + nZ <= alloc_top h)%Z
   /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
-  intros h nZ a H. unfold vm_find_base in H.
-  apply List.find_some in H as [_ H]. exact (vm_base_ok_sound h nZ a H).
+  intros vh vnZ va k1. unfold vm_find_base in k1.
+  apply vm_base_ok_sound. exact (proj2 (find_some _ _ k1)).
 Qed.
 
 Lemma vm_gap_available_find : forall h nZ,
   vm_gap_available h nZ = true -> exists a, vm_find_base h nZ = Some a.
 Proof.
-  intros h nZ H. unfold vm_gap_available in H.
-  destruct (vm_find_base h nZ) as [a|]; [now exists a | discriminate].
+  intros vh vnZ k1. unfold vm_gap_available in k1.
+  destruct (vm_find_base vh vnZ) as [va |]; [exists va; reflexivity | discriminate k1].
 Qed.
 
 Lemma region_free_false_In : forall maps lo n,
   region_free maps lo n = false ->
   exists a sz, In (a, sz) maps /\ iv_overlap lo n a sz = true.
 Proof.
-  induction maps as [|[b s] r IH]; intros lo n H; [discriminate|].
-  cbn in H. destruct (iv_overlap lo n b s) eqn:Ho.
-  - exists b, s. split; [now left|exact Ho].
-  - cbn in H. destruct (IH lo n H) as (a & sz & Hin & Hov).
-    exists a, sz. split; [now right|exact Hov].
+  intros vmaps vlo vn k1.
+  destruct (existsb (fun vp => iv_overlap vlo vn (fst vp) (snd vp)) vmaps) eqn:k2.
+  - (* some entry is met: name it *)
+    destruct (proj1 (existsb_exists _ _) k2) as ([va vsz] & k3 & k4).
+    exists va, vsz. exact (conj k3 k4).
+  - (* no entry is met: then the region is free, against [k1] *)
+    assert (k3 : region_free vmaps vlo vn = true).
+    { apply region_free_intro. intros va vsz k4.
+      apply Bool.not_true_is_false. intros k5.
+      rewrite (proj2 (existsb_exists _ _) (ex_intro _ (va, vsz) (conj k4 k5))) in k2.
+      discriminate k2. }
+    rewrite k3 in k1. discriminate k1.
 Qed.
 
 Lemma vm_base_ok_step : forall h nZ a,
@@ -483,46 +621,38 @@ Lemma vm_base_ok_step : forall h nZ a,
   \/ exists a', bv_unsigned a' = (bv_unsigned a - page_size)%Z
                 /\ vm_base_ok h nZ a' = true.
 Proof.
-  intros h nZ a Hok.
-  pose proof (vm_base_ok_sound h nZ a Hok) as (Hal & Hpos & Htop & Hfree).
-  pose proof (bv_unsigned_in_range 64 a) as [_ Ha]. unfold bv_modulus in Ha.
-  destruct (Z.eq_dec (bv_unsigned a) page_size) as [Heq|Hne].
-  { left. left. rewrite <- Heq. apply Z_to_bv_bv_unsigned. }
-  assert (Hge : (2 * page_size <= bv_unsigned a)%Z).
-  { unfold page_size in *.
-    pose proof (Z_div_mod_eq_full (bv_unsigned a) 4096). lia. }
-  set (a' := Z_to_bv 64 (bv_unsigned a - page_size)).
-  assert (Ua' : bv_unsigned a' = (bv_unsigned a - page_size)%Z).
-  { subst a'. rewrite Z_to_bv_unsigned. apply bv_wrap_small.
-    unfold bv_modulus, page_size in *. lia. }
-  destruct (vm_base_ok h nZ a') eqn:Hok'.
-  { right. exists a'. split; [exact Ua'|exact Hok']. }
-  left. unfold vm_base_ok in Hok'. rewrite Ua' in Hok'.
-  assert (H1 : ((bv_unsigned a - page_size) mod page_size =? 0)%Z = true)
-    by (apply Z.eqb_eq; rewrite Zminus_mod, Hal, Z_mod_same_full; reflexivity).
-  assert (H2 : (0 <? bv_unsigned a - page_size)%Z = true)
-    by (apply Z.ltb_lt; unfold page_size in *; lia).
-  assert (H3 : (bv_unsigned a - page_size + nZ <=? alloc_top h)%Z = true)
-    by (apply Z.leb_le; unfold page_size in *; lia).
-  rewrite H1, H2, H3 in Hok'. cbn [andb] in Hok'.
-  destruct (region_free_false_In _ _ _ Hok') as (lo & sz & Hin & Hov).
-  pose proof (region_free_In _ _ _ _ _ Hfree Hin) as Hnov.
-  unfold iv_overlap in Hov, Hnov. rewrite Ua' in Hov.
-  apply andb_true_iff in Hov as [O1 O2].
-  apply Z.ltb_lt in O1. apply Z.ltb_lt in O2.
-  apply andb_false_iff in Hnov as [N|N]; apply Z.ltb_ge in N;
-    [|unfold page_size in *; lia].
-  right. apply in_map_iff. exists (lo, sz). split; [|exact Hin].
-  cbn [fst snd].
-  replace (page_round_up_Z (bv_unsigned lo + bv_unsigned sz))
-    with (bv_unsigned a); [apply Z_to_bv_bv_unsigned|].
-  unfold page_round_up_Z, page_size in *.
-  pose proof (Z_div_mod_eq_full (bv_unsigned a) 4096) as Hq.
-  rewrite Hal, Z.add_0_r in Hq.
-  rewrite <- (Z.div_unique_pos (bv_unsigned lo + bv_unsigned sz + 4096 - 1)
-                4096 (bv_unsigned a / 4096)
-                (bv_unsigned lo + bv_unsigned sz + 4096 - 1
-                 - 4096 * (bv_unsigned a / 4096))); lia.
+  intros vh vnZ va k1.
+  destruct (in_dec (fun vx vy => decide (vx = vy)) va (vm_base_candidates vh)) as [k2 | k2];
+    [left; exact k2 | right].
+  destruct (proj1 (cr2_vm_base_ok_iff vh vnZ va) k1) as (k3 & k4 & k5 & k6).
+  pose proof (bv_unsigned_in_range _ va) as k7.
+  assert (k8 : bv_modulus 64 = 18446744073709551616%Z) by reflexivity.
+  rewrite k8 in k7.
+  (* [a] is page-aligned and positive, and it is not the candidate [page_size] itself, so it is at least two pages *)
+  assert (k9 : bv_unsigned va <> page_size).
+  { intros k10. apply k2. left. apply bv_eq. rewrite k10.
+    apply Z_to_bv_small. rewrite k8. unfold page_size. lia. }
+  unfold page_size in *.
+  assert (k11 : (8192 <= bv_unsigned va)%Z) by lia.
+  exists (Z_to_bv 64 (bv_unsigned va - 4096)).
+  assert (k12 : bv_unsigned (Z_to_bv 64 (bv_unsigned va - 4096)) = (bv_unsigned va - 4096)%Z).
+  { apply Z_to_bv_small. rewrite k8. lia. }
+  split; [exact k12 |].
+  apply cr2_vm_base_ok_iff. rewrite k12. unfold page_size.
+  split; [lia |]. split; [lia |]. split; [lia |].
+  (* an entry the lower base would meet ends inside the page below [a],
+     so [a] is that entry's rounded end: a candidate, which it is not *)
+  apply region_free_intro. intros vq vsz k13.
+  apply Bool.not_true_is_false. intros k14.
+  apply k2. right. apply in_map_iff. exists (vq, vsz). split; [| exact k13].
+  pose proof (region_free_In _ _ _ _ _ k6 k13) as k15.
+  unfold iv_overlap in k14, k15. rewrite k12 in k14.
+  rewrite Bool.andb_true_iff, !Z.ltb_lt in k14.
+  rewrite Bool.andb_false_iff, !Z.ltb_ge in k15.
+  cbn [fst snd]. apply bv_eq. unfold page_round_up_Z, page_size.
+  pose proof (bv_unsigned_in_range _ (Z_to_bv 64 vnZ)) as k16.
+  rewrite Z_to_bv_small; [lia |].
+  rewrite k8. lia.
 Qed.
 
 Lemma vm_find_base_complete_aux : forall h nZ k a,
@@ -530,26 +660,35 @@ Lemma vm_find_base_complete_aux : forall h nZ k a,
   vm_base_ok h nZ a = true ->
   exists c, In c (vm_base_candidates h) /\ vm_base_ok h nZ c = true.
 Proof.
-  intros h nZ k. induction k as [|k IH]; intros a Hk Hok.
-  - pose proof (vm_base_ok_sound h nZ a Hok) as (_ & Hpos & _). cbn in Hk. lia.
-  - destruct (vm_base_ok_step h nZ a Hok) as [Hin | (a' & Ua' & Hok')].
-    + exists a. split; assumption.
-    + apply (IH a'); [|exact Hok'].
-      rewrite Ua'. rewrite Nat2Z.inj_succ in Hk. unfold page_size in *. lia.
+  intros vh vnZ vk. unfold page_size.
+  induction vk as [| vj k1]; intros va k2 k3;
+    destruct (vm_base_ok_step vh vnZ va k3) as [k4 | (vb & k4 & k5)];
+    try (exists va; exact (conj k4 k3)).
+  - (* [k] is 0, so [a] lies at or below 0, yet the step puts a [b] a page below it, and no word is negative *)
+    exfalso. pose proof (bv_unsigned_in_range _ vb) as k6. unfold page_size in k4. lia.
+  - apply (k1 vb); [unfold page_size in k4; lia | exact k5].
 Qed.
 
 Lemma vm_find_base_complete : forall h nZ a,
   vm_base_ok h nZ a = true -> vm_gap_available h nZ = true.
 Proof.
-  intros h nZ a Hok.
-  pose proof (bv_unsigned_in_range 64 a) as [Ha _].
-  destruct (vm_find_base_complete_aux h nZ (Z.to_nat (bv_unsigned a)) a)
-    as (c & Hin & Hc); [unfold page_size; lia|exact Hok|].
+  intros vh vnZ va k1.
+  pose proof (bv_unsigned_in_range _ va) as k2.
+  destruct (vm_find_base_complete_aux vh vnZ (Z.to_nat (bv_unsigned va)) va) as (vc & k3 & k4);
+    [unfold page_size; lia | exact k1 |].
   unfold vm_gap_available, vm_find_base.
-  destruct (List.find (vm_base_ok h nZ) (vm_base_candidates h)) eqn:Hf;
-    [reflexivity|exfalso].
-  pose proof (List.find_none _ _ Hf c Hin) as Hn. cbn beta in Hn.
-  rewrite Hc in Hn. discriminate Hn.
+  destruct (find (vm_base_ok vh vnZ) (vm_base_candidates vh)) eqn:k5; [reflexivity |].
+  rewrite (find_none _ _ k5 vc k3) in k4. discriminate k4.
+Qed.
+
+(* A gap is available exactly when some base passes [vm_base_ok]. *)
+Lemma cr2_gap_some_ok : forall h nZ,
+  vm_gap_available h nZ = true <-> exists a, vm_base_ok h nZ a = true.
+Proof.
+  intros vh vnZ. split.
+  - intros k1. destruct (vm_gap_available_find vh vnZ k1) as [va k2].
+    exists va. exact (proj2 (find_some _ _ k2)).
+  - intros [va k1]. exact (vm_find_base_complete vh vnZ va k1).
 Qed.
 
 Lemma vm_gap_available_iff : forall h nZ,
@@ -559,13 +698,8 @@ Lemma vm_gap_available_iff : forall h nZ,
             /\ (bv_unsigned a + nZ <= alloc_top h)%Z
             /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
-  intros h nZ. split.
-  - intros H. apply vm_gap_available_find in H as [a Ha].
-    exists a. exact (vm_find_base_sound h nZ a Ha).
-  - intros (a & Hal & Hpos & Htop & Hfree).
-    apply (vm_find_base_complete h nZ a). unfold vm_base_ok.
-    rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
-      (proj2 (Z.leb_le _ _) Htop), Hfree. reflexivity.
+  intros vh vnZ. rewrite cr2_gap_some_ok.
+  split; intros [va k1]; exists va; apply cr2_vm_base_ok_iff; exact k1.
 Qed.
 
 Definition mmap_grant_refusable (flags : word) (m : Model) (nZ : Z) : bool :=

@@ -230,12 +230,11 @@ Lemma nstep_brk_inv : forall req mo rsp mo' evs,
     /\ rsp = mkEffectU r [] (brk_zeros (Z_to_bv 64 req) r (vm_brk h)) (brk_unmaps r (vm_brk h)) [] []
     /\ evs = [].
 Proof.
-  intros req mo rsp mo' evs H. apply nstep_brk_check in H. destruct rsp as [r ws zs us cs ci]. unfold check_brk in H.
-  destruct ws; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
-  destruct (brk_r_ok mo (Z_to_bv 64 req) r) eqn:E1; [|discriminate].
-  destruct (listNN_eqb zs _) eqn:E2; [|discriminate]. destruct (listNN_eqb us _) eqn:E3; [|discriminate].
-  cbn [andb] in H. inversion H; subst. apply listNN_eqb_eq in E2. apply listNN_eqb_eq in E3. subst.
-  exists r. split; [exact E1|]. repeat split; reflexivity.
+  intros req mo rsp mo' evs Step h.
+  destruct (proj1 (nstep_brk_spec req mo rsp mo' evs) Step) as (NoEvents & Outcome & _).
+  destruct (proj1 (brk_outcome _ _ _ _) Outcome) as (ret & RetOk & Same).
+  injection Same as SameRsp SameModel SameEvs.
+  exists ret. refine (conj RetOk (conj SameModel (conj SameRsp NoEvents))).
 Qed.
 
 Lemma m_vmmaps_with_brk_next' : forall mo req r,
@@ -347,62 +346,62 @@ Lemma nstep_mmap_fixed_inv : forall a mo rsp mo' evs,
   | FxLost e => False
   end.
 Proof.
-  intros a mo rsp mo' evs h aw n Htop Ha Hc Hal Hrf Hmc H.
-  pose proof alloc_ceiling_lt as Hcl.
-  assert (Hnr : mmap_noreserve_b (Z_to_bv 64 MAPFX) = false) by reflexivity.
-  pose proof (nstep_mm_vm_only (NMmap a PGSZ PROT_NONE MAPFX) mo rsp mo' evs Hnr H) as (Hv & -> & _). split; [reflexivity|]. split; [exact Hv|].
-  assert (Haw : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; unfold PGSZ in *; lia).
-  assert (Hn : bv_unsigned n = PGSZ) by (subst n; apply unsigned_lit; unfold PGSZ; lia).
-  assert (RED : forall e, check_mmap aw (Z_to_bv 64 PGSZ) (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 (-1)) (Z_to_bv 64 0) e mo =
-    match e with
-    | mkEffectU r [] [] us [] [] =>
-        if errno_ret_in mmap_errnos r
-        then match us with
-             | [] => CheckOk mo []
-             | _ => if listNN_eqb us [(aw, n)]
-                    then CheckOk (with_mmap_destroyed aw n (mmap_fixed_destroyed_next h aw n) mo) []
-                    else CheckReject
-             end
-        else if bv_eqb r aw && listNN_eqb us [(aw, n)]
-        then CheckOk (with_mmap_replacement (Z_to_bv 64 MAPFX) aw n
-               (with_vmmaps (mkVmMapsFull (vm_reserved h) (vm_maps h) ((aw, n) :: maps_subtract (vm_noaccess h) a (a + PGSZ))
-                                          (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)) []
-        else CheckReject
-    | _ => CheckReject
-    end).
-  { intros e. unfold check_mmap.
-    change (mmap_off_aligned_b (Z_to_bv 64 0)) with true.
-    change (mmap_anon_b (Z_to_bv 64 MAPFX)) with true. cbn [negb].
-    rewrite w_is0_lit by (unfold PGSZ; lia). change (PGSZ =? 0) with false.
-    change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with false.
-    change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with false.
-    change (mmap_fixed_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0)) with true.
-    cbv iota beta. fold h. rewrite (unsigned_lit PGSZ) by (unfold PGSZ; lia).
-    change (page_round_up_Z PGSZ) with PGSZ. fold n. rewrite Haw, Hn.
-    replace (two_pow_64 <=? a + PGSZ) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64, PGSZ in *; lia).
-    rewrite Htop. replace (a + PGSZ <=? alloc_ceiling) with true by (symmetry; apply Z.leb_le; lia). cbn [negb].
-    rewrite page_size_eq, Hal. replace (0 <? a) with true by (symmetry; apply Z.ltb_lt; lia).
-    cbn [Z.eqb negb]. cbv zeta. fold n. rewrite Hrf, Hmc. cbn [andb]. reflexivity. }
-  assert (Hnrf : errno_ret_in mmap_errnos (eff_ret rsp) = false).
-  { eapply (nstep_mmap_nonrefusal_of_grant a PGSZ PROT_NONE MAPFX mo rsp mo' [] (mkEffectU aw [] [] [(aw, n)] [] [])); [exact H| |].
-    - fold aw. rewrite RED. change (errno_ret_in mmap_errnos aw) with (ret_in_errnos [ENOMEM] aw).
-      rewrite ret_in_errnos_ENOMEM_aligned by (rewrite Haw, page_size_eq; exact Hal).
-      rewrite !bv_eqb_refl. rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
-    - cbn [eff_ret]. change (errno_ret_in mmap_errnos aw) with (ret_in_errnos [ENOMEM] aw).
-      apply ret_in_errnos_ENOMEM_aligned. rewrite Haw, page_size_eq. exact Hal. }
-  apply nstep_mmap_check in H; [|exact Hnr]. fold aw in H. rewrite RED in H.
-  destruct rsp as [r ws zs us cs ci]. cbn [eff_ret] in Hnrf.
-  destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
-  rewrite Hnrf in H.
-  change (mmap_len PGSZ) with PGSZ. fold n. clear Haw.
-  destruct (bv_eqb r aw && listNN_eqb us [(aw, n)]) eqn:E; [|discriminate]. inversion H; subst.
-  apply andb_prop in E as [E1 E2]. apply bv_eqb_eq in E1. apply listNN_eqb_eq in E2. subst r us.
-  exists FxDone. split.
-  + unfold dec_mmap_fixed. clear Hn. subst aw n. rewrite !bv_eqb_refl. cbn [andb].
-    change (mmap_len PGSZ) with PGSZ. rewrite ?bv_eqb_refl. cbn [andb].
-    rewrite errno_of_lit by (unfold PGSZ in *; lia). reflexivity.
-  + unfold with_mmap_replacement. rewrite m_vmmaps_with_mmap_backing_plain by exact Hnr.
-    rewrite m_vmmaps_vm_forget_range. reflexivity.
+  intros a mo rsp mo' evs h aw n AtTop APos AFits AAligned ResvFree MapsHave Step.
+  pose proof alloc_ceiling_lt as CeilBound.
+  assert (AwVal : bv_unsigned aw = a) by (apply unsigned_lit; unfold PGSZ in AFits; lia).
+  assert (NoRes : mmap_noreserve_b (Z_to_bv 64 MAPFX) = false) by reflexivity.
+  destruct (nstep_mm_vm_only (NMmap a PGSZ PROT_NONE MAPFX) mo rsp mo' evs NoRes Step) as (Shape & NoEvents & _).
+  assert (NWidth : bv_unsigned n = 4096) by reflexivity.
+  assert (Rounded : page_round_up_Z (bv_unsigned n) = 4096) by (rewrite NWidth; reflexivity).
+  assert (OffOk : mmap_off_aligned_b (Z_to_bv 64 0) = true) by reflexivity.
+  assert (AnonOk : mmap_anon_b (Z_to_bv 64 MAPFX) = true) by reflexivity.
+  assert (LenNonzero : w_is0 n = false) by reflexivity.
+  assert (NotPlain : mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0) = false) by reflexivity.
+  assert (NotFloating : mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0) = false) by reflexivity.
+  assert (FixedNone : mmap_fixed_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 0) = true) by reflexivity.
+  assert (NoWrap : (two_pow_64 <=? a + 4096) = false) by (apply Z.leb_gt; unfold two_pow_64; unfold PGSZ in AFits; lia).
+  assert (BelowTop : (a + 4096 <=? alloc_top h) = true) by (apply Z.leb_le; rewrite AtTop; unfold PGSZ in AFits; lia).
+  assert (PageAligned : (a mod page_size =? 0) = true) by (apply Z.eqb_eq; exact AAligned).
+  assert (NonNull : (0 <? a) = true) by (apply Z.ltb_lt; exact APos).
+  assert (Placeable : region_free (vm_reserved h) aw n && map_contains (vm_maps h) aw n = true)
+    by (rewrite ResvFree, MapsHave; reflexivity).
+  set (Mrep := with_mmap_replacement (Z_to_bv 64 MAPFX) aw n
+         (with_vmmaps (mkVmMapsFull (vm_reserved h) (vm_maps h) ((aw, n) :: maps_subtract (vm_noaccess h) a (a + 4096))
+                         (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)).
+  assert (Exact : forall eff mo2 evs2, errno_ret_in mmap_errnos (eff_ret eff) = false ->
+    check_mmap aw n (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPFX) (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo = CheckOk mo2 evs2 <->
+    eff = mkEffectU aw [] [] [(aw, n)] [] [] /\ mo2 = Mrep /\ evs2 = []).
+  { intros eff mo2 evs2 Clean.
+    unfold check_mmap. cbv zeta. fold h.
+    rewrite OffOk, AnonOk, LenNonzero, NotPlain, NotFloating, FixedNone, Rounded, AwVal.
+    change (Z_to_bv 64 4096) with n. cbn [negb].
+    rewrite NoWrap, BelowTop, PageAligned, NonNull, Placeable, NWidth. cbn [negb].
+    destruct eff as [ret writes zeros unmaps copies copyins]. cbn [eff_ret] in Clean.
+    split.
+    - intros Accepted.
+      destruct writes; [|discriminate Accepted]. destruct zeros; [|discriminate Accepted].
+      destruct copies; [|discriminate Accepted]. destruct copyins; [|discriminate Accepted].
+      rewrite Clean in Accepted.
+      destruct (bv_eqb ret aw && listNN_eqb unmaps [(aw, n)]) eqn:Hit; [|discriminate Accepted].
+      apply andb_prop in Hit as [RetHit UnmapHit].
+      apply bv_eqb_eq in RetHit. apply listNN_eqb_eq in UnmapHit. subst ret unmaps.
+      injection Accepted as ModelIs EventsAre. subst mo2 evs2. repeat split.
+    - intros (EffIs & ModelIs & EventsAre). subst mo2 evs2.
+      injection EffIs as RetIs WritesAre ZerosAre UnmapsAre CopiesAre CopyinsAre.
+      subst ret writes zeros unmaps copies copyins.
+      rewrite Clean. cbn [listNN_eqb]. rewrite !bv_eqb_refl. reflexivity. }
+  assert (AwClean : errno_ret_in mmap_errnos aw = false).
+  { apply errno_ret_in_below; [reflexivity|]. rewrite AwVal. unfold two_pow_64. unfold PGSZ in AFits. lia. }
+  pose proof (proj2 (Exact (mkEffectU aw [] [] [(aw, n)] [] []) Mrep [] AwClean) (conj eq_refl (conj eq_refl eq_refl))) as Granted.
+  pose proof (nstep_mmap_nonrefusal_of_grant _ _ _ _ _ _ _ _ _ _ _ Step Granted AwClean) as RspClean.
+  destruct (proj1 (Exact rsp mo' evs RspClean) (nstep_mmap_check _ _ _ _ _ _ _ _ NoRes Step)) as (RspIs & Mo'Is & _).
+  assert (AwNoErrno : errno_of aw = None).
+  { unfold errno_of. rewrite AwVal. destruct (Z.leb_spec0 (2^64 - 4095) a) as [Big|Small]; [lia| reflexivity]. }
+  refine (conj NoEvents (conj Shape (ex_intro _ FxDone (conj _ _)))).
+  - rewrite RspIs. unfold dec_mmap_fixed. cbv beta iota.
+    change (Z_to_bv 64 (mmap_len PGSZ)) with n. change (Z_to_bv 64 a) with aw.
+    rewrite AwNoErrno, !bv_eqb_refl. reflexivity.
+  - cbv beta iota. rewrite Mo'Is. reflexivity.
 Qed.
 
 End WithCeiling.
@@ -1146,33 +1145,37 @@ Lemma nstep_mprotect_rgfalse : forall addr len mo rsp mo' evs,
   nstep (NMprotect addr len (PROT_READ + PROT_WRITE)) mo rsp mo' evs ->
   dec_mprotect addr len rsp = Some (RgDone false) -> False.
 Proof.
-  intros addr len mo rsp mo' evs h a n Ha Hlen Hlen2 Hcn H Hd.
-  pose proof (mmap_len_bound len Hlen) as Hb.
-  assert (Hrf : region_free (vm_noaccess h) a n = false).
-  { destruct (region_free (vm_noaccess h) a n) eqn:E; [|reflexivity]. exfalso.
-    eapply map_contains_not_free; [| exact Hcn | exact E]. unfold n. rewrite unsigned_lit by lia. lia. }
-  apply nstep_mprotect_iff in H. destruct H as [H Hnrf]. unfold check_mprotect in H.
-  fold a h in H. rewrite (unsigned_lit len) in H by lia. fold (mmap_len len) in H. fold n in H.
-  change (mprotect_grows_conflict_b (Z_to_bv 64 (PROT_READ + PROT_WRITE))) with false in H.
-  change (mprotect_modeled_b (Z_to_bv 64 (PROT_READ + PROT_WRITE))) with true in H. cbn [negb] in H. cbv iota in H.
-  destruct (negb (bv_unsigned a mod page_size =? 0)%Z).
-  { apply check_ret_only_ok_iff in H as (-> & -> & _).
-    unfold dec_mprotect in Hd. cbn in Hd. rewrite errno_of_errno_ret in Hd by (unfold EINVAL; lia). discriminate. }
-  rewrite w_is0_lit in H by lia. replace (len =? 0)%Z with false in H by (symmetry; apply Z.eqb_neq; lia).
-  destruct (two_pow_64 <=? _)%Z.
-  { apply check_ret_only_ok_iff in H as (-> & -> & _).
-    unfold dec_mprotect in Hd. cbn in Hd. rewrite errno_of_errno_ret in Hd by (unfold ENOMEM; lia). discriminate. }
-  cbv zeta in H. rewrite Hcn, Hrf in H. cbn [andb] in H.
-  destruct (map_contains (vm_maps h) a n) eqn:Hcm; [|discriminate].
-  destruct rsp as [r ws zs us cs ci]. cbn [eff_ret] in Hnrf.
-  change (ret_in_errnos mprotect_errnos r) with (errno_ret_in mprotect_errnos r) in Hnrf.
-  destruct ws; [|discriminate]. destruct us; [|destruct zs; discriminate].
-  destruct cs; [|destruct zs; discriminate]. destruct ci; [|destruct zs; discriminate].
-  rewrite Hnrf in H.
-  + destruct (mprotect_budget_ok mo a n && w_is0 r && listNN_eqb zs [(a, n)]) eqn:E; [|discriminate].
-    apply andb_prop in E as [E E2]. apply andb_prop in E as [E0 E1]. apply listNN_eqb_eq in E2. subst zs.
-    unfold dec_mprotect in Hd.
-    destruct ((bv_unsigned r =? 0) && bv_eqb a (Z_to_bv 64 addr) && bv_eqb n (Z_to_bv 64 (mmap_len len))); discriminate.
+  intros addr len mo rsp mo' evs h a n AddrRange LenPos LenFits NoAccessHas Step Decoded.
+  pose proof (mmap_len_ge len LenPos) as LenBelow.
+  destruct (proj1 (nstep_mprotect_iff _ _ _ _ _ _ _) Step) as [Checked NotRefused].
+  assert (LenVal : bv_unsigned (Z_to_bv 64 len) = len) by (apply unsigned_lit; lia).
+  assert (NoConflict : mprotect_grows_conflict_b (Z_to_bv 64 (PROT_READ + PROT_WRITE)) = false) by reflexivity.
+  assert (RwModeled : mprotect_modeled_b (Z_to_bv 64 (PROT_READ + PROT_WRITE)) = true) by reflexivity.
+  assert (LenNonzero : w_is0 (Z_to_bv 64 len) = false) by (apply w_is0_pos; lia).
+  unfold check_mprotect in Checked.
+  rewrite NoConflict, RwModeled, LenNonzero, LenVal in Checked. cbv zeta in Checked.
+  fold (mmap_len len) in Checked. fold h a n in Checked.
+  destruct (bv_unsigned a mod page_size =? 0) eqn:Aligned; cbn [negb] in Checked.
+  2: { apply check_ret_only_ok_iff in Checked as (RspIs & _ & _). rewrite RspIs in Decoded.
+       unfold dec_mprotect in Decoded. cbv beta iota zeta in Decoded.
+       change (errno_of (errno_ret EINVAL)) with (Some EINVAL) in Decoded. discriminate Decoded. }
+  destruct (two_pow_64 <=? bv_unsigned a + mmap_len len) eqn:Overflow.
+  { apply check_ret_only_ok_iff in Checked as (RspIs & _ & _). rewrite RspIs in NotRefused.
+    cbn [eff_ret] in NotRefused. rewrite ret_in_errnos_errno in NotRefused; [discriminate NotRefused| apply in_eq]. }
+  rewrite NoAccessHas in Checked.
+  destruct (map_contains (vm_maps h) a n) eqn:MapsHas; cbn [andb] in Checked; [|discriminate Checked].
+  destruct rsp as [ret writes zeros unmaps copies copyins]. cbn [eff_ret] in NotRefused.
+  destruct writes; [|discriminate Checked]. destruct unmaps; [|discriminate Checked].
+  destruct copies; [|discriminate Checked]. destruct copyins; [|discriminate Checked].
+  change (errno_ret_in mprotect_errnos ret) with (ret_in_errnos mprotect_errnos ret) in Checked.
+  rewrite NotRefused in Checked.
+  destruct (mprotect_budget_ok mo a n && w_is0 ret && listNN_eqb zeros [(a, n)]) eqn:Granted; [|discriminate Checked].
+  apply andb_prop in Granted as [Granted ZerosHit]. apply andb_prop in Granted as [_ RetZero].
+  apply bv_eqb_eq in RetZero. apply listNN_eqb_eq in ZerosHit. subst ret zeros.
+  unfold dec_mprotect in Decoded. cbv beta iota zeta in Decoded.
+  change (errno_of (Z_to_bv 64 0)) with (@None Z) in Decoded.
+  change (Z_to_bv 64 addr) with a in Decoded. change (Z_to_bv 64 (mmap_len len)) with n in Decoded.
+  rewrite !bv_eqb_refl in Decoded. discriminate Decoded.
 Qed.
 
 Lemma ev_mprotect_ok : forall L G s0 b l k, frame_ok G -> brk_quiet L -> In (b, l, k) (ld_metas L) ->

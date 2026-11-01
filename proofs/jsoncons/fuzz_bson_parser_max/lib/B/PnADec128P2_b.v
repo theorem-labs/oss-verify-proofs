@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From OssFuzzTheorems.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BigLinkZA.   (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
@@ -187,64 +187,54 @@ Lemma adkD1_conc fx R M (V : nat -> Z) :
         /\ bv_unsigned (getr R' (reg 14)) = (Z.land ((V 36%nat) / 4294967296) 1610612736)
         /\ (((Z.land ((V 36%nat) / 4294967296) 1610612736) - 1610612736) mod 2 ^ 64) < 1)).
 Proof.
-  intros pvzI1 pvzI2 pvzI3 pvzI4 pvzI5 pvzI6 pvzI7 G2 G8 G9 G10 G11 G18 G19 G20 G23 G24 G26 G27 G30 pvzI8 K1 K2 pvzI9 K4 K5 K6 K7 K8 K9 pvzI10 pvzI11.
-  pose proof (proj1 pvzI1) as HV2l; move HV2l before pvzI1; pose proof (proj2 pvzI1) as HV2r; move HV2r before pvzI1; clear pvzI1. pose proof (proj1 pvzI2) as HV33l; move HV33l before pvzI2; pose proof (proj2 pvzI2) as HV33r; move HV33r before pvzI2; clear pvzI2. pose proof (proj1 pvzI3) as HV34l; move HV34l before pvzI3; pose proof (proj2 pvzI3) as HV34r; move HV34r before pvzI3; clear pvzI3. pose proof (proj1 pvzI4) as HV35l; move HV35l before pvzI4; pose proof (proj2 pvzI4) as HV35r; move HV35r before pvzI4; clear pvzI4. pose proof (proj1 pvzI5) as HV36l; move HV36l before pvzI5; pose proof (proj2 pvzI5) as HV36r; move HV36r before pvzI5; clear pvzI5. pose proof (proj1 pvzI6) as HV38l; move HV38l before pvzI6; pose proof (proj2 pvzI6) as HV38r; move HV38r before pvzI6; clear pvzI6. pose proof (proj1 pvzI7) as HV50l; move HV50l before pvzI7; pose proof (proj2 pvzI7) as HV50r; move HV50r before pvzI7; clear pvzI7. pose proof (proj1 pvzI8) as K0l; move K0l before pvzI8; pose proof (proj2 pvzI8) as K0r; move K0r before pvzI8; clear pvzI8. pose proof (proj1 pvzI9) as K3l; move K3l before pvzI9; pose proof (proj2 pvzI9) as K3r; move K3r before pvzI9; clear pvzI9. pose proof (proj1 pvzI10) as K10l; move K10l before pvzI10; pose proof (proj2 pvzI10) as K10r; move K10r before pvzI10; clear pvzI10. pose proof (proj1 pvzI11) as K11l; move K11l before pvzI11; pose proof (proj2 pvzI11) as K11r; move K11r before pvzI11; clear pvzI11.
-  set (vz_2 := V 2%nat) in *. set (vz_33 := V 33%nat) in *. set (vz_34 := V 34%nat) in *. set (vz_35 := V 35%nat) in *. set (vz_36 := V 36%nat) in *. set (vz_38 := V 38%nat) in *. set (vz_50 := V 50%nat) in *.
-  set (E := Env (fun j : nat => match j with 2%nat => Z_to_bv 64 vz_2 | 33%nat => Z_to_bv 64 vz_33 | 34%nat => Z_to_bv 64 vz_34 | 35%nat => Z_to_bv 64 vz_35 | 36%nat => Z_to_bv 64 vz_36 | 38%nat => Z_to_bv 64 vz_38 | 50%nat => Z_to_bv 64 vz_50 | _ => getr R (reg j) end) (fun _ => [])).
-  set (VzN := (fun j : nat => match j with 2%nat => vz_2 | 33%nat => vz_33 | 34%nat => vz_34 | 35%nat => vz_35 | 36%nat => vz_36 | 38%nat => vz_38 | 50%nat => vz_50 | _ => bv_unsigned (getr R (reg j)) end)).
-  assert (ZA : forall j, bv_unsigned (ev E j) = VzN j).
-  { unfold VzN. BigLinkZA.za_tac0 51%nat. }
-  assert (HR: regs_ok E PadkD1.regs0 R). { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PadkD1.regs0 nth]. apc_norm. repeat split; slotP ZA. }
-  assert (HK: know_ok RSEGS E M PadkD1.kn0).
-  { unfold know_ok, PadkD1.kn0.
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K9) | exact (conj K0l K0r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K9) | clear; lia | exact K1]. }
-    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K9) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r K9; lia | clear - HV2l HV2r K0l K0r K9; lia | clear - HV2l HV2r K0l K0r K9; lia | exactA K2]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV34l HV34r K3l K3r K5 K9) | exact (conj K3l K3r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV34l HV34r K3l K3r K5 K9) | clear; lia | exact K4]. }
-    apply Forall_cons. { eapply L5K.kentry_KDisj; [evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear - HV34l HV34r K3l K3r K5 K9) | evalEk ZA ltac:(clear) | generalize K5; clear; intro; lia]. }
-    apply Forall_cons. { eapply L5KA.kentry_KZero; [evalEk ZA ltac:(clear - HV34l HV34r K3l K3r K5 K9) | evalEk ZA ltac:(clear) | clear - HV34l HV34r K3l K3r K5 K9; lia | clear - HV34l HV34r K3l K3r K5 K9; lia | clear - HV34l HV34r K3l K3r K5 K9; lia | exactA K6]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV34l HV34r K3l K3r K5 K9) | evalEk ZA ltac:(clear - HV35l HV35r) | clear - HV34l HV34r K3l K3r K5 K9; lia | clear - HV34l HV34r K3l K3r K5 K9; lia | exactA K7]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV34l HV34r K3l K3r K5 K9) | evalEk ZA ltac:(clear - HV36l HV36r) | clear - HV34l HV34r K3l K3r K5 K9; lia | clear - HV34l HV34r K3l K3r K5 K9; lia | exactA K8]. }
-    apply Forall_cons. { eapply L5K.kentry_KDisj; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K9) | evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear - HV34l HV34r K3l K3r K5 K9) | evalEk ZA ltac:(clear) | generalize K9; clear; intro; lia]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K10l K10r K11l K11r) | exact (conj K10l K10r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K10l K10r K11l K11r HV38l HV38r) | exact (conj K11l K11r)]. }
-    apply Forall_nil. }
-  pvz_hg ltac:(idtac; destruct (PadkD1.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & kk & ps & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr)).
-  change PadkD1.NX0 with 80%nat in Hag.
-  exists fx', R', M'. pvz_linconj. split. exact Hgr.
-  assert (FRW: forall a : word, M' a = M a).
-  { intros a. apply Hfr. unfold PadkD1.F0.
-    apply L5K.outside_nil_e. }
-  split. exact FRW.
-  split. { intros i Hi. apply FRW; rewrite ?BG.unsigned_lit by exact Hi; assumption. }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. left.
-    change (SR.ps_pc PadkD1.ps0) with 0xb40a4 in Hms. change (SR.ps_regs PadkD1.ps0) with (map (fun i => (i, nth i PadkD1.regs_out0 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkD1.ps0) with PadkD1.cells0 in Hcells. unfold PadkD1.cells0 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkD1.regs0 PadkD1.regs_out0 80 KS_adkD1_0 KS_adkD1_0_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkD1.regs_out0 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out0 E' R' 11 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out0 E' R' 12 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out0]. (L5K.evalB' ZA Hag; pvz_unfold ZA). den_tac. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out0 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out0 E' R' 14 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out0]. (L5K.evalB' ZA Hag; pvz_unfold ZA). den_tac. }
-    (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end).
-  }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. right. 
-    change (SR.ps_pc PadkD1.ps1) with 0xb4994 in Hms. change (SR.ps_regs PadkD1.ps1) with (map (fun i => (i, nth i PadkD1.regs_out1 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkD1.ps1) with PadkD1.cells1 in Hcells. unfold PadkD1.cells1 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkD1.regs0 PadkD1.regs_out1 80 KS_adkD1_1 KS_adkD1_1_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkD1.regs_out1 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out1 E' R' 11 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out1 E' R' 12 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out1 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD1.regs_out1 E' R' 14 Hregs) by (clear; lia). cbn [nth PadkD1.regs_out1]. (L5K.evalB' ZA Hag; pvz_unfold ZA). den_tac. }
-    (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end).
-  }
-  destruct kk; cbn in Hnth; discriminate.
+  intros wd2 wd33 wd34 wd35 wd36 wd38 wd50 r2 r8 r9 r10 r11 r18 r19 r20 r23 r24 r26 r27 r30
+    rg2 al2 wr2 rg34 al34 dj34sh zs34 u35 u36 dj34sp rg33 rg38.
+  set (val := fun j : nat => match j with
+    | 2%nat | 33%nat | 34%nat | 35%nat | 36%nat | 38%nat | 50%nat => V j
+    | k => bv_unsigned (getr R (reg k)) end).
+  set (Ein := {| ev := fun j : nat => match j with
+    | 2%nat | 33%nat | 34%nat | 35%nat | 36%nat | 38%nat | 50%nat => Z_to_bv 64 (V j)
+    | k => getr R (reg k) end; eb := fun _ : nat => [] |}).
+  assert (val_ok : forall j, bv_unsigned (ev Ein j) = val j).
+  { intros j. unfold val, Ein. cbn [ev].
+    do 51 (destruct j as [|j]; [lazy beta iota; first [reflexivity | apply BG.unsigned_lit; assumption] |]).
+    reflexivity. }
+  assert (regs_in : regs_ok Ein PadkD1.regs0 R).
+  { apply BG.regs_ok_of_slots; [reflexivity|]. cbn [PadkD1.regs0 tl BG.slots].
+    repeat (apply conj; [slotP val_ok|]). exact I. }
+  assert (kn_in : know_ok RSEGS Ein M PadkD1.kn0).
+  { unfold know_ok, PadkD1.kn0. repeat apply Forall_cons; [..|apply Forall_nil].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg2].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al2].
+    - eapply L5K.kentry_KWr; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA wr2]; lazy beta iota; lia.
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg34].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al34].
+    - eapply L5K.kentry_KDisj; [evalEk val_ok (lazy beta iota) .. | lazy beta iota; lia].
+    - eapply L5KA.kentry_KZero; [evalEk val_ok (lazy beta iota; zfacts) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA zs34];
+        lazy beta iota; zfacts; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u35]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u36]; lazy beta iota; lia.
+    - eapply L5K.kentry_KDisj; [evalEk val_ok (lazy beta iota) .. | lazy beta iota; lia].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg33].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg38]. }
+  destruct (PadkD1.seg_sound_ax fx Ein R M regs_in kn_in ltac:(constructor))
+    as (fx1 & E1 & R1 & M1 & k & post & pick & agree & run & outs & _ & _ & frame & cells & grows).
+  assert (same : forall a, M1 a = M a) by (intros a; apply frame, L5K.outside_nil_e).
+  assert (d36 : bv_unsigned (ev E1 36) = V 36%nat).
+  { change (ev E1 36) with (edenot E1 (EVar 36)). evalEk' val_ok agree (lazy beta iota). }
+  cbn [PadkD1.PSS PadkD1.SXALL map app] in pick.
+  exists fx1, R1, M1. split; [exact grows|]. split; [exact same|]. split; [intros i _; apply same|].
+  destruct (L5K.nth_error_pair _ _ _ _ pick) as [[-> ->] | [-> ->]]; [left | right].
+  all: cbn [SR.ps_pc SR.ps_regs SR.ps_cells PadkD1.ps0 PadkD1.ps1 PadkD1.cells0 PadkD1.cells1] in run, outs, cells.
+  all: split; [exact run|].
+  all: split; [eapply BG.kept_regs; [| exact regs_in | exact agree | exact outs]; first [exact KS_adkD1_0_ok | exact KS_adkD1_1_ok]|].
+  all: repeat (split; [rewrite (BG.out_reg _ _ _ _ outs) by lia; L5K.norm_expr;
+    first [ wordP' val_ok agree
+          | evalEk' val_ok agree (zp_norm; pose proof (Z.mod_pos_bound (32768 * V 36%nat) 18446744073709551616 ltac:(lia)); zfacts)
+          | cbn [edenot]; rewrite u_and64, u_srl64, d36, !BG.unsigned_lit by lia; reflexivity ]|]).
+  all: pose proof (L5K.range_of_KRange _ _ _ _ _ _ _ (cells _ (or_introl eq_refl)) eq_refl) as flag;
+    cbn [edenot] in flag; rewrite u_sltu64, u_sub64, u_and64, u_srl64, d36, !BG.unsigned_lit in flag by lia;
+    revert flag; case Z.ltb_spec; intros c f; first [exact c | lia].
 Qed.
 (* [comment removed for export] *)
 
@@ -383,174 +373,87 @@ Lemma adkD2_conc fx R M (V : nat -> Z) :
         /\ L5.u32_at RSEGS M' ((V 2%nat) - 132) (V 36%nat)
         /\ L5.u32_at RSEGS M' ((V 2%nat) - 136) ((((16384 * (V 37%nat)) mod 2 ^ 64) + (Z.land (V 39%nat) 16383)) mod 2 ^ 64))).
 Proof.
-  intros pvzI1 pvzI2 pvzI3 pvzI4 pvzI5 pvzI6 pvzI7 pvzI8 pvzI9 G2 G8 G9 G10 G11 G12 G13 G18 G19 G20 G23 G24 G26 G27 G30 pvzI10 K1 K2 K3 pvzI11 pvzI12 pvzI13 pvzI14 pvzI15 pvzI16.
-  pose proof (proj1 pvzI1) as HV2l; move HV2l before pvzI1; pose proof (proj2 pvzI1) as HV2r; move HV2r before pvzI1; clear pvzI1. pose proof (proj1 pvzI2) as HV33l; move HV33l before pvzI2; pose proof (proj2 pvzI2) as HV33r; move HV33r before pvzI2; clear pvzI2. pose proof (proj1 pvzI3) as HV34l; move HV34l before pvzI3; pose proof (proj2 pvzI3) as HV34r; move HV34r before pvzI3; clear pvzI3. pose proof (proj1 pvzI4) as HV35l; move HV35l before pvzI4; pose proof (proj2 pvzI4) as HV35r; move HV35r before pvzI4; clear pvzI4. pose proof (proj1 pvzI5) as HV36l; move HV36l before pvzI5; pose proof (proj2 pvzI5) as HV36r; move HV36r before pvzI5; clear pvzI5. pose proof (proj1 pvzI6) as HV37l; move HV37l before pvzI6; pose proof (proj2 pvzI6) as HV37r; move HV37r before pvzI6; clear pvzI6. pose proof (proj1 pvzI7) as HV38l; move HV38l before pvzI7; pose proof (proj2 pvzI7) as HV38r; move HV38r before pvzI7; clear pvzI7. pose proof (proj1 pvzI8) as HV39l; move HV39l before pvzI8; pose proof (proj2 pvzI8) as HV39r; move HV39r before pvzI8; clear pvzI8. pose proof (proj1 pvzI9) as HV50l; move HV50l before pvzI9; pose proof (proj2 pvzI9) as HV50r; move HV50r before pvzI9; clear pvzI9. pose proof (proj1 pvzI10) as K0l; move K0l before pvzI10; pose proof (proj2 pvzI10) as K0r; move K0r before pvzI10; clear pvzI10. pose proof (proj1 pvzI11) as K4l; move K4l before pvzI11; pose proof (proj2 pvzI11) as K4r; move K4r before pvzI11; clear pvzI11. pose proof (proj1 pvzI12) as K5l; move K5l before pvzI12; pose proof (proj2 pvzI12) as K5r; move K5r before pvzI12; clear pvzI12. pose proof (proj1 pvzI13) as K6l; move K6l before pvzI13; pose proof (proj2 pvzI13) as K6r; move K6r before pvzI13; clear pvzI13. pose proof (proj1 pvzI14) as K7l; move K7l before pvzI14; pose proof (proj2 pvzI14) as K7r; move K7r before pvzI14; clear pvzI14. pose proof (proj1 pvzI15) as K8l; move K8l before pvzI15; pose proof (proj2 pvzI15) as K8r; move K8r before pvzI15; clear pvzI15. pose proof (proj1 pvzI16) as K9l; move K9l before pvzI16; pose proof (proj2 pvzI16) as K9r; move K9r before pvzI16; clear pvzI16.
-  set (vz_2 := V 2%nat) in *. set (vz_33 := V 33%nat) in *. set (vz_34 := V 34%nat) in *. set (vz_35 := V 35%nat) in *. set (vz_36 := V 36%nat) in *. set (vz_37 := V 37%nat) in *. set (vz_38 := V 38%nat) in *. set (vz_39 := V 39%nat) in *. set (vz_50 := V 50%nat) in *.
-  set (E := Env (fun j : nat => match j with 2%nat => Z_to_bv 64 vz_2 | 33%nat => Z_to_bv 64 vz_33 | 34%nat => Z_to_bv 64 vz_34 | 35%nat => Z_to_bv 64 vz_35 | 36%nat => Z_to_bv 64 vz_36 | 37%nat => Z_to_bv 64 vz_37 | 38%nat => Z_to_bv 64 vz_38 | 39%nat => Z_to_bv 64 vz_39 | 50%nat => Z_to_bv 64 vz_50 | _ => getr R (reg j) end) (fun _ => [])).
-  set (VzN := (fun j : nat => match j with 2%nat => vz_2 | 33%nat => vz_33 | 34%nat => vz_34 | 35%nat => vz_35 | 36%nat => vz_36 | 37%nat => vz_37 | 38%nat => vz_38 | 39%nat => vz_39 | 50%nat => vz_50 | _ => bv_unsigned (getr R (reg j)) end)).
-  assert (ZA : forall j, bv_unsigned (ev E j) = VzN j).
-  { unfold VzN. BigLinkZA.za_tac0 51%nat. }
-  assert (HR: regs_ok E PadkD2.regs0 R). { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PadkD2.regs0 nth]. apc_norm. repeat split; slotP ZA. }
-  assert (HK: know_ok RSEGS E M PadkD2.kn0).
-  { unfold know_ok, PadkD2.kn0.
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | exact (conj K0l K0r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | clear; lia | exact K1]. }
-    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K2]. }
-    apply Forall_cons. { eapply L5K.kentry_KImg; [clear; lia | clear; lia | exact K3]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV39l HV39r K4l K4r) | exact (conj K4l K4r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV37l HV37r K5l K5r) | exact (conj K5l K5r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV50l HV50r K6l K6r) | exact (conj K6l K6r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K7l K7r K9l K9r) | exact (conj K7l K7r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV34l HV34r K8l K8r) | exact (conj K8l K8r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K7l K7r K9l K9r HV38l HV38r) | exact (conj K9l K9r)]. }
-    apply Forall_nil. }
-  pvz_hg ltac:(idtac; destruct (PadkD2.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & kk & ps & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr)).
-  change PadkD2.NX0 with 80%nat in Hag.
-  exists fx', R', M'. pvz_linconj. split. exact Hgr.
-  assert (FRW: forall a : word, ~ ((vz_2 - 240) <= bv_unsigned a < (vz_2 - 240) + 64) -> ~ ((vz_2 - 168) <= bv_unsigned a < (vz_2 - 168) + 8) -> ~ ((vz_2 - 136) <= bv_unsigned a < (vz_2 - 136) + 16) -> M' a = M a).
-  { intros a Hn0 Hn1 Hn2. apply Hfr. unfold PadkD2.F0.
-    eapply L5K.outside_cons_e; [evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear - HV2l HV2r K0l K0r Hn0; lia |].
-    eapply L5K.outside_cons_e; [evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear - HV2l HV2r K0l K0r Hn1; lia |].
-    eapply L5K.outside_cons_e; [evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear - HV2l HV2r K0l K0r Hn2; lia |].
+  intros wd2 wd33 wd34 wd35 wd36 wd37 wd38 wd39 wd50 r2 r8 r9 r10 r11 r12 r13 r18 r19 r20 r23 r24 r26 r27 r30
+    rg2 al2 wr2 img rg39 rg37 rg50 rg33 rg34 rg38.
+  set (Ein := {| ev := fun j : nat => match j with
+    | 2%nat => Z_to_bv 64 (V 2%nat) | 33%nat => Z_to_bv 64 (V 33%nat) | 34%nat => Z_to_bv 64 (V 34%nat)
+    | 35%nat => Z_to_bv 64 (V 35%nat) | 36%nat => Z_to_bv 64 (V 36%nat) | 37%nat => Z_to_bv 64 (V 37%nat)
+    | 38%nat => Z_to_bv 64 (V 38%nat) | 39%nat => Z_to_bv 64 (V 39%nat) | 50%nat => Z_to_bv 64 (V 50%nat)
+    | _ => getr R (reg j) end; eb := fun _ : nat => [] |}).
+  set (val := fun j : nat => match j with
+    | 2%nat | 33%nat | 34%nat | 35%nat | 36%nat | 37%nat | 38%nat | 39%nat | 50%nat => V j
+    | k => bv_unsigned (getr R (reg k)) end).
+  assert (val_ok : forall j, bv_unsigned (ev Ein j) = val j).
+  { intros j. unfold val, Ein. cbn [ev].
+    do 51 (destruct j as [|j]; [lazy beta iota; first [reflexivity | apply BG.unsigned_lit; assumption] |]).
+    reflexivity. }
+  assert (regs_in : regs_ok Ein PadkD2.regs0 R).
+  { apply BG.regs_ok_of_slots; [reflexivity|]. cbn [PadkD2.regs0 tl BG.slots].
+    repeat (apply conj; [slotP val_ok|]). exact I. }
+  assert (kn_in : know_ok RSEGS Ein M PadkD2.kn0).
+  { unfold know_ok, PadkD2.kn0. repeat apply Forall_cons; [..|apply Forall_nil].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg2].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al2].
+    - eapply L5K.kentry_KWr; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA wr2]; lazy beta iota; lia.
+    - apply L5K.kentry_KImg; [lia | lia | exact img].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg39].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg37].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg50].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg33].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg34].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg38]. }
+  destruct (PadkD2.seg_sound_ax fx Ein R M regs_in kn_in ltac:(constructor))
+    as (fx1 & E1 & R1 & M1 & k & post & pick & agree & run & outs & _ & _ & frame & cells & grows).
+  assert (keep : forall a : word, ~ (V 2%nat - 240 <= bv_unsigned a < V 2%nat - 240 + 64) ->
+            ~ (V 2%nat - 168 <= bv_unsigned a < V 2%nat - 168 + 8) ->
+            ~ (V 2%nat - 136 <= bv_unsigned a < V 2%nat - 136 + 16) -> M1 a = M a).
+  { intros a o240 o168 o136. apply frame. cbn [PadkD2.F0].
+    apply (L5K.outside_cons_e _ _ _ _ _ _ (V 2%nat) 64);
+      [evalEk' val_ok agree (lazy beta iota) | evalEk' val_ok agree (lazy beta iota) | exact o240 |].
+    apply (L5K.outside_cons_e _ _ _ _ _ _ (V 2%nat) 8);
+      [evalEk' val_ok agree (lazy beta iota) | evalEk' val_ok agree (lazy beta iota) | exact o168 |].
+    apply (L5K.outside_cons_e _ _ _ _ _ _ (V 2%nat) 16);
+      [evalEk' val_ok agree (lazy beta iota) | evalEk' val_ok agree (lazy beta iota) | exact o136 |].
     apply L5K.outside_nil_e. }
-  split. exact FRW.
-  split. { intros i Hi Hn0 Hn1 Hn2. apply FRW; rewrite ?BG.unsigned_lit by exact Hi; assumption. }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. left.
-    change (SR.ps_pc PadkD2.ps0) with 0xb425c in Hms. change (SR.ps_regs PadkD2.ps0) with (map (fun i => (i, nth i PadkD2.regs_out0 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkD2.ps0) with PadkD2.cells0 in Hcells. unfold PadkD2.cells0 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkD2.regs0 PadkD2.regs_out0 80 KS_adkD2_0 KS_adkD2_0_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkD2.regs_out0 E' R' 5 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out0 E' R' 11 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out0 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out0 E' R' 14 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out0 E' R' 15 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out0 E' R' 16 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out0 E' R' 17 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | rewrite (BG.edenot_kept 80 E E' _ Hag) by (vm_compute; reflexivity); subst E; reflexivity]. }
-    split. { (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 1%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end). }
-    split. { eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 2%nat); reflexivity | rewrite (BG.edenot_kept 80 E E' _ Hag) by (vm_compute; reflexivity); subst E; reflexivity]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 3%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 4%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 5%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV36l HV36r) | clear; lia]. }
-    eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 6%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | (L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac | clear; lia].
-  }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. right. left.
-    change (SR.ps_pc PadkD2.ps1) with 0xb4164 in Hms. change (SR.ps_regs PadkD2.ps1) with (map (fun i => (i, nth i PadkD2.regs_out1 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkD2.ps1) with PadkD2.cells1 in Hcells. unfold PadkD2.cells1 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkD2.regs0 PadkD2.regs_out1 80 KS_adkD2_1 KS_adkD2_1_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 5 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 11 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 12 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 14 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 15 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 16 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 17 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 19 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 20 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 22 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 23 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 25 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 26 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out1 E' R' 27 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 1%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 2%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 3%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 4%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 5%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV33l HV33r K7l K7r K9l K9r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 6%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV38l HV38r K9l K9r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 7%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV39l HV39r K4l K4r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 8%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. }
-    split. { eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 9%nat); reflexivity | rewrite (BG.edenot_kept 80 E E' _ Hag) by (vm_compute; reflexivity); subst E; reflexivity]. }
-    split. { (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 10%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end). }
-    split. { eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 11%nat); reflexivity | rewrite (BG.edenot_kept 80 E E' _ Hag) by (vm_compute; reflexivity); subst E; reflexivity]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 12%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 13%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 14%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV36l HV36r) | clear; lia]. }
-    eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 15%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | (L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac | clear; lia].
-  }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. right. right. left.
-    change (SR.ps_pc PadkD2.ps2) with 0xb4164 in Hms. change (SR.ps_regs PadkD2.ps2) with (map (fun i => (i, nth i PadkD2.regs_out2 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkD2.ps2) with PadkD2.cells2 in Hcells. unfold PadkD2.cells2 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkD2.regs0 PadkD2.regs_out2 80 KS_adkD2_2 KS_adkD2_2_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 5 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 11 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 12 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 14 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 15 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 16 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 17 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 19 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 20 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 22 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 23 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 25 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 26 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out2 E' R' 27 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out2]. first [reflexivity | wordP' ZA Hag]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 1%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 2%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 3%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 4%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 5%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV33l HV33r K7l K7r K9l K9r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 6%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV38l HV38r K9l K9r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 7%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV39l HV39r K4l K4r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 8%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. }
-    split. { (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 9%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end). }
-    split. { eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 10%nat); reflexivity | rewrite (BG.edenot_kept 80 E E' _ Hag) by (vm_compute; reflexivity); subst E; reflexivity]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 11%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 12%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 13%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV36l HV36r) | clear; lia]. }
-    eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 14%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | (L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac | clear; lia].
-  }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. right. right. right. 
-    change (SR.ps_pc PadkD2.ps3) with 0xb4164 in Hms. change (SR.ps_regs PadkD2.ps3) with (map (fun i => (i, nth i PadkD2.regs_out3 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkD2.ps3) with PadkD2.cells3 in Hcells. unfold PadkD2.cells3 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkD2.regs0 PadkD2.regs_out3 80 KS_adkD2_3 KS_adkD2_3_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 5 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 11 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 12 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 14 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. (L5K.evalB' ZA Hag; pvz_unfold ZA). den_tac. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 15 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 16 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 17 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 19 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 20 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 22 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 23 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 25 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 26 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkD2.regs_out3 E' R' 27 Hregs) by (clear; lia). cbn [nth PadkD2.regs_out3]. first [reflexivity | wordP' ZA Hag]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 1%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 2%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 3%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV50l HV50r K6l K6r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 4%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 5%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV33l HV33r K7l K7r K9l K9r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 6%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV38l HV38r K9l K9r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 7%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV39l HV39r K4l K4r) | clear; lia]. }
-    split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 8%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. }
-    split. { eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 9%nat); reflexivity | rewrite (BG.edenot_kept 80 E E' _ Hag) by (vm_compute; reflexivity); subst E; reflexivity]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 10%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 11%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV35l HV35r) | clear; lia]. }
-    split. { eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 12%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear - HV36l HV36r) | clear; lia]. }
-    eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 13%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | (L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac | clear; lia].
-  }
-  destruct kk; cbn in Hnth; discriminate.
+  assert (d35 : bv_unsigned (ev E1 35) = V 35%nat).
+  { change (ev E1 35) with (edenot E1 (EVar 35)). evalEk' val_ok agree (lazy beta iota). }
+  assert (d37 : bv_unsigned (ev E1 37) = V 37%nat).
+  { change (ev E1 37) with (edenot E1 (EVar 37)). evalEk' val_ok agree (lazy beta iota). }
+  assert (d39 : bv_unsigned (ev E1 39) = V 39%nat).
+  { change (ev E1 39) with (edenot E1 (EVar 39)). evalEk' val_ok agree (lazy beta iota). }
+  exists fx1, R1, M1. split; [exact grows|]. split; [exact keep|].
+  split. { intros i wi o240 o168 o136. apply keep; rewrite BG.unsigned_lit by exact wi; assumption. }
+  cbn [PadkD2.PSS PadkD2.SXALL map app] in pick.
+  destruct k as [|[|[|[|k]]]]; cbn [nth_error] in pick; [..|destruct k; discriminate].
+  all: injection pick as <-.
+  all: cbn [SR.ps_pc SR.ps_regs SR.ps_cells PadkD2.ps0 PadkD2.ps1 PadkD2.ps2 PadkD2.ps3
+            PadkD2.cells0 PadkD2.cells1 PadkD2.cells2 PadkD2.cells3] in run, outs, cells.
+  4: right; right; right. 3: right; right; left. 2: right; left. 1: left.
+  all: pose proof (proj2 (Forall_forall _ _) cells) as cs;
+    repeat (apply Forall_cons_iff in cs as [?c cs]).
+  all: split; [exact run|].
+  all: split; [eapply BG.kept_regs; [| exact regs_in | exact agree | exact outs];
+    first [exact KS_adkD2_0_ok | exact KS_adkD2_1_ok | exact KS_adkD2_2_ok | exact KS_adkD2_3_ok]|].
+  all: repeat (split; [rewrite (BG.out_reg _ _ _ _ outs) by lia; L5K.norm_expr;
+    first [ wordP' val_ok agree
+          | cbn [edenot]; rewrite u_add64, u_mul64, u_and64, d37, d39, !BG.unsigned_lit by lia; reflexivity ]|]).
+  all: repeat match goal with |- ?x <= ?y /\ ?y <= ?z => fail 1 | |- _ /\ _ => split end.
+  all: try match goal with c : kentry_ok _ _ _ (KWord _ 8 _) |- L5.u64_at _ _ _ _ =>
+    eapply (u64_of_KWord8a _ _ _ _ _ _ _ _ c);
+      [evalEk' val_ok agree (lazy beta iota) | evalEk' val_ok agree (lazy beta iota; zfacts) | lazy beta iota; lia] end.
+  all: try match goal with c : kentry_ok _ _ _ (KWord _ 4 _) |- L5.u32_at _ _ _ _ =>
+    eapply (u32_of_KWord4a _ _ _ _ _ _ _ _ c);
+      [ evalEk' val_ok agree (lazy beta iota)
+      | first [ evalEk' val_ok agree (lazy beta iota; zfacts)
+              | cbn [edenot]; rewrite u_add64, u_mul64, u_and64, d37, d39, !BG.unsigned_lit by lia; reflexivity ]
+      | lazy beta iota; lia ] end.
+  all: try (rewrite (edenot_agree _ _ _ _ agree) by (vm_compute; reflexivity);
+    match goal with c : kentry_ok _ _ _ (KRange ?e ?lo ?hi) |- ?lo <= bv_unsigned (edenot _ ?e) <= ?hi =>
+      exact (L5K.range_of_KRange _ _ _ _ _ _ _ c eq_refl) end).
+  all: match goal with c : kentry_ok _ _ _ (KRange (EAlu ALU_SLTU (EAlu ALU_SUB (EAlu ALU_SRL _ _) _) _) _ _) |- _ =>
+      pose proof (L5K.range_of_KRange _ _ _ _ _ _ _ c eq_refl) as flag end;
+    cbn [edenot] in flag; rewrite u_sltu64, u_sub64, u_srl64, d35, !BG.unsigned_lit in flag by lia;
+    revert flag; case Z.ltb_spec; intros q f; first [exact q | lia].
 Qed.
 (* [comment removed for export] *)
 
@@ -599,81 +502,57 @@ Lemma adkZ1_conc fx R M (V : nat -> Z) :
         /\ getr R' (reg 30) = Z_to_bv 64 (V 38%nat)
         /\ 1 <= (((V 55%nat) - 0) mod 2 ^ 64))).
 Proof.
-  intros pvzI1 pvzI2 pvzI3 pvzI4 pvzI5 pvzI6 G2 G8 G9 G18 pvzI7 K1 K2 pvzI8 pvzI9 pvzI10 K6 pvzI11 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17.
-  pose proof (proj1 pvzI1) as HV2l; move HV2l before pvzI1; pose proof (proj2 pvzI1) as HV2r; move HV2r before pvzI1; clear pvzI1. pose proof (proj1 pvzI2) as HV33l; move HV33l before pvzI2; pose proof (proj2 pvzI2) as HV33r; move HV33r before pvzI2; clear pvzI2. pose proof (proj1 pvzI3) as HV38l; move HV38l before pvzI3; pose proof (proj2 pvzI3) as HV38r; move HV38r before pvzI3; clear pvzI3. pose proof (proj1 pvzI4) as HV50l; move HV50l before pvzI4; pose proof (proj2 pvzI4) as HV50r; move HV50r before pvzI4; clear pvzI4. pose proof (proj1 pvzI5) as HV55l; move HV55l before pvzI5; pose proof (proj2 pvzI5) as HV55r; move HV55r before pvzI5; clear pvzI5. pose proof (proj1 pvzI6) as HV59l; move HV59l before pvzI6; pose proof (proj2 pvzI6) as HV59r; move HV59r before pvzI6; clear pvzI6. pose proof (proj1 pvzI7) as K0l; move K0l before pvzI7; pose proof (proj2 pvzI7) as K0r; move K0r before pvzI7; clear pvzI7. pose proof (proj1 pvzI8) as K3l; move K3l before pvzI8; pose proof (proj2 pvzI8) as K3r; move K3r before pvzI8; clear pvzI8. pose proof (proj1 pvzI9) as K4l; move K4l before pvzI9; pose proof (proj2 pvzI9) as K4r; move K4r before pvzI9; clear pvzI9. pose proof (proj1 pvzI10) as K5l; move K5l before pvzI10; pose proof (proj2 pvzI10) as K5r; move K5r before pvzI10; clear pvzI10. pose proof (proj1 pvzI11) as K7l; move K7l before pvzI11; pose proof (proj2 pvzI11) as K7r; move K7r before pvzI11; clear pvzI11.
-  set (vz_2 := V 2%nat) in *. set (vz_33 := V 33%nat) in *. set (vz_38 := V 38%nat) in *. set (vz_50 := V 50%nat) in *. set (vz_55 := V 55%nat) in *. set (vz_59 := V 59%nat) in *.
-  set (E := Env (fun j : nat => match j with 2%nat => Z_to_bv 64 vz_2 | 33%nat => Z_to_bv 64 vz_33 | 38%nat => Z_to_bv 64 vz_38 | 50%nat => Z_to_bv 64 vz_50 | 55%nat => Z_to_bv 64 vz_55 | 59%nat => Z_to_bv 64 vz_59 | _ => getr R (reg j) end) (fun _ => [])).
-  set (VzN := (fun j : nat => match j with 2%nat => vz_2 | 33%nat => vz_33 | 38%nat => vz_38 | 50%nat => vz_50 | 55%nat => vz_55 | 59%nat => vz_59 | _ => bv_unsigned (getr R (reg j)) end)).
-  assert (ZA : forall j, bv_unsigned (ev E j) = VzN j).
-  { unfold VzN. BigLinkZA.za_tac0 60%nat. }
-  assert (HR: regs_ok E PadkZ1.regs0 R). { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PadkZ1.regs0 nth]. apc_norm. repeat split; slotP ZA. }
-  assert (HK: know_ok RSEGS E M PadkZ1.kn0).
-  { unfold know_ok, PadkZ1.kn0.
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | exact (conj K0l K0r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | clear; lia | exact K1]. }
-    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K2]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV50l HV50r K3l K3r) | exact (conj K3l K3r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r) | exact (conj K4l K4r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r HV38l HV38r) | exact (conj K5l K5r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord4; [evalEk ZA ltac:(clear - HV50l HV50r K3l K3r) | evalEk ZA ltac:(clear - HV55l HV55r K7l K7r) | clear - HV50l HV50r K3l K3r; lia | clear - HV50l HV50r K3l K3r; lia | exactA K6]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV55l HV55r K7l K7r) | exact (conj K7l K7r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K8]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV59l HV59r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K9]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV38l HV38r K5l K5r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K10]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K11]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K12]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV50l HV50r K3l K3r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K13]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV50l HV50r K3l K3r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K14]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV50l HV50r K3l K3r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K15]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K16]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV50l HV50r K3l K3r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K17]. }
-    apply Forall_nil. }
-  pvz_hg ltac:(idtac; destruct (PadkZ1.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & kk & ps & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr)).
-  change PadkZ1.NX0 with 80%nat in Hag.
-  exists fx', R', M'. pvz_linconj. split. exact Hgr.
-  assert (FRW: forall a : word, M' a = M a).
-  { intros a. apply Hfr. unfold PadkZ1.F0.
-    apply L5K.outside_nil_e. }
-  split. exact FRW.
-  split. { intros i Hi. apply FRW; rewrite ?BG.unsigned_lit by exact Hi; assumption. }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. left.
-    change (SR.ps_pc PadkZ1.ps0) with 0xb4564 in Hms. change (SR.ps_regs PadkZ1.ps0) with (map (fun i => (i, nth i PadkZ1.regs_out0 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkZ1.ps0) with PadkZ1.cells0 in Hcells. unfold PadkZ1.cells0 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkZ1.regs0 PadkZ1.regs_out0 80 KS_adkZ1_0 KS_adkZ1_0_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 5 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 11 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 17 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 19 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 20 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 23 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 26 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 27 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out0 E' R' 30 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end).
-  }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. right. 
-    change (SR.ps_pc PadkZ1.ps1) with 0xb4294 in Hms. change (SR.ps_regs PadkZ1.ps1) with (map (fun i => (i, nth i PadkZ1.regs_out1 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkZ1.ps1) with PadkZ1.cells1 in Hcells. unfold PadkZ1.cells1 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkZ1.regs0 PadkZ1.regs_out1 80 KS_adkZ1_1 KS_adkZ1_1_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 5 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 17 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 19 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 20 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 23 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 26 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 27 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkZ1.regs_out1 E' R' 30 Hregs) by (clear; lia). cbn [nth PadkZ1.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end).
-  }
-  destruct kk; cbn in Hnth; discriminate.
+  intros wd2 wd33 wd38 wd50 wd55 wd59 r2 r8 r9 r18 rg2 al2 wr2 rg50 rg33 rg38 u55 rg55
+    u240 u232 u224 u216 u208 u200 u192 u184 u176 u168.
+  set (val := fun j : nat => match j with
+    | 2%nat | 33%nat | 38%nat | 50%nat | 55%nat | 59%nat => V j
+    | k => bv_unsigned (getr R (reg k)) end).
+  set (Ein := {| ev := fun j : nat => match j with
+    | 2%nat | 33%nat | 38%nat | 50%nat | 55%nat | 59%nat => Z_to_bv 64 (V j)
+    | k => getr R (reg k) end; eb := fun _ : nat => [] |}).
+  assert (val_ok : forall j, bv_unsigned (ev Ein j) = val j).
+  { intros j. unfold val, Ein. cbn [ev].
+    do 60 (destruct j as [|j]; [lazy beta iota; first [reflexivity | apply BG.unsigned_lit; assumption] |]).
+    reflexivity. }
+  assert (regs_in : regs_ok Ein PadkZ1.regs0 R).
+  { apply BG.regs_ok_of_slots; [reflexivity|]. cbn [PadkZ1.regs0 tl BG.slots].
+    repeat (apply conj; [slotP val_ok|]). exact I. }
+  assert (kn_in : know_ok RSEGS Ein M PadkZ1.kn0).
+  { unfold know_ok, PadkZ1.kn0. repeat apply Forall_cons; [..|apply Forall_nil].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg2].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al2].
+    - eapply L5K.kentry_KWr; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA wr2]; lazy beta iota; lia.
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg50].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg33].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg38].
+    - eapply L5K.kentry_KWord4; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u55];
+        lazy beta iota; lia.
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg55].
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u240]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u232]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u224]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u216]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u208]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u200]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u192]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota; zfacts) | | | lazy beta iota; exactA u184]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u176]; lazy beta iota; lia.
+    - eapply L5K.kentry_KWord8; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u168]; lazy beta iota; lia. }
+  destruct (PadkZ1.seg_sound_ax fx Ein R M regs_in kn_in ltac:(constructor))
+    as (fx1 & E1 & R1 & M1 & k & post & pick & agree & run & outs & _ & _ & frame & cells & grows).
+  assert (same : forall a, M1 a = M a) by (intros a; apply frame, L5K.outside_nil_e).
+  assert (d55 : bv_unsigned (ev E1 55) = V 55%nat).
+  { change (ev E1 55) with (edenot E1 (EVar 55)). evalEk' val_ok agree (lazy beta iota). }
+  cbn [PadkZ1.PSS PadkZ1.SXALL map app] in pick.
+  exists fx1, R1, M1. split; [exact grows|]. split; [exact same|]. split; [intros i _; apply same|].
+  destruct (L5K.nth_error_pair _ _ _ _ pick) as [[-> ->] | [-> ->]]; [left | right].
+  all: cbn [SR.ps_pc SR.ps_regs SR.ps_cells PadkZ1.ps0 PadkZ1.ps1 PadkZ1.cells0 PadkZ1.cells1] in run, outs, cells.
+  all: split; [exact run|].
+  all: split; [eapply BG.kept_regs; [| exact regs_in | exact agree | exact outs]; first [exact KS_adkZ1_0_ok | exact KS_adkZ1_1_ok]|].
+  all: repeat (split; [rewrite (BG.out_reg _ _ _ _ outs) by lia; L5K.norm_expr; wordP' val_ok agree|]).
+  all: pose proof (L5K.range_of_KRange _ _ _ _ _ _ _ (cells _ (or_introl eq_refl)) eq_refl) as flag;
+    cbn [edenot] in flag; rewrite u_sltu64, u_sub64, d55, !BG.unsigned_lit in flag by lia;
+    revert flag; case Z.ltb_spec; intros c f; first [exact c | lia].
 Qed.
 (* [comment removed for export] *)
 
@@ -707,62 +586,52 @@ Lemma adkSC_conc fx R M (V : nat -> Z) :
         /\ getr R' (reg 18) = Z_to_bv 64 (V 52%nat)
         /\ 1 <= (((V 53%nat) - 0) mod 2 ^ 64))).
 Proof.
-  intros pvzI1 pvzI2 pvzI3 pvzI4 pvzI5 pvzI6 pvzI7 pvzI8 G2 G5 G8 G9 G10 G11 G13 G17 G18 G19 G20 G23 G26 G30 pvzI9 K1 K2 pvzI10 pvzI11 pvzI12 pvzI13 K7 K8 K9 pvzI14 pvzI15.
-  pose proof (proj1 pvzI1) as HV2l; move HV2l before pvzI1; pose proof (proj2 pvzI1) as HV2r; move HV2r before pvzI1; clear pvzI1. pose proof (proj1 pvzI2) as HV33l; move HV33l before pvzI2; pose proof (proj2 pvzI2) as HV33r; move HV33r before pvzI2; clear pvzI2. pose proof (proj1 pvzI3) as HV38l; move HV38l before pvzI3; pose proof (proj2 pvzI3) as HV38r; move HV38r before pvzI3; clear pvzI3. pose proof (proj1 pvzI4) as HV50l; move HV50l before pvzI4; pose proof (proj2 pvzI4) as HV50r; move HV50r before pvzI4; clear pvzI4. pose proof (proj1 pvzI5) as HV52l; move HV52l before pvzI5; pose proof (proj2 pvzI5) as HV52r; move HV52r before pvzI5; clear pvzI5. pose proof (proj1 pvzI6) as HV53l; move HV53l before pvzI6; pose proof (proj2 pvzI6) as HV53r; move HV53r before pvzI6; clear pvzI6. pose proof (proj1 pvzI7) as HV54l; move HV54l before pvzI7; pose proof (proj2 pvzI7) as HV54r; move HV54r before pvzI7; clear pvzI7. pose proof (proj1 pvzI8) as HV59l; move HV59l before pvzI8; pose proof (proj2 pvzI8) as HV59r; move HV59r before pvzI8; clear pvzI8. pose proof (proj1 pvzI9) as K0l; move K0l before pvzI9; pose proof (proj2 pvzI9) as K0r; move K0r before pvzI9; clear pvzI9. pose proof (proj1 pvzI10) as K3l; move K3l before pvzI10; pose proof (proj2 pvzI10) as K3r; move K3r before pvzI10; clear pvzI10. pose proof (proj1 pvzI11) as K4l; move K4l before pvzI11; pose proof (proj2 pvzI11) as K4r; move K4r before pvzI11; clear pvzI11. pose proof (proj1 pvzI12) as K5l; move K5l before pvzI12; pose proof (proj2 pvzI12) as K5r; move K5r before pvzI12; clear pvzI12. pose proof (proj1 pvzI13) as K6l; move K6l before pvzI13; pose proof (proj2 pvzI13) as K6r; move K6r before pvzI13; clear pvzI13. pose proof (proj1 pvzI14) as K10l; move K10l before pvzI14; pose proof (proj2 pvzI14) as K10r; move K10r before pvzI14; clear pvzI14. pose proof (proj1 pvzI15) as K11l; move K11l before pvzI15; pose proof (proj2 pvzI15) as K11r; move K11r before pvzI15; clear pvzI15.
-  set (vz_2 := V 2%nat) in *. set (vz_33 := V 33%nat) in *. set (vz_38 := V 38%nat) in *. set (vz_50 := V 50%nat) in *. set (vz_52 := V 52%nat) in *. set (vz_53 := V 53%nat) in *. set (vz_54 := V 54%nat) in *. set (vz_59 := V 59%nat) in *.
-  set (E := Env (fun j : nat => match j with 2%nat => Z_to_bv 64 vz_2 | 33%nat => Z_to_bv 64 vz_33 | 38%nat => Z_to_bv 64 vz_38 | 50%nat => Z_to_bv 64 vz_50 | 52%nat => Z_to_bv 64 vz_52 | 53%nat => Z_to_bv 64 vz_53 | 54%nat => Z_to_bv 64 vz_54 | 59%nat => Z_to_bv 64 vz_59 | _ => getr R (reg j) end) (fun _ => [])).
-  set (VzN := (fun j : nat => match j with 2%nat => vz_2 | 33%nat => vz_33 | 38%nat => vz_38 | 50%nat => vz_50 | 52%nat => vz_52 | 53%nat => vz_53 | 54%nat => vz_54 | 59%nat => vz_59 | _ => bv_unsigned (getr R (reg j)) end)).
-  assert (ZA : forall j, bv_unsigned (ev E j) = VzN j).
-  { unfold VzN. BigLinkZA.za_tac0 60%nat. }
-  assert (HR: regs_ok E PadkSC.regs0 R). { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PadkSC.regs0 nth]. apc_norm. repeat split; slotP ZA. }
-  assert (HK: know_ok RSEGS E M PadkSC.kn0).
-  { unfold know_ok, PadkSC.kn0.
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | exact (conj K0l K0r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | clear; lia | exact K1]. }
-    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K2]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV50l HV50r K3l K3r) | exact (conj K3l K3r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r) | exact (conj K4l K4r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r HV38l HV38r) | exact (conj K5l K5r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV52l HV52r K6l K6r) | exact (conj K6l K6r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV52l HV52r K6l K6r) | clear; lia | exact K7]. }
-    apply Forall_cons. { eapply L5KA.kentry_KZero; [evalEk ZA ltac:(clear - HV52l HV52r K6l K6r) | evalEk ZA ltac:(clear) | clear - HV52l HV52r K6l K6r; lia | clear - HV52l HV52r K6l K6r; lia | clear - HV52l HV52r K6l K6r; lia | exactA K8]. }
-    apply Forall_cons. { eapply L5K.kentry_KWord4; [evalEk ZA ltac:(clear - HV52l HV52r K6l K6r) | evalEk ZA ltac:(clear - HV53l HV53r K10l K10r) | clear - HV52l HV52r K6l K6r; lia | clear - HV52l HV52r K6l K6r; lia | exactA K9]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV53l HV53r K10l K10r) | exact (conj K10l K10r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV54l HV54r K11l K11r) | exact (conj K11l K11r)]. }
-    apply Forall_nil. }
-  pvz_hg ltac:(idtac; destruct (PadkSC.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & kk & ps & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr)).
-  change PadkSC.NX0 with 80%nat in Hag.
-  exists fx', R', M'. pvz_linconj. split. exact Hgr.
-  assert (FRW: forall a : word, M' a = M a).
-  { intros a. apply Hfr. unfold PadkSC.F0.
-    apply L5K.outside_nil_e. }
-  split. exact FRW.
-  split. { intros i Hi. apply FRW; rewrite ?BG.unsigned_lit by exact Hi; assumption. }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. left.
-    change (SR.ps_pc PadkSC.ps0) with 0xb4564 in Hms. change (SR.ps_regs PadkSC.ps0) with (map (fun i => (i, nth i PadkSC.regs_out0 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkSC.ps0) with PadkSC.cells0 in Hcells. unfold PadkSC.cells0 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkSC.regs0 PadkSC.regs_out0 80 KS_adkSC_0 KS_adkSC_0_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkSC.regs_out0 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkSC.regs_out0 E' R' 12 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkSC.regs_out0 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkSC.regs_out0 E' R' 18 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-    (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end).
-  }
-  destruct kk as [|kk].
-  { cbn in Hnth. injection Hnth as Hps. subst ps. right. 
-    change (SR.ps_pc PadkSC.ps1) with 0xb4294 in Hms. change (SR.ps_regs PadkSC.ps1) with (map (fun i => (i, nth i PadkSC.regs_out1 (ELit 0))) (seq 1 31)) in Hregs.
-    change (SR.ps_cells PadkSC.ps1) with PadkSC.cells1 in Hcells. unfold PadkSC.cells1 in Hcells.
-    split. { exact Hms. }
-    split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkSC.regs0 PadkSC.regs_out1 80 KS_adkSC_1 KS_adkSC_1_ok HR Hag Hregs j Hj). }
-    split. { rewrite (BG.out_reg PadkSC.regs_out1 E' R' 10 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkSC.regs_out1 E' R' 12 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkSC.regs_out1 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    split. { rewrite (BG.out_reg PadkSC.regs_out1 E' R' 18 Hregs) by (clear; lia). cbn [nth PadkSC.regs_out1]. first [reflexivity | wordP' ZA Hag]. }
-    (let HR := fresh "HR" in eassert (HR : _ <= _ <= _) by (eapply L5K.range_of_KRange; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | ((L5K.evalB' ZA Hag; pvz_unfold ZA); den_tac)]); revert HR; clear; intro HR; match type of HR with context [Z.ltb ?a ?b] => destruct (Z.ltb_spec0 a b); lia end).
-  }
-  destruct kk; cbn in Hnth; discriminate.
+  intros wd2 wd33 wd38 wd50 wd52 wd53 wd54 wd59 r2 r5 r8 r9 r10 r11 r13 r17 r18 r19 r20 r23 r26 r30
+    rg2 al2 wr2 rg50 rg33 rg38 rg52 al52 zs52 u52 rg53 rg54.
+  set (val := fun j : nat => match j with
+    | 2%nat | 33%nat | 38%nat | 50%nat | 52%nat | 53%nat | 54%nat | 59%nat => V j
+    | k => bv_unsigned (getr R (reg k)) end).
+  set (Ein := {| ev := fun j : nat => match j with
+    | 2%nat | 33%nat | 38%nat | 50%nat | 52%nat | 53%nat | 54%nat | 59%nat => Z_to_bv 64 (V j)
+    | k => getr R (reg k) end; eb := fun _ : nat => [] |}).
+  assert (val_ok : forall j, bv_unsigned (ev Ein j) = val j).
+  { intros j. unfold val, Ein. cbn [ev].
+    do 60 (destruct j as [|j]; [lazy beta iota; first [reflexivity | apply BG.unsigned_lit; assumption] |]).
+    reflexivity. }
+  assert (regs_in : regs_ok Ein PadkSC.regs0 R).
+  { apply BG.regs_ok_of_slots; [reflexivity|]. cbn [PadkSC.regs0 tl BG.slots].
+    repeat (apply conj; [slotP val_ok|]). exact I. }
+  assert (kn_in : know_ok RSEGS Ein M PadkSC.kn0).
+  { unfold know_ok, PadkSC.kn0. repeat apply Forall_cons; [..|apply Forall_nil].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg2].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al2].
+    - eapply L5K.kentry_KWr; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA wr2]; lazy beta iota; lia.
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg50].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg33].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg38].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg52].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al52].
+    - eapply L5KA.kentry_KZero; [evalEk val_ok (lazy beta iota; zfacts) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA zs52];
+        lazy beta iota; zfacts; lia.
+    - eapply L5K.kentry_KWord4; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | lazy beta iota; exactA u52];
+        lazy beta iota; lia.
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg53].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg54]. }
+  destruct (PadkSC.seg_sound_ax fx Ein R M regs_in kn_in ltac:(constructor))
+    as (fx1 & E1 & R1 & M1 & k & post & pick & agree & run & outs & _ & _ & frame & cells & grows).
+  assert (same : forall a, M1 a = M a) by (intros a; apply frame, L5K.outside_nil_e).
+  assert (d53 : bv_unsigned (ev E1 53) = V 53%nat).
+  { change (ev E1 53) with (edenot E1 (EVar 53)). evalEk' val_ok agree (lazy beta iota). }
+  cbn [PadkSC.PSS PadkSC.SXALL map app] in pick.
+  exists fx1, R1, M1. split; [exact grows|]. split; [exact same|]. split; [intros i _; apply same|].
+  destruct (L5K.nth_error_pair _ _ _ _ pick) as [[-> ->] | [-> ->]]; [left | right].
+  all: cbn [SR.ps_pc SR.ps_regs SR.ps_cells PadkSC.ps0 PadkSC.ps1 PadkSC.cells0 PadkSC.cells1] in run, outs, cells.
+  all: split; [exact run|].
+  all: split; [eapply BG.kept_regs; [| exact regs_in | exact agree | exact outs]; first [exact KS_adkSC_0_ok | exact KS_adkSC_1_ok]|].
+  all: repeat (split; [rewrite (BG.out_reg _ _ _ _ outs) by lia; L5K.norm_expr; wordP' val_ok agree|]).
+  all: pose proof (L5K.range_of_KRange _ _ _ _ _ _ _ (cells _ (or_introl eq_refl)) eq_refl) as flag;
+    cbn [edenot] in flag; rewrite u_sltu64, u_sub64, d53, !BG.unsigned_lit in flag by lia;
+    revert flag; case Z.ltb_spec; intros c f; first [exact c | lia].
 Qed.
 (* [comment removed for export] *)
 
@@ -785,46 +654,58 @@ Lemma adkZ0_conc fx R M (V : nat -> Z) :
         /\ getr R' (reg 25) = getr R (reg 25)
         /\ L5.u32_at RSEGS M' ((V 50%nat) + 32) 0).
 Proof.
-  intros pvzI1 pvzI2 pvzI3 pvzI4 pvzI5 G2 G5 G8 G9 G17 G18 G19 G20 G23 G26 G27 G30 pvzI6 K1 K2 pvzI7 pvzI8 pvzI9 pvzI10 K7 K8 K9 K10 K11.
-  pose proof (proj1 pvzI1) as HV2l; move HV2l before pvzI1; pose proof (proj2 pvzI1) as HV2r; move HV2r before pvzI1; clear pvzI1. pose proof (proj1 pvzI2) as HV33l; move HV33l before pvzI2; pose proof (proj2 pvzI2) as HV33r; move HV33r before pvzI2; clear pvzI2. pose proof (proj1 pvzI3) as HV38l; move HV38l before pvzI3; pose proof (proj2 pvzI3) as HV38r; move HV38r before pvzI3; clear pvzI3. pose proof (proj1 pvzI4) as HV50l; move HV50l before pvzI4; pose proof (proj2 pvzI4) as HV50r; move HV50r before pvzI4; clear pvzI4. pose proof (proj1 pvzI5) as HV59l; move HV59l before pvzI5; pose proof (proj2 pvzI5) as HV59r; move HV59r before pvzI5; clear pvzI5. pose proof (proj1 pvzI6) as K0l; move K0l before pvzI6; pose proof (proj2 pvzI6) as K0r; move K0r before pvzI6; clear pvzI6. pose proof (proj1 pvzI7) as K3l; move K3l before pvzI7; pose proof (proj2 pvzI7) as K3r; move K3r before pvzI7; clear pvzI7. pose proof (proj1 pvzI8) as K4l; move K4l before pvzI8; pose proof (proj2 pvzI8) as K4r; move K4r before pvzI8; clear pvzI8. pose proof (proj1 pvzI9) as K5l; move K5l before pvzI9; pose proof (proj2 pvzI9) as K5r; move K5r before pvzI9; clear pvzI9. pose proof (proj1 pvzI10) as K6l; move K6l before pvzI10; pose proof (proj2 pvzI10) as K6r; move K6r before pvzI10; clear pvzI10.
-  set (vz_2 := V 2%nat) in *. set (vz_33 := V 33%nat) in *. set (vz_38 := V 38%nat) in *. set (vz_50 := V 50%nat) in *. set (vz_59 := V 59%nat) in *.
-  set (E := Env (fun j : nat => match j with 2%nat => Z_to_bv 64 vz_2 | 33%nat => Z_to_bv 64 vz_33 | 38%nat => Z_to_bv 64 vz_38 | 50%nat => Z_to_bv 64 vz_50 | 59%nat => Z_to_bv 64 vz_59 | _ => getr R (reg j) end) (fun _ => [])).
-  set (VzN := (fun j : nat => match j with 2%nat => vz_2 | 33%nat => vz_33 | 38%nat => vz_38 | 50%nat => vz_50 | 59%nat => vz_59 | _ => bv_unsigned (getr R (reg j)) end)).
-  assert (ZA : forall j, bv_unsigned (ev E j) = VzN j).
-  { unfold VzN. BigLinkZA.za_tac0 60%nat. }
-  assert (HR: regs_ok E PadkZ0.regs0 R). { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PadkZ0.regs0 nth]. apc_norm. repeat split; slotP ZA. }
-  assert (HK: know_ok RSEGS E M PadkZ0.kn0).
-  { unfold know_ok, PadkZ0.kn0.
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K10) | exact (conj K0l K0r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K10) | clear; lia | exact K1]. }
-    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K10) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r K10; lia | clear - HV2l HV2r K0l K0r K10; lia | clear - HV2l HV2r K0l K0r K10; lia | exactA K2]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | exact (conj K3l K3r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r) | exact (conj K4l K4r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV33l HV33r K4l K4r K5l K5r HV38l HV38r) | exact (conj K5l K5r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | exact (conj K6l K6r)]. }
-    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | clear; lia | exact K7]. }
-    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | evalEk ZA ltac:(clear) | clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11; lia | clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11; lia | clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11; lia | exactA K8]. }
-    apply Forall_cons. { eapply L5K.kentry_KDisj; [evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | evalEk ZA ltac:(clear) | generalize K9; clear; intro; lia]. }
-    apply Forall_cons. { eapply L5K.kentry_KDisj; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r K10) | evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | evalEk ZA ltac:(clear) | generalize K10; clear; intro; lia]. }
-    apply Forall_cons. { eapply L5K.kentry_KDisj; [evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear) | evalEk ZA ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | evalEk ZA ltac:(clear) | generalize K11; clear; intro; lia]. }
-    apply Forall_nil. }
-  pvz_hg ltac:(idtac; destruct (PadkZ0.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & kk & ps & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr)).
-  change PadkZ0.NX0 with 80%nat in Hag.
-  exists fx', R', M'. pvz_linconj. split. exact Hgr.
-  assert (FRW: forall a : word, ~ ((vz_50 + 32) <= bv_unsigned a < (vz_50 + 32) + 4) -> M' a = M a).
-  { intros a Hn0. apply Hfr. unfold PadkZ0.F0.
-    eapply L5K.outside_cons_e; [evalEk' ZA Hag ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | evalEk' ZA Hag ltac:(clear) | clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11 Hn0; lia |].
-    apply L5K.outside_nil_e. }
-  split. exact FRW.
-  split. { intros i Hi Hn0. apply FRW; rewrite ?BG.unsigned_lit by exact Hi; assumption. }
-  apply L5K.nth_error_single in Hnth. subst ps.
-  change (SR.ps_pc PadkZ0.ps0) with 0xb4294 in Hms. change (SR.ps_regs PadkZ0.ps0) with (map (fun i => (i, nth i PadkZ0.regs_out0 (ELit 0))) (seq 1 31)) in Hregs.
-  change (SR.ps_cells PadkZ0.ps0) with PadkZ0.cells0 in Hcells.
-  split. { exact Hms. }
-  split. { intros j Hj. apply (BG.kept_regs E E' R R' PadkZ0.regs0 PadkZ0.regs_out0 80 KS_adkZ0 KS_adkZ0_ok HR Hag Hregs j Hj). }
-  split. { rewrite (BG.out_reg PadkZ0.regs_out0 E' R' 13 Hregs) by (clear; lia). cbn [nth PadkZ0.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
-  split. { rewrite (BG.out_reg PadkZ0.regs_out0 E' R' 25 Hregs) by (clear; lia). cbn [nth PadkZ0.regs_out0]. rewrite (BG.edenot_kept 80 E E' _ Hag) by (vm_compute; reflexivity). reflexivity. }
-  eapply u32_of_KWord4a; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV50l HV50r K3l K3r K6l K6r K9 K10 K11) | evalEk' ZA Hag ltac:(clear) | clear; lia].
+  intros wd2 wd33 wd38 wd50 wd59 r2 r5 r8 r9 r17 r18 r19 r20 r23 r26 r27 r30
+    rg2 al2 wr2 rg50 rg33 rg38 rg50' al50 wr50 dj50sh dj50sp dj50img.
+  set (val := fun j : nat => match j with
+    | 2%nat | 33%nat | 38%nat | 50%nat | 59%nat => V j
+    | k => bv_unsigned (getr R (reg k)) end).
+  set (Ein := {| ev := fun j : nat => match j with
+    | 2%nat | 33%nat | 38%nat | 50%nat | 59%nat => Z_to_bv 64 (V j)
+    | k => getr R (reg k) end; eb := fun _ : nat => [] |}).
+  assert (val_ok : forall j, bv_unsigned (ev Ein j) = val j).
+  { intros j. unfold val, Ein. cbn [ev].
+    do 60 (destruct j as [|j]; [lazy beta iota; first [reflexivity | apply BG.unsigned_lit; assumption] |]).
+    reflexivity. }
+  assert (regs_in : regs_ok Ein PadkZ0.regs0 R).
+  { apply BG.regs_ok_of_slots; [reflexivity|]. cbn [PadkZ0.regs0 tl BG.slots].
+    repeat (apply conj; [slotP val_ok|]). exact I. }
+  assert (kn_in : know_ok RSEGS Ein M PadkZ0.kn0).
+  { unfold know_ok, PadkZ0.kn0. repeat apply Forall_cons; [..|apply Forall_nil].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg2].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al2].
+    - eapply L5K.kentry_KWr; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA wr2]; lazy beta iota; lia.
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg50].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg33].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg38].
+    - eapply L5K.kentry_KRange; [evalEk val_ok (lazy beta iota) | exact rg50'].
+    - eapply L5K.kentry_KAlign; [evalEk val_ok (lazy beta iota) | lia | exact al50].
+    - eapply L5K.kentry_KWr; [evalEk val_ok (lazy beta iota) | evalEk val_ok (lazy beta iota) | | | | lazy beta iota; exactA wr50]; lazy beta iota; lia.
+    - eapply L5K.kentry_KDisj; [evalEk val_ok (lazy beta iota) .. | lazy beta iota; lia].
+    - eapply L5K.kentry_KDisj; [evalEk val_ok (lazy beta iota) .. | lazy beta iota; lia].
+    - eapply L5K.kentry_KDisj; [evalEk val_ok (lazy beta iota) .. | lazy beta iota; lia]. }
+  destruct (PadkZ0.seg_sound_ax fx Ein R M regs_in kn_in ltac:(constructor))
+    as (fx1 & E1 & R1 & M1 & k & post & pick & agree & run & outs & _ & _ & frame & cells & grows).
+  cbn [PadkZ0.PSS PadkZ0.SXALL map app] in pick. apply L5K.nth_error_single in pick. subst post.
+  cbn [SR.ps_pc SR.ps_regs SR.ps_cells PadkZ0.ps0 PadkZ0.cells0] in run, outs, cells.
+  assert (keep : forall a : word, ~ (V 50%nat + 32 <= bv_unsigned a < V 50%nat + 32 + 4) -> M1 a = M a).
+  { intros a off. apply frame. cbn [PadkZ0.F0].
+    apply (L5K.outside_cons_e _ _ _ _ _ _ (V 50%nat) 4).
+    - evalEk' val_ok agree (lazy beta iota).
+    - evalEk' val_ok agree (lazy beta iota).
+    - exact off.
+    - apply L5K.outside_nil_e. }
+  exists fx1, R1, M1.
+  split; [exact grows|]. split; [exact keep|].
+  split. { intros i wi off. apply keep. rewrite BG.unsigned_lit by exact wi. exact off. }
+  split; [exact run|].
+  split. { exact (BG.kept_regs _ _ _ _ _ _ _ _ KS_adkZ0_ok regs_in agree outs). }
+  split. { rewrite (BG.out_reg _ _ _ 13 outs) by lia. reflexivity. }
+  split. { apply (BG.kept_regs _ _ _ _ _ _ _ _ KS_adkZ0_ok regs_in agree outs). apply L5K.in_b. vm_compute. reflexivity. }
+  apply (u32_of_KWord4a E1 M1 (EVar 50) 32 (ELit 0) (V 50%nat)).
+  - apply cells. left. reflexivity.
+  - evalEk' val_ok agree (lazy beta iota).
+  - evalEk' val_ok agree (lazy beta iota).
+  - reflexivity.
 Qed.
 (* [comment removed for export] *)
 

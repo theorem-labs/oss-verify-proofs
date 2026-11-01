@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -34,19 +34,32 @@ Definition A_C10_A : Z := 0xa7d40.     (* [comment removed for export] *)
 Definition A_C11_A : Z := 0xa7d00.     (* [comment removed for export] *)
 Definition A_C18_A : Z := 0xa7d60.     (* [comment removed for export] *)
 
-Lemma fmt_C1_roA : ro_bytes ctasegs A_C1_A (zb FMT_C1). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C2_roA : ro_bytes ctasegs A_C2_A (zb FMT_C2). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C3_roA : ro_bytes ctasegs A_C3_A (zb FMT_C3). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C4_roA : ro_bytes ctasegs A_C4_A (zb FMT_C4). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C5_roA : ro_bytes ctasegs A_C5_A (zb FMT_C5). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C6_roA : ro_bytes ctasegs A_C6_A (zb FMT_C6). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C7_roA : ro_bytes ctasegs A_C7_A (zb FMT_C7). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C8_roA : ro_bytes ctasegs A_C8_A (zb FMT_C8). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C9_roA : ro_bytes ctasegs A_C9_A (zb FMT_C9). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C10_roA : ro_bytes ctasegs A_C10_A (zb FMT_C10). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C11_roA : ro_bytes ctasegs A_C11_A (zb FMT_C11). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma fmt_C18_roA : ro_bytes ctasegs A_C18_A (zb FMT_C18). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
-Lemma empty_lit_roA : ro_bytes ctasegs A_EMPTY_A (zb [] ++ Z_to_bv 8 0 :: zb [0; 0; 0; 0; 0; 0; 0]). Proof. apply ro_bytes_b_sound. vm_compute. reflexivity. Qed.
+Lemma fmt_C1_roA : ro_bytes ctasegs A_C1_A (zb FMT_C1).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C2_roA : ro_bytes ctasegs A_C2_A (zb FMT_C2).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C3_roA : ro_bytes ctasegs A_C3_A (zb FMT_C3).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C4_roA : ro_bytes ctasegs A_C4_A (zb FMT_C4).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C5_roA : ro_bytes ctasegs A_C5_A (zb FMT_C5).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C6_roA : ro_bytes ctasegs A_C6_A (zb FMT_C6).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C7_roA : ro_bytes ctasegs A_C7_A (zb FMT_C7).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C8_roA : ro_bytes ctasegs A_C8_A (zb FMT_C8).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C9_roA : ro_bytes ctasegs A_C9_A (zb FMT_C9).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C10_roA : ro_bytes ctasegs A_C10_A (zb FMT_C10).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C11_roA : ro_bytes ctasegs A_C11_A (zb FMT_C11).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma fmt_C18_roA : ro_bytes ctasegs A_C18_A (zb FMT_C18).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
+Lemma empty_lit_roA : ro_bytes ctasegs A_EMPTY_A (zb [] ++ Z_to_bv 8 0 :: zb [0; 0; 0; 0; 0; 0; 0]).
+Proof. apply ro_bytes_b_sound; vm_cast_no_check (eq_refl true). Qed.
 
 (* [comment removed for export] *)
 Lemma vfmtA_of_pieces : forall A fmt args ps r (g : Z * Z * Z),
@@ -55,13 +68,17 @@ Lemma vfmtA_of_pieces : forall A fmt args ps r (g : Z * Z * Z),
   printf_piecesx fmt args = Some (ps, r) -> r <= 80 -> fp_callsx (length fmt) fmt args = [] -> pcomx_ok fmt args = true -> fmtz_ok fmt = true ->
   vfmtA_ok A fmt args (concat ps).
 Proof.
-  intros A fmt args ps r g RO FB P1 GM G1 G2 A1 A2 P Hr FP PC FZ. pose proof (printf_piecesx_count _ _ _ _ P) as L.
-  split; [exact RO|]. split; [exact FB|]. split; [exact A1|]. split; [exact A2|].
-  split. { intros AR' Σ' OW' LB' m' H. eapply (af_lib_acc_lit _ (@ar_AF AR') Σ' m' g); [exact (@AH_art AR' _ _ _ _ H)| exact GM| exact G1| exact G2]. }
-  split; [exact P1|].
-  split. { rewrite L. apply (printf_modelx_sn _ _ _ _ P). lazymatch goal with |- _ <= ?cap => change (zlength (concat ps) <= cap) end.
-           rewrite L. unfold OssFuzzTheorems.Proofs.openssl.ct.lib.P.F_printf_iface.SN_CAP. clear - Hr. lia. }
-  split; [exact FP|]. split; [exact PC| exact FZ].
+  intros A fmt args ps r g ro_fmt fmt_bytes p1_ok memb_g g_lo g_hi a_lo a_hi pieces_ok out_cap no_fp pcom_ok fmtz.
+  pose proof (printf_piecesx_count fmt args ps r pieces_ok) as out_len.
+  assert (model_ok : printf_modelx OUT_sn OUTFP_sn fmt args [] = ITree.Ret (ITree.Exc.Ok (zlength (concat ps), concat ps))).
+  { rewrite out_len. refine (printf_modelx_sn fmt args ps r pieces_ok _). rewrite out_len. exact out_cap. }
+  assert (acc_fmt : forall (AR' : ARun) (Σ' : rts (@ar_RT AR')) OW' LB' m',
+            @BnHeapA.AHEAP AR' Σ' OW' LB' m' -> acc ctasegs m' A (zlength fmt)).
+  { intros AR' Σ' OW' LB' m' heap.
+    refine (af_lib_acc_lit (@ar_RT AR') ar_AF Σ' m' g A (zlength fmt) _ memb_g g_lo g_hi).
+    eapply AH_art. exact heap. }
+  exact (conj ro_fmt (conj fmt_bytes (conj a_lo (conj a_hi (conj acc_fmt
+           (conj p1_ok (conj model_ok (conj no_fp (conj pcom_ok fmtz))))))))).
 Qed.
 
 Local Ltac vf RO FB P1 g PC n :=

@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -32,9 +32,9 @@ Section INI.
   Hypothesis DSYM : fse_dsym_stmt.
   Hypothesis DSYMF : fse_dsymf_stmt.
   Notation POST := (fse_dec_post ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc SPV DST cap WK wksz lo m).
-  Notation STF pc mm x1 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 :=
-    (MS (mkR x1 (Z_to_bv 64 (SPV + -192)) gp tp x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)
-        F (Z_to_bv 64 pc) fc None mm (seg_rom usegs)).
+  Notation STF ip mem w1 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22 w23 w24 w25 w26 w27 w28 w29 w30 w31 :=
+    (MS (mkR w1 (Z_to_bv 64 (SPV + -192)) gp tp w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22 w23 w24 w25 w26 w27 w28 w29 w30 w31)
+        F (Z_to_bv 64 ip) fc None mem (seg_rom usegs)).
   Notation FDm := (FDU s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra m SPV lo DST cap WK wksz SRCI DT srci tb).
   Notation FDCm := (FDCU s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra m SPV lo DST cap WK wksz SRCI DT srci tb).
   Ltac sec_hyps := first [exact HY | exact LOSU | exact SPA | exact DTA | exact TBL | exact SRCLEN | exact LOS2 | exact OFFWK | exact WKR0
@@ -49,41 +49,40 @@ Section INI.
     mem_inv usegs m1 -> munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1 -> wmono usegs m m1 ->
     0 <= r < 2^64 -> (zd_is_error r = true \/ r <= cap) ->
     evt usegs POST (STF 0x2b964 m1 x1 x5 x6 x7 x8 x9 (Z_to_bv 64 r) x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31).
-  Proof.
-    intros until x31; intros OUT OLEN WKS STK F0 SZ0 FS2 SZ2 FS1 SZ1 FBD SZB FSAV MI MU WM RR RES. clear HY TBL SRCLEN DTA.
-    do 14 zstep.
-    apply stk_of_rw_cells in F0, FS2, FS1, FBD, FSAV. rewrite SZ0 in F0. rewrite SZ2 in FS2. rewrite SZ1 in FS1. rewrite SZB in FBD.
-    cbn [cells_size csize Nat.add] in FSAV.
-    assert (STK' : stk usegs m1 lo SPV).
-    { apply (stk_merge usegs m1 lo (SPV + -192) SPV STK); [|lia].
-      apply (stk_merge usegs m1 (SPV + -192) (SPV + -176) SPV); [replace (SPV + -176) with (SPV + -192 + Z.of_nat 16) by lia; exact F0| |lia].
-      apply (stk_merge usegs m1 (SPV + -176) (SPV + -160) SPV); [replace (SPV + -160) with (SPV + -176 + Z.of_nat 16) by lia; exact FS2| |lia].
-      apply (stk_merge usegs m1 (SPV + -160) (SPV + -144) SPV); [replace (SPV + -144) with (SPV + -160 + Z.of_nat 16) by lia; exact FS1| |lia].
-      apply (stk_merge usegs m1 (SPV + -144) (SPV + -104) SPV); [replace (SPV + -104) with (SPV + -144 + Z.of_nat 40) by lia; exact FBD| |lia].
-      replace SPV with (SPV + -104 + Z.of_nat 104) at 2 by lia. exact FSAV. }
-    assert (DSTS : stk usegs m1 DST (DST + cap)).
-    { apply rw_cells_of_u8arr in OUT. apply stk_of_rw_cells in OUT. cbn [cells_size csize] in OUT.
-      replace (DST + cap) with (DST + Z.of_nat (length out + 0)) by lia. exact OUT. }
-    zstep. apply evt_done. unfold fse_dec_post.
-    do 14 eexists. exists m1, r.
-    split; [reflexivity|]. split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [exact STK'|].
-    split; [exact DSTS|]. split; [exact WKS|]. split; [exact RR| exact RES].
+  Proof using LOSU.
+    clear DTA SRCLEN.
+    intros * out_arr out_len wk_stk lo_stk c0 c0_sz c2 c2_sz c1 c1_sz cb cb_sz saved mi mu wm r_rng r_ok.
+    assert (dst_stk : stk usegs m1 DST (DST + cap)).
+    { pose proof (stk_of_rw_cells _ _ _ _ (rw_cells_of_u8arr _ _ _ _ out_arr)) as raw.
+      cbn [cells_size csize] in raw. rewrite Nat.add_0_r, out_len in raw. exact raw. }
+    assert (grow : forall A B cs, stk usegs m1 lo A -> rw_cells usegs m1 A cs ->
+                     B = A + Z.of_nat (cells_size cs) -> lo <= A -> stk usegs m1 lo B).
+    { intros A B cs below here B_at lo_le. subst B. exact (stk_release _ _ _ _ _ below here lo_le). }
+    assert (frame_free : stk usegs m1 lo SPV).
+    { refine (grow (SPV + -104) _ _ (grow (SPV + -144) _ _ (grow (SPV + -160) _ _
+                (grow (SPV + -176) _ _ (grow (SPV + -192) _ _ lo_stk c0 _ _) c2 _ _) c1 _ _) cb _ _) saved _ _);
+        rewrite ?c0_sz, ?c2_sz, ?c1_sz, ?cb_sz; cbn [cells_size csize Nat.add]; lia. }
+    clear grow.
+    zn. zn. zn. zn. zn. zn. zn. zn. zn. zn. zn. zn. zn. zn. zstep.
+    apply evt_done. unfold fse_dec_post.
+    exists x5, x6, x7, x11, x12, x13, x14, x15, x16, x17, x28, x29, x30, x31, m1, r.
+    split; [reflexivity |].
+    split; [exact mu |]. split; [exact wm |]. split; [exact mi |].
+    split; [exact frame_free |]. split; [exact dst_stk |]. split; [exact wk_stk |].
+    split; [exact r_rng | exact r_ok].
   Qed.
 
   (* [comment removed for export] *)
   Definition FDI (out : list byte) (m1 : fmem) : Prop :=
-    u8arr usegs m1 DST out /\ Z.of_nat (length out) = cap
-    /\ stk usegs m1 WK (WK + wksz)
-    /\ bytes_at usegs m1 SRCI srci
-    /\ bytes_at usegs m1 DT (le2 (Z_to_bv 64 tl))
-    /\ bytes_at usegs m1 (DT + 4) (map (Z_to_bv 8) tb)
-    /\ stk usegs m1 lo (SPV + -192)
-    /\ (exists j0 msv tlw, rw_cells usegs m1 (SPV + -192) [CB 8 j0; C4 msv; C4 tlw])
-    /\ (exists j2, rw_cells usegs m1 (SPV + -176) [CB 16 j2])
-    /\ (exists j1, rw_cells usegs m1 (SPV + -160) [CB 16 j1])
-    /\ (exists jb, rw_cells usegs m1 (SPV + -144) [CB 40 jb])
-    /\ rw_cells usegs m1 (SPV + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
-    /\ mem_inv usegs m1 /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1 /\ wmono usegs m m1.
+    u8arr usegs m1 DST out /\ zlen out = cap /\ stk usegs m1 WK (WK + wksz) /\
+    bytes_at usegs m1 SRCI srci /\ bytes_at usegs m1 DT (le2 (Z_to_bv 64 tl)) /\
+    bytes_at usegs m1 (DT + 4) (map (Z_to_bv 8) tb) /\ stk usegs m1 lo (SPV + -192) /\
+    (exists (hole : list byte) (msv tlw : word), rw_cells usegs m1 (SPV + -192) [CB 8 hole; C4 msv; C4 tlw]) /\
+    (exists sj2 : list byte, rw_cells usegs m1 (SPV + -176) [CB 16 sj2]) /\
+    (exists sj1 : list byte, rw_cells usegs m1 (SPV + -160) [CB 16 sj1]) /\
+    (exists bj : list byte, rw_cells usegs m1 (SPV + -144) [CB 40 bj]) /\
+    rw_cells usegs m1 (SPV + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] /\
+    mem_inv usegs m1 /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1 /\ wmono usegs m m1.
 
   (* [comment removed for export] *)
   Lemma fd1_loop0 : forall m1 out st1 st2 cont bc pad ptr x1 x5 x6 x7 x17 x21 x23 x24 x25 x26 x27 x29 x30 x31,
@@ -102,22 +101,23 @@ Section INI.
 
   (* [comment removed for export] *)
   Definition FDC (out : list byte) (st1 st2 : Z) (cont : word) (bc : Z) (pad : list byte) (ptr : Z) (m1 : fmem) : Prop :=
-    u8arr usegs m1 DST out /\ Z.of_nat (length out) = cap
-    /\ stk usegs m1 WK (WK + wksz)
-    /\ bytes_at usegs m1 SRCI srci
-    /\ bytes_at usegs m1 (DT + 4) (map (Z_to_bv 8) tb)
-    /\ stk usegs m1 lo (SPV + -192)
-    /\ (exists j0 msv tlw, rw_cells usegs m1 (SPV + -192) [CB 8 j0; C4 msv; C4 tlw])
-    /\ rw_cells usegs m1 (SPV + -176) [C8 (Z_to_bv 64 st2); C8 (Z_to_bv 64 (DT + 4))]
-    /\ rw_cells usegs m1 (SPV + -160) [C8 (Z_to_bv 64 st1); C8 (Z_to_bv 64 (DT + 4))]
-    /\ rw_cells usegs m1 (SPV + -144) (bitd_cells cont (Z_to_bv 64 bc) pad ptr SRCI)
-    /\ rw_cells usegs m1 (SPV + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
-    /\ mem_inv usegs m1 /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1 /\ wmono usegs m m1.
+    u8arr usegs m1 DST out /\ zlen out = cap /\ stk usegs m1 WK (WK + wksz) /\ bytes_at usegs m1 SRCI srci /\
+    bytes_at usegs m1 (DT + 4) (map (Z_to_bv 8) tb) /\ stk usegs m1 lo (SPV + -192) /\
+    (exists (hole : list byte) (msv tlw : word), rw_cells usegs m1 (SPV + -192) [CB 8 hole; C4 msv; C4 tlw]) /\
+    rw_cells usegs m1 (SPV + -176) [C8 (Z_to_bv 64 st2); C8 (Z_to_bv 64 (DT + 4))] /\
+    rw_cells usegs m1 (SPV + -160) [C8 (Z_to_bv 64 st1); C8 (Z_to_bv 64 (DT + 4))] /\
+    rw_cells usegs m1 (SPV + -144) (bitd_cells cont (Z_to_bv 64 bc) pad ptr SRCI) /\
+    rw_cells usegs m1 (SPV + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] /\
+    mem_inv usegs m1 /\ munch [(DST, DST + cap); (WK, WK + wksz); (SPV - 448, SPV)] m m1 /\ wmono usegs m m1.
   Ltac open_fdc I := destruct I as (OUT & OLEN & WKS & SRCB & CELB & STK & (fj0 & fmsv & ftlw & F0) & FS2 & FS1 & FBD & FSAV & MI & MU & WM);
                      unfold bitd_cells in FBD.
-  Ltac close_fdc := unfold FDC, bitd_cells; split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; [eassumption|];
-                    split; [eassumption|]; split; [eassumption|]; split; [do 3 eexists; eassumption|]; split; [eassumption|];
-                    split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; [eassumption|]; split; eassumption.
+  Ltac close_fdc :=
+    unfold FDC;
+    repeat lazymatch goal with
+           | |- _ /\ _ => split
+           | |- ex _ => eexists
+           end;
+    eassumption.
 
   (* [comment removed for export] *)
   Lemma fd_nf_25970 : forall m1 out st1 st2 cont bc pad ptr x1 x5 x6 x7 x11 x12 x13 x14 x15 x21 x23 x24 x25 x26 x27 x29 x30 x31,
@@ -127,10 +127,11 @@ Section INI.
       (STF 0x2afa0 m1 x1 x5 x6 x7 (Z_to_bv 64 DST) (Z_to_bv 64 2305843009213693952) (Z_to_bv 64 (SRCI + 8)) x11 x12 x13 x14 x15 (Z_to_bv 64 ptr)
            (Z_to_bv 64 SRCI) (Z_to_bv 64 (DST + cap)) (Z_to_bv 64 65535) (Z_to_bv 64 FBITMASK) x21 (Z_to_bv 64 (DST + cap + -3))
            x23 x24 x25 x26 x27 (Z_to_bv 64 bc) x29 x30 x31).
-  Proof.
-    intros until x31; intros I S1 S2 BCR PV. open_fh HY. pose proof I as I0. open_fdc I0.
-    do 7 zn. zc.
-    eapply fd1_loop0; eassumption.
+  Proof using DSYM HY LOSU OFFWK SPA SRCLEN TBL.
+    intros * fdc_now st1_rng st2_rng bc_rng ptr_ok.
+    pose proof fdc_now as parts. open_fdc parts. open_fh HY.
+    do 7 zn; zc.
+    eapply fd1_loop0; [exact fdc_now | exact st1_rng | exact st2_rng | exact bc_rng | exact ptr_ok].
   Qed.
 
   Lemma fd_nf_ld : forall m1 out st1 st2 cont bc pad ptr x1 x5 x6 x7 x11 x12 x13 x14 x15 x21 x23 x24 x25 x26 x27 x29 x30 x31,
@@ -140,13 +141,25 @@ Section INI.
       (STF 0x2af0c m1 x1 x5 x6 x7 (Z_to_bv 64 DST) (Z_to_bv 64 2305843009213693952) (Z_to_bv 64 (SRCI + 8)) x11 x12 x13 x14 x15 (Z_to_bv 64 ptr)
            (Z_to_bv 64 SRCI) (Z_to_bv 64 (DST + cap)) (Z_to_bv 64 65535) (Z_to_bv 64 FBITMASK) x21 (Z_to_bv 64 (DST + cap + -3))
            x23 x24 x25 x26 x27 (Z_to_bv 64 bc) x29 x30 x31).
-  Proof.
-    intros until x31; intros I S1 S2 BCR PLO PHI PV. open_fh HY. pose proof I as I0. open_fdc I0.
-    pose proof TBL as (TBLEN & TBBY & TBOK).
-    assert (P2 : 1 <= 2^tl <= 512) by (split; [pose proof (Z.pow_pos_nonneg 2 tl ltac:(lia) ltac:(lia)); lia | change 512 with (2^9); apply Z.pow_le_mono_r; lia]).
-    lbyte SRCB. lbyte SRCB. lbyte SRCB. lbyte SRCB. do 4 zstep. lbyte SRCB. lbyte SRCB. zstep. lbyte SRCB. lbyte SRCB. do 9 zstep.
-    zstep. zstep.
-    eapply fd_nf_25970; [close_fdc | exact S1 | exact S2 | exact BCR | exact PV].
+  Proof using DSYM DTA HY LOS2 LOSU OFFWK SPA SRCLEN TBL.
+    intros * fdc_now st1_rng st2_rng bc_rng ptr_lo ptr_hi ptr_ok.
+    pose proof fdc_now as parts. open_fdc parts. open_fh HY.
+    assert (cells_len : zlen (map (Z_to_bv 8) tb) = 4 * 2^tl) by (rewrite length_map; apply (proj1 TBL)).
+    assert (byte_at : forall k, 0 <= k < 8 -> exists b, ov_read_bytes usegs m1 (wa (ptr + k)) 1 = Some [b]).
+    { intros k k_rng. eexists. apply (raw_byte_rd usegs m1 SRCI srci (ptr - SRCI + k)); [exact SRCB | lia | f_equal; lia]. }
+    destruct (byte_at 1 ltac:(lia)) as (b1 & rd1). zn. clear rd1.
+    destruct (byte_at 2 ltac:(lia)) as (b2 & rd2). zn. clear rd2.
+    destruct (byte_at 3 ltac:(lia)) as (b3 & rd3). zn. clear rd3.
+    destruct (byte_at 0 ltac:(lia)) as (b0 & rd0). zn. clear rd0.
+    do 4 (zn; repeat lazymatch goal with |- context [Some (Z_to_bv 64 (Z.lor ?u ?v))] => let acc := fresh "acc" in generalize (Z_to_bv 64 (Z.lor u v)); intro acc end).
+    destruct (byte_at 4 ltac:(lia)) as (b4 & rd4). zn. clear rd4.
+    destruct (byte_at 5 ltac:(lia)) as (b5 & rd5). zn. clear rd5.
+    zn; repeat lazymatch goal with |- context [Some (Z_to_bv 64 (Z.lor ?u ?v))] => let acc := fresh "acc" in generalize (Z_to_bv 64 (Z.lor u v)); intro acc end.
+    destruct (byte_at 6 ltac:(lia)) as (b6 & rd6). zn. clear rd6.
+    destruct (byte_at 7 ltac:(lia)) as (b7 & rd7). zn. clear rd7.
+    do 9 (zn; repeat lazymatch goal with |- context [Some (Z_to_bv 64 (Z.lor ?u ?v))] => let acc := fresh "acc" in generalize (Z_to_bv 64 (Z.lor u v)); intro acc end).
+    zn. zn.
+    eapply fd_nf_25970; [close_fdc | exact st1_rng | exact st2_rng | exact bc_rng | exact ptr_ok].
   Qed.
 
   (* [comment removed for export] *)
@@ -155,44 +168,42 @@ Section INI.
     evt usegs POST
       (STF 0x2ae78 m1 x1 x5 x6 x7 (Z_to_bv 64 DST) x9 x10 x11 x12 x13 x14 x15 x16 x17 (Z_to_bv 64 (DST + cap)) x19 x20 x21
            (Z_to_bv 64 (DST + cap + -3)) x23 x24 x25 x26 x27 x28 x29 x30 x31).
-  Proof.
-    intros until x31; intros I S1 S2 (BCR & BOK). open_fh HY. pose proof I as I0. open_fdc I0.
-    pose proof TBL as (TBLEN & TBBY & TBOK).
-    assert (P2 : 1 <= 2^tl <= 512) by (split; [pose proof (Z.pow_pos_nonneg 2 tl ltac:(lia) ltac:(lia)); lia | change 512 with (2^9); apply Z.pow_le_mono_r; lia]).
-    zstep. try rewrite (sx32w_small bc) by lia. try rewrite (zx32w_small bc) by lia. zn.
-    zstep. if_cases K; zify_cond K.
-    - (* [comment removed for export] *)
-      zn. zn.
-      replace (Z_to_bv 64 (-20)) with (Z_to_bv 64 18446744073709551596) by (apply bv_eq; reflexivity).
-      eapply fd_epi; try sec_hyps; [close_fdu | lia | left; reflexivity].
-    - specialize (BOK ltac:(lia)).
-      do 8 zn.
-      zstep. if_cases K2; zify_cond K2.
-      + (* [comment removed for export] *)
-        zn. zstep.
-        remember (map (Z_to_bv 8) tb) as tbb eqn:ETBB in CELB.
-        assert (TBBL : Z.of_nat (length tbb) = 4 * 2^tl) by (subst tbb; rewrite length_map; exact TBLEN).
+  Proof using DSYM DTA HY LOS2 LOSU OFFWK RELOAD SPA SRCLEN TBL.
+    intros * fdc_now st1_rng st2_rng bit_ok.
+    destruct bit_ok as (bc_rng & near_src).
+    pose proof fdc_now as parts. open_fdc parts. open_fh HY.
+    assert (cells_len : zlen (map (Z_to_bv 8) tb) = 4 * 2^tl) by (rewrite length_map; apply (proj1 TBL)).
+    zn. rewrite (sx32w_small bc) by lia. zn. zstep.
+    if_cases over64; zify_cond over64.
+    - zn. zn.
+      replace (Z_to_bv 64 (-20)) with (Z_to_bv 64 18446744073709551596) by (apply bv_eq; vm_compute; reflexivity).
+      apply (fd_epi0 m1 out [CB 8 fj0; C4 fmsv; C4 ftlw] [C8 (Z_to_bv 64 st2); C8 (Z_to_bv 64 (DT + 4))]
+               [C8 (Z_to_bv 64 st1); C8 (Z_to_bv 64 (DT + 4))] (bitd_cells cont (Z_to_bv 64 bc) pad ptr SRCI) 18446744073709551596);
+        first [assumption | reflexivity | lia | left; vm_compute; reflexivity].
+    - specialize (near_src over64).
+      assert (q8 : 0 <= bc mod 8 < 8) by (apply Z.mod_pos_bound; lia).
+      assert (d8 : 0 <= bc / 8 <= 8) by (split; [apply Z.div_pos; lia | apply Z.div_le_upper_bound; lia]).
+      assert (split8 : bc = 8 * (bc / 8) + bc mod 8) by (apply Z.div_mod; lia).
+      zn. zn. zn. zn. zn. zn. zn. zn. zstep.
+      if_cases far; zify_cond far.
+      + zn. zstep.
         eapply evt_cut.
-        { eapply (RELOAD _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ (SPV + -144) SRCI ni bc ptr cont pad srci); try eassumption; try lia. }
-        unfold huf_reload_post. lazymatch goal with MIx : mem_inv usegs ?mm |- _ => post_call usegs mm end. unfold bitd_cells in *.
-        zstep. try rewrite (sx32w_small (bc mod 8)) by lia. try rewrite (zx32w_small (bc mod 8)) by lia. zn. zn. zn.
-        subst tbb. eapply fd_nf_25970; [close_fdc | exact S1 | exact S2 | lia | right; lia].
-      + zn. zstep. if_cases K3; zify_cond K3.
-        * (* [comment removed for export] *)
-          assert (EP : ptr = SRCI) by lia. subst ptr.
-          do 6 zn.
-          eapply fd1_loop0; [exact I | exact S1 | exact S2 | lia | left; reflexivity].
-        * (* [comment removed for export] *)
-          zstep. rewrite (srliw_val bc 3) by lia. rewrite (Z.mod_small bc 4294967296) by lia. change (2^3) with 8.
-          assert (QR : 0 <= bc / 8 <= 8 /\ 8 * (bc / 8) <= bc) by (clear - BCR K; Z.div_mod_to_equations; lia).
-          remember (bc / 8) as q eqn:EQ. clear EQ.
-          zc. zn. zn. zn. zn. zc. zn. zstep. if_cases K4; zify_cond K4.
+        { eapply (RELOAD _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m1 (SPV + -144) SRCI ni bc ptr cont pad srci);
+            first [eassumption | lia]. }
+        unfold huf_reload_post. post_call usegs m1. unfold bitd_cells in POST.
+        zn. rewrite (sx32w_small (bc mod 8)) by lia. zn. zn. zn.
+        eapply fd_nf_25970; [close_fdc | exact st1_rng | exact st2_rng | lia | right; lia].
+      + zn. zstep. if_cases at_start; zify_cond at_start.
+        * subst ptr. zn. zn. zn. zn. zn. zn.
+          eapply fd1_loop0; [exact fdc_now | exact st1_rng | exact st2_rng | lia | left; reflexivity].
+        * zn. rewrite (wrap32_small bc), (swrap32_small (bc / 8)) by lia. zc. zn. zn. zn. zn. zc. zn. zstep.
+          if_cases enough; zify_cond enough.
           -- zn. zn. zc. zn. zn. zn. zc. zn. zn. zn. zn. zn. zc.
-             eapply fd_nf_ld; [close_fdc | exact S1 | exact S2 | lia | lia | lia | right; lia].
-          -- (* [comment removed for export] *)
-             assert (DR : 1 <= ptr - SRCI <= 7 /\ 8 <= ni) by (clear - BOK K2 K3 K4 QR; lia).
-             zn. zn. zn. zc. zn. zn. zn. zc. zn. zn. zn. zn. zn. zc.
-             eapply fd_nf_ld; [close_fdc | exact S1 | exact S2 | lia | lia | lia | left; lia].
+             rewrite ?Z.div_mul in * by lia.
+             eapply fd_nf_ld; [close_fdc | exact st1_rng | exact st2_rng | lia ..].
+          -- zn. zn. zn. zc. zn. zn. zn. zc. zn. zn. zn. zn. zn. zc.
+             rewrite ?Z.div_mul in * by lia.
+             eapply fd_nf_ld; [close_fdc | exact st1_rng | exact st2_rng | lia ..].
   Qed.
 
   (* [comment removed for export] *)

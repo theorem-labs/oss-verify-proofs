@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -20,29 +20,29 @@ Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section h. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
 Definition RA0 : Z := ubs2_A_cgif_raw_addframe.
-Definition PC_A   : Z := RA0 + 0x7c.
-Definition PC_B   : Z := RA0 + 0x104.
-Definition PC_IC  : Z := RA0 + 0x144.
-Definition PC_C   : Z := RA0 + 0x1f0.
-Definition PC_IL  : Z := RA0 + 0x21c.
-Definition PC_L1  : Z := RA0 + 0x240.
+Definition PC_A : Z := RA0 + 0x7c.
+Definition PC_B : Z := RA0 + 0x104.
+Definition PC_IC : Z := RA0 + 0x144.
+Definition PC_C : Z := RA0 + 0x1f0.
+Definition PC_IL : Z := RA0 + 0x21c.
+Definition PC_L1 : Z := RA0 + 0x240.
 Definition PC_L1X : Z := RA0 + 0x298.
-Definition PC_L2  : Z := RA0 + 0x2a8.
+Definition PC_L2 : Z := RA0 + 0x2a8.
 Definition PC_L2X : Z := RA0 + 0x318.
-Definition PC_L3  : Z := RA0 + 0x324.
+Definition PC_L3 : Z := RA0 + 0x324.
 Definition PC_L3X : Z := RA0 + 0x384.
-Definition PC_L4  : Z := RA0 + 0x390.
+Definition PC_L4 : Z := RA0 + 0x390.
 Definition PC_L4X : Z := RA0 + 0x3f0.
-Definition PC_OK  : Z := RA0 + 0x45c.
+Definition PC_OK : Z := RA0 + 0x45c.
 Definition PC_EAL : Z := RA0 + 0x304.
-Definition PC_ST  : Z := RA0 + 0x41c.
+Definition PC_ST : Z := RA0 + 0x41c.
 Definition PC_RET : Z := RA0 + 0x420.
-Definition PC_T2  : Z := RA0 + 0x4d0.
+Definition PC_T2 : Z := RA0 + 0x4d0.
 Definition PC_WDB : Z := RA0 + 0x554.
-Definition PC_WDBX: Z := RA0 + 0x570.
+Definition PC_WDBX : Z := RA0 + 0x570.
 Definition PC_T2B : Z := RA0 + 0x578.
 Definition PC_L4P : Z := RA0 + 0x384.
-Definition PC_T3  : Z := RA0 + 0x580.
+Definition PC_T3 : Z := RA0 + 0x580.
 Definition RA_FRAME : Z := 144.
 Definition AC : Z := alloc_ceiling.
 Record ra_cx := mkRC {
@@ -65,7 +65,8 @@ Definition c_nP (cx : ra_cx) : Z := c_w cx * c_h cx.
 Definition c_blocks (cx : ra_cx) : list (Z * Z) :=
 (c_raw cx, RAW_SIZE) :: (c_g cx, CGIF_SIZE) :: (c_img cx, c_Nimg cx) :: c_rest cx.
 Definition rcx_pre (cx : ra_cx) : Prop :=
-c_sp cx mod 16 = 0 /\ alloc_ceiling + 8560 <= c_sp cx /\ c_sp cx + 144 <= c_cfp cx /\ c_cfp cx + 40 <= 2 ^ 63 /\ c_cfp cx mod 8 = 0 /\
+c_sp cx mod 16 = 0 /\ alloc_ceiling + 8560 <= c_sp cx /\
+c_sp cx + 144 <= c_cfp cx /\ c_cfp cx + 40 <= 2 ^ 63 /\ c_cfp cx mod 8 = 0 /\
 4096 <= c_raw cx /\ c_raw cx + 48 <= alloc_ceiling /\ c_raw cx mod 16 = 0 /\
 4096 <= c_g cx /\ c_g cx + 96 <= alloc_ceiling /\ c_g cx mod 16 = 0 /\
 4096 <= c_img cx /\ c_img cx + c_Nimg cx <= alloc_ceiling /\ c_img cx mod 16 = 0 /\
@@ -146,15 +147,19 @@ split; [|exact I]. split; [exact Hv | change (2 ^ (8 * Z.of_N 4)) with (2 ^ 32);
 Qed.
 Definition lits_RFC : list (option Z) := [None; None; None; None; None; None; None; None; None; None; None].
 Definition common_facts : list (nat * afact) :=
-[ (2%nat, mkAF (CEIL_MIN + 8560) (2^63 - 144) 4); (9%nat, mkAF (CEIL_MIN + 8704) (2^63 - 40) 3); (8%nat, mkAF 4096 (CEIL_MAX - 48) 4);
-(44%nat, mkAF 4096 (CEIL_MAX - 96) 4); (33%nat, mkAF 4096 CEIL_MAX 4); (34%nat, mkAF 0 (2^32-1) 0);
-(35%nat, mkAF 1 65535 0); (36%nat, mkAF 1 65535 0); (37%nat, mkAF 0 65535 0); (38%nat, mkAF 0 65535 0); (39%nat, mkAF 0 65535 0);
-(41%nat, mkAF 0 255 0); (42%nat, mkAF 0 255 0); (46%nat, mkAF 0 (2^32-1) 0); (49%nat, mkAF 0 256 0); (51%nat, mkAF 0 (2^32-1) 0) ].
+[(2%nat, mkAF (CEIL_MIN + 8560) (2 ^ 63 - 184) 4); (8%nat, mkAF 4096 (CEIL_MAX - 48) 4);
+(9%nat, mkAF (CEIL_MIN + 8704) (2 ^ 63 - 40) 3); (33%nat, mkAF 4096 (CEIL_MAX - 1) 4);
+(34%nat, mkAF 0 (2 ^ 32 - 1) 0); (35%nat, mkAF 1 65535 0); (36%nat, mkAF 1 65535 0);
+(37%nat, mkAF 0 65535 0); (38%nat, mkAF 0 65535 0); (39%nat, mkAF 0 65535 0);
+(41%nat, mkAF 0 255 0); (42%nat, mkAF 0 255 0); (44%nat, mkAF 4096 (CEIL_MAX - 96) 4);
+(46%nat, mkAF 0 (2 ^ 32 - 1) 0); (49%nat, mkAF 0 256 0); (51%nat, mkAF 0 (2 ^ 32 - 1) 0)].
 Definition common_facts3 : list (nat * afact) :=
-[ (2%nat, mkAF (CEIL_MIN + 8560) (2^63 - 144) 4); (8%nat, mkAF 4096 (CEIL_MAX - 48) 4);
-(44%nat, mkAF 4096 (CEIL_MAX - 96) 4); (33%nat, mkAF 4096 CEIL_MAX 4); (34%nat, mkAF 0 (2^32-1) 0);
-(35%nat, mkAF 1 65535 0); (36%nat, mkAF 1 65535 0); (37%nat, mkAF 0 65535 0); (38%nat, mkAF 0 65535 0); (39%nat, mkAF 0 65535 0);
-(41%nat, mkAF 0 255 0); (42%nat, mkAF 0 255 0); (46%nat, mkAF 0 (2^32-1) 0); (49%nat, mkAF 0 256 0); (51%nat, mkAF 0 (2^32-1) 0) ].
+[(2%nat, mkAF (CEIL_MIN + 8560) (2 ^ 63 - 184) 4); (8%nat, mkAF 4096 (CEIL_MAX - 48) 4);
+(33%nat, mkAF 4096 (CEIL_MAX - 1) 4);
+(34%nat, mkAF 0 (2 ^ 32 - 1) 0); (35%nat, mkAF 1 65535 0); (36%nat, mkAF 1 65535 0);
+(37%nat, mkAF 0 65535 0); (38%nat, mkAF 0 65535 0); (39%nat, mkAF 0 65535 0);
+(41%nat, mkAF 0 255 0); (42%nat, mkAF 0 255 0); (44%nat, mkAF 4096 (CEIL_MAX - 96) 4);
+(46%nat, mkAF 0 (2 ^ 32 - 1) 0); (49%nat, mkAF 0 256 0); (51%nat, mkAF 0 (2 ^ 32 - 1) 0)].
 Definition R_frameW (fwlo fwhi : Z) (xc : list YQ0b.chunk) : YQ0b.region := YQ0b.mkRegion (Some 2%nat) (-16) 48 fwlo fwhi xc.
 Definition R_frame (xc : list YQ0b.chunk) : YQ0b.region := R_frameW (-16) 48 xc.
 Definition R_cfg : YQ0b.region := YQ0b.mkRegion (Some 9%nat) 0 40 0 0 (obj_chunks_gen LAY_RawFrameConfig 32 lits_RFC).
@@ -224,56 +229,82 @@ Forall (chunk_ok ubs2segs E mem (c_sp cx)) xc ->
 atoms_ok E fs -> conds_ok E cs -> alias_ok E al ->
 st_ok ubs2segs E (ra_ssW pc sr fwlo fwhi xc w fs cs al) (mkst regs (Z_to_bv 64 pc) mem (seg_rom ubs2segs)).
 Proof.
-intros cx cur regs more mem pc sr fwlo fwhi w xc fs cs al Hcx Hobjs HR E Hsr Hwst Hwraw Hwf Hxc Hfs Hcs Hal. subst E.
-pose proof (proj1 alloc_ceiling_val) as Hac. assert (HRSv : RAW_SIZE = 48) by reflexivity. assert (HGSv : CGIF_SIZE = 96) by reflexivity.
-pose proof (objs_fields_ok _ _ _ Hobjs) as HF.
-destruct Hobjs as (OC & OR & OG).
-destruct cx as [sp raw cfp g lct img fattr w_ h_ top left delay slct disp tidx gct rattr W H sgct loops rcur gvals Nimg rest tp gp s9v s10v s11v].
-unfold rcx_ok, rcx_pre in Hcx. unfold fields_ok in HF. unfold ra_regs in HR.
-cbn [c_sp c_raw c_cfp c_g c_lct c_img c_fattr c_w c_h c_top c_left c_delay c_slct c_disp c_tidx
-c_gct c_rattr c_W c_H c_sgct c_loops c_rcur c_gvals c_Nimg c_rest c_tp c_gp c_s9 c_s10 c_s11] in *.
-destruct Hcx as ((Hspal & Hsplo & Hcfplo & Hcfphi & Hcfpal & Hraw0 & Hraw1 & Hraw16 & Hg0 & Hg1 & Hg16 & Himg0 & Himg1 & Himg16 &
-Hs1 & Hs2 & Hs3 & Hw1 & Hh1 & HnP & HnP2 & Hsgct & Hwfn & Hfile & Htp) & Hslct).
-destruct HF as (F0 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & F9 & F10 & G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8 & LG).
-destruct HR as (R2 & R8 & R9 & R4 & R3 & R27).
-set (cx := mkRC sp raw cfp g lct img fattr w_ h_ top left delay slct disp tidx gct rattr W H sgct loops rcur gvals Nimg rest tp gp s9v s10v s11v) in *.
-assert (HE2 : ew (Ereg regs (ra_extra cx cur more)) 2 = Z_to_bv 64 sp) by (rewrite (E_reg regs cx cur more 2%bv 2) by reflexivity; exact R2).
-assert (HE8 : ew (Ereg regs (ra_extra cx cur more)) 8 = Z_to_bv 64 raw) by (rewrite (E_reg regs cx cur more 8%bv 8) by reflexivity; exact R8).
-assert (HE9 : ew (Ereg regs (ra_extra cx cur more)) 9 = Z_to_bv 64 cfp) by (rewrite (E_reg regs cx cur more 9%bv 9) by reflexivity; exact R9).
-pose proof (E_cv regs cx cur more) as HX. pose proof (E_rv regs cx cur more) as HY. pose proof (E_gv regs cx cur more LG) as HZ.
-assert (HE44 : ew (Ereg regs (ra_extra cx cur more)) 44 = Z_to_bv 64 g) by (apply (HY 1%nat); reflexivity).
-assert (HE33 : ew (Ereg regs (ra_extra cx cur more)) 33 = Z_to_bv 64 img) by (apply (HX 1%nat); reflexivity).
-assert (HE34 : ew (Ereg regs (ra_extra cx cur more)) 34 = Z_to_bv 64 fattr) by (apply (HX 2%nat); reflexivity).
-assert (HE35 : ew (Ereg regs (ra_extra cx cur more)) 35 = Z_to_bv 64 w_) by (apply (HX 3%nat); reflexivity).
-assert (HE36 : ew (Ereg regs (ra_extra cx cur more)) 36 = Z_to_bv 64 h_) by (apply (HX 4%nat); reflexivity).
-assert (HE37 : ew (Ereg regs (ra_extra cx cur more)) 37 = Z_to_bv 64 top) by (apply (HX 5%nat); reflexivity).
-assert (HE38 : ew (Ereg regs (ra_extra cx cur more)) 38 = Z_to_bv 64 left) by (apply (HX 6%nat); reflexivity).
-assert (HE39 : ew (Ereg regs (ra_extra cx cur more)) 39 = Z_to_bv 64 delay) by (apply (HX 7%nat); reflexivity).
-assert (HE41 : ew (Ereg regs (ra_extra cx cur more)) 41 = Z_to_bv 64 disp) by (apply (HX 9%nat); reflexivity).
-assert (HE42 : ew (Ereg regs (ra_extra cx cur more)) 42 = Z_to_bv 64 tidx) by (apply (HX 10%nat); reflexivity).
-assert (HE46 : ew (Ereg regs (ra_extra cx cur more)) 46 = Z_to_bv 64 rattr) by (apply (HY 3%nat); reflexivity).
-assert (HE49 : ew (Ereg regs (ra_extra cx cur more)) 49 = Z_to_bv 64 sgct) by (apply (HY 6%nat); reflexivity).
-assert (HE51 : ew (Ereg regs (ra_extra cx cur more)) 51 = Z_to_bv 64 cur) by (apply (HY 8%nat); reflexivity).
-apply entry_st_ok_full.
-- exact Hsr.
-- cbn [regions_wf ra_ssW forallb]. rewrite Hwf. destruct w; reflexivity.
-- constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]].
-+ unfold region_ok, R_frameW. cbn [r_base r_lo r_hi r_wlo r_whi r_chunks base_val].
-rewrite HE2, unsigned_lit_small by lia. split; [lia|]. split; [lia|]. split; [intros o Ho; apply Hwst; lia|]. exact Hxc.
-+ eapply (region_ok_obj_gen ubs2segs _ mem 9 cfp); [rewrite HE9; apply unsigned_lit_small; lia | lia | lia | exact OC | reflexivity | exact HX | | intros i Hi; lia].
-intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
-+ eapply (region_ok_obj_gen ubs2segs _ mem 8 raw); [rewrite HE8; apply unsigned_lit_small; lia | lia | lia | exact OR | reflexivity | exact HY | apply lits_Raw_ok; reflexivity |].
-intros i Hi. destruct w; [apply (Hwraw eq_refl); lia | lia].
-+ eapply (region_ok_obj_gen ubs2segs _ mem 44 g); [rewrite HE44; apply unsigned_lit_small; lia | lia | lia | exact OG | reflexivity | exact HZ | apply (lits_CGIF_ok gvals Hwfn Hfile) | intros i Hi; lia].
-- cbn [pairwise_disjoint all_disjoint ra_ssW]. unfold extent_disjoint. cbn [r_base r_lo r_hi base_val R_frameW R_cfg R_raw R_cgif].
-rewrite HE2, HE9, HE8, HE44, !unsigned_lit_small by lia. unfold RAW_SIZE, CGIF_SIZE. repeat split; lia.
-- split; [|split; [exact Hcs | exact Hal]].
-unfold ra_ssW. cbn [f_atoms]. apply atoms_ok_app; [exact Hfs|].
-cbn [atoms_ok common_facts]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2].
-rewrite HE2, HE9, HE8, HE44, HE33, HE34, HE35, HE36, HE37, HE38, HE39, HE41, HE42, HE46, HE49, HE51, !unsigned_lit_small by lia.
-change (2 ^ 4) with 16. change (2 ^ 3) with 8. change (2 ^ 0) with 1. rewrite !Z.mod_1_r.
-repeat split; first [assumption | lia | idtac].
-all: first [ rewrite (Znumtheory.Zmod_div_mod 8 16); [reflexivity | lia | lia | exists 2; reflexivity] | idtac ].
+intros cx cur regs more mem pc sr fwlo fwhi w xc fs cs al ok_cx ok_objs ok_regs E
+ok_sr wr_frame wr_raw wf_frame ok_xc ok_fs ok_cs ok_al.
+pose proof (objs_fields_ok mem cx cur ok_objs) as ok_fields.
+pose proof (proj1 alloc_ceiling_val) as ceil_range.
+destruct ok_objs as (obj_cfg & obj_raw & obj_cgif).
+destruct ok_regs as (reg_sp & reg_raw & reg_cfp & _).
+unfold rcx_ok, rcx_pre in ok_cx. unfold fields_ok in ok_fields.
+decompose [and] ok_cx. decompose [and] ok_fields.
+assert (len_g : length (c_gvals cx) = 17%nat) by assumption.
+pose proof (E_cv regs cx cur more) as cv. pose proof (E_rv regs cx cur more) as rv.
+pose proof (E_gv regs cx cur more len_g) as gv.
+assert (val_sp : ew E 2 = Z_to_bv 64 (c_sp cx)) by (rewrite <- reg_sp; apply E_reg; reflexivity).
+assert (val_raw : ew E 8 = Z_to_bv 64 (c_raw cx)) by (rewrite <- reg_raw; apply E_reg; reflexivity).
+assert (val_cfp : ew E 9 = Z_to_bv 64 (c_cfp cx)) by (rewrite <- reg_cfp; apply E_reg; reflexivity).
+assert (val_g : ew E 44 = Z_to_bv 64 (c_g cx)) by (apply (rv 1%nat); reflexivity).
+assert (base_sp : bv_unsigned (ew E 2) = c_sp cx) by (rewrite val_sp; apply unsigned_lit_small; lia).
+assert (base_raw : bv_unsigned (ew E 8) = c_raw cx) by (rewrite val_raw; apply unsigned_lit_small; lia).
+assert (base_cfp : bv_unsigned (ew E 9) = c_cfp cx) by (rewrite val_cfp; apply unsigned_lit_small; lia).
+assert (base_g : bv_unsigned (ew E 44) = c_g cx) by (rewrite val_g; apply unsigned_lit_small; lia).
+assert (fact_of : forall n v lo hi a, ew E n = Z_to_bv 64 v -> 0 <= v < 2 ^ 64 -> lo <= v <= hi ->
+v mod 2 ^ a = 0 -> 0 <= a <= 64 -> afact_ok E n (mkAF lo hi a)).
+{ intros n v lo hi a at_n v_word v_in v_al a_rng. unfold afact_ok. cbn [af_lo af_hi af_al2].
+rewrite at_n, (unsigned_lit_small v v_word). exact (conj v_in (conj v_al a_rng)). }
+assert (facts : facts_ok E (mkFacts (fs ++ common_facts) cs al)).
+{ refine (conj _ (conj ok_cs ok_al)). cbn [f_atoms]. apply atoms_ok_app; [exact ok_fs |].
+cbn [atoms_ok common_facts].
+repeat lazymatch goal with
+| |- True => exact I
+| |- afact_ok _ _ _ /\ _ =>
+split; [ eapply fact_of;
+[ first [ eassumption | apply cv; reflexivity | apply rv; reflexivity ]
+| lia | lia | first [ exact (Z.mod_1_r _) | assumption ] | lia ] |]
+end. }
+assert (rgn_frame : region_ok ubs2segs E mem (R_frameW fwlo fwhi xc)).
+{ unfold region_ok, R_frameW. cbn [r_base r_lo r_hi r_wlo r_whi r_chunks base_val]. rewrite base_sp.
+refine (conj _ (conj _ (conj _ ok_xc))); [lia | lia |]. intros o o_in. apply wr_frame. lia. }
+assert (rgn_cfg : region_ok ubs2segs E mem R_cfg).
+{ unfold R_cfg. apply (region_ok_obj_gen ubs2segs E mem 9 (c_cfp cx) 40 0 0 LAY_RawFrameConfig (cvals cx) 32 lits_RFC).
+- exact base_cfp.
+- lia.
+- lia.
+- exact obj_cfg.
+- reflexivity.
+- exact cv.
+- intros j z slot. apply nth_error_In in slot. cbn [lits_RFC In] in slot.
+repeat (destruct slot as [slot | slot]; [discriminate slot |]). destruct slot.
+- intros i i_in. lia. }
+assert (rgn_raw : region_ok ubs2segs E mem (R_raw w)).
+{ unfold R_raw. apply (region_ok_obj_gen ubs2segs E mem 8 (c_raw cx) RAW_SIZE _ _ LAY_Raw (rvals' cx cur) 43 lits_Raw).
+- exact base_raw.
+- lia.
+- unfold RAW_SIZE. lia.
+- exact obj_raw.
+- reflexivity.
+- exact rv.
+- apply lits_Raw_ok. reflexivity.
+- intros i i_in. destruct w; cbn in i_in; [apply (wr_raw eq_refl); lia | lia]. }
+assert (rgn_cgif : region_ok ubs2segs E mem R_cgif).
+{ unfold R_cgif. apply (region_ok_obj_gen ubs2segs E mem 44 (c_g cx) CGIF_SIZE 0 0 LAY_CGIF (c_gvals cx) 52 lits_CGIF).
+- exact base_g.
+- lia.
+- unfold CGIF_SIZE. lia.
+- exact obj_cgif.
+- reflexivity.
+- exact gv.
+- apply lits_CGIF_ok; assumption.
+- intros i i_in. lia. }
+assert (disj : pairwise_disjoint E [R_frameW fwlo fwhi xc; R_cfg; R_raw w; R_cgif]).
+{ cbn [pairwise_disjoint all_disjoint]. unfold extent_disjoint.
+cbn [r_base r_lo r_hi base_val R_frameW R_cfg R_raw R_cgif]. rewrite base_sp, base_cfp, base_raw, base_g.
+unfold RAW_SIZE, CGIF_SIZE. lia. }
+assert (wf_all : regions_wf [R_frameW fwlo fwhi xc; R_cfg; R_raw w; R_cgif] = true).
+{ cbn [regions_wf]. rewrite wf_frame. destruct w; vm_compute; reflexivity. }
+assert (all_ok : Forall (region_ok ubs2segs E mem) [R_frameW fwlo fwhi xc; R_cfg; R_raw w; R_cgif]).
+{ repeat (apply Forall_cons; [assumption |]). apply Forall_nil. }
+subst E. unfold ra_ssW. apply entry_st_ok_full; assumption.
 Qed.
 Lemma ra_st_ok : forall cx cur regs more mem pc sr w xc fs cs al,
 rcx_ok cx -> objs_at mem cx cur -> ra_regs regs cx ->
@@ -438,7 +469,7 @@ Qed.
 End p.
 Definition ra_origin (cx : ra_cx) (regs0 : bvmap 5 word) : Prop :=
 spZ regs0 = c_sp cx + 144 /\ getr regs0 4 = Z_to_bv 64 (c_tp cx) /\ getr regs0 3 = Z_to_bv 64 (c_gp cx) /\
-YK0s.ret_ok (getr regs0 1) /\ 0 <= c_gp cx < 2 ^ 64 /\
+ret_ok (getr regs0 1) /\ 0 <= c_gp cx < 2 ^ 64 /\
 getr regs0 25 = Z_to_bv 64 (c_s9 cx) /\ getr regs0 26 = Z_to_bv 64 (c_s10 cx) /\ getr regs0 27 = Z_to_bv 64 (c_s11 cx).
 Section q.
 Variable API : AllocAPI ubs2_msyms.

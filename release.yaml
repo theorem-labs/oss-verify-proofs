@@ -1,6 +1,6 @@
 schema: oss-fuzz-theorems/release/1
-release: 2026.10.2
-date: '2026-10-27'
+release: 2026.11.0
+date: '2026-11-01'
 oss_fuzz:
   repository: https://github.com/google/oss-fuzz
   commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
@@ -16,7 +16,7 @@ rocq:
   version: 9.2.0
 images:
   checker: ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:cc9ae43a9f4b0dd59d7c8d30727d36e039bfe72a2a9f9c4a99c68e413037e902
-  runner: ghcr.io/theorem-labs/oss-fuzz-theorems-runner@sha256:d197498c0e20de006e61fbe7c3d70ebdd81ad3928468ac45d643b72c716e7af2
+  runner: ghcr.io/theorem-labs/oss-fuzz-theorems-runner@sha256:2eb5afc7b37095cbab0e290966b991cda8bdedbefe8fdb4ce44f56d0c30834c0
   builder:
   - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
   - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711

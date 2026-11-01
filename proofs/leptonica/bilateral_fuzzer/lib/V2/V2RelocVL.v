@@ -7,21 +7,31 @@ From OssFuzzTheorems.Proofs.leptonica.bilateral_fuzzer.lib.Common.Leptonica Requ
 From OssFuzzTheorems.Proofs.leptonica.bilateral_fuzzer.lib.V2 Require Import V2Reloc.
 
 Lemma v2_code_vl_ok : code_check (@rl_segs v2_reloc) (@rl_delta v2_reloc) canon_code_VL = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Definition v2_code_vl : RelocCodeVL v2_reloc := {| rl_code_vl_ok := v2_code_vl_ok |}.
+Proof. vm_compute. reflexivity. Qed.
+Definition v2_code_vl : RelocCodeVL v2_reloc := Build_RelocCodeVL v2_reloc v2_code_vl_ok.
 
 Lemma v2_sites_vl_ok : @sites_check v2_reloc canon_sites_VL = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Definition v2_sites_vl : RelocSitesVL v2_reloc := {| rl_sites_vl_ok := v2_sites_vl_ok |}.
+Proof. exact (eq_refl true <: @sites_check v2_reloc canon_sites_VL = true). Qed.
+Definition v2_sites_vl : RelocSitesVL v2_reloc := Build_RelocSitesVL v2_reloc v2_sites_vl_ok.
 
 Lemma v2_lept_ok : wr_readable_chk (@rl_segs v2_reloc) = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Definition v2_lept : RelocLept v2_reloc := {| rl_wr_readable_ok := v2_lept_ok; rl_pages_ok := eq_refl; rl_clr_extra := nil |}.
+Proof. lazy. reflexivity. Qed.
+Definition v2_lept : RelocLept v2_reloc := Build_RelocLept v2_reloc v2_lept_ok (@eq_refl bool true) nil.
 
 Lemma v2_strs_vl_ok : @strs_check v2_reloc canon_strs_VL = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+Proof. apply Bool.Is_true_eq_true. vm_compute. exact I. Qed.
 Lemma v2_cells_vl_ok : @cells_check v2_reloc canon_cells_VL = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+Proof.
+  unfold cells_check. apply forallb_forall.
+  intros cell cell_listed. cbn [In canon_cells_VL] in cell_listed.
+  repeat (destruct cell_listed as [<- | cell_listed]; [vm_compute; constructor |]).
+  destruct cell_listed.
+Qed.
 Lemma v2_spans_vl_ok : @RelocLept.spans_check v2_reloc canon_spans_VL = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Definition v2_img_vl : RelocImgVL v2_reloc := {| rl_strs_vl_ok := v2_strs_vl_ok; rl_cells_vl_ok := v2_cells_vl_ok; rl_spans_vl_ok := v2_spans_vl_ok |}.
+Proof.
+  unfold spans_check, canon_spans_VL. cbn [forallb].
+  repeat match goal with |- _ && _ = true => apply andb_true_intro; split end.
+  all: reflexivity.
+Qed.
+Definition v2_img_vl : RelocImgVL v2_reloc :=
+  Build_RelocImgVL v2_reloc v2_strs_vl_ok v2_cells_vl_ok v2_spans_vl_ok.

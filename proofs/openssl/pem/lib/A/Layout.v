@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -57,41 +57,41 @@ Definition K_malloc_context_size : Z := 30.
 Definition K_clear_shadow_mmap_threshold : Z := 18446744073709551615.   (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition g_instance : Z := 6722776.  (* [comment removed for export] *)
-Definition g_asan_flags : Z := 6726456.  (* [comment removed for export] *)
-Definition g_common_flags : Z := 7333480.  (* [comment removed for export] *)
-Definition g_shadow_memory_dynamic_address : Z := 6736696.  (* [comment removed for export] *)
-Definition g_detect_stack_use_after_return : Z := 6736704.  (* [comment removed for export] *)
-Definition g_asan_inited : Z := 6739992.  (* [comment removed for export] *)
-Definition g_kHighMemEnd : Z := 6740000.  (* [comment removed for export] *)
-Definition g_kMidMemBeg : Z := 6740008.  (* [comment removed for export] *)
-Definition g_kMidMemEnd : Z := 6740016.  (* [comment removed for export] *)
-Definition g_malloc_context_size_cell : Z := 6740028.  (* [comment removed for export] *)
-Definition g_can_poison_memory : Z := 6734748.  (* [comment removed for export] *)
-Definition g_tsd_key_inited : Z := 6734752.  (* [comment removed for export] *)
-Definition g_tsd_key : Z := 6734756.  (* [comment removed for export] *)
-Definition g_unknown_thread_stats : Z := 6740072.  (* [comment removed for export] *)
-Definition g_internal_alloc_placeholder : Z := 6741312.  (* [comment removed for export] *)
-Definition g_rss_limit_exceeded : Z := 7269794.  (* [comment removed for export] *)
-Definition g_internal_allocator_initialized : Z := 7325128.  (* [comment removed for export] *)
-Definition g_PageSizeCached : Z := 7325152.  (* [comment removed for export] *)
-Definition g_g_total_mmaped : Z := 7325176.  (* [comment removed for export] *)
-Definition g_MFHooks : Z := 7333376.  (* [comment removed for export] *)
-Definition g_sealed_report_in_progress : Z := 7333468.  (* [comment removed for export] *)
-Definition g_read_stage : Z := 12120464.  (* [comment removed for export] *)
-Definition g_GOT_sealed_init : Z := 5916152.  (* [comment removed for export] *)
-Definition g_GOT_sealed_report : Z := 5916160.  (* [comment removed for export] *)
-Definition g_GOT_common_flags : Z := 5916072.  (* [comment removed for export] *)
-Definition g_GOT_asan_flags : Z := 5916080.  (* [comment removed for export] *)
-Definition g_GOT_shadow_offset_cell : Z := 5916088.  (* [comment removed for export] *)
-Definition g_GOT_kMidMemBeg : Z := 5916096.  (* [comment removed for export] *)
-Definition g_GOT_kMidMemEnd : Z := 5916104.  (* [comment removed for export] *)
-Definition g_GOT_kHighMemEnd : Z := 5916112.  (* [comment removed for export] *)
-Definition g_GOT_real_memset : Z := 5916120.  (* [comment removed for export] *)
-Definition g_GOT_PageSizeCached : Z := 5916056.  (* [comment removed for export] *)
-Definition g_GOT_detect_uar : Z := 5916176.  (* [comment removed for export] *)
-Definition g_REAL_memset : Z := 5928944.  (* [comment removed for export] *)
-Definition g_REAL_memcpy : Z := 5928936.  (* [comment removed for export] *)
+Definition g_instance : Z := 6722776.
+Definition g_asan_flags : Z := 6726456.
+Definition g_common_flags : Z := 7333480.
+Definition g_shadow_memory_dynamic_address : Z := 6736696.
+Definition g_detect_stack_use_after_return : Z := 6736704.
+Definition g_asan_inited : Z := 6739992.
+Definition g_kHighMemEnd : Z := 6740000.
+Definition g_kMidMemBeg : Z := 6740008.
+Definition g_kMidMemEnd : Z := 6740016.
+Definition g_malloc_context_size_cell : Z := 6740028.
+Definition g_can_poison_memory : Z := 6734748.
+Definition g_tsd_key_inited : Z := 6734752.
+Definition g_tsd_key : Z := 6734756.
+Definition g_unknown_thread_stats : Z := 6740072.
+Definition g_internal_alloc_placeholder : Z := 6741312.
+Definition g_rss_limit_exceeded : Z := 7269794.
+Definition g_internal_allocator_initialized : Z := 7325128.
+Definition g_PageSizeCached : Z := 7325152.
+Definition g_g_total_mmaped : Z := 7325176.
+Definition g_MFHooks : Z := 7333376.
+Definition g_sealed_report_in_progress : Z := 7333468.
+Definition g_read_stage : Z := 12120464.
+Definition g_GOT_sealed_init : Z := 5916152.
+Definition g_GOT_sealed_report : Z := 5916160.
+Definition g_GOT_common_flags : Z := 5916072.
+Definition g_GOT_asan_flags : Z := 5916080.
+Definition g_GOT_shadow_offset_cell : Z := 5916088.
+Definition g_GOT_kMidMemBeg : Z := 5916096.
+Definition g_GOT_kMidMemEnd : Z := 5916104.
+Definition g_GOT_kHighMemEnd : Z := 5916112.
+Definition g_GOT_real_memset : Z := 5916120.
+Definition g_GOT_PageSizeCached : Z := 5916056.
+Definition g_GOT_detect_uar : Z := 5916176.
+Definition g_REAL_memset : Z := 5928944.
+Definition g_REAL_memcpy : Z := 5928936.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

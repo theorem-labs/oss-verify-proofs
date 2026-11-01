@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -59,75 +59,76 @@ Section TF1.
       /\ (forall lo' hi', stk asegs m lo' hi' -> stk asegs M' lo' hi')
       /\ rw_cells asegs M' (SP - 80) [C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra].
   Proof.
-    intros R F fc m ro ra s0 s1 s2 s3 s4 s5 s6 s7 s8 SP v lo P1 P2 P8 P9 P18 P19 P20 P21 P22 P23 P24 P10 HF SP16 SPR V0 V47 VNZ VM8 ST LO MI AC.
+    intros R F fc m ro ra s0 s1 s2 s3 s4 s5 s6 s7 s8 SP v lo ra_at sp_at s0_at s1_at s2_at s3_at s4_at s5_at s6_at
+      s7_at s8_at a0_at full_R sp_align sp_range v_nonneg v_top v_nz v_align stack_m lo_room inv_m const_m.
     subst ra s0 s1 s2 s3 s4 s5 s6 s7 s8.
-    pose proof (ACONST_shbase m AC) as [CG CS].
-    assert (Hq : SP = 16 * (SP / 16)) by (clear - SP16; Z.div_mod_to_equations; lia).
-    set (q := SP / 16) in *. clearbody q.
-    pose (E := Eseed R [Z_to_bv 64 v; Z_to_bv 64 q]).
-    assert (HR : regs_ok E (srs sr_id [(10%bv, EVar 32); (2%bv, EMd M_MUL (ELit 16) (EVar 33))]) R).
-    { apply regs_ok_srs; [apply regs_ok_seed|]. repeat constructor; cbn [fst snd]; try (intros X; discriminate X); subst E; evs.
-      - exact P10.
-      - rewrite P2, w_mul by lia. f_equal. lia. }
-    assert (HB : bv_unsigned (edenot E (EMd M_MUL (ELit 16) (EVar 33))) = 16 * q) by (subst E; evs; rewrite w_mul, u64_of_Z by lia; reflexivity).
-    assert (EV : forall o, estart E (SA (EVar 32) o) = v + o) by (intros o; unfold estart; subst E; evs; rewrite u64_of_Z by lia; cbn [a_off]; lia).
-    assert (HK : know_ok asegs E m
-       [ KWord (SA (ELit 0) AGOT_SHBASE) 8 (ELit ASHBASE_CELL);
-         KWord (SA (ELit 0) ASHBASE_CELL) 8 (ELit 0x7fff8000);
-         KWr (SA (EMd M_MUL (ELit 16) (EVar 33)) (-80)) (ELit 80);
-         KRange (EVar 33) (2 ^ 41) (2 ^ 43 + 1); KRange (EVar 32) 0 (2 ^ 47) ]).
-    { unfold know_ok.
-      apply Forall_cons.
-      { eapply (kword_of_rw_cells asegs E m 0x1850a0 _ 0%nat (C8 (wz ASHBASE_CELL))); [exact CG | reflexivity | reflexivity | lia | reflexivity | cbn; lia | cbn; lia | reflexivity]. }
-      apply Forall_cons.
-      { eapply (kword_of_rw_cells asegs E m 0x191038 _ 0%nat (C8 (wz ASHADOW_BASE))); [exact CS | reflexivity | reflexivity | lia | reflexivity | cbn; lia | cbn; lia | reflexivity]. }
-      apply Forall_cons.
-      { eapply kwr_of_stk; [exact ST | unfold estart; cbn [a_base a_off]; rewrite HB; lia
-                           | unfold estart, elenZ; cbn [a_base a_off]; rewrite HB; subst E; evs; rewrite u64_of_Z by lia; lia
-                           | unfold elenZ; subst E; evs; rewrite u64_of_Z by lia; lia]. }
-      apply Forall_cons; [cbn [kentry_ok]; subst E; evs; rewrite u64_of_Z by lia; lia|].
-      apply Forall_cons; [cbn [kentry_ok]; subst E; evs; rewrite u64_of_Z by lia; lia | apply Forall_nil]. }
-    assert (WS : forall a, SP - 80 <= a -> a + 8 <= SP -> wr_at asegs m a 8).
-    { intros a X1 X2. pose proof (wr_at_of_stk asegs m lo SP ST) as W. destruct W as (W1 & W2 & W).
-      split; [lia|]. split; [lia|]. intros i Hi. replace (a + i) with (lo + (a - lo + i)) by lia. apply W. lia. }
-    xrun_at (PropExec.mkFP F fc) asegs R AT_TAKE_FIRST m ro HR HK 60%nat [TF_HEAD] (SCR [false; false] [] []) 40%N.
-    { split_scs; cbn [sc_denot]; subst E; evs;
-        first [rewrite land7_val by lia; rewrite VM8, br_ne by lia; reflexivity | rewrite br_eq by lia; apply Z.eqb_neq; exact VNZ]. }
-    clear HK.
-    lazymatch type of Hlf with log_flat _ ?lg =>
-      lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) =>
-        change mm with (mem_denot E m lg) in Hms; set (M1 := mem_denot E m lg) in Hms end end.
-    exists R', M1. split; [exact Hms|].
-    pose proof (msteps_full asegs _ _ Hms HF) as HF1; cbn [ms_regs] in HF1.
-    split; [exact HF1|].
-    assert (KK : kept_in KTB1 R R') by (intros rr Hrr; eapply (syms_id_sound R _ _ R' KTB1 HR'); [vm_cast_no_check (@eq_refl bool true) | exact Hrr]).
-    split; [exact KK|].
-    rreg HR' 2%bv L2. rreg HR' 8%bv L8. rreg HR' 9%bv L9. rreg HR' 18%bv L18. rreg HR' 20%bv L20. rreg HR' 21%bv L21.
-    rreg HR' 22%bv L22. rreg HR' 23%bv L23. rreg HR' 24%bv L24.
-    split; [rewrite L2; rewrite ?w_mul, ?w_add, ?w_addm by lia; first [reflexivity | rewrite TablLib.zbv_add; f_equal; lia | f_equal; lia]|].
-    split; [exact L8|]. split; [rewrite L9, TablLib.zbv_add; reflexivity|]. split; [rewrite L18, TablLib.zbv_add; reflexivity|].
-    split; [rewrite L20; reflexivity|].
-    split; [rewrite L21; reflexivity|].
-    split; [rewrite L22, TablLib.zbv_add, sh_word by lia; reflexivity|].
-    split; [rewrite L23, sh_word by lia; reflexivity|].
-    split; [rewrite L24, TablLib.zbv_add, sh_word by lia; reflexivity|].
-    split.
-    { subst M1. clear - Hlf HB Hq SPR.
-      pose proof (munch_mem_denot_sb [(-80, 0)] (EMd M_MUL (ELit 16) (EVar 33)) _ m _ Hlf ltac:(vm_compute; reflexivity)) as MU.
-      rewrite HB in MU. cbn [map fst snd] in MU. eapply munch_eqW; [exact MU | repeat f_equal; lia]. }
-    split; [subst M1; apply wmono_mem_denot|]. split; [exact (msteps_mem_inv asegs _ _ Hms MI)|].
-    split; [intros lo' hi' S; subst M1; apply stk_mem_denot; exact S|].
-    subst M1. clear - Hlf HB Hq SPR WS.
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 0%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 1%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 2%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 3%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 4%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 5%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 6%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 7%nat|].
-    apply rw_cells_cons8_c; [lgcell2 Hlf HB WS 8%nat|].
-    lgcell2 Hlf HB WS 9%nat.
+    pose (env0 := Eseed R []).
+    assert (sp_ev : ev env0 2 = Z_to_bv 64 SP) by (subst env0; rewrite (Eseed_regZ R [] 2%bv); exact sp_at).
+    assert (a0_ev : ev env0 10 = Z_to_bv 64 v) by (subst env0; rewrite (Eseed_regZ R [] 10%bv); exact a0_at).
+    assert (shadow_sum : forall x, 0 <= x < 2 ^ 47 ->
+      alu64 ALU_ADD (alu64 ALU_SRL (Z_to_bv 64 x) (Z_to_bv 64 3)) (Z_to_bv 64 2147450880) = Z_to_bv 64 (sh x)).
+    { intros x x_rng. pose proof (div8_bound x x_rng) as quot.
+      rewrite w_srl by lia. change (2 ^ 3) with 8. rewrite w_add by lia.
+      unfold sh, ASHADOW_BASE. f_equal. lia. }
+    assert (frame_wr : wr_at asegs m (SP - 80) 80).
+    { eapply wr_at_sub; [exact (wr_at_of_stk asegs m lo SP stack_m) | lia | lia | lia]. }
+    destruct (ACONST_shbase m const_m) as [got_cell base_cell].
+    assert (regs0 : regs_ok env0 sr_id R) by apply regs_ok_seed.
+    assert (know0 : know_ok asegs env0 m
+      [KWr (SA (EVar 2) (-80)) (ELit 80);
+       KWord (SA (ELit 0) AGOT_SHBASE) 8 (ELit ASHBASE_CELL);
+       KWord (SA (ELit 0) ASHBASE_CELL) 8 (ELit ASHADOW_BASE)]).
+    { unfold know_ok. repeat apply Forall_cons; try apply Forall_nil.
+      - apply (kwr_of_stk asegs env0 m lo SP _ _ stack_m); unfold estart, elenZ; cbn [a_base a_off edenot];
+          rewrite ?sp_ev, ?u64_of_Z by lia; lia.
+      - eapply (kword_of_rw_cells asegs env0 m AGOT_SHBASE _ 0 _ _ _ 8 got_cell);
+          [reflexivity | reflexivity | lia | reflexivity | unfold AGOT_SHBASE; lia | unfold AGOT_SHBASE; lia | reflexivity].
+      - eapply (kword_of_rw_cells asegs env0 m ASHBASE_CELL _ 0 _ _ _ 8 base_cell);
+          [reflexivity | reflexivity | lia | reflexivity | unfold ASHBASE_CELL; lia | unfold ASHBASE_CELL; lia | reflexivity]. }
+    xrun_at (PropExec.mkFP F fc) asegs R AT_TAKE_FIRST m ro regs0 know0 40%nat [TF_HEAD] (SCR [false; false] [] []) 32%N.
+    { unfold scs_denot; repeat apply Forall_cons; try apply Forall_nil; cbn [sc_denot];
+        lazymatch goal with
+        | |- branch_taken BC_EQ _ _ = _ => cbn [edenot]; rewrite a0_ev, br_eq by lia; apply Z.eqb_neq; exact v_nz
+        | |- branch_taken BC_NE _ _ = _ => cbn [edenot]; rewrite a0_ev, land7_val, v_align by lia; reflexivity
+        | |- _ => unfold flat, estart, elenZ; cbn [a_base a_off edenot]; rewrite ?sp_ev; rewrite ?u64_of_Z by lia; lia
+        end. }
+    rename R' into R1, HR' into regs1, Hlf into flat1, Hms into run1.
+    lazymatch type of flat1 with log_flat _ ?lg => exists R1, (mem_denot env0 m lg) end.
+    repeat match goal with |- _ /\ _ => split end.
+    all: lazymatch goal with
+      | |- CatSim.msteps _ _ _ => exact run1
+      | |- rfull _ => exact (msteps_full asegs _ _ run1 full_R)
+      | |- kept_in _ _ _ =>
+          intros r r_in; apply (syms_id_sound R _ _ R1 KTB1 regs1); [vm_compute; reflexivity | exact r_in]
+      | |- getr _ _ = _ =>
+          rewrite regs1;
+          lazymatch goal with |- edenot _ (sr_get ?sr ?r) = _ =>
+            let e := eval vm_compute in (sr_get sr r) in change (sr_get sr r) with e end;
+          cbn [edenot]; rewrite ?a0_ev, ?sp_ev;
+          first [ reflexivity
+                | rewrite w_addm by lia; f_equal; lia
+                | apply shadow_sum; lia
+                | rewrite w_add by lia; first [reflexivity | apply shadow_sum; lia] ]
+      | |- munch _ _ _ =>
+          eapply munch_eqW; [eapply (munch_mem_denot_sb [(-80, 0)] (EVar 2)); [exact flat1 | vm_compute; reflexivity] |];
+          cbn [map fst snd edenot]; rewrite sp_ev, u64_of_Z by lia; f_equal; f_equal; lia
+      | |- wmono _ _ _ => apply wmono_mem_denot
+      | |- mem_inv _ _ => exact (msteps_mem_inv asegs _ _ run1 inv_m)
+      | |- forall _ _, stk _ _ _ _ -> _ => intros lo1 hi1 frame_stk; apply stk_mem_denot; exact frame_stk
+      | |- rw_cells _ _ _ _ =>
+          let slot k :=
+            eapply (rw_cells_log_nth_sb env0 m _ k (EVar 2));
+            [ exact flat1 | reflexivity | vm_compute; reflexivity
+            | cbn [edenot]; rewrite sp_ev, u64_of_Z by lia; lia
+            | eapply wr_at_sub; [exact frame_wr | lia | lia | lia]
+            | reflexivity | exact I | reflexivity ] in
+          let rec walk k :=
+            lazymatch goal with
+            | |- rw_cells _ _ _ [_] => slot k
+            | |- rw_cells _ _ _ (_ :: _) => apply rw_cells_cons8_c; [slot k | walk (S k)]
+            end in
+          walk 0%nat
+      end.
   Qed.
 
   Lemma tf_pop : forall (R : bvmap 5 word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (ro : word -> option byte) (v b d c t j : Z),
@@ -151,108 +152,128 @@ Section TF1.
       /\ (mem_inv asegs m -> mem_inv asegs M')
       /\ rw_cells asegs M' (v + 8) [C8 (Z_to_bv 64 d)].
   Proof.
-    intros R F fc m ro v b d c t j P8 P9 P18 P20 P21 P22 P23 P24 HF V8 VLO VB VHI B16 B8 BD DC C47 D4 BB DJV F0 F8 F16 GZ FT TR SJ JC WV.
-    pose (E := Eseed R [Z_to_bv 64 v; Z_to_bv 64 d; Z_to_bv 64 j; Z_to_bv 64 t; Z_to_bv 64 b; Z_to_bv 64 c]).
-    set (SR0 := srs sr_id [(8%bv, EVar 32); (9%bv, EAlu ALU_ADD (EVar 32) (ELit 8)); (18%bv, EAlu ALU_ADD (EVar 32) (ELit 16));
-                           (20%bv, ELit 5); (21%bv, ELit 2147450880);
-                           (22%bv, EAlu ALU_ADD (EAlu ALU_SRL (EAlu ALU_ADD (EVar 32) (ELit 8)) (ELit 3)) (ELit 2147450880));
-                           (23%bv, EAlu ALU_ADD (EAlu ALU_SRL (EVar 32) (ELit 3)) (ELit 2147450880));
-                           (24%bv, EAlu ALU_ADD (EAlu ALU_SRL (EAlu ALU_ADD (EVar 32) (ELit 16)) (ELit 3)) (ELit 2147450880))]).
-    assert (HR : regs_ok E SR0 R).
-    { subst SR0. apply regs_ok_srs; [apply regs_ok_seed|]. repeat constructor; cbn [fst snd]; try (intros X; discriminate X); subst E; evs;
-        [exact P8 | rewrite P9, TablLib.zbv_add; reflexivity | rewrite P18, TablLib.zbv_add; reflexivity | exact P20 | exact P21
-        | rewrite P22, TablLib.zbv_add, sh_word by lia; reflexivity | rewrite P23, sh_word by lia; reflexivity
-        | rewrite P24, TablLib.zbv_add, sh_word by lia; reflexivity]. }
-    assert (EV : forall o, estart E (SA (EVar 32) o) = v + o) by (intros o; unfold estart; subst E; evs; rewrite u64_of_Z by lia; cbn [a_off]; lia).
-    assert (ED : forall o, estart E (SA (EVar 33) o) = d + o) by (intros o; unfold estart; subst E; evs; rewrite u64_of_Z by lia; cbn [a_off]; lia).
-    assert (HK : know_ok asegs E m
-       [ KWord (SA (EVar 32) 0) 8 (EVar 36); KWord (SA (EVar 32) 8) 8 (EAlu ALU_ADD (EVar 33) (ELit 4)); KWord (SA (EVar 32) 16) 8 (EVar 37);
-         KWord (SA (EAlu ALU_SRL (EAlu ALU_ADD (EVar 32) (ELit 8)) (ELit 3)) 2147450880) 1 (ELit 0);
-         KWord (SA (EAlu ALU_SRL (EAlu ALU_ADD (EVar 32) (ELit 16)) (ELit 3)) 2147450880) 1 (ELit 0);
-         KWord (SA (EAlu ALU_SRL (EVar 32) (ELit 3)) 2147450880) 1 (ELit 0);
-         KWord (SA (EAlu ALU_SRL (EVar 33) (ELit 3)) 2147450880) 1 (EVar 34);
-         KWord (SA (EVar 33) 0) 4 (EVar 35);
-         KWr (SA (EVar 32) 8) (ELit 8);
-         KRange (EVar 32) 0x6e8000 (2 ^ 47 - 24); KRange (EVar 33) 16 (2 ^ 47 - 4); KAlign (EVar 33) 4;
-         KRange (EVar 34) 0 7; KRange (EVar 35) 0 (2 ^ 31); KRange (EVar 36) 16 (2 ^ 47); KRange (EVar 37) 0 (2 ^ 47);
-         KDisj (SA (EVar 33) 0) (ELit 4) (SA (EVar 32) 8) (ELit 8) ]).
-    { unfold know_ok.
-      apply Forall_cons. { eapply (pt_kword_of_fld E m (SA (EVar 32) 0) (EVar 36) 8%nat v b F0); [lia | rewrite EV; lia | lia | lia | subst E; evs; reflexivity]. }
-      apply Forall_cons. { eapply (pt_kword_of_fld E m (SA (EVar 32) 8) _ 8%nat (v + 8) (d + 4) F8); [lia | rewrite EV; lia | lia | lia | subst E; evs; rewrite TablLib.zbv_add; reflexivity]. }
-      apply Forall_cons. { eapply (pt_kword_of_fld E m (SA (EVar 32) 16) (EVar 37) 8%nat (v + 16) c F16); [lia | rewrite EV; lia | lia | lia | subst E; evs; reflexivity]. }
-      apply Forall_cons. { eapply (kshadow0 _ _ _ (v + 8)); [subst E; evs; rewrite TablLib.zbv_add; reflexivity | lia | exact (gz_at m v 24 8 GZ ltac:(lia))]. }
-      apply Forall_cons. { eapply (kshadow0 _ _ _ (v + 16)); [subst E; evs; rewrite TablLib.zbv_add; reflexivity | lia | exact (gz_at m v 24 16 GZ ltac:(lia))]. }
-      apply Forall_cons. { eapply (kshadow0 _ _ _ v); [subst E; evs; reflexivity | lia | pose proof (gz_at m v 24 0 GZ ltac:(lia)) as X; rewrite Z.add_0_r in X; exact X]. }
-      apply Forall_cons. { eapply (kshadow _ _ _ d j); [subst E; evs; reflexivity | lia | destruct JC; lia | subst E; evs; reflexivity | exact SJ]. }
-      apply Forall_cons. { eapply (pt_kword_of_fld E m (SA (EVar 33) 0) (EVar 35) 4%nat d t FT); [lia | rewrite ED; lia | lia | lia | subst E; evs; reflexivity]. }
-      apply Forall_cons. { eapply kwr_of_wr_at; [exact WV | rewrite EV; lia | unfold elenZ; rewrite EV; subst E; evs; rewrite u64_of_Z by lia; lia
-                                                | unfold elenZ; subst E; evs; rewrite u64_of_Z by lia; lia]. }
-      do 2 (apply Forall_cons; [cbn [kentry_ok]; subst E; evs; rewrite u64_of_Z by lia; lia|]).
-      apply Forall_cons; [cbn [kentry_ok]; subst E; evs; rewrite u64_of_Z by lia; split; [lia | exact D4]|].
-      apply Forall_cons; [cbn [kentry_ok]; subst E; evs; rewrite u64_of_Z by (destruct JC; lia); destruct JC; lia|].
-      do 3 (apply Forall_cons; [cbn [kentry_ok]; subst E; evs; rewrite u64_of_Z by lia; lia|]).
-      apply Forall_cons; [|apply Forall_nil]. cbn [kentry_ok]. unfold elenZ. rewrite ED, EV. subst E; evs. rewrite !u64_of_Z by lia. clear - DJV BD DC; lia. }
-    assert (SHV : forall o, 0 <= o <= 16 -> estart E (SA (EAlu ALU_SRL (EAlu ALU_ADD (EVar 32) (ELit o)) (ELit 3)) 2147450880) = sh (v + o)).
-    { intros o Ho. unfold estart. cbn [a_base a_off]. subst E; evs. rewrite TablLib.zbv_add, HWord.w_srl by lia.
-      rewrite u64_of_Z by (clear - VLO VHI Ho; Z.div_mod_to_equations; lia). unfold sh. rewrite ASHADOW_BASE_val. change (2 ^ 3) with 8. lia. }
-    assert (SHB : 0x7fff8000 <= sh (v + 16) /\ sh (v + 16) + 1 <= 0x10007fff8000) by (clear - VLO VHI; unfold sh; rewrite ASHADOW_BASE_val; Z.div_mod_to_equations; lia).
-    assert (SD : sc_denot asegs m E (SCDisj (SA (EAlu ALU_SRL (EAlu ALU_ADD (EVar 32) (ELit 16)) (ELit 3)) 2147450880) (ELit 1) (SA (EVar 32) 8) (ELit 8))).
-    { cbn [sc_denot]. unfold flat, elenZ. rewrite (SHV 16 ltac:(lia)), EV. cbn [edenot]. rewrite !u64_of_Z by lia. clear - SHB VB VLO VHI. lia. }
-    destruct JC as [J0|(JA & J1)].
-    - subst j. xrun_at (PropExec.mkFP F fc) asegs R TF_HEAD m ro HR HK 40%nat [AANNOTATE_CC] (SCR [false; false; false; false; false] [] []) 40%N.
-      { split_scs; first [exact SD | cbn [sc_denot]; subst E; evs; rewrite ?TablLib.zbv_add, ?ext4_small by lia;
-          first [rewrite br_ne by lia | rewrite br_ltu by lia | rewrite br_lts_small by lia]; bool_lia]. }
-      lazymatch type of Hlf with log_flat _ ?lg =>
-        lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) =>
-          change mm with (mem_denot E m lg) in Hms; set (M1 := mem_denot E m lg) in Hms end end.
-      exists R', M1. split; [exact Hms|].
-      split; [exact (msteps_full asegs _ _ Hms HF)|].
-      assert (KK : kept_in KTPOP R R') by (intros rr Hrr; eapply (syms_id_sound R _ _ R' KTPOP HR'); [vm_cast_no_check (@eq_refl bool true) | exact Hrr]).
-      split; [exact KK|].
-      rreg HR' 1%bv L1. rreg HR' 10%bv L10. rreg HR' 11%bv L11. rreg HR' 12%bv L12. rreg HR' 13%bv L13. rreg HR' 19%bv L19.
-      rreg HR' 8%bv L8. rreg HR' 9%bv L9. rreg HR' 18%bv L18. rreg HR' 20%bv L20. rreg HR' 21%bv L21. rreg HR' 22%bv L22. rreg HR' 23%bv L23.
-      rreg HR' 24%bv L24.
-      split; [exact L1|]. split; [exact L10|]. split; [exact L11|]. split; [rewrite L12, TablLib.zbv_add; reflexivity|]. split; [exact L13|].
-      split; [rewrite L19, ext4_small by lia; reflexivity|].
-      split; [exact L8|]. split; [rewrite L9, TablLib.zbv_add; reflexivity|]. split; [rewrite L18, TablLib.zbv_add; reflexivity|]. split; [exact L20|].
-      split; [exact L21|]. split; [rewrite L22, TablLib.zbv_add, sh_word by lia; reflexivity|]. split; [rewrite L23, sh_word by lia; reflexivity|].
-      split; [rewrite L24, TablLib.zbv_add, sh_word by lia; reflexivity|].
-      split.
-      { subst M1. apply munch_mem_denot; [exact Hlf|].
-        apply Forall_cons; [cbn [e_addr e_width]; rewrite EV; cbn [inside Z.of_nat Pos.of_succ_nat Pos.succ]; lia | apply Forall_nil]. }
-      split; [subst M1; apply wmono_mem_denot|]. split; [intros lo hi S; subst M1; apply stk_mem_denot; exact S|].
-      split; [intros MI; exact (msteps_mem_inv asegs _ _ Hms MI)|].
-      subst M1. eapply (rw_cells_log_nth _ m _ 0%nat); [exact Hlf | reflexivity | apply Forall_nil
-          | rewrite EV; lia | exact WV | reflexivity | exact I | try subst E; HLib.evs; reflexivity].
-    - assert (SL : sc_denot asegs m E (SCBr true BC_LT (EAlu ALU_ADD (EAlu ALU_AND (EVar 33) (ELit 7)) (ELit 3)) (EVar 34))).
-      { cbn [sc_denot]. subst E; evs. rewrite land7_val by lia. rewrite JA, TablLib.zbv_add. rewrite br_lts_small by lia. apply Z.ltb_lt. lia. }
-      assert (SN : sc_denot asegs m E (SCBr true BC_NE (EVar 34) (ELit 0))).
-      { cbn [sc_denot]. subst E; evs. rewrite br_ne by lia. apply negb_true_iff, Z.eqb_neq. lia. }
-      xrun_at (PropExec.mkFP F fc) asegs R TF_HEAD m ro HR HK 40%nat [AANNOTATE_CC] (SCR [true; true; false; false; false; false] [] []) 40%N.
-      { split_scs; first [exact SD | exact SL | exact SN | cbn [sc_denot]; subst E; evs; rewrite ?TablLib.zbv_add, ?ext4_small by lia;
-          first [rewrite br_ltu by lia | rewrite br_lts_small by lia]; bool_lia]. }
-      lazymatch type of Hlf with log_flat _ ?lg =>
-        lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) =>
-          change mm with (mem_denot E m lg) in Hms; set (M1 := mem_denot E m lg) in Hms end end.
-      exists R', M1. split; [exact Hms|].
-      split; [exact (msteps_full asegs _ _ Hms HF)|].
-      assert (KK : kept_in KTPOP R R') by (intros rr Hrr; eapply (syms_id_sound R _ _ R' KTPOP HR'); [vm_cast_no_check (@eq_refl bool true) | exact Hrr]).
-      split; [exact KK|].
-      rreg HR' 1%bv L1. rreg HR' 10%bv L10. rreg HR' 11%bv L11. rreg HR' 12%bv L12. rreg HR' 13%bv L13. rreg HR' 19%bv L19.
-      rreg HR' 8%bv L8. rreg HR' 9%bv L9. rreg HR' 18%bv L18. rreg HR' 20%bv L20. rreg HR' 21%bv L21. rreg HR' 22%bv L22. rreg HR' 23%bv L23.
-      rreg HR' 24%bv L24.
-      split; [exact L1|]. split; [exact L10|]. split; [exact L11|]. split; [rewrite L12, TablLib.zbv_add; reflexivity|]. split; [exact L13|].
-      split; [rewrite L19, ext4_small by lia; reflexivity|].
-      split; [exact L8|]. split; [rewrite L9, TablLib.zbv_add; reflexivity|]. split; [rewrite L18, TablLib.zbv_add; reflexivity|]. split; [exact L20|].
-      split; [exact L21|]. split; [rewrite L22, TablLib.zbv_add, sh_word by lia; reflexivity|]. split; [rewrite L23, sh_word by lia; reflexivity|].
-      split; [rewrite L24, TablLib.zbv_add, sh_word by lia; reflexivity|].
-      split.
-      { subst M1. apply munch_mem_denot; [exact Hlf|].
-        apply Forall_cons; [cbn [e_addr e_width]; rewrite EV; cbn [inside Z.of_nat Pos.of_succ_nat Pos.succ]; lia | apply Forall_nil]. }
-      split; [subst M1; apply wmono_mem_denot|]. split; [intros lo hi S; subst M1; apply stk_mem_denot; exact S|].
-      split; [intros MI; exact (msteps_mem_inv asegs _ _ Hms MI)|].
-      subst M1. eapply (rw_cells_log_nth _ m _ 0%nat); [exact Hlf | reflexivity | apply Forall_nil
-          | rewrite EV; lia | exact WV | reflexivity | exact I | try subst E; HLib.evs; reflexivity].
+    intros R F fc m ro v b d c t j s0_at s1_at s2_at s4_at s5_at s6_at s7_at s8_at full_R
+      v_align v_low v_window v_top b_low b_align b_le_d d_room c_top d_align c_window apart
+      cell_b cell_d4 cell_c shadow_v cell_t t_range shadow_d j_cases slot_wr.
+    assert (j_byte : 0 <= j < 8) by lia.
+    pose proof (div8_bound v ltac:(lia)) as q_v.
+    pose proof (div8_bound (v + 8) ltac:(lia)) as q_v8.
+    pose proof (div8_bound (v + 16) ltac:(lia)) as q_v16.
+    pose proof (div8_bound d ltac:(lia)) as q_d.
+    assert (d_low2 : Z.land d 3 = 0).
+    { change 3 with (Z.ones 2). rewrite Z.land_ones by lia. exact d_align. }
+    pose (env0 := Eseed R [Z_to_bv 64 b; Z_to_bv 64 c; Z_to_bv 64 d; Z_to_bv 64 j; Z_to_bv 64 t]).
+    assert (ev8 : ev env0 8 = Z_to_bv 64 v) by (subst env0; rewrite (Eseed_regZ R _ 8%bv); exact s0_at).
+    assert (ev9 : ev env0 9 = Z_to_bv 64 (v + 8)) by (subst env0; rewrite (Eseed_regZ R _ 9%bv); exact s1_at).
+    assert (ev18 : ev env0 18 = Z_to_bv 64 (v + 16)) by (subst env0; rewrite (Eseed_regZ R _ 18%bv); exact s2_at).
+    assert (ev_b : ev env0 32 = Z_to_bv 64 b) by reflexivity.
+    assert (ev_c : ev env0 33 = Z_to_bv 64 c) by reflexivity.
+    assert (ev_d : ev env0 34 = Z_to_bv 64 d) by reflexivity.
+    assert (ev_j : ev env0 35 = Z_to_bv 64 j) by reflexivity.
+    assert (ev_t : ev env0 36 = Z_to_bv 64 t) by reflexivity.
+    assert (plain_at : forall (n : N) x o, ev env0 n = Z_to_bv 64 x -> 0 <= x < 2 ^ 64 ->
+      estart env0 (SA (EVar n) o) = x + o).
+    { intros n x o ev_x x_rng. unfold estart. cbn [a_base a_off edenot]. rewrite ev_x, u64_of_Z by lia. reflexivity. }
+    assert (sh_at : forall (n : N) x, ev env0 n = Z_to_bv 64 x -> 0 <= x < 2 ^ 47 ->
+      estart env0 (SA (EAlu ALU_SRL (EVar n) (ELit 3)) 2147450880) = sh x).
+    { intros n x ev_x x_rng. unfold estart. cbn [a_base a_off].
+      rewrite (srl3_val env0 (EVar n) x ev_x) by lia. unfold sh, ASHADOW_BASE. lia. }
+    assert (shadow_sum : forall x, 0 <= x < 2 ^ 47 ->
+      alu64 ALU_ADD (alu64 ALU_SRL (Z_to_bv 64 x) (Z_to_bv 64 3)) (Z_to_bv 64 2147450880) = Z_to_bv 64 (sh x)).
+    { intros x x_rng. pose proof (div8_bound x x_rng) as quot.
+      rewrite w_srl by lia. change (2 ^ 3) with 8. rewrite w_add by lia.
+      unfold sh, ASHADOW_BASE. f_equal. lia. }
+    assert (regs0 : regs_ok env0 (srs sr_id
+      [(20%bv, ELit 5); (21%bv, ELit 2147450880);
+       (22%bv, EAlu ALU_ADD (EAlu ALU_SRL (EVar 9) (ELit 3)) (ELit 2147450880));
+       (23%bv, EAlu ALU_ADD (EAlu ALU_SRL (EVar 8) (ELit 3)) (ELit 2147450880));
+       (24%bv, EAlu ALU_ADD (EAlu ALU_SRL (EVar 18) (ELit 3)) (ELit 2147450880))]) R).
+    { apply regs_ok_srs; [apply regs_ok_seed|].
+      repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd]; (split; [discriminate|]); cbn [edenot]; rewrite ?ev8, ?ev9, ?ev18.
+      - exact s4_at.
+      - exact s5_at.
+      - rewrite s6_at. symmetry. apply shadow_sum. lia.
+      - rewrite s7_at. symmetry. apply shadow_sum. lia.
+      - rewrite s8_at. symmetry. apply shadow_sum. lia. }
+    assert (know_fld : forall (sa : saddr) (k : nat) (p x : Z) (ex : expr),
+      fldA m p k x -> (k <= 8)%nat -> estart env0 sa = p -> 0 <= p < 2 ^ 64 -> p + Z.of_nat k <= 2 ^ 64 ->
+      edenot env0 ex = Z_to_bv 64 x -> kentry_ok asegs env0 m (KWord sa k ex)).
+    { intros sa k p x ex fld_px k_le at_p p_rng p_hi val_x. cbn [kentry_ok].
+      pose proof (Nat2Z.is_nonneg k) as k_pos.
+      split; [exact k_le|]. split; [unfold flat; rewrite at_p; lia|].
+      rewrite (adenot_of_estart env0 sa p at_p p_rng), val_x. exact fld_px. }
+    assert (know0 : know_ok asegs env0 m
+      [KWord (SA (EAlu ALU_SRL (EVar 9) (ELit 3)) 2147450880) 1 (ELit 0);
+       KWord (SA (EAlu ALU_SRL (EVar 8) (ELit 3)) 2147450880) 1 (ELit 0);
+       KWord (SA (EAlu ALU_SRL (EVar 18) (ELit 3)) 2147450880) 1 (ELit 0);
+       KWord (SA (EVar 9) 0) 8 (EAlu ALU_ADD (EVar 34) (ELit 4));
+       KWord (SA (EVar 8) 0) 8 (EVar 32);
+       KWord (SA (EVar 18) 0) 8 (EVar 33);
+       KWord (SA (EAlu ALU_SRL (EVar 34) (ELit 3)) 2147450880) 1 (EVar 35);
+       KWord (SA (EVar 34) 0) 4 (EVar 36);
+       KWr (SA (EVar 9) 0) (ELit 8)]).
+    { unfold know_ok. repeat apply Forall_cons; try apply Forall_nil.
+      - apply (kshadow0 env0 m (EVar 9) (v + 8) ev9); [lia | exact (gz_at m v 24 8 shadow_v ltac:(lia))].
+      - pose proof (gz_at m v 24 0 shadow_v ltac:(lia)) as sv. rewrite Z.add_0_r in sv.
+        apply (kshadow0 env0 m (EVar 8) v ev8); [lia | exact sv].
+      - apply (kshadow0 env0 m (EVar 18) (v + 16) ev18); [lia | exact (gz_at m v 24 16 shadow_v ltac:(lia))].
+      - apply (know_fld _ 8%nat (v + 8) (d + 4)); [exact cell_d4 | lia | rewrite (plain_at 9%N (v + 8)) by (exact ev9 || lia); lia | lia | lia |].
+        cbn [edenot]. rewrite ev_d, w_add by lia. reflexivity.
+      - apply (know_fld _ 8%nat v b); [exact cell_b | lia | rewrite (plain_at 8%N v) by (exact ev8 || lia); lia | lia | lia | exact ev_b].
+      - apply (know_fld _ 8%nat (v + 16) c); [exact cell_c | lia | rewrite (plain_at 18%N (v + 16)) by (exact ev18 || lia); lia | lia | lia | exact ev_c].
+      - apply (kshadow env0 m (EVar 34) d j (EVar 35) ev_d); [lia | lia | exact ev_j | exact shadow_d].
+      - apply (know_fld _ 4%nat d t); [exact cell_t | lia | rewrite (plain_at 34%N d) by (exact ev_d || lia); lia | lia | lia | exact ev_t].
+      - apply (kwr_of_wr_at asegs env0 m (v + 8) 8 _ _ slot_wr); rewrite ?(plain_at 9%N (v + 8)) by (exact ev9 || lia);
+          unfold elenZ; cbn [edenot]; rewrite ?u64_of_Z by lia; lia. }
+    destruct j_cases as [j_zero | [d_al8 j_big]];
+      [ xrun_at (PropExec.mkFP F fc) asegs R TF_HEAD m ro regs0 know0 60%nat [AANNOTATE_CC]
+          (SCR [false; false; false; false; false; false; false; false; false] [] []) 37%N
+      | xrun_at (PropExec.mkFP F fc) asegs R TF_HEAD m ro regs0 know0 60%nat [AANNOTATE_CC]
+          (SCR [false; false; true; true; false; false; false; false; false; false] [] []) 37%N ].
+    1, 3: unfold scs_denot; repeat apply Forall_cons; try apply Forall_nil; cbn [sc_denot];
+      lazymatch goal with
+      | |- branch_taken _ _ _ = _ =>
+          cbn [edenot]; rewrite ?ev_b, ?ev_c, ?ev_d, ?ev_j, ?ev_t;
+          rewrite ?ext4_small, ?ext_shadow_small, ?land7_val, ?w_and by lia;
+          rewrite ?d_low2;
+          repeat match goal with al : ?x mod 8 = 0 |- context [?x mod 8] => rewrite al end;
+          rewrite ?w_add by lia;
+          rewrite ?br_eq, ?br_ne, ?br_ltu, ?br_lts_small by lia; bool_lia
+      | |- _ =>
+          unfold flat, elenZ;
+          rewrite ?(sh_at 9%N (v + 8)), ?(sh_at 8%N v), ?(sh_at 18%N (v + 16)), ?(sh_at 34%N d),
+                  ?(plain_at 9%N (v + 8)), ?(plain_at 8%N v), ?(plain_at 18%N (v + 16)), ?(plain_at 34%N d)
+            by first [assumption | lia];
+          cbn [edenot]; rewrite ?u64_of_Z by lia; unfold sh, ASHADOW_BASE; lia
+      end.
+    all: rename R' into R1, HR' into regs1, Hlf into flat1, Hms into run1.
+    all: lazymatch type of flat1 with log_flat _ ?lg => exists R1, (mem_denot env0 m lg) end.
+    all: repeat match goal with |- _ /\ _ => split end.
+    all: lazymatch goal with
+      | |- CatSim.msteps _ _ _ => exact run1
+      | |- rfull _ => exact (msteps_full asegs _ _ run1 full_R)
+      | |- kept_in _ _ _ =>
+          intros r r_in; apply (syms_id_sound R _ _ R1 KTPOP regs1); [vm_compute; reflexivity | exact r_in]
+      | |- getr _ _ = _ =>
+          rewrite regs1;
+          lazymatch goal with |- edenot _ (sr_get ?sr ?r) = _ =>
+            let e := eval vm_compute in (sr_get sr r) in change (sr_get sr r) with e end;
+          cbn [edenot]; rewrite ?ev8, ?ev9, ?ev18, ?ev_b, ?ev_c, ?ev_d, ?ev_t;
+          first [ reflexivity
+                | apply shadow_sum; lia
+                | rewrite w_add by lia; reflexivity
+                | rewrite ext4_small by lia; reflexivity ]
+      | |- munch _ _ _ =>
+          eapply munch_eqW; [eapply (munch_mem_denot_sb [(0, 8)] (EVar 9)); [exact flat1 | vm_compute; reflexivity] |];
+          cbn [map fst snd edenot]; rewrite ev9, u64_of_Z by lia; f_equal; f_equal; lia
+      | |- wmono _ _ _ => apply wmono_mem_denot
+      | |- forall _ _, stk _ _ _ _ -> _ => intros lo1 hi1 frame_stk; apply stk_mem_denot; exact frame_stk
+      | |- mem_inv _ _ -> mem_inv _ _ => intros inv_m; exact (msteps_mem_inv asegs _ _ run1 inv_m)
+      | |- rw_cells _ _ _ _ =>
+          eapply (rw_cells_log_nth_sb env0 m _ 0 (EVar 9));
+          [ exact flat1 | reflexivity | reflexivity | cbn [edenot]; rewrite ev9, u64_of_Z by lia; lia
+          | exact slot_wr | reflexivity | exact I | reflexivity ]
+      end.
   Qed.
 
   Lemma tf_call : forall (R : bvmap 5 word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (ro : word -> option byte),
@@ -304,44 +325,42 @@ Section TF1.
       /\ getr R' 1 = ra /\ getr R' 2 = Z_to_bv 64 SP /\ getr R' 8 = s0 /\ getr R' 9 = s1 /\ getr R' 18 = s2 /\ getr R' 19 = s3
       /\ getr R' 20 = s4 /\ getr R' 21 = s5 /\ getr R' 22 = s6 /\ getr R' 23 = s7 /\ getr R' 24 = s8 /\ getr R' 10 = getr R 19.
   Proof.
-    intros R F fc m ro ra s0 s1 s2 s3 s4 s5 s6 s7 s8 SP P10 P2 HF SPR CS MI.
-    pose (E := Eseed R [Z_to_bv 64 (SP - 80); ra; s0; s1; s2; s3; s4; s5; s6; s7; s8]).
-    assert (HR : regs_ok E (srs sr_id [(10%bv, ELit 0); (2%bv, EVar 32)]) R)
-      by (apply regs_ok_srs; [apply regs_ok_seed|]; repeat constructor; cbn [fst snd]; try (intros X; discriminate X); try subst E; evs; [exact P10 | exact P2]).
-    assert (EP : bv_unsigned (edenot E (EVar 32)) = SP - 80) by (try subst E; evs; rewrite u64_of_Z by lia; reflexivity).
-    Ltac ktail CSF EP k c :=
-      eapply (kword_of_rw_cells asegs _ _ _ _ k c); [exact CSF | reflexivity | reflexivity | lia
-        | unfold estart; cbn [a_base a_off]; rewrite EP; cbn; lia | lia | lia | HLib.evs; reflexivity].
-    assert (HK : know_ok asegs E m
-       [ KWord (SA (EVar 32) 0) 8 (EVar 42); KWord (SA (EVar 32) 8) 8 (EVar 41); KWord (SA (EVar 32) 16) 8 (EVar 40);
-         KWord (SA (EVar 32) 24) 8 (EVar 39); KWord (SA (EVar 32) 32) 8 (EVar 38); KWord (SA (EVar 32) 40) 8 (EVar 37);
-         KWord (SA (EVar 32) 48) 8 (EVar 36); KWord (SA (EVar 32) 56) 8 (EVar 35); KWord (SA (EVar 32) 64) 8 (EVar 34);
-         KWord (SA (EVar 32) 72) 8 (EVar 33); KRange (EVar 32) (2 ^ 44) (2 ^ 47) ]).
-    { unfold know_ok.
-      apply Forall_cons. { ktail CS EP 0%nat (C8 s8). }
-      apply Forall_cons. { ktail CS EP 8%nat (C8 s7). }
-      apply Forall_cons. { ktail CS EP 16%nat (C8 s6). }
-      apply Forall_cons. { ktail CS EP 24%nat (C8 s5). }
-      apply Forall_cons. { ktail CS EP 32%nat (C8 s4). }
-      apply Forall_cons. { ktail CS EP 40%nat (C8 s3). }
-      apply Forall_cons. { ktail CS EP 48%nat (C8 s2). }
-      apply Forall_cons. { ktail CS EP 56%nat (C8 s1). }
-      apply Forall_cons. { ktail CS EP 64%nat (C8 s0). }
-      apply Forall_cons. { ktail CS EP 72%nat (C8 ra). }
-      apply Forall_cons; [cbn [kentry_ok]; rewrite EP; lia | apply Forall_nil]. }
-    xrun_at (PropExec.mkFP F fc) asegs R TF_XP_RET m ro HR HK 30%nat [TF_RET; TF_HEAD] (SCR [] [] []) 43%N.
-    { first [apply Forall_nil | split_scs]. }
-    lazymatch goal with Hms : CatSim.msteps _ _ (@PropExec.mkst _ ?R1 _ ?mm _) |- _ =>
-      change mm with m in Hms; exists R1; split; [exact Hms|]; split; [exact (msteps_full asegs _ _ Hms HF)|] end.
-    split; [intros rr Hrr; eapply (syms_id_sound R _ _ R' KTEXIT HR'); [vm_cast_no_check (@eq_refl bool true) | exact Hrr]|].
-    rreg HR' 1%bv L1. rreg HR' 2%bv L2. rreg HR' 8%bv L8. rreg HR' 9%bv L9. rreg HR' 10%bv L10. rreg HR' 18%bv L18. rreg HR' 19%bv L19.
-    rreg HR' 20%bv L20. rreg HR' 21%bv L21. rreg HR' 22%bv L22. rreg HR' 23%bv L23. rreg HR' 24%bv L24.
-    split; [rewrite L1; try subst E; evs; reflexivity|]. split; [rewrite L2; try subst E; evs; rewrite TablLib.zbv_add; f_equal; lia|].
-    split; [rewrite L8; try subst E; evs; reflexivity|]. split; [rewrite L9; try subst E; evs; reflexivity|].
-    split; [rewrite L18; try subst E; evs; reflexivity|]. split; [rewrite L19; try subst E; evs; reflexivity|].
-    split; [rewrite L20; try subst E; evs; reflexivity|]. split; [rewrite L21; try subst E; evs; reflexivity|].
-    split; [rewrite L22; try subst E; evs; reflexivity|]. split; [rewrite L23; try subst E; evs; reflexivity|].
-    split; [rewrite L24; try subst E; evs; reflexivity|].
-    rewrite L10; try subst E; evs; reflexivity.
+    intros R F fc m ro ra s0 s1 s2 s3 s4 s5 s6 s7 s8 SP a0_at sp_at full_R sp_range frame_cells _.
+    pose (env0 := Eseed R [s8; s7; s6; s5; s4; s3; s2; s1; s0; ra]).
+    assert (sp_ev : ev env0 2 = Z_to_bv 64 (SP - 80)) by (subst env0; rewrite (Eseed_regZ R _ 2%bv); exact sp_at).
+    assert (a0_ev : ev env0 10 = Z_to_bv 64 0) by (subst env0; rewrite (Eseed_regZ R _ 10%bv); exact a0_at).
+    assert (regs0 : regs_ok env0 sr_id R) by apply regs_ok_seed.
+    assert (know0 : know_ok asegs env0 m
+      ltac:(let l := eval vm_compute in
+              (map (fun k => KWord (SA (EVar 2) (8 * Z.of_nat k)) 8 (EVar (32 + N.of_nat k))) (seq 0 10)) in exact l)).
+    { unfold know_ok; repeat apply Forall_cons; try apply Forall_nil;
+        lazymatch goal with |- kentry_ok _ _ _ (KWord (SA _ ?o) _ _) =>
+          let k := eval vm_compute in (Z.to_nat o) in
+          eapply (kword_of_rw_cells asegs env0 m (SP - 80) _ k _ _ _ 8 frame_cells);
+          [ reflexivity | reflexivity | lia
+          | unfold estart; cbn [a_base a_off edenot]; rewrite sp_ev, u64_of_Z by lia; reflexivity
+          | lia | lia | reflexivity ]
+        end. }
+    xrun_at (PropExec.mkFP F fc) asegs R TF_XP_RET m ro regs0 know0 30%nat [TF_RET] (SCR [false] [] []) 42%N.
+    { unfold scs_denot; repeat apply Forall_cons; try apply Forall_nil; cbn [sc_denot];
+        lazymatch goal with
+        | |- branch_taken _ _ _ = _ => cbn [edenot]; rewrite a0_ev; reflexivity
+        | |- _ => unfold flat, estart, elenZ; cbn [a_base a_off edenot]; rewrite sp_ev, ?u64_of_Z by lia; lia
+        end. }
+    rename R' into R1, HR' into regs1, Hms into run1. clear Hlf.
+    exists R1.
+    repeat match goal with |- _ /\ _ => split end.
+    all: lazymatch goal with
+      | |- CatSim.msteps _ _ _ => exact run1
+      | |- rfull _ => exact (msteps_full asegs _ _ run1 full_R)
+      | |- kept_in _ _ _ =>
+          intros r r_in; apply (syms_id_sound R _ _ R1 KTEXIT regs1); [vm_compute; reflexivity | exact r_in]
+      | |- getr _ _ = _ =>
+          rewrite regs1;
+          lazymatch goal with |- edenot _ (sr_get ?sr ?r) = _ =>
+            let e := eval vm_compute in (sr_get sr r) in change (sr_get sr r) with e end;
+          cbn [edenot]; rewrite ?sp_ev;
+          first [ reflexivity | rewrite w_add by lia; f_equal; lia ]
+      end.
   Qed.
 End TF1.

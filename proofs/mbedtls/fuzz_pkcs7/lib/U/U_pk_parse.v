@@ -116,7 +116,7 @@ Section PA.
   Hypothesis SPR : bv_unsigned sp < 2^64.
 
   Notation POST := (pk_parse_subpubkey_post usegs L HI PK SI ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc h0 LB PP P END PKA lo m0 mo0).
-  Notation FRS mm := (rw_cells usegs mm (bv_unsigned sp + -40) [C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
+  Notation FRS m := (rw_cells usegs m (bv_unsigned sp + -48) [C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
   Notation FP := ([(PP, PP + 8); (PKA, PKA + 16)] ++ XS).
 
 Notation pa_basics' := (pa_basics L HI HLS sp m0 mo0 h0 LB PP BUF PKA lo bs HH0 INB SPP SPK ACL SLO DHI).
@@ -135,11 +135,16 @@ Notation pa_basics' := (pa_basics L HI HLS sp m0 mo0 h0 LB PP BUF PKA lo bs HH0 
   Notation heap_presx_weak'' := (heap_presx_weak' L ra sp LB PP P END BUF PKA bs BP PE EB DPK DKB DPB NZPP NZP).
   Lemma DI1 : hl_img_lo L <= hl_data_lo L. Proof. exact (proj1 DIMG). Qed.
   Lemma DI2 : hl_data_hi L <= hl_img_hi L. Proof. exact (proj2 DIMG). Qed.
-  Lemma IL1 : hl_data_lo L <= U_ECP_IDS_DONE. Proof. exact (proj1 HL). Qed.
-  Lemma IL2 : U_ECP_IDS_DONE + 1 <= U_ECP_IDS. Proof. exact (proj1 (proj2 HL)). Qed.
-  Lemma IL3 : U_ECP_IDS + 56 <= hl_data_hi L. Proof. exact (proj1 (proj2 (proj2 HL))). Qed.
-  Lemma ML1 : hl_data_lo L <= U_MUL_COUNT. Proof. exact (proj1 HMC). Qed.
-  Lemma ML2 : U_MUL_COUNT + 8 <= hl_data_hi L. Proof. exact (proj1 (proj2 HMC)). Qed.
+  Lemma IL1 : hl_data_lo L <= U_ECP_IDS_DONE.
+    Proof. destruct HL as [ids_floor _]. exact ids_floor. Qed.
+  Lemma IL2 : U_ECP_IDS_DONE + 1 <= U_ECP_IDS.
+    Proof. destruct HL as (_ & ids_gap & _). exact ids_gap. Qed.
+  Lemma IL3 : U_ECP_IDS + 56 <= hl_data_hi L.
+    Proof. destruct HL as (_ & _ & ids_ceiling & _). exact ids_ceiling. Qed.
+  Lemma ML1 : hl_data_lo L <= U_MUL_COUNT.
+    Proof. destruct HMC as [count_floor _]. exact count_floor. Qed.
+  Lemma ML2 : U_MUL_COUNT + 8 <= hl_data_hi L.
+    Proof. destruct HMC as (_ & count_ceiling & _). exact count_ceiling. Qed.
   Notation rsa_walk' := (rsa_walk L HI HFREE HCALLOC HLS SW DIMG HND HL HMC HPERM CA_MSF CA_RSA0 CA_RSA80 CA_EC0 CA_EC80 ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 mo0 h0 LB PP P END BUF PKA lo bs HH0 HBS0 INB BP PE EB B63 BUF0 ALP SPP PPT SPK PKT DPK ACL SLO SPA HTOP DHI TP DKB DPB NZPP NZP DSPP DSP DSB CWPP CWP CRB SPR).
   Notation ec_walk' := (ec_walk L HI HFREE HCALLOC HLS SW DIMG HND HL HMC HPERM CA_MSF CA_RSA0 CA_RSA80 CA_EC0 CA_EC80 CAT_ECGRP CA_BP HPRB HCPK ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 mo0 h0 LB PP P END BUF PKA lo bs HH0 HBS0 INB BP PE EB B63 BUF0 ALP SPP SPK PKT DPK ACL SLO SPA HTOP DHI TP DKB DPB NZPP NZP DSPP DSP DSB CWPP CWP CRB SPR).
   Notation low_frame_merge' := (low_frame_merge ra sp PP PKA bs).

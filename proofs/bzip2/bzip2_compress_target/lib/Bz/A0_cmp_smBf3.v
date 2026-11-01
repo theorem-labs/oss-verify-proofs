@@ -145,260 +145,48 @@ Section FC.
            F (Z_to_bv 64 0x8c708) fc None m' (seg_rom a0segs))) ->
     evt a0segs Q (MS (mkR (Z_to_bv 64 (p 3 2)) (Z_to_bv 64 (P)) gp tp (Z_to_bv 64 (p 0 1)) (Z_to_bv 64 (p 4 1)) (Z_to_bv 64 (p 0 2)) s0 (Z_to_bv 64 (P)) (Z_to_bv 64 (A1 + 2 * gs)) (Z_to_bv 64 (E + 16 * q 43 + 51640)) xa2 (Z_to_bv 64 (E + 51640)) xa4 (Z_to_bv 64 (p 42 0)) (Z_to_bv 64 (p 4 0)) (Z_to_bv 64 (p 0 0)) (Z_to_bv 64 (49)) (Z_to_bv 64 (p 1 2)) (Z_to_bv 64 (2147450880)) (Z_to_bv 64 (nSel)) (Z_to_bv 64 (1)) (Z_to_bv 64 (p 2 0)) (Z_to_bv 64 (p 2 2)) (Z_to_bv 64 (p 2 1)) (Z_to_bv 64 (p 3 0)) (Z_to_bv 64 (p 3 1)) (Z_to_bv 64 (p 1 0)) (Z_to_bv 64 (gs + 50)) (Z_to_bv 64 (p 1 1)) (Z_to_bv 64 (gs + 49)))
          F (Z_to_bv 64 0x8c1f0) fc None m (seg_rom a0segs)).
-  Proof.
-    intros m me xa2 xa4 x232 x240 x248 x256 x264 x272 x280 x288 x296 x304 x312 x320 x328 x336 x344 x352 x360 x368 x376 x392 x1312 x1320 x1328 x1336 x1360 SPL HI MI MU WM VAR1 SHa VLPK SHe K.
-    openCX. try clear ME MA1 MA2 MF Mb Mf. clear XA20 XA21 XF0 XF1 Xb0 Xb1 Xf0 Xf1 LJb. unfold ESTATE_SIZE in SHe. assert (HAd : A = (e_nInUse e + 2)%Z) by reflexivity.
-    pose proof (QB 43 ltac:(lia)) as QB43.
-    pose proof (PB 0 0 ltac:(lia) ltac:(lia)) as PB0_0.
-    pose proof (PB 1 0 ltac:(lia) ltac:(lia)) as PB1_0.
-    pose proof (PB 2 0 ltac:(lia) ltac:(lia)) as PB2_0.
-    pose proof (PB 3 0 ltac:(lia) ltac:(lia)) as PB3_0.
-    pose proof (PB 4 0 ltac:(lia) ltac:(lia)) as PB4_0.
-    pose proof (PB 5 0 ltac:(lia) ltac:(lia)) as PB5_0.
-    pose proof (PB 6 0 ltac:(lia) ltac:(lia)) as PB6_0.
-    pose proof (PB 7 0 ltac:(lia) ltac:(lia)) as PB7_0.
-    pose proof (PB 8 0 ltac:(lia) ltac:(lia)) as PB8_0.
-    pose proof (PB 9 0 ltac:(lia) ltac:(lia)) as PB9_0.
-    pose proof (PB 10 0 ltac:(lia) ltac:(lia)) as PB10_0.
-    pose proof (PB 11 0 ltac:(lia) ltac:(lia)) as PB11_0.
-    pose proof (PB 12 0 ltac:(lia) ltac:(lia)) as PB12_0.
-    pose proof (PB 13 0 ltac:(lia) ltac:(lia)) as PB13_0.
-    pose proof (PB 14 0 ltac:(lia) ltac:(lia)) as PB14_0.
-    pose proof (PB 15 0 ltac:(lia) ltac:(lia)) as PB15_0.
-    pose proof (PB 16 0 ltac:(lia) ltac:(lia)) as PB16_0.
-    pose proof (PB 17 0 ltac:(lia) ltac:(lia)) as PB17_0.
-    pose proof (PB 18 0 ltac:(lia) ltac:(lia)) as PB18_0.
-    pose proof (PB 19 0 ltac:(lia) ltac:(lia)) as PB19_0.
-    pose proof (PB 20 0 ltac:(lia) ltac:(lia)) as PB20_0.
-    pose proof (PB 21 0 ltac:(lia) ltac:(lia)) as PB21_0.
-    pose proof (PB 22 0 ltac:(lia) ltac:(lia)) as PB22_0.
-    pose proof (PB 23 0 ltac:(lia) ltac:(lia)) as PB23_0.
-    pose proof (PB 24 0 ltac:(lia) ltac:(lia)) as PB24_0.
-    pose proof (PB 25 0 ltac:(lia) ltac:(lia)) as PB25_0.
-    pose proof (PB 26 0 ltac:(lia) ltac:(lia)) as PB26_0.
-    pose proof (PB 27 0 ltac:(lia) ltac:(lia)) as PB27_0.
-    pose proof (PB 28 0 ltac:(lia) ltac:(lia)) as PB28_0.
-    pose proof (PB 29 0 ltac:(lia) ltac:(lia)) as PB29_0.
-    pose proof (PB 30 0 ltac:(lia) ltac:(lia)) as PB30_0.
-    pose proof (PB 31 0 ltac:(lia) ltac:(lia)) as PB31_0.
-    pose proof (PB 32 0 ltac:(lia) ltac:(lia)) as PB32_0.
-    pose proof (PB 33 0 ltac:(lia) ltac:(lia)) as PB33_0.
-    pose proof (PB 34 0 ltac:(lia) ltac:(lia)) as PB34_0.
-    pose proof (PB 35 0 ltac:(lia) ltac:(lia)) as PB35_0.
-    pose proof (PB 36 0 ltac:(lia) ltac:(lia)) as PB36_0.
-    pose proof (PB 37 0 ltac:(lia) ltac:(lia)) as PB37_0.
-    pose proof (PB 38 0 ltac:(lia) ltac:(lia)) as PB38_0.
-    pose proof (PB 39 0 ltac:(lia) ltac:(lia)) as PB39_0.
-    pose proof (PB 40 0 ltac:(lia) ltac:(lia)) as PB40_0.
-    pose proof (PB 41 0 ltac:(lia) ltac:(lia)) as PB41_0.
-    pose proof (PB 42 0 ltac:(lia) ltac:(lia)) as PB42_0.
-    pose proof (PB 0 1 ltac:(lia) ltac:(lia)) as PB0_1.
-    pose proof (PB 1 1 ltac:(lia) ltac:(lia)) as PB1_1.
-    pose proof (PB 2 1 ltac:(lia) ltac:(lia)) as PB2_1.
-    pose proof (PB 3 1 ltac:(lia) ltac:(lia)) as PB3_1.
-    pose proof (PB 4 1 ltac:(lia) ltac:(lia)) as PB4_1.
-    pose proof (PB 5 1 ltac:(lia) ltac:(lia)) as PB5_1.
-    pose proof (PB 6 1 ltac:(lia) ltac:(lia)) as PB6_1.
-    pose proof (PB 7 1 ltac:(lia) ltac:(lia)) as PB7_1.
-    pose proof (PB 8 1 ltac:(lia) ltac:(lia)) as PB8_1.
-    pose proof (PB 9 1 ltac:(lia) ltac:(lia)) as PB9_1.
-    pose proof (PB 10 1 ltac:(lia) ltac:(lia)) as PB10_1.
-    pose proof (PB 11 1 ltac:(lia) ltac:(lia)) as PB11_1.
-    pose proof (PB 12 1 ltac:(lia) ltac:(lia)) as PB12_1.
-    pose proof (PB 13 1 ltac:(lia) ltac:(lia)) as PB13_1.
-    pose proof (PB 14 1 ltac:(lia) ltac:(lia)) as PB14_1.
-    pose proof (PB 15 1 ltac:(lia) ltac:(lia)) as PB15_1.
-    pose proof (PB 16 1 ltac:(lia) ltac:(lia)) as PB16_1.
-    pose proof (PB 17 1 ltac:(lia) ltac:(lia)) as PB17_1.
-    pose proof (PB 18 1 ltac:(lia) ltac:(lia)) as PB18_1.
-    pose proof (PB 19 1 ltac:(lia) ltac:(lia)) as PB19_1.
-    pose proof (PB 20 1 ltac:(lia) ltac:(lia)) as PB20_1.
-    pose proof (PB 21 1 ltac:(lia) ltac:(lia)) as PB21_1.
-    pose proof (PB 22 1 ltac:(lia) ltac:(lia)) as PB22_1.
-    pose proof (PB 23 1 ltac:(lia) ltac:(lia)) as PB23_1.
-    pose proof (PB 24 1 ltac:(lia) ltac:(lia)) as PB24_1.
-    pose proof (PB 25 1 ltac:(lia) ltac:(lia)) as PB25_1.
-    pose proof (PB 26 1 ltac:(lia) ltac:(lia)) as PB26_1.
-    pose proof (PB 27 1 ltac:(lia) ltac:(lia)) as PB27_1.
-    pose proof (PB 28 1 ltac:(lia) ltac:(lia)) as PB28_1.
-    pose proof (PB 29 1 ltac:(lia) ltac:(lia)) as PB29_1.
-    pose proof (PB 30 1 ltac:(lia) ltac:(lia)) as PB30_1.
-    pose proof (PB 31 1 ltac:(lia) ltac:(lia)) as PB31_1.
-    pose proof (PB 32 1 ltac:(lia) ltac:(lia)) as PB32_1.
-    pose proof (PB 33 1 ltac:(lia) ltac:(lia)) as PB33_1.
-    pose proof (PB 34 1 ltac:(lia) ltac:(lia)) as PB34_1.
-    pose proof (PB 35 1 ltac:(lia) ltac:(lia)) as PB35_1.
-    pose proof (PB 36 1 ltac:(lia) ltac:(lia)) as PB36_1.
-    pose proof (PB 37 1 ltac:(lia) ltac:(lia)) as PB37_1.
-    pose proof (PB 38 1 ltac:(lia) ltac:(lia)) as PB38_1.
-    pose proof (PB 39 1 ltac:(lia) ltac:(lia)) as PB39_1.
-    pose proof (PB 40 1 ltac:(lia) ltac:(lia)) as PB40_1.
-    pose proof (PB 41 1 ltac:(lia) ltac:(lia)) as PB41_1.
-    pose proof (PB 42 1 ltac:(lia) ltac:(lia)) as PB42_1.
-    pose proof (PB 0 2 ltac:(lia) ltac:(lia)) as PB0_2.
-    pose proof (PB 1 2 ltac:(lia) ltac:(lia)) as PB1_2.
-    pose proof (PB 2 2 ltac:(lia) ltac:(lia)) as PB2_2.
-    pose proof (PB 3 2 ltac:(lia) ltac:(lia)) as PB3_2.
-    pose proof (PB 4 2 ltac:(lia) ltac:(lia)) as PB4_2.
-    pose proof (PB 5 2 ltac:(lia) ltac:(lia)) as PB5_2.
-    pose proof (PB 6 2 ltac:(lia) ltac:(lia)) as PB6_2.
-    pose proof (PB 7 2 ltac:(lia) ltac:(lia)) as PB7_2.
-    pose proof (PB 8 2 ltac:(lia) ltac:(lia)) as PB8_2.
-    pose proof (PB 9 2 ltac:(lia) ltac:(lia)) as PB9_2.
-    pose proof (PB 10 2 ltac:(lia) ltac:(lia)) as PB10_2.
-    pose proof (PB 11 2 ltac:(lia) ltac:(lia)) as PB11_2.
-    pose proof (PB 12 2 ltac:(lia) ltac:(lia)) as PB12_2.
-    pose proof (PB 13 2 ltac:(lia) ltac:(lia)) as PB13_2.
-    pose proof (PB 14 2 ltac:(lia) ltac:(lia)) as PB14_2.
-    pose proof (PB 15 2 ltac:(lia) ltac:(lia)) as PB15_2.
-    pose proof (PB 16 2 ltac:(lia) ltac:(lia)) as PB16_2.
-    pose proof (PB 17 2 ltac:(lia) ltac:(lia)) as PB17_2.
-    pose proof (PB 18 2 ltac:(lia) ltac:(lia)) as PB18_2.
-    pose proof (PB 19 2 ltac:(lia) ltac:(lia)) as PB19_2.
-    pose proof (PB 20 2 ltac:(lia) ltac:(lia)) as PB20_2.
-    pose proof (PB 21 2 ltac:(lia) ltac:(lia)) as PB21_2.
-    pose proof (PB 22 2 ltac:(lia) ltac:(lia)) as PB22_2.
-    pose proof (PB 23 2 ltac:(lia) ltac:(lia)) as PB23_2.
-    pose proof (PB 24 2 ltac:(lia) ltac:(lia)) as PB24_2.
-    pose proof (PB 25 2 ltac:(lia) ltac:(lia)) as PB25_2.
-    pose proof (PB 26 2 ltac:(lia) ltac:(lia)) as PB26_2.
-    pose proof (PB 27 2 ltac:(lia) ltac:(lia)) as PB27_2.
-    pose proof (PB 28 2 ltac:(lia) ltac:(lia)) as PB28_2.
-    pose proof (PB 29 2 ltac:(lia) ltac:(lia)) as PB29_2.
-    pose proof (PB 30 2 ltac:(lia) ltac:(lia)) as PB30_2.
-    pose proof (PB 31 2 ltac:(lia) ltac:(lia)) as PB31_2.
-    pose proof (PB 32 2 ltac:(lia) ltac:(lia)) as PB32_2.
-    pose proof (PB 33 2 ltac:(lia) ltac:(lia)) as PB33_2.
-    pose proof (PB 34 2 ltac:(lia) ltac:(lia)) as PB34_2.
-    pose proof (PB 35 2 ltac:(lia) ltac:(lia)) as PB35_2.
-    pose proof (PB 36 2 ltac:(lia) ltac:(lia)) as PB36_2.
-    pose proof (PB 37 2 ltac:(lia) ltac:(lia)) as PB37_2.
-    pose proof (PB 38 2 ltac:(lia) ltac:(lia)) as PB38_2.
-    pose proof (PB 39 2 ltac:(lia) ltac:(lia)) as PB39_2.
-    pose proof (PB 40 2 ltac:(lia) ltac:(lia)) as PB40_2.
-    pose proof (PB 41 2 ltac:(lia) ltac:(lia)) as PB41_2.
-    pose proof (PB 42 2 ltac:(lia) ltac:(lia)) as PB42_2.
-    frun_to 0x8c200%Z. RDP VLPK 43%Z 0%Z.
-    frun_to 0x8c204%Z. SST.
-    frun_to 0x8c220%Z. RDP VLPK 43%Z 1%Z.
-    frun_to 0x8c224%Z. SST.
-    frun_to 0x8c240%Z. RDP VLPK 43%Z 2%Z.
-    frun_to 0x8c244%Z. SST.
-    frun_to 0x8c254%Z. RDQ VAR1 44%Z.
-    frun_to 0x8c284%Z. RDP VLPK 44%Z 0%Z.
-    frun_to 0x8c288%Z. SST.
-    frun_to 0x8c2a4%Z. RDP VLPK 44%Z 1%Z.
-    frun_to 0x8c2a8%Z. SST.
-    frun_to 0x8c2c4%Z. RDP VLPK 44%Z 2%Z.
-    frun_to 0x8c2c8%Z. SST.
-    frun_to 0x8c2d4%Z. RDQ VAR1 45%Z.
-    frun_to 0x8c304%Z. RDP VLPK 45%Z 0%Z.
-    frun_to 0x8c308%Z. SST.
-    frun_to 0x8c324%Z. RDP VLPK 45%Z 1%Z.
-    frun_to 0x8c328%Z. SST.
-    frun_to 0x8c344%Z. RDP VLPK 45%Z 2%Z.
-    frun_to 0x8c348%Z. SST.
-    frun_to 0x8c354%Z. RDQ VAR1 46%Z.
-    frun_to 0x8c384%Z. RDP VLPK 46%Z 0%Z.
-    frun_to 0x8c388%Z. SST.
-    frun_to 0x8c3a4%Z. RDP VLPK 46%Z 1%Z.
-    frun_to 0x8c3a8%Z. SST.
-    frun_to 0x8c3c4%Z. RDP VLPK 46%Z 2%Z.
-    frun_to 0x8c3c8%Z. SST.
-    frun_to 0x8c3d4%Z. RDQ VAR1 47%Z.
-    frun_to 0x8c404%Z. RDP VLPK 47%Z 0%Z.
-    frun_to 0x8c408%Z. SST.
-    frun_to 0x8c424%Z. RDP VLPK 47%Z 1%Z.
-    frun_to 0x8c428%Z. SST.
-    frun_to 0x8c444%Z. RDP VLPK 47%Z 2%Z.
-    frun_to 0x8c448%Z. SST.
-    frun_to 0x8c454%Z. RDQ VAR1 48%Z.
-    frun_to 0x8c484%Z. RDP VLPK 48%Z 0%Z.
-    frun_to 0x8c488%Z. SST.
-    frun_to 0x8c4a4%Z. RDP VLPK 48%Z 1%Z.
-    frun_to 0x8c4a8%Z. SST.
-    frun_to 0x8c4c4%Z. RDP VLPK 48%Z 2%Z.
-    frun_to 0x8c4c8%Z. SST.
-    frun_to 0x8c4d8%Z. RDQ VAR1 49%Z.
-    frun_to 0x8c508%Z. RDP VLPK 49%Z 0%Z.
-    frun_to 0x8c50c%Z. SST.
-    frun_to 0x8c518%Z. SST.
-    frun_to 0x8c51c%Z. SST.
-    frun_to 0x8c520%Z. SST.
-    frun_to 0x8c524%Z. SST.
-    frun_to 0x8c528%Z. SST.
-    frun_to 0x8c53c%Z. RDP VLPK 49%Z 1%Z.
-    frun_to 0x8c540%Z. SST.
-    frun_to 0x8c564%Z. lstep.
-    frun_to 0x8c56c%Z. lstep.
-    frun_to 0x8c574%Z. lstep.
-    frun_to 0x8c578%Z. SST.
-    frun_to 0x8c57c%Z. lstep.
-    frun_to 0x8c584%Z. lstep.
-    frun_to 0x8c588%Z. lstep.
-    frun_to 0x8c590%Z. lstep.
-    frun_to 0x8c594%Z. lstep.
-    frun_to 0x8c59c%Z. lstep.
-    frun_to 0x8c5a0%Z. lstep.
-    frun_to 0x8c5a8%Z. lstep.
-    frun_to 0x8c5ac%Z. lstep.
-    frun_to 0x8c5b4%Z. lstep.
-    frun_to 0x8c5b8%Z. lstep.
-    frun_to 0x8c5c0%Z. lstep.
-    frun_to 0x8c5c4%Z. lstep.
-    frun_to 0x8c5cc%Z. lstep.
-    frun_to 0x8c5d0%Z. lstep.
-    frun_to 0x8c5d8%Z. lstep.
-    frun_to 0x8c5dc%Z. lstep.
-    frun_to 0x8c5e4%Z. lstep.
-    frun_to 0x8c5e8%Z. lstep.
-    frun_to 0x8c5f0%Z. lstep.
-    frun_to 0x8c5f4%Z. lstep.
-    frun_to 0x8c5fc%Z. lstep.
-    frun_to 0x8c600%Z. lstep.
-    frun_to 0x8c608%Z. lstep.
-    frun_to 0x8c60c%Z. lstep.
-    frun_to 0x8c614%Z. lstep.
-    frun_to 0x8c618%Z. lstep.
-    frun_to 0x8c620%Z. SST.
-    frun_to 0x8c624%Z. lstep.
-    frun_to 0x8c628%Z. lstep.
-    frun_to 0x8c630%Z. lstep.
-    frun_to 0x8c634%Z. lstep.
-    frun_to 0x8c63c%Z. lstep.
-    frun_to 0x8c640%Z. lstep.
-    frun_to 0x8c648%Z. SST.
-    frun_to 0x8c64c%Z. lstep.
-    frun_to 0x8c650%Z. lstep.
-    frun_to 0x8c658%Z. SST.
-    frun_to 0x8c65c%Z. lstep.
-    frun_to 0x8c660%Z. lstep.
-    frun_to 0x8c668%Z. SST.
-    frun_to 0x8c678%Z. lstep.
-    frun_to 0x8c680%Z. lstep.
-    frun_to 0x8c688%Z. lstep.
-    frun_to 0x8c690%Z. lstep.
-    frun_to 0x8c698%Z. lstep.
-    frun_to 0x8c6a0%Z. lstep.
-    frun_to 0x8c6a8%Z. lstep.
-    frun_to 0x8c6b0%Z. lstep.
-    frun_to 0x8c6b8%Z. lstep.
-    frun_to 0x8c6c0%Z. lstep.
-    frun_to 0x8c6c8%Z. lstep.
-    frun_to 0x8c6d0%Z. lstep.
-    frun_to 0x8c6d8%Z. lstep.
-    frun_to 0x8c6e0%Z. lstep.
-    frun_to 0x8c6e8%Z. lstep.
-    frun_to 0x8c6f0%Z. lstep.
-    frun_to 0x8c6f4%Z. lstep.
-    frun_to 0x8c6fc%Z. lstep.
-    frun_to 0x8c704%Z. lstep.
-    frun_to 0x8c708%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm) end;
-      [ st_eq
-      | lazymatch type of SPL with rw_cells _ _ _ ?L => lazymatch goal with |- rw_cells _ _ _ ?L2 => replace L2 with L; [exact SPL| CmpFast.rlf] end end
-      | lazymatch type of HI with rw_cells _ _ _ ?L => lazymatch goal with |- rw_cells _ _ _ ?L2 => replace L2 with L; [exact HI| CmpFast.rlf] end end
-      | assumption | exact MU | exact WM ].
+  Proof using CX HA Hgs HgsM HM ZB QB PB PD.
+    intros m me xa2 xa4 x232 x240 x248 x256 x264 x272 x280 x288 x296 x304 x312 x320 x328 x336 x344 x352 x360 x368 x376 x392 x1312 x1320 x1328 x1336 x1360 Fr Fh Inv Mu Mono Arr1At ShA1 LpAt ShE Kont.
+    clear CEP PHI COL COH NG6 HnS Htc.
+    openCX. bz_ceil. unfold ESTATE_SIZE in ShE.
+    pose proof (QB 43 ltac:(lia)) as Q43.
+    do 4 lstep; RDP LpAt 43 0; SST; fstep.
+    do 4 lstep; RDP LpAt 43 1; SST; fstep.
+    do 4 lstep; RDP LpAt 43 2; SST; fstep.
+    lstep; RDQ Arr1At 44; do 5 lstep; fstep.
+    do 4 lstep; RDP LpAt 44 0; SST; fstep.
+    do 4 lstep; RDP LpAt 44 1; SST; fstep.
+    do 4 lstep; RDP LpAt 44 2; SST; fstep.
+    RDQ Arr1At 45; do 5 lstep; fstep.
+    do 4 lstep; RDP LpAt 45 0; SST; fstep.
+    do 4 lstep; RDP LpAt 45 1; SST; fstep.
+    do 4 lstep; RDP LpAt 45 2; SST; fstep.
+    RDQ Arr1At 46; do 5 lstep; fstep.
+    do 4 lstep; RDP LpAt 46 0; SST; fstep.
+    do 4 lstep; RDP LpAt 46 1; SST; fstep.
+    do 4 lstep; RDP LpAt 46 2; SST; fstep.
+    RDQ Arr1At 47; do 5 lstep; fstep.
+    do 4 lstep; RDP LpAt 47 0; SST; fstep.
+    do 4 lstep; RDP LpAt 47 1; SST; fstep.
+    do 4 lstep; RDP LpAt 47 2; SST; fstep.
+    RDQ Arr1At 48; do 5 lstep; fstep.
+    do 4 lstep; RDP LpAt 48 0; SST; fstep.
+    do 4 lstep; RDP LpAt 48 1; SST; fstep.
+    do 4 lstep; RDP LpAt 48 2; SST; fstep.
+    lstep; RDQ Arr1At 49; do 5 lstep; fstep.
+    do 4 lstep; RDP LpAt 49 0; SST; fstep.
+    do 5 SST; do 4 lstep; RDP LpAt 49 1; SST; fstep.
+    frun_to 574840; SST.
+    frun_to 575008; SST.
+    frun_to 575048; SST.
+    frun_to 575064; SST.
+    frun_to 575080; SST.
+    frun_to 575240.
+    replace (p 1 0 + p 0 0 + (p 2 0 + p 3 0)) with (p 0 0 + p 1 0 + p 2 0 + p 3 0) by lia.
+    replace (p 1 1 + p 0 1 + (p 2 1 + p 3 1)) with (p 0 1 + p 1 1 + p 2 1 + p 3 1) by lia.
+    replace (p 1 2 + p 0 2 + (p 2 2 + p 3 2)) with (p 0 2 + p 1 2 + p 2 2 + p 3 2) by lia.
+    replace (E + 51640 + q 49 * 16 + 8) with (E + 16 * q 49 + 51648) in Fr by lia.
+    apply Kont; assumption.
   Qed.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -426,270 +214,32 @@ Section FC.
            F (Z_to_bv 64 0x8ca4c) fc None m' (seg_rom a0segs))) ->
     evt a0segs Q (MS (mkR (Z_to_bv 64 (p 22 0 + p 23 0 + p 24 0)) (Z_to_bv 64 (P)) gp tp (Z_to_bv 64 (p 4 0 + p 5 0 + p 6 0)) (Z_to_bv 64 (p 0 1 + p 1 1 + p 2 1 + p 3 1)) (Z_to_bv 64 (p 31 2)) s0 (Z_to_bv 64 (P)) (Z_to_bv 64 (p 37 2 + p 38 2)) (Z_to_bv 64 (p 29 0 + p 30 0 + p 31 0)) (Z_to_bv 64 (p 22 1 + p 23 1 + p 24 1)) (Z_to_bv 64 (p 11 0 + p 12 0 + p 13 0)) (Z_to_bv 64 (p 0 0 + p 1 0 + p 2 0 + p 3 0)) (Z_to_bv 64 (p 4 2 + p 5 2 + p 6 2)) (Z_to_bv 64 (p 22 2 + p 23 2 + p 24 2)) (Z_to_bv 64 (p 0 2 + p 1 2 + p 2 2 + p 3 2)) (Z_to_bv 64 (p 16 0 + p 17 0 + p 18 0)) (Z_to_bv 64 (p 7 1 + p 8 1 + p 9 1)) (Z_to_bv 64 (2147450880)) (Z_to_bv 64 (p 11 1 + p 12 1 + p 13 1)) (Z_to_bv 64 (p 29 1 + p 30 1 + p 31 1)) (Z_to_bv 64 (p 11 2 + p 12 2 + p 13 2)) (Z_to_bv 64 (p 29 2 + p 30 2)) (Z_to_bv 64 (p 2 1 + p 3 1)) (Z_to_bv 64 (p 7 2 + p 8 2 + p 9 2)) (Z_to_bv 64 (p 4 1 + p 5 1 + p 6 1)) (Z_to_bv 64 (p 2 0 + p 3 0)) (Z_to_bv 64 (p 7 0 + p 8 0 + p 9 0)) (Z_to_bv 64 (p 16 1 + p 17 1 + p 18 1)) (Z_to_bv 64 (p 16 2 + p 17 2 + p 18 2)))
          F (Z_to_bv 64 0x8c708) fc None m (seg_rom a0segs)).
-  Proof.
-    intros m me  SPL HI COST MI MU WM VLPK SHe V176 V184 V192 V200 V208 V216 K.
-    openCX. try clear ME MA1 MA2 MF Mb Mf. clear XA20 XA21 XF0 XF1 Xb0 Xb1 Xf0 Xf1 LJb. unfold ESTATE_SIZE in SHe. assert (HAd : A = (e_nInUse e + 2)%Z) by reflexivity.
-    pose proof (zb8_length_nat cb 12) as LC.
-    pose proof (QB 49 ltac:(lia)) as QB49.
-    pose proof (PB 0 0 ltac:(lia) ltac:(lia)) as PB0_0.
-    pose proof (PB 1 0 ltac:(lia) ltac:(lia)) as PB1_0.
-    pose proof (PB 2 0 ltac:(lia) ltac:(lia)) as PB2_0.
-    pose proof (PB 3 0 ltac:(lia) ltac:(lia)) as PB3_0.
-    pose proof (PB 4 0 ltac:(lia) ltac:(lia)) as PB4_0.
-    pose proof (PB 5 0 ltac:(lia) ltac:(lia)) as PB5_0.
-    pose proof (PB 6 0 ltac:(lia) ltac:(lia)) as PB6_0.
-    pose proof (PB 7 0 ltac:(lia) ltac:(lia)) as PB7_0.
-    pose proof (PB 8 0 ltac:(lia) ltac:(lia)) as PB8_0.
-    pose proof (PB 9 0 ltac:(lia) ltac:(lia)) as PB9_0.
-    pose proof (PB 10 0 ltac:(lia) ltac:(lia)) as PB10_0.
-    pose proof (PB 11 0 ltac:(lia) ltac:(lia)) as PB11_0.
-    pose proof (PB 12 0 ltac:(lia) ltac:(lia)) as PB12_0.
-    pose proof (PB 13 0 ltac:(lia) ltac:(lia)) as PB13_0.
-    pose proof (PB 14 0 ltac:(lia) ltac:(lia)) as PB14_0.
-    pose proof (PB 15 0 ltac:(lia) ltac:(lia)) as PB15_0.
-    pose proof (PB 16 0 ltac:(lia) ltac:(lia)) as PB16_0.
-    pose proof (PB 17 0 ltac:(lia) ltac:(lia)) as PB17_0.
-    pose proof (PB 18 0 ltac:(lia) ltac:(lia)) as PB18_0.
-    pose proof (PB 19 0 ltac:(lia) ltac:(lia)) as PB19_0.
-    pose proof (PB 20 0 ltac:(lia) ltac:(lia)) as PB20_0.
-    pose proof (PB 21 0 ltac:(lia) ltac:(lia)) as PB21_0.
-    pose proof (PB 22 0 ltac:(lia) ltac:(lia)) as PB22_0.
-    pose proof (PB 23 0 ltac:(lia) ltac:(lia)) as PB23_0.
-    pose proof (PB 24 0 ltac:(lia) ltac:(lia)) as PB24_0.
-    pose proof (PB 25 0 ltac:(lia) ltac:(lia)) as PB25_0.
-    pose proof (PB 26 0 ltac:(lia) ltac:(lia)) as PB26_0.
-    pose proof (PB 27 0 ltac:(lia) ltac:(lia)) as PB27_0.
-    pose proof (PB 28 0 ltac:(lia) ltac:(lia)) as PB28_0.
-    pose proof (PB 29 0 ltac:(lia) ltac:(lia)) as PB29_0.
-    pose proof (PB 30 0 ltac:(lia) ltac:(lia)) as PB30_0.
-    pose proof (PB 31 0 ltac:(lia) ltac:(lia)) as PB31_0.
-    pose proof (PB 32 0 ltac:(lia) ltac:(lia)) as PB32_0.
-    pose proof (PB 33 0 ltac:(lia) ltac:(lia)) as PB33_0.
-    pose proof (PB 34 0 ltac:(lia) ltac:(lia)) as PB34_0.
-    pose proof (PB 35 0 ltac:(lia) ltac:(lia)) as PB35_0.
-    pose proof (PB 36 0 ltac:(lia) ltac:(lia)) as PB36_0.
-    pose proof (PB 37 0 ltac:(lia) ltac:(lia)) as PB37_0.
-    pose proof (PB 38 0 ltac:(lia) ltac:(lia)) as PB38_0.
-    pose proof (PB 39 0 ltac:(lia) ltac:(lia)) as PB39_0.
-    pose proof (PB 40 0 ltac:(lia) ltac:(lia)) as PB40_0.
-    pose proof (PB 41 0 ltac:(lia) ltac:(lia)) as PB41_0.
-    pose proof (PB 42 0 ltac:(lia) ltac:(lia)) as PB42_0.
-    pose proof (PB 43 0 ltac:(lia) ltac:(lia)) as PB43_0.
-    pose proof (PB 44 0 ltac:(lia) ltac:(lia)) as PB44_0.
-    pose proof (PB 45 0 ltac:(lia) ltac:(lia)) as PB45_0.
-    pose proof (PB 46 0 ltac:(lia) ltac:(lia)) as PB46_0.
-    pose proof (PB 47 0 ltac:(lia) ltac:(lia)) as PB47_0.
-    pose proof (PB 48 0 ltac:(lia) ltac:(lia)) as PB48_0.
-    pose proof (PB 49 0 ltac:(lia) ltac:(lia)) as PB49_0.
-    pose proof (PB 0 1 ltac:(lia) ltac:(lia)) as PB0_1.
-    pose proof (PB 1 1 ltac:(lia) ltac:(lia)) as PB1_1.
-    pose proof (PB 2 1 ltac:(lia) ltac:(lia)) as PB2_1.
-    pose proof (PB 3 1 ltac:(lia) ltac:(lia)) as PB3_1.
-    pose proof (PB 4 1 ltac:(lia) ltac:(lia)) as PB4_1.
-    pose proof (PB 5 1 ltac:(lia) ltac:(lia)) as PB5_1.
-    pose proof (PB 6 1 ltac:(lia) ltac:(lia)) as PB6_1.
-    pose proof (PB 7 1 ltac:(lia) ltac:(lia)) as PB7_1.
-    pose proof (PB 8 1 ltac:(lia) ltac:(lia)) as PB8_1.
-    pose proof (PB 9 1 ltac:(lia) ltac:(lia)) as PB9_1.
-    pose proof (PB 10 1 ltac:(lia) ltac:(lia)) as PB10_1.
-    pose proof (PB 11 1 ltac:(lia) ltac:(lia)) as PB11_1.
-    pose proof (PB 12 1 ltac:(lia) ltac:(lia)) as PB12_1.
-    pose proof (PB 13 1 ltac:(lia) ltac:(lia)) as PB13_1.
-    pose proof (PB 14 1 ltac:(lia) ltac:(lia)) as PB14_1.
-    pose proof (PB 15 1 ltac:(lia) ltac:(lia)) as PB15_1.
-    pose proof (PB 16 1 ltac:(lia) ltac:(lia)) as PB16_1.
-    pose proof (PB 17 1 ltac:(lia) ltac:(lia)) as PB17_1.
-    pose proof (PB 18 1 ltac:(lia) ltac:(lia)) as PB18_1.
-    pose proof (PB 19 1 ltac:(lia) ltac:(lia)) as PB19_1.
-    pose proof (PB 20 1 ltac:(lia) ltac:(lia)) as PB20_1.
-    pose proof (PB 21 1 ltac:(lia) ltac:(lia)) as PB21_1.
-    pose proof (PB 22 1 ltac:(lia) ltac:(lia)) as PB22_1.
-    pose proof (PB 23 1 ltac:(lia) ltac:(lia)) as PB23_1.
-    pose proof (PB 24 1 ltac:(lia) ltac:(lia)) as PB24_1.
-    pose proof (PB 25 1 ltac:(lia) ltac:(lia)) as PB25_1.
-    pose proof (PB 26 1 ltac:(lia) ltac:(lia)) as PB26_1.
-    pose proof (PB 27 1 ltac:(lia) ltac:(lia)) as PB27_1.
-    pose proof (PB 28 1 ltac:(lia) ltac:(lia)) as PB28_1.
-    pose proof (PB 29 1 ltac:(lia) ltac:(lia)) as PB29_1.
-    pose proof (PB 30 1 ltac:(lia) ltac:(lia)) as PB30_1.
-    pose proof (PB 31 1 ltac:(lia) ltac:(lia)) as PB31_1.
-    pose proof (PB 32 1 ltac:(lia) ltac:(lia)) as PB32_1.
-    pose proof (PB 33 1 ltac:(lia) ltac:(lia)) as PB33_1.
-    pose proof (PB 34 1 ltac:(lia) ltac:(lia)) as PB34_1.
-    pose proof (PB 35 1 ltac:(lia) ltac:(lia)) as PB35_1.
-    pose proof (PB 36 1 ltac:(lia) ltac:(lia)) as PB36_1.
-    pose proof (PB 37 1 ltac:(lia) ltac:(lia)) as PB37_1.
-    pose proof (PB 38 1 ltac:(lia) ltac:(lia)) as PB38_1.
-    pose proof (PB 39 1 ltac:(lia) ltac:(lia)) as PB39_1.
-    pose proof (PB 40 1 ltac:(lia) ltac:(lia)) as PB40_1.
-    pose proof (PB 41 1 ltac:(lia) ltac:(lia)) as PB41_1.
-    pose proof (PB 42 1 ltac:(lia) ltac:(lia)) as PB42_1.
-    pose proof (PB 43 1 ltac:(lia) ltac:(lia)) as PB43_1.
-    pose proof (PB 44 1 ltac:(lia) ltac:(lia)) as PB44_1.
-    pose proof (PB 45 1 ltac:(lia) ltac:(lia)) as PB45_1.
-    pose proof (PB 46 1 ltac:(lia) ltac:(lia)) as PB46_1.
-    pose proof (PB 47 1 ltac:(lia) ltac:(lia)) as PB47_1.
-    pose proof (PB 48 1 ltac:(lia) ltac:(lia)) as PB48_1.
-    pose proof (PB 49 1 ltac:(lia) ltac:(lia)) as PB49_1.
-    pose proof (PB 0 2 ltac:(lia) ltac:(lia)) as PB0_2.
-    pose proof (PB 1 2 ltac:(lia) ltac:(lia)) as PB1_2.
-    pose proof (PB 2 2 ltac:(lia) ltac:(lia)) as PB2_2.
-    pose proof (PB 3 2 ltac:(lia) ltac:(lia)) as PB3_2.
-    pose proof (PB 4 2 ltac:(lia) ltac:(lia)) as PB4_2.
-    pose proof (PB 5 2 ltac:(lia) ltac:(lia)) as PB5_2.
-    pose proof (PB 6 2 ltac:(lia) ltac:(lia)) as PB6_2.
-    pose proof (PB 7 2 ltac:(lia) ltac:(lia)) as PB7_2.
-    pose proof (PB 8 2 ltac:(lia) ltac:(lia)) as PB8_2.
-    pose proof (PB 9 2 ltac:(lia) ltac:(lia)) as PB9_2.
-    pose proof (PB 10 2 ltac:(lia) ltac:(lia)) as PB10_2.
-    pose proof (PB 11 2 ltac:(lia) ltac:(lia)) as PB11_2.
-    pose proof (PB 12 2 ltac:(lia) ltac:(lia)) as PB12_2.
-    pose proof (PB 13 2 ltac:(lia) ltac:(lia)) as PB13_2.
-    pose proof (PB 14 2 ltac:(lia) ltac:(lia)) as PB14_2.
-    pose proof (PB 15 2 ltac:(lia) ltac:(lia)) as PB15_2.
-    pose proof (PB 16 2 ltac:(lia) ltac:(lia)) as PB16_2.
-    pose proof (PB 17 2 ltac:(lia) ltac:(lia)) as PB17_2.
-    pose proof (PB 18 2 ltac:(lia) ltac:(lia)) as PB18_2.
-    pose proof (PB 19 2 ltac:(lia) ltac:(lia)) as PB19_2.
-    pose proof (PB 20 2 ltac:(lia) ltac:(lia)) as PB20_2.
-    pose proof (PB 21 2 ltac:(lia) ltac:(lia)) as PB21_2.
-    pose proof (PB 22 2 ltac:(lia) ltac:(lia)) as PB22_2.
-    pose proof (PB 23 2 ltac:(lia) ltac:(lia)) as PB23_2.
-    pose proof (PB 24 2 ltac:(lia) ltac:(lia)) as PB24_2.
-    pose proof (PB 25 2 ltac:(lia) ltac:(lia)) as PB25_2.
-    pose proof (PB 26 2 ltac:(lia) ltac:(lia)) as PB26_2.
-    pose proof (PB 27 2 ltac:(lia) ltac:(lia)) as PB27_2.
-    pose proof (PB 28 2 ltac:(lia) ltac:(lia)) as PB28_2.
-    pose proof (PB 29 2 ltac:(lia) ltac:(lia)) as PB29_2.
-    pose proof (PB 30 2 ltac:(lia) ltac:(lia)) as PB30_2.
-    pose proof (PB 31 2 ltac:(lia) ltac:(lia)) as PB31_2.
-    pose proof (PB 32 2 ltac:(lia) ltac:(lia)) as PB32_2.
-    pose proof (PB 33 2 ltac:(lia) ltac:(lia)) as PB33_2.
-    pose proof (PB 34 2 ltac:(lia) ltac:(lia)) as PB34_2.
-    pose proof (PB 35 2 ltac:(lia) ltac:(lia)) as PB35_2.
-    pose proof (PB 36 2 ltac:(lia) ltac:(lia)) as PB36_2.
-    pose proof (PB 37 2 ltac:(lia) ltac:(lia)) as PB37_2.
-    pose proof (PB 38 2 ltac:(lia) ltac:(lia)) as PB38_2.
-    pose proof (PB 39 2 ltac:(lia) ltac:(lia)) as PB39_2.
-    pose proof (PB 40 2 ltac:(lia) ltac:(lia)) as PB40_2.
-    pose proof (PB 41 2 ltac:(lia) ltac:(lia)) as PB41_2.
-    pose proof (PB 42 2 ltac:(lia) ltac:(lia)) as PB42_2.
-    pose proof (PB 43 2 ltac:(lia) ltac:(lia)) as PB43_2.
-    pose proof (PB 44 2 ltac:(lia) ltac:(lia)) as PB44_2.
-    pose proof (PB 45 2 ltac:(lia) ltac:(lia)) as PB45_2.
-    pose proof (PB 46 2 ltac:(lia) ltac:(lia)) as PB46_2.
-    pose proof (PB 47 2 ltac:(lia) ltac:(lia)) as PB47_2.
-    pose proof (PB 48 2 ltac:(lia) ltac:(lia)) as PB48_2.
-    frun_to 0x8c70c%Z. lstep.
-    frun_to 0x8c710%Z. lstep.
-    frun_to 0x8c718%Z. lstep.
-    frun_to 0x8c71c%Z. lstep.
-    frun_to 0x8c724%Z. lstep.
-    frun_to 0x8c728%Z. lstep.
-    frun_to 0x8c73c%Z. lstep.
-    frun_to 0x8c744%Z. lstep.
-    frun_to 0x8c74c%Z. lstep.
-    frun_to 0x8c754%Z. lstep.
-    frun_to 0x8c75c%Z. lstep.
-    frun_to 0x8c764%Z. lstep.
-    frun_to 0x8c76c%Z. lstep.
-    frun_to 0x8c774%Z. lstep.
-    frun_to 0x8c77c%Z. lstep.
-    frun_to 0x8c784%Z. lstep.
-    frun_to 0x8c78c%Z. lstep.
-    frun_to 0x8c794%Z. lstep.
-    frun_to 0x8c79c%Z. lstep.
-    frun_to 0x8c7a4%Z. lstep.
-    frun_to 0x8c7ac%Z. lstep.
-    frun_to 0x8c7b4%Z. lstep.
-    frun_to 0x8c7bc%Z. lstep.
-    frun_to 0x8c7c4%Z. lstep.
-    frun_to 0x8c7d8%Z. lstep.
-    frun_to 0x8c7e0%Z. lstep.
-    frun_to 0x8c7e8%Z. lstep.
-    frun_to 0x8c7f0%Z. lstep.
-    frun_to 0x8c7f8%Z. lstep.
-    frun_to 0x8c800%Z. lstep.
-    frun_to 0x8c808%Z. lstep.
-    frun_to 0x8c810%Z. lstep.
-    frun_to 0x8c818%Z. lstep.
-    frun_to 0x8c820%Z. lstep.
-    frun_to 0x8c828%Z. lstep.
-    frun_to 0x8c830%Z. lstep.
-    frun_to 0x8c838%Z. lstep.
-    frun_to 0x8c840%Z. lstep.
-    frun_to 0x8c848%Z. lstep.
-    frun_to 0x8c85c%Z. lstep.
-    frun_to 0x8c864%Z. lstep.
-    frun_to 0x8c86c%Z. lstep.
-    frun_to 0x8c874%Z. lstep.
-    frun_to 0x8c87c%Z. lstep.
-    frun_to 0x8c884%Z. lstep.
-    frun_to 0x8c88c%Z. lstep.
-    frun_to 0x8c894%Z. lstep.
-    frun_to 0x8c89c%Z. lstep.
-    frun_to 0x8c8a4%Z. lstep.
-    frun_to 0x8c8ac%Z. lstep.
-    frun_to 0x8c8b4%Z. lstep.
-    frun_to 0x8c8c8%Z. lstep.
-    frun_to 0x8c8d0%Z. lstep.
-    frun_to 0x8c8d8%Z. lstep.
-    frun_to 0x8c8e0%Z. lstep.
-    frun_to 0x8c8e8%Z. lstep.
-    frun_to 0x8c8f0%Z. lstep.
-    frun_to 0x8c8f8%Z. lstep.
-    frun_to 0x8c900%Z. lstep.
-    frun_to 0x8c908%Z. lstep.
-    frun_to 0x8c91c%Z. lstep.
-    frun_to 0x8c924%Z. lstep.
-    frun_to 0x8c92c%Z. lstep.
-    frun_to 0x8c934%Z. lstep.
-    frun_to 0x8c93c%Z. lstep.
-    frun_to 0x8c940%Z. lstep.
-    frun_to 0x8c948%Z. lstep.
-    frun_to 0x8c94c%Z. lstep.
-    frun_to 0x8c954%Z. lstep.
-    frun_to 0x8c958%Z. lstep.
-    frun_to 0x8c960%Z. lstep.
-    frun_to 0x8c964%Z. RDP VLPK 49%Z 2%Z.
-    frun_to 0x8c968%Z. lstep.
-    frun_to 0x8c970%Z. lstep.
-    frun_to 0x8c978%Z. lstep.
-    frun_to 0x8c980%Z. lstep.
-    frun_to 0x8c988%Z. lstep.
-    frun_to 0x8c994%Z. lstep.
-    frun_to 0x8c99c%Z. lstep.
-    frun_to 0x8c9b0%Z. lstep.
-    frun_to 0x8c9b8%Z. lstep.
-    frun_to 0x8c9c0%Z. lstep.
-    frun_to 0x8c9ec%Z. lstep.
-    frun_to 0x8c9f0%Z. CST COST 0%Z.
-    frun_to 0x8c9f4%Z. CST COST 2%Z.
-    frun_to 0x8c9f8%Z. CST COST 4%Z.
-    frun_to 0x8c9fc%Z. CST COST 6%Z.
-    frun_to 0x8ca00%Z. CST COST 8%Z.
-    frun_to 0x8ca04%Z. CST COST 10%Z.
-    frun_to 0x8ca08%Z. RDV V176.
-    frun_to 0x8ca0c%Z. RDV V216.
-    frun_to 0x8ca10%Z. RDV V184.
-    frun_to 0x8ca14%Z. RDV V200.
-    frun_to 0x8ca18%Z. lstep.
-    frun_to 0x8ca1c%Z. RDV V192.
-    frun_to 0x8ca20%Z. RDV V208.
-    frun_to 0x8ca24%Z. lstep.
-    frun_to 0x8ca28%Z. lstep.
-    frun_to 0x8ca2c%Z. lstep.
-    frun_to 0x8ca30%Z. lstep.
-    frun_to 0x8ca34%Z. lstep.
-    frun_to 0x8ca38%Z. lstep.
-    frun_to 0x8ca4c%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm (p 0 0 + p 1 0 + p 2 0 + p 3 0 + p 4 0 + p 5 0 + p 6 0 + p 7 0 + p 8 0 + p 9 0 + p 10 0 + p 11 0 + p 12 0 + p 13 0 + p 14 0 + p 15 0 + p 16 0 + p 17 0 + p 18 0 + p 19 0 + p 20 0 + p 21 0 + p 22 0 + p 23 0 + p 24 0 + p 25 0 + p 26 0 + p 27 0 + p 28 0 + p 29 0 + p 30 0 + p 31 0 + p 32 0 + p 33 0 + p 34 0 + p 35 0 + p 36 0 + p 37 0 + p 38 0 + p 39 0 + p 40 0 + p 41 0 + p 42 0 + p 43 0 + p 44 0 + p 45 0 + p 46 0 + p 47 0 + p 48 0 + p 49 0)%Z (p 0 1 + p 1 1 + p 2 1 + p 3 1 + p 4 1 + p 5 1 + p 6 1 + p 7 1 + p 8 1 + p 9 1 + p 10 1 + p 11 1 + p 12 1 + p 13 1 + p 14 1 + p 15 1 + p 16 1 + p 17 1 + p 18 1 + p 19 1 + p 20 1 + p 21 1 + p 22 1 + p 23 1 + p 24 1 + p 25 1 + p 26 1 + p 27 1 + p 28 1 + p 29 1 + p 30 1 + p 31 1 + p 32 1 + p 33 1 + p 34 1 + p 35 1 + p 36 1 + p 37 1 + p 38 1 + p 39 1 + p 40 1 + p 41 1 + p 42 1 + p 43 1 + p 44 1 + p 45 1 + p 46 1 + p 47 1 + p 48 1 + p 49 1)%Z (p 0 2 + p 1 2 + p 2 2 + p 3 2 + p 4 2 + p 5 2 + p 6 2 + p 7 2 + p 8 2 + p 9 2 + p 10 2 + p 11 2 + p 12 2 + p 13 2 + p 14 2 + p 15 2 + p 16 2 + p 17 2 + p 18 2 + p 19 2 + p 20 2 + p 21 2 + p 22 2 + p 23 2 + p 24 2 + p 25 2 + p 26 2 + p 27 2 + p 28 2 + p 29 2 + p 30 2 + p 31 2 + p 32 2 + p 33 2 + p 34 2 + p 35 2 + p 36 2 + p 37 2 + p 38 2 + p 39 2 + p 40 2 + p 41 2 + p 42 2 + p 43 2 + p 44 2 + p 45 2 + p 46 2 + p 47 2 + p 48 2 + p 49 2)%Z _ _ _ _ _ _ _ _ _ _ _) end;
-      [ st_eq
-      | rewrite psum50_eq; lia | rewrite psum50_eq; lia | rewrite psum50_eq; lia
-      | lazymatch type of SPL with rw_cells _ _ _ ?L => lazymatch goal with |- rw_cells _ _ _ ?L2 => replace L2 with L; [exact SPL| CmpFast.rlf] end end
-      | lazymatch type of HI with rw_cells _ _ _ ?L => lazymatch goal with |- rw_cells _ _ _ ?L2 => replace L2 with L; [exact HI| CmpFast.rlf] end end
-      | first [exact COST | lazymatch type of COST with u8arr _ _ _ ?L => lazymatch goal with |- u8arr _ _ _ ?L2 => replace L2 with L; [exact COST| CmpFast.rlf] end end]
-      | assumption | exact MU | exact WM ].
+  Proof using CX CEP PHI COL COH HA QB PB PD.
+    intros m me Fr Fh Cost Inv Mu Mono LpAt ShE SlotE668 SlotSHE SlotA SlotNG SlotE37708 SlotA1 Kont.
+    clear Hgs HgsM HM ZB NG6 HnS Htc.
+    assert (SumB : forall j, 0 <= j < 3 -> forall n k0 : nat, (k0 + n <= 50)%nat ->
+              0 <= psum arr1 lp gs j k0 n <= Z.of_nat n * 2097151).
+    { intros j Rj n; induction n as [|n IHn]; intros k0 Rk; cbn [psum]; [lia|].
+      pose proof (PB (Z.of_nat k0) j ltac:(lia) Rj) as Bk0.
+      specialize (IHn (S k0) ltac:(lia)); lia. }
+    frun_to 575844.
+    RDP LpAt 49 2.
+    frun_to 575968.
+    pose proof (SumB 0 ltac:(lia) 50%nat 0%nat ltac:(lia)) as Sum0B.
+    pose proof (SumB 1 ltac:(lia) 50%nat 0%nat ltac:(lia)) as Sum1B.
+    pose proof (SumB 2 ltac:(lia) 50%nat 0%nat ltac:(lia)) as Sum2B.
+    lazymatch goal with
+    | |- evt _ _ (MS (mkR _ _ _ _ _ _ _ _ _ (Z_to_bv 64 ?c0) (Z_to_bv 64 ?c1) (Z_to_bv 64 ?c2) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) _ _ _ _ _ _) =>
+        replace c0 with (psum arr1 lp gs 0 0 50) by (rewrite psum50_eq; ring);
+        replace c1 with (psum arr1 lp gs 1 0 50) by (rewrite psum50_eq; ring);
+        replace c2 with (psum arr1 lp gs 2 0 50) by (rewrite psum50_eq; ring)
+    end.
+    frun_to 575984.
+    CST Cost 0. CST Cost 2. CST Cost 4. CST Cost 6. CST Cost 8. CST Cost 10.
+    RDV SlotE668. RDV SlotA1. RDV SlotSHE. RDV SlotNG.
+    fstep. RDV SlotA. RDV SlotE37708.
+    frun_to 576076.
+    eapply Kont; [reflexivity | reflexivity | reflexivity | assumption ..].
   Qed.
 End FC.
 End ACeilS1.

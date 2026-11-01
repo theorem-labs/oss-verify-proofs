@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -29,7 +29,7 @@ Definition srNP0 : list expr := srs sr_id [(2%bv, EVar 34); (8%bv, EVar 32); (9%
 Definition srNP1 : list expr := srs sr_id [(2%bv, EVar 34); (8%bv, EVar 32); (9%bv, EAlu ALU_ADD (EVar 32) (ELit 8)); (11%bv, EVar 33)].
 Definition KNP : list kentry :=
   [KWord (SA (ELit 0) AGOT_SHBASE) 8 (ELit ASHBASE_CELL); KWord (SA (ELit 0) ASHBASE_CELL) 8 (ELit SHBASE);
-   KWr (SA (EVar 34) (-32)) (ELit 32); KRange (EVar 34) (2 ^ 45) (2 ^ 47)].
+   KRange (EVar 34) (2 ^ 45) (2 ^ 47); KWr (SA (EVar 34) (-32)) (ELit 32)].
 Definition tlNP : list expr := [EVar 18; EAlu ALU_ADD (EVar 32) (ELit 8); EVar 32; ELit E_IDX].
 Definition lgNP : list sentry := Eval cbv in c8log (EVar 34) (-32) tlNP.
 Lemma lgNP_c8 : lgNP = c8log (EVar 34) (-32) tlNP.
@@ -77,91 +77,98 @@ Section EmpN.
     Forall (fun iv => aceil <= fst iv /\ snd iv <= spf spz /\ fst iv <= snd iv) W ->
     GPREx s mo m1 errv' LB' LBm p.
   Proof.
-    intros s mo m m1 errv' LB' LBm p W GP MU WM MI1 ST1 FW.
-    destruct GP as (MP & FR & SP16 & SPL & SPH & RAE & MI & ST & ERR & RA & TPV & ACS & ACL & LOR & SHI & SPB & BR & LFO & OCE
-                    & U & SH & GROW & BCL & SZR & KR32 & AD & WR & OBL & P0 & P1 & P16 & PO & PA & NC & ADP
-                    & RH & PE & PM & OWN & XP & RF & AC & S0 & AL & AL0 & RS & RC & RL & RICM & TRK).
-    pose proof (aceil_facts) as ((ACF1 & ACF2) & _ & _).
-    pose proof (ah_fsb H HH _ _ _ RH) as (FB1 & FB2 & FB3 & FB4).
-    pose proof (obj_place H HH LF obj m RF LFO) as (VA & OB1 & OB2 & OB3). unfold AIMG_TOP in OB3.
-    pose proof (u_obj_lo U) as Ho0. pose proof (u_obj_hi U) as Ho1.
-    unfold spf in *.
-    assert (FWK : Forall (fun iv => aclient_write_ok H LB' iv /\ afs_write_ok H LF iv /\ aconst_ok iv /\ stack0_ok iv) W).
-    { eapply Forall_impl; [|exact FW]. intros [l h] (X1 & X2 & X3). cbn [Datatypes.fst Datatypes.snd] in *.
-      destruct (stack_window_ok H LB' LF l h X1 ltac:(unfold AFS_SIZE in *; lia)) as (W1 & W2 & W3).
-      split; [exact W1|]. split; [exact W2|]. split; [exact W3|]. left. cbn. unfold AHI_LO. lia. }
-    assert (F1 : Forall (aclient_write_ok H LB') W) by (eapply Forall_impl; [|exact FWK]; intros iv X; exact (proj1 X)).
-    assert (F2 : Forall (afs_write_ok H LF) W) by (eapply Forall_impl; [|exact FWK]; intros iv X; exact (proj1 (proj2 X))).
-    assert (F3 : Forall aconst_ok W) by (eapply Forall_impl; [|exact FWK]; intros iv X; exact (proj1 (proj2 (proj2 X)))).
-    assert (F4 : Forall stack0_ok W) by (eapply Forall_impl; [|exact FWK]; intros iv X; exact (proj2 (proj2 (proj2 X)))).
-    assert (FDJ : forall a k, a + k <= aceil \/ spz - 96 <= a -> disjoint_from W a k).
-    { intros a k Hc. apply LbB_HXmpI2.dj_of_forall. eapply Forall_impl; [|exact FW]. intros iv (X1 & X2 & X3). lia. }
-    assert (FSH : forall A k, 0 <= A -> 0 <= k -> A + k <= 2 ^ 47 -> disjoint_from W (sh A) (nsh k)).
-    { intros A k HA Hk Hak. apply LbB_HXmpI2.dj_of_forall. eapply Forall_impl; [|exact FW]. intros iv (X1 & X2 & X3).
-      pose proof (sh_nsh_high A k HA Hk ltac:(unfold AAPP_HI; lia)) as SN. unfold AHI_LO in SN. lia. }
-    destruct (client_frame H HH s LB' LF B W m m1 RH RF AC RA MU WM F1 F2 F3) as (RH1 & RF1 & AC1 & RA1).
+    intros s mo m m1 errv' LB' LBm p W before untouched views_kept inv_after stack_after fits.
+    pose proof aceil_facts as ((ceil_low & ceil_high) & _ & _).
+    destruct before as (pres_mo & frame_m & spz16 & spf_low & spz_high & ra_even & inv_m & stk_m & errno_m & auxv_m
+      & tp_is & ceil_spf & ceil_lo & lo_room & spz_shi & spz_B & B_top & live_obj & obj_ceil & map_m & mapsh_m
+      & full_or_empty & bc_last & len_small & key32 & objaddr_m & objwr_m & obj_sep & p_pos & p_top & p16 & p_obj
+      & p_blocks & node_m & paddr_m & heap_m & lb_split & lbm_perm & own_m & xp_m & fs_m & const_m & stk0_m
+      & al_ge & al_pos & small_cap & cnt_cap & large_cap & icm_le & trace_k).
+    (* Every address below the heap ceiling keeps its byte: the writes all sit at or above it. *)
+    assert (below_same : forall x, 0 <= x < aceil -> m1 (Z_to_bv 64 x) = m (Z_to_bv 64 x)).
+    { intros x x_low. apply untouched. rewrite u64_of_Z by lia. apply outI.
+      eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *. lia. }
+    assert (owned_low : forall A n, In (A, n) (lbl LBm) -> 0 < A /\ A + n <= aceil).
+    { intros A n in_lbl. destruct (lbl_in_inv LBm A n in_lbl) as (q & in_m).
+      assert (in_all : In (q, A, n) LB').
+      { eapply Permutation_in; [apply Permutation_sym; exact lb_split|]. apply in_or_app. right. exact in_m. }
+      pose proof (ah_blocks H HH s LB' m (q, A, n) heap_m in_all) as range.
+      unfold ablock_range in range. cbn [blk_addr blk_size fst snd] in range. lia. }
+    assert (map_low : forall A n, In (A, n) (umap_blocks 24 bl bc ents) -> 0 < A /\ A + n <= aceil).
+    { intros A n in_map. apply owned_low.
+      eapply Permutation_in; [apply Permutation_sym; exact lbm_perm|]. right. exact in_map. }
+    assert (foot_same : forall a, umap_foot 24 obj bl bc ents a -> m1 (Z_to_bv 64 a) = m (Z_to_bv 64 a)).
+    { intros a foot. apply below_same.
+      destruct foot as [in_obj | [(nonempty & in_bkt) | (q & q_key & in_node)]].
+      - pose proof (u_obj_lo map_m). lia.
+      - assert (bkt_blk : In (bl, 8 * bc) (umap_blocks 24 bl bc ents)).
+        { unfold umap_blocks. apply in_or_app. left.
+          destruct (Z.eqb_spec bc 0) as [is_zero | _]; [contradiction | left; reflexivity]. }
+        pose proof (map_low _ _ bkt_blk). lia.
+      - assert (node_blk : In (q, 24) (umap_blocks 24 bl bc ents)).
+        { unfold umap_blocks. apply in_or_app. right.
+          apply in_map_iff in q_key. destruct q_key as (e & e_fst & e_in).
+          apply in_map_iff. exists e. split; [f_equal; exact e_fst | exact e_in]. }
+        pose proof (map_low _ _ node_blk). lia. }
+    assert (shadow_clear : forall A n, 0 <= A -> 0 <= n -> A + n <= 2 ^ 47 -> disjoint_from W (sh A) (nsh n)).
+    { intros A n A_pos n_pos A_top. apply dsh_app; [| exact A_pos | exact n_pos | exact A_top].
+      eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *. right. unfold AHI_LO. lia. }
+    pose proof (ah_fsb H HH s LB' m heap_m) as (_ & fsb_ceil & _ & _).
+    assert (clients : Forall (aclient_write_ok H LB') W).
+    { eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *. unfold aclient_write_ok. left. apply fit. }
+    assert (fs_ok : Forall (afs_write_ok H LF) W).
+    { eapply Forall_impl; [|exact fits]. intros [a1 a2] fit; cbv beta in fit |- *. cbn [fst snd] in fit.
+      assert (at_ceil : aceil <= a1) by lia.
+      exact (proj1 (proj2 (stack_window_ok H LB' LF a1 a2 at_ceil fsb_ceil))). }
+    assert (consts_ok : Forall aconst_ok W).
+    { eapply Forall_impl; [|exact fits]. intros [a1 a2] fit; cbv beta in fit |- *. cbn [fst snd] in fit.
+      assert (at_ceil : aceil <= a1) by lia.
+      exact (proj2 (proj2 (stack_window_ok H LB' LF a1 a2 at_ceil fsb_ceil))). }
+    destruct (client_frame H HH s LB' LF B W m m1 heap_m fs_m const_m auxv_m untouched views_kept clients fs_ok consts_ok)
+      as (heap_1 & fs_1 & const_1 & auxv_1).
+    assert (frame_1 : FRAME ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 spz m1).
+    { unfold FRAME in *. eapply rw_cells_transport; [exact frame_m | exact untouched | exact views_kept |].
+      apply djI. eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *. cbn [cells_size csize Nat.add]. lia. }
+    assert (errno_1 : rw_cells asegs m1 (bv_unsigned tp + -164) [C4 errv']).
+    { eapply rw_cells_transport; [exact errno_m | exact untouched | exact views_kept |].
+      apply djI. eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *.
+      rewrite tp_is, u64_of_Z by (unfold ATP; lia). cbn [cells_size csize]. unfold ATP. lia. }
+    assert (p_low : 0 < p /\ p + 24 <= aceil).
+    { apply owned_low. eapply Permutation_in; [apply Permutation_sym; exact lbm_perm | left; reflexivity]. }
+    assert (node_1 : rw_cells asegs m1 p [C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 key); C4 (Z_to_bv 64 key); C4 (Z_to_bv 64 0)]).
+    { eapply rw_cells_transport; [exact node_m | exact untouched | exact views_kept |].
+      apply djI. eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *. cbn [cells_size csize Nat.add]. lia. }
+    assert (objaddr_1 : addressable m1 obj 40).
+    { eapply addressable_transport; [exact objaddr_m | exact untouched | exact views_kept |].
+      pose proof (u_obj_lo map_m). pose proof (u_obj_hi map_m). apply shadow_clear; lia. }
+    assert (paddr_1 : addressable m1 p 24).
+    { eapply addressable_transport; [exact paddr_m | exact untouched | exact views_kept |].
+      apply shadow_clear; lia. }
+    assert (map_1 : umapx MI_A 24 (nval24 ASEGS) (lbl LB') m1 obj bl bc ents).
+    { eapply umapx_agree; [exact (nval24_agree ASEGS) | lia | exact map_m | exact foot_same |].
+      intros q n _ live. exact live. }
+    assert (mapsh_1 : umap_sh m1 24 (bl, bc, ents)).
+    { unfold umap_sh in mapsh_m |- *. cbn [HStmts.t3a HStmts.t3b HStmts.t3c fst snd] in mapsh_m |- *.
+      destruct mapsh_m as [bkt_sh node_sh]. split.
+      - intros nonempty. pose proof (u_bl_lo map_m nonempty). pose proof (u_bl_hi map_m).
+        pose proof (LbB_HFind.BSEQ_boundA bc (u_bseq map_m)).
+        eapply addressable_transport; [exact (bkt_sh nonempty) | exact untouched | exact views_kept |].
+        apply shadow_clear; lia.
+      - intros q k v in_ents. destruct (u_node map_m q k v in_ents) as (_ & q_pos & q_top & _).
+        eapply addressable_transport; [exact (node_sh q k v in_ents) | exact untouched | exact views_kept |].
+        apply shadow_clear; lia. }
+    assert (stk0_1 : stack0 m1 lo shi).
+    { eapply stack0_transport; [exact stk0_m | exact untouched | exact views_kept |].
+      eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *. unfold stack0_ok. left. unfold AHI_LO. lia. }
+    assert (xp_1 : xpres H LB0 spz [(obj, obj + 40)] m0 m1).
+    { eapply (xpres_munch_mixed H HH s LB' LB0 LBm spz [(obj, obj + 40)] W m0 m m1);
+        [exact xp_m | exact heap_m | exact lb_split | unfold spf in *; lia | exact untouched | exact views_kept |].
+      eapply Forall_impl; [|exact fits]. intros iv fit; cbv beta in fit |- *. unfold wmix. left. unfold spf in fit. lia. }
+    pose proof (wr_at_wmono m m1 obj 40 objwr_m views_kept) as objwr_1.
+    pose proof (lb_own_wmono LBm m m1 own_m views_kept) as own_1.
     unfold GPRE.
-    split; [exact MP|].
-    split; [unfold FRAME, spf in FR |- *; eapply rw_cells_transport; [exact FR | exact MU | exact WM | apply FDJ; right; lia]|].
-    split; [exact SP16|]. split; [exact SPL|]. split; [exact SPH|]. split; [exact RAE|].
-    split; [exact MI1|]. split; [exact ST1|].
-    split. { rewrite TPV in ERR |- *. unfold errno_addr in ERR |- *. rewrite u64_of_Z in ERR |- * by (unfold ATP; lia).
-             eapply rw_cells_transport; [exact ERR | exact MU | exact WM | apply FDJ; left; cbn; unfold ATP; lia]. }
-    split; [exact RA1|].
-    split; [exact TPV|]. split; [exact ACS|]. split; [exact ACL|]. split; [exact LOR|]. split; [exact SHI|].
-    split; [exact SPB|]. split; [exact BR|]. split; [exact LFO|]. split; [exact OCE|].
-
-    assert (BLK : forall q k, In (q, k) (umap_blocks 24 bl bc ents) -> 0 < q /\ q + k <= aceil /\ 0 <= k /\ aapp q k).
-    { intros q k Hq. destruct (lbl_in_inv LBm q k (Permutation_in _ (Permutation_sym PM) (or_intror Hq))) as (qi & Qi).
-      assert (QiL : In (qi, q, k) LB') by (apply (Permutation_in _ (Permutation_sym PE)); apply in_or_app; right; exact Qi).
-      pose proof (ah_blocks H HH _ _ _ _ RH QiL) as (B0 & _ & Bn & _ & BC & _ & BA).
-      cbn [blk_addr blk_size Datatypes.fst Datatypes.snd] in B0, Bn, BC, BA. split; [lia|]. split; [lia|]. split; [lia | exact BA]. }
-    assert (FPA : forall a, umap_foot 24 obj bl bc ents a -> 0 <= a < aceil).
-    { intros a [Ha | [[Hbc Ha] | (q & Hq & Hqa)]].
-      - lia.
-      - assert (IB : In (bl, 8 * bc) (umap_blocks 24 bl bc ents))
-          by (unfold umap_blocks; apply in_app_iff; left; destruct (Z.eqb_spec bc 0); [lia | left; reflexivity]).
-        destruct (BLK _ _ IB) as (B0 & BC & _). lia.
-      - apply in_map_iff in Hq. destruct Hq as ([z [k v]] & Hz & Hin). cbn in Hz. subst z.
-        assert (IB : In (q, 24) (umap_blocks 24 bl bc ents))
-          by (unfold umap_blocks; apply in_app_iff; right; apply in_map_iff; exists (q, (k, v)); split; [reflexivity | exact Hin]).
-        destruct (BLK _ _ IB) as (B0 & BC & _). lia. }
-    assert (OUT : forall a, 0 <= a < aceil -> m1 (Z_to_bv 64 a) = m (Z_to_bv 64 a)).
-    { intros a Ha. apply MU. rewrite u64_of_Z by lia. apply LbB_HXmpI2.out_of_forall. eapply Forall_impl; [|exact FW]. intros iv (X1 & X2 & X3). lia. }
-    split; [eapply (umapx_agree ASEGS LY_A MI_A 24 _ (nval24 ASEGS) (nval24_agree ASEGS) ltac:(lia) (lbl LB') (lbl LB') m m1);
-              [exact U | intros a Ha; exact (OUT a (FPA a Ha)) | intros; assumption]|].
-    split.
-    { destruct SH as [SHb SHn]. unfold umap_sh, HStmts.t3a, HStmts.t3b, HStmts.t3c in *. cbn [Datatypes.fst Datatypes.snd] in *. split.
-      - intros Hbc. assert (IB : In (bl, 8 * bc) (umap_blocks 24 bl bc ents))
-          by (unfold umap_blocks; apply in_app_iff; left; destruct (Z.eqb_spec bc 0); [lia | left; reflexivity]).
-        destruct (BLK _ _ IB) as (B0 & BC & Bn & _).
-        eapply addressable_transport; [exact (SHb Hbc) | exact MU | exact WM | apply FSH; lia].
-      - intros q k v Hin. assert (IB : In (q, 24) (umap_blocks 24 bl bc ents))
-          by (unfold umap_blocks; apply in_app_iff; right; apply in_map_iff; exists (q, (k, v)); split; [reflexivity | exact Hin]).
-        destruct (BLK _ _ IB) as (B0 & BC & Bn & _).
-        eapply addressable_transport; [exact (SHn q k v Hin) | exact MU | exact WM | apply FSH; lia]. }
-    split; [exact GROW|]. split; [exact BCL|]. split; [exact SZR|]. split; [exact KR32|].
-    split; [eapply addressable_transport; [exact AD | exact MU | exact WM | apply FSH; lia]|].
-    split; [exact (wr_at_wmono _ _ _ _ WR WM)|].
-    split; [exact OBL|].
-    split; [exact P0|]. split; [exact P1|]. split; [exact P16|]. split; [exact PO|]. split; [exact PA|].
-    destruct (lbl_in_inv LBm p 24 (Permutation_in _ (Permutation_sym PM) (or_introl eq_refl))) as (qp & QPm).
-    assert (QPL : In (qp, p, 24) LB') by (apply (Permutation_in _ (Permutation_sym PE)); apply in_or_app; right; exact QPm).
-    pose proof (ah_blocks H HH _ _ _ _ RH QPL) as (_ & _ & _ & _ & PCE & _ & _). cbn [blk_addr blk_size Datatypes.fst Datatypes.snd] in PCE.
-    split; [eapply rw_cells_transport; [exact NC | exact MU | exact WM | apply FDJ; left; cbn [cells_size csize Z.of_nat]; lia]|].
-    split; [eapply addressable_transport; [exact ADP | exact MU | exact WM | apply FSH; lia]|].
-    split; [exact RH1|]. split; [exact PE|]. split; [exact PM|].
-    split; [exact (lb_own_wmono _ _ _ OWN WM)|].
-    split.
-    { eapply xpres_trans; [exact XP|]. eapply (xpres_weaken H).
-      - eapply (xpres_of_munch H s LB' spz [(obj, obj + 40)] W m m m1 HH RH MU WM).
-        eapply Forall_impl; [|exact FW]; intros iv (X1 & X2 & X3); left; lia.
-      - lia.
-      - intros b Hb. apply (Permutation_in _ (Permutation_sym PE)). apply in_or_app. left. exact Hb.
-      - intros a Ha. exact Ha. }
-    split; [exact RF1|]. split; [exact AC1|]. split; [eapply stack0_transport; [exact S0 | exact MU | exact WM | exact F4]|].
-    split; [exact AL|]. split; [exact AL0|]. split; [exact RS|]. split; [exact RC|]. split; [exact RL|]. split; [exact RICM|].
-    exact TRK.
+    repeat match goal with |- _ /\ _ => split end.
+    all: first [assumption | lia].
   Qed.
 
   Lemma stack_room_of_stk : forall m sp S, stk asegs m lo spz -> lo <= sp - S -> sp <= spz -> 0 <= S -> stack_room asegs m sp S.
@@ -179,186 +186,195 @@ ltac2:(KReplay.run1 (kr_t_LbB_HXmpN ()) ["EmpN"] "h04__x1h17__sat13h24__x2h34__x
     frm_zero fc -> as_AKREL H s (mkCfg msF mo) ->
     GPREx s mo m errv' LB' LBm p ->
     as_SR H QIx (mkCfg msF mo).
-  Proof using All.
-    intros s msF mo m F fc y1 y5 y6 y7 y10 y12 y13 y14 y15 y16 y17 y20 y28 y29 y30 y31 errv' LB' LBm p VIS FRZ KR GP.
-    pose proof GP as GP0.
-    destruct GP0 as (MP & FR & SP16 & SPL & SPH & RAE & MI & ST & ERR & RA & TPV & ACS & ACL & LOR & SHI & SPB & BR & LFO & OCE
-                     & U & SH & GROW & BCL & SZR & KR32 & AD & WR & OBL & P0 & P1 & P16 & PO & PA & NC & ADP
-                     & RH & PE & PM & OWN & XP & RF & AC & S0 & AL & AL0 & RS & RC & RL & RICM & TRK).
-    pose proof (u_obj_lo U) as Ho0. pose proof (u_obj_hi U) as Ho1.
-    pose proof LOR as LOR'. unfold AREH_STACK, AOPNEW_STACK, AMALLOC_STACK, spf in LOR'.
-    pose proof (LbB_HFind.BSEQ_boundA bc (u_bseq U)) as BCR.
-    pose proof (aceil_facts) as ((ACF1 & ACF2) & _ & _).
-    pose proof (ACONST_shbase m AC) as [CG CS].
-    unfold spf in SPL, ACS. unfold spf in VIS.
-    assert (FW1 : Forall (fun iv => aceil <= fst iv /\ snd iv <= spf spz /\ fst iv <= snd iv) [(spz - 96 - 32, spz - 96)])
-      by (apply Forall_cons; [cbn [Datatypes.fst Datatypes.snd]; unfold spf; lia | apply Forall_nil]).
-    pose (RN := fun v : word => mkR y1 (Z_to_bv 64 (spz - 96)) gp tp y5 y6 y7 (Z_to_bv 64 obj) (Z_to_bv 64 (obj + 8)) y10
-                  v y12 y13 y14 y15 y16 y17 (Z_to_bv 64 (obj + 24)) (Z_to_bv 64 SHBASE) y20
+  Proof.
+    intros s msF mo m F fc y1 y5 y6 y7 y10 y12 y13 y14 y15 y16 y17 y20 y28 y29 y30 y31 errv' LB' LBm p
+      at_np fcsr kernel pre.
+    pose proof pre as (_ & _ & spz16 & spf_low & spz_high & _ & inv_m & stk_m & _ & _ & _ & _ & ceil_lo & lo_room
+      & _ & _ & _ & live_obj & obj_ceil & map_m & _ & _ & bc_last & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _
+      & _ & _ & _ & _ & _ & fs_m & const_m & _).
+    unfold AREH_STACK, AOPNEW_STACK, AMALLOC_STACK in lo_room. unfold spf in *.
+    pose proof aceil_facts as ((ceil_low & ceil_high) & _ & _).
+    pose proof (obj_place H HH LF obj m fs_m live_obj) as (_ & _ & _ & obj_img).
+    unfold AIMG_TOP in obj_img.
+    pose proof (LbB_HFind.BSEQ_boundA bc (u_bseq map_m)) as bc_range.
+    (* Writes this stage makes stay in the forty bytes under the frame base. *)
+    set (W := [(spz - 96 - 40, spz - 96)]).
+    assert (W_fits : Forall (fun iv => aceil <= fst iv /\ snd iv <= spf spz /\ fst iv <= snd iv) W).
+    { unfold W. apply Forall_cons; [| apply Forall_nil]. cbv beta. unfold spf. cbn [fst snd]. lia. }
+    remember (mkR y1 (Z_to_bv 64 (spz - 96)) gp tp y5 y6 y7 (Z_to_bv 64 obj) (Z_to_bv 64 (obj + 8)) y10
+                  (Z_to_bv 64 (nreq bc)) y12 y13 y14 y15 y16 y17 (Z_to_bv 64 (obj + 24)) (Z_to_bv 64 SHBASE) y20
                   (Z_to_bv 64 (obj / 8)) (Z_to_bv 64 key) (Z_to_bv 64 ((obj + 8) / 8 + SHBASE)) (Z_to_bv 64 p)
-                  (rShe (Z_to_bv 64 p)) (rShe (Z_to_bv 64 (obj + 24))) s11 y28 y29 y30 y31).
-    assert (HF : forall v M1, log_flat (Eseed (RN v) [Z_to_bv 64 obj; v; Z_to_bv 64 (spz - 96)]) lgNP ->
-                 M1 = mem_denot (Eseed (RN v) [Z_to_bv 64 obj; v; Z_to_bv 64 (spz - 96)]) m lgNP ->
-                 munch [(spz - 96 - 32, spz - 96)] m M1 /\ wmono asegs m M1 /\ stk asegs M1 lo spz
-                 /\ rw_cells asegs M1 (spz - 96 - 32) [C8 (Z_to_bv 64 (obj + 24)); C8 (Z_to_bv 64 (obj + 8)); C8 (Z_to_bv 64 obj); C8 (Z_to_bv 64 E_IDX)]).
-    { intros v M1 Hlf HM. subst M1.
-      split. { apply munch_mem_denot; [exact Hlf|]. unfold lgNP.
-               repeat (apply Forall_cons; [cbn [e_addr e_width]; unfold estart; evs; rewrite ?u64_of_Z by lia; cbn [inside a_off a_base Z.of_nat Pos.of_succ_nat Pos.succ]; lia|]).
-               apply Forall_nil. }
-      split; [apply wmono_mem_denot|]. split; [apply stk_mem_denot; exact ST|].
-      assert (CE : map (fun e => C8 (edenot (Eseed (RN v) [Z_to_bv 64 obj; v; Z_to_bv 64 (spz - 96)]) e)) tlNP
-                   = [C8 (Z_to_bv 64 (obj + 24)); C8 (Z_to_bv 64 (obj + 8)); C8 (Z_to_bv 64 obj); C8 (Z_to_bv 64 E_IDX)]).
-      { unfold tlNP. cbn [map]. unfold RN. evs. rewrite w_add by lia. reflexivity. }
-      rewrite <- CE. rewrite lgNP_c8 in Hlf |- *.
-      apply rw_cells_c8log; [exact Hlf | unfold estart; evs; rewrite u64_of_Z by lia; cbn [a_off a_base]; lia |].
-      cbn [tlNP length Z.of_nat Pos.of_succ_nat Pos.succ Pos.mul Z.mul].
-      exact (wr_at_subE m lo (spz - lo) (spz - 96 - 32) 32 (wr_at_of_stk asegs m lo spz ST) ltac:(lia) ltac:(lia) ltac:(lia)). }
-    assert (HK : forall v, know_ok asegs (Eseed (RN v) [Z_to_bv 64 obj; v; Z_to_bv 64 (spz - 96)]) m KNP).
-    { intros v. unfold KNP, know_ok.
-      apply Forall_cons. { eapply (kword_of_rw_cells asegs _ m AGOT_SHBASE _ 0%nat (C8 (wz ASHBASE_CELL)));
-          [exact CG | reflexivity | reflexivity | lia | reflexivity | unfold AGOT_SHBASE; cbn; lia | unfold AGOT_SHBASE; cbn; lia | reflexivity]. }
-      apply Forall_cons. { eapply (kword_of_rw_cells asegs _ m ASHBASE_CELL _ 0%nat (C8 (wz ASHADOW_BASE)));
-          [exact CS | reflexivity | reflexivity | lia | reflexivity | unfold ASHBASE_CELL; cbn; lia | unfold ASHBASE_CELL; cbn; lia | reflexivity]. }
-      apply Forall_cons. { eapply kwr_of_stk; [exact ST | unfold estart; evs; rewrite u64_of_Z by lia; cbn [a_off]; lia
-                                             | unfold estart, elenZ; evs; rewrite !u64_of_Z by lia; cbn [a_off]; lia
-                                             | unfold elenZ; evs; rewrite u64_of_Z by lia; lia]. }
-      apply Forall_cons; [cbn [kentry_ok]; evs; rewrite u64_of_Z by lia; lia|]. apply Forall_nil. }
-
-    destruct (Z.eqb_spec bc 0) as [Hb0 | Hb0].
-    - assert (NQ : nreq bc = 1) by (unfold nreq; rewrite Hb0; reflexivity).
-      rewrite NQ in VIS.
-      remember (mkR y1 (Z_to_bv 64 (spz - 96)) gp tp y5 y6 y7 (Z_to_bv 64 obj) (Z_to_bv 64 (obj + 8)) y10
-                    (Z_to_bv 64 1) y12 y13 y14 y15 y16 y17 (Z_to_bv 64 (obj + 24)) (Z_to_bv 64 SHBASE) y20
-                    (Z_to_bv 64 (obj / 8)) (Z_to_bv 64 key) (Z_to_bv 64 ((obj + 8) / 8 + SHBASE)) (Z_to_bv 64 p)
-                    (rShe (Z_to_bv 64 p)) (rShe (Z_to_bv 64 (obj + 24))) s11 y28 y29 y30 y31) as R eqn:HR0.
-      assert (HRN : R = RN (Z_to_bv 64 1)) by exact HR0.
-      pose (E := Eseed R [Z_to_bv 64 obj; Z_to_bv 64 1; Z_to_bv 64 (spz - 96)]).
-      assert (HR : regs_ok E srNP0 R).
-      { apply regs_ok_srs; [apply regs_ok_seed|].
-        repeat (apply Forall_cons; [cbn [fst snd]; split; [intros X; discriminate X | subst R; evs; rewrite ?w_add by lia; reflexivity] |]).
+                  (rShe (Z_to_bv 64 p)) (rShe (Z_to_bv 64 (obj + 24))) s11 y28 y29 y30 y31) as regs0 eqn:regs0_is.
+    assert (full0 : rfull regs0) by (rewrite regs0_is; apply rfull_mkR).
+    pose (E := Eseed regs0 [Z_to_bv 64 obj; Z_to_bv 64 (nreq bc); Z_to_bv 64 (spz - 96)]).
+    assert (sp_seed : ev E 34 = Z_to_bv 64 (spz - 96)) by (subst E; evs; reflexivity).
+    assert (room32 : stack_room asegs m (spz - 96) 32) by (eapply stack_room_of_stk; [exact stk_m | lia | lia | lia]).
+    destruct (ACONST_shbase m const_m) as [got_cell shcell_cell].
+    assert (known : know_ok asegs E m KNP).
+    { unfold KNP, know_ok.
+      apply Forall_cons.
+      { eapply (kword_of_rw_cells asegs E m AGOT_SHBASE _ 0%nat (C8 (wz ASHBASE_CELL)));
+          [ exact got_cell | reflexivity | reflexivity | lia
+          | unfold estart; cbn [a_base a_off edenot]; rewrite u64_of_Z by lia; reflexivity
+          | unfold AGOT_SHBASE; lia | unfold AGOT_SHBASE; cbn [Z.of_nat]; lia | reflexivity ]. }
+      apply Forall_cons.
+      { eapply (kword_of_rw_cells asegs E m ASHBASE_CELL _ 0%nat (C8 (wz ASHADOW_BASE)));
+          [ exact shcell_cell | reflexivity | reflexivity | lia
+          | unfold estart; cbn [a_base a_off edenot]; rewrite u64_of_Z by lia; reflexivity
+          | unfold ASHBASE_CELL; lia | unfold ASHBASE_CELL; cbn [Z.of_nat]; lia | reflexivity ]. }
+      apply Forall_cons; [exact (krange_var asegs E m 34 (spz - 96) (2 ^ 45) (2 ^ 47) sp_seed ltac:(lia) ltac:(lia)) |].
+      apply Forall_cons; [exact (kwr_stack asegs E m 34 (spz - 96) 32 (-32) sp_seed eq_refl ltac:(lia) ltac:(lia) room32) |].
+      apply Forall_nil. }
+    (* The four saved registers land in the new frame, whichever way the bucket count goes. *)
+    assert (wr_frame : wr_at asegs m (spz - 96 - 32) 32).
+    { eapply wr_at_subE; [exact (wr_at_of_stk asegs m lo spz stk_m) | lia | lia | lia]. }
+    assert (saved_vals : map (fun v => C8 (edenot E v)) tlNP
+                         = [C8 (Z_to_bv 64 (obj + 24)); C8 (Z_to_bv 64 (obj + 8)); C8 (Z_to_bv 64 obj); C8 (Z_to_bv 64 E_IDX)]).
+    { unfold tlNP. cbn [map]. subst E. evs. rewrite w_add by lia. rewrite regs0_is. reflexivity. }
+    assert (saved_cells : rw_cells asegs (mem_denot E m lgNP) (spz - 96 - 32)
+                            [C8 (Z_to_bv 64 (obj + 24)); C8 (Z_to_bv 64 (obj + 8)); C8 (Z_to_bv 64 obj); C8 (Z_to_bv 64 E_IDX)]).
+    { assert (flat_log : log_flat E lgNP).
+      { unfold lgNP. cbn [log_flat]. unfold flat, estart, elenZ. cbn [a_base a_off edenot]. rewrite sp_seed, u64_of_Z by lia.
+        cbn [Z.of_nat]. repeat split; lia. }
+      rewrite <- saved_vals. rewrite lgNP_c8 in flat_log |- *.
+      apply rw_cells_c8log; [exact flat_log | unfold estart; cbn [a_base a_off edenot]; rewrite sp_seed, u64_of_Z by lia; lia |].
+      exact wr_frame. }
+    assert (log_in_W : munch W m (mem_denot E m lgNP)).
+    { apply munch_mem_denot.
+      - unfold lgNP. cbn [log_flat]. unfold flat, estart, elenZ. cbn [a_base a_off edenot]. rewrite sp_seed, u64_of_Z by lia.
+        cbn [Z.of_nat]. repeat split; lia.
+      - unfold lgNP. repeat (apply Forall_cons; [cbv beta; unfold W, estart; cbn [e_addr e_width a_base a_off edenot inside];
+                                                 rewrite sp_seed, u64_of_Z by lia; cbn [Z.of_nat]; lia |]).
         apply Forall_nil. }
-      assert (FHF : rfull R) by (rewrite HR0; apply rfull_mkR).
-      assert (HK0 : know_ok asegs E m KNP) by (unfold E; rewrite HRN; apply HK).
-      xrun_at (PropExec.mkFP F fc) asegs R E_NP m (seg_rom asegs) HR HK0 60%nat [E_RC; LbB_HNextPrime.NP_A] (SCR [] [] []) 50%N.
-      { split_scs. }
-      change (log_flat E lgNP) in Hlf.
-      lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) => change mm with (mem_denot E m lgNP) in Hms end.
-      set (M1 := mem_denot E m lgNP) in Hms.
-      destruct (HF (Z_to_bv 64 1) M1 ltac:(rewrite <- HRN; exact Hlf) ltac:(subst M1 E; rewrite <- HRN; reflexivity))
-        as (MU1 & WM1 & ST1 & HF1).
-      assert (MI1 : mem_inv asegs M1) by exact (msteps_mem_inv asegs _ _ Hms MI).
-      pose proof (gpre_stack s mo m M1 errv' LB' LBm p _ GP MU1 WM1 MI1 ST1 FW1) as GP1.
-      readback HR' (msteps_full asegs _ _ Hms FHF) HR0 HRe.
-      rreg HR' 1%bv G1. rreg HR' 2%bv G2. rreg HR' 8%bv G8. rreg HR' 9%bv G9. rreg HR' 10%bv G10. rreg HR' 11%bv G11. rreg HR' 12%bv G12.
-      assert (G2' : getr R' 2 = Z_to_bv 64 (spz - 96 - 32)) by (rewrite G2, w_addm by lia; f_equal; lia).
-      assert (G9' : getr R' 9 = Z_to_bv 64 SHBASE) by (rewrite G9; reflexivity).
-      assert (G11' : getr R' 11 = Z_to_bv 64 (bseq_next bc)) by (rewrite G11, Hb0; reflexivity).
-      rewrite G1, G2', G8, G9', G10, G11', G12 in HRe. clear G2 G9 G11.
-      eapply (sr_blk_eq H HH); [exact KR | exact VIS | exact FHF | exact Hms | exact HRe |].
-      intros msF1 mo1 KR1 MP1 VIS1.
-      eapply (stage_rcall H HH REH ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 spz sk0 LB0 LF obj bl bc key ents lo B shi m0 mo0
-                s msF1 mo1 M1 F fc) with (errv' := errv') (LB' := LB') (LBm := LBm) (p := p);
-        [exact VIS1 | exact FRZ | exact KR1 | | exact HF1].
-      destruct GP1 as (MPx & GPr). split; [eapply (ah_mpres_trans H HH); [exact MPx | exact MP1] | exact GPr].
-
-    - assert (NQ : nreq bc = np_arg bc) by (unfold nreq; destruct (Z.eqb_spec bc 0); [lia | reflexivity]).
-      rewrite NQ in VIS.
-      remember (mkR y1 (Z_to_bv 64 (spz - 96)) gp tp y5 y6 y7 (Z_to_bv 64 obj) (Z_to_bv 64 (obj + 8)) y10
-                    (Z_to_bv 64 (np_arg bc)) y12 y13 y14 y15 y16 y17 (Z_to_bv 64 (obj + 24)) (Z_to_bv 64 SHBASE) y20
-                    (Z_to_bv 64 (obj / 8)) (Z_to_bv 64 key) (Z_to_bv 64 ((obj + 8) / 8 + SHBASE)) (Z_to_bv 64 p)
-                    (rShe (Z_to_bv 64 p)) (rShe (Z_to_bv 64 (obj + 24))) s11 y28 y29 y30 y31) as R eqn:HR0.
-      assert (HRN : R = RN (Z_to_bv 64 (np_arg bc))) by exact HR0.
-      pose (E := Eseed R [Z_to_bv 64 obj; Z_to_bv 64 (np_arg bc); Z_to_bv 64 (spz - 96)]).
-      assert (HR : regs_ok E srNP1 R).
-      { apply regs_ok_srs; [apply regs_ok_seed|].
-        repeat (apply Forall_cons; [cbn [fst snd]; split; [intros X; discriminate X | subst R; evs; rewrite ?w_add by lia; reflexivity] |]).
+    pose proof (wmono_mem_denot E m lgNP) as views_log.
+    pose proof (stk_mem_denot E m lgNP lo spz stk_m) as stk_log.
+    destruct (Z.eq_dec bc 0) as [empty | nonempty].
+    - (* No buckets yet: the code takes two buckets at once and skips the prime search. *)
+      assert (seeded : regs_ok E srNP0 regs0).
+      { unfold srNP0. apply regs_ok_srs; [apply regs_ok_seed |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is; evs; reflexivity] |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is; evs; reflexivity] |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is; evs; rewrite w_add by lia; reflexivity] |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is, empty; reflexivity] |].
         apply Forall_nil. }
-      assert (FHF : rfull R) by (rewrite HR0; apply rfull_mkR).
-      assert (HK0 : know_ok asegs E m KNP) by (unfold E; rewrite HRN; apply HK).
-      xrun_at (PropExec.mkFP F fc) asegs R E_NP m (seg_rom asegs) HR HK0 60%nat [E_RC; LbB_HNextPrime.NP_A] (SCR [true; false] [] []) 50%N.
-      { clear - E Hb0 BCR. split_scs; cbn [sc_denot]; evs; unfold np_arg;
-          first [ rewrite br_ne by lia; apply (proj2 (Bool.negb_true_iff _)); apply Z.eqb_neq; lia
-                | rewrite (w_addm (2 * bc + 1) (-1)) by lia; replace (2 * bc + 1 + -1) with (2 * bc) by lia;
-                  rewrite w_and by lia; rewrite land_oe by lia; rewrite br_eq by lia; apply Z.eqb_neq; lia ]. }
-      change (log_flat E lgNP) in Hlf.
-      lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) => change mm with (mem_denot E m lgNP) in Hms end.
-      set (M1 := mem_denot E m lgNP) in Hms.
-      destruct (HF (Z_to_bv 64 (np_arg bc)) M1 ltac:(rewrite <- HRN; exact Hlf) ltac:(subst M1 E; rewrite <- HRN; reflexivity))
-        as (MU1 & WM1 & ST1 & HF1).
-      assert (MI1 : mem_inv asegs M1) by exact (msteps_mem_inv asegs _ _ Hms MI).
-      pose proof (gpre_stack s mo m M1 errv' LB' LBm p _ GP MU1 WM1 MI1 ST1 FW1) as GP1.
-      readback HR' (msteps_full asegs _ _ Hms FHF) HR0 HRe.
-      rreg HR' 1%bv G1. rreg HR' 2%bv G2. rreg HR' 8%bv G8. rreg HR' 9%bv G9. rreg HR' 10%bv G10. rreg HR' 11%bv G11.
-      assert (G1' : getr R' 1 = Z_to_bv 64 E_NPR) by (rewrite G1; reflexivity).
-      assert (G2' : getr R' 2 = Z_to_bv 64 (spz - 96 - 32)) by (rewrite G2, w_addm by lia; f_equal; lia).
-      assert (G9' : getr R' 9 = Z_to_bv 64 SHBASE) by (rewrite G9; reflexivity).
-      rewrite G1', G2', G8, G9', G10, G11 in HRe. clear G1 G2 G9.
-      eapply (sr_blk_eq H HH); [exact KR | exact VIS | exact FHF | exact Hms | exact HRe |].
-      intros msF1 mo1 KR1 MP1 VIS1.
-      eapply (np_sr H HH QIx s msF1 mo1 _ F fc M1 bc (spz - 96 - 32) (Z_to_bv 64 E_NPR) KR1 VIS1 (u_bseq U) Hb0);
-        [ unfold LbB_HNextPrime.BSEQ_LAST_A; unfold BSEQ_LAST in BCL; exact BCL
-        | reflexivity | reflexivity | vm_compute; reflexivity | reflexivity
-        | replace (spz - 96 - 32) with (spz + (-8) * 16) by lia; rewrite Z.mod_add by lia; exact SP16 | lia | lia
-        | apply (stack_room_of_stk M1 (spz - 96 - 32) 16); [exact ST1 | lia | lia | lia] | exact MI1 | apply rfull_mkR | ].
-      intros msF2 mo2 R2 KR2 MP2 VIS2 KEPT G10n FR2.
-      assert (Q1 : getr R2 1 = Z_to_bv 64 E_NPR) by (rewrite (KEPT 1%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q2 : getr R2 2 = Z_to_bv 64 (spz - 96 - 32)) by (rewrite (KEPT 2%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q3 : getr R2 3 = gp) by (rewrite (KEPT 3%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q4 : getr R2 4 = tp) by (rewrite (KEPT 4%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q8 : getr R2 8 = Z_to_bv 64 obj) by (rewrite (KEPT 8%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q9 : getr R2 9 = Z_to_bv 64 SHBASE) by (rewrite (KEPT 9%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q18 : getr R2 18 = Z_to_bv 64 (obj + 24)) by (rewrite (KEPT 18%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q19 : getr R2 19 = Z_to_bv 64 SHBASE) by (rewrite (KEPT 19%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q20 : getr R2 20 = y20) by (rewrite (KEPT 20%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q21 : getr R2 21 = Z_to_bv 64 (obj / 8)) by (rewrite (KEPT 21%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q22 : getr R2 22 = Z_to_bv 64 key) by (rewrite (KEPT 22%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q23 : getr R2 23 = Z_to_bv 64 ((obj + 8) / 8 + SHBASE)) by (rewrite (KEPT 23%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q24 : getr R2 24 = Z_to_bv 64 p) by (rewrite (KEPT 24%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q25 : getr R2 25 = rShe (Z_to_bv 64 p)) by (rewrite (KEPT 25%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q26 : getr R2 26 = rShe (Z_to_bv 64 (obj + 24))) by (rewrite (KEPT 26%bv ltac:(cbn; tauto)); reflexivity).
-      assert (Q27 : getr R2 27 = s11) by (rewrite (KEPT 27%bv ltac:(cbn; tauto)); reflexivity).
-      rewrite (rfull_eq R2 FR2) in VIS2.
-      rewrite Q1, Q2, Q3, Q4, Q8, Q9, Q18, Q19, Q20, Q21, Q22, Q23, Q24, Q25, Q26, Q27, G10n in VIS2.
-      set (bs := word_to_le_bytes 8 (Z_to_bv 64 E_NPR)) in VIS2.
-      assert (Lbs : length bs = 8%nat) by reflexivity.
-      set (M2 := CatExec.wbytes M1 (Z_to_bv 64 (spz - 96 - 32 - 8)) bs) in VIS2.
-      assert (E2 : M2 = write_to_mem M1 (wa (spz - 96 - 32 - 8)) bs) by (subst M2; rewrite wbytes_eq; reflexivity).
-      assert (MU2 : munch [(spz - 96 - 32 - 8, spz - 96 - 32)] M1 M2).
-      { rewrite E2. apply munch_write; [apply munch_refl | lia | rewrite Lbs; cbn; lia | rewrite Lbs; cbn; lia]. }
-      assert (WM2 : wmono asegs M1 M2) by (rewrite E2; apply wmono_write; apply wmono_refl).
-      assert (MI2 : mem_inv asegs M2).
-      { rewrite E2. apply mem_inv_store; [exact MI1|]. rewrite Lbs.
-        pose proof (stack_room_of_stk M1 (spz - 96 - 32) 8 ST1 ltac:(lia) ltac:(lia) ltac:(lia)) as SR0. unfold stack_room in SR0. exact SR0. }
-      assert (ST2 : stk asegs M2 lo spz) by (rewrite E2; apply stk_write; [exact ST1 | lia | rewrite Lbs; cbn; lia]).
-      pose proof (gpre_stack s mo M1 M2 errv' LB' LBm p _ GP1 MU2 WM2 MI2 ST2
-                    ltac:(apply Forall_cons; [cbn [Datatypes.fst Datatypes.snd]; unfold spf; lia | apply Forall_nil])) as GP2.
-      assert (HF2 : rw_cells asegs M2 (spz - 96 - 32) [C8 (Z_to_bv 64 (obj + 24)); C8 (Z_to_bv 64 (obj + 8)); C8 (Z_to_bv 64 obj); C8 (Z_to_bv 64 E_IDX)]).
-      { eapply rw_cells_transport; [exact HF1 | exact MU2 | exact WM2 |]. apply LbB_HXmpI2.dj_of_forall.
-        apply Forall_cons; [cbn [Datatypes.fst Datatypes.snd]; lia | apply Forall_nil]. }
-
-      remember (mkR (Z_to_bv 64 E_NPR) (Z_to_bv 64 (spz - 96 - 32)) gp tp (getr R2 5) (getr R2 6) (getr R2 7) (Z_to_bv 64 obj)
-                    (Z_to_bv 64 SHBASE) (Z_to_bv 64 (bseq_next bc)) (getr R2 11) (getr R2 12) (getr R2 13) (getr R2 14) (getr R2 15)
-                    (getr R2 16) (getr R2 17) (Z_to_bv 64 (obj + 24)) (Z_to_bv 64 SHBASE) y20 (Z_to_bv 64 (obj / 8)) (Z_to_bv 64 key)
-                    (Z_to_bv 64 ((obj + 8) / 8 + SHBASE)) (Z_to_bv 64 p) (rShe (Z_to_bv 64 p)) (rShe (Z_to_bv 64 (obj + 24))) s11
-                    (getr R2 28) (getr R2 29) (getr R2 30) (getr R2 31)) as R3 eqn:HR3.
-      pose (E3 := Eseed R3 []).
-      assert (HR3' : regs_ok E3 (srs sr_id []) R3) by (apply regs_ok_srs; [apply regs_ok_seed | apply Forall_nil]).
-      assert (HK3 : know_ok asegs E3 M2 []) by constructor.
-      assert (FHF3 : rfull R3) by (rewrite HR3; apply rfull_mkR).
-      xrun_at (PropExec.mkFP F fc) asegs R3 E_NPR M2 (seg_rom asegs) HR3' HK3 10%nat [E_RC] (SCR [] [] []) 50%N.
+      xrun_at (PropExec.mkFP F fc) asegs regs0 E_NP m (seg_rom asegs) seeded known 40%nat [E_RC] (SCR [] [] []) 35%N.
       { split_scs. }
-      readback HR'0 (msteps_full asegs _ _ Hms0 FHF3) HR3 HRe3.
-      rreg HR'0 10%bv G10r. rreg HR'0 11%bv G11r.
-      assert (G10r' : getr R'0 10 = Z_to_bv 64 obj) by (rewrite G10r, HR3; reflexivity).
-      assert (G11r' : getr R'0 11 = Z_to_bv 64 (bseq_next bc)) by (rewrite G11r, HR3; reflexivity).
-      rewrite G10r', G11r' in HRe3. clear G10r G11r.
-      eapply (sr_blk_eq H HH); [exact KR2 | exact VIS2 | exact FHF3 | exact Hms0 | exact HRe3 |].
-      intros msF4 mo4 KR4 MP4 VIS4.
-      eapply (stage_rcall H HH REH ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 spz sk0 LB0 LF obj bl bc key ents lo B shi m0 mo0
-                s msF4 mo4 M2 F fc) with (errv' := errv') (LB' := LB') (LBm := LBm) (p := p);
-        [exact VIS4 | exact FRZ | exact KR4 | | exact HF2].
-      destruct GP2 as (MPx & GPr). split; [|exact GPr].
-      eapply (ah_mpres_trans H HH); [exact MPx|]. eapply (ah_mpres_trans H HH); [exact MP1|].
-      eapply (ah_mpres_trans H HH); [exact MP2 | exact MP4].
+      lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) => change mm with (mem_denot E m lgNP) in Hms end.
+      readback HR' (msteps_full asegs _ _ Hms full0) regs0_is regs_after.
+      rreg HR' 2%bv sp_after. rreg HR' 8%bv s0_after. rreg HR' 9%bv s1_after. rreg HR' 10%bv a0_after. rreg HR' 11%bv a1_after.
+      rewrite w_addm in sp_after by lia. replace (spz - 96 + -32) with (spz - 96 - 32) in sp_after by lia.
+      assert (two_is : Z_to_bv 64 2 = Z_to_bv 64 (bseq_next bc)) by (rewrite empty; reflexivity).
+      rewrite sp_after, s0_after, s1_after, a0_after, a1_after, two_is in regs_after.
+      eapply (sr_blk_eq H HH); [exact kernel | exact at_np | exact full0 | exact Hms | exact regs_after |].
+      intros msF1 mo1 kernel1 step1 at_rc.
+      pose proof (gpre_stack s mo m _ errv' LB' LBm p W pre log_in_W views_log
+                    (msteps_mem_inv asegs _ _ Hms inv_m) stk_log W_fits) as (pres_mo & rest).
+      eapply (stage_rcall H HH REH).
+      + unfold spf. exact at_rc.
+      + exact fcsr.
+      + exact kernel1.
+      + exact (conj (ah_mpres_trans H HH _ _ _ pres_mo step1) rest).
+      + unfold spf. exact saved_cells.
+    - (* Buckets exist: grow to the next prime of the sequence, then join the same rehash call. *)
+      assert (arg_is : nreq bc = np_arg bc) by (unfold nreq; rewrite (proj2 (Z.eqb_neq bc 0) nonempty); reflexivity).
+      assert (arg_range : 3 <= np_arg bc <= 2 * 26339969 + 1) by (unfold np_arg; lia).
+      assert (seeded : regs_ok E srNP1 regs0).
+      { unfold srNP1. apply regs_ok_srs; [apply regs_ok_seed |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is; evs; reflexivity] |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is; evs; reflexivity] |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is; evs; rewrite w_add by lia; reflexivity] |].
+        apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite regs0_is; evs; reflexivity] |].
+        apply Forall_nil. }
+      xrun_at (PropExec.mkFP F fc) asegs regs0 E_NP m (seg_rom asegs) seeded known 40%nat [LbB_HNextPrime.NP_A]
+        (SCR [true; false] [] []) 35%N.
+      { assert (odd_and : Z.land (2 * bc + 1) (2 * bc) = 2 * bc).
+        { apply Z.bits_inj'. intros n n_nonneg. rewrite Z.land_spec.
+          destruct (Z.eq_dec n 0) as [n_zero | n_pos].
+          - rewrite n_zero, Z.testbit_even_0. apply andb_false_r.
+          - replace n with (Z.succ (Z.pred n)) by lia.
+            rewrite Z.testbit_odd_succ, Z.testbit_even_succ by lia. apply andb_diag. }
+        split_scs; cbn [sc_denot]; subst E; evs; rewrite arg_is.
+        - rewrite w_addm by lia. rewrite w_and by lia. unfold np_arg in *.
+          replace (2 * bc + 1 + -1) with (2 * bc) by lia. rewrite odd_and.
+          rewrite br_eq by lia. apply Z.eqb_neq. lia.
+        - rewrite br_ne by lia. apply negb_true_iff, Z.eqb_neq. lia. }
+      lazymatch type of Hms with CatSim.msteps _ _ (@PropExec.mkst _ _ _ ?mm _) => change mm with (mem_denot E m lgNP) in Hms end.
+      set (M1 := mem_denot E m lgNP) in *.
+      readback HR' (msteps_full asegs _ _ Hms full0) regs0_is regs_after.
+      rreg HR' 1%bv ra_after. rreg HR' 2%bv sp_after. rreg HR' 8%bv s0_after. rreg HR' 9%bv s1_after.
+      rreg HR' 10%bv a0_after.
+      rewrite w_addm in sp_after by lia. replace (spz - 96 + -32) with (spz - 96 - 32) in sp_after by lia.
+      rewrite ra_after, sp_after, s0_after, s1_after, a0_after in regs_after.
+      eapply (sr_blk_eq H HH); [exact kernel | exact at_np | exact full0 | exact Hms | exact regs_after |].
+      intros msF1 mo1 kernel1 step1 at_call.
+      pose proof (msteps_mem_inv asegs _ _ Hms inv_m) as inv1.
+      assert (room16 : stack_room asegs M1 (spz - 96 - 32) 16) by (eapply stack_room_of_stk; [exact stk_log | lia | lia | lia]).
+      assert (room8 : stack_room asegs M1 (spz - 96 - 32) 8) by (eapply stack_room_of_stk; [exact stk_log | lia | lia | lia]).
+      eapply (np_sr H HH QIx s msF1 mo1 _ F fc M1 bc (spz - 96 - 32) (Z_to_bv 64 E_NPR)).
+      + exact kernel1.
+      + exact at_call.
+      + exact (u_bseq map_m).
+      + exact nonempty.
+      + unfold LbB_HNextPrime.BSEQ_LAST_A. unfold BSEQ_LAST in bc_last. exact bc_last.
+      + rewrite <- arg_is. reflexivity.
+      + reflexivity.
+      + unfold ret_ok. apply bv_eq. vm_compute. reflexivity.
+      + reflexivity.
+      + replace (spz - 96 - 32) with (spz + (-8) * 16) by lia. rewrite Z.mod_add by lia. exact spz16.
+      + lia.
+      + lia.
+      + exact room16.
+      + exact inv1.
+      + apply rfull_mkR.
+      + intros msF2 mo2 R2 kernel2 step2 at_ret kept2 a0_ret full2.
+        rewrite wbytes_eq in at_ret.
+        replace (spz - 96 - 32 - 8) with (spz - 96 - 40) in at_ret by lia.
+        set (M2 := write_to_mem M1 (Z_to_bv 64 (spz - 96 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 E_NPR))) in *.
+        assert (len8 : Z.of_nat (length (word_to_le_bytes 8 (Z_to_bv 64 E_NPR))) = 8)
+          by (rewrite CatExec.length_N_to_le_bytes; reflexivity).
+        assert (inv2 : mem_inv asegs M2).
+        { unfold M2. apply mem_inv_store; [exact inv1 |]. rewrite CatExec.length_N_to_le_bytes.
+          unfold stack_room in room8. replace (spz - 96 - 32 - 8) with (spz - 96 - 40) in room8 by lia. exact room8. }
+        assert (stk2 : stk asegs M2 lo spz) by (unfold M2; apply stk_write; [exact stk_log | lia | rewrite len8; lia]).
+        assert (W_2 : munch W m M2)
+          by (unfold M2; apply munch_write; [exact log_in_W | lia | rewrite len8; lia | rewrite len8; unfold W; cbn [inside]; left; lia]).
+        assert (views_2 : wmono asegs m M2) by (unfold M2; apply wmono_write; exact views_log).
+        assert (cells_2 : rw_cells asegs M2 (spz - 96 - 32)
+                            [C8 (Z_to_bv 64 (obj + 24)); C8 (Z_to_bv 64 (obj + 8)); C8 (Z_to_bv 64 obj); C8 (Z_to_bv 64 E_IDX)]).
+        { apply (rw_cells_transport asegs [(spz - 96 - 40, spz - 96 - 32)] M1 M2); [exact saved_cells | | |].
+          - unfold M2. apply munch_write; [intros x _; reflexivity | lia | rewrite len8; lia | rewrite len8; cbn [inside]; left; lia].
+          - unfold M2. apply wmono_write. intros x defined. exact defined.
+          - cbn [disjoint_from cells_size csize Nat.add]. lia. }
+        (* The prime search keeps every callee-saved register, so the frame the rehash call wants is still there. *)
+        assert (R2_vals : R2 = mkR (getr R2 1%bv) (Z_to_bv 64 (spz - 96 - 32)) gp tp (getr R2 5%bv) (getr R2 6%bv) (getr R2 7%bv)
+                                   (Z_to_bv 64 obj) (Z_to_bv 64 2147450880) (getr R2 10%bv) (getr R2 11%bv) (getr R2 12%bv)
+                                   (getr R2 13%bv) (getr R2 14%bv) (getr R2 15%bv) (getr R2 16%bv) (getr R2 17%bv)
+                                   (Z_to_bv 64 (obj + 24)) (Z_to_bv 64 SHBASE) (getr R2 20%bv) (Z_to_bv 64 (obj / 8))
+                                   (Z_to_bv 64 key) (Z_to_bv 64 ((obj + 8) / 8 + SHBASE)) (Z_to_bv 64 p)
+                                   (rShe (Z_to_bv 64 p)) (rShe (Z_to_bv 64 (obj + 24))) s11
+                                   (getr R2 28%bv) (getr R2 29%bv) (getr R2 30%bv) (getr R2 31%bv)).
+        { rewrite (rfull_eq R2 full2) at 1. f_equal;
+            lazymatch goal with |- getr R2 ?r = _ => rewrite (kept2 r ltac:(inb)); reflexivity end. }
+        pose (E2 := Eseed R2 [Z_to_bv 64 obj; Z_to_bv 64 (bseq_next bc)]).
+        assert (seeded2 : regs_ok E2 (srs sr_id [(8%bv, EVar 32); (10%bv, EVar 33)]) R2).
+        { apply regs_ok_srs; [apply regs_ok_seed |].
+          apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | rewrite R2_vals at 1; subst E2; evs; reflexivity] |].
+          apply Forall_cons; [cbn [fst snd]; split; [intros zero_reg; discriminate zero_reg | subst E2; evs; exact a0_ret] |].
+          apply Forall_nil. }
+        assert (known2 : know_ok asegs E2 M2 []) by apply Forall_nil.
+        xrun_at (PropExec.mkFP F fc) asegs R2 E_NPR M2 (seg_rom asegs) seeded2 known2 10%nat [E_RC] (SCR [] [] []) 35%N.
+        { split_scs. }
+        readback HR'0 (msteps_full asegs _ _ Hms0 full2) R2_vals regs_back.
+        rreg HR'0 8%bv s0_back. rreg HR'0 10%bv a0_back. rreg HR'0 11%bv a1_back.
+        rewrite s0_back, a0_back, a1_back in regs_back.
+        eapply (sr_blk_eq H HH); [exact kernel2 | exact at_ret | exact full2 | exact Hms0 | exact regs_back |].
+        intros msF3 mo3 kernel3 step3 at_rc.
+        pose proof (gpre_stack s mo m M2 errv' LB' LBm p W pre W_2 views_2 inv2 stk2 W_fits) as (pres_mo & rest).
+        eapply (stage_rcall H HH REH).
+        * unfold spf. exact at_rc.
+        * exact fcsr.
+        * exact kernel3.
+        * exact (conj (ah_mpres_trans H HH _ _ _ (ah_mpres_trans H HH _ _ _ (ah_mpres_trans H HH _ _ _ pres_mo step1) step2) step3) rest).
+        * unfold spf. exact cells_2.
   Qed.
 End EmpN.

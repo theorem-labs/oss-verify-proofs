@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -52,10 +52,15 @@ Lemma client_static_intro : forall x,
   \/ (0x6cc0b0 <= x < 0x6cd2a0)
   \/ (0x6cd2a8 <= x < 0x6cd7d8) -> client_static x.
 Proof.
-  intros x Hx. split.
-  - destruct (Z.ltb_spec0 x 0x174558); [exists 0x172c90, 0x174558; split; [left; reflexivity| lia]|]. destruct (Z.ltb_spec0 x 0x6aa210); [exists 0x69a210, 0x6aa210; split; [right; left; reflexivity| lia]|]. exists 0x6aa210, 0x6cd7d8; split; [right; right; left; reflexivity| lia].
-  - intros (lo & hi & Hin & Hlh). unfold RT_STATIC in Hin.
-    repeat (destruct Hin as [E|Hin]; [injection E as <- <-; lia|]). destruct Hin.
+  intros x span.
+  assert (cover : Exists (fun seg => fst seg <= x < snd seg) CLIENT_STATIC).
+  { unfold CLIENT_STATIC. rewrite !Exists_cons, Exists_nil. cbn [fst snd]. lia. }
+  assert (gaps : Forall (fun seg => ~ (fst seg <= x < snd seg)) RT_STATIC).
+  { unfold RT_STATIC. rewrite !Forall_cons_iff, Forall_nil_iff. cbn [fst snd].
+    repeat split; lia. }
+  apply Exists_exists in cover. destruct cover as ([lo hi] & member & within).
+  split; [exists lo, hi; exact (conj member within)|].
+  intros (rlo & rhi & listed & hit). exact (proj1 (Forall_forall _ _) gaps (rlo, rhi) listed hit).
 Qed.
 
 Lemma drv_cell_static : forall x, drv_cell x -> client_static x.

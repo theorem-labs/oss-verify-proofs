@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -86,7 +86,7 @@ Section PA.
 
   Notation SI := (U_pk_sinv L HL HMC).
   Notation PK := (PKC_inst usegs U_RSA_INFO U_EC_INFOS MT).
-  Notation XS := [(U_ECP_IDS_DONE, U_ECP_IDS_DONE + 1); (U_MUL_COUNT, U_MUL_COUNT + 8); (U_ECP_IDS, U_ECP_IDS + 56)].
+  Notation XS := [(U_ECP_IDS_DONE, U_ECP_IDS_DONE + 1); (380840, 380840 + 8); (U_ECP_IDS, U_ECP_IDS + 56)].
 
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
             (m0 : mem) (mo0 : Model) (h0 : HST usegs L HI) (LB : list blk) (PP P END BUF PKA lo : Z) (bs : list byte).
@@ -131,7 +131,7 @@ Section PA.
   Hypothesis SPR : bv_unsigned sp < 2^64.
 
   Notation POST := (pk_parse_subpubkey_post usegs L HI PK SI ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc h0 LB PP P END PKA lo m0 mo0).
-  Notation FRS mm := (rw_cells usegs mm (bv_unsigned sp + -40) [C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
+  Notation FRS mem_at := (rw_cells usegs mem_at (bv_unsigned sp + -48) [C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
   Notation FP := ([(PP, PP + 8); (PKA, PKA + 16)] ++ XS).
 
 Notation pa_basics' := (pa_basics L HI HLS sp m0 mo0 h0 LB PP BUF PKA lo bs HH0 INB SPP SPK ACL SLO DHI).
@@ -198,173 +198,201 @@ Notation pa_basics' := (pa_basics L HI HLS sp m0 mo0 h0 LB PP BUF PKA lo bs HH0 
     64%N 0x293dc%Z) fc (@Corelib.Init.Datatypes.None (@stdpp.bitvector.definitions.bv 64%N)) m (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom
     (@OssFuzzTheorems.Proofs.mbedtls.fuzz_pkcs7.lib.U.UImg.usegs)))
 (* [comment removed for export] *).
+
   Proof.
-    intros until x31. intros CX RSA0 BRC APC HPP PB E2B HPKA FRL FRO FR ST P00.
-    dpose pa_basics' as (ACP & BAC & BIM & PPD & PKD & SLO').
-    dpose CX as (HH & HT & MF & MI & SOK & SIP & SUB & PX). pose proof (heap_mok _ _ HI _ _ _ _ HH) as MK.
-    dpose BRC as (C0 & C16 & _ & CAC & CIM).
-    pose proof (rw_cells_bound _ _ _ _ HPKA) as PKB. cbn [cells_size csize Nat.add] in PKB.
-    pose proof (rw_cells_bound _ _ _ _ HPP) as PPB. cbn [cells_size csize Nat.add] in PPB.
-    (* [comment removed for export] *)
-    pose proof (conj MI I) as MIbox.
-    pose proof (munch_refl [(bv_unsigned sp + -64, bv_unsigned sp + -48)] m) as MU. pose proof (wmono_refl usegs m) as WM.
-    zstep. zstep. zstep. zstep.
-    lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
-    match goal with M : mem_inv usegs m1 |- _ => rename M into MI1 end. match goal with W : wmono usegs m m1 |- _ => rename W into WM1 end.
-    pose proof (pctx_munch' _ _ _ _ _ _ CX MU WM1 MI1 ltac:(constructor; [cbn; left; clear -SLO' HLS; lia| constructor])) as CX1.
-    assert (RSA1 : rsa_at usegs m1 ((C, 232) :: LB) C (rsa_fresh C)).
-    { eapply rsa_at_munch; [exact RSA0| exact MU| exact WM1| exact (proj1 MIbox)| exact MI1| cbn [disjoint_from]; clear -CAC ACL SLO' HLS; lia|].
-      cbn. intros d Hd HO. exfalso. decompose [or] Hd; try contradiction; subst d; cbn in HO; discriminate. }
-    clear MU WM1 CX RSA0 MIbox. dpose CX1 as (HH1 & _ & _ & _ & SOK1 & _). clear HH HT MF SIP SUB PX. try clear SOK.
-    (* [comment removed for export] *)
-    match goal with H : rw_cells usegs m1 (bv_unsigned sp + -64) _ |- _ => rename H into FRO1 end.
-    pose proof (U_pk_get_type_spec L CA_RSA0 CA_EC0) as SPT. unfold pk_get_type_stmt, pk_get_type_post, U_PK_GET_TYPE in SPT.
-    zstep. zstep.
-    rename FRO1 into FROa.
-    acallp (eapply SPT with (A := bv_unsigned sp + -64) (info := U_RSA_INFO); rewrite ?(unsigned_lit (bv_unsigned sp + -64)) by (clear -SLO' HLS SPR; lia);
-           first [exact FROa| exact MI1| exact SOK1| reflexivity| right; left; reflexivity| clear -SPA SPR; lia| clear -SLO' HLS ACL ACP; lia
-                 | match goal with |- ?g => idtac "PTLEFT" g end]).
-    match goal with H : U_RSA_INFO = U_RSA_INFO -> ?t = 1 |- _ => pose proof (H eq_refl) as TY; clear H; subst t end.
-    repeat match goal with H : _ -> _ = _ |- _ => clear H | H : _ -> _ <= _ <= _ |- _ => clear H end.
-    rename FROa into FRO1.
-    (* [comment removed for export] *)
-    zstep. zstep. zstep. zstep. zstep. zstep. zstep.
-    dpose RSA1 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & C64 & _). unfold RSA_CTX_SIZE in C64.
-    (* [comment removed for export] *)
-    pose proof (pctx_bytes' _ _ _ _ CX1) as HBS1.
-    set (kbs := firstn (Z.to_nat (E2 - p)) (skipn (Z.to_nat (p - BUF)) bs)).
-    assert (LENK : Z.of_nat (length kbs) = E2 - p) by (subst kbs; apply U_asn1_get_mpi.bytes_at_sub_length; clear -PB E2B BP EB; lia).
-    assert (HKB : bytes_at usegs m1 p kbs) by (subst kbs; eapply U_asn1_get_mpi.bytes_at_sub; [exact HBS1| | |]; clear -PB E2B BP EB; lia).
-    clearbody kbs.
-    dpose CX1 as (_ & HT1 & MF1 & _ & _ & SIP1 & SUB1 & PX1).
-    pose proof (U_rsa_parse_pubkey_spec L HI HFREE HCALLOC HLS SW DIMG HND _ eq_refl) as SRP. unfold rsa_parse_pubkey_stmt, rsa_parse_pubkey_post, U_RSA_PARSE_PUBKEY in SRP.
+    intros m mo h C p E2 alen oj lj x1 x5 x6 x7 x10 x11 x12 x13 x14 x15 x16 x17 p0 x20 x28 x29 x30 x31
+      ctx_in rsa_in blk_c apart_c pp_in p_in e2_end pka_in lj_in oj_in regs_in stk_in p0_in.
+    pose proof alloc_ceiling_pos as ceil_pos.
+    pose proof ctx_in as (heap_in & _ & _ & mi_in & _).
+    pose proof (heap_mok _ _ HI _ _ _ _ heap_in) as mok_in.
+    clear heap_in.
+    pose proof (munch_refl [(bv_unsigned sp + -64, bv_unsigned sp + -48)] m) as mu_1.
+    pose proof (wmono_refl usegs m) as wm_1.
+    do 6 zstep.
+    rename m2 into m1.
+    assert (ctx_1 : pctx' h ((C, 232) :: LB) m1 mo).
+    { refine (pctx_munch' h ((C, 232) :: LB) m m1 mo _ ctx_in mu_1 wm_1 mi_in _).
+      apply Forall_cons; [| apply Forall_nil]. left. cbn [fst snd]. unfold PK_PARSE_STACK in SLO. lia. }
+    pose proof ctx_1 as (_ & _ & _ & _ & sok_1 & _).
+    pose proof (U_pk_get_type_spec L CA_RSA0 CA_EC0) as ty_spec.
+    unfold pk_get_type_stmt, U_PK_GET_TYPE in ty_spec.
+    eapply aevtM_cut_evt; [exact mok_in | eapply ty_spec with (A := bv_unsigned sp + -64) (info := U_RSA_INFO) (c := Z_to_bv 64 C);
+      [ exact oj_in | unfold PK_PARSE_STACK in SLO; lia | unfold PK_PARSE_STACK in SLO; lia | right; left; reflexivity
+      | exact mi_in | exact sok_1 | reflexivity | reflexivity ] | ].
+    intros ms_t post_t.
+    destruct post_t as (a1_t & ty & ms_t_eq & _ & ty_rsa & _ & _).
+    subst ms_t. rewrite (ty_rsa eq_refl). clear ty_rsa ty_spec.
+    rewrite (ret_pc_even 168948) by (first [lia | reflexivity]).
+    do 8 zstep.
+    pose proof pa_basics' as (_ & buf_ceil & _ & _ & _ & room).
+    pose proof blk_c as (c_pos & c_al & _ & c_ceil & c_img).
+    assert (fs_bound : 0 <= bv_unsigned sp + -112 < 2 ^ 64) by lia.
+    assert (a0_c : Z.land ((Z.b2z (0 <? 0) + -1) mod 18446744073709551616) (C mod 18446744073709551616) = C).
+    { change ((Z.b2z (0 <? 0) + -1) mod 18446744073709551616) with (Z.ones 64).
+      rewrite Z.land_comm, Z.land_ones by lia. rewrite !Z.mod_small by lia. reflexivity. }
+    rewrite a0_c. clear a0_c.
+    pose proof (pctx_bytes' h ((C, 232) :: LB) m1 mo ctx_1) as bs_1.
+    pose proof (bytes_at_sub usegs m1 BUF bs p (E2 - p) bs_1 ltac:(lia) ltac:(lia) ltac:(lia)) as key_1.
+    pose proof (bytes_at_sub_length bs BUF p (E2 - p) ltac:(lia) ltac:(lia) ltac:(lia)) as key_len.
+    set (key := firstn (Z.to_nat (E2 - p)) (skipn (Z.to_nat (p - BUF)) bs)) in key_1, key_len.
+    assert (rsa_1 : rsa_at usegs m1 ((C, 232) :: LB) C (rsa_fresh C)).
+    { pose proof ctx_in as (_ & _ & _ & mi_0 & _).
+      refine (rsa_at_munch usegs m m1 _ C _ _ rsa_in mu_1 wm_1 mi_0 mi_in _ _).
+      - cbn [disjoint_from]. split; [lia | exact I].
+      - intros d d_in own_heap. cbn [rsa_mpds rsa_fresh r_N r_E rsa_zero_mpds rsa_zero_offs map] in d_in.
+        repeat (destruct d_in as [d_eq | d_in]; [subst d; discriminate own_heap |]). destruct d_in. }
+    pose proof (U_rsa_parse_pubkey_spec L HI HFREE HCALLOC HLS SW DIMG HND U_MEMSET_FUNC eq_refl) as rp_spec.
+    unfold rsa_parse_pubkey_stmt, U_RSA_PARSE_PUBKEY in rp_spec.
+    pose proof ctx_1 as (heap_1 & top_1 & _).
+    rewrite <- (unsigned_lit (bv_unsigned sp + -112)) in stk_in by exact fs_bound.
+    unfold RSA_CTX_SIZE, PK_PARSE_STACK in *.
+    eapply aevtM_cut; [ eapply rp_spec with (h := h) (LB := (C, 232) :: LB) (C := C) (KEY := p) (kbs := key) (lo := lo);
+      [ exact heap_1 | exact rsa_1 | exact key_1 | lia | lia
+      | apply (client_range_blk L _ lo BUF (Z.of_nat (length bs))); [right; exact INB | lia | lia ]
+      | destruct (apart_c BUF (Z.of_nat (length bs)) INB) as [c_under | c_over]; [right | left]; lia
+      | rewrite unsigned_lit by exact fs_bound; lia
+      | exact stk_in
+      | rewrite unsigned_lit by exact fs_bound; lia
+      | exact ACL
+      | rewrite unsigned_lit, top_1 by exact fs_bound; lia
+      | rewrite unsigned_lit by exact fs_bound; lia
+      | exact DHI | exact TP | exact mi_in | exact sok_1 | exact CA_MSF | reflexivity | reflexivity | reflexivity
+      | rewrite key_len; reflexivity ] | ].
+    clear rp_spec.
+    intros ms_2 mo2 post_2. unfold rsa_parse_pubkey_post in post_2.
+    destruct post_2 as (t0r & t1r & t2r & a0r & a1r & a2r & a3r & a4r & a5r & a6r & a7r & t3r & t4r & t5r & t6r
+      & m2 & mo2r & h2 & LB2 & r2 & cfg_2 & mi_2 & stk_2 & mof_2 & top_2 & heap_2 & rsa_2 & sub_2 & sup_2
+      & new_2 & presx_2 & sok_2).
+    injection cfg_2 as -> ->.
+    rewrite (ret_pc_even 168980) by (first [lia | reflexivity]).
+    unfold RSA_CTX_SIZE in presx_2.
+    rewrite unsigned_lit in presx_2, stk_2 by exact fs_bound.
+    pose proof (heap_mok _ _ HI _ _ _ _ heap_2) as mok_2.
+    pose proof ctx_1 as (_ & _ & mof_1 & _ & _ & sinv_1 & _ & keep_1).
+    pose proof (fresh_apart_pp' C 232 blk_c apart_c ltac:(lia)) as c_pp.
+    pose proof (fresh_apart_pka' C 232 blk_c apart_c ltac:(lia)) as c_pka.
+    assert (sub_c : forall b, In b LB -> In b ((C, 232) :: LB)) by (intros b b_in; right; exact b_in).
+    assert (far_c : Forall (fun iv : Z * Z => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv) [(C, C + 232)]).
+    { apply Forall_cons; [| apply Forall_nil]. left. cbn [fst snd]. lia. }
+    pose proof (keep_pp' _ _ _ _ _ _ presx_2 sub_c ltac:(lia) pp_in eq_refl ltac:(cbn [disjoint_from]; split; [lia | exact I])) as pp_2.
+    pose proof (keep_pka' _ _ _ _ _ _ presx_2 sub_c ltac:(lia) pka_in eq_refl ltac:(cbn [disjoint_from]; split; [lia | exact I])) as pka_2.
+    pose proof (keep_frame' _ _ _ _ _ _ _ presx_2 ltac:(lia) lj_in ltac:(lia) ltac:(cbn; lia) far_c) as lj_2.
+    pose proof (keep_frame' _ _ _ _ _ _ _ presx_2 ltac:(lia) oj_in ltac:(lia) ltac:(cbn; lia) far_c) as oj_2.
+    pose proof (keep_frame' _ _ _ _ _ _ _ presx_2 ltac:(lia) regs_in ltac:(lia) ltac:(cbn; lia) far_c) as regs_2.
+    clear pp_in pka_in lj_in oj_in regs_in.
+    assert (ctx_2 : pctx' h2 LB2 m2 mo2r).
+    { refine (conj heap_2 (conj _ (conj (mo_frame_trans mo0 mo mo2r mof_1 mof_2) (conj mi_2 (conj sok_2 (conj _ (conj _ _))))))).
+      - rewrite top_2. exact top_1.
+      - change (si_P (U_pk_sinv L HL HMC) m2). apply (si_frame (U_pk_sinv L HL HMC) m1 m2 sinv_1).
+        intros a a_rng a_fp. destruct (si_data (U_pk_sinv L HL HMC) a a_fp) as [a_data [_ a_ns]].
+        refine (proj1 (presx_2 a a_rng _ _)).
+        + right. left. split; [exact a_data | exact a_ns].
+        + cbn [outside]. split; [| exact I]. pose proof DI1 as img_data_lo. pose proof DI2 as img_data_hi. lia.
+      - intros b b_in. apply sup_2. right. exact b_in.
+      - apply (heap_presx_trans usegs L LB (bv_unsigned sp) FP m0 m1 m2 keep_1).
+        apply (heap_presx_weak'' ((C, 232) :: LB) (bv_unsigned sp + -112) [(C, C + 232)] FP m1 m2 presx_2 sub_c ltac:(lia)).
+        intros a a_cl _. cbn [outside]. split; [| exact I].
+        intros a_c. exact (fresh_not_client' C 232 a blk_c apart_c a_c a_cl). }
+    pose proof (HND h2 LB2 m2 mo2r heap_2) as nd_2.
+    pose proof (HND h ((C, 232) :: LB) m1 mo heap_1) as nd_1.
+    pose proof (NoDup_map_inv fst LB (HND h0 LB m0 mo0 HH0)) as nd_lb.
+    assert (c_not_lb : ~ In (C, 232) LB).
+    { intros c_in. cbn [map] in nd_1. apply NoDup_cons_iff in nd_1 as [c_fresh _].
+      apply c_fresh. exact (in_map fst LB (C, 232) c_in). }
+    assert (blk_dec : forall x y : blk, {x = y} + {x <> y}) by (intros x y; decide equality; apply Z.eq_dec).
+    set (owned := List.filter (fun b => if in_dec blk_dec b LB then false else true) LB2).
+    assert (owned_spec : forall b, In b owned <-> In b LB2 /\ ~ In b LB).
+    { intros b. unfold owned. rewrite filter_In.
+      destruct (in_dec blk_dec b LB) as [b_lb | b_lb]; split; intros [b_l2 b_k]; try discriminate; tauto. }
+    assert (owned_iff : forall b, In b owned <-> In b ((C, 232) :: rsa_limb_blocks r2)).
+    { intros b. rewrite owned_spec. split.
+      - intros [b_l2 b_nlb]. destruct (sub_2 b b_l2) as [[b_c | b_lb] | b_limb].
+        + left. exact b_c.
+        + contradiction.
+        + right. exact b_limb.
+      - intros [b_c | b_limb].
+        + subst b. split; [apply sup_2; left; reflexivity | exact c_not_lb].
+        + split; [exact (rsa_limb_blocks_in usegs m2 LB2 C r2 b rsa_2 b_limb) |].
+          intros b_lb. exact (new_2 b b_limb (or_intror b_lb)). }
+    assert (perm_2 : Permutation LB2 (owned ++ LB)).
+    { apply perm_of_sets; [exact nd_2 | |].
+      - apply (nodup_fst_of_sub (owned ++ LB) LB2 nd_2).
+        + intros b b_in. apply in_app_or in b_in as [b_o | b_lb]; [apply owned_spec in b_o; tauto | apply sup_2; right; exact b_lb].
+        + apply NoDup_app; [apply NoDup_filter; exact (NoDup_map_inv fst LB2 nd_2) | exact nd_lb |].
+          intros b b_o. apply owned_spec in b_o. tauto.
+      - intros b. rewrite in_app_iff, owned_spec. split.
+        + intros b_l2. destruct (in_dec blk_dec b LB) as [b_lb | b_lb]; [right; exact b_lb | left; tauto].
+        + intros [[b_l2 _] | b_lb]; [exact b_l2 | apply sup_2; right; exact b_lb]. }
+    assert (rep_2 : pk_rep_c usegs U_RSA_INFO U_EC_INFOS U_MT m2 (owned ++ LB) PKA U_RSA_INFO C owned).
+    { apply (pk_rep_c_frame usegs U_RSA_INFO U_EC_INFOS U_MT m2 m2 LB2 (owned ++ LB) PKA U_RSA_INFO C owned).
+      - right. left. refine (conj eq_refl (conj _ (conj mi_2 (ex_intro _ r2 (conj rsa_2 owned_iff))))).
+        unfold U_RSA_INFO. lia.
+      - exact mi_2.
+      - intros b b_in. apply in_or_app. left. exact b_in.
+      - intros a _. reflexivity. }
+    assert (frame_fold : forall mm, stk usegs mm lo (bv_unsigned sp + -112) ->
+              rw_cells usegs mm (bv_unsigned sp + -112) [CB 48 lj] ->
+              rw_cells usegs mm (bv_unsigned sp + -64) [C8 (Z_to_bv 64 U_RSA_INFO); C8 (Z_to_bv 64 C)] ->
+              stk usegs mm lo (bv_unsigned sp + -112) /\ exists junk, rw_cells usegs mm (bv_unsigned sp + -112) [CB 64 junk]).
+    { intros mm stk_m low_m high_m.
+      pose proof (stk_release _ _ _ _ _ stk_m low_m ltac:(lia)) as upto_64. cbn [cells_size csize Nat.add] in upto_64.
+      replace (bv_unsigned sp + -112 + Z.of_nat 48) with (bv_unsigned sp + -64) in upto_64 by lia.
+      pose proof (stk_release _ _ _ _ _ upto_64 high_m ltac:(lia)) as upto_48. cbn [cells_size csize Nat.add] in upto_48.
+      replace (bv_unsigned sp + -64 + Z.of_nat 16) with (bv_unsigned sp + -48) in upto_48 by lia.
+      destruct (stk_carve _ _ _ _ 64 upto_48 ltac:(lia)) as [below whole].
+      replace (bv_unsigned sp + -48 - Z.of_nat 64) with (bv_unsigned sp + -112) in below, whole by lia.
+      exact (conj below whole). }
     zstep.
-    eapply aevtM_cut.
-    { eapply SRP with (lo := lo) (h := h) (LB := (C, 232) :: LB) (C := C) (KEY := p) (kbs := kbs);
-        rewrite ?(unsigned_lit (bv_unsigned sp + -112)) by (clear -SLO' HLS ACL ACP SPR; lia); rewrite ?LENK;
-        first [ exact HH1 | exact RSA1 | exact HKB | exact TP | exact MI1 | exact SOK1 | exact CA_MSF | exact ACL | exact DHI | eassumption | reflexivity
-              | f_equal; clear; lia
-              | (* [comment removed for export] *) f_equal; lazymatch goal with |- Z.land ?msk C = C => replace msk with (Z.ones 64) by reflexivity end;
-                rewrite Z.land_comm, Z.land_ones by (clear; lia); apply Z.mod_small; clear -C0 C64; lia
-              | (* [comment removed for export] *) intros a Ha; right; right; exists (BUF, Z.of_nat (length bs)); split; [right; exact INB| cbn; clear -Ha PB E2B BP EB; lia]
-              | (* [comment removed for export] *) unfold RSA_CTX_SIZE; destruct (APC _ _ INB) as [Q|Q]; [right; clear -Q PB E2B BP EB; lia| left; clear -Q PB E2B BP EB; lia]
-              | rewrite HT1; clear -HTOP SLO' HLS; lia
-              | clear -PB E2B BP EB B63 BUF0 BAC ACL SLO' HLS SPA SPR; lia
-              | match goal with |- ?g => idtac "RPLEFT" g end ]. }
-    clear SRP.
-    intros ms' mo' PO. destruct_exs PO. destruct PO as [E PO]. injection E as E1 E2'. subst ms' mo'.
-    rewrite ?(unsigned_lit (bv_unsigned sp + -112)) in PO by (clear -SLO' HLS ACL ACP SPR; lia).
-    ddestruct PO as (MI2 & ST2 & MF2 & HT2 & HH2 & RSA2 & COV2 & SUB2 & NEW2 & PX2 & SOK2).
-    lazymatch goal with |- _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
-      replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ clear; lia | reflexivity ]) end.
-    lazymatch goal with |- aevtM _ ?mox _ (MS _ _ _ _ _ ?mx _) => rename mx into m2; rename mox into mo2 end.
-    match type of HH2 with HEAP _ _ _ ?hh ?lb _ _ => rename hh into h2; rename lb into LB2 end.
-    match type of RSA2 with rsa_at _ _ _ _ ?rr => rename rr into r' end.
-    pose proof (heap_mok _ _ HI _ _ _ _ HH2) as MK2. clear MK.
-    unfold RSA_CTX_SIZE in PX2.
-    (* [comment removed for export] *)
-    assert (XF : Forall (fun iv => snd iv <= bv_unsigned sp + -112 \/ bv_unsigned sp <= fst iv) [(C, C + 232)]) by (constructor; [cbn; left; clear -CAC ACL SLO' HLS; lia| constructor]).
-    apply (keep_frame' _ _ _ m1 m2 _ _ PX2 ltac:(clear; lia)) in FRL; [| clear; lia| cbn; clear; lia| exact XF].
-    apply (keep_frame' _ _ _ m1 m2 _ _ PX2 ltac:(clear; lia)) in FRO1; [| clear; lia| cbn; clear; lia| exact XF].
-    apply (keep_frame' _ _ _ m1 m2 _ _ PX2 ltac:(clear; lia)) in FR; [| clear; lia| cbn; clear; lia| exact XF].
-    match goal with H : rw_cells usegs m1 PP _ |- _ =>
-      apply (keep_pp' ((C, 232) :: LB) _ _ m1 m2 _ PX2 ltac:(intros b Hb; right; exact Hb) ltac:(clear; lia)) in H; [| reflexivity| cbn; pose proof (fresh_apart_pp' C 232 BRC APC ltac:(clear; lia)) as Q; split; [clear -Q; lia| exact I]]; rename H into HPP2 end.
-    match goal with H : rw_cells usegs m1 PKA _ |- _ =>
-      apply (keep_pka' ((C, 232) :: LB) _ _ m1 m2 _ PX2 ltac:(intros b Hb; right; exact Hb) ltac:(clear; lia)) in H; [| reflexivity| cbn; pose proof (fresh_apart_pka' C 232 BRC APC ltac:(clear; lia)) as Q; split; [clear -Q; lia| exact I]]; rename H into HPKA2 end.
-    (* [comment removed for export] *)
-    assert (CX2 : pctx' h2 LB2 m2 mo2).
-    { split; [exact HH2|]. split; [rewrite HT2; exact HT1|]. split; [eapply mo_frame_trans; [exact MF1| exact MF2]|]. split; [exact MI2|]. split; [exact SOK2|].
-      split. { destruct SIP1 as [IDS1 [cnt RC1]]. pose proof IL1 as I1; pose proof IL2 as I2; pose proof IL3 as I3; pose proof ML1 as M1; pose proof ML2 as M2; pose proof DI1 as E1'; pose proof DI2 as E2''. split.
-               - apply (ecp_ids_state_presx usegs L _ _ _ _ _ m1 m2 IDS1 PX2 HL); cbn; clear -CIM I1 I2 I3 E1' E2''; (split; [lia| exact I]).
-               - exists cnt. eapply heap_presx_rw_cells; [exact PX2| exact RC1| |]; cbn [cells_size csize Nat.add disjoint_from].
-                 + intros a Ha. right; left. split; [clear -Ha M1 M2; lia| exact (proj2 (proj2 (proj2 HMC) a Ha))].
-                 + split; [clear -CIM M1 M2 E1' E2''; lia| exact I]. }
-      split; [intros b Hb; apply SUB2; right; exact Hb|].
-      eapply heap_presx_trans; [exact PX1|]. eapply heap_presx_weak''; [exact PX2| intros b Hb; right; exact Hb| clear; lia|].
-      intros a Hc _. cbn. split; [| exact I]. intros Ha. exact (fresh_not_client' C 232 a BRC APC Ha Hc). }
-    clear CX1 HH1 SOK1 HT1 MF1 SIP1 SUB1 PX1 MI1 HBS1 HKB.
-    (* [comment removed for export] *)
-    dpose CX2 as (_ & HT2' & MF2' & _ & _ & SIP2 & SUB2' & PX2').
-    set (owned := (C, 232) :: rsa_limb_blocks r').
-    assert (NDL : List.NoDup (map fst LB)) by exact (HND _ _ _ _ HH0).
-    pose proof (HND _ _ _ _ HH2) as ND2.
-    dpose RSA2 as (_ & _ & _ & _ & _ & _ & _ & ALL2 & _ & _ & _ & CIN2 & NC1 & NC2 & NNE).
-    assert (LIMBS : forall b, In b (rsa_limb_blocks r') -> In b LB2) by (intros b Hb; eapply rsa_limb_blocks_in; [exact RSA2| exact Hb]).
-    assert (PERM : Permutation LB2 (owned ++ LB)).
-    { apply perm_of_sets; [exact ND2| |].
-      - apply (nodup_fst_of_sub _ LB2 ND2).
-        + subst owned. cbn [app]. intros b [E|Hb]; [subst b; exact CIN2|]. apply in_app_or in Hb. destruct Hb as [Hb|Hb]; [exact (LIMBS b Hb)| apply SUB2'; exact Hb].
-        + subst owned. cbn [app]. constructor.
-          * intros Hin. apply in_app_or in Hin. destruct Hin as [Hin|Hin].
-            -- unfold rsa_limb_blocks in Hin. apply in_app_or in Hin.
-               destruct Hin as [Hin|Hin]; apply mpd_blk_in in Hin; destruct Hin as [HO E]; injection E as Ea Eb; [exact (NC1 HO (eq_sym Ea))| exact (NC2 HO (eq_sym Ea))].
-            -- destruct (APC _ _ Hin); clear -H; lia.
-          * apply NoDup_app.
-            -- unfold rsa_limb_blocks. destruct (mpd_blk_cases (r_N r')) as [EN|[ON EN]]; destruct (mpd_blk_cases (r_E r')) as [EE|[OE EE]]; rewrite EN, EE; cbn [app].
-               ++ constructor.
-               ++ constructor; [intros []| constructor].
-               ++ constructor; [intros []| constructor].
-               ++ constructor; [| constructor; [intros []| constructor]]. intros [E|[]]. injection E as Ea Eb. exact (NNE ON OE (eq_sym Ea)).
-            -- apply (NoDup_map_inv fst). exact NDL.
-            -- intros b Hb HbL. exact (NEW2 b Hb ltac:(right; exact HbL)).
-      - intros b. subst owned. cbn [app]. split.
-        + intros Hb. destruct (COV2 b Hb) as [Hb'|Hb'].
-          * destruct Hb' as [E|Hb']; [left; exact E| right; apply in_or_app; right; exact Hb'].
-          * right; apply in_or_app; left; exact Hb'.
-        + intros [E|Hb]; [subst b; exact CIN2|]. apply in_app_or in Hb. destruct Hb as [Hb|Hb]; [exact (LIMBS b Hb)| apply SUB2'; exact Hb]. }
-    assert (INP : forall b, In b LB2 -> In b (owned ++ LB)) by (intros b Hb; eapply Permutation_in; [exact PERM| exact Hb]).
-    (* [comment removed for export] *)
-    assert (REPm : forall mx, mem_inv usegs mx -> rsa_at usegs mx LB2 C r' -> pk_rep_c usegs U_RSA_INFO U_EC_INFOS MT mx (owned ++ LB) PKA U_RSA_INFO C owned).
-    { (intros mx MIx dd_H; ddestruct dd_H as (Q1 & Q2 & Q3 & Q4 & Q5 & Q6 & Q7 & QALL & Q9 & Q10 & Q11 & QIN & Q13 & Q14 & Q15)).
-      right; left. split; [reflexivity|]. split; [unfold U_RSA_INFO; clear; lia|]. split; [exact MIx|].
-      exists r'. split; [| intros b'; subst owned; split; intros Hx; exact Hx].
-      refine (conj Q1 (conj Q2 (conj Q3 (conj Q4 (conj Q5 (conj Q6 (conj Q7 (conj _ (conj Q9 (conj Q10 (conj Q11 (conj (INP _ QIN) (conj Q13 (conj Q14 Q15)))))))))))))).
-      apply Forall_forall. intros d Hd. eapply mpdr_at_LB_mono; [exact (proj1 (Forall_forall _ _) QALL d Hd)| exact INP]. }
-    (* [comment removed for export] *)
-    pose proof FRL as [[WF _] _]. cbn in WF.
-    lazymatch type of FRO1 with rw_cells _ _ _ [C8 ?w1; C8 ?w2] => set (wi := w1) in FRO1; set (wc := w2) in FRO1; clearbody wi wc end.
-    chunk_join FRL FRO1 FRJ.
-    eapply rw_cells_reshape with (cs' := [CB 64 (lj ++ le8 wi ++ le8 wc)]) in FRJ;
-      [| cbn; rewrite ?app_length, ?length_le8; cbn; split; [clear -WF; lia| exact I]| cbn; rewrite ?app_nil_r, <- ?app_assoc; reflexivity].
-    clearbody owned.
-    (* [comment removed for export] *)
-    zstep. if_cases K0; zify_cond K0.
-    - (* [comment removed for export] *)
-      pose proof (conj MI2 (conj HH2 I)) as BOX2. clear HH2.
-      pose proof (munch_refl [(PP, PP + 8)] m2) as MU. pose proof (wmono_refl usegs m2) as WM.
-      zstep. zstep. zstep. zstep. pk_ckb KN ltac:(clear -P00 PB E2B BP EB BUF0 B63; lia).
-      zstep. zstep. zstep. zstep. zstep. zstep. pk_ckb KS ltac:(clear -P00 PB E2B BP EB BUF0 B63; lia).
-      zstep. zstep.
-      lazymatch goal with |- aevtM _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
-      match goal with M : mem_inv usegs m3 |- _ => rename M into MI3 end. match goal with W : wmono usegs m2 m3 |- _ => rename W into WM3 end.
-      pose proof (pctx_munch' _ _ _ _ _ _ CX2 MU WM3 MI3 ltac:(constructor; [cbn; right; left; reflexivity| constructor])) as CX3.
-      assert (RSA3 : rsa_at usegs m3 LB2 C r').
-      { eapply rsa_at_munch; [exact RSA2| exact MU| exact WM3| exact (proj1 BOX2)| exact MI3| cbn [disjoint_from]; pose proof (fresh_apart_pp' C 232 BRC APC ltac:(clear; lia)) as Q; split; [clear -Q; lia| exact I]|].
-        intros d Hd HO. destruct (heap_blocks _ _ HI _ _ _ _ (proj1 (proj2 BOX2))) as [HBR2 _].
-        rewrite Forall_forall in ALL2. pose proof (ALL2 d Hd) as MDd.
-        destruct (mpdr_blk_facts usegs L _ _ _ MDd HO HBR2) as (HIn & _ & _ & Pc & _).
-        cbn. split; [| exact I]. clear -Pc ACL SLO' HLS SPP. left. lia. }
-      clear MU WM3 CX2 RSA2 BOX2.
-      zstep. if_cases KE; zify_cond KE. 2:{ exfalso. first [ apply KE; reflexivity | clear -KE PB E2B BP EB B63 BUF0; rewrite ?unsigned_lit in KE by lia; lia ]. }
-      zstep. zstep.
-      dpose CX3 as (HH3 & HT3 & MF3 & _ & SOK3 & SIP3 & SUB3 & PX3).
-      destruct (HPERM _ _ _ _ _ HH3 PERM) as (h4 & HH4 & HT4).
-      match goal with H : rw_cells usegs m3 PP _ |- _ => rename H into HPP3 end.
-      eapply ret_walk' with (owned := owned) (info := U_RSA_INFO) (ctx := C) (h := h4);
-        [ exact HH4 | rewrite HT4; exact HT3 | exact MF3 | exact MI3 | exact SOK3 | exact SIP3 | exact PX3 | clear; lia | exact HPP3 | clear -PB E2B; lia
-        | exact HPKA2 | exact (REPm m3 MI3 RSA3) | intros NZ; exfalso; apply NZ; reflexivity | reflexivity | exact FRJ | exact FR | exact ST2 ].
-    - (* [comment removed for export] *)
-      zstep. zstep. zstep. zstep. zstep. zstep. if_cases KG; zify_cond KG.
-      + (* [comment removed for export] *)
-        eapply fail_free_walk' with (owned := owned) (info := U_RSA_INFO) (ctx := C);
-          [ exact CX2 | exact PERM | clear; lia | exact HPP2 | clear -PB E2B; lia | exact HPKA2 | exact (REPm m2 MI2 RSA2) | exact FRJ | exact FR | exact ST2 ].
-      + (* [comment removed for export] *)
-        zstep. zstep.
-        lazymatch type of KG with context [bv_swrap 32 (bv_unsigned ?xw + 108)] =>
-          pose proof (bv_unsigned_in_range 64 xw) as XR;
-          pose proof (rsa_err_map (bv_unsigned xw) ltac:(clear -XR; lia) KG) as RRm end.
-        eapply fail_free_walk' with (owned := owned) (info := U_RSA_INFO) (ctx := C);
-          [ exact CX2 | exact PERM | exact RRm | exact HPP2 | clear -PB E2B; lia | exact HPKA2 | exact (REPm m2 MI2 RSA2) | exact FRJ | exact FR | exact ST2 ].
+    if_cases ret_ok.
+    - (* the parser accepted the key: consume the rest of the input *)
+      do 4 zstep.
+      replace (p0 <? 1) with false by (symmetry; apply Z.ltb_ge; lia).
+      replace (0 <? p) with true by (symmetry; apply Z.ltb_lt; lia).
+      if_false.
+      do 6 zstep.
+      rewrite (pk_lxor_sb (E2 - p)) by lia.
+      replace (E2 - p + 9223372036854775808 <? 9223372036854775808) with false by (symmetry; apply Z.ltb_ge; lia).
+      replace (E2 <? p) with false by (symmetry; apply Z.ltb_ge; lia).
+      if_false.
+      zstep.
+      pose proof (munch_refl [(PP, PP + 8)] m2) as mu_3.
+      pose proof (wmono_refl usegs m2) as wm_3.
+      zstep.
+      replace (p + (E2 - p)) with E2 in * by lia.
+      zstep. if_true.
+      do 2 zstep.
+      assert (ctx_3 : pctx' h2 LB2 m3 mo2r).
+      { refine (pctx_munch' h2 LB2 m2 m3 mo2r _ ctx_2 mu_3 wm_3 mi_2 _).
+        apply Forall_cons; [| apply Forall_nil]. right. left. reflexivity. }
+      pose proof ctx_3 as (heap_3 & top_3 & mof_3 & mi_3 & sok_3 & sinv_3 & _ & keep_3).
+      destruct (HPERM h2 LB2 (owned ++ LB) m3 mo2r heap_3 perm_2) as (h3 & heap_h3 & top_h3).
+      destruct (heap_blocks _ _ HI _ _ _ _ heap_2) as [ranges_2 _].
+      assert (rep_3 : pk_rep_c usegs U_RSA_INFO U_EC_INFOS U_MT m3 (owned ++ LB) PKA U_RSA_INFO C owned).
+      { apply (pk_rep_c_frame usegs U_RSA_INFO U_EC_INFOS U_MT m2 m3 (owned ++ LB) (owned ++ LB) PKA U_RSA_INFO C owned rep_2 mi_3).
+        - intros b b_in. apply in_or_app. left. exact b_in.
+        - intros a ([B k] & b_o & b_rng). cbn [fst snd] in b_rng.
+          apply owned_spec in b_o as [b_l2 b_nlb].
+          pose proof (proj1 (Forall_forall _ _) ranges_2 _ b_l2) as (b_pos & _ & _ & b_ceil & _). cbn [fst snd] in b_pos, b_ceil.
+          pose proof (blk_apart_pp L HI DIMG h0 LB PP lo ACL CWPP h2 LB2 m3 mo2r B k heap_2 (fun b b_lb => sup_2 b (or_intror b_lb)) b_l2 b_nlb ltac:(lia)) as b_pp.
+          apply mu_3. rewrite wa_unsigned by lia. cbn [outside]. split; [lia | exact I]. }
+      destruct (frame_fold m3 stk_2 lj_2 oj_2) as [stk_3 [junk lbuf_3]].
+      refine (ret_walk' m3 mo2r h3 (owned ++ LB) 0 E2 U_RSA_INFO C owned junk _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                heap_h3 _ mof_3 mi_3 sok_3 sinv_3 keep_3 _ pp_2 _ pka_2 rep_3 _ eq_refl lbuf_3 regs_2 stk_3).
+      + rewrite top_h3. exact top_3.
+      + lia.
+      + lia.
+      + intros nonzero. exfalso. apply nonzero. reflexivity.
+    - (* the parser failed: map its code and free the context *)
+      destruct (frame_fold m2 stk_2 lj_2 oj_2) as [stk_x [junk lbuf_2]].
+      do 6 zstep.
+      if_cases asn1_err.
+      + refine (fail_free_walk' m2 mo2r h2 LB2 _ p U_RSA_INFO C owned junk _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                  ctx_2 perm_2 _ pp_2 _ pka_2 rep_2 lbuf_2 regs_2 stk_x); lia.
+      + zify_cond asn1_err.
+        do 2 zstep.
+        pose proof (rsa_err_map (bv_unsigned a0r) ltac:(pose proof (bv_unsigned_in_range 64 a0r) as a0r_rng; lia) asn1_err) as err_rng.
+        refine (fail_free_walk' m2 mo2r h2 LB2 _ p U_RSA_INFO C owned junk _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                  ctx_2 perm_2 _ pp_2 _ pka_2 rep_2 lbuf_2 regs_2 stk_x); lia.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 End PA.

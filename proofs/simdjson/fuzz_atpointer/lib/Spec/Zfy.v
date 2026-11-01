@@ -25,33 +25,46 @@ Qed.
 
 Lemma nstep_mm_progress : forall n mo, is_mm n -> nsafe n mo -> no_enomem n mo -> exists rsp mo' evs, nstep n mo rsp mo' evs.
 Proof.
-  intros n mo Hn Hsafe Hne. destruct n; try contradiction.
-  - destruct (mm_prog_nonspurious (pure_input 214 [Z_to_bv 64 req]) mo (fun eff => check_brk (Z_to_bv 64 req) eff mo))
-      as (eff & mo' & evs & Hsp & Hns).
-    + intros eff. dispatch_pure check_syscall_brk. reflexivity.
+  intros n mo MemNode SafeArgs NoOom.
+  assert (Granted : forall (i : SyscallInput) (chk : resp -> check_result),
+            (forall eff, check_syscall i eff mo = chk eff) ->
+            (forall eff, chk eff <> CheckUnmodeled) ->
+            (forall eff mo1 evs1, chk eff = CheckOk mo1 evs1 -> evs1 = []) ->
+            exists eff mo1, syscall_spec i mo (Monad.Ok eff mo1 []) /\ ~ spurious_refusal_cfg ACFG i mo eff).
+  { intros i chk Agrees Modeled Silent.
+    destruct (mm_prog_nonspurious i mo chk Agrees Modeled) as (out & mo1 & evs1 & Spec1 & Real1).
+    pose proof (proj2 (check_syscall_ok_iff i out mo mo1 evs1) Spec1) as Checked.
+    rewrite Agrees in Checked. apply Silent in Checked. subst evs1.
+    exists out, mo1. split; [exact Spec1| exact Real1]. }
+  destruct n as [fd bufs|path|fd buf cnt|fd|fd req| |code|req|addr len prot flags|addr len|addr len prot];
+    cbn [is_mm] in MemNode; try contradiction; cbn [nsafe] in SafeArgs; cbn [no_enomem] in NoOom.
+  4: exact (proj2 NoOom).
+  - destruct (Granted (pure_input 214 [Z_to_bv 64 req]) (fun eff => check_brk (Z_to_bv 64 req) eff mo))
+      as (out & mo1 & Spec1 & Real1).
+    + intros eff. apply check_syscall_brk. reflexivity.
     + intros eff. apply check_brk_not_unmodeled.
-    + exists eff, mo', evs. apply nstep_brk_iff. split; [| exact Hns].
-      apply check_syscall_ok_iff in Hsp. revert Hsp. dispatch_pure check_syscall_brk. auto.
-  - cbn [no_enomem unforced] in Hne. destruct (kernel_placed flags) eqn:KP.
-    + exact (proj2 Hne eq_refl).
-    + pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ Hsafe) as Hnr.
-      destruct (mm_prog_nonspurious (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
-                                                   Z_to_bv 64 (-1); Z_to_bv 64 0]) mo
-                  (fun eff => check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
-                                         (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo))
-        as (eff & mo' & evs & Hsp & Hns).
-      * intros eff. dispatch_pure check_syscall_mmap. reflexivity.
-      * intros eff. apply mmap_safe_no_unmodeled. exact Hsafe.
-      * exists eff, mo', evs. apply nstep_mmap_iff; [exact Hnr|]. split.
-        { apply check_syscall_ok_iff in Hsp. revert Hsp. dispatch_pure check_syscall_mmap. auto. }
-        cbn [mm_ok]. rewrite KP. exact Hns.
-  - pose proof (receptive (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]) mo) as Hr.
-    destruct (syscall_spec_witness _ mo) as [eff mo' evs|] eqn:W.
-    + exists eff, mo', evs. apply nstep_munmap_iff. apply check_syscall_ok_iff in Hr. revert Hr.
-      dispatch_pure check_syscall_munmap. auto.
-    + exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr. revert Hr.
-      dispatch_pure check_syscall_munmap. apply munmap_safe_no_unmodeled. exact Hsafe.
-  - cbn [no_enomem unforced] in Hne. exact (proj2 Hne).
+    + intros eff mo2 evs2 Ok2. exact (proj1 (proj2 (check_brk_shape _ _ _ _ _ Ok2))).
+    + exists out, mo1, []. split; [reflexivity|]. split; [exact Spec1| exact Real1].
+  - destruct NoOom as [_ Unforced]. cbn [unforced] in Unforced.
+    destruct (kernel_placed flags) eqn:Placed; [exact (Unforced eq_refl)|].
+    pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ SafeArgs) as NoReserve.
+    destruct (Granted (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
+                                       Z_to_bv 64 (-1); Z_to_bv 64 0])
+                      (fun eff => check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
+                                             (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo))
+      as (out & mo1 & Spec1 & Real1).
+    + intros eff. apply check_syscall_mmap. reflexivity.
+    + intros eff. apply mmap_safe_no_unmodeled. exact SafeArgs.
+    + intros eff mo2 evs2 Ok2. exact (proj1 (proj2 (check_mmap_shape _ _ _ _ _ _ _ _ _ _ NoReserve Ok2))).
+    + exists out, mo1, []. split; [reflexivity|]. split; [exact Spec1|].
+      cbn [mm_ok]. rewrite Placed. exact Real1.
+  - destruct (Granted (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len])
+                      (fun eff => check_munmap (Z_to_bv 64 addr) (Z_to_bv 64 len) eff mo))
+      as (out & mo1 & Spec1 & _).
+    + intros eff. apply check_syscall_munmap. reflexivity.
+    + intros eff. apply munmap_safe_no_unmodeled. exact SafeArgs.
+    + intros eff mo2 evs2 Ok2. exact (proj1 (proj2 (check_munmap_shape _ _ _ _ _ _ Ok2))).
+    + exists out, mo1, []. split; [reflexivity| exact Spec1].
 Qed.
 
 Lemma osel_not_open : forall sel n mo rsp, match n with NOpen _ => False | _ => True end -> osel sel n mo rsp.

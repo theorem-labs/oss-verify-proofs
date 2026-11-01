@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -42,16 +42,20 @@ Definition libenv_fp (LBL : list block) (a : Z) : Prop :=
 
 Definition libenv (m : mem) (LBL : list block) (E : Z) : Prop :=
   exists (od pad tw ne : word) (k MK SA NODES : Z) (pm psa pn pk : bptr) (kd LK : Z),
-       LBL = [(pm, MK, 72); (psa, SA, 32); (pn, NODES, 128); (pk, LK, 40)]
-    /\ rw_cells usegs m (IC_S + 8) [C1 (Z_to_bv 8 0)] /\ rw_cells usegs m (IC_S + 32) [C4 (Z_to_bv 64 2); C4 (Z_to_bv 64 1)] /\ rw_cells usegs m (IC_S + 96) [C8 od]
-    /\ rw_cells usegs m TH_ONCE [C4 (Z_to_bv 64 2)] /\ rw_cells usegs m TH_KEY [C4 (Z_to_bv 64 k)] /\ 0 <= k < 128
+    LBL = [(pm, MK, 72); (psa, SA, 32); (pn, NODES, 128); (pk, LK, 40)]
+    /\ rw_cells usegs m (IC_S + 8) [C1 (Z_to_bv 8 0)]
+    /\ rw_cells usegs m (IC_S + 32) [C4 (Z_to_bv 64 2); C4 (Z_to_bv 64 1)]
+    /\ rw_cells usegs m (IC_S + 96) [C8 od]
+    /\ rw_cells usegs m TH_ONCE [C4 (Z_to_bv 64 2)]
+    /\ rw_cells usegs m TH_KEY [C4 (Z_to_bv 64 k)] /\ 0 <= k < 128
     /\ rw_cells usegs m (RATP + -88) [C8 (Z_to_bv 64 TSD_MAIN)]
     /\ rw_cells usegs m (TSD_MAIN + 8 * k) [C8 (Z_to_bv 64 MK)] /\ 0 < MK < 2 ^ 64
     /\ rw_cells usegs m (MK + 8 * 3) [C8 (Z_to_bv 64 SA)] /\ 0 < SA < 2 ^ 64
-    /\ rw_cells usegs m SA (sa_hdr (Z_to_bv 64 1) pad tw ne (Z_to_bv 64 NODES)) /\ 0 < NODES < 2 ^ 64 /\ bv_unsigned ne <> 0
+    /\ rw_cells usegs m SA (sa_hdr (Z_to_bv 64 1) pad tw ne (Z_to_bv 64 NODES)) /\ 0 < NODES < 2 ^ 64
+    /\ bv_unsigned ne <> 0
     /\ rw_cells usegs m NODES [C8 (Z_to_bv 64 E)]
-    (* [comment removed for export] *)
-    /\ rw_cells usegs m DC_S [C1 (Z_to_bv 8 1)] /\ rw_cells usegs m (DC_S + 4) [C4 (Z_to_bv 64 kd)] /\ 0 <= kd < 128
+    /\ rw_cells usegs m DC_S [C1 (Z_to_bv 8 1)]
+    /\ rw_cells usegs m (DC_S + 4) [C4 (Z_to_bv 64 kd)] /\ 0 <= kd < 128
     /\ rw_cells usegs m (DC_S + 8) [C4 (Z_to_bv 64 2)] /\ rw_cells usegs m (DC_S + 12) [C4 (Z_to_bv 64 1)]
     /\ rw_cells usegs m (DC_S + 16) [C4 (Z_to_bv 64 2)] /\ rw_cells usegs m (DC_S + 20) [C4 (Z_to_bv 64 1)]
     /\ rw_cells usegs m (TSD_MAIN + 8 * kd) [C8 (Z_to_bv 64 0)]
@@ -69,33 +73,21 @@ Qed.
 
 Theorem libenv_agree : forall m m' LBL E, libenv m LBL E -> agree_on (libenv_fp LBL) m m' -> libenv m' LBL E.
 Proof.
-  intros m m' LBL E (od & pad & tw & ne & k & MK & SA & NODES & pm & psa & pn & pk & kd & LK & HL & STOP & ONCE & OD & OC & KC & HK & TS & SLOT & HMK & P3 & HSA & HDR & HNO & NE & LEAF
-                     & XI & XK & HKD & XO1 & XR1 & XO2 & XR2 & XT & XG & LK0 & LKAL & XM & XIP) AG.
-  assert (RS : forall a cs, rw_cells usegs m a cs -> (forall x, a <= x < a + Z.of_nat (cells_size cs) -> libenv_static x) -> rw_cells usegs m' a cs).
-  { intros a cs H HR. apply (rw_cells_agree _ m m' a cs AG H). intros x Hx. left. exact (HR x Hx). }
-  assert (RB : forall a cs p B n, rw_cells usegs m a cs -> In (p, B, n) LBL -> B <= a -> a + Z.of_nat (cells_size cs) <= B + n -> rw_cells usegs m' a cs).
-  { intros a cs p B n H HIn H1 H2. apply (rw_cells_agree _ m m' a cs AG H). intros x Hx. right. exists (p, B, n). split; [exact HIn|]. cbn [blk_addr blk_size fst snd]. lia. }
-  exists od, pad, tw, ne, k, MK, SA, NODES, pm, psa, pn, pk, kd, LK. split; [exact HL|]. subst LBL.
-  split; [apply (RS _ _ STOP); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ ONCE); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ OD); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ OC); cbn; unfold libenv_static, TH_ONCE; intros; lia|].
-  split; [apply (RS _ _ KC); cbn; unfold libenv_static, TH_KEY; intros; lia|]. split; [exact HK|].
-  split; [apply (RS _ _ TS); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ SLOT); cbn; unfold libenv_static; intros; lia|]. split; [exact HMK|].
-  split; [apply (RB _ _ pm MK 72 P3); [cbn; tauto| lia| cbn; lia]|]. split; [exact HSA|].
-  split; [apply (RB _ _ psa SA 32 HDR); [cbn; tauto| lia| unfold sa_hdr; cbn; lia]|]. split; [exact HNO|]. split; [exact NE|].
-  split; [apply (RB _ _ pn NODES 128 LEAF); [cbn; tauto| lia| cbn; lia]|].
-  split; [apply (RS _ _ XI); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ XK); cbn; unfold libenv_static; intros; lia|]. split; [exact HKD|].
-  split; [apply (RS _ _ XO1); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ XR1); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ XO2); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ XR2); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ XT); cbn; unfold libenv_static; intros; lia|].
-  split; [apply (RS _ _ XG); cbn; unfold libenv_static, DC_GLOBAL_LOCK; intros; lia|]. split; [exact LK0|]. split; [exact LKAL|].
-  split; [apply (RB _ _ pk LK 40 XM); [cbn; tauto| lia| unfold mutex_cells; cbn; lia]|].
-  apply (RS _ _ XIP); cbn; unfold libenv_static, DC_IP12; intros; lia.
+  intros m m' LBL E ENV SAME.
+  destruct ENV as (od & pad & tw & ne & k & MK & SA & NODES & pm & psa & pn & pk & kd & LK
+    & e_lbl & c_ic8 & c_ic32 & c_ic96 & c_once & c_key & r_k & c_tsdp & c_slot & r_mk & c_mk24 & r_sa
+    & c_hdr & r_nodes & r_ne & c_nodes & c_dc0 & c_dc4 & r_kd & c_dc8 & c_dc12 & c_dc16 & c_dc20
+    & c_dslot & c_glock & r_lk & r_lkal & c_mtx & c_ip12).
+  exists od, pad, tw, ne, k, MK, SA, NODES, pm, psa, pn, pk, kd, LK.
+  refine (conj e_lbl (conj _ (conj _ (conj _ (conj _ (conj _ (conj r_k (conj _ (conj _ (conj r_mk
+    (conj _ (conj r_sa (conj _ (conj r_nodes (conj r_ne (conj _ (conj _ (conj _ (conj r_kd
+    (conj _ (conj _ (conj _ (conj _ (conj _ (conj _ (conj r_lk (conj r_lkal (conj _ _)))))))))))))))))))))))))))).
+  all: apply (rw_cells_agree _ m m' _ _ SAME); [assumption|].
+  all: intros a INSIDE; cbn [cells_size csize sa_hdr mutex_cells Nat.add Z.of_nat Pos.of_succ_nat Pos.succ] in INSIDE.
+  all: first
+    [ left; unfold libenv_static; clear - INSIDE r_k r_kd; lia
+    | right; rewrite e_lbl; apply Exists_exists;
+      solve [repeat first [apply Exists_cons_hd; cbn [blk_addr blk_size fst snd]; clear - INSIDE; lia | apply Exists_cons_tl]] ].
 Qed.
 
 (* [comment removed for export] *)
@@ -110,10 +102,13 @@ Lemma libenv_cells : forall m LBL E, libenv m LBL E ->
     /\ ro_cells usegs m SA (sa_hdr (Z_to_bv 64 1) pad tw ne (Z_to_bv 64 NODES)) /\ 0 < NODES < 2 ^ 64 /\ bv_unsigned ne <> 0
     /\ ro_cells usegs m NODES [C8 (Z_to_bv 64 E)].
 Proof.
-  intros m LBL E (od & pad & tw & ne & k & MK & SA & NODES & pm & psa & pn & pk & kd & LK & HL & STOP & ONCE & OD & OC & KC & HK & TS & SLOT & HMK & P3 & HSA & HDR & HNO & NE & LEAF & _).
+  intros m LBL E (od & pad & tw & ne & k & MK & SA & NODES & pm & psa & pn & pk & kd & LK
+    & e_lbl & c_ic8 & c_ic32 & c_ic96 & c_once & c_key & r_k & c_tsdp & c_slot & r_mk & c_mk24 & r_sa
+    & c_hdr & r_nodes & r_ne & c_nodes & _).
   exists od, pad, tw, ne, k, MK, SA, NODES, pm, psa, pn, pk, LK.
-  repeat (split; [first [assumption | exact (proj1 OC) | exact (proj1 KC) | exact (proj1 TS) | exact (proj1 SLOT) | exact (proj1 P3) | exact (proj1 HDR)]|]).
-  exact (proj1 LEAF).
+  exact (conj e_lbl (conj c_ic8 (conj c_ic32 (conj c_ic96 (conj (proj1 c_once) (conj (proj1 c_key)
+    (conj r_k (conj (proj1 c_tsdp) (conj (proj1 c_slot) (conj r_mk (conj (proj1 c_mk24) (conj r_sa
+    (conj (proj1 c_hdr) (conj r_nodes (conj r_ne (proj1 c_nodes)))))))))))))))).
 Qed.
 
 (* [comment removed for export] *)
@@ -129,11 +124,15 @@ Lemma libenv_exd_cells : forall m LBL E, libenv m LBL E ->
     /\ rw_cells usegs m LK (mutex_cells (Z_to_bv 64 0) (Z_to_bv 64 0))
     /\ ro_cells usegs m DC_IP12 [C8 (Z_to_bv 64 0)].
 Proof.
-  intros m LBL E (od & pad & tw & ne & k & MK & SA & NODES & pm & psa & pn & pk & kd & LK & HL & STOP & ONCE & OD & OC & KC & HK & TS & SLOT & HMK & P3 & HSA & HDR & HNO & NE & LEAF
-                 & XI & XK & HKD & XO1 & XR1 & XO2 & XR2 & XT & XG & LK0 & LKAL & XM & XIP).
-  exists kd, LK, pk. split; [rewrite HL; cbn; tauto|].
-  repeat (split; [first [assumption | exact (proj1 XI) | exact (proj1 XK) | exact (proj1 XO1) | exact (proj1 XR1) | exact (proj1 XO2) | exact (proj1 XR2) | exact (proj1 TS) | exact (proj1 XT) | exact (proj1 XG)]|]).
-  exact (proj1 XIP).
+  intros m LBL E ENV.
+  destruct ENV as (od & pad & tw & ne & k & MK & SA & NODES & pm & psa & pn & pk & kd & LK
+    & e_lbl & _ & _ & _ & _ & _ & _ & c_tsdp & _ & _ & _ & _ & _ & _ & _ & _
+    & c_dc0 & c_dc4 & r_kd & c_dc8 & c_dc12 & c_dc16 & c_dc20 & c_dslot & c_glock & r_lk & r_lkal & c_mtx & c_ip12).
+  assert (pk_in : In (pk, LK, 40) LBL) by (rewrite e_lbl; cbn [In]; tauto).
+  exists kd, LK, pk.
+  exact (conj pk_in (conj (proj1 c_dc0) (conj (proj1 c_dc4) (conj r_kd (conj (proj1 c_dc8) (conj (proj1 c_dc12)
+    (conj (proj1 c_dc16) (conj (proj1 c_dc20) (conj (proj1 c_tsdp) (conj (proj1 c_dslot) (conj (proj1 c_glock)
+    (conj r_lk (conj r_lkal (conj c_mtx (proj1 c_ip12))))))))))))))).
 Qed.
 
 End WithCeiling0.

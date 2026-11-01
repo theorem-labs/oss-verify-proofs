@@ -1,5 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* [comment removed for export] *)
 From OssFuzzTheorems.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -78,16 +78,19 @@ Local Ltac disj_one ::=
 Definition sb1_W (sp P SZ T PAB n : Z) : list (Z * Z) := ((sp - 464, sp - 96) :: sb_W sp P SZ T PAB n)%Z.
 
 (* [comment removed for export] *)
-Definition sb1_mid (sp ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 : word) (P SZ PAB nres T : Z) (ws : list word) (mm md : word) (m : mem)
-    : Prop :=
+Definition sb1_mid (sp ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 : word) (P SZ PAB nres T : Z) (ws : list word) (mm md : word)
+    (m : mem) : Prop :=
   exists (jf : list byte) (b : byte) (jj : list byte) (w1 w2 w3 w4 ga gm : word) (bl : list word),
-    rw_cells ctasegs m (bv_unsigned sp - 96) [CB 8 jf; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
+    rw_cells ctasegs m (bv_unsigned sp - 96)
+      [CB 8 jf; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
     /\ rw_cells ctasegs m i_sec_chunks [C8 (Z_to_bv 64 PAB)]
     /\ rw_cells ctasegs m i_sec_nres [C8 (Z_to_bv 64 nres); C8 (Z_to_bv 64 nres)]
     /\ rw_cells ctasegs m i_sec_sorted [C1 b; CB 7 jj; C8 w1; C8 w2; C8 w3; C8 w4]
-    /\ length bl = 64%nat /\ u64arr ctasegs m i_sec_bylog bl /\ rw_cells ctasegs m i_gstat_alloc [C8 ga; C8 gm]
+    /\ length bl = 64%nat /\ u64arr ctasegs m i_sec_bylog bl
+    /\ rw_cells ctasegs m i_gstat_alloc [C8 ga; C8 gm]
     /\ rw_cells ctasegs m i_sec_mutex [C4 (Z_to_bv 64 1)]
-    /\ u64arr ctasegs m PAB ws /\ sec_range m PAB
+    /\ u64arr ctasegs m PAB ws
+    /\ sec_range m PAB
     /\ rw_cells ctasegs m P [C8 (Z_to_bv 64 P); C8 (Z_to_bv 64 (sa_msz SZ)); C8 (Z_to_bv 64 SZ)]
     /\ rw_cells ctasegs m (P + 24) [C8 (Z_to_bv 64 0)]
     /\ rw_cells ctasegs m (P + 32) [CB (Z.to_nat (sa_msz SZ - 32)) (repeat (Z_to_bv 8 0) (Z.to_nat (sa_msz SZ - 32)))]
@@ -98,17 +101,18 @@ Definition sb1_mid (sp ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 : word) (P SZ PAB nres T
 
 Definition secalloc_B1_post (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (P SZ PAB nres T lo : Z) (ws : list word) (mm md : word) (mA : mem) : machine_state -> Prop :=
-  fun ms' => exists (t0' t1' t2' a6' t3' t4' t5' t6' : word) (k : Z) (m' : mem),
+  fun ms' => exists (t0' t1' t2' a6' t3' t4' t5' t6' : word) (kk : Z) (mB : mem),
     ms' = MSsvc (mfi0_regs (Z_to_bv 64 0x1a0cb0) (Z_to_bv 64 (bv_unsigned sp - 96)) gp (Z_to_bv 64 tpA) t0' t1' t2' a6'
                    (PAB + 8 * nres) 0x20000 (Z_to_bv 64 P) (Z_to_bv 64 (P + sa_msz SZ)) (Z_to_bv 64 (P + 4096 + SZ))
                    (Z_to_bv 64 7) (Z_to_bv 64 (P + 4096)) s10 s11 t3' t4' t5' t6') F
-                (Z_to_bv 64 mmap_ecall_pc) (Z_to_bv 64 222) fc None m' (seg_rom ctasegs)
-    /\ munch (sb1_W (bv_unsigned sp) P SZ T PAB nres) mA m' /\ wmono ctasegs mA m' /\ mem_inv ctasegs m'
-    /\ mfi_frame m' (Z_to_bv 64 (bv_unsigned sp - 96)) (Z_to_bv 64 0x1a0cb0) (Z_to_bv 64 GSTAT) (Z_to_bv 64 SEC)
-         (Z_to_bv 64 (sa_msz SZ)) (Z_to_bv 64 (63 - k)) (Z_to_bv 64 (P + 4096))
-    /\ stk ctasegs m' lo (bv_unsigned sp - 192) /\ mm_gcells m'
-    /\ (0 <= k < 64)%Z /\ (2 ^ k <= sa_msz SZ < 2 ^ (k + 1))%Z
-    /\ sb1_mid sp ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 P SZ PAB nres T ws mm md m'.
+                (Z_to_bv 64 mmap_ecall_pc) (Z_to_bv 64 222) fc None mB (seg_rom ctasegs)
+    /\ munch (sb1_W (bv_unsigned sp) P SZ T PAB nres) mA mB /\ wmono ctasegs mA mB /\ mem_inv ctasegs mB
+    /\ mfi_frame mB (Z_to_bv 64 (bv_unsigned sp - 96)) (Z_to_bv 64 0x1a0cb0) (Z_to_bv 64 GSTAT) (Z_to_bv 64 SEC)
+         (Z_to_bv 64 (sa_msz SZ)) (Z_to_bv 64 (63 - kk)) (Z_to_bv 64 (P + 4096))
+    /\ stk ctasegs mB lo (bv_unsigned sp - 192)
+    /\ mm_gcells mB
+    /\ (0 <= kk < 64)%Z /\ (2 ^ kk <= sa_msz SZ < 2 ^ (kk + 1))%Z
+    /\ sb1_mid sp ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 P SZ PAB nres T ws mm md mB.
 
 Lemma secalloc_B1_spec : forall ra sp gp t0 t1 t2 a6 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (mA : mem) (SZ P PAB nres TCX T lo : Z) (ws : list word) (mm md : word) (shj1 shj2 : list byte),
@@ -133,70 +137,89 @@ Lemma secalloc_B1_spec : forall ra sp gp t0 t1 t2 a6 s0 s1 s2 s3 s4 s5 s6 s7 s8 
                  (Z_to_bv 64 sec_mmap_ecall) (Z_to_bv 64 222) fc None mA (seg_rom ctasegs))
           (mkEffect (Z_to_bv 64 P) [] [(Z_to_bv 64 P, Z_to_bv 64 (roundup4k (sa_msz SZ)))])).
 Proof.
-  intros until shj2. intros HSZ HP GP GT GX GA APT APX ATX APA ATA Hn Hlen Hnres Hnres16 HPAB FR MF ST MM PG PS TH TS SC PAD SJ ARR
-    SRG SH1 SH2 HLOH HLO HSP MI.
-  eapply (sb_common _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc mA SZ P PAB nres nres TCX T lo ws mm md shj1 shj2);
-    [exact HSZ| exact HP| exact GP| exact GT| exact GX| exact GA| exact APT| exact APX| exact ATX| exact APA| exact ATA| lia
-    | exact Hlen| lia| exact Hnres16| lia| exact FR| exact MF| exact ST| exact MM| exact PG| exact PS| exact TH| exact TS
-    | exact SC| exact PAD| exact SJ| exact ARR| exact SRG| exact SH1| exact SH2| exact HLOH| lia| exact HSP| exact MI|].
-  intros m2 ra2 t0' t1' t2' a1' a2' a5' a6' a7' t3' t4' t5' t6' k jf b jj w1 w2 w3 w4 ga gm bl
-    MU WM MI2 ST2 FR2 CH NR SJ1 Hbl SJ2 SJ3 LW ARR2 SRG2 MM2 HD3 HI RMP SH1' SH2' TS' Hk Hx.
-  clear FR ST MM PG PS TH TS SC PAD SJ ARR SRG SH1 SH2 MI MF.
-  pose proof (sa_msz_facts SZ ltac:(lia)) as [MS1 MS2].
-  pose proof GP as GP0. pose proof GA as GA0. apply box in GP0, GA0.
-  destruct GP as (GP1 & GP2 & GP3 & GP4). destruct GT as (GT1 & GT2 & GT3 & GT4). destruct GX as (GX1 & GX2 & GX3 & GX4).
-  destruct GA as (GA1 & GA2 & GA3 & GA4).
-  clear GX1 GX2 GX3 GX4 APX ATX.
-  unfold sapart, img_hull_lo, img_hull_hi, kHighShadowEnd in *.
-  assert (GP4' : (12365824 <= P)%Z) by (destruct GP4; lia). clear GP4.
-  assert (GA4' : (12365824 <= PAB)%Z) by (destruct GA4; lia). clear GA4.
-  pose proof (sa_shad_facts P SZ lo HP ltac:(lia) ltac:(lia) (unbox _ GP0) ltac:(lia)) as (SR1 & SR2 & SR3 & SR4 & SR5 & SR6 & SR7 & SR8 & SRc).
-  rewrite SR7 in SH2'. apply box in SR7.
-  set (z8 := (SZ / 8)%Z) in *. set (ms8 := (sa_msz SZ / 8)%Z) in *. clearbody z8 ms8.
-  assert (MS8 : (8704 <= ms8)%Z) by lia.
-  pose proof HSZ as (HSZ1 & HSZ2 & HSZ3).
-  apply box in HP, MS2, HSZ2, Hnres16, HSZ, HPAB.
-  assert (HL8 : (8 * nres + 0x20000 <= 0x800000)%Z) by lia.
-  unfold kHighShadowEnd in *.
-  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn [Z.of_N] in RSP.
-  assert (ESP : bv_unsigned (Z_to_bv 64 (bv_unsigned sp - 96)) = (bv_unsigned sp - 96)%Z) by (apply unsigned_lit; lia).
-  unfold sec_range, i_sec_range in SRG2. change (INST + 0x50)%Z with 6744616%Z in SRG2.
-  change i_sec_chunks with 6744608%Z in CH. change i_sec_nres with 6744648%Z in NR. change i_sec_mutex with 6745216%Z in LW.
-  change i_sec_sorted with 6744664%Z in SJ1. change i_sec_bylog with 6744704%Z in SJ2. change i_gstat_alloc with 6745240%Z in SJ3.
-  apply (munch_weaken (sb_W (bv_unsigned sp) P SZ T PAB nres) (sb1_W (bv_unsigned sp) P SZ T PAB nres)) in MU;
-    [| intros x Hxo; cbn [sb1_W outside] in Hxo; clear - Hxo; tauto].
-  unfold sb1_W, sb_W in MU.
-  change i_sec_nres with 6744648%Z in MU. change i_sec_sorted with 6744664%Z in MU. change i_sec_bylog with 6744704%Z in MU.
-  change i_gstat_alloc with 6745240%Z in MU. change i_sec_mutex with 6745216%Z in MU.
-  pose proof MM2 as (G1 & G2 & G3 & G4 & G5). clear MM2.
-  unfold kHighShadowEnd in *.
-  change SEC with 6744600%Z. change GSTAT with 6745224%Z.
-  hide_disj.
+  intros ra sp gp t0 t1 t2 a6 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc mA SZ P PAB nres TCX T lo ws mm md
+    shj1 shj2 size_ok p_al obj_p obj_t obj_x obj_ab apart_pt apart_px apart_tx apart_pab apart_tab nres_pos ws_len
+    nres_room nres_al pab_al frame_sa frame_mod stack_a gcells_a page_a poison_a thread_a tstat_a core_a pad_a junk_a
+    chunks_a range_a shlo_a shhi_a lo_shadow lo_sp sp_top inv_a.
+  apply (sb_common ra sp gp t0 t1 t2 a6 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc mA SZ P PAB nres nres TCX T
+           lo ws mm md shj1 shj2 _ size_ok p_al obj_p obj_t obj_x obj_ab apart_pt apart_px apart_tx apart_pab apart_tab
+           ltac:(lia) ws_len ltac:(lia) nres_al ltac:(lia) frame_sa frame_mod stack_a gcells_a page_a poison_a thread_a
+           tstat_a core_a pad_a junk_a chunks_a range_a shlo_a shhi_a lo_shadow ltac:(lia) sp_top inv_a).
+  intros m2 ra2 t0b t1b t2b a1b a2b a5b a6b a7b t3b t4b t5b t6b k jf b jj w1 w2 w3 w4 ga gm bl
+    win2 grow2 inv2 stack2 frame2 chunks2 counts2 sorted2 bl_len bylog2 gstat2 lock2 arr2 range2 gcells2 hdr2 hdr24
+    zeros2 shlo2 shhi2 tstat2 k_rng k_log.
+  clear frame_sa frame_mod stack_a gcells_a page_a poison_a thread_a tstat_a core_a pad_a junk_a chunks_a range_a
+    shlo_a shhi_a inv_a.
+  unfold kHighShadowEnd in lo_shadow.
+  pose proof (sa_msz_facts SZ ltac:(lia)) as (msz_rng & msz_al).
+  pose proof (sa_shad_facts P SZ lo p_al ltac:(lia) ltac:(lia) obj_p ltac:(lia))
+    as (shad_base & _ & shad_split & _ & _ & _ & shad_tail & shad_cap & _).
+  destruct obj_ab as (ab_pos & ab_top & _ & _). destruct obj_t as (t_pos & t_top & _ & _).
+  destruct obj_p as (p_pos & p_top & _ & _).
+  unfold sec_range, i_sec_range in range2. change (INST + 0x50)%Z with 6744616%Z in range2.
+  change SEC with 6744600%Z.
   zstep. ifT.
-  do 8 zstep.
+  do 9 zstep.
   replace (nres ≪ 3 + PAB)%Z with (PAB + 8 * nres)%Z by (rewrite Z.shiftl_mul_pow2 by lia; lia).
-  zstep.
-  call (mapordie_A_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ (PAB + 8 * nres) 0x20000 lo).
-  all: rewrite ?ESP.
-  1:{ lia. }
-  1:{ pose proof (unbox _ HPAB). pose proof (unbox _ Hnres16). Z.div_mod_to_equations. lia. }
-  1:{ lia. }
-  1:{ reflexivity. }
-  1:{ lia. }
-  1:{ unfold mm_gcells. repeat (split; [assumption|]). assumption. }
-  1:{ exact ST2. }
-  1:{ unfold kHighShadowEnd. lia. }
-  1:{ lia. }
-  1:{ lia. }
-  1:{ assumption. }
-  apply evt_done. unfold secalloc_B1_post. do 8 eexists. exists k. eexists.
-  split; [reflexivity|].
-  split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [assumption|].
-  split; [rewrite ESP in *; replace (bv_unsigned sp - 192)%Z with (bv_unsigned sp - 96 - 96)%Z by lia; assumption|].
-  split; [assumption|]. split; [exact Hk|]. split; [exact Hx|].
-  unfold sb1_mid. exists jf, b, jj, w1, w2, w3, w4, ga, gm, bl.
-  split; [exact FR2|]. split; [exact CH|]. split; [exact NR|]. split; [exact SJ1|]. split; [exact Hbl|]. split; [exact SJ2|].
-  split; [exact SJ3|]. split; [exact LW|]. split; [exact ARR2|]. split; [unfold sec_range, i_sec_range; exact SRG2|].
-  split; [exact HD3|]. split; [exact HI|]. split; [exact RMP|]. split; [exact SH1'|].
-  split; [rewrite (unbox _ SR7); exact SH2'| exact TS'].
+  assert (sp_low : bv_unsigned (Z_to_bv 64 (bv_unsigned sp - 96)) = (bv_unsigned sp - 96)%Z) by (apply unsigned_lit; lia).
+  eapply evt_cut.
+  { eapply (mapordie_A_spec (Z_to_bv 64 1707184) (Z_to_bv 64 (bv_unsigned sp - 96)) gp (Z_to_bv 64 tpA) t0b t1b t2b
+              (Z_to_bv 64 GSTAT) (Z_to_bv 64 6744600) (Z_to_bv 64 6744616) (Z_to_bv 64 6744616) a5b a6b a7b
+              (Z_to_bv 64 (sa_msz SZ)) (Z_to_bv 64 (63 - k)) (Z_to_bv 64 (P + 4096)) (Z_to_bv 64 P)
+              (Z_to_bv 64 (P + sa_msz SZ)) (Z_to_bv 64 (P + 4096 + SZ)) (Z_to_bv 64 7) (Z_to_bv 64 (P + 4096)) s10 s11
+              t3b t4b t5b t6b F fc m2 (PAB + 8 * nres) 131072 lo); rewrite ?sp_low.
+    - lia.
+    - lia.
+    - lia.
+    - reflexivity.
+    - lia.
+    - exact gcells2.
+    - exact stack2.
+    - unfold kHighShadowEnd. lia.
+    - lia.
+    - lia.
+    - exact inv2. }
+  intros ms' (t0c & t1c & t2c & a6c & t3c & t4c & t5c & t6c & mB & -> & win3 & grow3 & inv3 & frame3 & stack3 & gcells3).
+  rewrite sp_low in win3, stack3.
+  assert (win_all : munch (sb1_W (bv_unsigned sp) P SZ T PAB nres) mA mB).
+  { apply (munch_trans _ mA m2 mB).
+    - refine (munch_weaken _ _ mA m2 _ win2).
+      intros x out_x. unfold sb1_W in out_x. cbn [outside] in out_x. exact (proj2 out_x).
+    - refine (munch_weaken _ _ m2 mB _ win3).
+      intros x out_x. unfold sb1_W in out_x. cbn [outside] in out_x |- *. split; [lia | exact I]. }
+  assert (stackB : stk ctasegs mB lo (bv_unsigned sp - 192)).
+  { replace (bv_unsigned sp - 192)%Z with (bv_unsigned sp - 96 - 96)%Z by lia. exact stack3. }
+  assert (carry : forall A cs, rw_cells ctasegs m2 A cs ->
+            (A + Z.of_nat (cells_size cs) <= bv_unsigned sp - 464 \/ bv_unsigned sp - 96 <= A)%Z ->
+            rw_cells ctasegs mB A cs).
+  { intros A cs held apart. apply (rw_cells_transport ctasegs _ m2 mB A cs held win3 grow3).
+    cbn [disjoint_from]. split; [lia | exact I]. }
+  assert (carry64 : forall A xs, u64arr ctasegs m2 A xs ->
+            (A + 8 * Z.of_nat (length xs) <= bv_unsigned sp - 464)%Z -> u64arr ctasegs mB A xs).
+  { intros A xs held apart. apply (u64arr_transport ctasegs _ m2 mB A xs held win3 grow3).
+    cbn [disjoint_from]. split; [lia | exact I]. }
+  pose proof (carry _ _ frame2 ltac:(right; lia)) as frameB.
+  pose proof (carry _ _ tstat2 ltac:(cbn [cells_size csize Nat.add]; lia)) as tstatB.
+  pose proof (carry _ _ hdr2 ltac:(cbn [cells_size csize Nat.add]; lia)) as hdrB.
+  pose proof (carry _ _ hdr24 ltac:(cbn [cells_size csize Nat.add]; lia)) as hdr24B.
+  pose proof (carry _ _ zeros2 ltac:(cbn [cells_size csize Nat.add]; lia)) as zerosB.
+  pose proof (carry _ _ shlo2 ltac:(cbn [cells_size csize Nat.add]; lia)) as shloB.
+  pose proof (carry _ _ shhi2 ltac:(cbn [cells_size csize Nat.add]; lia)) as shhiB.
+  pose proof (carry64 _ _ arr2 ltac:(lia)) as arrB.
+  unfold i_sec_chunks, i_sec_nres, i_sec_mutex, i_sec_sorted, i_sec_bylog, i_gstat_alloc, INST, g_instance
+    in chunks2, counts2, lock2, sorted2, bylog2, gstat2.
+  pose proof (carry _ _ chunks2 ltac:(cbn [cells_size csize Nat.add]; lia)) as chunksB.
+  pose proof (carry _ _ counts2 ltac:(cbn [cells_size csize Nat.add]; lia)) as countsB.
+  pose proof (carry _ _ lock2 ltac:(cbn [cells_size csize Nat.add]; lia)) as lockB.
+  pose proof (carry _ _ sorted2 ltac:(cbn [cells_size csize Nat.add]; lia)) as sortedB.
+  pose proof (carry _ _ gstat2 ltac:(cbn [cells_size csize Nat.add]; lia)) as gstatB.
+  pose proof (carry64 _ _ bylog2 ltac:(rewrite bl_len; lia)) as bylogB.
+  pose proof (carry _ _ range2 ltac:(cbn [cells_size csize Nat.add]; lia)) as rangeB.
+  apply evt_done. red.
+  exists t0c, t1c, t2c, a6c, t3c, t4c, t5c, t6c, k, mB.
+  refine (conj eq_refl (conj win_all (conj (wmono_trans ctasegs _ _ _ grow2 grow3)
+            (conj inv3 (conj frame3 (conj stackB (conj gcells3 (conj k_rng (conj k_log _))))))))).
+  exists jf, b, jj, w1, w2, w3, w4, ga, gm, bl.
+  exact (conj frameB (conj chunksB (conj countsB (conj sortedB (conj bl_len (conj bylogB (conj gstatB (conj lockB
+           (conj arrB (conj rangeB (conj hdrB (conj hdr24B (conj zerosB (conj shloB (conj shhiB tstatB))))))))))))))).
 Qed.
