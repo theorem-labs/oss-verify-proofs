@@ -80,8 +80,8 @@
 #     this repository's own runs writes it.  Each proof itself, and the wrapper
 #     that ties it to its statement and prints its assumptions, is compiled
 #     afresh every run (oft check compiles them with `rocq compile` in fresh
-#     directories).  No proof check restores this cache now (OSSV-218: the
-#     check job's restore step says why); it is still saved.
+#     directories).  No proof check restores this cache now (the check job's
+#     restore step says why); it is still saved.
 #   - the release assets, keyed by their pinned SHA-256; `oft fetch` checks every
 #     archive and file against the facts before using it.
 # A job that read a draft saves neither cache: a pull request can restore a
@@ -446,7 +446,7 @@ jobs:
           drafts: ${{ toJSON(matrix.job.drafts) }}
           assets: ${{ runner.temp }}/assets
       - name: dune's cache, from earlier runs
-        # Off, and it stays off (OSSV-218).  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
+        # Off, and it stays off.  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
         # put in a filled cache under the same key, made doctored proofs pass check-units.sh.  dune restores
         # files/<digest> without hashing the bytes again (ocaml/dune 72f6fefe, src/dune_cache/shared.ml:313-319,
         # 329-348), and the kernel does not check a compiled file again when a proof loads it.  Hashing the restored

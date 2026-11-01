@@ -674,7 +674,7 @@ jobs:
           # the image check-units.sh runs: the release.yaml of the tree it checks
           bash "$RUNNER_TEMP/tools/oft/ci/cache-key.sh" "${{ steps.work.outputs.work }}/release.yaml" "${units[@]}" >> "$GITHUB_OUTPUT"
       - name: dune's cache from earlier runs of the base branch (read only)
-        # Off, and it stays off (OSSV-218).  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
+        # Off, and it stays off.  Measured 27 October 02:22Z: a valid Statements.vo of different statements,
         # put in a filled cache under the same key, made doctored proofs pass check-units.sh.  dune restores
         # files/<digest> without hashing the bytes again (ocaml/dune 72f6fefe, src/dune_cache/shared.ml:313-319,
         # 329-348), and the kernel does not check a compiled file again when a proof loads it.  Hashing the restored
@@ -715,7 +715,7 @@ jobs:
         run: bash "$RUNNER_TEMP/tools/oft/ci/check-units.sh"
       # One job saves, and not one that read a draft.  A save per job filled the repository's 10 GB of cache (8 such
       # entries held 8.3 GiB of 9.6) and evicted the rest; a job that read a draft saves nothing (the header says why).
-      # No proof check restores this cache (OSSV-218, the restore step above).
+      # No proof check restores this cache (the restore step above).
       - name: keep dune's cache (main only, one job, and not from a draft)
         if: github.event_name == 'push' && matrix.job.index == 0 && join(matrix.job.drafts, ',') == ''
         uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
