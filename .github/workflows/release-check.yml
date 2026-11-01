@@ -57,8 +57,9 @@
 # It runs on every push to main, weekly and on request.  pr.yml checks what a pull request touches;
 # the weekly run and a workflow_dispatch check every committed proof and finding, so the badge rests on
 # a full re-check at least once a week.  The proof checks
-# run on ubuntu-24.04-16core, a 16-core/64 GB GitHub-hosted larger runner (a proof
-# check peaks at 14.5-19.4 GiB on 16 cores).
+# run on ubuntu-24.04, the standard runner GitHub does not bill a public repository for
+# (the check job says what that costs and what the cores did); the repository variable
+# PROOF_RUNNER moves them back to ubuntu-24.04-16core.
 #
 # A token with contents: read cannot see a draft release, and a release's new
 # binaries stay drafts until release.yml publishes them.  So fetch-drafts alone
@@ -383,8 +384,16 @@ jobs:
       !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.units != '0'
       && (needs.fetch-drafts.result == 'success' || needs.fetch-drafts.result == 'skipped')
     name: check ${{ matrix.job.index }}
-    # the proof runner and its limit: pr.yml's check job says how to change them
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
+    # This repository is PUBLIC, and GitHub bills a public repository for a LARGER runner but not for a
+    # standard one. Every minute of this workflow was a larger runner: 3,863 minutes over 63 check jobs
+    # in the 24 hours to 2026-11-01T17:30Z, US$162.25 (US$6.76 an hour), the whole of this repository's
+    # GitHub Actions bill but US$2.35. On ubuntu-24.04 the same minutes cost nothing.
+    # What the cores do here: `oft check` compiles each proof and each wrapper with one `rocq compile`
+    # after another (tools/oft/check.py), and only the harness library build is parallel
+    # (`dune build -j <CPUs>`), so a smaller runner lengthens that one step, not the whole job.
+    # PROOF_RUNNER, the repository variable pr.yml's check job describes, still moves every proof check
+    # job of this workflow, pr.yml and weekly.yml; setting it to ubuntu-24.04-16core undoes this change.
+    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04' }}
     timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
     strategy:
       fail-fast: false
