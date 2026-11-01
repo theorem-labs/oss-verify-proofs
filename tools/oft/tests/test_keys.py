@@ -683,6 +683,22 @@ class Plan(unittest.TestCase):
             self.assertIn("full=true\n", output)
 
     @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_the_release_check_plan_step_plans_no_proof_for_a_change_a_check_never_opens(self):
+        """A change to a file of tools/oft/ that keys.NOT_THE_CHECKER names (the lint, the tests) leaves the checker
+        id where it was, so the step plans by key and nothing is checked; only the files the full-plan pattern names
+        by hand, keys.py and plan.py, take the full plan from under tools/oft/."""
+        for path in ("tools/oft/lint.py", "tools/oft/tests/test_lint.py"):
+            with self.subTest(path=path), tree() as t, tempfile.TemporaryDirectory() as d:
+                t.write(path, "# the file as it was\n")
+                base = self.released(t)
+                t.write(path, "# the file, changed\n")
+                commit(t)
+                got, output = self.release_check(t, d, EVENT_BASE=base)
+                self.assertEqual((got["units"], got["jobs"]), ([], []), output)
+                self.assertIn("units=0\n", output)
+                self.assertIn("full=false\n", output)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
     def test_the_release_check_plan_step_plans_no_proof_for_a_workflow_only_commit(self):
         """A commit under .github/workflows/, alone or with a CHANGELOG note (the shape of the commit that carries
         this router to the public repository), plans no proof: pr.yml's run of the same push lints the tree and runs

@@ -81,7 +81,7 @@ You need Docker, zstd, and Python 3 with the packages `tools/oft/requirements.tx
 
 `oft check` does these steps. It checks each binary against its SHA-256. It builds the memory images and the statements. It compiles each proof. It compiles a small wrapper that gives the proof's theorem the type of the statement. Then it reads what `Print Assumptions` prints for the wrapper, and it refuses every assumption that is not in the allowed list ([docs/checking.md](docs/checking.md)).
 
-CI runs the same check. The [release-check](.github/workflows/release-check.yml) workflow checks what each push to `main` changes, and every committed proof once a week, and the badge at the top shows its result. The [pr](.github/workflows/pr.yml) workflow checks what a pull request changes. The [weekly](.github/workflows/weekly.yml) workflow checks every statement and every proof, with no cache ([docs/checking.md](docs/checking.md#what-ci-runs)).
+CI runs the same check. The [release-check](.github/workflows/release-check.yml) workflow checks what each push to `main` changes, and the badge at the top shows its result. The [pr](.github/workflows/pr.yml) workflow checks what a pull request changes. The [weekly](.github/workflows/weekly.yml) workflow checks every statement and every proof, with no cache, once a week and after each release ([docs/checking.md](docs/checking.md#what-ci-runs)).
 
 ## How the binaries are built
 Each binary is a static riscv64 Linux program, built with clang 20.1.8 against musl. An entry point has up to four builds: plain, ASan, UBSan and ASan+UBSan. [docs/building.md](docs/building.md) gives the compiler flags and the sanitizer settings. [docs/running.md](docs/running.md) tells you how to run a binary and what its input file holds.
