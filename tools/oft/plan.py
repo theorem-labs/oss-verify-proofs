@@ -84,11 +84,16 @@ def timeout_minutes(units, times, on):
 # also under SUM_MINUTES.  The units runner() puts on the standard runner, each within that, are packed into jobs of
 # their own, so that a long unit never pulls a short one onto the 16-core runner; the rest are packed into 16-core
 # jobs.  Each kind is packed first-fit decreasing: longest unit first, into the first job it fits in.  A unit with no
-# measured minutes gets a job of its own, at CAP.  A unit whose own minutes are over the 16-core room (offloaded()) is
-# in no job: it is checked on the build service (builds-ossv), and the plan takes a citation of that check instead
-# (OFFLOADED).  The jobs are listed longest first, so that the matrix starts them first.  MATRIX is the most jobs
-# GitHub runs in one matrix.
+# measured minutes (in TIMES: the 61 with a committed proof; the tree has some 2,150 harnesses, most checked on their
+# statements alone) is packed on the 16-core runner as UNMEASURED minutes, and its job's limit is CAP.  UNMEASURED is
+# the largest minutes per harness of a sweep job with no proved harness in the measured weekly runs of 24 and 26
+# October 2026 (five such 16-core jobs: 9 or 26 harnesses each, 4.2 to 75.9 minutes; the 75.9-minute job of 26
+# harnesses is 2.92 a harness, and the median is 0.54), rounded up.  A unit whose own minutes are over the 16-core
+# room (offloaded()) is in no job: it is checked on the build service (builds-ossv), and the plan takes a citation of
+# that check instead (OFFLOADED).  The jobs are listed longest first, so that the matrix starts them first.  MATRIX is
+# the most jobs GitHub runs in one matrix.
 ROOM = {LARGE: CAP / MARGIN, STANDARD: CAP / MARGIN / SLOWER}
+UNMEASURED = 3.0
 MATRIX = 256
 
 
@@ -101,7 +106,7 @@ def offloaded(unit, times):
 def pack(units, times):
     """([(runner, [unit, ...]), ...], [unit, ...]): the check jobs of units, by the rule above, and the units that are
     in no job because offloaded() says so.  Every unit is in exactly one job or in the second list."""
-    alone, by, away = [], {STANDARD: [], LARGE: []}, []
+    by, away, size = {STANDARD: [], LARGE: []}, [], {}
     for u in units:
         m = times.get(u, (None, None))[0]
         on = runner([u], times)
@@ -109,25 +114,23 @@ def pack(units, times):
             on = LARGE
         if offloaded(u, times):
             away.append(u)
-        elif m is None:
-            alone.append((LARGE, [u]))
         else:
+            size[u] = UNMEASURED if m is None else m
             by[on].append(u)
-    jobs = alone
+    jobs = []
     for on, members in by.items():
         bins = []
-        for u in sorted(members, key=lambda u: (-times[u][0], u)):
-            b = next((b for b in bins if b[0] + times[u][0] <= ROOM[on]), None)
+        for u in sorted(members, key=lambda u: (-size[u], u)):
+            b = next((b for b in bins if b[0] + size[u] <= ROOM[on]), None)
             if b is None:
-                bins.append([times[u][0], [u]])
+                bins.append([size[u], [u]])
             else:
-                b[0] += times[u][0]
+                b[0] += size[u]
                 b[1].append(u)
         jobs += [(on, b[1]) for b in bins]
 
     def length(job):
-        minutes = [times.get(u, (None, None))[0] for u in job[1]]
-        return math.inf if None in minutes else sum(minutes) * (SLOWER if job[0] == STANDARD else 1)
+        return sum(size[u] for u in job[1]) * (SLOWER if job[0] == STANDARD else 1)
     jobs = [(on, sorted(us)) for on, us in sorted(jobs, key=lambda j: (-length(j), sorted(j[1])))]
     if len(jobs) > MATRIX:
         raise ValueError("%d check jobs: more than the %d a matrix runs" % (len(jobs), MATRIX))

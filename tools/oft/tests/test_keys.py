@@ -443,15 +443,34 @@ class Plan(unittest.TestCase):
                  "e/s2": (20.0, 10.0), "f/over": (300.0, 30.0), "g/s_long": (120.0, 10.0)}
         jobs, away = plan.pack(sorted(times) + ["h/unmeasured"], times)
         self.assertEqual(jobs, [
-            ("ubuntu-24.04-16core", ["h/unmeasured"]),
-            # 200 + 26 fits in 226.7; 100 does not
+            # 200 + 26 fits in 226.7; 100 does not, nor the unmeasured unit's 3 after them
             ("ubuntu-24.04-16core", ["a/l1", "c/l3"]),
-            # a unit the rule puts on the standard runner, too long for its room there (103.0), takes 16 cores
-            ("ubuntu-24.04-16core", ["b/l2", "g/s_long"]),
+            # a unit the rule puts on the standard runner, too long for its room there (103.0), takes 16 cores; an
+            # unmeasured unit is packed as plan.UNMEASURED minutes on 16 cores: 120 + 100 + 3
+            ("ubuntu-24.04-16core", ["b/l2", "g/s_long", "h/unmeasured"]),
             ("ubuntu-24.04", ["d/s1"]),
             ("ubuntu-24.04", ["e/s2"])])
         # over the 16-core room alone: in no job
         self.assertEqual(away, ["f/over"])
+
+    @unittest.skipUnless(os.path.isfile(os.path.join(REPO, "index", "harnesses.tsv")),
+                         "no index/harnesses.tsv beside tools/")
+    def test_a_plan_of_every_harness_of_this_tree_fits_one_matrix(self):
+        """Every harness of the repository (2,148 on 2 November 2026, of which check-times.tsv measures 61), packed:
+        each is in exactly one job or offloaded, the jobs fit one matrix, and no job's estimate is over its room."""
+        with open(os.path.join(REPO, "index", "harnesses.tsv"), encoding="utf-8") as f:
+            units = sorted({"%s/%s" % tuple(line.split("\t")[:2]) for line in list(f)[1:]})
+        self.assertGreater(len(units), 2000)
+        times = plan.check_times()
+        jobs, away = plan.pack(units, times)
+        packed = [u for _on, us in jobs for u in us]
+        self.assertEqual(sorted(packed + away), units)
+        self.assertEqual(len(packed), len(set(packed)))
+        self.assertLessEqual(len(jobs), plan.MATRIX)
+        self.assertEqual(away, ["cgif/cgif_rgb_fuzzer", "openssl/hashtable", "zstd/simple_decompress"])
+        for on, us in jobs:
+            estimate = sum(plan.UNMEASURED if times.get(u, (None, None))[0] is None else times[u][0] for u in us)
+            self.assertLessEqual(estimate, plan.ROOM[on], (on, us))
 
     def _offloaded_tree(self, t):
         """A tree in which UNIT is too long for a check job, and the rows of its parts' keys at the commit."""
@@ -582,7 +601,7 @@ class Plan(unittest.TestCase):
             self.assertEqual(self.checked(p), [])
             self.assertIn("recorded pass", [r["why"] for r in p["parts"] if r["unit"] == UNIT])
 
-    def test_a_finding_on_a_harness_that_withholds_every_build_is_a_job_that_fetches_and_builds_nothing(self):
+    def test_a_finding_on_a_harness_that_withholds_every_build_adds_no_build_and_no_fetch_to_its_job(self):
         """pr.yml runs a check job for it and required wants it to pass; check-units.sh fetches only its unpatched
         binaries."""
         with tree() as t:
@@ -591,8 +610,12 @@ class Plan(unittest.TestCase):
             p = self.plan(t, change=commit(t))
             self.assertNotIn((UNIT, "build"), self.checked(p))
             job = next(j for j in p["jobs"] if UNIT in j["units"].split())
-            self.assertEqual((job["check_units"], job["projects"], job["counterexamples"], job["findings"]),
-                             ("", "", "", UNIT))
+            # packed with other units, it adds only its finding to the job: no build to check, and no project's
+            # binaries to fetch for it (the job's projects are its builds' and counterexamples' alone)
+            self.assertIn(UNIT, job["findings"].split())
+            self.assertNotIn(UNIT, job["check_units"].split() + job["counterexamples"].split())
+            built = job["check_units"].split() + job["counterexamples"].split()
+            self.assertEqual(job["projects"].split(), sorted({u.split("/")[0] for u in built}))
 
     def test_with_no_base_every_part_without_a_recorded_pass_is_checked(self):
         with tree() as t:
@@ -732,7 +755,11 @@ class Plan(unittest.TestCase):
         against; without it the step plans every part."""
         _remote, clone = self.workflow(t, d)
         shutil.rmtree(os.path.join(clone, "tools"))
-        os.symlink(TOOLS, os.path.join(clone, "tools"))
+        # this tools/, with no citation of a check on the build service: the rows of this repository's
+        # offloaded-checks.tsv name its harnesses, which the fixture does not have, and the plan refuses such a row
+        shutil.copytree(TOOLS, os.path.join(clone, "tools"), ignore=shutil.ignore_patterns("__pycache__"))
+        with open(os.path.join(clone, plan.OFFLOADED), "w", encoding="utf-8") as f:
+            f.write("\t".join(plan.OFFLOADED_COLUMNS) + "\n")
         return self.run_step(d, "release-check.yml", clone, **env)
 
     def released(self, t):
