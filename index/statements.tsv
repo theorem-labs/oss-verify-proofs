@@ -19744,7 +19744,7 @@ zlib/checksum_fuzzer/plain_halts	halts	plain	budget	0,2	proved	-	1	72b324135c36b
 zlib/checksum_fuzzer/ubsan_halts	halts	ubsan	budget	0,2	open	-	1	3b9942d190e092bb35b013b5f5c1e1e8e7972acd691e818dd8b4eb3b66d26667	-
 zlib/checksum_fuzzer/asan_halts	halts	asan	budget	0,2	open	-	1	987a37da71d3af17c3a4b010c7e1751fecf2d325d27f4e201721812212ff6d05	-
 zlib/checksum_fuzzer/asan_ubsan_halts	halts	asan-ubsan	budget	0,2	open	-	1	e33909579bdd45eab52e2517a4885e298616d4938800b636893b67d63516fdaa	-
-zlib/checksum_fuzzer/plain_halts_may_fail	halts	plain	may-fail	any	open	-	1	b4b430a3f7d5d6bf5ba54b460782bfb2f6d8c9b9e0323694b13ffe8846906aea	-
+zlib/checksum_fuzzer/plain_halts_may_fail	halts	plain	may-fail	any	proved	-	1	b4b430a3f7d5d6bf5ba54b460782bfb2f6d8c9b9e0323694b13ffe8846906aea	proofs/zlib/checksum_fuzzer/plain_halts_may_fail
 zlib/checksum_fuzzer/ubsan_halts_may_fail	halts	ubsan	may-fail	any	open	-	1	0b4860e773cb4c749d3c6e1ccd7ca59a5034e8ead2735e79525f9a3891e835d7	-
 zlib/checksum_fuzzer/asan_agrees	agreement	plain,asan	may-fail	-	open	-	1	f56270dca7b303584345e8b0bb9a0b199ae0a8086682dbdee147f14e8c9ad06d	-
 zlib/checksum_fuzzer/ubsan_agrees	agreement	plain,ubsan	may-fail	-	open	-	1	efe769c796ed73affdebc6cc76689bca03d8481a631c31b2556c7a5565676f45	-

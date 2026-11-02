@@ -28,7 +28,7 @@ A failed check marked as ending the process contradicts every halts statement be
 | `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
 | `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
 | `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2; so the checks above hold | open |
-| `plain_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the plain build exits with any status | open |
+| `plain_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the plain build exits with any status | [proved](../../../proofs/zlib/checksum_fuzzer/plain_halts_may_fail/) |
 | `ubsan_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the UBSan build exits with any status | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires | open |
 | `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires | open |
