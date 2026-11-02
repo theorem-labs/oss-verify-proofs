@@ -649,7 +649,9 @@ esac
                 subprocess.run(git + args, check=True, capture_output=True,
                                env=dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1"))
             buf = io.StringIO()
-            plan.plan(t.root, units={"zlib/checksum_fuzzer", "zlib/api-driver"}, max_jobs=1, out=buf)
+            # both units measured on the 16-core runner and short, so that they pack into one job
+            plan.plan(t.root, units={"zlib/checksum_fuzzer", "zlib/api-driver"}, out=buf,
+                      times={"zlib/checksum_fuzzer": (10.0, 20.0), "zlib/api-driver": (10.0, 20.0)})
             job = json.loads(buf.getvalue())["jobs"][0]
             self.assertEqual(job["check_units"], "zlib/api-driver zlib/checksum_fuzzer")
             self.assertEqual(job["proof_units"], "zlib/checksum_fuzzer")

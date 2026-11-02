@@ -423,6 +423,38 @@ class Plan(unittest.TestCase):
         for unit in ("c/z", "e/unlisted"):
             self.assertEqual(plan.timeout_minutes(["d/w", unit], times, "ubuntu-24.04-16core"), 340, unit)
 
+    def test_a_full_plan_of_the_measured_table_has_no_job_over_its_limit_but_a_lone_unit(self):
+        """Every unit of check-times.tsv, packed: each unit is in one job, and a job of more than one unit holds no
+        more measured minutes than its time limit allows under the cap, 1.5 x 2.2 x minutes on the standard runner
+        and 1.5 x minutes on the 16-core one.  Only a unit over that alone, or with no minutes, is at the cap."""
+        times = plan.check_times()
+        jobs = plan.pack(sorted(times), times)
+        self.assertEqual(sorted(u for _on, us in jobs for u in us), sorted(times))
+        for on, units in jobs:
+            minutes = [times[u][0] for u in units]
+            if len(units) > 1:
+                self.assertNotIn(None, minutes, units)
+                factor = plan.SLOWER if on == plan.STANDARD else 1
+                self.assertLessEqual(plan.MARGIN * factor * sum(minutes), plan.CAP, (on, units))
+                self.assertEqual(on, plan.runner(units, times), units)
+        lone = {us[0] for on, us in jobs if plan.timeout_minutes(us, times, on) == plan.CAP
+                and (times[us[0]][0] is None or plan.MARGIN * times[us[0]][0] > plan.CAP)}
+        self.assertEqual(lone, {"openssl/hashtable", "zstd/simple_decompress", "cgif/cgif_rgb_fuzzer"})
+
+    def test_units_are_packed_longest_first_into_the_first_job_they_fit(self):
+        times = {"a/l1": (200.0, 30.0), "b/l2": (100.0, 30.0), "c/l3": (26.0, 30.0), "d/s1": (90.0, 10.0),
+                 "e/s2": (20.0, 10.0), "f/over": (300.0, 30.0), "g/s_long": (120.0, 10.0)}
+        jobs = plan.pack(sorted(times) + ["h/unmeasured"], times)
+        self.assertEqual(jobs, [
+            ("ubuntu-24.04-16core", ["h/unmeasured"]),
+            ("ubuntu-24.04-16core", ["f/over"]),
+            # 200 + 26 fits in 226.7; 100 does not
+            ("ubuntu-24.04-16core", ["a/l1", "c/l3"]),
+            # a unit the rule puts on the standard runner, too long for its room there (103.0), takes 16 cores
+            ("ubuntu-24.04-16core", ["b/l2", "g/s_long"]),
+            ("ubuntu-24.04", ["d/s1"]),
+            ("ubuntu-24.04", ["e/s2"])])
+
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""
         for kind in ("maintainer", "contributor"):
@@ -526,7 +558,9 @@ class Plan(unittest.TestCase):
             t.put_yaml("proofs/%s/plain_halts/proof.yaml" % UNIT, {
                 "schema": "oss-fuzz-theorems/proof/1", "proves": st.id, "fingerprint": st.fingerprint})
             t.write("proofs/%s/plain_halts/Proof.v" % UNIT, "Theorem plain_halts_holds : True. Qed.\n")
-            p = self.plan(t, change=commit(t), max_jobs=1)
+            # every unit measured on the 16-core runner and short, so that they pack into one job
+            times = {u: (10.0, 20.0) for u, _part in keys.wanted(facts.load(t.root))}
+            p = self.plan(t, change=commit(t), times=times)
             self.assertEqual(len(p["jobs"]), 1)
             self.assertIn("zlib/api-driver", p["jobs"][0]["check_units"].split())
             self.assertEqual(p["jobs"][0]["proof_units"], UNIT)

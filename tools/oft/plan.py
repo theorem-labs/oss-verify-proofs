@@ -77,6 +77,51 @@ def timeout_minutes(units, times, on):
     return min(CAP, max(FLOOR, math.ceil(round(MARGIN * expected, 6))))
 
 
+# How the units are packed into check jobs.  A job may hold measured minutes up to what its time limit allows below
+# CAP: CAP / MARGIN on the 16-core runner (226.7), and on the standard runner CAP / MARGIN / SLOWER (103.0), which is
+# also under SUM_MINUTES.  The units runner() puts on the standard runner, each within that, are packed into jobs of
+# their own, so that a long unit never pulls a short one onto the 16-core runner; the rest are packed into 16-core
+# jobs.  Each kind is packed first-fit decreasing: longest unit first, into the first job it fits in.  A unit with no
+# measured minutes, and one whose own minutes are over its runner's room (openssl/hashtable, zstd/simple_decompress,
+# cgif/cgif_rgb_fuzzer), gets a job of its own, at CAP.  The jobs are listed longest first, so that the matrix starts
+# them first.  MATRIX is the most jobs GitHub runs in one matrix.
+ROOM = {LARGE: CAP / MARGIN, STANDARD: CAP / MARGIN / SLOWER}
+MATRIX = 256
+
+
+def pack(units, times):
+    """[(runner, [unit, ...]), ...]: the check jobs of units, by the rule above.  Every unit is in exactly one job."""
+    alone, by = [], {STANDARD: [], LARGE: []}
+    for u in units:
+        m = times.get(u, (None, None))[0]
+        on = runner([u], times)
+        if on == STANDARD and m > ROOM[STANDARD]:
+            on = LARGE
+        if m is None or m > ROOM[on]:
+            alone.append((LARGE, [u]))
+        else:
+            by[on].append(u)
+    jobs = alone
+    for on, members in by.items():
+        bins = []
+        for u in sorted(members, key=lambda u: (-times[u][0], u)):
+            b = next((b for b in bins if b[0] + times[u][0] <= ROOM[on]), None)
+            if b is None:
+                bins.append([times[u][0], [u]])
+            else:
+                b[0] += times[u][0]
+                b[1].append(u)
+        jobs += [(on, b[1]) for b in bins]
+
+    def length(job):
+        minutes = [times.get(u, (None, None))[0] for u in job[1]]
+        return math.inf if None in minutes else sum(minutes) * (SLOWER if job[0] == STANDARD else 1)
+    jobs = [(on, sorted(us)) for on, us in sorted(jobs, key=lambda j: (-length(j), sorted(j[1])))]
+    if len(jobs) > MATRIX:
+        raise ValueError("%d check jobs: more than the %d a matrix runs" % (len(jobs), MATRIX))
+    return jobs
+
+
 def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, store=None, rocqchk=False):
     """[(row, components, the base's components or None)] for each (unit, part) of wanted.  root is the tree a check
     job checks, inside a git repository that holds the commits named here.
@@ -116,17 +161,17 @@ def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, sto
     return out
 
 
-def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, max_jobs=20,
-         rocqchk=False, times=None, out=sys.stdout):
+def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, rocqchk=False,
+         times=None, out=sys.stdout):
     """Print {"all", "units", "check_units", "parts", "jobs"} for the parts rows() checks; units, if given, limits
     the plan to those units (weekly's rotating third).  parts holds every part's row with its key and components.
-    Each job lists its units, the units whose build it checks (check_units) and those of them with a proof of one of
-    their statements (proof_units, which check-units.sh checks with their proofs and the rest on their statements),
-    the projects whose binaries those and the counterexamples need, the units whose counterexamples and findings it
-    runs, the runner it runs on (runner(), from times: check_times() when None) and its time limit in minutes
-    (timeout_minutes()).  A job carries no keys (the parts do): the workflows pass the jobs as one job output, which
-    grows with the tree, and weekly.yml's determinism job takes them as one environment variable, which Linux caps at
-    131,072 bytes (with a key per part, #170 measured a plan of every harness at 132,809 bytes)."""
+    The jobs are pack()'s, from times (check_times() when None).  Each job lists its units, the units whose build it
+    checks (check_units) and those of them with a proof of one of their statements (proof_units, which check-units.sh
+    checks with their proofs and the rest on their statements), the projects whose binaries those and the
+    counterexamples need, the units whose counterexamples and findings it runs, the runner it runs on and its time
+    limit in minutes (timeout_minutes()).  A job carries no keys (the parts do): the workflows pass the jobs as one job
+    output, which grows with the tree, and weekly.yml's determinism job takes them as one environment variable, which
+    Linux caps at 131,072 bytes (with a key per part, #170 measured a plan of every harness at 132,809 bytes)."""
     times = check_times() if times is None else times
     tree = facts.load(root)
     proved = {st.harness.project.name + "/" + st.harness.name for st in tree.statements() if st.proof}
@@ -139,12 +184,10 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
         if r["check"]:
             of.setdefault(r["unit"], set()).add(r["part"])
     chosen = sorted(of)
-    n = max(1, min(max_jobs, len(chosen)))
     jobs = []
-    for i, shard in enumerate([chosen[i::n] for i in range(n)] if chosen else []):
+    for i, (on, shard) in enumerate(pack(chosen, times)):
         build = [u for u in shard if "build" in of[u]]
         cx = [u for u in shard if "counterexamples" in of[u]]
-        on = runner(shard, times)
         jobs.append({"index": i, "units": " ".join(shard), "check_units": " ".join(build),
                      "proof_units": " ".join(u for u in build if u in proved),
                      "projects": " ".join(sorted({u.split("/")[0] for u in build + cx})),

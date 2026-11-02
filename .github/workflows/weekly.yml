@@ -68,8 +68,13 @@ jobs:
           ROTATE: ${{ github.event_name == 'schedule' && github.event.repository.visibility != 'public' }}
         run: |
           set -euo pipefail
-          # with no base and no recorded pass, every part of every harness is planned
-          PYTHONPATH=tools python -m oft plan --max-jobs 1 > "$RUNNER_TEMP/all.json"
+          # with no base and no recorded pass, every part of every harness is planned.  The jobs: the tools pack the
+          # units by their measured minutes (tools/oft/plan.py, pack); tools that predate the packing take --max-jobs,
+          # and deal units round-robin, so they get 256, the matrix limit: a job for each unit.
+          PYTHONPATH=tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
+          jobs=()
+          if grep -q -- --max-jobs "$RUNNER_TEMP/plan-help.txt"; then jobs=(--max-jobs 256); fi
+          PYTHONPATH=tools python -m oft plan "${jobs[@]}" > "$RUNNER_TEMP/all.json"
           if [ -n "${UNITS:-}" ]; then
             read -r -a named <<< "$UNITS"
             printf '%s\n' "${named[@]}" > "$RUNNER_TEMP/units.txt"
@@ -80,7 +85,7 @@ jobs:
             jq -r '.units[]' "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
           fi
           [ -s "$RUNNER_TEMP/units.txt" ] || { echo "::error::no harness to check: nothing examined"; exit 1; }
-          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" --max-jobs 256 > "$RUNNER_TEMP/plan.json"
+          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" "${jobs[@]}" > "$RUNNER_TEMP/plan.json"
           # the determinism job's sample: the first job with published builds (a harness whose every build is
           # withheld has a finding to re-run, and no binary to snapshot), as two small values, since the plan's jobs
           # grow with the tree and an environment value may not exceed 131,072 bytes

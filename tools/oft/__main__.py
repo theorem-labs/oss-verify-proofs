@@ -75,7 +75,7 @@ def cmd_plan(a):
         return plan.explain(_root(a), a.explain, change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools,
                             store=a.store, rocqchk=a.rocqchk)
     return plan.plan(_root(a), change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools, store=a.store,
-                     units=units, max_jobs=a.max_jobs, rocqchk=a.rocqchk)
+                     units=units, rocqchk=a.rocqchk)
 
 
 def cmd_release_tree(a):
@@ -149,7 +149,6 @@ def main(argv=None):
     pl.add_argument("--tools", help="the commit of the tools the check jobs run (default: --base, else --change)")
     pl.add_argument("--store", help="a commit of the branch check-results; without it nothing is recorded")
     pl.add_argument("--units", metavar="FILE", help="only the units FILE lists, one per line")
-    pl.add_argument("--max-jobs", type=int, default=20)
     pl.add_argument("--rocqchk", action="store_true", help="the check jobs run rocqchk")
     pl.add_argument("--explain", metavar="PROJECT/HARNESS",
                     help="print each part of one unit, whether it is checked and why, and every input of its key")

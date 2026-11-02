@@ -256,11 +256,11 @@ jobs:
           if [ ! -e head/release.yaml ]; then
             echo "units=0" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # 20 jobs, as before: each job pays about 2 minutes of checkout, base worktree, cache and image before its
-          # first proof (measured: run 40167837171, median 125 s outside the check step), so more jobs buy a shorter
-          # full re-check for more billed 16-core minutes (64 jobs: about 2.2 hours of that per full re-check against
-          # 40 minutes; 256: 9 hours).  It also keeps a run's jobs on the one page of 100 that required's restate
-          # step reads.
+          # The jobs: the base's tools pack the units by their measured minutes (tools/oft/plan.py, pack), so that no
+          # job holds more than its time limit allows, with as many jobs as that takes.  Each job pays about 2 minutes
+          # of checkout, base worktree, cache and image before its first proof (measured: run 40167837171, median 125 s
+          # outside the check step), so packing short units together keeps that overhead to the few jobs the minutes
+          # need.  Tools that predate the packing deal units round-robin into 20 jobs (their --max-jobs default).
           PYTHONPATH=base/tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
           if grep -q -- --store "$RUNNER_TEMP/plan-help.txt"; then
             # Content keys (tools/oft/keys.py): each part of each harness has the key of what its check reads, with
@@ -268,7 +268,7 @@ jobs:
             # counterexamples/ and findings/, and the base's tools, which are what the check jobs run.  A part is
             # checked when its key differs from its key at the base.  So a change to the tools or the workflows
             # checks nothing here.  No recorded pass is read (--store): nothing protects a branch of them yet.
-            args=(--base "$BASE" --pr-kind "$KIND" --max-jobs 20)
+            args=(--base "$BASE" --pr-kind "$KIND")
             PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
             { echo "### parts checked, and why"
               jq -r '.parts[] | select(.check) | "- \(.unit) \(.part): \(.why)"' "$RUNNER_TEMP/plan.json"
@@ -620,7 +620,7 @@ jobs:
       ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
-      # the plan's --max-jobs 20 (the plan step says why not more), all at once
+      # the plan's jobs, at most 20 at a time
       max-parallel: 20
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.plan) }}

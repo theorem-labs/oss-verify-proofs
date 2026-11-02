@@ -308,11 +308,13 @@ jobs:
               fi
             fi
           fi
-          # 256 jobs, the matrix limit: oft plan deals units to jobs round-robin by name, blind to how long each
-          # takes, and at 32 jobs it put cgif/cgif_rgb_fuzzer (188 min) and openssl/hashtable (120 min) in one
-          # job, close to the 6 hours a GitHub-hosted job cannot exceed.  max-parallel (the check job) is unchanged.
+          # The jobs: tools/oft/plan.py packs the units by their measured minutes, so that no job holds more than its
+          # time limit allows (plan.pack).  Older tools deal units to jobs round-robin by name, blind to how long each
+          # takes (at 32 jobs that put cgif/cgif_rgb_fuzzer and openssl/hashtable in one job, close to the 6 hours a
+          # GitHub-hosted job cannot exceed), so they get --max-jobs 256, the matrix limit: a job for each unit.
           if [ "$keyed" = true ]; then
-            args=(--units "$RUNNER_TEMP/units.txt" --max-jobs 256)
+            args=(--units "$RUNNER_TEMP/units.txt")
+            if grep -q -- --max-jobs "$RUNNER_TEMP/plan-help.txt"; then args+=(--max-jobs 256); fi
             if [ "$full" = false ]; then
               # Content keys (tools/oft/keys.py): a part is checked when the key of what its check reads
               # differs from its key at the base.  --pr-kind release and --tools HEAD name what the check
