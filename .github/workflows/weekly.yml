@@ -96,9 +96,8 @@ jobs:
   sweep:
     needs: plan
     name: sweep ${{ matrix.job.index }}
-    # a proof check peaks at 14.5-19.4 GiB on 16 cores: the 16-core/64 GB GitHub-hosted larger runner, unless the
-    # repository variables say otherwise (pr.yml's check job)
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
+    # the runner the job's plan entry names, unless the repository variables say otherwise (pr.yml's check job)
+    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
     timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
     strategy:
       fail-fast: false
@@ -242,7 +241,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.warm && github.ref == 'refs/heads/main'
     needs: plan
     name: warm ${{ matrix.job.index }}
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
+    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
     timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
     strategy:
       fail-fast: false

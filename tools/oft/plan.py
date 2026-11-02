@@ -4,6 +4,7 @@ A part is checked when its key (keys.py) has no recorded pass on the branch chec
 judges a change against a base, when the key differs from the base's: a change is checked on what it changes.  Each
 part's row says why it is or is not checked."""
 import json
+import os
 import sys
 
 import yaml
@@ -11,6 +12,42 @@ import yaml
 from . import facts, keys
 
 KINDS = ("release", "maintainer", "contributor")
+
+# Each check job's runner.  A job runs on GitHub's standard runner (4 CPUs, 16 GB; free on a public repository) when
+# every unit in it peaked under PEAK_GIB on the 16-core runner and its units' minutes there sum to at most
+# SUM_MINUTES; otherwise on the 16-core runner (64 GB).  PEAK_GIB leaves 2 GiB of the 16 GB for the checker image and
+# dune's tree beside the check.  SUM_MINUTES: most of a check is serial (each proof and each wrapper is one
+# `rocq compile` after another, and the counterexamples run one by one), but the proof library's `dune build -j` and
+# the statements' `dune build` use every CPU, so a job runs longer on 4 CPUs; 150 minutes leaves the job room under
+# GitHub's 6-hour cap even if it takes twice as long.  The measurements are TIMES; a unit missing from it counts as
+# over both thresholds.
+STANDARD = "ubuntu-24.04"
+LARGE = "ubuntu-24.04-16core"
+PEAK_GIB = 14
+SUM_MINUTES = 150
+TIMES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check-times.tsv")
+
+
+def check_times(path=TIMES):
+    """{unit: (minutes or None, peak_gib or None)}: the measured checks of TIMES on the 16-core runner."""
+    out = {}
+    with open(path, encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f if not line.startswith("#")]
+    if not lines or lines[0].split("\t") != ["unit", "minutes", "peak_gib"]:
+        raise ValueError("%s: the header must be unit, minutes, peak_gib" % path)
+    for line in lines[1:]:
+        unit, minutes, peak = line.split("\t")
+        out[unit] = (float(minutes) if minutes else None, float(peak) if peak else None)
+    return out
+
+
+def runner(units, times):
+    """The runner of a check job of units, by the rule above."""
+    measured = [times.get(u, (None, None)) for u in units]
+    if all(m is not None and p is not None and p < PEAK_GIB for m, p in measured) \
+            and sum(m for m, _p in measured) <= SUM_MINUTES:
+        return STANDARD
+    return LARGE
 
 
 def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, store=None, rocqchk=False):
@@ -53,15 +90,17 @@ def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, sto
 
 
 def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, max_jobs=20,
-         rocqchk=False, out=sys.stdout):
+         rocqchk=False, times=None, out=sys.stdout):
     """Print {"all", "units", "check_units", "parts", "jobs"} for the parts rows() checks; units, if given, limits
     the plan to those units (weekly's rotating third).  parts holds every part's row with its key and components.
     Each job lists its units, the units whose build it checks (check_units) and those of them with a proof of one of
     their statements (proof_units, which check-units.sh checks with their proofs and the rest on their statements),
-    the projects whose binaries those and the counterexamples need, and the units whose counterexamples and findings
-    it runs.  A job carries no keys (the parts do): the workflows pass the jobs as one job output, which grows with
-    the tree, and weekly.yml's determinism job takes them as one environment variable, which Linux caps at 131,072
-    bytes (with a key per part, #170 measured a plan of every harness at 132,809 bytes)."""
+    the projects whose binaries those and the counterexamples need, the units whose counterexamples and findings it
+    runs, and the runner it runs on (runner(), from times: check_times() when None).  A job carries no keys (the parts
+    do): the workflows pass the jobs as one job output, which grows with the tree, and weekly.yml's determinism job
+    takes them as one environment variable, which Linux caps at 131,072 bytes (with a key per part, #170 measured a
+    plan of every harness at 132,809 bytes)."""
+    times = check_times() if times is None else times
     tree = facts.load(root)
     proved = {st.harness.project.name + "/" + st.harness.name for st in tree.statements() if st.proof}
     wanted = keys.wanted(tree)
@@ -82,7 +121,8 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
                      "proof_units": " ".join(u for u in build if u in proved),
                      "projects": " ".join(sorted({u.split("/")[0] for u in build + cx})),
                      "counterexamples": " ".join(cx),
-                     "findings": " ".join(u for u in shard if "findings" in of[u])})
+                     "findings": " ".join(u for u in shard if "findings" in of[u]),
+                     "runner": runner(shard, times)})
     json.dump({"all": bool(parts) and all(r["check"] for r in parts), "units": chosen,
                "check_units": [u for u in chosen if "build" in of[u]], "parts": parts, "jobs": jobs}, out)
     out.write("\n")

@@ -378,10 +378,33 @@ class Plan(unittest.TestCase):
             self.assertEqual(row["why"], "changed: proofs")
             self.assertEqual(p["units"], [UNIT])
             # a job's whole shape: the fields the workflows read (pr.yml, release-check.yml and weekly.yml read index,
-            # check_units, proof_units, projects, counterexamples and findings), the job's units, and no key, which the
-            # parts carry.  The Proof.v above has no proof.yaml, so facts sees no proof and proof_units is empty.
+            # check_units, proof_units, projects, counterexamples, findings and runner), the job's units, and no key,
+            # which the parts carry.  The Proof.v above has no proof.yaml, so facts sees no proof and proof_units is
+            # empty; check-times.tsv has no peak for this unit, so its job keeps the 16-core runner.
             self.assertEqual(p["jobs"], [{"index": 0, "units": UNIT, "check_units": UNIT, "proof_units": "",
-                                          "projects": "zlib", "counterexamples": "", "findings": ""}])
+                                          "projects": "zlib", "counterexamples": "", "findings": "",
+                                          "runner": "ubuntu-24.04-16core"}])
+
+    def test_a_job_takes_the_standard_runner_only_when_every_unit_is_small_and_the_sum_short(self):
+        times = {"a/small": (40.0, 12.0), "b/small": (100.0, 13.9), "c/big": (30.0, 14.0),
+                 "d/no_peak": (10.0, None), "e/no_minutes": (None, 1.0)}
+        self.assertEqual(plan.runner(["a/small"], times), "ubuntu-24.04")
+        # 140 minutes summed, both under 14 GiB
+        self.assertEqual(plan.runner(["a/small", "b/small"], times), "ubuntu-24.04")
+        # a peak of 14 GiB is not under 14
+        self.assertEqual(plan.runner(["a/small", "c/big"], times), "ubuntu-24.04-16core")
+        # 180 minutes summed
+        self.assertEqual(plan.runner(["a/small", "a/small", "b/small"], times), "ubuntu-24.04-16core")
+        # what was not measured counts as over the threshold
+        for unit in ("d/no_peak", "e/no_minutes", "f/unlisted"):
+            self.assertEqual(plan.runner(["a/small", unit], times), "ubuntu-24.04-16core", unit)
+
+    def test_the_measured_table_reads(self):
+        """check-times.tsv reads, and its rows decide as the rule says."""
+        times = plan.check_times()
+        self.assertEqual(times["openssl/hashtable"], (360.4, None))
+        self.assertEqual(plan.runner(["fast_float/from_chars"], times), "ubuntu-24.04")
+        self.assertEqual(plan.runner(["coturn/FuzzStunClient"], times), "ubuntu-24.04-16core")
 
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""

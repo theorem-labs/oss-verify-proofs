@@ -607,12 +607,14 @@ jobs:
       && (needs.fetch-drafts.result == 'success'
           || (needs.fetch-drafts.result == 'skipped' && needs.plan.outputs.draft_legs == '[]'))
     name: check ${{ matrix.job.index }}
-    # a proof check peaks at 14.5-19.4 GiB on 16 cores: the 16-core/64 GB GitHub-hosted larger runner.  The
-    # repository variables PROOF_RUNNER and PROOF_TIMEOUT_MINUTES move every proof check job (pr.yml, release-check.yml,
-    # weekly.yml) to a larger runner or a longer limit; a GitHub-hosted job stops at 6 hours whatever the limit.  A merge
-    # queue's group is checked like a push to main and must report within the queue's 360 minutes of its creation,
-    # runner waits included: a group whose checks run longer leaves the queue unmerged.
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
+    # The runner is the one the job's plan entry names (tools/oft/plan.py, runner: the standard ubuntu-24.04 for a job
+    # of small, short units, else the 16-core ubuntu-24.04-16core; a plan of tools that predate the field names none,
+    # and its jobs keep the 16-core runner).  The repository variables PROOF_RUNNER and PROOF_TIMEOUT_MINUTES move
+    # every proof check job (pr.yml, release-check.yml, weekly.yml) to another runner or a longer limit; a
+    # GitHub-hosted job stops at 6 hours whatever the limit.  A merge queue's group is checked like a push to main and
+    # must report within the queue's 360 minutes of its creation, runner waits included: a group whose checks run
+    # longer leaves the queue unmerged.
+    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
     timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
     strategy:
       fail-fast: false
