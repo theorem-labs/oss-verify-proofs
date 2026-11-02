@@ -86,15 +86,17 @@ jobs:
           fi
           [ -s "$RUNNER_TEMP/units.txt" ] || { echo "::error::no harness to check: nothing examined"; exit 1; }
           PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" "${jobs[@]}" > "$RUNNER_TEMP/plan.json"
-          # the determinism job's sample: the first job with published builds (a harness whose every build is
-          # withheld has a finding to re-run, and no binary to snapshot), as two small values, since the plan's jobs
-          # grow with the tree and an environment value may not exceed 131,072 bytes
-          sample='[.jobs[] | select(.check_units != "")][0]'
+          # the determinism job's sample: one harness, the first by name of the planned harnesses with published builds
+          # (a harness whose every build is withheld has a finding to re-run, and no binary to snapshot), whatever the
+          # order of the plan's jobs, which are listed longest first.  As two small values, since the plan's jobs grow
+          # with the tree and an environment value may not exceed 131,072 bytes.  Tools that predate the plan's
+          # top-level check_units list them in the jobs only.
+          sample='[(.check_units // [.jobs[].check_units | split(" ")[]]) | .[] | select(. != "")] | sort | .[0] // ""'
           {
             echo "plan=$(jq -c .jobs "$RUNNER_TEMP/plan.json")"
             echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
-            echo "sample=$(jq -r "$sample.check_units // \"\"" "$RUNNER_TEMP/plan.json")"
-            echo "sample_projects=$(jq -r "$sample.projects // \"\"" "$RUNNER_TEMP/plan.json")"
+            echo "sample=$(jq -r "$sample" "$RUNNER_TEMP/plan.json")"
+            echo "sample_projects=$(jq -r "$sample | split(\"/\")[0] // \"\"" "$RUNNER_TEMP/plan.json")"
           } >> "$GITHUB_OUTPUT"
           echo "harnesses: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq '.units | length' "$RUNNER_TEMP/all.json")" >> "$GITHUB_STEP_SUMMARY"
 
