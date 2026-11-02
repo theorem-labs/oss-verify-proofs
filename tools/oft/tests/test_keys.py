@@ -517,7 +517,7 @@ class Plan(unittest.TestCase):
             err = self.failed_plan(t, change=head, times=times)
             for r in mine:
                 self.assertIn("%s %s: key %s has no check" % (r["unit"], r["part"], r["key"]), err)
-                self.assertIn("its row is for key %s, a check of other bytes: replace it" % ("f" * 64), err)
+                self.assertIn("its rows are for key %s, checks of other bytes" % ("f" * 64), err)
 
     def test_a_malformed_citation_fails_the_plan(self):
         """Each column is held to its form, and the unit and part to what the tree has to check, so a row cannot cite
@@ -555,15 +555,43 @@ class Plan(unittest.TestCase):
             self.assertIn("line 2: a row has 6 non-empty columns, tab-separated",
                           self.failed_plan(t, change=head, times=times))
 
-    def test_a_second_citation_of_a_part_fails_the_plan(self):
-        """A part's row names its one current check: a second row of the same unit and part, at any key, is refused,
-        not taken in place of the first."""
+    def test_a_repeated_citation_fails_the_plan_and_two_keys_of_a_part_are_both_rows(self):
+        """A second row of the same unit, part and key is refused, not taken in place of the first.  Rows of one part at
+        two keys are two checks: the old key's row still cites the tree as it is while the new key's row waits on
+        main for the change that gives the part that key."""
         with tree() as t:
             head, times, mine = self._offloaded_tree(t)
             r = mine[0]
-            self.cite(t, [(r["unit"], r["part"], r["key"]), (r["unit"], r["part"], "f" * 64)])
+            self.cite(t, [(r["unit"], r["part"], r["key"]), (r["unit"], r["part"], r["key"])])
             err = self.failed_plan(t, change=head, times=times)
-            self.assertIn("line 3: line 2 already has a row for %s %s" % (r["unit"], r["part"]), err)
+            self.assertIn("line 3: line 2 already cites %s %s at key %s" % (r["unit"], r["part"], r["key"]), err)
+            self.cite(t, [(r["unit"], r["part"], "f" * 64)] + [(x["unit"], x["part"], x["key"]) for x in mine])
+            p = self.plan(t, change=commit(t), times=times)
+            self.assertEqual(sorted((o["unit"], o["part"], o["key"]) for o in p["offloaded"]),
+                             sorted((x["unit"], x["part"], x["key"]) for x in mine))
+
+    def test_a_row_only_in_the_change_does_not_cite(self):
+        """pr.yml gives the base's file (cited_from) for a change that is not a release: a row the change itself adds,
+        at the key it gives the part, is not a citation until it is on the base, and the plan says to merge it first.
+        The base's row at that key cites."""
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            head, times, mine = self._offloaded_tree(t)
+            self.cite(t, [(r["unit"], r["part"], r["key"]) for r in mine])
+            base_file = os.path.join(d, "offloaded-checks.tsv")
+            with open(base_file, "w", encoding="utf-8") as f:
+                f.write("\t".join(plan.OFFLOADED_COLUMNS) + "\n")
+            err = self.failed_plan(t, change=head, times=times, cited_from=base_file)
+            for r in mine:
+                self.assertIn("%s %s: key %s has no check on the build service (builds-ossv) in %s; this change adds "
+                              "its row, which cites only once it is on the base" % (r["unit"], r["part"], r["key"],
+                                                                                    base_file), err)
+            with open(base_file, "a", encoding="utf-8") as f:
+                f.write("".join("%s\t%s\t%s\tjob-1\t%s\t2026-11-02\n" % (r["unit"], r["part"], r["key"], "0" * 64)
+                                for r in mine))
+            out, err = io.StringIO(), io.StringIO()
+            self.assertEqual(plan.plan(t.root, change=head, times=times, cited_from=base_file, out=out, err=err), 0,
+                             err.getvalue())
+            self.assertEqual(len(json.loads(out.getvalue())["offloaded"]), len(mine))
 
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""
@@ -701,10 +729,10 @@ class Plan(unittest.TestCase):
         os.chmod(os.path.join(d, "bin", "python"), 0o755)
         return remote, clone
 
-    def run_step(self, d, workflow, cwd, **env):
-        """The step with id plan of the workflow, run as GitHub runs it in cwd: (its plan.json, its outputs).  The test
-        is skipped where the workflow is not, as in the runner image, whose build runs these tests with tools/oft alone
-        (toolchain/runner.Dockerfile)."""
+    def run_step(self, d, workflow, cwd, ok=True, **env):
+        """The step with id plan of the workflow, run as GitHub runs it in cwd: (its plan.json, its outputs), or, when
+        ok is False, (its exit status, its output).  The test is skipped where the workflow is not, as in the runner
+        image, whose build runs these tests with tools/oft alone (toolchain/runner.Dockerfile)."""
         path = os.path.join(REPO, ".github", "workflows", workflow)
         if not os.path.exists(path):
             self.skipTest("no .github/workflows/%s beside tools/oft" % workflow)
@@ -716,6 +744,8 @@ class Plan(unittest.TestCase):
                    GITHUB_OUTPUT=os.path.join(tmp, "output"), GITHUB_STEP_SUMMARY=os.path.join(tmp, "summary"), **env)
         r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", os.path.join(tmp, "plan.sh")],
                            cwd=cwd, env=env, capture_output=True, text=True)
+        if not ok:
+            return r.returncode, r.stdout + r.stderr
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         with open(os.path.join(tmp, "plan.json")) as f, open(os.path.join(tmp, "output")) as o:
             return json.load(f), o.read()
@@ -748,6 +778,39 @@ class Plan(unittest.TestCase):
             self.record(t, remote, head, [(UNIT, "build", key)])
             got, output = self.run_step(d, "pr.yml", d, KIND="maintainer", BASE=base)
             self.assertEqual((got["units"], "units=1\n" in output), ([UNIT], True), output)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_the_pr_plan_step_cites_the_base_s_rows_never_the_change_s(self):
+        """pr.yml's plan step for a change that is not a release, with UNIT too long for a check job (the base's
+        check-times.tsv says so): the change's own row at UNIT's new key does not cite, and the plan fails naming the
+        key; the same row on the base cites."""
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            base = repo(t)
+            t.write("proofs/%s/plain_halts/Proof.v" % UNIT, "Theorem x : True. Proof. exact I. Qed.\n")
+            commit(t)
+            self.workflow(t, d)
+            tools = os.path.join(d, "base", "tools")
+            shutil.copytree(TOOLS, tools, ignore=shutil.ignore_patterns("__pycache__"))
+            header = "\t".join(plan.OFFLOADED_COLUMNS) + "\n"
+            with open(os.path.join(tools, "oft", "offloaded-checks.tsv"), "w", encoding="utf-8") as f:
+                f.write(header)
+            got, _output = self.run_step(d, "pr.yml", d, KIND="maintainer", BASE=base)
+            key = next(r["key"] for r in got["parts"] if r["check"] and r["unit"] == UNIT)
+            with open(os.path.join(tools, "oft", "check-times.tsv"), "a", encoding="utf-8") as f:
+                f.write("%s\t300.0\t20.0\n" % UNIT)
+            row = "%s\tbuild\t%s\tjob-1\t%s\t2026-11-02\n" % (UNIT, key, "0" * 64)
+            os.makedirs(os.path.join(d, "head", "tools", "oft"), exist_ok=True)
+            with open(os.path.join(d, "head", plan.OFFLOADED), "w", encoding="utf-8") as f:
+                f.write(header + row)
+            rc, output = self.run_step(d, "pr.yml", d, ok=False, KIND="maintainer", BASE=base)
+            self.assertNotEqual(rc, 0, output)
+            self.assertIn("%s build: key %s has no check on the build service (builds-ossv) in "
+                          "base/tools/oft/offloaded-checks.tsv; this change adds its row" % (UNIT, key), output)
+            with open(os.path.join(tools, "oft", "offloaded-checks.tsv"), "a", encoding="utf-8") as f:
+                f.write(row)
+            got, output = self.run_step(d, "pr.yml", d, KIND="maintainer", BASE=base)
+            self.assertNotIn(UNIT, got["units"])
+            self.assertEqual([(o["unit"], o["key"]) for o in got["offloaded"]], [(UNIT, key)])
 
     def release_check(self, t, d, **env):
         """release-check.yml's plan step, run in a clone of t's last commit with this tools/: (its plan, outputs).

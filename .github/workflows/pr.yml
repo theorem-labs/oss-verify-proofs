@@ -270,6 +270,15 @@ jobs:
             # checked when its key differs from its key at the base.  So a change to the tools or the workflows
             # checks nothing here.  No recorded pass is read (--store): nothing protects a branch of them yet.
             args=(--base "$BASE" --pr-kind "$KIND")
+            # A harness too long for a check job is taken from a row of tools/oft/offloaded-checks.tsv, the citation of
+            # its check on the build service.  For a change that is not a release the rows that cite are the base's: a
+            # row cites only once it is on main, never one this change adds, since a row is a claim that nothing in
+            # this run checks.  So a change that gives such a harness a new key lands in two steps, as intended: first
+            # the row, at the key the change will give it (the key this step names when the row is missing), then the
+            # change.  A release, and release-check.yml's run of each push to main, read the tree's own rows.
+            if [ "$KIND" != release ] && grep -q -- --citations "$RUNNER_TEMP/plan-help.txt"; then
+              args+=(--citations base/tools/oft/offloaded-checks.tsv)
+            fi
             PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
             { echo "### parts checked, and why"
               jq -r '.parts[] | select(.check) | "- \(.unit) \(.part): \(.why)"' "$RUNNER_TEMP/plan.json"

@@ -137,9 +137,9 @@ def pack(units, times):
     return jobs, sorted(away)
 
 
-# The checks of offloaded units, done on the build service: one row per unit and part, naming the key it was checked
-# at, the build-service job that checked it, the SHA-256 of the job's result.json, and the date (YYYY-MM-DD); a newer
-# check replaces the row.  It is the file at this path in the tree a plan judges, and citations() refuses a malformed
+# The checks of offloaded units, done on the build service: one row per unit, part and key, naming the build-service
+# job that checked that part at that key, the SHA-256 of the job's result.json, and the date (YYYY-MM-DD).  It is the
+# file at this path in the tree a plan judges (pr.yml cites the base's, plan()), and citations() refuses a malformed
 # row.  A plan that checks a part of an offloaded unit takes that part's row at the part's key in place of a check job,
 # and fails, naming the unit, the part and the key, when there is none: a row of another key is a check of other
 # bytes.  keys.NOT_THE_CHECKER names the file, so a new row re-keys nothing.
@@ -149,13 +149,14 @@ _HEX64 = re.compile(r"[0-9a-f]{64}")
 _DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
-def citations(path, harnesses, wanted):
+def citations(path, harnesses=None, wanted=None):
     """{(unit, part, key): row}: the rows of the OFFLOADED file at path; {} when there is no such file.  harnesses is
-    the set of the tree's units, wanted the (unit, part) pairs it has to check.  Raises ValueError, naming each bad
-    row, for a row whose key or result_sha256 is not 64 lowercase hex digits, whose date is not a real YYYY-MM-DD,
-    whose part is not one of keys.PARTS, whose unit is no harness of the tree or has no such part to check, or that
-    repeats the unit and part of an earlier row (a part's row names its one current check; a newer check replaces
-    the row)."""
+    the set of the tree's units, wanted the (unit, part) pairs it has to check, or both None for another tree's file,
+    whose rows that tree's own plans hold to its harnesses.  Raises ValueError, naming each bad row, for a row whose
+    key or result_sha256 is not 64 lowercase hex digits, whose date is not a real YYYY-MM-DD, whose part is not one of
+    keys.PARTS, whose unit is no harness of the tree or has no such part to check, or that repeats the unit, part and
+    key of an earlier row.  A part may have rows at several keys: a change that gives it a new key lands its row at
+    that key first (pr.yml cites the base's rows), while the old key, the tree's current one, still needs its own."""
     if not os.path.isfile(path):
         return {}
     with open(path, encoding="utf-8") as f:
@@ -181,14 +182,14 @@ def citations(path, harnesses, wanted):
             why.append("date %r is not a date YYYY-MM-DD" % row["date"])
         if row["part"] not in keys.PARTS:
             why.append("part %r is not one of %s" % (row["part"], ", ".join(keys.PARTS)))
-        elif row["unit"] not in harnesses:
+        elif harnesses is not None and row["unit"] not in harnesses:
             why.append("unit %r is no harness of this tree" % row["unit"])
-        elif (row["unit"], row["part"]) not in wanted:
+        elif wanted is not None and (row["unit"], row["part"]) not in wanted:
             why.append("%s has no %s part to check" % (row["unit"], row["part"]))
-        if (row["unit"], row["part"]) in seen:
-            why.append("line %d already has a row for %s %s" % (seen[(row["unit"], row["part"])], row["unit"],
-                                                                 row["part"]))
-        seen.setdefault((row["unit"], row["part"]), n)
+        cited = (row["unit"], row["part"], row["key"])
+        if cited in seen:
+            why.append("line %d already cites %s %s at key %s" % (seen[cited], row["unit"], row["part"], row["key"]))
+        seen.setdefault(cited, n)
         if why:
             bad.append("line %d: %s" % (n, "; ".join(why)))
         else:
@@ -238,26 +239,30 @@ def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, sto
 
 
 def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, rocqchk=False,
-         times=None, out=sys.stdout, err=sys.stderr):
+         times=None, cited_from=None, out=sys.stdout, err=sys.stderr):
     """Print {"all", "units", "check_units", "offloaded", "parts", "jobs"} for the parts rows() checks; units, if
     given, limits the plan to those units (weekly's rotating third).  parts holds every part's row with its key and
     components.  The jobs are pack()'s, from times (check_times() when None); units and check_units name the units the
-    jobs check.  offloaded holds, for each checked part of a unit pack() leaves out, the row of root's OFFLOADED file
-    at the part's key; when a part has none, nothing is printed, each such part is named on err with its key, and the
-    plan returns 1.  Each job lists its units, the units whose build it checks (check_units) and those of them with a
-    proof of one of their statements (proof_units, which check-units.sh checks with their proofs and the rest on their
-    statements), the projects whose binaries those and the counterexamples need, the units whose counterexamples and
-    findings it runs, the runner it runs on and its time limit in minutes (timeout_minutes()).  A job carries no keys
-    (the parts do): the workflows pass the jobs as one job output, which grows with the tree, and weekly.yml's
-    determinism job takes them as one environment variable, which Linux caps at 131,072 bytes (with a key per part,
-    #170 measured a plan of every harness at 132,809 bytes)."""
+    jobs check.  offloaded holds, for each checked part of a unit pack() leaves out, the row at the part's key of the
+    OFFLOADED file that cites: root's own, or cited_from, when given.  pr.yml gives the base's for a change that is not
+    a release, so that only a row already on main cites, never one the change itself adds; root's own file is held to
+    its form all the same.  When a part has no row, nothing is printed, each such part is named on err with its key,
+    and the plan returns 1.  Each job lists its units, the units whose build it checks (check_units) and those of them
+    with a proof of one of their statements (proof_units, which check-units.sh checks with their proofs and the rest on
+    their statements), the projects whose binaries those and the counterexamples need, the units whose
+    counterexamples and findings it runs, the runner it runs on and its time limit in minutes (timeout_minutes()).  A
+    job carries no keys (the parts do): the workflows pass the jobs as one job output, which grows with the tree, and
+    weekly.yml's determinism job takes them as one environment variable, which Linux caps at 131,072 bytes (with a key
+    per part, #170 measured a plan of every harness at 132,809 bytes)."""
     times = check_times() if times is None else times
     tree = facts.load(root)
     proved = {st.harness.project.name + "/" + st.harness.name for st in tree.statements() if st.proof}
     wanted = keys.wanted(tree)
     try:
-        cited = citations(os.path.join(root, OFFLOADED),
-                          {h.project.name + "/" + h.name for h in tree.harnesses()}, set(wanted))
+        own = citations(os.path.join(root, OFFLOADED),
+                        {h.project.name + "/" + h.name for h in tree.harnesses()}, set(wanted))
+        # another tree's file names that tree's harnesses: only its form is held here, as its own plans hold the rest
+        cited = own if cited_from is None else citations(cited_from)
     except ValueError as e:
         print("oft plan: %s" % e, file=err)
         return 1
@@ -276,13 +281,18 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
             if row:
                 found.append(row)
             else:
-                other = [k for u, p, k in cited if (u, p) == (r["unit"], r["part"])]
+                other = sorted(k for u, p, k in cited if (u, p) == (r["unit"], r["part"]))
+                why = ""
+                if (r["unit"], r["part"], r["key"]) in own:
+                    why = ("; this change adds its row, which cites only once it is on the base: merge the row first, "
+                           "then this change")
+                elif other:
+                    why = "; its rows are for key %s, checks of other bytes" % ", ".join(other)
                 missing.append("%s %s: key %s has no check on the build service (builds-ossv) in %s%s" % (
-                    r["unit"], r["part"], r["key"], OFFLOADED,
-                    "; its row is for key %s, a check of other bytes: replace it" % other[0] if other else ""))
+                    r["unit"], r["part"], r["key"], cited_from or OFFLOADED, why))
     if missing:
         print("oft plan: %d part(s) too long for a check job and not checked on the build service at their key; "
-              "check each there and add or replace its row:" % len(missing), file=err)
+              "check each there and add its row at that key:" % len(missing), file=err)
         for m in missing:
             print("  " + m, file=err)
         return 1
