@@ -4,6 +4,7 @@ A part is checked when its key (keys.py) has no recorded pass on the branch chec
 judges a change against a base, when the key differs from the base's: a change is checked on what it changes.  Each
 part's row says why it is or is not checked."""
 import json
+import math
 import os
 import sys
 
@@ -26,6 +27,22 @@ LARGE = "ubuntu-24.04-16core"
 PEAK_GIB = 14
 SUM_MINUTES = 150
 TIMES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check-times.tsv")
+# Each check job's time limit, in minutes: MARGIN times the job's measured minutes on its runner (its units' minutes in
+# TIMES, times SLOWER on the standard runner), at least FLOOR and at most CAP; CAP when a unit has no measured minutes.
+#   SLOWER  cgif/cgif_file_fuzzer, the one unit checked on both runners at one commit: 302.8 minutes on ubuntu-24.04
+#           (release-check run 41335592258) against 137.9 and 159.7 on the 16-core runner (runs 41299366541,
+#           41335509469): 2.2 and 1.9 times; the larger is taken.
+#   MARGIN  the minutes in TIMES are each unit's longest run, and for 41 units that run is release-check run
+#           40665207695, which took a median 1.35 times (at most 1.56) the time of run 41299366541 on the same units;
+#           half as much again over the longest run covers a run as slow as that one, of a unit measured on a fast day.
+#   FLOOR   the shortest unit's longest job took 13.9 minutes; 30 leaves room for a slow pull of the images and the
+#           binaries.
+#   CAP     the longest successful check job, zstd/simple_decompress (324.5 minutes, run 40665207695), with 15 minutes
+#           to spare, under GitHub's 360.
+SLOWER = 2.2
+MARGIN = 1.5
+FLOOR = 30
+CAP = 340
 
 
 def check_times(path=TIMES):
@@ -48,6 +65,16 @@ def runner(units, times):
             and sum(m for m, _p in measured) <= SUM_MINUTES:
         return STANDARD
     return LARGE
+
+
+def timeout_minutes(units, times, on):
+    """The time limit of a check job of units on the runner on, by the rule above."""
+    minutes = [times.get(u, (None, None))[0] for u in units]
+    if any(m is None for m in minutes):
+        return CAP
+    expected = sum(minutes) * (SLOWER if on == STANDARD else 1)
+    # rounded first, so that a product such as 40 x 2.2 x 1.5 is the 132 it is and not 132.00000000000003
+    return min(CAP, max(FLOOR, math.ceil(round(MARGIN * expected, 6))))
 
 
 def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, store=None, rocqchk=False):
@@ -96,10 +123,10 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
     Each job lists its units, the units whose build it checks (check_units) and those of them with a proof of one of
     their statements (proof_units, which check-units.sh checks with their proofs and the rest on their statements),
     the projects whose binaries those and the counterexamples need, the units whose counterexamples and findings it
-    runs, and the runner it runs on (runner(), from times: check_times() when None).  A job carries no keys (the parts
-    do): the workflows pass the jobs as one job output, which grows with the tree, and weekly.yml's determinism job
-    takes them as one environment variable, which Linux caps at 131,072 bytes (with a key per part, #170 measured a
-    plan of every harness at 132,809 bytes)."""
+    runs, the runner it runs on (runner(), from times: check_times() when None) and its time limit in minutes
+    (timeout_minutes()).  A job carries no keys (the parts do): the workflows pass the jobs as one job output, which
+    grows with the tree, and weekly.yml's determinism job takes them as one environment variable, which Linux caps at
+    131,072 bytes (with a key per part, #170 measured a plan of every harness at 132,809 bytes)."""
     times = check_times() if times is None else times
     tree = facts.load(root)
     proved = {st.harness.project.name + "/" + st.harness.name for st in tree.statements() if st.proof}
@@ -117,12 +144,13 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
     for i, shard in enumerate([chosen[i::n] for i in range(n)] if chosen else []):
         build = [u for u in shard if "build" in of[u]]
         cx = [u for u in shard if "counterexamples" in of[u]]
+        on = runner(shard, times)
         jobs.append({"index": i, "units": " ".join(shard), "check_units": " ".join(build),
                      "proof_units": " ".join(u for u in build if u in proved),
                      "projects": " ".join(sorted({u.split("/")[0] for u in build + cx})),
                      "counterexamples": " ".join(cx),
                      "findings": " ".join(u for u in shard if "findings" in of[u]),
-                     "runner": runner(shard, times)})
+                     "runner": on, "timeout_minutes": timeout_minutes(shard, times, on)})
     json.dump({"all": bool(parts) and all(r["check"] for r in parts), "units": chosen,
                "check_units": [u for u in chosen if "build" in of[u]], "parts": parts, "jobs": jobs}, out)
     out.write("\n")

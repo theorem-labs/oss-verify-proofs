@@ -378,12 +378,13 @@ class Plan(unittest.TestCase):
             self.assertEqual(row["why"], "changed: proofs")
             self.assertEqual(p["units"], [UNIT])
             # a job's whole shape: the fields the workflows read (pr.yml, release-check.yml and weekly.yml read index,
-            # check_units, proof_units, projects, counterexamples, findings and runner), the job's units, and no key,
-            # which the parts carry.  The Proof.v above has no proof.yaml, so facts sees no proof and proof_units is
-            # empty; check-times.tsv has no peak for this unit, so its job keeps the 16-core runner.
+            # check_units, proof_units, projects, counterexamples, findings, runner and timeout_minutes), the job's
+            # units, and no key, which the parts carry.  The Proof.v above has no proof.yaml, so facts sees no proof
+            # and proof_units is empty; check-times.tsv has no peak for this unit, so its job keeps the 16-core runner,
+            # and its 13.9 minutes there give it the floor of 30.
             self.assertEqual(p["jobs"], [{"index": 0, "units": UNIT, "check_units": UNIT, "proof_units": "",
                                           "projects": "zlib", "counterexamples": "", "findings": "",
-                                          "runner": "ubuntu-24.04-16core"}])
+                                          "runner": "ubuntu-24.04-16core", "timeout_minutes": 30}])
 
     def test_a_job_takes_the_standard_runner_only_when_every_unit_is_small_and_the_sum_short(self):
         times = {"a/small": (40.0, 12.0), "b/small": (100.0, 13.9), "c/big": (30.0, 14.0),
@@ -405,6 +406,22 @@ class Plan(unittest.TestCase):
         self.assertEqual(times["openssl/hashtable"], (360.4, None))
         self.assertEqual(plan.runner(["fast_float/from_chars"], times), "ubuntu-24.04")
         self.assertEqual(plan.runner(["coturn/FuzzStunClient"], times), "ubuntu-24.04-16core")
+        # every measured unit's own job ends before GitHub's 6-hour cap
+        for unit in times:
+            self.assertLess(plan.timeout_minutes([unit], times, plan.runner([unit], times)), 360, unit)
+
+    def test_a_job_s_time_limit_is_its_measured_minutes_on_its_runner_and_half_again(self):
+        times = {"a/x": (40.0, 12.0), "b/y": (100.0, 20.0), "c/z": (None, 1.0), "d/w": (5.0, 1.0)}
+        self.assertEqual(plan.timeout_minutes(["b/y"], times, "ubuntu-24.04-16core"), 150)
+        # 2.2 times as long on the standard runner: 40 x 2.2 x 1.5 = 132
+        self.assertEqual(plan.timeout_minutes(["a/x"], times, "ubuntu-24.04"), 132)
+        # the sum of the job's units
+        self.assertEqual(plan.timeout_minutes(["a/x", "b/y"], times, "ubuntu-24.04-16core"), 210)
+        self.assertEqual(plan.timeout_minutes(["d/w"], times, "ubuntu-24.04-16core"), 30)
+        self.assertEqual(plan.timeout_minutes(["a/x", "b/y", "b/y"], times, "ubuntu-24.04-16core"), 340)
+        # what was not measured gets the cap
+        for unit in ("c/z", "e/unlisted"):
+            self.assertEqual(plan.timeout_minutes(["d/w", unit], times, "ubuntu-24.04-16core"), 340, unit)
 
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""

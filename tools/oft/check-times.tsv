@@ -1,6 +1,6 @@
 # The measured check of each unit with a committed proof or finding on GitHub's 16-core runner (ubuntu-24.04-16core),
-# from which `oft plan` chooses each check job's runner (plan.runner).  The table decides only where a job runs,
-# never what it checks.
+# from which `oft plan` chooses each check job's runner and time limit (plan.runner, plan.timeout_minutes).  The
+# table decides only where a job runs and for how long, never what it checks.
 #   minutes   the longest successful check job of the unit alone, from start to end, in this repository's
 #             release-check and pr runs of 22 October to 2 November 2026.  openssl/hashtable's 360.4 is a lower
 #             bound: GitHub's 6-hour cap cancelled that job on 1 November.

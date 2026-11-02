@@ -96,9 +96,11 @@ jobs:
   sweep:
     needs: plan
     name: sweep ${{ matrix.job.index }}
-    # the runner the job's plan entry names, unless the repository variables say otherwise (pr.yml's check job)
+    # the runner and the time limit the job's plan entry names, unless the repository variables say otherwise (pr.yml's
+    # check job)
     runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
-    timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
+    timeout-minutes: >-
+      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
       max-parallel: 32
@@ -242,7 +244,8 @@ jobs:
     needs: plan
     name: warm ${{ matrix.job.index }}
     runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
-    timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
+    timeout-minutes: >-
+      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
       max-parallel: 20

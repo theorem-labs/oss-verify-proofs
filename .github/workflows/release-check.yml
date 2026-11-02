@@ -60,8 +60,9 @@
 # commit nothing changed, a run no change decides.  pr.yml checks what a pull request touches; a
 # workflow_dispatch here checks every committed proof and finding, and weekly.yml's sweep, which runs
 # weekly and after each release, is what rests the badge on a full re-check.  Each proof check job
-# runs on the runner its plan entry names (tools/oft/plan.py, runner: the standard ubuntu-24.04 for a
-# job of small, short units, else the 16-core ubuntu-24.04-16core).
+# runs on the runner, and within the time limit, that its plan entry names (tools/oft/plan.py: the
+# standard ubuntu-24.04 for a job of small, short units, else the 16-core ubuntu-24.04-16core; a
+# limit from the units' measured minutes on that runner, at most 340).
 #
 # A token with contents: read cannot see a draft release, and a release's new
 # binaries stay drafts until release.yml publishes them.  So fetch-drafts alone
@@ -404,9 +405,11 @@ jobs:
       && (needs.fetch-drafts.result == 'success' || needs.fetch-drafts.result == 'skipped')
     name: check ${{ matrix.job.index }}
     # the proof runner and its limit: pr.yml's check job says how to change them.  A plan of tools that predate the
-    # runner field (a release line's older tools) names none, and its jobs keep the 16-core runner.
+    # runner and timeout_minutes fields (a release line's older tools) names neither, and its jobs keep the 16-core
+    # runner and plan.CAP, 340 minutes.
     runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
-    timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
+    timeout-minutes: >-
+      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
       max-parallel: 32
