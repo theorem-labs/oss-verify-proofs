@@ -17,9 +17,13 @@
 #   check          each group of harnesses: fetch (a draft from its artifact), build the
 #                  images and statements, every proof and its assumptions against the
 #                  allowlist, every counterexample and every finding
-#                  (tools/oft/ci/check-units.sh)
+#                  (tools/oft/ci/check-units.sh).  A harness too long for a check job even alone
+#                  is in no group: the plan takes the citation of its check on the build service
+#                  at each checked part's key (tools/oft/offloaded-checks.tsv), and fails, naming
+#                  the harness, the part and the key, when one has none
 #   release-check  the one required check: it always runs, and fails if any job failed, if a planned
-#                  harness was not checked, or if a full plan named no harness at all
+#                  harness was not checked, or if a full plan named no harness at all; its summary
+#                  names each part checked on the build service and its citation
 #
 # What each commit's own diff decides.  A commit that changes only CHANGELOG.md, docs/,
 # .github/workflows/, or release.yaml's version and date plans no proof job and is green in minutes; a
@@ -140,6 +144,7 @@ jobs:
       plan: ${{ steps.drafts.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
       full: ${{ steps.plan.outputs.full }}
+      offloaded: ${{ steps.plan.outputs.offloaded }}
       draft_legs: ${{ steps.drafts.outputs.draft_legs }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
@@ -354,15 +359,26 @@ jobs:
             PYTHONPATH=tools python -m oft plan --changed "$RUNNER_TEMP/changed.txt" --max-jobs 256 > "$RUNNER_TEMP/plan.json"
           fi
           n="$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
-          if [ "$full" = true ] && [ "$n" -eq 0 ]; then
+          # the parts of the units too long for a check job, each taken from its citation of a check on the build
+          # service at its key (tools/oft/plan.py, offloaded; `oft plan` fails above when one has none); an older plan
+          # has none
+          off="$(jq '.offloaded // [] | length' "$RUNNER_TEMP/plan.json")"
+          if [ "$full" = true ] && [ "$n" -eq 0 ] && [ "$off" -eq 0 ]; then
             echo "::error::the committed proofs and findings name no harness to check"; exit 1
           fi
           # the plan output is written by the next step, with each group's draft binaries in its entry
           { echo "units=$n"
-            echo "full=$full"; } >> "$GITHUB_OUTPUT"
-          { if [ "$full" = true ]; then echo "### every harness with a committed proof or finding: $n"
-            else echo "### harnesses this commit changes: $n"; fi
+            echo "full=$full"
+            echo "offloaded=$(jq -c '[.offloaded // [] | .[] | "\(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"]' "$RUNNER_TEMP/plan.json")"
+          } >> "$GITHUB_OUTPUT"
+          { if [ "$full" = true ]; then echo "### every harness with a committed proof or finding: $n in check jobs"
+            else echo "### harnesses this commit changes: $n in check jobs"; fi
             jq -r '.units[]' "$RUNNER_TEMP/plan.json"
+            if [ "$off" -gt 0 ]; then
+              echo "### checked on the build service (builds-ossv), by citation: $off part(s)"
+              jq -r '.offloaded[] | "- \(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
+                "$RUNNER_TEMP/plan.json"
+            fi
             # a content-keyed plan says why each part is or is not checked; an older plan has no parts
             if jq -e 'has("parts")' "$RUNNER_TEMP/plan.json" > /dev/null; then
               echo "### parts checked, and why"
@@ -535,6 +551,8 @@ jobs:
           PLAN_RESULT: ${{ needs.plan.result }}
           DRAFTS_RESULT: ${{ needs.fetch-drafts.result }}
           CHECK_RESULT: ${{ needs.check.result }}
+          # each part checked on the build service in place of a check job, with its citation (the plan step's)
+          OFFLOADED: ${{ needs.plan.outputs.offloaded || '[]' }}
         run: |
           set -euo pipefail
           [ "$PLAN_RESULT" = success ] || { echo "::error::the plan failed: nothing was checked"; exit 1; }
@@ -544,7 +562,7 @@ jobs:
             [ "$DRAFTS_RESULT" = skipped ] || { echo "::error::no draft binary listed, yet fetch-drafts ran"; exit 1; }
           fi
           # A full plan says every committed proof and finding; a tree that names none is not a release tree.
-          if [ "$FULL" = true ] && [ "${UNITS:-0}" -eq 0 ]; then
+          if [ "$FULL" = true ] && [ "${UNITS:-0}" -eq 0 ] && [ "$(jq length <<< "$OFFLOADED")" -eq 0 ]; then
             echo "::error::no harness with a committed proof or finding was checked"; exit 1
           fi
           if [ "${UNITS:-0}" -gt 0 ]; then
@@ -553,4 +571,7 @@ jobs:
             # a skipped job reports success, so this job, not the matrix, says that nothing ran
             [ "$CHECK_RESULT" = skipped ] || { echo "::error::no harness planned, yet check ran"; exit 1; }
           fi
-          echo "harnesses checked: ${UNITS:-0} (full plan: ${FULL:-unknown})"
+          { echo "### harnesses checked in check jobs: ${UNITS:-0} (full plan: ${FULL:-unknown})"
+            echo "### parts checked on the build service (builds-ossv), by citation: $(jq length <<< "$OFFLOADED")"
+            jq -r '.[] | "- \(.)"' <<< "$OFFLOADED"
+          } | tee -a "$GITHUB_STEP_SUMMARY"

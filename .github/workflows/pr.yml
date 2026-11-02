@@ -164,6 +164,7 @@ jobs:
     outputs:
       plan: ${{ steps.drafts.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
+      offloaded: ${{ steps.plan.outputs.offloaded }}
       base: ${{ steps.base.outputs.base }}
       draft_legs: ${{ steps.drafts.outputs.draft_legs }}
       repository_lint: ${{ steps.reach.outputs.repository_lint }}
@@ -269,6 +270,15 @@ jobs:
             # checked when its key differs from its key at the base.  So a change to the tools or the workflows
             # checks nothing here.  No recorded pass is read (--store): nothing protects a branch of them yet.
             args=(--base "$BASE" --pr-kind "$KIND")
+            # A harness too long for a check job is taken from a row of tools/oft/offloaded-checks.tsv, the citation of
+            # its check on the build service.  For a change that is not a release the rows that cite are the base's: a
+            # row cites only once it is on main, never one this change adds, since a row is a claim that nothing in
+            # this run checks.  So a change that gives such a harness a new key lands in two steps, as intended: first
+            # the row, at the key the change will give it (the key this step names when the row is missing), then the
+            # change.  A release, and release-check.yml's run of each push to main, read the tree's own rows.
+            if [ "$KIND" != release ] && grep -q -- --citations "$RUNNER_TEMP/plan-help.txt"; then
+              args+=(--citations base/tools/oft/offloaded-checks.tsv)
+            fi
             PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
             { echo "### parts checked, and why"
               jq -r '.parts[] | select(.check) | "- \(.unit) \(.part): \(.why)"' "$RUNNER_TEMP/plan.json"
@@ -319,9 +329,17 @@ jobs:
             fi
             PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
           fi
-          # the plan output is written by the drafts step, with each group's draft binaries in its entry
-          echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
-          { echo "### harnesses to check"; jq -r '.units[]' "$RUNNER_TEMP/plan.json"; } >> "$GITHUB_STEP_SUMMARY"
+          # the plan output is written by the drafts step, with each group's draft binaries in its entry.  The parts of
+          # the harnesses too long for a check job are each taken from its citation of a check on the build service at
+          # its key (tools/oft/plan.py, offloaded; `oft plan` fails above when one has none); an older plan has none.
+          { echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
+            echo "offloaded=$(jq -c '[.offloaded // [] | .[] | "\(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"]' "$RUNNER_TEMP/plan.json")"
+          } >> "$GITHUB_OUTPUT"
+          { echo "### harnesses to check"; jq -r '.units[]' "$RUNNER_TEMP/plan.json"
+            echo "### checked on the build service (builds-ossv), by citation: $(jq '.offloaded // [] | length' "$RUNNER_TEMP/plan.json") part(s)"
+            jq -r '.offloaded // [] | .[] | "- \(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
+              "$RUNNER_TEMP/plan.json"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: for each group of the plan, its binaries in a release this read-only token cannot see (a draft)
         id: drafts
         # The base's, like the tools: a GitHub App can change .github/actions/ with the Contents permission alone, while
@@ -941,6 +959,8 @@ jobs:
         if: env.RESTATE != 'true'
         env:
           DRAFTS_LISTED: ${{ needs.plan.outputs.draft_legs != '[]' }}
+          # each part checked on the build service in place of a check job, with its citation (the plan step's)
+          OFFLOADED: ${{ needs.plan.outputs.offloaded || '[]' }}
         run: |
           set -euo pipefail
           [ "${{ needs.plan.result }}" = success ] || { echo "::error::the plan failed"; exit 1; }
@@ -965,7 +985,10 @@ jobs:
           else
             [ "${{ needs.check.result }}" = skipped ] || { echo "::error::no harness planned, yet check ran"; exit 1; }
           fi
-          echo "harnesses checked: ${{ needs.plan.outputs.units }}"
+          { echo "### harnesses checked in check jobs: ${{ needs.plan.outputs.units }}"
+            echo "### parts checked on the build service (builds-ossv), by citation: $(jq length <<< "$OFFLOADED")"
+            jq -r '.[] | "- \(.)"' <<< "$OFFLOADED"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The status a main that merges through a merge queue requires, of each pull request and each queue group.  A pull
   # request made green against another branch and then retargeted at main must not carry that green into main, so on

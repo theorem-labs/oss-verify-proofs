@@ -1,0 +1,12 @@
+# The checks of the units too long for a GitHub check job even alone (tools/oft/plan.py, offloaded: measured minutes
+# on the 16-core runner over 226.7), each done on the build service (builds-ossv) at one key of one part.  One row per
+# unit, part and key: the build-service job, the SHA-256 of its result.json (64 lowercase hex digits), and the date
+# (YYYY-MM-DD).  `oft plan` refuses a malformed or repeated row, and takes a part's row at the part's current key in
+# place of a check job, failing, naming the unit, the part and the key, when there is none.  A pull request's plan
+# (pr.yml) cites the base's rows, never the ones it adds: a change that gives such a part a new key lands in two
+# steps, first its row at the new key, then the change.  keys.NOT_THE_CHECKER names this file, so a new row re-keys
+# nothing.
+unit	part	key	job	result_sha256	date
+openssl/hashtable	build	7fc8bf858531c525fb53bf3a4d79d956858026c8df9fc6bd6ff26a9111820895	farm/20261102t140551z-a2f687	a358199356db14502d3669752495b15df8ec3b49a452fe370c3f2ab2e976d47a	2026-11-02
+zstd/simple_decompress	build	b65b4ee6130d573b938ca41d3fd5bceef86a0fa6029ac35bf5efe93df9e30a72	farm/20261102t140614z-ec3ecc	ea3461ad85104c2f272089d6712eeb2d8e19b7dbe1d424a260e3f0a09c7da99b	2026-11-02
+cgif/cgif_rgb_fuzzer	build	2fac5c9eba0eb76c68896058b5f800fa8e6c51222b5ab0ec7c7c695602355bf4	farm/20261102t140638z-6d6f9c	8142cc6a15a9b20e26263806d9148072aa75860a5a4824e43c6ee5e36741a91b	2026-11-02
