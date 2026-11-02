@@ -8,8 +8,9 @@
 #   peak_gib  the largest peak memory a check of the unit reached on that runner (16 CPUs), 28 October to 1 November
 #             2026, as reported by a build of `oft check` that samples its process's cgroup every 2 seconds; empty
 #             where none was measured.
-# A unit not listed, or with an empty column, counts as over that column's threshold; one with no minutes is packed
-# as plan.UNMEASURED minutes on the 16-core runner, in a job limited to 340 (plan.py says what UNMEASURED rests on).
+# A unit not listed, or with an empty column, counts as over that column's threshold; one with no minutes and no
+# proof is packed as plan.UNMEASURED minutes on the 16-core runner, in a job limited to 340 (plan.py says what
+# UNMEASURED rests on), and one with no minutes and a proof gets a 16-core job of its own at 340.
 unit	minutes	peak_gib
 boost-beast/http_request	97.4	15.1
 boost-json/fuzz_parse	60.1	18.4

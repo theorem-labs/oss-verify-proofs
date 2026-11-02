@@ -85,13 +85,15 @@ def timeout_minutes(units, times, on):
 # their own, so that a long unit never pulls a short one onto the 16-core runner; the rest are packed into 16-core
 # jobs.  Each kind is packed first-fit decreasing: longest unit first, into the first job it fits in.  A unit with no
 # measured minutes (in TIMES: the 61 with a committed proof; the tree has some 2,150 harnesses, most checked on their
-# statements alone) is packed on the 16-core runner as UNMEASURED minutes, and its job's limit is CAP.  UNMEASURED is
-# the largest minutes per harness of a sweep job with no proved harness in the measured weekly runs of 24 and 26
-# October 2026 (five such 16-core jobs: 9 or 26 harnesses each, 4.2 to 75.9 minutes; the 75.9-minute job of 26
-# harnesses is 2.92 a harness, and the median is 0.54), rounded up.  A unit whose own minutes are over the 16-core
-# room (offloaded()) is in no job: it is checked on the build service (builds-ossv), and the plan takes a citation of
-# that check instead (OFFLOADED).  The jobs are listed longest first, so that the matrix starts them first.  MATRIX is
-# the most jobs GitHub runs in one matrix.
+# statements alone) and no proof is packed on the 16-core runner as UNMEASURED minutes, and its job's limit is CAP.
+# UNMEASURED is the largest minutes per harness of a sweep job with no proved harness in the measured weekly runs of
+# 24 and 26 October 2026 (five such 16-core jobs: 9 or 26 harnesses each, 4.2 to 75.9 minutes; the 75.9-minute job
+# of 26 harnesses is 2.92 a harness, and the median is 0.54), rounded up.  It says nothing of a proof's check, which
+# took 13.9 to 360 minutes for the measured ones: an unmeasured unit with a proof (a new proof, before TIMES has its
+# row) gets a 16-core job of its own, at CAP, so that it cannot take a job's other units past their limit with it.  A
+# unit whose own minutes are over the 16-core room (offloaded()) is in no job: it is checked on the build service
+# (builds-ossv), and the plan takes a citation of that check instead (OFFLOADED).  The jobs are listed longest first,
+# so that the matrix starts them first.  MATRIX is the most jobs GitHub runs in one matrix.
 ROOM = {LARGE: CAP / MARGIN, STANDARD: CAP / MARGIN / SLOWER}
 UNMEASURED = 3.0
 MATRIX = 256
@@ -103,10 +105,11 @@ def offloaded(unit, times):
     return m is not None and m > ROOM[LARGE]
 
 
-def pack(units, times):
+def pack(units, times, proved):
     """([(runner, [unit, ...]), ...], [unit, ...]): the check jobs of units, by the rule above, and the units that are
-    in no job because offloaded() says so.  Every unit is in exactly one job or in the second list."""
-    by, away, size = {STANDARD: [], LARGE: []}, [], {}
+    in no job because offloaded() says so.  proved is the set of units with a proof.  Every unit is in exactly one job
+    or in the second list."""
+    alone, by, away, size = [], {STANDARD: [], LARGE: []}, [], {}
     for u in units:
         m = times.get(u, (None, None))[0]
         on = runner([u], times)
@@ -114,10 +117,13 @@ def pack(units, times):
             on = LARGE
         if offloaded(u, times):
             away.append(u)
+        elif m is None and u in proved:
+            size[u] = math.inf
+            alone.append((LARGE, [u]))
         else:
             size[u] = UNMEASURED if m is None else m
             by[on].append(u)
-    jobs = []
+    jobs = alone
     for on, members in by.items():
         bins = []
         for u in sorted(members, key=lambda u: (-size[u], u)):
@@ -273,7 +279,7 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
     for r in parts:
         if r["check"]:
             of.setdefault(r["unit"], set()).add(r["part"])
-    packed, away = pack(sorted(of), times)
+    packed, away = pack(sorted(of), times, proved)
     found, missing = [], []
     for r in parts:
         if r["check"] and r["unit"] in away:

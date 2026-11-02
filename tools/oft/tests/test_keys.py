@@ -428,7 +428,7 @@ class Plan(unittest.TestCase):
         minutes than its time limit allows under the cap (1.5 x 2.2 x minutes on the standard runner, 1.5 x minutes on
         the 16-core one), and the offloaded units are those too long for a job even alone."""
         times = plan.check_times()
-        jobs, away = plan.pack(sorted(times), times)
+        jobs, away = plan.pack(sorted(times), times, set(times))
         self.assertEqual(sorted([u for _on, us in jobs for u in us] + away), sorted(times))
         for on, units in jobs:
             minutes = [times[u][0] for u in units]
@@ -441,17 +441,42 @@ class Plan(unittest.TestCase):
     def test_units_are_packed_longest_first_into_the_first_job_they_fit(self):
         times = {"a/l1": (200.0, 30.0), "b/l2": (100.0, 30.0), "c/l3": (26.0, 30.0), "d/s1": (90.0, 10.0),
                  "e/s2": (20.0, 10.0), "f/over": (300.0, 30.0), "g/s_long": (120.0, 10.0)}
-        jobs, away = plan.pack(sorted(times) + ["h/unmeasured"], times)
+        jobs, away = plan.pack(sorted(times) + ["h/unmeasured"], times, set(times))
         self.assertEqual(jobs, [
             # 200 + 26 fits in 226.7; 100 does not, nor the unmeasured unit's 3 after them
             ("ubuntu-24.04-16core", ["a/l1", "c/l3"]),
             # a unit the rule puts on the standard runner, too long for its room there (103.0), takes 16 cores; an
-            # unmeasured unit is packed as plan.UNMEASURED minutes on 16 cores: 120 + 100 + 3
+            # unmeasured unit with no proof is packed as plan.UNMEASURED minutes on 16 cores: 120 + 100 + 3
             ("ubuntu-24.04-16core", ["b/l2", "g/s_long", "h/unmeasured"]),
             ("ubuntu-24.04", ["d/s1"]),
             ("ubuntu-24.04", ["e/s2"])])
         # over the 16-core room alone: in no job
         self.assertEqual(away, ["f/over"])
+
+    def test_an_unmeasured_unit_with_a_proof_gets_a_job_of_its_own(self):
+        """A proof's check is not a statements-only one (the measured ones took 13.9 to 360 minutes): a proved unit
+        with no row in check-times.tsv is never packed beside another unit, whose verdict its limit would take with it.
+        An unmeasured unit with no proof still shares a job at its 3 minutes."""
+        times = {"a/l1": (220.0, 30.0)}
+        jobs, away = plan.pack(["a/l1", "n/new_proof", "s/statements"], times, {"a/l1", "n/new_proof"})
+        self.assertEqual(jobs, [("ubuntu-24.04-16core", ["n/new_proof"]),
+                                ("ubuntu-24.04-16core", ["a/l1", "s/statements"])])
+        self.assertEqual(away, [])
+        self.assertEqual(plan.timeout_minutes(["n/new_proof"], times, "ubuntu-24.04-16core"), plan.CAP)
+
+    def test_a_plan_gives_a_new_proof_with_no_measurement_a_job_of_its_own(self):
+        """In a plan, a harness of the fixture with a committed proof and no row in the table is alone in its job."""
+        with tree() as t:
+            repo(t)
+            st = next(x for x in facts.load(t.root).statements() if x.id == UNIT + "/plain_halts")
+            t.put_yaml("proofs/%s/plain_halts/proof.yaml" % UNIT, {
+                "schema": "oss-fuzz-theorems/proof/1", "proves": st.id, "fingerprint": st.fingerprint})
+            t.write("proofs/%s/plain_halts/Proof.v" % UNIT, "Theorem plain_halts_holds : True. Qed.\n")
+            p = self.plan(t, change=commit(t), times={})
+            mine = [j for j in p["jobs"] if UNIT in j["units"].split()]
+            self.assertEqual([j["units"] for j in mine], [UNIT])
+            self.assertEqual(mine[0]["timeout_minutes"], plan.CAP)
+            self.assertTrue(any(len(j["units"].split()) > 1 for j in p["jobs"]), "the unproved harnesses share jobs")
 
     @unittest.skipUnless(os.path.isfile(os.path.join(REPO, "index", "harnesses.tsv")),
                          "no index/harnesses.tsv beside tools/")
@@ -459,10 +484,13 @@ class Plan(unittest.TestCase):
         """Every harness of the repository (2,148 on 2 November 2026, of which check-times.tsv measures 61), packed:
         each is in exactly one job or offloaded, the jobs fit one matrix, and no job's estimate is over its room."""
         with open(os.path.join(REPO, "index", "harnesses.tsv"), encoding="utf-8") as f:
-            units = sorted({"%s/%s" % tuple(line.split("\t")[:2]) for line in list(f)[1:]})
+            rows = [line.rstrip("\n").split("\t") for line in list(f)[1:]]
+        units = sorted({"%s/%s" % (r[0], r[1]) for r in rows})
+        # the proved column: harnesses with a proof, which an unmeasured one would put in a job of its own
+        proved = {"%s/%s" % (r[0], r[1]) for r in rows if int(r[6]) > 0}
         self.assertGreater(len(units), 2000)
         times = plan.check_times()
-        jobs, away = plan.pack(units, times)
+        jobs, away = plan.pack(units, times, proved)
         packed = [u for _on, us in jobs for u in us]
         self.assertEqual(sorted(packed + away), units)
         self.assertEqual(len(packed), len(set(packed)))
