@@ -8,7 +8,7 @@
 #                  with tools that predate them (a release line's older tools), the changed paths are
 #                  mapped onto harnesses by `oft plan --changed`: a changed proofs/<p>/<h>/,
 #                  findings/<p>/<h>/, counterexamples/<p>/<h>/ or projects/<p>/ marks that harness or
-#                  that project's harnesses, and nothing else marks any.  A weekly or dispatched run, a
+#                  that project's harnesses, and nothing else marks any.  A dispatched run, a
 #                  push with no usable parent, and a change that reaches every harness (FULL below) plan
 #                  every part instead (a full plan).  The plan also names the planned binaries in a
 #                  release that a read-only token cannot see (a draft), and which group needs each
@@ -29,7 +29,9 @@
 #   - content keys, when `oft plan` has them (it takes --store): a change to the checker image pin
 #     (release.yaml images.checker), theories/, toolchain/allowed-axioms.txt or dune-project changes
 #     every build key, and so re-checks every build.  What no key holds takes the full plan (FULL):
-#     tools/ (the checker the check job copies and runs), toolchain/ (the files that build the
+#     the checker the check job copies and runs (keys.checker: every file of tools/ but those of
+#     tools/oft/ a check never opens), tools/oft/keys.py and tools/oft/plan.py, which define the
+#     checker and plan this run, toolchain/ (the files that build the
 #     images), a .gitattributes, and .github/actions/ (whose place-drafts the check job runs).  A
 #     hand-written dune file that could change a build is refused by the plan (keys.check_hand_dune).
 #   - the diff alone, with older tools: a change to a project's project.yaml or any of its
@@ -54,18 +56,20 @@
 # which are what the check job runs (it copies work/tools out of the tree it checks).  pr.yml instead
 # judges a pull request with the base's tools, which a reviewer has read.
 #
-# It runs on every push to main, weekly and on request.  pr.yml checks what a pull request touches;
-# the weekly run and a workflow_dispatch check every committed proof and finding, so the badge rests on
-# a full re-check at least once a week.  The proof checks
-# run on ubuntu-24.04-16core, a 16-core/64 GB GitHub-hosted larger runner (a proof
-# check peaks at 14.5-19.4 GiB on 16 cores).
+# It runs on every push to main and on request, and on no schedule: a scheduled run would check a
+# commit nothing changed, a run no change decides.  pr.yml checks what a pull request touches; a
+# workflow_dispatch here checks every committed proof and finding, and weekly.yml's sweep, which runs
+# weekly and after each release, is what rests the badge on a full re-check.  Each proof check job
+# runs on the runner, and within the time limit, that its plan entry names (tools/oft/plan.py: the
+# standard ubuntu-24.04 for a job of small, short units, else the 16-core ubuntu-24.04-16core; a
+# limit from the units' measured minutes on that runner, at most 340).
 #
 # A token with contents: read cannot see a draft release, and a release's new
 # binaries stay drafts until release.yml publishes them.  So fetch-drafts alone
 # has contents: write; it checks out nothing and runs no script from the tree,
 # only `gh release download` of the pins the plan listed and a SHA-256 check of
 # each.  Its YAML is the checked commit's fetch-drafts.yml: this workflow runs
-# on a push to main, on a schedule and on a request by someone with write
+# on a push to main and on a request by someone with write
 # access (of main or another branch), never for a pull request.  Every other
 # job has read access only.
 #
@@ -100,8 +104,8 @@ name: release-check
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: "41 4 * * 1"
+  # No schedule: weekly.yml's sweep checks every committed proof and finding once a week, so a cron here
+  # would check the same corpus a second time, on a commit nothing changed.
   workflow_dispatch:
     inputs:
       units:
@@ -113,7 +117,7 @@ permissions:
 concurrency:
   # Each push has a run of its own that nothing cancels, keyed by the branch as well as
   # the commit: a second push to main never cancels the run of the commit a release
-  # tags.  A schedule or workflow_dispatch run of the same commit waits for that run
+  # tags.  A workflow_dispatch run of the same commit waits for that run
   # (a later one of the same commit replaces it in the queue).  A dispatch for named
   # units is its own group, so it never replaces or waits for the run behind the badge.
   group: release-check-${{ format('{0}-{1}-{2}', github.ref, github.sha, inputs.units) }}
@@ -124,7 +128,7 @@ defaults:
 env:
   PYTHONDONTWRITEBYTECODE: "1"
   # The commit this one is judged against: main before the push (all zeros when the push made the
-  # branch).  A schedule or a dispatch has none, and plans every part of every harness with a committed
+  # branch).  A dispatch has none, and plans every part of every harness with a committed
   # proof or finding.
   EVENT_BASE: ${{ github.event_name == 'push' && github.event.before || '' }}
 
@@ -185,7 +189,7 @@ jobs:
           sed -E 's|^[^/]+/([^/]+/[^/]+)/$|\1|' "$RUNNER_TEMP/every.txt" | sort -u > "$RUNNER_TEMP/units.txt"
           # The commit this one is judged against: main's tip before this push, which is the commit's
           # parent for a fast-forward and the tip it replaced for a force-push (whose own run checked
-          # it).  Without one -- a schedule, a dispatch, or a push that made the branch -- every part is
+          # it).  Without one -- a dispatch, or a push that made the branch -- every part is
           # planned.
           base="${EVENT_BASE:-}"
           case "$base" in 0000000000000000000000000000000000000000) base= ;; esac
@@ -213,18 +217,35 @@ jobs:
             git -c core.quotePath=false diff --no-renames --name-only "$base" HEAD > "$RUNNER_TEMP/diff.txt"
             echo "changed paths: $(wc -l < "$RUNNER_TEMP/diff.txt")"
             if [ "$keyed" = true ]; then
-              # What no content key holds, so that a change to it takes the full plan: tools/, the checker
-              # the check job copies and runs (keys.py holds one tools/ id, which is the same on both
-              # sides of a comparison, so no key can tell this change); a .gitattributes, since a rule of
-              # one aimed at tools/ changes the bytes the checker is checked out as, and the keys hold the
-              # attributes of the keyed paths only; toolchain/, whose Dockerfiles build the
-              # images a check runs in; .github/actions/, whose place-drafts the check job runs.  A
+              # What no content key holds, so that a change to it takes the full plan: the checker the
+              # check job copies and runs (keys.py holds one checker id, which is the same on both sides
+              # of a comparison, so no key can tell this change), named by keys.checker: every file of
+              # tools/ but the files of tools/oft/ a check never opens (keys.NOT_THE_CHECKER: the lint,
+              # the planner, the README, the tests, ...), with its checkout attributes; a .gitattributes,
+              # since a rule of one aimed at tools/ changes the bytes the checker is checked out as, and
+              # the keys hold the attributes of the keyed paths only; toolchain/, whose Dockerfiles build
+              # the images a check runs in; .github/actions/, whose place-drafts the check job runs.  A
               # path git still quotes ('"', '\' or a control character in its name) cannot be read by
-              # this pattern, and takes the full plan too.  .github/workflows/ is NOT here: a change to a
+              # this pattern, and takes the full plan too.  Two files of tools/oft/ that no key holds
+              # take the full plan by name.  keys.py defines the checker (NOT_THE_CHECKER): this step
+              # computes both checker ids with the pushed commit's keys.py, so a push that narrowed the
+              # checker could otherwise judge its own checker change unchanged.  plan.py is the planner
+              # this very step runs, and no key holds it either, so a change that made it select nothing
+              # would answer no unit and pass with nothing checked; planned in full, it must name a
+              # harness or the gate job fails.  A checker id that cannot be computed takes the full plan
+              # too.  So a change to tools/oft/lint.py or to a file of tools/oft/tests/ alone plans by
+              # key, like any other change.  .github/workflows/ is NOT here: a change to a
               # workflow plans no proof, since pr.yml's run of the same push lints the tree and runs the
               # tools' tests, which are what such a change can break.
-              if LC_ALL=C grep -qE '^(toolchain/|tools/|\.github/actions/|")|(^|/)\.gitattributes$' "$RUNNER_TEMP/diff.txt"; then
-                echo "a change under toolchain/, tools/ or .github/actions/, or a .gitattributes: every part is planned"
+              # Every part key already carries the checker id, so a changed checker re-plans every part
+              # by key as well; what this branch adds is the full plan itself, which drops --base and so
+              # arms the gate job's assertion that a full plan named at least one harness.
+              checker() { PYTHONPATH=tools python -c 'import sys; from oft import keys; print(keys.checker(".", sys.argv[1]))' "$1"; }
+              if LC_ALL=C grep -qE '^(toolchain/|tools/oft/(keys|plan)\.py$|\.github/actions/|")|(^|/)\.gitattributes$' "$RUNNER_TEMP/diff.txt"; then
+                echo "a change under toolchain/, to tools/oft/keys.py or tools/oft/plan.py, under .github/actions/, to a .gitattributes, or to a path git quotes: every part is planned"
+              elif LC_ALL=C grep -q '^tools/' "$RUNNER_TEMP/diff.txt" \
+                  && ! { b="$(checker "$base")" && h="$(checker HEAD)" && [ "$b" = "$h" ]; }; then
+                echo "a change to the checker (keys.checker), or a checker id that cannot be computed: every part is planned"
               else
                 full=false
               fi
@@ -287,11 +308,13 @@ jobs:
               fi
             fi
           fi
-          # 256 jobs, the matrix limit: oft plan deals units to jobs round-robin by name, blind to how long each
-          # takes, and at 32 jobs it put cgif/cgif_rgb_fuzzer (188 min) and openssl/hashtable (120 min) in one
-          # job, close to the 6 hours a GitHub-hosted job cannot exceed.  max-parallel (the check job) is unchanged.
+          # The jobs: tools/oft/plan.py packs the units by their measured minutes, so that no job holds more than its
+          # time limit allows (plan.pack).  Older tools deal units to jobs round-robin by name, blind to how long each
+          # takes (at 32 jobs that put cgif/cgif_rgb_fuzzer and openssl/hashtable in one job, close to the 6 hours a
+          # GitHub-hosted job cannot exceed), so they get --max-jobs 256, the matrix limit: a job for each unit.
           if [ "$keyed" = true ]; then
-            args=(--units "$RUNNER_TEMP/units.txt" --max-jobs 256)
+            args=(--units "$RUNNER_TEMP/units.txt")
+            if grep -q -- --max-jobs "$RUNNER_TEMP/plan-help.txt"; then args+=(--max-jobs 256); fi
             if [ "$full" = false ]; then
               # Content keys (tools/oft/keys.py): a part is checked when the key of what its check reads
               # differs from its key at the base.  --pr-kind release and --tools HEAD name what the check
@@ -383,9 +406,12 @@ jobs:
       !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.units != '0'
       && (needs.fetch-drafts.result == 'success' || needs.fetch-drafts.result == 'skipped')
     name: check ${{ matrix.job.index }}
-    # the proof runner and its limit: pr.yml's check job says how to change them
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
-    timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
+    # the proof runner and its limit: pr.yml's check job says how to change them.  A plan of tools that predate the
+    # runner and timeout_minutes fields (a release line's older tools) names neither, and its jobs keep the 16-core
+    # runner and plan.CAP, 340 minutes.
+    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
+    timeout-minutes: >-
+      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
       max-parallel: 32

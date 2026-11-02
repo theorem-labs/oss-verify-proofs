@@ -48,8 +48,8 @@ VERSION = "1"
 # renders each proof library's lib/dune itself, with them.
 NOT_THE_CHECKER = re.compile(
     r"(?:__main__\.py|lint\.py|lint-exceptions\.yaml|urls\.py|ledger\.py|approvals\.py"
-    r"|release_tree\.py|revisions\.py|plan\.py|README\.md|templates/(?!proof-dune\.tmpl$).*|tests/.*"
-    r"|ci/facts-review-.*)")
+    r"|release_tree\.py|revisions\.py|plan\.py|check-times\.tsv|README\.md"
+    r"|templates/(?!proof-dune\.tmpl$).*|tests/.*|ci/facts-review-.*)")
 STORE_BRANCH = "check-results"
 
 

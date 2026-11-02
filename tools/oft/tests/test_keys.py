@@ -378,10 +378,82 @@ class Plan(unittest.TestCase):
             self.assertEqual(row["why"], "changed: proofs")
             self.assertEqual(p["units"], [UNIT])
             # a job's whole shape: the fields the workflows read (pr.yml, release-check.yml and weekly.yml read index,
-            # check_units, proof_units, projects, counterexamples and findings), the job's units, and no key, which the
-            # parts carry.  The Proof.v above has no proof.yaml, so facts sees no proof and proof_units is empty.
+            # check_units, proof_units, projects, counterexamples, findings, runner and timeout_minutes), the job's
+            # units, and no key, which the parts carry.  The Proof.v above has no proof.yaml, so facts sees no proof
+            # and proof_units is empty; check-times.tsv has no peak for this unit, so its job keeps the 16-core runner,
+            # and its 13.9 minutes there give it the floor of 30.
             self.assertEqual(p["jobs"], [{"index": 0, "units": UNIT, "check_units": UNIT, "proof_units": "",
-                                          "projects": "zlib", "counterexamples": "", "findings": ""}])
+                                          "projects": "zlib", "counterexamples": "", "findings": "",
+                                          "runner": "ubuntu-24.04-16core", "timeout_minutes": 30}])
+
+    def test_a_job_takes_the_standard_runner_only_when_every_unit_is_small_and_the_sum_short(self):
+        times = {"a/small": (40.0, 12.0), "b/small": (100.0, 13.9), "c/big": (30.0, 14.0),
+                 "d/no_peak": (10.0, None), "e/no_minutes": (None, 1.0)}
+        self.assertEqual(plan.runner(["a/small"], times), "ubuntu-24.04")
+        # 140 minutes summed, both under 14 GiB
+        self.assertEqual(plan.runner(["a/small", "b/small"], times), "ubuntu-24.04")
+        # a peak of 14 GiB is not under 14
+        self.assertEqual(plan.runner(["a/small", "c/big"], times), "ubuntu-24.04-16core")
+        # 180 minutes summed
+        self.assertEqual(plan.runner(["a/small", "a/small", "b/small"], times), "ubuntu-24.04-16core")
+        # what was not measured counts as over the threshold
+        for unit in ("d/no_peak", "e/no_minutes", "f/unlisted"):
+            self.assertEqual(plan.runner(["a/small", unit], times), "ubuntu-24.04-16core", unit)
+
+    def test_the_measured_table_reads(self):
+        """check-times.tsv reads, and its rows decide as the rule says."""
+        times = plan.check_times()
+        self.assertEqual(times["openssl/hashtable"], (360.4, None))
+        self.assertEqual(plan.runner(["fast_float/from_chars"], times), "ubuntu-24.04")
+        self.assertEqual(plan.runner(["coturn/FuzzStunClient"], times), "ubuntu-24.04-16core")
+        # every measured unit's own job ends before GitHub's 6-hour cap
+        for unit in times:
+            self.assertLess(plan.timeout_minutes([unit], times, plan.runner([unit], times)), 360, unit)
+
+    def test_a_job_s_time_limit_is_its_measured_minutes_on_its_runner_and_half_again(self):
+        times = {"a/x": (40.0, 12.0), "b/y": (100.0, 20.0), "c/z": (None, 1.0), "d/w": (5.0, 1.0)}
+        self.assertEqual(plan.timeout_minutes(["b/y"], times, "ubuntu-24.04-16core"), 150)
+        # 2.2 times as long on the standard runner: 40 x 2.2 x 1.5 = 132
+        self.assertEqual(plan.timeout_minutes(["a/x"], times, "ubuntu-24.04"), 132)
+        # the sum of the job's units
+        self.assertEqual(plan.timeout_minutes(["a/x", "b/y"], times, "ubuntu-24.04-16core"), 210)
+        self.assertEqual(plan.timeout_minutes(["d/w"], times, "ubuntu-24.04-16core"), 30)
+        self.assertEqual(plan.timeout_minutes(["a/x", "b/y", "b/y"], times, "ubuntu-24.04-16core"), 340)
+        # what was not measured gets the cap
+        for unit in ("c/z", "e/unlisted"):
+            self.assertEqual(plan.timeout_minutes(["d/w", unit], times, "ubuntu-24.04-16core"), 340, unit)
+
+    def test_a_full_plan_of_the_measured_table_has_no_job_over_its_limit_but_a_lone_unit(self):
+        """Every unit of check-times.tsv, packed: each unit is in one job, and a job of more than one unit holds no
+        more measured minutes than its time limit allows under the cap, 1.5 x 2.2 x minutes on the standard runner
+        and 1.5 x minutes on the 16-core one.  Only a unit over that alone, or with no minutes, is at the cap."""
+        times = plan.check_times()
+        jobs = plan.pack(sorted(times), times)
+        self.assertEqual(sorted(u for _on, us in jobs for u in us), sorted(times))
+        for on, units in jobs:
+            minutes = [times[u][0] for u in units]
+            if len(units) > 1:
+                self.assertNotIn(None, minutes, units)
+                factor = plan.SLOWER if on == plan.STANDARD else 1
+                self.assertLessEqual(plan.MARGIN * factor * sum(minutes), plan.CAP, (on, units))
+                self.assertEqual(on, plan.runner(units, times), units)
+        lone = {us[0] for on, us in jobs if plan.timeout_minutes(us, times, on) == plan.CAP
+                and (times[us[0]][0] is None or plan.MARGIN * times[us[0]][0] > plan.CAP)}
+        self.assertEqual(lone, {"openssl/hashtable", "zstd/simple_decompress", "cgif/cgif_rgb_fuzzer"})
+
+    def test_units_are_packed_longest_first_into_the_first_job_they_fit(self):
+        times = {"a/l1": (200.0, 30.0), "b/l2": (100.0, 30.0), "c/l3": (26.0, 30.0), "d/s1": (90.0, 10.0),
+                 "e/s2": (20.0, 10.0), "f/over": (300.0, 30.0), "g/s_long": (120.0, 10.0)}
+        jobs = plan.pack(sorted(times) + ["h/unmeasured"], times)
+        self.assertEqual(jobs, [
+            ("ubuntu-24.04-16core", ["h/unmeasured"]),
+            ("ubuntu-24.04-16core", ["f/over"]),
+            # 200 + 26 fits in 226.7; 100 does not
+            ("ubuntu-24.04-16core", ["a/l1", "c/l3"]),
+            # a unit the rule puts on the standard runner, too long for its room there (103.0), takes 16 cores
+            ("ubuntu-24.04-16core", ["b/l2", "g/s_long"]),
+            ("ubuntu-24.04", ["d/s1"]),
+            ("ubuntu-24.04", ["e/s2"])])
 
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""
@@ -486,7 +558,9 @@ class Plan(unittest.TestCase):
             t.put_yaml("proofs/%s/plain_halts/proof.yaml" % UNIT, {
                 "schema": "oss-fuzz-theorems/proof/1", "proves": st.id, "fingerprint": st.fingerprint})
             t.write("proofs/%s/plain_halts/Proof.v" % UNIT, "Theorem plain_halts_holds : True. Qed.\n")
-            p = self.plan(t, change=commit(t), max_jobs=1)
+            # every unit measured on the 16-core runner and short, so that they pack into one job
+            times = {u: (10.0, 20.0) for u, _part in keys.wanted(facts.load(t.root))}
+            p = self.plan(t, change=commit(t), times=times)
             self.assertEqual(len(p["jobs"]), 1)
             self.assertIn("zlib/api-driver", p["jobs"][0]["check_units"].split())
             self.assertEqual(p["jobs"][0]["proof_units"], UNIT)
@@ -681,6 +755,22 @@ class Plan(unittest.TestCase):
                              [up for up in keys.wanted(facts.load(t.root)) if up[0] in (CX_UNIT, UNIT)])
             self.assertIn("units=2\n", output)
             self.assertIn("full=true\n", output)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_the_release_check_plan_step_plans_no_proof_for_a_change_a_check_never_opens(self):
+        """A change to a file of tools/oft/ that keys.NOT_THE_CHECKER names (the lint, the tests) leaves the checker
+        id where it was, so the step plans by key and nothing is checked; only the files the full-plan pattern names
+        by hand, keys.py and plan.py, take the full plan from under tools/oft/."""
+        for path in ("tools/oft/lint.py", "tools/oft/tests/test_lint.py"):
+            with self.subTest(path=path), tree() as t, tempfile.TemporaryDirectory() as d:
+                t.write(path, "# the file as it was\n")
+                base = self.released(t)
+                t.write(path, "# the file, changed\n")
+                commit(t)
+                got, output = self.release_check(t, d, EVENT_BASE=base)
+                self.assertEqual((got["units"], got["jobs"]), ([], []), output)
+                self.assertIn("units=0\n", output)
+                self.assertIn("full=false\n", output)
 
     @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
     def test_the_release_check_plan_step_plans_no_proof_for_a_workflow_only_commit(self):

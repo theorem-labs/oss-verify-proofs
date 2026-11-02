@@ -68,8 +68,13 @@ jobs:
           ROTATE: ${{ github.event_name == 'schedule' && github.event.repository.visibility != 'public' }}
         run: |
           set -euo pipefail
-          # with no base and no recorded pass, every part of every harness is planned
-          PYTHONPATH=tools python -m oft plan --max-jobs 1 > "$RUNNER_TEMP/all.json"
+          # with no base and no recorded pass, every part of every harness is planned.  The jobs: the tools pack the
+          # units by their measured minutes (tools/oft/plan.py, pack); tools that predate the packing take --max-jobs,
+          # and deal units round-robin, so they get 256, the matrix limit: a job for each unit.
+          PYTHONPATH=tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
+          jobs=()
+          if grep -q -- --max-jobs "$RUNNER_TEMP/plan-help.txt"; then jobs=(--max-jobs 256); fi
+          PYTHONPATH=tools python -m oft plan "${jobs[@]}" > "$RUNNER_TEMP/all.json"
           if [ -n "${UNITS:-}" ]; then
             read -r -a named <<< "$UNITS"
             printf '%s\n' "${named[@]}" > "$RUNNER_TEMP/units.txt"
@@ -80,26 +85,29 @@ jobs:
             jq -r '.units[]' "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
           fi
           [ -s "$RUNNER_TEMP/units.txt" ] || { echo "::error::no harness to check: nothing examined"; exit 1; }
-          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" --max-jobs 256 > "$RUNNER_TEMP/plan.json"
-          # the determinism job's sample: the first job with published builds (a harness whose every build is
-          # withheld has a finding to re-run, and no binary to snapshot), as two small values, since the plan's jobs
-          # grow with the tree and an environment value may not exceed 131,072 bytes
-          sample='[.jobs[] | select(.check_units != "")][0]'
+          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" "${jobs[@]}" > "$RUNNER_TEMP/plan.json"
+          # the determinism job's sample: one harness, the first by name of the planned harnesses with published builds
+          # (a harness whose every build is withheld has a finding to re-run, and no binary to snapshot), whatever the
+          # order of the plan's jobs, which are listed longest first.  As two small values, since the plan's jobs grow
+          # with the tree and an environment value may not exceed 131,072 bytes.  Tools that predate the plan's
+          # top-level check_units list them in the jobs only.
+          sample='[(.check_units // [.jobs[].check_units | split(" ")[]]) | .[] | select(. != "")] | sort | .[0] // ""'
           {
             echo "plan=$(jq -c .jobs "$RUNNER_TEMP/plan.json")"
             echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
-            echo "sample=$(jq -r "$sample.check_units // \"\"" "$RUNNER_TEMP/plan.json")"
-            echo "sample_projects=$(jq -r "$sample.projects // \"\"" "$RUNNER_TEMP/plan.json")"
+            echo "sample=$(jq -r "$sample" "$RUNNER_TEMP/plan.json")"
+            echo "sample_projects=$(jq -r "$sample | split(\"/\")[0] // \"\"" "$RUNNER_TEMP/plan.json")"
           } >> "$GITHUB_OUTPUT"
           echo "harnesses: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq '.units | length' "$RUNNER_TEMP/all.json")" >> "$GITHUB_STEP_SUMMARY"
 
   sweep:
     needs: plan
     name: sweep ${{ matrix.job.index }}
-    # a proof check peaks at 14.5-19.4 GiB on 16 cores: the 16-core/64 GB GitHub-hosted larger runner, unless the
-    # repository variables say otherwise (pr.yml's check job)
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
-    timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
+    # the runner and the time limit the job's plan entry names, unless the repository variables say otherwise (pr.yml's
+    # check job)
+    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
+    timeout-minutes: >-
+      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
       max-parallel: 32
@@ -242,8 +250,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.warm && github.ref == 'refs/heads/main'
     needs: plan
     name: warm ${{ matrix.job.index }}
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
-    timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
+    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
+    timeout-minutes: >-
+      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
       max-parallel: 20

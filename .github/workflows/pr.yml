@@ -256,11 +256,11 @@ jobs:
           if [ ! -e head/release.yaml ]; then
             echo "units=0" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # 20 jobs, as before: each job pays about 2 minutes of checkout, base worktree, cache and image before its
-          # first proof (measured: run 40167837171, median 125 s outside the check step), so more jobs buy a shorter
-          # full re-check for more billed 16-core minutes (64 jobs: about 2.2 hours of that per full re-check against
-          # 40 minutes; 256: 9 hours).  It also keeps a run's jobs on the one page of 100 that required's restate
-          # step reads.
+          # The jobs: the base's tools pack the units by their measured minutes (tools/oft/plan.py, pack), so that no
+          # job holds more than its time limit allows, with as many jobs as that takes.  Each job pays about 2 minutes
+          # of checkout, base worktree, cache and image before its first proof (measured: run 40167837171, median 125 s
+          # outside the check step), so packing short units together keeps that overhead to the few jobs the minutes
+          # need.  Tools that predate the packing deal units round-robin into 20 jobs (their --max-jobs default).
           PYTHONPATH=base/tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
           if grep -q -- --store "$RUNNER_TEMP/plan-help.txt"; then
             # Content keys (tools/oft/keys.py): each part of each harness has the key of what its check reads, with
@@ -268,7 +268,7 @@ jobs:
             # counterexamples/ and findings/, and the base's tools, which are what the check jobs run.  A part is
             # checked when its key differs from its key at the base.  So a change to the tools or the workflows
             # checks nothing here.  No recorded pass is read (--store): nothing protects a branch of them yet.
-            args=(--base "$BASE" --pr-kind "$KIND" --max-jobs 20)
+            args=(--base "$BASE" --pr-kind "$KIND")
             PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
             { echo "### parts checked, and why"
               jq -r '.parts[] | select(.check) | "- \(.unit) \(.part): \(.why)"' "$RUNNER_TEMP/plan.json"
@@ -607,16 +607,20 @@ jobs:
       && (needs.fetch-drafts.result == 'success'
           || (needs.fetch-drafts.result == 'skipped' && needs.plan.outputs.draft_legs == '[]'))
     name: check ${{ matrix.job.index }}
-    # a proof check peaks at 14.5-19.4 GiB on 16 cores: the 16-core/64 GB GitHub-hosted larger runner.  The
-    # repository variables PROOF_RUNNER and PROOF_TIMEOUT_MINUTES move every proof check job (pr.yml, release-check.yml,
-    # weekly.yml) to a larger runner or a longer limit; a GitHub-hosted job stops at 6 hours whatever the limit.  A merge
-    # queue's group is checked like a push to main and must report within the queue's 360 minutes of its creation,
-    # runner waits included: a group whose checks run longer leaves the queue unmerged.
-    runs-on: ${{ vars.PROOF_RUNNER || 'ubuntu-24.04-16core' }}
-    timeout-minutes: ${{ fromJSON(vars.PROOF_TIMEOUT_MINUTES || '360') }}
+    # The runner and the time limit are the ones the job's plan entry names (tools/oft/plan.py, runner: the standard
+    # ubuntu-24.04 for a job of small, short units, else the 16-core ubuntu-24.04-16core; timeout_minutes: from the
+    # units' measured minutes on that runner, at most 340).  A plan of tools that predate those fields names neither,
+    # and its jobs keep the 16-core runner and 340 minutes.  The repository variables PROOF_RUNNER and
+    # PROOF_TIMEOUT_MINUTES move every proof check job (pr.yml, release-check.yml, weekly.yml) to another runner or
+    # another limit (set both to move a job to a slower runner); a GitHub-hosted job stops at 6 hours whatever the
+    # limit.  A merge queue's group is checked like a push to main and must report within the queue's 360 minutes of
+    # its creation, runner waits included: a group whose checks run longer leaves the queue unmerged.
+    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
+    timeout-minutes: >-
+      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
     strategy:
       fail-fast: false
-      # the plan's --max-jobs 20 (the plan step says why not more), all at once
+      # the plan's jobs, at most 20 at a time
       max-parallel: 20
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.plan) }}

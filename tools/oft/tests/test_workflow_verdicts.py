@@ -701,7 +701,9 @@ class PlanSizeTest(unittest.TestCase):
                                                         str(value)), value)
 
     @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
-    def test_the_sample_is_the_first_job_with_published_builds(self):
+    def test_the_sample_is_the_first_planned_unit_with_published_builds_by_name(self):
+        """One harness, whatever the order of the jobs (pack lists them longest first): the first by name of the
+        plan's check_units, or, for tools whose plan lacks that list, of the jobs' check_units."""
         jobs = load("weekly.yml")["jobs"]
         snapshot = step(jobs["determinism"], "snapshot a sample of ELF files with the pinned elf-snapshot")
         self.assertEqual(snapshot["env"]["SAMPLE"], "${{ needs.plan.outputs.sample }}")
@@ -710,34 +712,37 @@ class PlanSizeTest(unittest.TestCase):
         end = '} >> "$GITHUB_OUTPUT"'
         start = text.index("sample='")
         script = text[start:text.index(end, start) + len(end)]
-        plan = {"units": ["a/x", "b/y", "c/z"],
-                "jobs": [{"index": 0, "check_units": "", "projects": "a"},
-                         {"index": 1, "check_units": "b/y c/z", "projects": "b c"},
-                         {"index": 2, "check_units": "d/w", "projects": "d"}]}
-        with tempfile.TemporaryDirectory(prefix="oft-sample-") as d:
-            with open(os.path.join(d, "plan.json"), "w") as f:
-                json.dump(plan, f)
-            out = os.path.join(d, "output")
-            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
-                               env=dict(os.environ, RUNNER_TEMP=d, GITHUB_OUTPUT=out), capture_output=True, text=True)
-            self.assertEqual(r.returncode, 0, r.stderr)
-            with open(out) as f:
-                got = dict(line.rstrip("\n").split("=", 1) for line in f)
-        self.assertEqual(got["sample"], "b/y c/z")
-        self.assertEqual(got["sample_projects"], "b c")
-        self.assertEqual(json.loads(got["plan"]), plan["jobs"])
-        self.assertEqual(got["units"], "3")
 
-        none = {"units": ["a/x"], "jobs": [{"index": 0, "check_units": "", "projects": "a"}]}
-        with tempfile.TemporaryDirectory(prefix="oft-sample-") as d:
-            with open(os.path.join(d, "plan.json"), "w") as f:
-                json.dump(none, f)
-            out = os.path.join(d, "output")
-            subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script], check=True,
-                           env=dict(os.environ, RUNNER_TEMP=d, GITHUB_OUTPUT=out), capture_output=True, text=True)
-            with open(out) as f:
-                got = dict(line.rstrip("\n").split("=", 1) for line in f)
-        self.assertEqual((got["sample"], got["sample_projects"]), ("", ""))
+        def run(plan):
+            with tempfile.TemporaryDirectory(prefix="oft-sample-") as d:
+                with open(os.path.join(d, "plan.json"), "w") as f:
+                    json.dump(plan, f)
+                out = os.path.join(d, "output")
+                r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+                                   env=dict(os.environ, RUNNER_TEMP=d, GITHUB_OUTPUT=out), capture_output=True,
+                                   text=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                with open(out) as f:
+                    return dict(line.rstrip("\n").split("=", 1) for line in f)
+
+        # the longest job first, as pack lists them, and the first unit by name in the last job
+        planned = [{"index": 0, "check_units": "z/long", "projects": "z"},
+                   {"index": 1, "check_units": "", "projects": "a"},
+                   {"index": 2, "check_units": "d/w c/z", "projects": "c d"}]
+        plan = {"units": ["a/x", "c/z", "d/w", "z/long"], "check_units": ["c/z", "d/w", "z/long"], "jobs": planned}
+        got = run(plan)
+        self.assertEqual((got["sample"], got["sample_projects"]), ("c/z", "c"))
+        self.assertEqual(json.loads(got["plan"]), planned)
+        self.assertEqual(got["units"], "4")
+        # a plan of older tools, with no top-level check_units
+        del plan["check_units"]
+        got = run(plan)
+        self.assertEqual((got["sample"], got["sample_projects"]), ("c/z", "c"))
+
+        for none in ({"units": ["a/x"], "check_units": [], "jobs": [{"index": 0, "check_units": "", "projects": "a"}]},
+                     {"units": ["a/x"], "jobs": [{"index": 0, "check_units": "", "projects": "a"}]}):
+            got = run(none)
+            self.assertEqual((got["sample"], got["sample_projects"]), ("", ""))
 
 
 class CheckTreeTest(unittest.TestCase):

@@ -1,0 +1,73 @@
+# The measured check of each unit with a committed proof or finding on GitHub's 16-core runner (ubuntu-24.04-16core),
+# from which `oft plan` packs the units into check jobs and chooses each job's runner and time limit (plan.pack,
+# plan.runner, plan.timeout_minutes).  The table decides only how the jobs are cut, where they run and for how long,
+# never what they check.
+#   minutes   the longest successful check job of the unit alone, from start to end, in this repository's
+#             release-check and pr runs of 22 October to 2 November 2026.  openssl/hashtable's 360.4 is a lower
+#             bound: GitHub's 6-hour cap cancelled that job on 1 November.
+#   peak_gib  the largest peak memory a check of the unit reached on that runner (16 CPUs), 28 October to 1 November
+#             2026, as reported by a build of `oft check` that samples its process's cgroup every 2 seconds; empty
+#             where none was measured.
+# A unit not listed, or with an empty column, counts as over that column's threshold.
+unit	minutes	peak_gib
+boost-beast/http_request	97.4	15.1
+boost-json/fuzz_parse	60.1	18.4
+bzip2/bzip2_compress_target	69.8	18.4
+cgif/cgif_file_fuzzer	159.7	
+cgif/cgif_rgb_fuzzer	278.6	
+cjson/cjson_read_fuzzer	38.9	15.5
+coturn/FuzzStunClient	25.1	16.6
+double-conversion/string_to_double_fuzzer	25.9	12.3
+fast_float/from_chars	46.6	12.5
+glaze/binary_reflection	26.4	12.9
+json-c/json_object_fuzzer	162.2	
+jsoncons/fuzz_bigint	129.6	
+jsoncons/fuzz_bson_parser_max	80.8	
+jsoncons/fuzz_json_cursor	194.8	
+jsoncons/fuzz_json_encoder	153.2	55.8
+jsoncons/fuzz_msgpack_encoder	36.1	21.7
+jsoncons/fuzz_ubjson_encoder	112.5	15.9
+jsoncons/fuzz_ubjson_parser_max	92.0	15.1
+leptonica/bilateral_fuzzer	65.4	14.3
+leptonica/colorfill_fuzzer	63.3	
+leptonica/edge_fuzzer	127.8	
+leptonica/fhmtgen_fuzzer	111.0	
+leptonica/graymorph_fuzzer	126.2	
+leptonica/grayquant_fuzzer	175.6	
+leptonica/jpegiostub_fuzzer	59.5	
+leptonica/kernel_fuzzer	69.6	
+leptonica/paintcmap_fuzzer	93.0	
+leptonica/pix1_fuzzer	62.1	
+leptonica/pix_orient_fuzzer	90.4	16.7
+libpcap/fuzz_pcap	66.2	17.4
+mbedtls/fuzz_pkcs7	107.0	32.6
+msgpack-c/unpack_pack_fuzzer	111.0	
+openssl/bignum	91.4	19.1
+openssl/bndiv	60.4	15.7
+openssl/ct	73.4	
+openssl/echconfiglist_parser	73.0	
+openssl/hashtable	360.4	
+openssl/pem	81.7	
+openssl/punycode	45.2	12.7
+pupnp/FuzzHttp	87.2	19.7
+simdjson/fuzz_atpointer	81.0	13.9
+simdjson/fuzz_dump	90.7	15.1
+simdjson/fuzz_dump_raw_tape	92.7	
+simdjson/fuzz_element	76.5	
+simdjson/fuzz_implementations	80.1	
+simdjson/fuzz_minifyimpl	87.7	
+simdjson/fuzz_ondemand	58.9	14.1
+simdjson/fuzz_parser	64.0	
+simdjson/fuzz_print_json	56.1	15.1
+simdjson/fuzz_utf8	39.2	14.0
+skcms/iccprofile_info	22.7	
+speex/speex_decode_fuzzer_float	120.5	22.1
+spirv-tools/spvtools_binary_parser_fuzzer	62.4	27.4
+tinyobjloader/fuzz_tobj_c	84.8	18.3
+varnish/esi_parse_fuzzer	73.1	15.8
+yajl-ruby/json_fuzzer	73.5	13.4
+zlib/checksum_fuzzer	13.9	
+zstd/fse_read_ncount	36.3	
+zstd/huf_decompress	189.1	
+zstd/simple_decompress	324.5	
+zstd/zstd_frame_info	40.9	
