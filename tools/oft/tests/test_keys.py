@@ -423,37 +423,82 @@ class Plan(unittest.TestCase):
         for unit in ("c/z", "e/unlisted"):
             self.assertEqual(plan.timeout_minutes(["d/w", unit], times, "ubuntu-24.04-16core"), 340, unit)
 
-    def test_a_full_plan_of_the_measured_table_has_no_job_over_its_limit_but_a_lone_unit(self):
-        """Every unit of check-times.tsv, packed: each unit is in one job, and a job of more than one unit holds no
-        more measured minutes than its time limit allows under the cap, 1.5 x 2.2 x minutes on the standard runner
-        and 1.5 x minutes on the 16-core one.  Only a unit over that alone, or with no minutes, is at the cap."""
+    def test_a_full_plan_of_the_measured_table_has_no_job_over_its_limit(self):
+        """Every unit of check-times.tsv, packed: each unit is in one job or offloaded, no job holds more measured
+        minutes than its time limit allows under the cap (1.5 x 2.2 x minutes on the standard runner, 1.5 x minutes on
+        the 16-core one), and the offloaded units are those too long for a job even alone."""
         times = plan.check_times()
-        jobs = plan.pack(sorted(times), times)
-        self.assertEqual(sorted(u for _on, us in jobs for u in us), sorted(times))
+        jobs, away = plan.pack(sorted(times), times)
+        self.assertEqual(sorted([u for _on, us in jobs for u in us] + away), sorted(times))
         for on, units in jobs:
             minutes = [times[u][0] for u in units]
-            if len(units) > 1:
-                self.assertNotIn(None, minutes, units)
-                factor = plan.SLOWER if on == plan.STANDARD else 1
-                self.assertLessEqual(plan.MARGIN * factor * sum(minutes), plan.CAP, (on, units))
-                self.assertEqual(on, plan.runner(units, times), units)
-        lone = {us[0] for on, us in jobs if plan.timeout_minutes(us, times, on) == plan.CAP
-                and (times[us[0]][0] is None or plan.MARGIN * times[us[0]][0] > plan.CAP)}
-        self.assertEqual(lone, {"openssl/hashtable", "zstd/simple_decompress", "cgif/cgif_rgb_fuzzer"})
+            self.assertNotIn(None, minutes, units)
+            factor = plan.SLOWER if on == plan.STANDARD else 1
+            self.assertLessEqual(plan.MARGIN * factor * sum(minutes), plan.CAP, (on, units))
+            self.assertEqual(on, plan.runner(units, times), units)
+        self.assertEqual(away, ["cgif/cgif_rgb_fuzzer", "openssl/hashtable", "zstd/simple_decompress"])
 
     def test_units_are_packed_longest_first_into_the_first_job_they_fit(self):
         times = {"a/l1": (200.0, 30.0), "b/l2": (100.0, 30.0), "c/l3": (26.0, 30.0), "d/s1": (90.0, 10.0),
                  "e/s2": (20.0, 10.0), "f/over": (300.0, 30.0), "g/s_long": (120.0, 10.0)}
-        jobs = plan.pack(sorted(times) + ["h/unmeasured"], times)
+        jobs, away = plan.pack(sorted(times) + ["h/unmeasured"], times)
         self.assertEqual(jobs, [
             ("ubuntu-24.04-16core", ["h/unmeasured"]),
-            ("ubuntu-24.04-16core", ["f/over"]),
             # 200 + 26 fits in 226.7; 100 does not
             ("ubuntu-24.04-16core", ["a/l1", "c/l3"]),
             # a unit the rule puts on the standard runner, too long for its room there (103.0), takes 16 cores
             ("ubuntu-24.04-16core", ["b/l2", "g/s_long"]),
             ("ubuntu-24.04", ["d/s1"]),
             ("ubuntu-24.04", ["e/s2"])])
+        # over the 16-core room alone: in no job
+        self.assertEqual(away, ["f/over"])
+
+    def _offloaded_tree(self, t):
+        """A tree in which UNIT is too long for a check job, and the rows of its parts' keys at the commit."""
+        head = repo(t)
+        wanted = keys.wanted(facts.load(t.root))
+        times = {u: (10.0, 20.0) for u, _part in wanted}
+        times[UNIT] = (300.0, 20.0)
+        mine = [r for r, _c, _o in plan.rows(t.root, [w for w in wanted if w[0] == UNIT], change=head)]
+        self.assertTrue(mine)
+        return head, times, mine
+
+    def cite(self, t, cited):
+        t.write(plan.OFFLOADED, "\t".join(plan.OFFLOADED_COLUMNS) + "\n" + "".join(
+            "%s\t%s\t%s\tjob-1\t%s\t2026-11-02\n" % (unit, part, key, "0" * 64) for unit, part, key in cited))
+
+    def failed_plan(self, t, **kw):
+        out, err = io.StringIO(), io.StringIO()
+        self.assertEqual(plan.plan(t.root, out=out, err=err, **kw), 1)
+        self.assertEqual(out.getvalue(), "", "a failed plan prints no plan")
+        return err.getvalue()
+
+    def test_a_unit_checked_on_the_build_service_at_its_key_is_in_no_job(self):
+        with tree() as t:
+            _head, times, mine = self._offloaded_tree(t)
+            self.cite(t, [(r["unit"], r["part"], r["key"]) for r in mine])
+            # the citation file is not the checker: committed, it changes no key
+            p = self.plan(t, change=commit(t), times=times)
+            self.assertNotIn(UNIT, p["units"])
+            self.assertNotIn(UNIT, " ".join(j["units"] for j in p["jobs"]).split())
+            self.assertEqual([(o["unit"], o["part"], o["key"], o["job"]) for o in p["offloaded"]],
+                             [(r["unit"], r["part"], r["key"], "job-1") for r in mine])
+
+    def test_a_unit_too_long_for_a_job_and_not_checked_on_the_build_service_fails_the_plan(self):
+        with tree() as t:
+            head, times, mine = self._offloaded_tree(t)
+            err = self.failed_plan(t, change=head, times=times)
+            for r in mine:
+                self.assertIn("%s %s: key %s has no check on the build service" % (r["unit"], r["part"], r["key"]), err)
+
+    def test_a_check_on_the_build_service_at_another_key_fails_the_plan(self):
+        with tree() as t:
+            head, times, mine = self._offloaded_tree(t)
+            self.cite(t, [(r["unit"], r["part"], "f" * 64) for r in mine])
+            err = self.failed_plan(t, change=head, times=times)
+            for r in mine:
+                self.assertIn("%s %s: key %s has no check" % (r["unit"], r["part"], r["key"]), err)
+                self.assertIn("its rows are for key %s, a check of other bytes" % ("f" * 64), err)
 
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""

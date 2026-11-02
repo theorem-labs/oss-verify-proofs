@@ -82,22 +82,32 @@ def timeout_minutes(units, times, on):
 # also under SUM_MINUTES.  The units runner() puts on the standard runner, each within that, are packed into jobs of
 # their own, so that a long unit never pulls a short one onto the 16-core runner; the rest are packed into 16-core
 # jobs.  Each kind is packed first-fit decreasing: longest unit first, into the first job it fits in.  A unit with no
-# measured minutes, and one whose own minutes are over its runner's room (openssl/hashtable, zstd/simple_decompress,
-# cgif/cgif_rgb_fuzzer), gets a job of its own, at CAP.  The jobs are listed longest first, so that the matrix starts
-# them first.  MATRIX is the most jobs GitHub runs in one matrix.
+# measured minutes gets a job of its own, at CAP.  A unit whose own minutes are over the 16-core room (offloaded()) is
+# in no job: it is checked on the build service (builds-ossv), and the plan takes a citation of that check instead
+# (OFFLOADED).  The jobs are listed longest first, so that the matrix starts them first.  MATRIX is the most jobs
+# GitHub runs in one matrix.
 ROOM = {LARGE: CAP / MARGIN, STANDARD: CAP / MARGIN / SLOWER}
 MATRIX = 256
 
 
+def offloaded(unit, times):
+    """Whether unit is too long for a check job even alone: its measured minutes are over the 16-core room."""
+    m = times.get(unit, (None, None))[0]
+    return m is not None and m > ROOM[LARGE]
+
+
 def pack(units, times):
-    """[(runner, [unit, ...]), ...]: the check jobs of units, by the rule above.  Every unit is in exactly one job."""
-    alone, by = [], {STANDARD: [], LARGE: []}
+    """([(runner, [unit, ...]), ...], [unit, ...]): the check jobs of units, by the rule above, and the units that are
+    in no job because offloaded() says so.  Every unit is in exactly one job or in the second list."""
+    alone, by, away = [], {STANDARD: [], LARGE: []}, []
     for u in units:
         m = times.get(u, (None, None))[0]
         on = runner([u], times)
         if on == STANDARD and m > ROOM[STANDARD]:
             on = LARGE
-        if m is None or m > ROOM[on]:
+        if offloaded(u, times):
+            away.append(u)
+        elif m is None:
             alone.append((LARGE, [u]))
         else:
             by[on].append(u)
@@ -119,7 +129,34 @@ def pack(units, times):
     jobs = [(on, sorted(us)) for on, us in sorted(jobs, key=lambda j: (-length(j), sorted(j[1])))]
     if len(jobs) > MATRIX:
         raise ValueError("%d check jobs: more than the %d a matrix runs" % (len(jobs), MATRIX))
-    return jobs
+    return jobs, sorted(away)
+
+
+# The checks of offloaded units, done on the build service: one row per unit, part and key, naming the build-service
+# job that checked that part at that key, the SHA-256 of the job's result.json, and the date (YYYY-MM-DD).  It is the
+# file at this path in the tree a plan judges.  A plan that checks a part of an offloaded unit takes that part's row
+# at the part's key in place of a check job, and fails, naming the unit, the part and the key, when there is none: a
+# row of another key is a check of other bytes.  keys.NOT_THE_CHECKER names the file, so a new row re-keys nothing.
+OFFLOADED = os.path.join("tools", "oft", "offloaded-checks.tsv")
+OFFLOADED_COLUMNS = ["unit", "part", "key", "job", "result_sha256", "date"]
+
+
+def citations(path):
+    """{(unit, part, key): row}: the rows of the OFFLOADED file at path; {} when there is no such file."""
+    if not os.path.isfile(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f if not line.startswith("#") and line.strip()]
+    if not lines or lines[0].split("\t") != OFFLOADED_COLUMNS:
+        raise ValueError("%s: the header must be %s" % (path, ", ".join(OFFLOADED_COLUMNS)))
+    out = {}
+    for line in lines[1:]:
+        fields = line.split("\t")
+        if len(fields) != len(OFFLOADED_COLUMNS) or not all(fields):
+            raise ValueError("%s: a row must have %d non-empty columns: %r" % (path, len(OFFLOADED_COLUMNS), line))
+        row = dict(zip(OFFLOADED_COLUMNS, fields))
+        out[(row["unit"], row["part"], row["key"])] = row
+    return out
 
 
 def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, store=None, rocqchk=False):
@@ -162,16 +199,19 @@ def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, sto
 
 
 def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, rocqchk=False,
-         times=None, out=sys.stdout):
-    """Print {"all", "units", "check_units", "parts", "jobs"} for the parts rows() checks; units, if given, limits
-    the plan to those units (weekly's rotating third).  parts holds every part's row with its key and components.
-    The jobs are pack()'s, from times (check_times() when None).  Each job lists its units, the units whose build it
-    checks (check_units) and those of them with a proof of one of their statements (proof_units, which check-units.sh
-    checks with their proofs and the rest on their statements), the projects whose binaries those and the
-    counterexamples need, the units whose counterexamples and findings it runs, the runner it runs on and its time
-    limit in minutes (timeout_minutes()).  A job carries no keys (the parts do): the workflows pass the jobs as one job
-    output, which grows with the tree, and weekly.yml's determinism job takes them as one environment variable, which
-    Linux caps at 131,072 bytes (with a key per part, #170 measured a plan of every harness at 132,809 bytes)."""
+         times=None, out=sys.stdout, err=sys.stderr):
+    """Print {"all", "units", "check_units", "offloaded", "parts", "jobs"} for the parts rows() checks; units, if
+    given, limits the plan to those units (weekly's rotating third).  parts holds every part's row with its key and
+    components.  The jobs are pack()'s, from times (check_times() when None); units and check_units name the units the
+    jobs check.  offloaded holds, for each checked part of a unit pack() leaves out, the row of root's OFFLOADED file
+    at the part's key; when a part has none, nothing is printed, each such part is named on err with its key, and the
+    plan returns 1.  Each job lists its units, the units whose build it checks (check_units) and those of them with a
+    proof of one of their statements (proof_units, which check-units.sh checks with their proofs and the rest on their
+    statements), the projects whose binaries those and the counterexamples need, the units whose counterexamples and
+    findings it runs, the runner it runs on and its time limit in minutes (timeout_minutes()).  A job carries no keys
+    (the parts do): the workflows pass the jobs as one job output, which grows with the tree, and weekly.yml's
+    determinism job takes them as one environment variable, which Linux caps at 131,072 bytes (with a key per part,
+    #170 measured a plan of every harness at 132,809 bytes)."""
     times = check_times() if times is None else times
     tree = facts.load(root)
     proved = {st.harness.project.name + "/" + st.harness.name for st in tree.statements() if st.proof}
@@ -183,9 +223,28 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
     for r in parts:
         if r["check"]:
             of.setdefault(r["unit"], set()).add(r["part"])
-    chosen = sorted(of)
+    packed, away = pack(sorted(of), times)
+    cited = citations(os.path.join(root, OFFLOADED))
+    found, missing = [], []
+    for r in parts:
+        if r["check"] and r["unit"] in away:
+            row = cited.get((r["unit"], r["part"], r["key"]))
+            if row:
+                found.append(row)
+            else:
+                other = sorted(k for u, p, k in cited if (u, p) == (r["unit"], r["part"]))
+                missing.append("%s %s: key %s has no check on the build service (builds-ossv) in %s%s" % (
+                    r["unit"], r["part"], r["key"], OFFLOADED,
+                    "; its rows are for key %s, a check of other bytes" % ", ".join(other) if other else ""))
+    if missing:
+        print("oft plan: %d part(s) too long for a check job and not checked on the build service at their key; "
+              "check each there and add its row:" % len(missing), file=err)
+        for m in missing:
+            print("  " + m, file=err)
+        return 1
+    chosen = sorted(u for _on, shard in packed for u in shard)
     jobs = []
-    for i, (on, shard) in enumerate(pack(chosen, times)):
+    for i, (on, shard) in enumerate(packed):
         build = [u for u in shard if "build" in of[u]]
         cx = [u for u in shard if "counterexamples" in of[u]]
         jobs.append({"index": i, "units": " ".join(shard), "check_units": " ".join(build),
@@ -195,7 +254,8 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
                      "findings": " ".join(u for u in shard if "findings" in of[u]),
                      "runner": on, "timeout_minutes": timeout_minutes(shard, times, on)})
     json.dump({"all": bool(parts) and all(r["check"] for r in parts), "units": chosen,
-               "check_units": [u for u in chosen if "build" in of[u]], "parts": parts, "jobs": jobs}, out)
+               "check_units": [u for u in chosen if "build" in of[u]], "offloaded": found, "parts": parts,
+               "jobs": jobs}, out)
     out.write("\n")
     return 0
 
