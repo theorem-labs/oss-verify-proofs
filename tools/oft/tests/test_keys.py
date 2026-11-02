@@ -498,7 +498,53 @@ class Plan(unittest.TestCase):
             err = self.failed_plan(t, change=head, times=times)
             for r in mine:
                 self.assertIn("%s %s: key %s has no check" % (r["unit"], r["part"], r["key"]), err)
-                self.assertIn("its rows are for key %s, a check of other bytes" % ("f" * 64), err)
+                self.assertIn("its row is for key %s, a check of other bytes: replace it" % ("f" * 64), err)
+
+    def test_a_malformed_citation_fails_the_plan(self):
+        """Each column is held to its form, and the unit and part to what the tree has to check, so a row cannot cite
+        what it does not name; every bad row is named, by its line."""
+        good = {"unit": UNIT, "part": "build", "key": "a" * 64, "job": "job-1", "result_sha256": "b" * 64,
+                "date": "2026-11-02"}
+        bad = {
+            "key": ("A" * 64, "key %r is not 64 lowercase hex digits" % ("A" * 64)),
+            "result_sha256": ("b" * 63, "result_sha256 %r is not 64 lowercase hex digits" % ("b" * 63)),
+            "date": ("2026-02-30", "date '2026-02-30' is not a date YYYY-MM-DD"),
+            "part": ("proofs", "part 'proofs' is not one of build, counterexamples, findings"),
+            "unit": ("zlib/no_such_fuzzer", "unit 'zlib/no_such_fuzzer' is no harness of this tree"),
+        }
+        for column, (value, message) in bad.items():
+            with self.subTest(column=column), tree() as t:
+                head, times, _mine = self._offloaded_tree(t)
+                row = dict(good, **{column: value})
+                t.write(plan.OFFLOADED, "# a comment\n" + "\t".join(plan.OFFLOADED_COLUMNS) + "\n"
+                        + "\t".join(row[c] for c in plan.OFFLOADED_COLUMNS) + "\n")
+                err = self.failed_plan(t, change=head, times=times)
+                self.assertIn("1 bad row(s):\n  line 3: " + message, err)
+        with tree() as t:
+            head, times, _mine = self._offloaded_tree(t)
+            # a harness of the tree and a part it has nothing to check in
+            loaded = facts.load(t.root)
+            have = set(keys.wanted(loaded))
+            unit, part = next((h.project.name + "/" + h.name, p) for h in loaded.harnesses() for p in keys.PARTS
+                              if (h.project.name + "/" + h.name, p) not in have)
+            row = dict(good, unit=unit, part=part)
+            t.write(plan.OFFLOADED, "\t".join(plan.OFFLOADED_COLUMNS) + "\n"
+                    + "\t".join(row[c] for c in plan.OFFLOADED_COLUMNS) + "\n")
+            self.assertIn("line 2: %s has no %s part to check" % (unit, part),
+                          self.failed_plan(t, change=head, times=times))
+            t.write(plan.OFFLOADED, "\t".join(plan.OFFLOADED_COLUMNS) + "\n" + "%s\tbuild\t%s\n" % (UNIT, "a" * 64))
+            self.assertIn("line 2: a row has 6 non-empty columns, tab-separated",
+                          self.failed_plan(t, change=head, times=times))
+
+    def test_a_second_citation_of_a_part_fails_the_plan(self):
+        """A part's row names its one current check: a second row of the same unit and part, at any key, is refused,
+        not taken in place of the first."""
+        with tree() as t:
+            head, times, mine = self._offloaded_tree(t)
+            r = mine[0]
+            self.cite(t, [(r["unit"], r["part"], r["key"]), (r["unit"], r["part"], "f" * 64)])
+            err = self.failed_plan(t, change=head, times=times)
+            self.assertIn("line 3: line 2 already has a row for %s %s" % (r["unit"], r["part"]), err)
 
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""

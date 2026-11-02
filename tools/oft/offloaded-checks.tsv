@@ -1,6 +1,7 @@
 # The checks of the units too long for a GitHub check job even alone (tools/oft/plan.py, offloaded: measured minutes
 # on the 16-core runner over 226.7), each done on the build service (builds-ossv) at one key of one part.  One row per
-# unit, part and key: the build-service job, the SHA-256 of its result.json, and the date (YYYY-MM-DD).  `oft plan`
-# takes a part's row at the part's current key in place of a check job, and fails, naming the unit, the part and the
-# key, when there is none.  keys.NOT_THE_CHECKER names this file, so a new row re-keys nothing.
+# unit and part (a newer check replaces it): the key it was checked at, the build-service job, the SHA-256 of its
+# result.json (64 lowercase hex digits), and the date (YYYY-MM-DD).  `oft plan` refuses a malformed row, and takes a
+# part's row at the part's current key in place of a check job, failing, naming the unit, the part and the key, when
+# there is none.  keys.NOT_THE_CHECKER names this file, so a new row re-keys nothing.
 unit	part	key	job	result_sha256	date
