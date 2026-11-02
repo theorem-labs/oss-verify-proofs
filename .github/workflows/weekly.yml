@@ -75,14 +75,16 @@ jobs:
           jobs=()
           if grep -q -- --max-jobs "$RUNNER_TEMP/plan-help.txt"; then jobs=(--max-jobs 256); fi
           PYTHONPATH=tools python -m oft plan "${jobs[@]}" > "$RUNNER_TEMP/all.json"
+          # every harness: those in the plan's jobs and those it takes from their checks on the build service
+          every='[.units[], (.offloaded // [] | .[].unit)] | unique | .[]'
           if [ -n "${UNITS:-}" ]; then
             read -r -a named <<< "$UNITS"
             printf '%s\n' "${named[@]}" > "$RUNNER_TEMP/units.txt"
           elif [ "$ROTATE" = true ]; then
             week=$(( 10#$(date -u +%V) % 3 ))
-            jq -r '.units[]' "$RUNNER_TEMP/all.json" | awk -v w="$week" 'NR % 3 == w' > "$RUNNER_TEMP/units.txt"
+            jq -r "$every" "$RUNNER_TEMP/all.json" | awk -v w="$week" 'NR % 3 == w' > "$RUNNER_TEMP/units.txt"
           else
-            jq -r '.units[]' "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
+            jq -r "$every" "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
           fi
           [ -s "$RUNNER_TEMP/units.txt" ] || { echo "::error::no harness to check: nothing examined"; exit 1; }
           PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" "${jobs[@]}" > "$RUNNER_TEMP/plan.json"
@@ -98,7 +100,13 @@ jobs:
             echo "sample=$(jq -r "$sample" "$RUNNER_TEMP/plan.json")"
             echo "sample_projects=$(jq -r "$sample | split(\"/\")[0] // \"\"" "$RUNNER_TEMP/plan.json")"
           } >> "$GITHUB_OUTPUT"
-          echo "harnesses: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq '.units | length' "$RUNNER_TEMP/all.json")" >> "$GITHUB_STEP_SUMMARY"
+          # .units names the harnesses in sweep jobs; one too long for a job even alone is checked on the build service,
+          # and the plan takes its citation at each part's key or fails (tools/oft/plan.py, offloaded)
+          { echo "harnesses in sweep jobs: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq -r "$every" "$RUNNER_TEMP/all.json" | wc -l)"
+            echo "### checked on the build service (builds-ossv), by citation: $(jq '.offloaded // [] | length' "$RUNNER_TEMP/plan.json") part(s)"
+            jq -r '.offloaded // [] | .[] | "- \(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
+              "$RUNNER_TEMP/plan.json"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   sweep:
     needs: plan
