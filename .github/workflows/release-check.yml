@@ -20,7 +20,11 @@
 #                  (tools/oft/ci/check-units.sh).  A harness too long for a check job even alone
 #                  is in no group: the plan takes the citation of its check on the build service
 #                  at each checked part's key (tools/oft/offloaded-checks.tsv), and fails, naming
-#                  the harness, the part and the key, when one has none
+#                  the harness, the part and the key, when one has none.  A unit's build part
+#                  that the publishing gate checked on the build service at its key, for this
+#                  commit, is cited too (the plan job's gate step; tools/oft/plan.py, gate),
+#                  and only its counterexamples and findings are checked in a group: each part is
+#                  either checked in a job or cited at its own key, never neither
 #   release-check  the one required check: it always runs, and fails if any job failed, if a planned
 #                  harness was not checked, or if a full plan named no harness at all; its summary
 #                  names each part checked on the build service and its citation
@@ -140,11 +144,16 @@ jobs:
   plan:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: read   # the publishing gate's citations check run on this commit (the gate step)
     outputs:
       plan: ${{ steps.drafts.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
       full: ${{ steps.plan.outputs.full }}
       offloaded: ${{ steps.plan.outputs.offloaded }}
+      gated: ${{ steps.plan.outputs.gated }}
+      gate_run: ${{ steps.gate.outputs.check_run }}
       draft_legs: ${{ steps.drafts.outputs.draft_legs }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
@@ -161,10 +170,58 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --quiet --require-hashes -r tools/oft/requirements.txt
+      # The build parts the publishing gate checked on the build service, at this commit's keys: cited, not checked
+      # again in a job (tools/oft/plan.py, gate); their counterexamples and findings still are.  weekly.yml runs the
+      # same step.  The gate, outside this repository, checks each unit's build part (statements and proofs, in the
+      # release checker image) on the build service (builds-ossv).  For a commit it passed, it pushes a file in
+      # tools/oft/offloaded-checks.tsv's form (part `build`, the key at that commit, its job, the SHA-256 of the job's
+      # result, the date; comment lines say why a unit has no row) to citations/<commit>.tsv on the branch
+      # gate-citations, and only then creates a check run CHECK on that commit with its own GitHub App (APP_ID), whose
+      # summary names the file and that SHA-256, one `key: value` line each: citations, sha256, scope (full or
+      # routed), units, gate run.  Only a check run of that name made by that App counts (any account or workflow with
+      # write access can create a check run of any name; one is bound to the App whose token created it), and its
+      # newest on exactly the commit decides, so the gate can withdraw citations by creating another.  The file is
+      # anyone's to push to that branch; the check run binds its bytes, and a file that differs fails this step.  No
+      # check run, or one that is not a success: no file, and every planned part is checked in a job.  `oft plan`
+      # takes a row only at the part's current key, so a part is either cited at its own key or checked in a job,
+      # never neither.
+      - name: the publishing gate's citations of this commit
+        id: gate
+        env:
+          COMMIT: ${{ github.sha }}
+          OUT: ${{ runner.temp }}/gate-citations.tsv
+          GH_TOKEN: ${{ github.token }}
+          CHECK: ossv-gate/citations
+          APP_ID: "5447700"
+          BRANCH: gate-citations
+        run: |
+          set -euo pipefail
+          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::commit $COMMIT is not a full commit id"; exit 1; }
+          none() { echo "the publishing gate cites nothing on $COMMIT: $1"; { echo "file="; echo "check_run="; echo "scope="; } >> "$GITHUB_OUTPUT"; exit 0; }
+          # every check run of that name and App on exactly this commit; the newest (the highest id) decides
+          gh api --paginate --method GET "repos/$GITHUB_REPOSITORY/commits/$COMMIT/check-runs" \
+              -f check_name="$CHECK" -f app_id="$APP_ID" -f filter=all -f per_page=100 --jq \
+              '.check_runs[] | select(.name == env.CHECK and (.app.id | tostring) == env.APP_ID and .head_sha == env.COMMIT)
+               | {id, status, conclusion, html_url, summary: (.output.summary // "")}' \
+            | jq -s 'sort_by(.id) | last // empty' > "$RUNNER_TEMP/gate-check.json"
+          [ -s "$RUNNER_TEMP/gate-check.json" ] || none "no $CHECK check run by App $APP_ID"
+          read -r status conclusion url < <(jq -r '"\(.status) \(.conclusion // "none") \(.html_url)"' "$RUNNER_TEMP/gate-check.json")
+          [ "$status/$conclusion" = completed/success ] || none "its newest $CHECK check run, $url, is $status $conclusion"
+          field() { jq -r .summary "$RUNNER_TEMP/gate-check.json" | sed -n "s/^$1: *//p" | head -n 1; }
+          path="$(field citations)" sha="$(field sha256)" scope="$(field scope)"
+          [ "$path" = "citations/$COMMIT.tsv" ] || { echo "::error::$url names the file '$path', not citations/$COMMIT.tsv"; exit 1; }
+          [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::$url names no SHA-256 of its file"; exit 1; }
+          gh api -H "Accept: application/vnd.github.raw" "repos/$GITHUB_REPOSITORY/contents/$path?ref=$BRANCH" > "$OUT"
+          got="$(sha256sum "$OUT" | cut -d ' ' -f 1)"
+          [ "$got" = "$sha" ] || { echo "::error::$path on $BRANCH has SHA-256 $got, and $url names $sha"; exit 1; }
+          { echo "file=$OUT"; echo "check_run=$url"; echo "scope=$scope"; } >> "$GITHUB_OUTPUT"
+          echo "the publishing gate's citations of $COMMIT: $path on $BRANCH ($(grep -vc '^#' "$OUT") lines with its header), from $url, scope $scope"
       - name: plan
         id: plan
         env:
           UNITS: ${{ inputs.units }}
+          GATE: ${{ steps.gate.outputs.file }}
+          GATE_RUN: ${{ steps.gate.outputs.check_run }}
         run: |
           set -euo pipefail
           # Every harness with a committed proof or finding, each as the directory a change to it would
@@ -328,6 +385,11 @@ jobs:
               # No record of passes is read (--store): a pass of an earlier push credits nothing.
               args+=(--base "$base" --pr-kind release --tools HEAD)
             fi
+            # the publishing gate's citations, when it cites on this commit and these tools read them
+            if [ -n "${GATE:-}" ]; then
+              grep -q -- --gate-citations "$RUNNER_TEMP/plan-help.txt" && args+=(--gate-citations "$GATE") ||
+                echo "these tools take no --gate-citations: every planned part is checked in a job"
+            fi
             PYTHONPATH=tools python -m oft plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
           else
             if [ "$full" = true ]; then
@@ -360,23 +422,27 @@ jobs:
           fi
           n="$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
           # the parts of the units too long for a check job, each taken from its citation of a check on the build
-          # service at its key (tools/oft/plan.py, offloaded; `oft plan` fails above when one has none); an older plan
-          # has none
+          # service at its key (tools/oft/plan.py, offloaded; `oft plan` fails above when one has none), and the build
+          # parts the publishing gate cites at their keys ("by": "gate"); an older plan has none
           off="$(jq '.offloaded // [] | length' "$RUNNER_TEMP/plan.json")"
+          gated="$(jq '[.offloaded // [] | .[] | select(.by == "gate")] | length' "$RUNNER_TEMP/plan.json")"
           if [ "$full" = true ] && [ "$n" -eq 0 ] && [ "$off" -eq 0 ]; then
             echo "::error::the committed proofs and findings name no harness to check"; exit 1
           fi
-          # the plan output is written by the next step, with each group's draft binaries in its entry
+          # the plan output is written by the next step, with each group's draft binaries in its entry.  The gate's
+          # citations are counted, not listed: a full plan cites some 2,000, more than a job output should carry; the
+          # summary below and the gate's file list them.
           { echo "units=$n"
             echo "full=$full"
-            echo "offloaded=$(jq -c '[.offloaded // [] | .[] | "\(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"]' "$RUNNER_TEMP/plan.json")"
+            echo "offloaded=$(jq -c '[.offloaded // [] | .[] | select(.by != "gate") | "\(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"]' "$RUNNER_TEMP/plan.json")"
+            echo "gated=$gated"
           } >> "$GITHUB_OUTPUT"
           { if [ "$full" = true ]; then echo "### every harness with a committed proof or finding: $n in check jobs"
             else echo "### harnesses this commit changes: $n in check jobs"; fi
             jq -r '.units[]' "$RUNNER_TEMP/plan.json"
             if [ "$off" -gt 0 ]; then
-              echo "### checked on the build service (builds-ossv), by citation: $off part(s)"
-              jq -r '.offloaded[] | "- \(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
+              echo "### checked on the build service (builds-ossv), by citation: $off part(s), $gated of them the publishing gate's${GATE_RUN:+ (its check run $GATE_RUN)}"
+              jq -r '.offloaded[] | "- \(.unit) \(.part) at key \(.key): \(if .by == "gate" then "publishing gate" else "build-service" end) job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
                 "$RUNNER_TEMP/plan.json"
             fi
             # a content-keyed plan says why each part is or is not checked; an older plan has no parts
@@ -553,6 +619,9 @@ jobs:
           CHECK_RESULT: ${{ needs.check.result }}
           # each part checked on the build service in place of a check job, with its citation (the plan step's)
           OFFLOADED: ${{ needs.plan.outputs.offloaded || '[]' }}
+          # the build parts the publishing gate cites at their keys, counted (the plan job's summary lists them)
+          GATED: ${{ needs.plan.outputs.gated || '0' }}
+          GATE_RUN: ${{ needs.plan.outputs.gate_run }}
         run: |
           set -euo pipefail
           [ "$PLAN_RESULT" = success ] || { echo "::error::the plan failed: nothing was checked"; exit 1; }
@@ -562,7 +631,8 @@ jobs:
             [ "$DRAFTS_RESULT" = skipped ] || { echo "::error::no draft binary listed, yet fetch-drafts ran"; exit 1; }
           fi
           # A full plan says every committed proof and finding; a tree that names none is not a release tree.
-          if [ "$FULL" = true ] && [ "${UNITS:-0}" -eq 0 ] && [ "$(jq length <<< "$OFFLOADED")" -eq 0 ]; then
+          if [ "$FULL" = true ] && [ "${UNITS:-0}" -eq 0 ] && [ "$(jq length <<< "$OFFLOADED")" -eq 0 ] \
+              && [ "${GATED:-0}" -eq 0 ]; then
             echo "::error::no harness with a committed proof or finding was checked"; exit 1
           fi
           if [ "${UNITS:-0}" -gt 0 ]; then
@@ -574,4 +644,5 @@ jobs:
           { echo "### harnesses checked in check jobs: ${UNITS:-0} (full plan: ${FULL:-unknown})"
             echo "### parts checked on the build service (builds-ossv), by citation: $(jq length <<< "$OFFLOADED")"
             jq -r '.[] | "- \(.)"' <<< "$OFFLOADED"
+            echo "### build parts the publishing gate checked on the build service, by citation at their keys: ${GATED:-0}${GATE_RUN:+ ($GATE_RUN)}"
           } | tee -a "$GITHUB_STEP_SUMMARY"

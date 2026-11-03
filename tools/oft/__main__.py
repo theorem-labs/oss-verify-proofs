@@ -75,7 +75,7 @@ def cmd_plan(a):
         return plan.explain(_root(a), a.explain, change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools,
                             store=a.store, rocqchk=a.rocqchk)
     return plan.plan(_root(a), change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools, store=a.store,
-                     units=units, rocqchk=a.rocqchk, cited_from=a.citations)
+                     units=units, rocqchk=a.rocqchk, cited_from=a.citations, gate=a.gate_citations)
 
 
 def cmd_release_tree(a):
@@ -151,6 +151,9 @@ def main(argv=None):
     pl.add_argument("--units", metavar="FILE", help="only the units FILE lists, one per line")
     pl.add_argument("--citations", metavar="FILE",
                     help="the offloaded-checks.tsv whose rows cite (default: the tree's own); pr.yml gives the base's")
+    pl.add_argument("--gate-citations", metavar="FILE",
+                    help="the publishing gate's citations of build checks on the build service, at their keys "
+                         "(the workflow takes them from the gate's check run on the commit checked)")
     pl.add_argument("--rocqchk", action="store_true", help="the check jobs run rocqchk")
     pl.add_argument("--explain", metavar="PROJECT/HARNESS",
                     help="print each part of one unit, whether it is checked and why, and every input of its key")
