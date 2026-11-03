@@ -707,6 +707,28 @@ class CollectTest(StandIn):
         self.check(s, cases)
 
 
+class GateCitationsStepTest(unittest.TestCase):
+    """release-check.yml's and weekly.yml's plan jobs read the publishing gate's citations with the same step: the
+    same trust checks (the gate's App, the check run's name, exactly the commit, its newest run succeeded, the file's
+    SHA-256), so that neither workflow cites on less."""
+
+    def gate(self, workflow):
+        job = load(workflow)["jobs"]["plan"]
+        self.assertEqual(job["permissions"].get("checks"), "read")
+        return step(job, "the publishing gate's citations of this commit")
+
+    def test_both_workflows_run_the_same_step(self):
+        a, b = self.gate("release-check.yml"), self.gate("weekly.yml")
+        self.assertEqual((a["id"], a["env"], a["run"]), (b["id"], b["env"], b["run"]))
+        self.assertEqual((a["env"]["APP_ID"], a["env"]["CHECK"], a["env"]["COMMIT"], a["env"]["BRANCH"]),
+                         ("5447700", "ossv-gate/citations", "${{ github.sha }}", "gate-citations"))
+        for check in ('.head_sha == env.COMMIT', '(.app.id | tostring) == env.APP_ID', "sort_by(.id) | last",
+                      '"$status/$conclusion" = completed/success', '[ "$got" = "$sha" ]',
+                      '[ "$path" = "citations/$COMMIT.tsv" ]'):
+            self.assertIn(check, a["run"])
+
+
+
 class PlanSizeTest(unittest.TestCase):
     """A plan of every harness outgrows what one environment value may hold (131,072 bytes on Linux; weekly.yml's was
     51,715 bytes on 2026-10-26 and a full sweep's plan reached 166,794): only a matrix reads the whole plan, and the

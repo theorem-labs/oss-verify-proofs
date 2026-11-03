@@ -4,7 +4,7 @@
 #                public, a scheduled run checks a rotating third of them.  A
 #                harness's build part that the publishing gate checked on the
 #                build service at its key, for this commit, is cited and not swept
-#                (.github/actions/gate-citations; tools/oft/plan.py, gate): each part
+#                (the plan job's gate step; tools/oft/plan.py, gate): each part
 #                is either swept or cited at its own key, never neither
 #   sweep        each harness: fetch, build every image afresh, every proof
 #                and its assumptions against the allowlist, every counterexample;
@@ -71,7 +71,7 @@ jobs:
     permissions:
       contents: read
       actions: read   # the cite step lists this commit's runs and their jobs
-      checks: read    # the publishing gate's citations check run on this commit (.github/actions/gate-citations)
+      checks: read    # the publishing gate's citations check run on this commit (the gate step)
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
@@ -88,20 +88,46 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --quiet --require-hashes -r tools/oft/requirements.txt
       # the build parts the publishing gate checked on the build service, at this commit's keys: cited, not swept
-      # again (tools/oft/plan.py, gate); their counterexamples and findings are still swept
+      # again (tools/oft/plan.py, gate); their counterexamples and findings are still swept.  The same step as
+      # release-check.yml's, whose comment says what the gate writes and why each check below is there.
       - name: the publishing gate's citations of this commit
         id: gate
-        uses: ./.github/actions/gate-citations
-        with:
-          commit: ${{ github.sha }}
-          file: ${{ runner.temp }}/gate-citations.tsv
+        env:
+          COMMIT: ${{ github.sha }}
+          OUT: ${{ runner.temp }}/gate-citations.tsv
+          GH_TOKEN: ${{ github.token }}
+          CHECK: ossv-gate/citations
+          APP_ID: "5447700"
+          BRANCH: gate-citations
+        run: |
+          set -euo pipefail
+          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::commit $COMMIT is not a full commit id"; exit 1; }
+          none() { echo "the publishing gate cites nothing on $COMMIT: $1"; { echo "file="; echo "check_run="; echo "scope="; } >> "$GITHUB_OUTPUT"; exit 0; }
+          # every check run of that name and App on exactly this commit; the newest (the highest id) decides
+          gh api --paginate --method GET "repos/$GITHUB_REPOSITORY/commits/$COMMIT/check-runs" \
+              -f check_name="$CHECK" -f app_id="$APP_ID" -f filter=all -f per_page=100 --jq \
+              '.check_runs[] | select(.name == env.CHECK and (.app.id | tostring) == env.APP_ID and .head_sha == env.COMMIT)
+               | {id, status, conclusion, html_url, summary: (.output.summary // "")}' \
+            | jq -s 'sort_by(.id) | last // empty' > "$RUNNER_TEMP/gate-check.json"
+          [ -s "$RUNNER_TEMP/gate-check.json" ] || none "no $CHECK check run by App $APP_ID"
+          read -r status conclusion url < <(jq -r '"\(.status) \(.conclusion // "none") \(.html_url)"' "$RUNNER_TEMP/gate-check.json")
+          [ "$status/$conclusion" = completed/success ] || none "its newest $CHECK check run, $url, is $status $conclusion"
+          field() { jq -r .summary "$RUNNER_TEMP/gate-check.json" | sed -n "s/^$1: *//p" | head -n 1; }
+          path="$(field citations)" sha="$(field sha256)" scope="$(field scope)"
+          [ "$path" = "citations/$COMMIT.tsv" ] || { echo "::error::$url names the file '$path', not citations/$COMMIT.tsv"; exit 1; }
+          [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::$url names no SHA-256 of its file"; exit 1; }
+          gh api -H "Accept: application/vnd.github.raw" "repos/$GITHUB_REPOSITORY/contents/$path?ref=$BRANCH" > "$OUT"
+          got="$(sha256sum "$OUT" | cut -d ' ' -f 1)"
+          [ "$got" = "$sha" ] || { echo "::error::$path on $BRANCH has SHA-256 $got, and $url names $sha"; exit 1; }
+          { echo "file=$OUT"; echo "check_run=$url"; echo "scope=$scope"; } >> "$GITHUB_OUTPUT"
+          echo "the publishing gate's citations of $COMMIT: $path on $BRANCH ($(grep -vc '^#' "$OUT") lines with its header), from $url, scope $scope"
       - name: plan
         id: plan
         env:
           UNITS: ${{ inputs.units }}
           ROTATE: ${{ github.event_name == 'schedule' && github.event.repository.visibility != 'public' }}
           GATE: ${{ steps.gate.outputs.file }}
-          GATE_RUN: ${{ steps.gate.outputs.check-run }}
+          GATE_RUN: ${{ steps.gate.outputs.check_run }}
         run: |
           set -euo pipefail
           # with no base and no recorded pass, every part of every harness is planned.  The jobs: the tools pack the

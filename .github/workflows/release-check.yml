@@ -22,7 +22,7 @@
 #                  at each checked part's key (tools/oft/offloaded-checks.tsv), and fails, naming
 #                  the harness, the part and the key, when one has none.  A unit's build part
 #                  that the publishing gate checked on the build service at its key, for this
-#                  commit, is cited too (.github/actions/gate-citations; tools/oft/plan.py, gate),
+#                  commit, is cited too (the plan job's gate step; tools/oft/plan.py, gate),
 #                  and only its counterexamples and findings are checked in a group: each part is
 #                  either checked in a job or cited at its own key, never neither
 #   release-check  the one required check: it always runs, and fails if any job failed, if a planned
@@ -146,14 +146,14 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      checks: read   # the publishing gate's citations check run on this commit (.github/actions/gate-citations)
+      checks: read   # the publishing gate's citations check run on this commit (the gate step)
     outputs:
       plan: ${{ steps.drafts.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
       full: ${{ steps.plan.outputs.full }}
       offloaded: ${{ steps.plan.outputs.offloaded }}
       gated: ${{ steps.plan.outputs.gated }}
-      gate_run: ${{ steps.gate.outputs.check-run }}
+      gate_run: ${{ steps.gate.outputs.check_run }}
       draft_legs: ${{ steps.drafts.outputs.draft_legs }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
@@ -170,20 +170,58 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --quiet --require-hashes -r tools/oft/requirements.txt
-      # the build parts the publishing gate checked on the build service, at this commit's keys: cited, not checked
-      # again in a job (tools/oft/plan.py, gate); their counterexamples and findings still are
+      # The build parts the publishing gate checked on the build service, at this commit's keys: cited, not checked
+      # again in a job (tools/oft/plan.py, gate); their counterexamples and findings still are.  weekly.yml runs the
+      # same step.  The gate, outside this repository, checks each unit's build part (statements and proofs, in the
+      # release checker image) on the build service (builds-ossv).  For a commit it passed, it pushes a file in
+      # tools/oft/offloaded-checks.tsv's form (part `build`, the key at that commit, its job, the SHA-256 of the job's
+      # result, the date; comment lines say why a unit has no row) to citations/<commit>.tsv on the branch
+      # gate-citations, and only then creates a check run CHECK on that commit with its own GitHub App (APP_ID), whose
+      # summary names the file and that SHA-256, one `key: value` line each: citations, sha256, scope (full or
+      # routed), units, gate run.  Only a check run of that name made by that App counts (any account or workflow with
+      # write access can create a check run of any name; one is bound to the App whose token created it), and its
+      # newest on exactly the commit decides, so the gate can withdraw citations by creating another.  The file is
+      # anyone's to push to that branch; the check run binds its bytes, and a file that differs fails this step.  No
+      # check run, or one that is not a success: no file, and every planned part is checked in a job.  `oft plan`
+      # takes a row only at the part's current key, so a part is either cited at its own key or checked in a job,
+      # never neither.
       - name: the publishing gate's citations of this commit
         id: gate
-        uses: ./.github/actions/gate-citations
-        with:
-          commit: ${{ github.sha }}
-          file: ${{ runner.temp }}/gate-citations.tsv
+        env:
+          COMMIT: ${{ github.sha }}
+          OUT: ${{ runner.temp }}/gate-citations.tsv
+          GH_TOKEN: ${{ github.token }}
+          CHECK: ossv-gate/citations
+          APP_ID: "5447700"
+          BRANCH: gate-citations
+        run: |
+          set -euo pipefail
+          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::commit $COMMIT is not a full commit id"; exit 1; }
+          none() { echo "the publishing gate cites nothing on $COMMIT: $1"; { echo "file="; echo "check_run="; echo "scope="; } >> "$GITHUB_OUTPUT"; exit 0; }
+          # every check run of that name and App on exactly this commit; the newest (the highest id) decides
+          gh api --paginate --method GET "repos/$GITHUB_REPOSITORY/commits/$COMMIT/check-runs" \
+              -f check_name="$CHECK" -f app_id="$APP_ID" -f filter=all -f per_page=100 --jq \
+              '.check_runs[] | select(.name == env.CHECK and (.app.id | tostring) == env.APP_ID and .head_sha == env.COMMIT)
+               | {id, status, conclusion, html_url, summary: (.output.summary // "")}' \
+            | jq -s 'sort_by(.id) | last // empty' > "$RUNNER_TEMP/gate-check.json"
+          [ -s "$RUNNER_TEMP/gate-check.json" ] || none "no $CHECK check run by App $APP_ID"
+          read -r status conclusion url < <(jq -r '"\(.status) \(.conclusion // "none") \(.html_url)"' "$RUNNER_TEMP/gate-check.json")
+          [ "$status/$conclusion" = completed/success ] || none "its newest $CHECK check run, $url, is $status $conclusion"
+          field() { jq -r .summary "$RUNNER_TEMP/gate-check.json" | sed -n "s/^$1: *//p" | head -n 1; }
+          path="$(field citations)" sha="$(field sha256)" scope="$(field scope)"
+          [ "$path" = "citations/$COMMIT.tsv" ] || { echo "::error::$url names the file '$path', not citations/$COMMIT.tsv"; exit 1; }
+          [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::$url names no SHA-256 of its file"; exit 1; }
+          gh api -H "Accept: application/vnd.github.raw" "repos/$GITHUB_REPOSITORY/contents/$path?ref=$BRANCH" > "$OUT"
+          got="$(sha256sum "$OUT" | cut -d ' ' -f 1)"
+          [ "$got" = "$sha" ] || { echo "::error::$path on $BRANCH has SHA-256 $got, and $url names $sha"; exit 1; }
+          { echo "file=$OUT"; echo "check_run=$url"; echo "scope=$scope"; } >> "$GITHUB_OUTPUT"
+          echo "the publishing gate's citations of $COMMIT: $path on $BRANCH ($(grep -vc '^#' "$OUT") lines with its header), from $url, scope $scope"
       - name: plan
         id: plan
         env:
           UNITS: ${{ inputs.units }}
           GATE: ${{ steps.gate.outputs.file }}
-          GATE_RUN: ${{ steps.gate.outputs.check-run }}
+          GATE_RUN: ${{ steps.gate.outputs.check_run }}
         run: |
           set -euo pipefail
           # Every harness with a committed proof or finding, each as the directory a change to it would
