@@ -72,10 +72,10 @@
 # a change to it needs a reviewer's eye before its run is trusted; the local actions it uses come from the base, as
 # the tools do: a GitHub App can change .github/actions/ with the Contents permission alone, and this file only
 # with the Workflows permission as well.  So a change to an action takes effect for the pull requests after it
-# lands.  A push to main runs lint, tests and controls in full, and checks the harnesses the push changes;
-# release-check.yml, when enabled, checks on it what that push changes, and every committed proof and
-# finding once a week.  A merge queue group is the commit main becomes, and is checked as a push to
-# main is.
+# lands.  A push to main runs lint, tests and controls in full, and no proof check: release-check.yml checks on
+# that push what it changes, by the release rules, and weekly.yml every committed
+# proof and finding once a week.  A merge queue group is the commit main becomes, and is checked as a push to
+# main is, except that it also checks the harnesses it changes, since nothing else checks a group.
 #
 # required and main-gate have no condition that skips them, since a skipped job reports success.  A pull request
 # runs again when it is edited, which is the event for a new base, and a new base is checked as any other run is.
@@ -597,7 +597,8 @@ jobs:
   # that lint accepted (no GPL binary without its source).
   fetch-drafts:
     needs: [plan, lint]
-    if: needs.plan.outputs.draft_legs != '[]'
+    # only for check, which a push to main does not run
+    if: needs.plan.outputs.draft_legs != '[]' && github.event_name != 'push'
     name: fetch-drafts ${{ matrix.leg.index }}
     permissions:
       contents: write   # the only permission with which the workflow's token sees a draft release; nothing is written
@@ -613,14 +614,17 @@ jobs:
     # A change that is not a release is checked on a worktree of the base with only this change's proofs/,
     # counterexamples/ and findings/ in it (the step below), so its plan names only the harnesses whose files under
     # those three it changes: for every other harness this job would compile the base's bytes a second time.  A
-    # release pull request, a push to main and a merge queue group bring their own facts: plan reads them by the
-    # release rules (every harness the change reaches) and this job checks them on the change's own tree.
+    # release pull request and a merge queue group bring their own facts: plan reads them by the release rules
+    # (every harness the change reaches) and this job checks them on the change's own tree.  A push to main is not
+    # checked here: release-check.yml's run of the same push plans what that push changes by the release rules, with
+    # the pushed commit's own tools, and checks it; its verdict is the one of record (the README's badge), and a second
+    # check here was the same work twice.
     # fetch-drafts is skipped when no group has a draft, and a job whose need was skipped is skipped too unless its
     # condition says otherwise: run when fetch-drafts passed or had nothing to do, never when it failed, was cancelled
     # or was skipped because lint failed
     needs: [plan, lint, fetch-drafts]
     if: >-
-      !cancelled() && needs.plan.result == 'success' && needs.lint.result == 'success'
+      !cancelled() && github.event_name != 'push' && needs.plan.result == 'success' && needs.lint.result == 'success'
       && needs.plan.outputs.units != '0'
       && (needs.fetch-drafts.result == 'success'
           || (needs.fetch-drafts.result == 'skipped' && needs.plan.outputs.draft_legs == '[]'))
@@ -735,15 +739,6 @@ jobs:
           CACHE: ${{ runner.temp }}/dune-cache
           GH_TOKEN: ${{ github.token }}
         run: bash "$RUNNER_TEMP/tools/oft/ci/check-units.sh"
-      # One job saves, and not one that read a draft.  A save per job filled the repository's 10 GB of cache (8 such
-      # entries held 8.3 GiB of 9.6) and evicted the rest; a job that read a draft saves nothing (the header says why).
-      # No proof check restores this cache (the restore step above).
-      - name: keep dune's cache (main only, one job, and not from a draft)
-        if: github.event_name == 'push' && matrix.job.index == 0 && join(matrix.job.drafts, ',') == ''
-        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
-        with:
-          path: ${{ runner.temp }}/dune-cache
-          key: ${{ steps.keys.outputs.key }}
 
   controls:
     # the change's own tests/check.sh and dune files: only after lint has accepted the paths it changes
@@ -958,6 +953,8 @@ jobs:
       - name: every job green, and something checked when the plan named anything
         if: env.RESTATE != 'true'
         env:
+          # a push to main runs no check and so no fetch-drafts: release-check.yml checks what it changes (check's comment)
+          PUSH: ${{ github.event_name == 'push' }}
           DRAFTS_LISTED: ${{ needs.plan.outputs.draft_legs != '[]' }}
           # each part checked on the build service in place of a check job, with its citation (the plan step's)
           OFFLOADED: ${{ needs.plan.outputs.offloaded || '[]' }}
@@ -970,7 +967,7 @@ jobs:
           else
             [ "${{ needs.tests.result }}" = skipped ] || { echo "::error::nothing the tools' tests read changed, yet they ran"; exit 1; }
           fi
-          if [ "$DRAFTS_LISTED" = true ]; then
+          if [ "$DRAFTS_LISTED" = true ] && [ "$PUSH" != true ]; then
             [ "${{ needs.fetch-drafts.result }}" = success ] || { echo "::error::fetching the draft binaries failed or did not run"; exit 1; }
           else
             [ "${{ needs.fetch-drafts.result }}" = skipped ] || { echo "::error::no draft binary listed, yet fetch-drafts ran"; exit 1; }
@@ -979,6 +976,12 @@ jobs:
             [ "${{ needs.controls.result }}" = success ] || { echo "::error::the controls failed or did not run"; exit 1; }
           else
             [ "${{ needs.controls.result }}" = skipped ] || { echo "::error::no input of the controls changed, yet they ran"; exit 1; }
+          fi
+          if [ "$PUSH" = true ]; then
+            [ "${{ needs.check.result }}" = skipped ] || { echo "::error::a push to main, yet check ran"; exit 1; }
+            echo "### a push to main: release-check.yml checks the ${{ needs.plan.outputs.units }} harness(es) planned here" \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
           if [ "${{ needs.plan.outputs.units }}" != 0 ]; then
             [ "${{ needs.check.result }}" = success ] || { echo "::error::a check failed or did not run"; exit 1; }
