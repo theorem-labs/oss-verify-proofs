@@ -203,6 +203,7 @@ jobs:
       contents: read
       packages: read   # weekly.yml pulls the pinned images from ghcr.io; a called workflow gets no more than this
       actions: read    # weekly.yml's plan job looks for a passed sweep of this commit to cite
+      checks: read     # weekly.yml's plan job reads the publishing gate's citations check run on this commit
     uses: ./.github/workflows/weekly.yml
     with:
       release: ${{ github.ref_name }}

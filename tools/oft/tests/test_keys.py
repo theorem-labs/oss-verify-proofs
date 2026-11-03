@@ -621,6 +621,69 @@ class Plan(unittest.TestCase):
                              err.getvalue())
             self.assertEqual(len(json.loads(out.getvalue())["offloaded"]), len(mine))
 
+    def gate_file(self, d, cited):
+        path = os.path.join(d, "gate-citations.tsv")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\t".join(plan.OFFLOADED_COLUMNS) + "\n" + "".join(
+                "%s\t%s\t%s\tgate/run-1/proof:%s\t%s\t2026-11-03\n" % (unit, part, key, unit, "1" * 64)
+                for unit, part, key in cited))
+        return path
+
+    def test_the_publishing_gate_cites_the_build_part_of_any_unit_and_the_other_parts_are_still_checked(self):
+        """A build part with a gate row at its key is cited and in no job; the unit's counterexamples and findings are
+        still checked in a job.  Every checked part is so in a job or cited at its key, never neither."""
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            head = repo(t)
+            whole = self.plan(t, change=head)
+            builds = [(r["unit"], r["part"], r["key"]) for r in whole["parts"] if r["check"] and r["part"] == "build"]
+            others = sorted((r["unit"], r["part"]) for r in whole["parts"] if r["check"] and r["part"] != "build")
+            self.assertTrue(builds and others, "the tree has build parts and other parts to check")
+            p = self.plan(t, change=head, gate=self.gate_file(d, builds))
+            self.assertEqual(sorted((r["unit"], r["part"], r["key"]) for r in p["offloaded"] if r.get("by") == "gate"),
+                             sorted(builds))
+            self.assertEqual(p["check_units"], [])
+            self.assertTrue(all(j["check_units"] == "" and j["proof_units"] == "" for j in p["jobs"]), p["jobs"])
+            in_jobs = sorted([(u, "counterexamples") for j in p["jobs"] for u in j["counterexamples"].split()]
+                             + [(u, "findings") for j in p["jobs"] for u in j["findings"].split()])
+            self.assertEqual(in_jobs, others)
+            # the projects a job fetches binaries for are its counterexamples' alone, no cited build's
+            for j in p["jobs"]:
+                self.assertEqual(j["projects"].split(), sorted({u.split("/")[0] for u in j["counterexamples"].split()}))
+
+    def test_a_gate_row_at_another_key_cites_nothing(self):
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            head = repo(t)
+            builds = [(r["unit"], r["part"], r["key"]) for r in self.plan(t, change=head)["parts"]
+                      if r["check"] and r["part"] == "build"]
+            stale = [(u, part, "f" * 64) for u, part, _k in builds]
+            p = self.plan(t, change=head, gate=self.gate_file(d, stale))
+            self.assertEqual([r for r in p["offloaded"] if r.get("by") == "gate"], [])
+            self.assertEqual(sorted(p["check_units"]), sorted({u for u, _p, _k in builds}))
+
+    def test_a_unit_too_long_for_a_job_is_cited_by_the_gate_and_its_other_parts_go_to_a_job(self):
+        """An offloaded unit with no row in offloaded-checks.tsv fails the plan, unless the gate cites its build; its
+        other parts, which TIMES does not measure, are then checked in a job like any unit's."""
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            head, times, mine = self._offloaded_tree(t)
+            builds = [(r["unit"], r["part"], r["key"]) for r in mine if r["part"] == "build"]
+            self.assertTrue(builds)
+            self.failed_plan(t, change=head, times=times)
+            p = self.plan(t, change=head, times=times, gate=self.gate_file(d, builds))
+            self.assertNotIn(UNIT, p["check_units"])
+            self.assertEqual([r["unit"] for r in p["offloaded"]], [UNIT])
+            rest = sorted(r["part"] for r in mine if r["part"] != "build")
+            self.assertEqual(sorted([part for j in p["jobs"] for part in ("counterexamples", "findings")
+                                     if UNIT in j[part].split()]), rest)
+
+    def test_a_gate_row_of_another_part_or_a_missing_file_fails_the_plan(self):
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            head = repo(t)
+            other = [(r["unit"], r["part"], r["key"]) for r in self.plan(t, change=head)["parts"]
+                     if r["check"] and r["part"] != "build"][:1]
+            self.assertTrue(other)
+            self.assertIn("cites build parts only", self.failed_plan(t, change=head, gate=self.gate_file(d, other)))
+            self.assertIn("no such file", self.failed_plan(t, change=head, gate=os.path.join(d, "none.tsv")))
+
     def test_a_change_that_adds_a_shadowing_dune_file_fails_its_own_plan(self):
         """A change that is not a release is checked on the base's tests/, but its own dune files reach main."""
         for kind in ("maintainer", "contributor"):

@@ -673,15 +673,18 @@ class CollectTest(StandIn):
         # WARM_ASKED is the warm job's own condition; CITED is what skips the sweep, and nothing else does
         self.assertEqual(s["env"]["WARM_ASKED"], "${{ %s }}" % jobs["warm"]["if"])
         self.assertEqual(s["env"]["CITED"], "${{ needs.plan.outputs.cited }}")
-        self.assertEqual(jobs["sweep"]["if"], "needs.plan.outputs.cited == ''")
+        self.assertEqual(s["env"]["UNITS"], "${{ needs.plan.outputs.units }}")
+        self.assertEqual(jobs["sweep"]["if"], "needs.plan.outputs.cited == '' && needs.plan.outputs.units != '0'")
         names = ["plan", "sweep", "assets", "determinism", "determinism-compare", "warm"]
 
-        def env(asked="false", cited=None, **given):
+        def env(asked="false", cited=None, units=None, **given):
             r = results(names, **dict({"warm": "skipped"}, **given))
             e = {"WARM_ASKED": asked, "PLAN": r["plan"], "SWEEP": r["sweep"], "ASSETS": r["assets"],
                  "DETERMINISM": r["determinism"], "COMPARE": r["determinism-compare"], "WARM": r["warm"]}
             if cited is not None:
                 e["CITED"] = cited
+            if units is not None:
+                e["UNITS"] = units
             return e
         run = "https://github.com/o/r/actions/runs/1"
         cases = [(env(), True), (env(asked="true", warm="success"), True), (env(cited=""), True),
@@ -694,6 +697,11 @@ class CollectTest(StandIn):
             cases.append((env(cited=run, sweep=result), False))
         for job in ("plan", "assets", "determinism", "determinism_compare"):     # a citation stands for the sweep only
             cases.append((env(cited=run, sweep="skipped", **{job: "failure"}), False))
+        # a plan that cites every planned part (the publishing gate's citations) has no sweep job
+        cases += [(env(units="0", sweep="skipped"), True), (env(units="3", sweep="skipped"), False),
+                  (env(units="0", sweep="success"), False),
+                  (env(units="0", plan="failure", sweep="skipped"), False),
+                  (env(units="0", sweep="skipped", assets="failure"), False)]
         cases += [(env(asked="true"), False), (env(asked="true", warm="failure"), False),
                   (env(warm="success"), False)]
         self.check(s, cases)
@@ -756,6 +764,12 @@ class PlanSizeTest(unittest.TestCase):
                      {"units": ["a/x"], "jobs": [{"index": 0, "check_units": "", "projects": "a"}]}):
             got = run(none)
             self.assertEqual((got["sample"], got["sample_projects"]), ("", ""))
+        # a build the plan cites (the publishing gate's, or a unit too long for a job) has published builds too
+        cited = {"units": ["a/x"], "check_units": [], "jobs": [{"index": 0, "check_units": "", "projects": ""}],
+                 "offloaded": [{"unit": "b/y", "part": "build", "by": "gate"},
+                               {"unit": "a/a", "part": "findings"}]}
+        got = run(cited)
+        self.assertEqual((got["sample"], got["sample_projects"]), ("b/y", "b"))
 
 
 class CheckTreeTest(unittest.TestCase):

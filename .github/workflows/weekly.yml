@@ -1,11 +1,16 @@
 # weekly.yml: everything, with nothing cached.
 #
 #   plan         every harness (or the ones named); while the repository is not
-#                public, a scheduled run checks a rotating third of them
+#                public, a scheduled run checks a rotating third of them.  A
+#                harness's build part that the publishing gate checked on the
+#                build service at its key, for this commit, is cited and not swept
+#                (.github/actions/gate-citations; tools/oft/plan.py, gate): each part
+#                is either swept or cited at its own key, never neither
 #   sweep        each harness: fetch, build every image afresh, every proof
 #                and its assumptions against the allowlist, every counterexample;
 #                skipped, by citation, when a scheduled run or a release's run
-#                finds a passed sweep of every harness at this same commit (below)
+#                finds a passed sweep of every harness at this same commit (below),
+#                and when the plan cites every planned part
 #   assets       every release asset the facts pin, downloaded and hashed again
 #   determinism  two kinds of machine snapshot the same ELF files; the outputs
 #                are compared byte for byte, so no reference digest is needed
@@ -66,6 +71,7 @@ jobs:
     permissions:
       contents: read
       actions: read   # the cite step lists this commit's runs and their jobs
+      checks: read    # the publishing gate's citations check run on this commit (.github/actions/gate-citations)
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
@@ -81,11 +87,21 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --quiet --require-hashes -r tools/oft/requirements.txt
+      # the build parts the publishing gate checked on the build service, at this commit's keys: cited, not swept
+      # again (tools/oft/plan.py, gate); their counterexamples and findings are still swept
+      - name: the publishing gate's citations of this commit
+        id: gate
+        uses: ./.github/actions/gate-citations
+        with:
+          commit: ${{ github.sha }}
+          file: ${{ runner.temp }}/gate-citations.tsv
       - name: plan
         id: plan
         env:
           UNITS: ${{ inputs.units }}
           ROTATE: ${{ github.event_name == 'schedule' && github.event.repository.visibility != 'public' }}
+          GATE: ${{ steps.gate.outputs.file }}
+          GATE_RUN: ${{ steps.gate.outputs.check-run }}
         run: |
           set -euo pipefail
           # with no base and no recorded pass, every part of every harness is planned.  The jobs: the tools pack the
@@ -94,6 +110,10 @@ jobs:
           PYTHONPATH=tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
           jobs=()
           if grep -q -- --max-jobs "$RUNNER_TEMP/plan-help.txt"; then jobs=(--max-jobs 256); fi
+          if [ -n "${GATE:-}" ]; then
+            grep -q -- --gate-citations "$RUNNER_TEMP/plan-help.txt" && jobs+=(--gate-citations "$GATE") ||
+              echo "these tools take no --gate-citations: every planned part is swept"
+          fi
           PYTHONPATH=tools python -m oft plan "${jobs[@]}" > "$RUNNER_TEMP/all.json"
           # every harness: those in the plan's jobs and those it takes from their checks on the build service
           every='[.units[], (.offloaded // [] | .[].unit)] | unique | .[]'
@@ -110,10 +130,13 @@ jobs:
           PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" "${jobs[@]}" > "$RUNNER_TEMP/plan.json"
           # the determinism job's sample: one harness, the first by name of the planned harnesses with published builds
           # (a harness whose every build is withheld has a finding to re-run, and no binary to snapshot), whatever the
-          # order of the plan's jobs, which are listed longest first.  As two small values, since the plan's jobs grow
-          # with the tree and an environment value may not exceed 131,072 bytes.  Tools that predate the plan's
-          # top-level check_units list them in the jobs only.
-          sample='[(.check_units // [.jobs[].check_units | split(" ")[]]) | .[] | select(. != "")] | sort | .[0] // ""'
+          # order of the plan's jobs, which are listed longest first: those whose build a sweep job checks and those
+          # whose build check the plan cites.  As two small values, since the plan's jobs grow with the tree and an
+          # environment value may not exceed 131,072 bytes.  Tools that predate the plan's top-level check_units list
+          # them in the jobs only.
+          sample='[((.check_units // [.jobs[].check_units | split(" ")[]])
+                    + [.offloaded // [] | .[] | select(.part == "build") | .unit]) | .[] | select(. != "")]
+                  | sort | .[0] // ""'
           {
             echo "plan=$(jq -c .jobs "$RUNNER_TEMP/plan.json")"
             echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
@@ -121,10 +144,11 @@ jobs:
             echo "sample_projects=$(jq -r "$sample | split(\"/\")[0] // \"\"" "$RUNNER_TEMP/plan.json")"
           } >> "$GITHUB_OUTPUT"
           # .units names the harnesses in sweep jobs; one too long for a job even alone is checked on the build service,
-          # and the plan takes its citation at each part's key or fails (tools/oft/plan.py, offloaded)
+          # and the plan takes its citation at each part's key or fails (tools/oft/plan.py, offloaded); a build part
+          # the publishing gate checked at its key is cited too ("by": "gate")
           { echo "harnesses in sweep jobs: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq -r "$every" "$RUNNER_TEMP/all.json" | wc -l)"
-            echo "### checked on the build service (builds-ossv), by citation: $(jq '.offloaded // [] | length' "$RUNNER_TEMP/plan.json") part(s)"
-            jq -r '.offloaded // [] | .[] | "- \(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
+            echo "### checked on the build service (builds-ossv), by citation: $(jq '.offloaded // [] | length' "$RUNNER_TEMP/plan.json") part(s)${GATE_RUN:+; the publishing gate cites from its check run $GATE_RUN}"
+            jq -r '.offloaded // [] | .[] | "- \(.unit) \(.part) at key \(.key): \(if .by == "gate" then "publishing gate" else "build-service" end) job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
               "$RUNNER_TEMP/plan.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: an earlier passed sweep of every harness at this commit, cited instead of a second sweep (the header)
@@ -166,7 +190,8 @@ jobs:
 
   sweep:
     needs: plan
-    if: needs.plan.outputs.cited == ''
+    # not when an earlier sweep of this commit is cited, nor when the plan has no job (every planned part cited)
+    if: needs.plan.outputs.cited == '' && needs.plan.outputs.units != '0'
     name: sweep ${{ matrix.job.index }}
     # the runner and the time limit the job's plan entry names, unless the repository variables say otherwise (pr.yml's
     # check job)
@@ -386,6 +411,8 @@ jobs:
           SWEEP: ${{ needs.sweep.result }}
           # the earlier run whose sweep of this commit this run cites, or empty (the plan job's cite step)
           CITED: ${{ needs.plan.outputs.cited }}
+          # the harnesses in sweep jobs; 0 when the plan cites every planned part (the plan job's summary lists them)
+          UNITS: ${{ needs.plan.outputs.units }}
           ASSETS: ${{ needs.assets.result }}
           DETERMINISM: ${{ needs.determinism.result }}
           COMPARE: ${{ needs.determinism-compare.result }}
@@ -393,10 +420,13 @@ jobs:
         run: |
           set -euo pipefail
           got="plan $PLAN, sweep $SWEEP${CITED:+ (cited: $CITED)}, assets $ASSETS, determinism $DETERMINISM, determinism-compare $COMPARE, warm $WARM"
-          # a cited sweep is skipped, and only a cited one: the citation stands for it
+          # a cited sweep is skipped, and so is a sweep with no job, and only those: the citations stand for it
           sweep="$SWEEP"
           if [ -n "${CITED:-}" ]; then
             [ "$SWEEP" = skipped ] || { echo "::error::the sweep was cited, yet: $got"; exit 1; }
+            sweep=success
+          elif [ "$PLAN" = success ] && [ "${UNITS:-}" = 0 ]; then
+            [ "$SWEEP" = skipped ] || { echo "::error::the plan has no sweep job, yet: $got"; exit 1; }
             sweep=success
           fi
           [ "$PLAN/$sweep/$ASSETS/$DETERMINISM/$COMPARE" = success/success/success/success/success ] ||

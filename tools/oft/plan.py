@@ -92,8 +92,11 @@ def timeout_minutes(units, times, on):
 # took 13.9 to 360 minutes for the measured ones: an unmeasured unit with a proof (a new proof, before TIMES has its
 # row) gets a 16-core job of its own, at CAP, so that it cannot take a job's other units past their limit with it.  A
 # unit whose own minutes are over the 16-core room (offloaded()) is in no job: it is checked on the build service
-# (builds-ossv), and the plan takes a citation of that check instead (OFFLOADED).  The jobs are listed longest first,
-# so that the matrix starts them first.  MATRIX is the most jobs GitHub runs in one matrix.
+# (builds-ossv), and the plan takes a citation of that check instead (OFFLOADED).  A unit whose build part is not
+# planned (light: only its counterexamples or findings, for instance when the publishing gate's citation stands for its
+# build) is packed as UNMEASURED minutes on the 16-core runner, since TIMES measures the build, and is never offloaded.
+# The jobs are listed longest first, so that the matrix starts them first.  MATRIX is the most jobs GitHub runs in one
+# matrix.
 ROOM = {LARGE: CAP / MARGIN, STANDARD: CAP / MARGIN / SLOWER}
 UNMEASURED = 3.0
 MATRIX = 256
@@ -105,12 +108,16 @@ def offloaded(unit, times):
     return m is not None and m > ROOM[LARGE]
 
 
-def pack(units, times, proved):
+def pack(units, times, proved, light=frozenset()):
     """([(runner, [unit, ...]), ...], [unit, ...]): the check jobs of units, by the rule above, and the units that are
-    in no job because offloaded() says so.  proved is the set of units with a proof.  Every unit is in exactly one job
-    or in the second list."""
+    in no job because offloaded() says so.  proved is the set of units with a proof, light those whose build part is
+    not planned.  Every unit is in exactly one job or in the second list."""
     alone, by, away, size = [], {STANDARD: [], LARGE: []}, [], {}
     for u in units:
+        if u in light:
+            size[u] = UNMEASURED
+            by[LARGE].append(u)
+            continue
         m = times.get(u, (None, None))[0]
         on = runner([u], times)
         if on == STANDARD and m > ROOM[STANDARD]:
@@ -245,7 +252,7 @@ def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, sto
 
 
 def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, rocqchk=False,
-         times=None, cited_from=None, out=sys.stdout, err=sys.stderr):
+         times=None, cited_from=None, gate=None, out=sys.stdout, err=sys.stderr):
     """Print {"all", "units", "check_units", "offloaded", "parts", "jobs"} for the parts rows() checks; units, if
     given, limits the plan to those units (weekly's rotating third).  parts holds every part's row with its key and
     components.  The jobs are pack()'s, from times (check_times() when None); units and check_units name the units the
@@ -253,7 +260,17 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
     OFFLOADED file that cites: root's own, or cited_from, when given.  pr.yml gives the base's for a change that is not
     a release, so that only a row already on main cites, never one the change itself adds; root's own file is held to
     its form all the same.  When a part has no row, nothing is printed, each such part is named on err with its key,
-    and the plan returns 1.  Each job lists its units, the units whose build it checks (check_units) and those of them
+    and the plan returns 1.
+
+    gate, when given, is a file of the publishing gate's citations (the OFFLOADED form; the workflow takes it from the
+    gate's check run on exactly the commit checked, by the gate's App, and checks its SHA-256): each row cites the
+    gate's check of a unit's build part (statements and proofs, in the release checker image, on the build service)
+    at a key.  A checked build part of any unit whose key has such a row is cited, in offloaded with "by": "gate", and
+    is in no job; the
+    unit's other parts (counterexamples, findings) are still checked in a job.  A part is so either checked in a job or
+    cited at its own key, never neither; a gate row of another part is refused.
+
+    Each job lists its units, the units whose build it checks (check_units) and those of them
     with a proof of one of their statements (proof_units, which check-units.sh checks with their proofs and the rest on
     their statements), the projects whose binaries those and the counterexamples need, the units whose
     counterexamples and findings it runs, the runner it runs on and its time limit in minutes (timeout_minutes()).  A
@@ -264,25 +281,36 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
     tree = facts.load(root)
     proved = {st.harness.project.name + "/" + st.harness.name for st in tree.statements() if st.proof}
     wanted = keys.wanted(tree)
+    harnesses = {h.project.name + "/" + h.name for h in tree.harnesses()}
     try:
-        own = citations(os.path.join(root, OFFLOADED),
-                        {h.project.name + "/" + h.name for h in tree.harnesses()}, set(wanted))
+        own = citations(os.path.join(root, OFFLOADED), harnesses, set(wanted))
         # another tree's file names that tree's harnesses: only its form is held here, as its own plans hold the rest
         cited = own if cited_from is None else citations(cited_from)
+        gated = citations(gate, harnesses, set(wanted)) if gate else {}
+        if gate and not os.path.isfile(gate):
+            raise ValueError("%s: no such file of the publishing gate's citations" % gate)
+        other = sorted("%s %s" % (u, p) for u, p, _k in gated if p != "build")
+        if other:
+            raise ValueError("%s: the publishing gate cites build parts only, not %s" % (gate, ", ".join(other)))
     except ValueError as e:
         print("oft plan: %s" % e, file=err)
         return 1
     if units is not None:
         wanted = [(u, p) for u, p in wanted if u in units]
     parts = [dict(r, components=c) for r, c, _o in rows(root, wanted, change, base, kind, tools, store, rocqchk)]
-    of = {}
+    of, found = {}, []
     for r in parts:
-        if r["check"]:
+        if not r["check"]:
+            continue
+        row = gated.get((r["unit"], r["part"], r["key"]))
+        if row:
+            found.append(dict(row, by="gate"))
+        else:
             of.setdefault(r["unit"], set()).add(r["part"])
-    packed, away = pack(sorted(of), times, proved)
-    found, missing = [], []
+    packed, away = pack(sorted(of), times, proved, {u for u in of if "build" not in of[u]})
+    missing = []
     for r in parts:
-        if r["check"] and r["unit"] in away:
+        if r["check"] and r["unit"] in away and r["part"] in of[r["unit"]]:
             row = cited.get((r["unit"], r["part"], r["key"]))
             if row:
                 found.append(row)
