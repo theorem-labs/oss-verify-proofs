@@ -629,6 +629,26 @@ class Plan(unittest.TestCase):
                 for unit, part, key in cited))
         return path
 
+    def test_a_gate_file_with_comment_lines_and_rows_for_some_units_cites_only_those(self):
+        """The gate writes no row for a unit whose job ran another checker image or other tools, and says why in a
+        comment line: that unit's build is checked in a job, the others are cited."""
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            head = repo(t)
+            builds = sorted((r["unit"], r["part"], r["key"]) for r in self.plan(t, change=head)["parts"]
+                            if r["check"] and r["part"] == "build")
+            self.assertGreater(len(builds), 1)
+            kept, left = builds[1:], builds[0]
+            path = self.gate_file(d, kept)
+            with open(path, encoding="utf-8") as f:
+                body = f.read()
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("# gate run run-1, full, commit %s\n# no row: %s: its job ran another checker image\n%s"
+                        % (head, left[0], body))
+            p = self.plan(t, change=head, gate=path)
+            self.assertEqual(sorted((r["unit"], r["part"], r["key"]) for r in p["offloaded"] if r.get("by") == "gate"),
+                             kept)
+            self.assertEqual(p["check_units"], [left[0]])
+
     def test_the_publishing_gate_cites_the_build_part_of_any_unit_and_the_other_parts_are_still_checked(self):
         """A build part with a gate row at its key is cited and in no job; the unit's counterexamples and findings are
         still checked in a job.  Every checked part is so in a job or cited at its key, never neither."""
