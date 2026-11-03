@@ -27,7 +27,8 @@
 # attaches no file and needs no draft: this workflow creates its v<release>
 # when there is none, and it has no v<release>-src.  Once every release the
 # facts attach a file to is published, it runs the weekly sweep against the
-# files as published.
+# files as published, or cites a passed sweep of every harness at this same
+# commit (weekly.yml's header says when).
 name: release
 on:
   push:
@@ -201,6 +202,7 @@ jobs:
     permissions:
       contents: read
       packages: read   # weekly.yml pulls the pinned images from ghcr.io; a called workflow gets no more than this
+      actions: read    # weekly.yml's plan job looks for a passed sweep of this commit to cite
     uses: ./.github/workflows/weekly.yml
     with:
       release: ${{ github.ref_name }}
