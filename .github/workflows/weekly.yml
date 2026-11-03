@@ -3,19 +3,30 @@
 #   plan         every harness (or the ones named); while the repository is not
 #                public, a scheduled run checks a rotating third of them
 #   sweep        each harness: fetch, build every image afresh, every proof
-#                and its assumptions against the allowlist, every counterexample
+#                and its assumptions against the allowlist, every counterexample;
+#                skipped, by citation, when a scheduled run or a release's run
+#                finds a passed sweep of every harness at this same commit (below)
 #   assets       every release asset the facts pin, downloaded and hashed again
 #   determinism  two kinds of machine snapshot the same ELF files; the outputs
 #                are compared byte for byte, so no reference digest is needed
 #   warm         (on request, on main) fills the dune cache pr.yml reads
-#   weekly       the run's one verdict: every job above passed, warm when it
-#                was asked for and skipped when not.  It always runs, since a
-#                skipped job reports success.
+#   weekly       the run's one verdict: every job above passed (or the sweep was
+#                cited), warm when it was asked for and skipped when not.  It
+#                always runs, since a skipped job reports success.
 #
 # release.yml calls this workflow with `release`, so that a new release is
 # checked against the assets it actually published.  The trusted runs never
 # read the cache: the kernel does not check a compiled file again when a proof
 # loads it, and nothing in a cached image says which ELF it came from.
+#
+# A sweep of a commit already swept whole is the same check of the same bytes: the
+# commit fixes the tree, its tools and this workflow, release.yaml pins the images
+# by digest and the facts pin every asset by SHA-256 (a draft asset fails the
+# sweep, so a passed sweep saw them all published).  So a scheduled run and a
+# release's run cite, instead of sweeping, an earlier run of this commit, by
+# weekly.yml or release.yml and never for a pull request, that passed and whose
+# plan job is named "plan (every harness)" and whose sweep jobs ran and passed.
+# A manual run always sweeps.  Assets and determinism run every time.
 name: weekly
 on:
   schedule:
@@ -46,17 +57,26 @@ env:
 
 jobs:
   plan:
+    # the name says the plan is every harness (no units named, no rotating third): the cite step below reads it
+    name: >-
+      plan${{ !inputs.units && !(github.event_name == 'schedule' && github.event.repository.visibility != 'public')
+      && ' (every harness)' || '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read   # the cite step lists this commit's runs and their jobs
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
       sample: ${{ steps.plan.outputs.sample }}
       sample_projects: ${{ steps.plan.outputs.sample_projects }}
+      cited: ${{ steps.cite.outputs.cited }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
-          ref: ${{ inputs.release || github.ref }}
+          # the run's own commit, not the branch's tip when the job starts: every job checks the commit the run records
+          ref: ${{ inputs.release || github.sha }}
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
@@ -107,9 +127,46 @@ jobs:
             jq -r '.offloaded // [] | .[] | "- \(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
               "$RUNNER_TEMP/plan.json"
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: an earlier passed sweep of every harness at this commit, cited instead of a second sweep (the header)
+        id: cite
+        # a scheduled run of every harness, and a release's run; never a manual run, which asks for a sweep
+        if: (github.event_name == 'schedule' && github.event.repository.visibility == 'public') || inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          # this commit's passed runs of weekly.yml or release.yml from this repository, by no pull request, newest first
+          SHA="$sha" gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$sha&status=success&per_page=100" --jq '
+            .workflow_runs[]
+            | select(.head_sha == env.SHA and .id != (env.GITHUB_RUN_ID | tonumber)
+                     and .head_repository.full_name == env.GITHUB_REPOSITORY
+                     and (.path == ".github/workflows/weekly.yml" or .path == ".github/workflows/release.yml")
+                     and (.event == "schedule" or .event == "push" or .event == "workflow_dispatch"))
+            | "\(.id) \(.html_url)"' > "$RUNNER_TEMP/runs.txt"
+          cited=""
+          while read -r id url; do
+            # its latest attempt's jobs (a called workflow's are named "sweep / <job>"): the plan was every harness,
+            # and every sweep job ran and passed; a run that cited its own sweep has none, and is not cited
+            gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$id/jobs?filter=latest&per_page=100" \
+              --jq '.jobs[] | "\(.conclusion // "none")\t\(.name)"' > "$RUNNER_TEMP/jobs.txt"
+            grep -qxP 'success\t(sweep / )?plan \(every harness\)' "$RUNNER_TEMP/jobs.txt" || continue
+            grep -qP '^[^\t]*\t(sweep / )?sweep \d+$' "$RUNNER_TEMP/jobs.txt" || continue
+            grep -qP '^(?!success\t)[^\t]*\t(sweep / )?sweep \d+$' "$RUNNER_TEMP/jobs.txt" && continue
+            grep -qxP 'success\t(sweep / )?weekly' "$RUNNER_TEMP/jobs.txt" || continue
+            cited="$url"
+            break
+          done < "$RUNNER_TEMP/runs.txt"
+          echo "cited=$cited" >> "$GITHUB_OUTPUT"
+          if [ -n "$cited" ]; then
+            echo "### sweep: cited, not run: $cited swept every harness at $sha and passed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "no passed sweep of every harness at $sha: this run sweeps"
+          fi
 
   sweep:
     needs: plan
+    if: needs.plan.outputs.cited == ''
     name: sweep ${{ matrix.job.index }}
     # the runner and the time limit the job's plan entry names, unless the repository variables say otherwise (pr.yml's
     # check job)
@@ -124,7 +181,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
-          ref: ${{ inputs.release || github.ref }}
+          ref: ${{ inputs.release || github.sha }}
           path: work
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
@@ -161,7 +218,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
-          ref: ${{ inputs.release || github.ref }}
+          ref: ${{ inputs.release || github.sha }}
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
@@ -193,7 +250,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
-          ref: ${{ inputs.release || github.ref }}
+          ref: ${{ inputs.release || github.sha }}
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
@@ -321,20 +378,28 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: every job passed, and warm ran only when it was asked for
+      - name: every job passed (the sweep, or its citation), and warm ran only when it was asked for
         env:
           # warm's own condition
           WARM_ASKED: ${{ github.event_name == 'workflow_dispatch' && inputs.warm && github.ref == 'refs/heads/main' }}
           PLAN: ${{ needs.plan.result }}
           SWEEP: ${{ needs.sweep.result }}
+          # the earlier run whose sweep of this commit this run cites, or empty (the plan job's cite step)
+          CITED: ${{ needs.plan.outputs.cited }}
           ASSETS: ${{ needs.assets.result }}
           DETERMINISM: ${{ needs.determinism.result }}
           COMPARE: ${{ needs.determinism-compare.result }}
           WARM: ${{ needs.warm.result }}
         run: |
           set -euo pipefail
-          got="plan $PLAN, sweep $SWEEP, assets $ASSETS, determinism $DETERMINISM, determinism-compare $COMPARE, warm $WARM"
-          [ "$PLAN/$SWEEP/$ASSETS/$DETERMINISM/$COMPARE" = success/success/success/success/success ] ||
+          got="plan $PLAN, sweep $SWEEP${CITED:+ (cited: $CITED)}, assets $ASSETS, determinism $DETERMINISM, determinism-compare $COMPARE, warm $WARM"
+          # a cited sweep is skipped, and only a cited one: the citation stands for it
+          sweep="$SWEEP"
+          if [ -n "${CITED:-}" ]; then
+            [ "$SWEEP" = skipped ] || { echo "::error::the sweep was cited, yet: $got"; exit 1; }
+            sweep=success
+          fi
+          [ "$PLAN/$sweep/$ASSETS/$DETERMINISM/$COMPARE" = success/success/success/success/success ] ||
             { echo "::error::a job did not pass: $got"; exit 1; }
           if [ "$WARM_ASKED" = true ]; then
             [ "$WARM" = success ] || { echo "::error::the cache was to be warmed, and was not: $got"; exit 1; }

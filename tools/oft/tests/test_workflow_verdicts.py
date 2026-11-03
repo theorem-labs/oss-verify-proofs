@@ -669,18 +669,31 @@ class CollectTest(StandIn):
 
     def test_weekly(self):
         s = self.collector("weekly.yml", "weekly")
-        # WARM_ASKED is the warm job's own condition
-        self.assertEqual(s["env"]["WARM_ASKED"], "${{ %s }}" % load("weekly.yml")["jobs"]["warm"]["if"])
+        jobs = load("weekly.yml")["jobs"]
+        # WARM_ASKED is the warm job's own condition; CITED is what skips the sweep, and nothing else does
+        self.assertEqual(s["env"]["WARM_ASKED"], "${{ %s }}" % jobs["warm"]["if"])
+        self.assertEqual(s["env"]["CITED"], "${{ needs.plan.outputs.cited }}")
+        self.assertEqual(jobs["sweep"]["if"], "needs.plan.outputs.cited == ''")
         names = ["plan", "sweep", "assets", "determinism", "determinism-compare", "warm"]
 
-        def env(asked="false", **given):
+        def env(asked="false", cited=None, **given):
             r = results(names, **dict({"warm": "skipped"}, **given))
-            return {"WARM_ASKED": asked, "PLAN": r["plan"], "SWEEP": r["sweep"], "ASSETS": r["assets"],
-                    "DETERMINISM": r["determinism"], "COMPARE": r["determinism-compare"], "WARM": r["warm"]}
-        cases = [(env(), True), (env(asked="true", warm="success"), True)]
+            e = {"WARM_ASKED": asked, "PLAN": r["plan"], "SWEEP": r["sweep"], "ASSETS": r["assets"],
+                 "DETERMINISM": r["determinism"], "COMPARE": r["determinism-compare"], "WARM": r["warm"]}
+            if cited is not None:
+                e["CITED"] = cited
+            return e
+        run = "https://github.com/o/r/actions/runs/1"
+        cases = [(env(), True), (env(asked="true", warm="success"), True), (env(cited=""), True),
+                 (env(cited=run, sweep="skipped"), True)]
         for job in ("plan", "sweep", "assets", "determinism", "determinism_compare"):
             for result in ("failure", "cancelled", "skipped"):
                 cases.append((env(**{job: result}), False))
+                cases.append((env(cited="", **{job: result}), False))
+        for result in ("success", "failure", "cancelled"):     # cited, and the sweep did not skip
+            cases.append((env(cited=run, sweep=result), False))
+        for job in ("plan", "assets", "determinism", "determinism_compare"):     # a citation stands for the sweep only
+            cases.append((env(cited=run, sweep="skipped", **{job: "failure"}), False))
         cases += [(env(asked="true"), False), (env(asked="true", warm="failure"), False),
                   (env(warm="success"), False)]
         self.check(s, cases)
