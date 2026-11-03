@@ -72,10 +72,10 @@
 # a change to it needs a reviewer's eye before its run is trusted; the local actions it uses come from the base, as
 # the tools do: a GitHub App can change .github/actions/ with the Contents permission alone, and this file only
 # with the Workflows permission as well.  So a change to an action takes effect for the pull requests after it
-# lands.  A push to main runs lint, tests and controls in full, and checks the harnesses the push changes;
-# release-check.yml, when enabled, checks on it what that push changes, and every committed proof and
-# finding once a week.  A merge queue group is the commit main becomes, and is checked as a push to
-# main is.
+# lands.  A push to main runs lint, tests and controls in full, and checks the harnesses the push changes that have
+# no committed proof or finding; release-check.yml checks on it what that push changes of the harnesses that have
+# one (the plan step says why), and weekly.yml every committed proof and finding once a week.  A merge queue group
+# is the commit main becomes, and is checked as a push to main is, but on every harness it changes.
 #
 # required and main-gate have no condition that skips them, since a skipped job reports success.  A pull request
 # runs again when it is edited, which is the event for a new base, and a new base is checked as any other run is.
@@ -278,6 +278,24 @@ jobs:
             # change.  A release, and release-check.yml's run of each push to main, read the tree's own rows.
             if [ "$KIND" != release ] && grep -q -- --citations "$RUNNER_TEMP/plan-help.txt"; then
               args+=(--citations base/tools/oft/offloaded-checks.tsv)
+            fi
+            # A push to main: release-check.yml's run of the same push plans, by the release rules, every harness with a
+            # committed proof or finding (its every.txt) and checks the parts that push re-keys, and its verdict is the
+            # one of record.  Here the push checks the rest, the harnesses with neither (on their statements), so that
+            # each harness a push re-keys is checked once, not twice.  The same rule as release-check.yml's: a harness
+            # with a proofs/<p>/<h>/<s>/proof.yaml or a findings/<p>/<h>/<s>/finding.yaml.
+            if [ "${GITHUB_EVENT_NAME:-}" = push ] && grep -q -- --units "$RUNNER_TEMP/plan-help.txt"; then
+              ( cd head
+                { find proofs -mindepth 4 -maxdepth 4 -name proof.yaml 2>/dev/null || true
+                  find findings -mindepth 4 -maxdepth 4 -name finding.yaml 2>/dev/null || true
+                } | cut -d / -f 2,3 | LC_ALL=C sort -u > "$RUNNER_TEMP/release-check-units.txt"
+                find projects -mindepth 3 -maxdepth 3 -name harness.yaml | cut -d / -f 2,3 | LC_ALL=C sort -u \
+                  > "$RUNNER_TEMP/harnesses.txt" )
+              LC_ALL=C comm -23 "$RUNNER_TEMP/harnesses.txt" "$RUNNER_TEMP/release-check-units.txt" \
+                > "$RUNNER_TEMP/push-units.txt"
+              args+=(--units "$RUNNER_TEMP/push-units.txt")
+              echo "a push to main: $(wc -l < "$RUNNER_TEMP/push-units.txt") harnesses with no committed proof or finding planned here; release-check.yml plans the other $(wc -l < "$RUNNER_TEMP/release-check-units.txt")" \
+                | tee -a "$GITHUB_STEP_SUMMARY"
             fi
             PYTHONPATH=base/tools python -m oft --root head plan "${args[@]}" > "$RUNNER_TEMP/plan.json"
             { echo "### parts checked, and why"

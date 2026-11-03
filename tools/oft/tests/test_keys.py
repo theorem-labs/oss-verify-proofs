@@ -1,5 +1,6 @@
 """keys.py and plan.py: a part's key changes exactly when what its check reads changes, and a plan checks a part only
 when, judged against a base, its key differs from the base's, and when its key has no recorded pass."""
+import glob
 import io
 import json
 import os
@@ -806,6 +807,28 @@ class Plan(unittest.TestCase):
             self.record(t, remote, head, [(UNIT, "build", key)])
             got, output = self.run_step(d, "pr.yml", d, KIND="maintainer", BASE=base)
             self.assertEqual((got["units"], "units=1\n" in output), ([UNIT], True), output)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_the_pr_plan_step_of_a_push_to_main_plans_only_harnesses_release_check_does_not(self):
+        """release-check.yml's run of a push to main checks every harness with a committed proof or finding that the
+        push re-keys; pr.yml's run of the same push checks the others, so each re-keyed harness is checked once."""
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            base = repo(t)
+            t.write("projects/zlib/project.yaml", t.read("projects/zlib/project.yaml") + "# x\n")
+            commit(t)
+            self.workflow(t, d)
+            os.makedirs(os.path.join(d, "base"))
+            os.symlink(TOOLS, os.path.join(d, "base", "tools"))
+            every, _output = self.run_step(d, "pr.yml", d, KIND="release", BASE=base)
+            got, _output = self.run_step(d, "pr.yml", d, KIND="release", BASE=base, GITHUB_EVENT_NAME="push")
+            head = os.path.join(d, "head")
+            covered = {"/".join(p.split(os.sep)[-4:-2])
+                       for top, name in (("proofs", "proof.yaml"), ("findings", "finding.yaml"))
+                       for p in glob.glob(os.path.join(head, top, "*", "*", "*", name))}
+            self.assertIn(UNIT, every["units"])
+            self.assertIn(UNIT, covered)
+            self.assertEqual(got["units"], [u for u in every["units"] if u not in covered])
+            self.assertTrue(got["units"], "the push still checks the re-keyed harnesses with no proof or finding")
 
     @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
     def test_the_pr_plan_step_cites_the_base_s_rows_never_the_change_s(self):
