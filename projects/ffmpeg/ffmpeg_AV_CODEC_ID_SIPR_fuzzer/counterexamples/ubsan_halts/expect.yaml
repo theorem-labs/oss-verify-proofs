@@ -1,0 +1,14 @@
+schema: oss-fuzz-theorems/counterexample/1
+statement: ffmpeg/ffmpeg_AV_CODEC_ID_SIPR_fuzzer/ubsan_halts
+input: input.bin
+observed:
+  build: ubsan
+  exit: 134
+  signal: SIGABRT
+message: "Assertion ret != (-(int)(('B') | (('U') << 8) | (('G') << 16) | ((unsigned)('!') << 24))) failed"
+control:
+  input: control.bin
+  exit: 0
+disclosure: public
+note: >-
+  The harness's av_assert0(ret != AVERROR_BUG) (tools/target_dec_fuzzer.c) aborts. The harness takes the sample rate only from an options block, which a payload of 1024 bytes or less does not have and in which it can be 0; this input leaves it at 0, and the sipr decoder, which sets AV_CODEC_CAP_CHANNEL_CONF but never a sample rate, outputs a frame with sample_rate 0, which frame_validate() (libavcodec/decode.c) turns into AVERROR_BUG. control.bin is the same packet with an options block that sets the sample rate to 8000. The same input fails FFmpeg's own x86-64 fuzz build; a fix is proposed in FFmpeg pull request 25808 on FFmpeg's Forgejo.
